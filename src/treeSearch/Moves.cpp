@@ -141,11 +141,14 @@ void SPRMove::applyBLO(JointTree &tree,
         nodesToOptimize.push_back(prune->next);
         nodesToOptimize.push_back(prune->next->next);
     }
+    /*
     if (prune->back && prune->back->next) {
         nodesToOptimize.push_back(prune->back->next);
         nodesToOptimize.push_back(prune->back->next->next);
     }
-    nodesToOptimize.push_back(regraft);
+    */
+    //nodesToOptimize.push_back(regraft);
+    /*
     if (regraft->next) {
         nodesToOptimize.push_back(regraft->next);
         nodesToOptimize.push_back(regraft->next->next);
@@ -153,7 +156,7 @@ void SPRMove::applyBLO(JointTree &tree,
     if (regraft->back && regraft->back->next) {
         nodesToOptimize.push_back(regraft->back->next);
         nodesToOptimize.push_back(regraft->back->next->next);
-    }
+    }*/
     optimizeBranches(tree, nodesToOptimize);
 }
 
