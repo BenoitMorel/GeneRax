@@ -1,0 +1,449 @@
+10/05/17 -*- Version 2.3.0 -*-
+
+18/12/16 Julien Dutheil
+* Removed exception specifications in Transliterators
+
+17/12/16 Julien Dutheil
+* new function SiteTools::isDoubleton
+* new function SiteTools::getMinoralleleFrequency
+* new function SequenceTools::areSequencesIdentical
+
+19/09/16 Murray Patterson
+* Started integration of probabilistic sequences
+
+07/03/16 Julien Dutheil
+* Much faster getCompleteSites (does not check for positions)
+
+23/09/14 -*- Version 2.2.0 -*- 
+
+23/09/14 Julien Dutheil
+* Fixed bug #73
+
+16/09/14 Julien Dutheil
+* Fixed bug #79
+
+24/07/14 Julien Dutheil
+* Alphabet code gets a refreshment!
+
+05/03/13 -*- Version 2.1.0 -*- 
+
+07/02/13 Julien Dutheil
+* StateProperties => Alphabet index (dir renamed).
+* New BppO classes forAlphabet Index 1 and 2, and corresponding methods in SequenceApplicationTools.
+
+19/01/13 Julien Dutheil
+* Compiles with -Wconversion.
+
+09/01/13 Julien Dutheil
+* Use size_t instead of unsigned int for indexes in containers.
+
+17/09/12 Julien Dutheil
+* Reorganized IO classes.
+
+11/09/12 Julien Dutheil
+* Added generic container converter function.
+
+30/07/12 Julien Dutheil
+* Moved features, fastq and maf to new bpp-seq-omics library.
+
+18/07/12 Julien Dutheil
+* Bug fixed in merge maf iterator, in case a sequence is missing in one of the two blocks.
+
+25/06/12 Julien Dutheil
+* Extended maf tools and reorganization of the code.
+* Extended GFF output.
+* New [] operator in SequenceFeatureSet.
+
+18/06/12 Julien Dutheil
+* Fixed bug in Maf parser: scores are now parsed correctly.
+
+08/03/12 Julien Dutheil
+* Added support for '*' character in proteins (stop codon)
+
+09/02/12 -*- Version 2.0.3 -*-
+
+16/01/12 Julien Dutheil
+* Bug #42 solved, new support for extended fasta parser in application tools.
+* Added contribution from Benoit Nabholz and Annabelle Haudry on 4-fold degenerated sites.
+
+06/01/12 Julien Dutheil
+* Added support for "!" state in nucleic alphabet, which can be either a gap or an unknown character.
+
+24/11/11 Julien Dutheil
+* Added SequenceWalker class and test.
+
+22/11/11 Sylvain Gaillard
+* Added support for FastQ
+
+21/11/11 Julien Dutheil
+* Added support for GFF3.
+
+21/11/11 Sylvain Gaillard
+* Bug #35 solved.
+
+18/11/11 Julien Dutheil
+* New MafIterators: SequenceStatistics and PairwiseSequenceStatistics.
+* Function SequenceTools::getPercentIdentity now allows to exclude gaps.
+
+15/09/11 Julien Dutheil
+* Merge function of SequenceWithAnnotation now also merges annotations properly.
+
+17/06/11 Julien Dutheil
+* Bug #39 solved.
+
+09/06/11 -*- Version 2.0.2 -*-
+
+08/06/11 Julien Dutheil
+* Fixed several Maf iterators.
+
+28/02/11 -*- Version 2.0.1 -*-
+
+* Fixed debian packaging. 
+
+07/02/11 -*- Version 2.0.0 -*-
+
+19/11/10 Julien Dutheil
+* Solved bug 0000016 (General comments not copied in containers).
+* A few more code cleaning.
+
+01/11/10 Julien Dutheil
+* Solved bug 0000005 (Clustal parser).
+* Added unit testing for sequence input format.
+* Solved bug 0000004 (Remove gap sites in SiteContainer).
+
+12/10/10 Benoît Nabholz
+* Added yeast mitochondrial codon alphabet and genetic code.
+
+20/09/10 Julien Dutheil
+* Reorganization of the code for version 2.0.
+
+06/09/10 Julien Dutheil
+* Added support for masked sequences in SequenceWithAnnotationTools and MafParser.
+
+05/09/10 Julien Dutheil
+* First draft of CaseMaskedAlphabet, for dealing with repeat-masked sequences for instance.
+
+21/07/10 Julien Dutheil
+* Added method hasSequence(name) in SequenceContainer interface.
+
+20/07/10 Julien Dutheil
+* New Sequence interface design.
+* Maf parser now reads quality scores if there are some.
+
+19/07/10 Julien Dutheil
+* New method isInit in CodonAlphabet.
+* New method getCDS in SequenceTools.
+
+28/04/10 Julien Dutheil
+* New MAF genome alignment parser.
+
+22/04/10 Sylvain Gaillard
+* Break SequenceTools interface:
+		- renamed invert -> getInvert
+		- renamed complement -> getComplement
+	now invert and complement methods deals with sequence ref
+		- New method invertComplement
+
+16/04/10 Julien Dutheil
+* New Stockholm sequence format (output only).
+* Refactoring of class ISequence2 => IAlignment + new interface OAlignment.
+
+24/03/10 -*- Version 1.7.0 -*-
+
+11/03/10 Julien Dutheil
+* Nexus format now deals with lower case keywords.
+
+17/12/09 Julien Dutheil
+* Code cleaning for VectorSiteContainer
+* New class CompressedVectorSiteContainer using less memory than
+  VectorSiteContainer, but more restricted.
+
+16/11/09 Sylvain Gaillard
+* No more "using namespace" in header files.
+
+04/11/09 Julien Dutheil
+* Remove SymbolListTools::randomizeContent to a more efficient SymbolList::shuffle
+method.
+
+12/10/09 Julien Dutheil
+* Now SeqLib compiles with -Weffc++ and -Wshadow without any warning :)
+
+22/09/09 Julien Dutheil
+* Finally added 'addSequence' method in SequenceContainer.
+* MapSequenceContainer now has a addSequence method that uses the name of the
+  sequence as a key by default.
+* Several methods in Sequence/SiteContainerTools are not templated anymore and
+  have been improved.
+
+09/09/09 Sylvain Gaillard
+* Fixed white space skip in Fasta sequence
+
+20/08/09 Julien Dutheil
+* Added config files for CMake.
+
+19/08/09 Sylvain Gaillard
+* Introduced 3 new interfaces IOSequenceStream, ISequenceStream and
+  OSequenceStream. These interfaces are intended to be used by IOFormat
+  dealing with Sequence and not SequenceContainers. They are actually
+  implemented by the Fasta class.
+
+17/08/09 Adam Smith
+* Bug fixed in DefaultAlphabet: unknow state is 37 not 38.
+
+04/08/09 Sylvain Gaillard
+* Introduced new classes for Alphabet States
+
+23/07/09 Sylvain Gaillard
+* Added SequenceTools::getPutativeHaplotypes
+
+22/07/09 Sylvain Gaillard
+* Added SequenceTools::getNumberOfUnresolvedSites
+* Updated SequenceTools::getNumberOfSites,
+	SequenceTools::getNumberOfCompleteSites and SequenceTools::removeGaps to be
+	Alphabet implementation independant.
+
+07/07/07 Julien Dutheil
+* Updated GranthamAAChemicalDistance, with a new signed, non-symmetric,
+	option.
+
+26/06/09 Sylvain Gaillard
+* Added new SequencePositionIterators classes.
+
+23/06/09 Julien Dutheil
+* Actualization of the Container classes: now returns references and not
+pointer. Several code updates, including copy contructors.
+
+17/06/09 Sylvain Gaillard (Glasgow Workshop)
+* Fix DNA/RNA/ProteicAlphabet::getAlias: works now with lower case states.
+* Fix SiteTools::isConstant test gap or unknown
+* Turning SequenceContainerTools::getFrequencies into void function.
+
+21/07/08 -*- Version 1.6.0 -*-
+
+28/05/09 Julien Dutheil
+* Added basic support for the Nexus format.
+
+22/05/09 Julien Dutheil
+* Improved Clustal format (solves bug found by Emmanuel M.)
+* SequenceApplicationTools uses the keyval syntax for format description.
+
+27/04/09 Julien Dutheil
+* Added site randomization method.
+
+28/02/09 Julien Dutheil
+* Added mutual information calculation.
+* Added pairwise counting methods.
+* Frequencies counting methods have been improved (avoid useless copy of maps).
+
+16/01/09 Julien Dutheil
+* max_gap_allowed option in SequenceApplicationTools is now a included bound:
+  0 or 0% will keep all complete sites, and 'n=number of sequences' or 100%
+	will keep all sites.
+
+13/01/09 Sylvain Gaillard
+* Little optimization in Fasta::write() method.
+
+12/01/09 Sylvain Gaillard
+* Added support for comments (HUPO-PSI like) in Fasta.
+
+08/01/09 Julien Dutheil
+* SequenceTools::reverse method has been deprecated in favor of the
+  SequenceTools::inverse method, of witch it is now an alias.
+
+07/01/09 Julien Dutheil
+* Code improvement in Vector containers.
+
+21/12/08 Julien Dutheil
+* Return type for clone() methods corrected (Sequence, Site, SiteContainer and derivated classes).
+* Bug fixed in SequenceApplicationTools::get[Sequence/Site]Container, phylip format.
+
+21/07/08 -*- Version 1.5.0 -*-
+
+05/12/08 Julien Dutheil
+* VectorSiteContainer::getSite() faster (more than 10 times faster on a ~500
+	sequences data set!)
+
+04/12/08 Julien Dutheil
+* Fixed missing redefinition of translate and reverse methods in class DNAToRNA.
+* Made inheritance virtual.
+
+01/12/08 Julien Dutheil
+* New methods getSupportedInts and getSupportedChars in Alphabet classes.
+
+18/11/08 Julien Dutheil
+* biopp-help-forum 91 (by Stephen Smith): Fasta, Mase, Clustal and Phylip now
+  have an option to turn off the name checking and decrease loading time.
+* biopp-help-forum 93 (by Stephen Smith): Phylip format now supports any
+ delimiter when reading/writing files in extended format.
+
+14/11/08 Sylvain Gaillard
+* New method SequenceTools::subtractHaplotype(Sequence, Sequence, string,
+  unsigned int).
+
+07/11/08 Julien Dutheil
+* New contructor in VectorSiteContainer now as a tag to disable position
+  checking, which can turn to be quite slow.
+
+06/11/08 Sylvain Gaillard
+* New class PhredPhd to read sequence from phd files produced by the phred
+  program
+* Removed an unused method in PhredPoly
+
+05/11/08 Sylvain Gaillard
+* New methods Alphabet::getGeneric(states) implemented in AbstractAlphabet,
+  DefaultAlphabet, DNA, RNA and ProteicAlphabet.
+* New alphabet exception CharStateNotSupportedException.
+* New class PhredPoly to read sequence from poly files produced by the phred
+  program.
+* Fixed heterozygous site read in PhredPoly.
+
+09/10/08 Julien Dutheil
+* New method SequenceTools::invert(Sequence).
+
+24/09/08 Bastien Boussau & Julien Dutheil
+* Memory leak fixed in Fasta and Mase readers.
+
+21/07/08 -*- Version 1.4.1 -*-
+
+26/06/08 Julien Dutheil
+* Bug fixed in Clustal format.
+
+20/04/08 Julien Dutheil
+* New interface ISequence2 for reading alignments.
+
+18/03/08 Julien Dutheil and Bastien Boussau
+* Bowker's test for homogeneity implemented in SequenceTools.
+
+08/02/08 Julien Dutheil
+* Bug fixed in VectorSequenceContainer: method addSequence is now virtual!
+  (thanks to Laurent Gueguen for pointing out this bug)!.
+
+07/02/08 Julien Dutheil
+* Added function isDNAAlphabet and isRNAAlphabet in AlphabetTools.
+* Bug fixed in getAlphabetFromSequence method.
+* Method getContent in Sequence and Site now outputs a reference.
+
+18/01/08 -*- Version 1.4.0 -*-
+
+09/01/08 Julien Dutheil
+* All classes included in the new 'bpp' namespace.
+
+06/11/07 Julien Dutheil
+* New function SequenceContainerTools::merge.
+
+02/10/07 Julien Dutheil
+* New class GenBank, enabling GenBank sequence format support for input.
+* Added new copy constructors from SequenceContainer in
+  Vector[Site/Sequence]Container.
+* New methods changeUnresolvedCharacterToGaps and changeGapsToUnknownCharacters in SymbolListTools.
+* Bug fixed in changeUnresolvedCharacterToGaps in SiteContainerTools.
+
+06/07/07 -*- Version 1.3.0 -*-
+
+12/06/07 Julien Dutheil
+* More tools in class alphabet (isGap, isUnresolved, etc.)
+* New class DistanceMatrix, previously in phyllib.
+* New similarity measures in SiteContainerTools.
+
+04/06/07 Julien Dutheil
+* New constructor from sequence names in VectorSiteContainer.
+
+01/06/07 Julien Dutheil
+* New method SiteContainerTools::boostrapSites to bootstrap an alignment.
+
+21/05/07 Julien Dutheil
+* New method SequenceContainerTools::getSequenceContainer to read non-aligned
+  sequences.
+
+04/05/07 Julien Dutheil
+* Bug fixed in global alignment with gap opening and extending penalties.
+* New generic score scheme.
+* Compatibility update (NumCalc)
+
+24/04/07 Benoît Nabholz & Julien Dutheil
+* GeneticCode classes can now translate unknow codons to unknown amino acids.
+
+02/04/07 Julien Dutheil
+* VIRTUAL_COV variable changed to NO_VIRTUAL_COV. configure.ac file updated.
+  => Default behaviour is now /really/ to use covariant return type with
+	virtual inheritence, even when importing the files in an IDE. To use the old
+	compilers behaviour, one must set the NO_VIRTUAL_COV preproc variable.
+* this modification also solves a problem with the old configure.ac which
+  was not correctly updated in version 1.2.0 :(
+* Bug fixed in SymbolListTools::getCounts.
+
+02/04/07 Julien Dutheil
+* New method getAlphabetIndex1() in class SimpleIndexDistance.
+
+24/02/07 Julien Dutheil
+* New pairwise alignment algorithm: gap opening and extending penalties.
+	
+22/02/07 Julien Dutheil
+* GeneticCode derivated classes now properly redefine the translate(Sequence&)
+	method.
+
+19/01/07 -*- Version 1.2.0 -*-
+
+19/01/07 Julien Dutheil
+* Functions AlphabetTools::getType() and StringSequenceTools::getAlphabetFromSequence() rewritten.
+* New DefaultNucleotideScore matrix.
+* New AAIndex1Entry and AAIndex2Entry classes which create AlphabetIndex1 and
+AlphabetIndex2 objects from AAIndex1 and AAIndex2 entries, respectively.
+
+18/12/06 Julien Dutheil
+* New alignment tools in SiteContainerTools, including the Needleman and
+Wunsch alogrithm.
+* BLOSUM50 matrix available.
+* Bug fixed in Sequence.h: method setContent is now properly redefined.
+* Bug fixed in ProteicAlphabet->getAbbr(int). The returned result is now
+correct!!!
+
+06/12/06 Julien Dutheil
+* DefaultAlphabet now accepts "." characters.
+* New AlphabetTools::isDefaultAlphabet(const Alphabet *) method.
+* New SiteContainerTools::resolveDottedAlignment(const Sitecontainer &, const Alphabet *) method.
+
+30/08/06 Julien Dutheil
+* Bug fixed in phylip sequential reader, + duplicated sequence in container
+now throws sequence name. (included in 1.1.1 release).
+
+28/08/06 -*- Version 1.1.1 -*-
+
+08/08/06 Julien Dutheil
+* Bug fixed in Phylip sequential read method.
+
+15/06/06 Julien Dutheil
+* Method changeGapsToUnknownCharacters() moved from SequenceContainerTools to
+SiteContainerTools, and is really faster!
+* New removeGapOnlySites() method in SiteContainerTools.
+* New method SiteTools::isGapOnly().
+* new 'sequence.max_gap_allowed' option in SequenceApplicationTools::getSitesToAnalyse().
+
+13/06/06 Julien Dutheil
+* Phylip sequential format improved, no more empty line between sequences
+needed.
+
+12/06/06 Julien Dutheil
+* SiteTools::isConstant() method now has a 'ignoreUnknown' option.
+
+01/01/06 Julien Dutheil
+* VectorSiteContainer and AlignedSequenceContainer now number sites from 1 (and not 0). 
+
+17/05/06 Benoît Nabholz, Sylvain Glémin & Julien Dutheil
+* Bug fixed in SiteContainerTools::getConsensus(), + SymbolListTools::getFrequencies() and getCounts() improved.
+
+15/05/06 Julien Dutheil
+* Bug fixed: Added getUnknownCharacterCode() method in DefaultAlphabet.
+
+09/05/06 Julien Dutheil
+* New AAChargeIndex class.
+* Bug fixed in SiteTools::hasUnknown(Site).
+
+18/04/06 -*- Version 1.1.0 -*-
+
+18/04/06 Julien Dutheil
+* New IOSequenceFactory class.
+
+06/04/06 Julien Dutheil
+* New () function operators defined on SequenceContainers.
+

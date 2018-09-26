@@ -1,0 +1,11 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/BioPP/bpp-core.git
+	branch = v2.3.0
+	commit = b8a33fca68f0a5f30f831a5c7085ad070762e451
+	parent = none
+	cmdver = 0.3.1

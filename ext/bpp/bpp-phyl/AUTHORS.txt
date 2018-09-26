@@ -1,0 +1,23 @@
+Julien Dutheil     <julien.dutheil@univ-montp2.fr>
+Vincent Ranwez     <ranwez@univ-montp2.fr>
+Nicolas Galtier    <galtier@univ-montp2.fr>
+Bastien Boussau    <bastien.boussau@univ-lyon1.fr>
+Céline Scornavacca <celine.scornavacca@lirmm.fr>
+Laurent Guéguen    <laurent.gueguen@univ-lyon1.fr>
+Nicolas Rochette   <nicolas.rochette@univ-lyon1.fr>
+
+Contributed code to Bio++ was enabled thanks to the following institutions and resources:
+
+2002 - 2006 Laboratoire GPIA - UMR CNRS 5171 Université Montpellier 2 (Eric Bazin, Khalid Belkhir, Guillaume Deuchst, Julien Dutheil, Sylvain Gaillard, Nicolas Galtier, Sylvain Glémin)
+2005 -      ISE-M UMR CNRS 5554 Université Montpellier 2 (Vincent Ranwez, Céline Scornavacca)
+2006 -      ISE-M UMR CNRS 5554 Université Montpellier 2 (Khalid Belkhir, Nicolas Galtier, Sylvain Glémin)
+2006 - 2007 ISE-M UMR CNRS 5554 Université Montpellier 2 (Julien Dutheil)
+2007 - 2010 Bioinformatics Research Center, University of Aarhus (Julien Dutheil).
+            Funded by European research Area on Plant Genomics (ERA-PG) ARelatives.
+2010 -      ISE-M UMR CNRS 5554 Université Montpellier 2 (Julien Dutheil)
+2011 -      Max Planck Institute for Terrestrial Microbiology (Julien Dutheil)
+2007 -      Genetics and Horticulture UMR INRA 1259 Angers-Nantes INRA Center (Sylvain Gaillard)
+2008 - 2009 Laboratoire BBE - UMR CNRS 5558 Université Lyon 1 (Bastien Boussau)
+2009 - 2010 Berkeley University (Bastien Boussau)
+2010 -      Laboratoire BBE - UMR CNRS 5558 Université Lyon 1 (Bastien Boussau)   
+2008 -      Laboratoire BBE - UMR CNRS 5558 Université Lyon 1 (Laurent Guéguen)
