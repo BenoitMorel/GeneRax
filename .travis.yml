@@ -20,3 +20,4 @@ before_script:
 
 script: 
   - ./install.sh
+  - cd example && ./run_example.sh
