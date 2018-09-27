@@ -5,6 +5,14 @@
 #include <treeSearch/JointTree.h>
 #include <treeSearch/Moves.h>
 
+struct SPRMoveDesc {
+  SPRMoveDesc(int prune, int regraft, const vector<int> &edges):
+    pruneIndex(prune), regraftIndex(regraft), path(edges) {}
+  int pruneIndex;
+  int regraftIndex;
+  vector<int> path;
+};
+
 void queryPruneIndicesRec(pll_unode_t * node,
                                vector<int> &buffer)
 {
@@ -34,12 +42,13 @@ bool isValidSPRMove(shared_ptr<pllmod_treeinfo_t> treeinfo, pll_unode_s *prune, 
 }
 
 bool testSPRMove(JointTree &jointTree,
-    int pruneIndex,
-    int regraftIndex,
+    const SPRMoveDesc &move,
     double bestLoglk,
     double &newLoglk,
     shared_ptr<Move> &newMove)
 {
+  int pruneIndex = move.pruneIndex;
+  int regraftIndex = move.regraftIndex;
   if (!isValidSPRMove(jointTree.getTreeInfo(), jointTree.getNode(pruneIndex), jointTree.getNode(regraftIndex))) {
     return false;
   }
@@ -48,7 +57,7 @@ bool testSPRMove(JointTree &jointTree,
   if (Arguments::check) {
     initialLoglk = jointTree.computeJointLoglk();
   }
-  newMove = Move::createSPRMove(pruneIndex, regraftIndex);
+  newMove = Move::createSPRMove(pruneIndex, regraftIndex, move.path);
   jointTree.applyMove(newMove);
   newLoglk = jointTree.computeLibpllLoglk();
   if (newLoglk > bestLoglk) {
@@ -65,6 +74,24 @@ bool testSPRMove(JointTree &jointTree,
   return newLoglk > bestLoglk;
 }
 
+void getRegraftsRec(int pruneIndex, pll_unode_t *regraft, int maxRadius, vector<int> &path, vector<SPRMoveDesc> &moves)
+{
+  moves.push_back(SPRMoveDesc(pruneIndex, regraft->node_index, path));
+  if (path.size() < maxRadius && regraft->next) {
+    path.push_back(regraft->node_index);
+    getRegraftsRec(pruneIndex, regraft->next->back, maxRadius, path, moves);
+    getRegraftsRec(pruneIndex, regraft->next->next->back, maxRadius, path, moves);
+    path.pop_back();
+  }
+}
+
+void getRegrafts(JointTree &jointTree, int pruneIndex, int maxRadius, vector<SPRMoveDesc> &moves) 
+{
+  pll_unode_t *pruneNode = jointTree.getNode(pruneIndex);
+  vector<int> path;
+  getRegraftsRec(pruneIndex, pruneNode->next->back, maxRadius, path, moves);
+  getRegraftsRec(pruneIndex, pruneNode->next->next->back, maxRadius, path, moves);
+}
 
 bool SPRSearch::applySPRRound(ParallelJointTree &jointTree, int radius, double &bestLoglk) {
   if (Arguments::verbose) {
@@ -75,40 +102,19 @@ bool SPRSearch::applySPRRound(ParallelJointTree &jointTree, int radius, double &
   getAllPruneIndices(jointTree.getThreadInstance(), allNodes);
   const size_t edgesNumber = jointTree.getThreadInstance().getTreeInfo()->tree->edge_count;
   bool foundBetterMove = false;
-  
-  vector<pair<int, int> > movesToExplore;
+ 
+  vector<SPRMoveDesc> movesToExplore;
   for (int i = 0; i < allNodes.size(); ++i) {
       int pruneIndex = allNodes[i];
-      vector<pll_unode_t*> regraftNodes(edgesNumber);
-      unsigned int offset = 0;
-      unsigned int count = 0;
-      unsigned int radiusMin = 1;
-      unsigned int radiusMax = radius;
-      for (int r = radiusMin; r <= radiusMax; ++r) { 
-          pllmod_utree_nodes_at_node_dist(jointTree.getThreadInstance().getNode(pruneIndex),
-              &regraftNodes[offset],
-              &count,
-              r,
-              r);
-          offset += count;
-          count = 0;
-      }
-      regraftNodes.resize(offset);
-      vector<int> regraftIndices;
-      for (auto regraftNode: regraftNodes) {
-        movesToExplore.push_back(pair<int, int>(pruneIndex, regraftNode->node_index));
-      }
+      getRegrafts(jointTree.getThreadInstance(), pruneIndex, radius, movesToExplore);
   }
-
 
   #pragma omp parallel for num_threads(jointTree.getThreadsNumber())
   for (int i = 0; i < movesToExplore.size(); ++i) {
     if (true) {
         double newLoglk;
         shared_ptr<Move> newMove;
-        int pruneIndex = movesToExplore[i].first;
-        int regraftIndex = movesToExplore[i].second;
-        if (testSPRMove(jointTree.getThreadInstance(), pruneIndex, regraftIndex, bestLoglk, newLoglk, newMove)) {
+        if (testSPRMove(jointTree.getThreadInstance(), movesToExplore[i], bestLoglk, newLoglk, newMove)) {
           #pragma omp critical
           if (bestLoglk < newLoglk) {
             foundBetterMove = true;
@@ -133,7 +139,10 @@ void SPRSearch::applySPRSearch(ParallelJointTree &jointTree)
   jointTree.getThreadInstance().printLoglk();
   double startingLoglk = jointTree.getThreadInstance().computeJointLoglk();
   double bestLoglk = startingLoglk;
+  while (applySPRRound(jointTree, 1, bestLoglk)) {}
+  jointTree.optimizeParameters();
   while (applySPRRound(jointTree, 2, bestLoglk)) {}
-  while (applySPRRound(jointTree, 10, bestLoglk)) {}
+  jointTree.optimizeParameters();
+  while (applySPRRound(jointTree, 5, bestLoglk)) {}
 }
 

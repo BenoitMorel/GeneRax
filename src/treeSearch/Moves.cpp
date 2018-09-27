@@ -21,8 +21,8 @@ std::shared_ptr<Move> Move::createNNIMove(int nodeIndex, bool left, bool blo) {
   return make_shared<NNIMove>(nodeIndex, left, blo);
 }
 
-std::shared_ptr<Move> Move::createSPRMove(int pruneIndex, int regraftIndex) {
-  return make_shared<SPRMove>(pruneIndex, regraftIndex);
+std::shared_ptr<Move> Move::createSPRMove(int pruneIndex, int regraftIndex, const vector<int> &path) {
+  return make_shared<SPRMove>(pruneIndex, regraftIndex, path);
 }
 
 NNIMove::NNIMove(int nodeIndex, bool left, bool blo):
@@ -90,9 +90,10 @@ ostream& NNIMove::print(ostream & os) const {
 }
 
 
-SPRMove::SPRMove(int pruneIndex, int regraftIndex):
+SPRMove::SPRMove(int pruneIndex, int regraftIndex, const vector<int> &path):
   pruneIndex_(pruneIndex),
-  regraftIndex_(regraftIndex)
+  regraftIndex_(regraftIndex),
+  path_(path)
 {
 }
 
@@ -113,6 +114,8 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
   auto prune = tree.getNode(pruneIndex_);
   auto regraft = tree.getNode(regraftIndex_);
   pll_tree_rollback_t pll_rollback;
+
+  vector<SavedBranch> savedBranches;;
     
   vector<pll_unode_t *> branchesToOptimize;
   if (blo) {
@@ -120,10 +123,15 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
     branchesToOptimize.push_back(prune->next->back);
     branchesToOptimize.push_back(regraft->back);
     branchesToOptimize.push_back(regraft);
+    for (int branchIndex: path_) {
+      savedBranches.push_back(tree.getNode(branchIndex));
+      branchesToOptimize.push_back(tree.getNode(branchIndex));
+    }
+    
   } 
   
   assert(PLL_SUCCESS == pllmod_utree_spr(prune, regraft, &pll_rollback));
-  auto rollback = std::make_shared<SPRRollback>(tree, pll_rollback);
+  auto rollback = std::make_shared<SPRRollback>(tree, pll_rollback, savedBranches);
   optimizeBranches(tree, branchesToOptimize);
   tree.updateBPPTree();
   return rollback;

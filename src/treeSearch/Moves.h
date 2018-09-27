@@ -11,7 +11,7 @@ class Move {
 public:
   virtual std::shared_ptr<Rollback> applyMove(JointTree &tree) = 0;
   static std::shared_ptr<Move> createNNIMove(int nodeIndex, bool left, bool blo);
-  static std::shared_ptr<Move> createSPRMove(int pruneIndex, int regraftIndex);
+  static std::shared_ptr<Move> createSPRMove(int pruneIndex, int regraftIndex, const vector<int> &path);
     
   friend std::ostream & operator <<( std::ostream &os, const Move &move ) {
     return move.print(os);
@@ -36,7 +36,7 @@ private:
 
 class SPRMove: public Move {
 public:
-  SPRMove(int pruneIndex, int regraftIndex);
+  SPRMove(int pruneIndex, int regraftIndex, const vector<int> &path);
   virtual std::shared_ptr<Rollback> applyMove(JointTree &tree);
   virtual std::ostream& print(std::ostream & os) const;
 private:
@@ -45,6 +45,7 @@ private:
     pll_unode_t *regraft);
   int pruneIndex_;
   int regraftIndex_;
+  vector<int> path_;
 };
 
 #endif
