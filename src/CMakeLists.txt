@@ -4,6 +4,7 @@ add_executable(${PROJECT_NAME} JointSearch.cpp
   likelihoods/LibpllEvaluation.cpp
   treeSearch/JointTree.cpp
   treeSearch/Moves.cpp
+  treeSearch/Rollbacks.cpp
   treeSearch/NNISearch.cpp
   treeSearch/SPRSearch.cpp
   )

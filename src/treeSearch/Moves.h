@@ -2,25 +2,10 @@
 #define _MOVES_H_
 
 #include <likelihoods/LibpllEvaluation.h>
+#include <treeSearch/Rollbacks.hpp>
 #include <memory>
 
 class JointTree;
-
-class Rollback {
-public:
-  Rollback(JointTree &tree, pll_tree_rollback_t &rollback):
-    tree_(tree),
-    rollback_(rollback) 
-  {}
-
-  void applyRollback();
-
-private:
-  JointTree &tree_;
-  pll_tree_rollback_t rollback_;
-
-};
-
 
 class Move {
 public:

@@ -16,11 +16,6 @@
 #define RAXML_BRLEN_SCALER_MIN    0.01
 #define RAXML_BRLEN_SCALER_MAX 100.
   
-void Rollback::applyRollback() {
-  assert(PLL_SUCCESS == pllmod_tree_rollback(&rollback_));
-  tree_.updateBPPTree();
-}
-
 
 std::shared_ptr<Move> Move::createNNIMove(int nodeIndex, bool left, bool blo) {
   return make_shared<NNIMove>(nodeIndex, left, blo);
@@ -84,7 +79,7 @@ std::shared_ptr<Rollback> NNIMove::applyMove(JointTree &tree) {
         applyBLO(tree, edge);
     }
     tree.updateBPPTree();
-    return std::make_shared<Rollback>(tree, rollback);
+    return std::make_shared<NNIRollback>(tree, rollback);
 }
 
 ostream& NNIMove::print(ostream & os) const {
@@ -110,18 +105,20 @@ void printNode(pll_unode_s *node)
   cout << endl;
 }
 
+
+
 std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
 {
   auto prune = tree.getNode(pruneIndex_);
   auto regraft = tree.getNode(regraftIndex_);
   pll_tree_rollback_t rollback;
-  assert(PLL_SUCCESS == pllmod_utree_spr(prune, regraft, &rollback));
+  
   bool blo = true;
   if (blo) {
     applyBLO(tree, prune, regraft);
   }
   tree.updateBPPTree();
-  return std::make_shared<Rollback>(tree, rollback);
+  return std::make_shared<SPRRollback>(tree, rollback);
 }
 
 ostream& SPRMove::print(ostream & os) const {
