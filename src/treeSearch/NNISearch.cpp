@@ -2,6 +2,11 @@
 #include <algorithm>
 #include <omp.h>
 #include "Arguments.hpp"
+#include <Bpp/Phyl/Tree/PhyloTree.h>
+#include <ale/containers/GeneMap.h>
+#include <treeSearch/JointTree.h>
+#include <treeSearch/Moves.h>
+#include <ale/tools/SpeciesGeneMapper.h>
 
 void queryNNIIndicesRec(pll_unode_t * node,
                                vector<int> &buffer,
@@ -52,7 +57,7 @@ bool testNNIMove(JointTree &jointTree,
   return newLoglk > bestLoglk;
 }
 
-bool NNISearch::applyNNIRound(AbstractJointTree &jointTree, double &bestLoglk) {
+bool NNISearch::applyNNIRound(ParallelJointTree &jointTree, double &bestLoglk) {
   if (Arguments::verbose) {
     cout << "Start NNI Round" << endl;
   }
@@ -87,7 +92,7 @@ bool NNISearch::applyNNIRound(AbstractJointTree &jointTree, double &bestLoglk) {
 }
 
 
-void NNISearch::applyNNISearch(AbstractJointTree &jointTree)
+void NNISearch::applyNNISearch(ParallelJointTree &jointTree)
 {
   jointTree.getThreadInstance().printLoglk();
   double bestLoglk = jointTree.getThreadInstance().computeJointLoglk();

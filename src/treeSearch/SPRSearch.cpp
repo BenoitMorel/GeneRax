@@ -1,5 +1,9 @@
 #include "SPRSearch.h"
 #include "Arguments.hpp"
+#include <Bpp/Phyl/Tree/PhyloTree.h>
+#include <ale/containers/GeneMap.h>
+#include <treeSearch/JointTree.h>
+#include <treeSearch/Moves.h>
 
 void queryPruneIndicesRec(pll_unode_t * node,
                                vector<int> &buffer)
@@ -62,7 +66,7 @@ bool testSPRMove(JointTree &jointTree,
 }
 
 
-bool SPRSearch::applySPRRound(AbstractJointTree &jointTree, int radius, double &bestLoglk) {
+bool SPRSearch::applySPRRound(ParallelJointTree &jointTree, int radius, double &bestLoglk) {
   if (Arguments::verbose) {
     cout << "SPR ROUND WITH RADIUS " << radius << endl;
   }
@@ -124,7 +128,7 @@ bool SPRSearch::applySPRRound(AbstractJointTree &jointTree, int radius, double &
 }
 
 
-void SPRSearch::applySPRSearch(AbstractJointTree &jointTree)
+void SPRSearch::applySPRSearch(ParallelJointTree &jointTree)
 { 
   jointTree.getThreadInstance().printLoglk();
   double startingLoglk = jointTree.getThreadInstance().computeJointLoglk();

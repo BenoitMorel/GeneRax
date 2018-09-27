@@ -18,7 +18,7 @@ int main(int argc, char * argv[]) {
   cout << endl;
   Arguments::printSummary();
   cout << endl;
-  shared_ptr<AbstractJointTree> jointTree = make_shared<ParallelJointTree>(Arguments::geneTree,
+  auto jointTree = make_shared<ParallelJointTree>(Arguments::geneTree,
       Arguments::alignment,
       Arguments::speciesTree,
       dupCost,
