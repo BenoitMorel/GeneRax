@@ -98,20 +98,20 @@ bool SPRSearch::applySPRRound(AbstractJointTree &jointTree, int radius, double &
 
   #pragma omp parallel for num_threads(jointTree.getThreadsNumber())
   for (int i = 0; i < movesToExplore.size(); ++i) {
-    if (!foundBetterMove) {
+    if (true) {
         double newLoglk;
         shared_ptr<Move> newMove;
         int pruneIndex = movesToExplore[i].first;
         int regraftIndex = movesToExplore[i].second;
         if (testSPRMove(jointTree.getThreadInstance(), pruneIndex, regraftIndex, bestLoglk, newLoglk, newMove, false)) {
-        #pragma omp critical
-        if (!foundBetterMove) {
-          foundBetterMove = true;
-          bestMove = newMove;
-          bestLoglk = newLoglk;
-          cout << "found a better move with loglk " << newLoglk << endl;
+          #pragma omp critical
+          if (bestLoglk < newLoglk) {
+            foundBetterMove = true;
+            bestMove = newMove;
+            bestLoglk = newLoglk;
+            cout << "found a better move with loglk " << newLoglk << endl;
+          }
         }
-      }
     }
   }
   if (foundBetterMove) {
