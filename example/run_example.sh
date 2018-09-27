@@ -4,7 +4,7 @@ alignment=${dataset}/alignment.msa
 species_tree=${dataset}/speciesTree.newick
 strategy=NNI
 threads=4
-output=output
+prefix=output
 
 
-../build/bin/JointTreeSearch ${gene_tree} ${alignment} ${species_tree} ${strategy} ${threads} ${output}
+../build/bin/JointTreeSearch -g ${gene_tree} -a ${alignment} -s ${species_tree} --strategy ${strategy} -t ${threads} -p ${prefix}

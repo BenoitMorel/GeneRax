@@ -111,12 +111,12 @@ public:
     }
 
     void printLoglk(bool libpll = true, bool ale = true, bool joint = true, ostream &os = cout) {
-        if (libpll)
-            os << "libpll:\t" << computeLibpllLoglk() << " ";
-        if (ale)
-            os << "ale:\t\t" << computeALELoglk() << " ";
         if (joint)
-            os << "joint:\t" << computeJointLoglk();
+            os << "joint: " << computeJointLoglk() << "  ";
+        if (libpll)
+            os << "libpll: " << computeLibpllLoglk() << "  ";
+        if (ale)
+            os << "ale: " << computeALELoglk() << "  ";
         os << endl;
     }
 

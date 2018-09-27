@@ -1,4 +1,5 @@
 #include "SPRSearch.h"
+#include "Arguments.hpp"
 
 void queryPruneIndicesRec(pll_unode_t * node,
                                vector<int> &buffer)
@@ -33,16 +34,14 @@ bool testSPRMove(JointTree &jointTree,
     int regraftIndex,
     double bestLoglk,
     double &newLoglk,
-    shared_ptr<Move> &newMove,
-    bool check
-    )
+    shared_ptr<Move> &newMove)
 {
   if (!isValidSPRMove(jointTree.getTreeInfo(), jointTree.getNode(pruneIndex), jointTree.getNode(regraftIndex))) {
     return false;
   }
   bool res = false;
   double initialLoglk = 0.0;
-  if (check) {
+  if (Arguments::check) {
     initialLoglk = jointTree.computeJointLoglk();
   }
   newMove = Move::createSPRMove(pruneIndex, regraftIndex);
@@ -53,7 +52,7 @@ bool testSPRMove(JointTree &jointTree,
   }
   jointTree.rollbackLastMove();
   
-  if(check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
+  if(Arguments::check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
     cerr.precision(17);
     cerr << "rollback lead to different likelihoods: " << initialLoglk
       << " " << jointTree.computeJointLoglk() << endl;
@@ -64,8 +63,10 @@ bool testSPRMove(JointTree &jointTree,
 
 
 bool SPRSearch::applySPRRound(AbstractJointTree &jointTree, int radius, double &bestLoglk) {
-  cout << "SPR ROUND WITH RADIUS " << radius << endl;
-  shared_ptr<Move> bestMove(0);
+  if (Arguments::verbose) {
+    cout << "SPR ROUND WITH RADIUS " << radius << endl;
+  }
+    shared_ptr<Move> bestMove(0);
   vector<int> allNodes;
   getAllPruneIndices(jointTree.getThreadInstance(), allNodes);
   const size_t edgesNumber = jointTree.getThreadInstance().getTreeInfo()->tree->edge_count;
@@ -103,13 +104,15 @@ bool SPRSearch::applySPRRound(AbstractJointTree &jointTree, int radius, double &
         shared_ptr<Move> newMove;
         int pruneIndex = movesToExplore[i].first;
         int regraftIndex = movesToExplore[i].second;
-        if (testSPRMove(jointTree.getThreadInstance(), pruneIndex, regraftIndex, bestLoglk, newLoglk, newMove, false)) {
+        if (testSPRMove(jointTree.getThreadInstance(), pruneIndex, regraftIndex, bestLoglk, newLoglk, newMove)) {
           #pragma omp critical
           if (bestLoglk < newLoglk) {
             foundBetterMove = true;
             bestMove = newMove;
             bestLoglk = newLoglk;
-            cout << "found a better move with loglk " << newLoglk << endl;
+            if (Arguments::verbose) {
+              cout << "found a better move with loglk " << newLoglk << endl;
+            }
           }
         }
     }

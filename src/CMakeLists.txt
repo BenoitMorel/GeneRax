@@ -1,6 +1,6 @@
 # Add executable JointSearch
 add_executable(${PROJECT_NAME} JointSearch.cpp
-  # Tree search
+  Arguments.cpp
   likelihoods/LibpllEvaluation.cpp
   treeSearch/JointTree.cpp
   treeSearch/Moves.cpp

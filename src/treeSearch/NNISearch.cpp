@@ -1,6 +1,7 @@
 #include "NNISearch.h"
 #include <algorithm>
 #include <omp.h>
+#include "Arguments.hpp"
 
 void queryNNIIndicesRec(pll_unode_t * node,
                                vector<int> &buffer,
@@ -31,7 +32,10 @@ bool testNNIMove(JointTree &jointTree,
     shared_ptr<Move> &newMove
     )
 {
-  //double initialLoglk = jointTree.computeJointLoglk();
+  double initialLoglk = 0.9;
+  if (Arguments::check) {
+    jointTree.computeJointLoglk();
+  }
   newMove = Move::createNNIMove(nodeIndex, nniType, true);
   jointTree.applyMove(newMove);
   newLoglk = jointTree.computeLibpllLoglk();
@@ -39,12 +43,19 @@ bool testNNIMove(JointTree &jointTree,
     newLoglk += jointTree.computeALELoglk();
   }
   jointTree.rollbackLastMove();
-  //assert(initialLoglk == jointTree.computeJointLoglk());
+  if(Arguments::check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
+    cerr.precision(17);
+    cerr << "rollback lead to different likelihoods: " << initialLoglk
+      << " " << jointTree.computeJointLoglk() << endl;
+    exit(1);
+  }
   return newLoglk > bestLoglk;
 }
 
 bool NNISearch::applyNNIRound(AbstractJointTree &jointTree, double &bestLoglk) {
-  cout << "Start NNI Round" << endl;
+  if (Arguments::verbose) {
+    cout << "Start NNI Round" << endl;
+  }
   shared_ptr<Move> bestMove(0);
   vector<int> allNodes;
   getAllNNIIndices(jointTree.getThreadInstance(), allNodes);
@@ -61,7 +72,9 @@ bool NNISearch::applyNNIRound(AbstractJointTree &jointTree, double &bestLoglk) {
             foundBetterMove = true;
             bestMove = newMove;
             bestLoglk = loglk;
-            cout << "found a better move with loglk " << loglk << endl;
+            if (Arguments::verbose) {
+              cout << "found a better move with loglk " << loglk << endl;
+            }
           }
         }
       }
