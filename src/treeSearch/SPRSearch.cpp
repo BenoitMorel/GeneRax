@@ -7,7 +7,7 @@ bool sprYeldsSameTree(pll_unode_t *n1, pll_unode_t *n2)
 }
 
 bool isValidSPRMove(shared_ptr<pllmod_treeinfo_t> treeinfo, pll_unode_s *prune, pll_unode_s *regraft) {
-  bool res = !pllmod_utree_is_tip(regraft) && !sprYeldsSameTree(prune, regraft);
+  bool res = !pllmod_utree_is_tip(prune) && !sprYeldsSameTree(prune, regraft);
   return res;
 }
 
@@ -16,15 +16,18 @@ bool testSPRMove(JointTree &jointTree,
     int regraftIndex,
     double bestLoglk,
     double &newLoglk,
-    shared_ptr<Move> &newMove
+    shared_ptr<Move> &newMove,
+    bool check
     )
 {
   if (!isValidSPRMove(jointTree.getTreeInfo(), jointTree.getNode(pruneIndex), jointTree.getNode(regraftIndex))) {
     return false;
   }
   bool res = false;
-  double initialLoglk = jointTree.computeJointLoglk();
-
+  double initialLoglk = 0.0;
+  if (check) {
+    initialLoglk = jointTree.computeJointLoglk();
+  }
   newMove = Move::createSPRMove(pruneIndex, regraftIndex);
   jointTree.applyMove(newMove);
   newLoglk = jointTree.computeLibpllLoglk();
@@ -32,7 +35,13 @@ bool testSPRMove(JointTree &jointTree,
      newLoglk += jointTree.computeALELoglk();
   }
   jointTree.rollbackLastMove();
-  assert(initialLoglk == jointTree.computeJointLoglk());
+  
+  if(check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
+    cerr.precision(17);
+    cerr << "rollback lead to different likelihoods: " << initialLoglk
+      << " " << jointTree.computeJointLoglk() << endl;
+    exit(1);
+  }
   return newLoglk > bestLoglk;
 }
 
@@ -77,7 +86,7 @@ bool SPRSearch::applySPRRound(AbstractJointTree &jointTree, int radius, double &
         shared_ptr<Move> newMove;
         int pruneIndex = movesToExplore[i].first;
         int regraftIndex = movesToExplore[i].second;
-        if (testSPRMove(jointTree.getThreadInstance(), pruneIndex, regraftIndex, bestLoglk, newLoglk, newMove)) {
+        if (testSPRMove(jointTree.getThreadInstance(), pruneIndex, regraftIndex, bestLoglk, newLoglk, newMove, false)) {
         #pragma omp critical
         if (!foundBetterMove) {
           foundBetterMove = true;

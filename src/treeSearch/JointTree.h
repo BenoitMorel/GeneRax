@@ -127,10 +127,6 @@ public:
       return getTreeInfo()->subnodes[index];
     }
 
-    void getAllNodes(vector<pll_unode_t *> &allNodes) {
-        auto treeinfo = evaluation_->getTreeInfo();
-        assert(query_nni_nodes(treeinfo->root, allNodes) == allNodes.size());
-    }
 
     void getAllNodeIndices(vector<int> &allNodeIndices) {
         auto treeinfo = evaluation_->getTreeInfo();

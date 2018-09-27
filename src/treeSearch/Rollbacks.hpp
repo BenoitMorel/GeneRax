@@ -3,6 +3,7 @@
 
 #include <likelihoods/LibpllEvaluation.h>
 #include <memory>
+#include <vector>
 
 class JointTree;
 
@@ -32,7 +33,7 @@ public:
     tree_(tree),
     rollback_(rollback) 
   {}
-
+  
   virtual void applyRollback();
 
 private:

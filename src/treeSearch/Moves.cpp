@@ -109,16 +109,24 @@ void printNode(pll_unode_s *node)
 
 std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
 {
+  bool blo = true;
   auto prune = tree.getNode(pruneIndex_);
   auto regraft = tree.getNode(regraftIndex_);
-  pll_tree_rollback_t rollback;
-  
-  bool blo = true;
+  pll_tree_rollback_t pll_rollback;
+    
+  vector<pll_unode_t *> branchesToOptimize;
   if (blo) {
-    applyBLO(tree, prune, regraft);
-  }
+    branchesToOptimize.push_back(prune);
+    branchesToOptimize.push_back(prune->next->back);
+    branchesToOptimize.push_back(regraft->back);
+    branchesToOptimize.push_back(regraft);
+  } 
+  
+  assert(PLL_SUCCESS == pllmod_utree_spr(prune, regraft, &pll_rollback));
+  auto rollback = std::make_shared<SPRRollback>(tree, pll_rollback);
+  optimizeBranches(tree, branchesToOptimize);
   tree.updateBPPTree();
-  return std::make_shared<SPRRollback>(tree, rollback);
+  return rollback;
 }
 
 ostream& SPRMove::print(ostream & os) const {
@@ -154,6 +162,5 @@ void SPRMove::applyBLO(JointTree &tree,
         nodesToOptimize.push_back(regraft->back->next);
         nodesToOptimize.push_back(regraft->back->next->next);
     }*/
-    optimizeBranches(tree, nodesToOptimize);
 }
 
