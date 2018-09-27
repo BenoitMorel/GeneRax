@@ -3,26 +3,6 @@
 #include <chrono>
 
 
-void query_nni_nodes_recursive(pll_unode_t * node,
-                                          vector<pll_unode_t *> &buffer,
-                               bool include_Node = true)
-{
-  if (node->next) {
-    query_nni_nodes_recursive(node->next->back, buffer);
-    query_nni_nodes_recursive(node->next->next->back, buffer);
-    if (include_Node && node->back->next) {
-        buffer.push_back(node);
-    }
-  }
-}
-
-int query_nni_nodes(pll_unode_t * root, vector<pll_unode_t *> &buffer)
-{
-  query_nni_nodes_recursive(root->back, buffer, false);
-  query_nni_nodes_recursive(root, buffer);
-  return buffer.size();
-}
-
 void printLibpllNode(pll_unode_s *node, ostream &os, bool isRoot)
 {
     if (node->next) {

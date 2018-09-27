@@ -22,7 +22,6 @@ using BPPTree = std::shared_ptr<bpp::PhyloTree>;
 using BPPNode = std::shared_ptr<bpp::PhyloNode>;
 using BPPBranch = std::shared_ptr<bpp::PhyloBranch>;
 
-int query_nni_nodes(pll_unode_t * root, vector<pll_unode_t *> &buffer);
 void printLibpllNode(pll_unode_s *node, ostream &os, bool isRoot);
 void printLibpllTreeRooted(pll_unode_t *root, ostream &os);
 void addFromLibpll(BPPTree tree, BPPNode bppFather, pll_unode_s *libpllNode);
@@ -127,14 +126,6 @@ public:
       return getTreeInfo()->subnodes[index];
     }
 
-
-    void getAllNodeIndices(vector<int> &allNodeIndices) {
-        auto treeinfo = evaluation_->getTreeInfo();
-        vector<pll_unode_t*> allNodes;
-        assert(query_nni_nodes(treeinfo->root, allNodes) == allNodes.size());
-        for (auto node: allNodes) 
-          allNodeIndices.push_back(node->node_index);
-    }
 
     void applyMove(shared_ptr<Move> move) {
         
@@ -243,21 +234,14 @@ public:
   virtual bool checkConsistency() {
     cerr << "check consistency" << endl;
     vector<double> ll(getThreadsNumber());
-    vector<vector< int>> nodesIndices(getThreadsNumber());
     #pragma omp parallel for num_threads(getThreadsNumber())
     for (int i = 0; i < trees_.size(); ++i) {
       ll[i] = trees_[i]->computeJointLoglk();
-      getThreadInstance().getAllNodeIndices(nodesIndices[i]);
     }
     auto refll = ll[0];
-    auto refNodesIndices = nodesIndices[0];
     for (int i = 0; i < trees_.size(); ++i) {
       if (ll[i] != refll) {
         cerr << "Error, one tree at least has a different ll" << endl;
-        exit(1);
-      }
-      if (nodesIndices[i] != refNodesIndices) {
-        cerr << "Error, one tree at least has a node indices" << endl;
         exit(1);
       }
     }

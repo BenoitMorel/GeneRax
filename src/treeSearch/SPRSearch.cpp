@@ -1,5 +1,23 @@
 #include "SPRSearch.h"
 
+void queryPruneIndicesRec(pll_unode_t * node,
+                               vector<int> &buffer)
+{
+  if (node->next) {
+    queryPruneIndicesRec(node->next->back, buffer);
+    queryPruneIndicesRec(node->next->next->back, buffer);
+    buffer.push_back(node->node_index);
+  }
+}
+
+void getAllPruneIndices(JointTree &tree, vector<int> &allNodeIndices) {
+  auto treeinfo = tree.getTreeInfo();
+  vector<int> allNodes;
+  queryPruneIndicesRec(treeinfo->root->back, allNodeIndices);
+  queryPruneIndicesRec(treeinfo->root, allNodeIndices);
+}
+
+
 bool sprYeldsSameTree(pll_unode_t *n1, pll_unode_t *n2)
 {
   return (n2 == n1) || (n2 == n1->next) || (n2 == n1->next->next)
@@ -7,8 +25,7 @@ bool sprYeldsSameTree(pll_unode_t *n1, pll_unode_t *n2)
 }
 
 bool isValidSPRMove(shared_ptr<pllmod_treeinfo_t> treeinfo, pll_unode_s *prune, pll_unode_s *regraft) {
-  bool res = !pllmod_utree_is_tip(prune) && !sprYeldsSameTree(prune, regraft);
-  return res;
+  return !sprYeldsSameTree(prune, regraft);
 }
 
 bool testSPRMove(JointTree &jointTree,
@@ -50,7 +67,7 @@ bool SPRSearch::applySPRRound(AbstractJointTree &jointTree, int radius, double &
   cout << "SPR ROUND WITH RADIUS " << radius << endl;
   shared_ptr<Move> bestMove(0);
   vector<int> allNodes;
-  jointTree.getThreadInstance().getAllNodeIndices(allNodes);
+  getAllPruneIndices(jointTree.getThreadInstance(), allNodes);
   const size_t edgesNumber = jointTree.getThreadInstance().getTreeInfo()->tree->edge_count;
   bool foundBetterMove = false;
   
