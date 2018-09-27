@@ -17,7 +17,7 @@ struct Arguments {
       cerr << endl;
       cerr << "Syntax error. Usage:" << endl;
       cerr << "./jointTreeSearch gene_tree alignment_file species_tree strategy threads output_file" << endl;
-      cerr << "Strategy is either NNI or SPR" << endl;
+      cerr << "Strategy can be NNI, SPR or HYBRID" << endl;
       exit(1);
     }
     int i = 1;
@@ -58,10 +58,14 @@ int main(int argc, char * argv[]) {
   } else if (arg.strategy == "NNI") {
     cout << "Starting NNI search" << endl;
     NNISearch::applyNNISearch(*jointTree);
+  } else if (arg.strategy == "HYBRID") {
+    cout << "Starting NNI search" << endl;
+    NNISearch::applyNNISearch(*jointTree);
+    cout << "Starting SPR search" << endl;
+    SPRSearch::applySPRSearch(*jointTree);
+    cout << "Starting NNI search" << endl;
+    NNISearch::applyNNISearch(*jointTree);
   }
-  //jointTree.printBPPTree();
-  //jointTree.printLibpllTree();
-  
   cout << "END OF THE SEARCH" << endl;
 
   jointTree->getThreadInstance().printLoglk();

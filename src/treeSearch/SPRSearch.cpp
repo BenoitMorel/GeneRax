@@ -127,7 +127,6 @@ void SPRSearch::applySPRSearch(AbstractJointTree &jointTree)
   double startingLoglk = jointTree.getThreadInstance().computeJointLoglk();
   double bestLoglk = startingLoglk;
   while (applySPRRound(jointTree, 2, bestLoglk)) {}
-  while (applySPRRound(jointTree, 5, bestLoglk)) {}
   while (applySPRRound(jointTree, 10, bestLoglk)) {}
 }
 
