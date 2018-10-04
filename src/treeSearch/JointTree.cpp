@@ -1,7 +1,7 @@
 #include <treeSearch/JointTree.h>
 #include <treeSearch/Moves.h>
 #include <chrono>
-
+#include "Arguments.hpp"
 
 void printLibpllNode(pll_unode_s *node, ostream &os, bool isRoot)
 {
@@ -69,7 +69,8 @@ JointTree::JointTree(const string &newick_file,
     double lossCost):
   dupCost_(dupCost),
   lossCost_(lossCost),
-  transferCost_(0.01)
+  transferCost_(0.01),
+  aleWeight_(Arguments::aleWeight)
 {
 
   info_.alignmentFilename = alignment_file;
@@ -94,7 +95,8 @@ JointTree::JointTree(BPPTree geneTree,
   info_(*alignment),
   dupCost_(dupCost),
   lossCost_(lossCost),
-  transferCost_(0.0)
+  transferCost_(0.0),
+  aleWeight_(Arguments::aleWeight)
 {
   updateBPPTree();
 }
@@ -124,7 +126,7 @@ double JointTree::computeALELoglk () {
   auto genetree_copy = PhyloTreeToolBox::cloneTree(*geneTree_);
   PhyloTreeToolBox::removeArtificialGenes(*genetree_copy);
   double ale_loglk = ALEevaluation::evaluate(*genetree_copy, *speciesTree_, map_, 1, 1, dupCost_, transferCost_, lossCost_);
-  return ale_loglk;
+  return aleWeight_ * ale_loglk;
 }
 
 double JointTree::computeJointLoglk() {

@@ -23,6 +23,7 @@ public:
   static string output;
   static bool check;
   static bool verbose;
+  static double aleWeight;
 };
 
 #endif

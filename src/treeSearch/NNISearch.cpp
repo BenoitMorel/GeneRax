@@ -37,7 +37,7 @@ bool testNNIMove(JointTree &jointTree,
     shared_ptr<Move> &newMove
     )
 {
-  double initialLoglk = 0.9;
+  double initialLoglk = 0.0;
   if (Arguments::check) {
     jointTree.computeJointLoglk();
   }

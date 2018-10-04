@@ -11,7 +11,7 @@ int Arguments::threads = 1;
 string Arguments::output("jointSearch");
 bool Arguments::check = false;
 bool Arguments::verbose = false;
-
+double Arguments::aleWeight = 1.0;
 
 void Arguments::init(int argc, char * argv[])
 {
@@ -42,6 +42,8 @@ void Arguments::init(int argc, char * argv[])
       check = true;
     } else if (arg == "--verbose") {
       verbose = true;
+    } else if (arg == "--ale-weight") {
+      aleWeight = atof(argv[++i]);
     } else {
       cerr << "Unrecognized argument " << arg << endl;
       cerr << "Aborting" << endl;

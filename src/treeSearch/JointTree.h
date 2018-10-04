@@ -82,6 +82,7 @@ private:
     double lossCost_;
     double transferCost_;
     stack<shared_ptr<Rollback> > rollbacks_;
+    double aleWeight_;
 };
 
 class ParallelJointTree {
