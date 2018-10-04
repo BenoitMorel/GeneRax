@@ -52,19 +52,9 @@ public:
   std::shared_ptr<tree_type> S;                                             //Species tree
   std::map<std::shared_ptr<bpp::PhyloNode>, int> node_ids;                         //Map between node and its id.
 
-  std::map<int, scalar_type> t_begin;                        //del-loc. Map between the id of a node, and the beginning of the branch that leads to it.
-  std::map<int, scalar_type> t_end;                          //del-loc. Map between the id of a node, and the end of the time slice it defines, corresponding to the age of this node.
 
-  std::map<int, std::vector<int> > time_slices;              //del-loc. Map between rank of time slice and indices of branches going through it. Terminating branch is last in the vector.
-  std::map<int, std::vector<int> > branch_slices;            //del-loc. Map between a branch and all the time slices it traverses.
-  std::map<int, std::vector<scalar_type> > time_slice_times; //del-loc. Map between rank of time slice and all the end times of the sub-slices inside this time slice.
-  std::map<int, scalar_type> time_slice_begins;            //del-loc. Map between rank of time slice and begin time of this time slice.
-
-  //Variables used for computing.
-  std::map<int, std::map<scalar_type, scalar_type> > Ee;                       //del-loc. Probability (scalar value) that a gene present at a given time slice (whose rank is the int key) at time the first scalar key is getting extinct before reaching extant species.
   std::map<std::string, std::shared_ptr<bpp::PhyloNode>> name_node;
   std::map<std::shared_ptr<bpp::PhyloNode>, std::string> node_name;
-  std::map<std::string, std::map<std::string, int> > ancestral_names;
   std::vector<std::vector<int> > ancestral;
   std::vector<std::vector<int> > ancestors; // contains the ancestors of a given branch; useful to forbid transfers to them.
 
@@ -82,24 +72,10 @@ public:
   std::vector<scalar_type> PL; // Loss probability, per branch
   std::vector<scalar_type> PS; // Speciation probability, per branch
   int last_leaf;
-  std::map<int, std::map<scalar_type, scalar_type> > Ge;                       //del-loc. Probability (scalar value) that a gene present at a given time slice (whose rank is the int key) actually reaches extant species.
-  std::map<long int, std::map<scalar_type, std::map<int, scalar_type> > > q; //del-loc. Map between clade id (from the approx_posterior object) and a map between the time of a subslice and a map between branch id and probability of the clade given the ODTL model.
 
-  std::vector<std::vector<std::vector<std::map<int, scalar_type> > > > qvec;// NO del-loc !!
-
-  std::map<long int, std::map<scalar_type, std::map<int, step> > > q_step;   //del-loc
   std::map<long int, std::string> gid_sps;                                     //del-loc. Map between clade id (from the approx_posterior object) and species included in that clade.
   GeneMap<std::string, std::string> speciesGeneMap;                                     // Map between gene and species names.
 
-  std::map<std::string, scalar_type> MLRec_events;                            //del-loc
-  std::map<std::string, std::vector<scalar_type> > branch_counts;             //del-loc
-  std::vector<std::string> Ttokens;                                           //del-loc
-
-  std::map<long int, std::vector<std::string> > gid_events;             //del-loc
-  std::map<long int, std::vector<scalar_type> > gid_times;             //del-loc
-  std::map<long int, std::vector<int> > gid_branches;             //del-loc
-  std::map<long int, std::vector<long int> > gid_gidp;             //del-loc
-  std::map<long int, std::vector<long int> > gid_gidpp;             //del-loc
   std::map<std::string, scalar_type> fraction_missing;
 
   void construct_undated(const std::string &Sstring,

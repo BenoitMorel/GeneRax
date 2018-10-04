@@ -189,8 +189,8 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
     std::stringstream out;
     std::stringstream out1;
     std::stringstream out2;
-    out1 << t_begin[branch];
-    out2 << t_end[branch];
+    out1 << 0.0;
+    out2 << 0.0;
     int rank = branch;
     out << rank;
     if (S->hasFather(node) and S->getEdgeToFather(node))
@@ -222,7 +222,6 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
       name_from << edge;
 
     std::map<std::string, int> tmp;
-    ancestral_names[name_from.str()] = tmp;
     while (S->hasFather(node)) { //While we are not at the root.
       std::stringstream name_to;
       int f = node_ids[node];
@@ -232,7 +231,6 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
         name_to << f;
 
       node = S->getFather(node);
-      ancestral_names[name_from.str()][name_to.str()] = 1;
       if (not ancestral[edge][f])
         ancestors[edge].push_back(f);
 
@@ -241,7 +239,6 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
     std::stringstream name_to;
     int f = node_ids[node];
     name_to << f;
-    ancestral_names[name_from.str()][name_to.str()] = 1;
     if (not ancestral[edge][f])
       ancestors[edge].push_back(f);
     ancestral[edge][f] = 1;
@@ -261,27 +258,6 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
     }
   }
 
-  //Init branch_counts
-  branch_counts["Os"].clear();
-  branch_counts["Ds"].clear();
-  branch_counts["Ts"].clear();
-  branch_counts["Tfroms"].clear();
-  branch_counts["Ls"].clear();
-  branch_counts["count"].clear();
-  branch_counts["copies"].clear();
-  branch_counts["singleton"].clear();
-
-  for (int e = 0; e < last_branch; e++) {
-    branch_counts["Os"].push_back(0);
-    branch_counts["Ds"].push_back(0);
-    branch_counts["Ts"].push_back(0);
-    branch_counts["Tfroms"].push_back(0);
-    branch_counts["Ls"].push_back(0);
-    branch_counts["count"].push_back(0);
-    branch_counts["copies"].push_back(0);
-    branch_counts["singleton"].push_back(0);
-
-  }
 
   last_rank = last_branch;
   set_model_parameter("N", 1);
@@ -347,16 +323,12 @@ void exODT_model::calculate_undatedEs() {
   mPTE = 0;
   for (int i = 0; i < 4; i++) {
     scalar_type newmPTE = 0;
-    //vector<scalar_type> ancestral_correction;
     if (i > 0) // There should be no need for this loop at the first iteration, because then it leaves mPTE_ancestral_correction at 0.
     {
       for (int edge = 0; edge < last_branch; edge++) {
         mPTE_ancestral_correction[edge] = 0;
-        //for (map<int,int>::iterator it=ancestral[edge].begin();( it!=ancestral[edge].end() and i>0);it++)
         for (auto it = ancestors[edge].begin(); it != ancestors[edge].end(); it++) {
-          //int f=(*it).first;
           int f = (*it);
-          //if (ancestral[edge][f]==1)
           mPTE_ancestral_correction[edge] +=
               (PT[f] / (scalar_type) last_branch) * uE[f]; //That's how we forbid transfers to ancestors of a branch
         }
@@ -401,16 +373,8 @@ void  exODT_model::clear_all()
   mPTuq_ancestral_correction.clear();
   uq.clear();
   mPTuq.clear();//XX
-  for (auto it = q.begin(); it != q.end(); it++) {
-    for (auto jt = (*it).second.begin(); jt != (*it).second.end(); jt++)
-      (*jt).second.clear();
-    (*it).second.clear();
-  }
-  q.clear();
 
   //directed partitions and their sizes
-  //vector <long int>  g_ids;
-  //vector <long int>  g_id_sizes;
   g_ids.clear();
   g_id_sizes.clear();
 }
@@ -675,18 +639,6 @@ scalar_type exODT_model::pun(std::shared_ptr<approx_posterior> ale, bool verbose
   
 exODT_model::~exODT_model() {
     extant_species.clear();
-    t_begin.clear();
-    t_end.clear();
-    for (std::map<int, std::vector<int> >::iterator it = time_slices.begin(); it != time_slices.end(); it++)
-      (*it).second.clear();
-    time_slices.clear();
-    for (std::map<int, std::vector<int> >::iterator it = branch_slices.begin(); it != branch_slices.end(); it++)
-      (*it).second.clear();
-    for (std::map<int, std::vector<scalar_type> >::iterator it = time_slice_times.begin();
-         it != time_slice_times.end(); it++)
-      (*it).second.clear();
-    time_slice_times.clear();
-    time_slice_begins.clear();
     scalar_parameter.clear();
     for (std::map<std::string, std::vector<scalar_type> >::iterator it = vector_parameter.begin();
          it != vector_parameter.end(); it++)//del_loc
@@ -695,52 +647,7 @@ exODT_model::~exODT_model() {
     string_parameter.clear();
     node_ids.clear();
 //      delete S;
-    for (std::map<int, std::map<scalar_type, scalar_type> >::iterator it = Ee.begin(); it != Ee.end(); it++)//del_loc
-      (*it).second.clear();
-    Ee.clear();
-    for (std::map<int, std::map<scalar_type, scalar_type> >::iterator it = Ge.begin(); it != Ge.end(); it++)//del_loc
-      (*it).second.clear();
-    Ge.clear();
-    Ee.clear();
-    for (std::map<long int, std::map<scalar_type, std::map<int, scalar_type> > >::iterator it = q.begin();
-         it != q.end(); it++) {
-      for (std::map<scalar_type, std::map<int, scalar_type> >::iterator jt = (*it).second.begin();
-           jt != (*it).second.end(); jt++)
-        (*jt).second.clear();
-      (*it).second.clear();
-    }
-    q.clear();
-    for (std::map<long int, std::map<scalar_type, std::map<int, step> > >::iterator it = q_step.begin();
-         it != q_step.end(); it++) {
-      for (std::map<scalar_type, std::map<int, step> >::iterator jt = (*it).second.begin();
-           jt != (*it).second.end(); jt++)
-        (*jt).second.clear();
-      (*it).second.clear();
-    }
-    q_step.clear();
     gid_sps.clear();
-    MLRec_events.clear();
-    for (std::map<std::string, std::vector<scalar_type> >::iterator it = branch_counts.begin();
-         it != branch_counts.end(); it++)//del_loc
-      (*it).second.clear();
-    branch_counts.clear();
 
-    for (std::map<long int, std::vector<std::string> >::iterator it = gid_events.begin();
-         it != gid_events.end(); it++)//del_loc
-      (*it).second.clear();
-    gid_events.clear();
-
-    for (std::map<long int, std::vector<scalar_type> >::iterator it = gid_times.begin();
-         it != gid_times.end(); it++)//del_loc
-      (*it).second.clear();
-    gid_times.clear();
-
-    for (std::map<long int, std::vector<int> >::iterator it = gid_branches.begin();
-         it != gid_branches.end(); it++)//del_loc
-      (*it).second.clear();
-    gid_branches.clear();
-
-
-    Ttokens.clear();
   }
 
