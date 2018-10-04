@@ -73,27 +73,15 @@ public:
     Bip_bls.clear();
   }
 
-  //// Does nothing. Formal constructor must be followed by load_state.
-  approx_posterior();                                                               //Does nothing. Formal constructor must be followed by load_state.
   /// Constructs a basic instance by calling construct.
   approx_posterior(std::string tree);                                               //Constructs a basic instance by calling construct.
   /// Constructs a basic instance.
   void construct(std::string tree_string);                                          //Constructs a basic instance.
-  /// Writes the object to a file.
-  //void save_state(std::string fname) ;                                              //Writes the object to a file.
-  //void load_state(std::string fname);
 
   /// Given a vector of trees, fills an approx_posterior object by recursively calling decompose, and then doing some more counts.
-  void observation(std::vector<std::string> trees,bool count_topologies=false, scalar_type weight=1.0);     //Given a vector of trees, fills an approx_posterior object by recursively calling decompose, and then doing some more counts.
+  void observation(std::vector<std::string> trees);     //Given a vector of trees, fills an approx_posterior object by recursively calling decompose, and then doing some more counts.
   /// Computes the probability of a string tree. Calls recompose on the tree, and then uses the map returned by recompose to compute the probability of the whole tree.
-  scalar_type p(std::string tree) const;                                                  //Computes the probability of a string tree. Calls recompose on the tree, and then uses the map returned by recompose to compute the probability of the whole tree.
-  /// Computes the proportion of bipartitions already in the approx_posterior object that are present in the tree.
-  //scalar_type nbipp(std::string tree) const;                                              //Computes the proportion of bipartitions already in the approx_posterior object that are present in the tree
-  //scalar_type binomial(int n,int m) const;                                              //Computes the binomial coefficient.
-  //scalar_type trinomial(int n1,int n2,int n3) const;                                    //Computes the multinomial coefficient for 3 elements.
-
-  /// Returns the maximum a posteriori tree that can be amalgamated from the approx_prior object. Uses a double-recursive traversal of all bipartitions.
-  //std::pair<std::string,scalar_type> mpp_tree() const;                                    //Returns the maximum a posteriori tree that can be amalgamated from the approx_prior object. Uses a double-recursive traversal of all bipartitions.
+  
   /// Recursive function that, given a bipartition id and a map associating bipartition ids to their maximum a posteriori value, builds the maximum a posteriori tree, complete with (average) branch lengths.
   std::string mpp_backtrack(long int g_id, std::map<long int, scalar_type > * qmpp) const;//Recursive function that, given a bipartition id and a map associating bipartition ids to their maximum a posteriori value, builds the maximum a posteriori tree, complete with (average) branch lengths.
   //std::string random_tree() const;                                                      //Function that returns a random tree with unit branch lengths. Calls random_split.

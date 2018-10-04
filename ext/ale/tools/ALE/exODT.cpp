@@ -73,7 +73,6 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
   name_node.clear();
   node_name.clear();
   node_ids.clear();
-  id_nodes.clear();
 
   string_parameter["S_un"] = Sstring;
   S = std::shared_ptr<tree_type>(IO::newickToPhyloTree(string_parameter["S_un"], true));
@@ -128,7 +127,6 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
       auto node = (*it).second;
       extant_species[last_branch] = node->getName();
       node_ids[node] = last_branch;
-      id_nodes[last_branch] = node;
       last_branch++;
       last_leaf++;
       saw.insert(node);
@@ -162,7 +160,6 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
 
         if (not node_ids.count(father) and saw.count(sister)) {
           node_ids[father] = last_branch;
-          id_nodes[last_branch] = father;
           std::stringstream name;
           name << last_branch;
           if (S->hasFather(father) and S->getEdgeToFather(father))
@@ -184,10 +181,8 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
 
   // Collect each bootstrap value (from upper branch of a given node).
   // If the edge has no bootstrap, set default value as -1.
-  // This, fills rank2label where rank is the branch and label the bootstrap.
+  // This, labels the bootstrap.
   // Each branch is edited with a property "ID".
-  // \todo Each label of rank2label, a bootstrap is an integer. Sometimes we can find bootstrap as floating values.
-  rank2label.resize(node_ids.size());
   for (auto it = node_ids.begin(); it != node_ids.end(); it++) {
     auto node = (*it).first;
     int branch = (*it).second;
@@ -198,11 +193,6 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
     out2 << t_end[branch];
     int rank = branch;
     out << rank;
-    if (S->hasFather(node) and S->getEdgeToFather(node) and (S->getEdgeToFather(node)->hasBootstrapValue())) {
-      rank2label[rank] = S->getEdgeToFather(node)->getBootstrapValue();
-    } else {
-      rank2label[rank] = -1;
-    }
     if (S->hasFather(node) and S->getEdgeToFather(node))
       S->getEdgeToFather(node)->setProperty("ID", BppString(out.str()));
   }
@@ -210,17 +200,13 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
   // Save the resulting speciestree with the "ID" label at each branch.
   string_parameter["S_with_ranks"] = IO::PhyloTreeToNewick(*S, false, "ID");
 
-  //map <string,map<string,int> > ancestral_names;
-  //map <int,map<int,int> > ancestral;
-
   // Initialize the ancestor matrix (nb_branches x bn_branches) with zeros.
   // Value take one if node has parent's relationship with an other.
   ancestral.clear();
   ancestral.resize(last_branch);
   for (int e = 0; e < last_branch; e++) {
-    std::vector<int> tmp;
     ancestral[e].resize(last_branch);
-    ancestors.push_back(tmp);
+    ancestors.push_back(std::vector<int>());
     for (int f = 0; f < last_branch; f++)
       ancestral[e][f] = 0;
   }
@@ -336,7 +322,6 @@ void exODT_model::calculate_undatedEs() {
     P_T += vector_parameter["tau"][f] / (scalar_type) last_branch;
 
   for (int e = 0; e < last_branch; e++) {
-    //cout << e << " is " << node_name[id_nodes[e]] << endl;
     scalar_type P_D = vector_parameter["delta"][e];
     scalar_type P_L = vector_parameter["lambda"][e];
     scalar_type P_S = 1;
@@ -687,4 +672,75 @@ scalar_type exODT_model::pun(std::shared_ptr<approx_posterior> ale, bool verbose
   return root_sum / survive / O_norm * (last_branch);
 
 }
+  
+exODT_model::~exODT_model() {
+    extant_species.clear();
+    t_begin.clear();
+    t_end.clear();
+    for (std::map<int, std::vector<int> >::iterator it = time_slices.begin(); it != time_slices.end(); it++)
+      (*it).second.clear();
+    time_slices.clear();
+    for (std::map<int, std::vector<int> >::iterator it = branch_slices.begin(); it != branch_slices.end(); it++)
+      (*it).second.clear();
+    for (std::map<int, std::vector<scalar_type> >::iterator it = time_slice_times.begin();
+         it != time_slice_times.end(); it++)
+      (*it).second.clear();
+    time_slice_times.clear();
+    time_slice_begins.clear();
+    scalar_parameter.clear();
+    for (std::map<std::string, std::vector<scalar_type> >::iterator it = vector_parameter.begin();
+         it != vector_parameter.end(); it++)//del_loc
+      (*it).second.clear();
+    vector_parameter.clear();
+    string_parameter.clear();
+    node_ids.clear();
+//      delete S;
+    for (std::map<int, std::map<scalar_type, scalar_type> >::iterator it = Ee.begin(); it != Ee.end(); it++)//del_loc
+      (*it).second.clear();
+    Ee.clear();
+    for (std::map<int, std::map<scalar_type, scalar_type> >::iterator it = Ge.begin(); it != Ge.end(); it++)//del_loc
+      (*it).second.clear();
+    Ge.clear();
+    Ee.clear();
+    for (std::map<long int, std::map<scalar_type, std::map<int, scalar_type> > >::iterator it = q.begin();
+         it != q.end(); it++) {
+      for (std::map<scalar_type, std::map<int, scalar_type> >::iterator jt = (*it).second.begin();
+           jt != (*it).second.end(); jt++)
+        (*jt).second.clear();
+      (*it).second.clear();
+    }
+    q.clear();
+    for (std::map<long int, std::map<scalar_type, std::map<int, step> > >::iterator it = q_step.begin();
+         it != q_step.end(); it++) {
+      for (std::map<scalar_type, std::map<int, step> >::iterator jt = (*it).second.begin();
+           jt != (*it).second.end(); jt++)
+        (*jt).second.clear();
+      (*it).second.clear();
+    }
+    q_step.clear();
+    gid_sps.clear();
+    MLRec_events.clear();
+    for (std::map<std::string, std::vector<scalar_type> >::iterator it = branch_counts.begin();
+         it != branch_counts.end(); it++)//del_loc
+      (*it).second.clear();
+    branch_counts.clear();
+
+    for (std::map<long int, std::vector<std::string> >::iterator it = gid_events.begin();
+         it != gid_events.end(); it++)//del_loc
+      (*it).second.clear();
+    gid_events.clear();
+
+    for (std::map<long int, std::vector<scalar_type> >::iterator it = gid_times.begin();
+         it != gid_times.end(); it++)//del_loc
+      (*it).second.clear();
+    gid_times.clear();
+
+    for (std::map<long int, std::vector<int> >::iterator it = gid_branches.begin();
+         it != gid_branches.end(); it++)//del_loc
+      (*it).second.clear();
+    gid_branches.clear();
+
+
+    Ttokens.clear();
+  }
 
