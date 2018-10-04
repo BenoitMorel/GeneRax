@@ -289,10 +289,6 @@ void exODT_model::calculate_undatedEs() {
   uE.clear();
   fm.clear();
   mPTE_ancestral_correction.clear();
-  PD.clear();
-  PT.clear();
-  PL.clear();
-  PS.clear();
   scalar_type P_T = 0;
   for (int f = 0; f < last_branch; f++)
     P_T += vector_parameter["tau"][f] / (scalar_type) last_branch;
@@ -305,10 +301,10 @@ void exODT_model::calculate_undatedEs() {
     P_D /= tmp;
     P_L /= tmp;
     P_S /= tmp;
-    PD.push_back(P_D);
-    PT.push_back(P_T / tmp);
-    PL.push_back(P_L);
-    PS.push_back(P_S);
+    PD = P_D;
+    PT = (P_T / tmp);
+    PL = P_L;
+    PS = P_S;
     uE.push_back(0);
     if (e < last_leaf) { // we are at a leaf
       fm.push_back(vector_parameter["fraction_missing"][e]);
@@ -330,7 +326,7 @@ void exODT_model::calculate_undatedEs() {
         for (auto it = ancestors[edge].begin(); it != ancestors[edge].end(); it++) {
           int f = (*it);
           mPTE_ancestral_correction[edge] +=
-              (PT[f] / (scalar_type) last_branch) * uE[f]; //That's how we forbid transfers to ancestors of a branch
+              (PT / (scalar_type) last_branch) * uE[f]; //That's how we forbid transfers to ancestors of a branch
         }
       }
     }
@@ -338,14 +334,14 @@ void exODT_model::calculate_undatedEs() {
     for (int e = 0; e < last_branch; e++) {
       if (e < last_leaf) // we are at a leaf, there cannot be a speciation event, but the gene has been lost
       {
-        uE[e] = PL[e] + PD[e] * uE[e] * uE[e] + uE[e] * (mPTE - mPTE_ancestral_correction[e]);
+        uE[e] = PL + PD * uE[e] * uE[e] + uE[e] * (mPTE - mPTE_ancestral_correction[e]);
       } else // Not at a leaf: the gene was lost once on branch e, or on all descendants, including after speciation
       {
         int f = daughter[e];
         int g = son[e];
-        uE[e] = PL[e] + PS[e] * uE[f] * uE[g] + PD[e] * uE[e] * uE[e] + uE[e] * (mPTE - mPTE_ancestral_correction[e]);
+        uE[e] = PL + PS * uE[f] * uE[g] + PD * uE[e] * uE[e] + uE[e] * (mPTE - mPTE_ancestral_correction[e]);
       }
-      newmPTE += (PT[e] / (scalar_type) last_branch) * uE[e];
+      newmPTE += (PT / (scalar_type) last_branch) * uE[e];
     }
     mPTE = newmPTE;
   } // End of the loop to compute mPTE
@@ -360,9 +356,9 @@ void exODT_model::calculate_undatedEs() {
     {
       int f = daughter[e];
       int g = son[e];
-      uE[e] = PL[e] + PS[e] * uE[f] * uE[g] + PD[e] * uE[e] * uE[e] + uE[e] * (mPTE - mPTE_ancestral_correction[e]);
+      uE[e] = PL + PS * uE[f] * uE[g] + PD * uE[e] * uE[e] + uE[e] * (mPTE - mPTE_ancestral_correction[e]);
     }
-    newmPTE += (PT[e] / (scalar_type) last_branch) * uE[e];
+    newmPTE += (PT / (scalar_type) last_branch) * uE[e];
   }
   mPTE = newmPTE;
 
@@ -459,7 +455,7 @@ void exODT_model::inner_loop(std::shared_ptr<approx_posterior> ale, bool is_a_le
     // S leaf and G leaf
     if (e < last_leaf and is_a_leaf and extant_species[e] == gid_sps[g_id]) {
       // present
-      uq_sum += PS[e] * 1;
+      uq_sum += PS * 1;
     }
     // G internal
     if (not is_a_leaf) {
@@ -469,10 +465,10 @@ void exODT_model::inner_loop(std::shared_ptr<approx_posterior> ale, bool is_a_le
         int gpp_i = gpp_is[i];
         scalar_type pp = p_part[i];
         if (not(e < last_leaf)) {
-          uq_sum += PS[e] * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]) * pp;
+          uq_sum += PS * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]) * pp;
         }
         // D event
-        uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2) * pp;
+        uq_sum += PD * (uq[gp_i][e] * uq[gpp_i][e] * 2) * pp;
         // T event
         if (transfers) {
           uq_sum += (uq[gp_i][e] * (mPTuq[gpp_i] - mPTuq_ancestral_correction[gpp_i][e]) +
@@ -482,10 +478,10 @@ void exODT_model::inner_loop(std::shared_ptr<approx_posterior> ale, bool is_a_le
     }
     if (not(e < last_leaf)) {
       // SL event
-      uq_sum += PS[e] * (uq[i][f] * uE[g] + uq[i][g] * uE[f]);
+      uq_sum += PS * (uq[i][f] * uE[g] + uq[i][g] * uE[f]);
     }
     // DL event
-    uq_sum += PD[e] * (uq[i][e] * uE[e] * 2);
+    uq_sum += PD * (uq[i][e] * uE[e] * 2);
     // TL event
     if (transfers) {
       uq_sum += ((mPTuq[i] - mPTuq_ancestral_correction[i][e]) * uE[e] +
@@ -494,10 +490,10 @@ void exODT_model::inner_loop(std::shared_ptr<approx_posterior> ale, bool is_a_le
     if (uq_sum < EPSILON) uq_sum = EPSILON;
     uq[i][e] = uq_sum;
     if (transfers) {
-      new_mPTuq += (PT[e] / (scalar_type) last_branch) * uq_sum;
+      new_mPTuq += (PT / (scalar_type) last_branch) * uq_sum;
       mPTuq_ancestral_correction[i][e] = 0;
       for (std::vector<int>::iterator it = ancestors[e].begin(); it != ancestors[e].end(); it++) {
-        mPTuq_ancestral_correction[i][e] += (PT[*it] / (scalar_type) last_branch) * uq_sum;
+        mPTuq_ancestral_correction[i][e] += (PT / (scalar_type) last_branch) * uq_sum;
       }
     }
   }

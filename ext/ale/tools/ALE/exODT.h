@@ -45,9 +45,7 @@ public:
 
   std::vector<int> daughter;
   std::vector<int> son;
-
   std::map<int, std::string> extant_species;                   //del-loc. Map between leaf id (0 to # of leaves) and leaf name.
-
 
   std::shared_ptr<tree_type> S;                                             //Species tree
   std::map<std::shared_ptr<bpp::PhyloNode>, int> node_ids;                         //Map between node and its id.
@@ -67,17 +65,18 @@ public:
   std::vector<scalar_type> mPTuq;
   std::vector<std::vector<scalar_type> > mPTuq_ancestral_correction;
 
-  std::vector<scalar_type> PD; // Duplication probability, per branch
-  std::vector<scalar_type> PT; // Transfer probability, per branch
-  std::vector<scalar_type> PL; // Loss probability, per branch
-  std::vector<scalar_type> PS; // Speciation probability, per branch
+  scalar_type PD; // Duplication probability, per branch
+  scalar_type PT; // Transfer probability, per branch
+  scalar_type PL; // Loss probability, per branch
+  scalar_type PS; // Speciation probability, per branch
   int last_leaf;
 
   std::map<long int, std::string> gid_sps;                                     //del-loc. Map between clade id (from the approx_posterior object) and species included in that clade.
   GeneMap<std::string, std::string> speciesGeneMap;                                     // Map between gene and species names.
-
   std::map<std::string, scalar_type> fraction_missing;
 
+
+public:
   void construct_undated(const std::string &Sstring,
                          const std::string &fractionMissingFile = ""); //Constructs an object given a species tree and file containing fractions of missing genes per species.
   void calculate_undatedEs();
