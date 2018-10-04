@@ -48,10 +48,9 @@ public:
 
   bool transfers;
 
-  std::map<int, int> father;                                  //del-loc. Map between node id and id of its father.
   std::map<int, std::vector<int> > daughters;                 //del-loc. Map between node id and ids of its daughters (-1 if node is a leaf).
-  std::map<int, int> daughter;
-  std::map<int, int> son;
+  std::vector<int> daughter;
+  std::vector<int> son;
 
   std::map<int, std::string> extant_species;                   //del-loc. Map between leaf id (0 to # of leaves) and leaf name.
   //std::map <int,std::string> extant_taxa;                    // extant_taxa map for id-ing branches across trees
@@ -150,7 +149,6 @@ public:
   ~exODT_model() {
     rank_ids.clear();
     id_ranks.clear();
-    father.clear();
     for (std::map<int, std::vector<int> >::iterator it = daughters.begin(); it != daughters.end(); it++)
       (*it).second.clear();
     daughters.clear();

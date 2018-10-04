@@ -110,6 +110,8 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
       node_name[(*it)] = name.str();
     }
   }
+  daughter.resize(nodes.size());
+  son.resize(nodes.size());
 
   // register species
   last_branch = 0;
@@ -120,6 +122,7 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
   // and starting to determine the number of branches.
   // \todo Use PhyloTreeToolBox to get direct post-order.
   std::set<std::shared_ptr<bpp::PhyloNode>> saw;
+  
   for (auto it = name_node.begin(); it != name_node.end(); it++)
     if (S->isLeaf((*it).second)) {
       auto node = (*it).second;

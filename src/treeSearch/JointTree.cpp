@@ -69,7 +69,7 @@ JointTree::JointTree(const string &newick_file,
     double lossCost):
   dupCost_(dupCost),
   lossCost_(lossCost),
-  transferCost_(0.01),
+  transferCost_(0.0),
   aleWeight_(Arguments::aleWeight)
 {
 

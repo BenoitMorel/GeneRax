@@ -51,7 +51,7 @@ int main(int argc, char * argv[]) {
   jointTree->getThreadInstance().printLoglk(true, true, true, os);
 
   chrono::duration<double> elapsed = finish - start;
-  cout<<"Elapsed time is :  "<< chrono::duration_cast<chrono::seconds>(elapsed).count() << "s" <<endl;  
+  cout<<"Elapsed time is :  "<< chrono::duration_cast<chrono::milliseconds>(elapsed).count() / 1000.0 << "s" <<endl;  
   return 0;
 }
 
