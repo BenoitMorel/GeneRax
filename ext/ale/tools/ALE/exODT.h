@@ -57,7 +57,6 @@ public:
 
 
   std::map<int, scalar_type> branch_ts;                        //del-loc. Map between branch identified by the id of the node it ends at, and time of the time slice.
-  std::map<int, int> rank_ids;                                 //del-loc. Map between rank of a time slice and the id of the node that terminates it.
   std::map<int, int> id_ranks;                                 //del-loc. Map between node id and rank of the time slice it terminates. Time slice at leaves has rank 0.
 
   std::shared_ptr<tree_type> S;                                             //Species tree
@@ -133,10 +132,6 @@ public:
   //std::string feSPR(int e, int f);
   //std::vector<std::string> NNIs(int e);
 
-  std::string sample_undated();
-
-  std::string sample_undated(int e, int i, std::string last_event, std::string branch_string = "");
-
   std::vector<long int> g_ids;
   std::vector<long int> g_id_sizes;
   std::map<long int, int> g_id2i;
@@ -147,14 +142,12 @@ public:
   //void construct(const std::string& Sstring, const scalar_type& N=1e6, const std::string& fractionMissingFile=""); //Constructs an object given a species tree, population size and file containing fractions of missing genes per species.
   exODT_model();
   ~exODT_model() {
-    rank_ids.clear();
     id_ranks.clear();
     for (std::map<int, std::vector<int> >::iterator it = daughters.begin(); it != daughters.end(); it++)
       (*it).second.clear();
     daughters.clear();
     extant_species.clear();
     branch_ts.clear();
-    rank_ids.clear();
     id_ranks.clear();
     t_begin.clear();
     t_end.clear();
@@ -228,47 +221,5 @@ public:
 
   void set_model_parameter(std::string name, std::string value);    //Sets the value of a string parameter.
   void set_model_parameter(std::string, scalar_type);               //Sets the value of a scalar parameter.
-  void register_O(int e);
-
-  void register_D(int e);
-
-  void register_Tto(int e);
-
-  void register_Tfrom(int e);
-
-  void register_L(int e);
-
-  void register_S(int e);
-
-  void register_Su(int e, std::string last_event);
-
-  void register_T_to_from(int e, int f);
-  //void reset_T_to_from( );
-
-  std::vector<std::vector<scalar_type> > T_to_from;
-
-  void register_leaf(int e);
-
-  void register_leafu(int e, std::string last_event);
-
-  void register_Ttoken(std::string token);
-
-  //implemented in traceback_lowmem.cpp - not done
-  //implemented in sample.cpp
-  std::string sample(bool max_rec = false);
-
-  std::string sample(bool S_node, long int g_id, int t_i, scalar_type rank, int e, scalar_type branch_length,
-                     std::string branch_events, std::string transfer_toke = "", bool max_rec = false);
-
-
-  //void show_counts(std::string name, bool as_branch_length=true, bool per_copy=false);
-  //std::string counts_string(scalar_type samples=1);
-  std::string counts_string_undated(scalar_type samples = 1);
-
-  //void show_rates(std::string name);
-  //std::string gid_string(long int g_id);
-  std::string vertical_string(long int g_id, std::string ancestral_string = "", scalar_type t_0 = -1);
-
-private:
 
 };
