@@ -187,6 +187,7 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
   // This, fills rank2label where rank is the branch and label the bootstrap.
   // Each branch is edited with a property "ID".
   // \todo Each label of rank2label, a bootstrap is an integer. Sometimes we can find bootstrap as floating values.
+  rank2label.resize(node_ids.size());
   for (auto it = node_ids.begin(); it != node_ids.end(); it++) {
     auto node = (*it).first;
     int branch = (*it).second;
@@ -214,9 +215,11 @@ void exODT_model::construct_undated(const std::string &Sstring, const std::strin
 
   // Initialize the ancestor matrix (nb_branches x bn_branches) with zeros.
   // Value take one if node has parent's relationship with an other.
-  ancestors.clear();
+  ancestral.clear();
+  ancestral.resize(last_branch);
   for (int e = 0; e < last_branch; e++) {
     std::vector<int> tmp;
+    ancestral[e].resize(last_branch);
     ancestors.push_back(tmp);
     for (int f = 0; f < last_branch; f++)
       ancestral[e][f] = 0;

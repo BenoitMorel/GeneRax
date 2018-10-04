@@ -32,7 +32,7 @@ struct step {
  *****************************************************************************/
 class exODT_model {
 public:
-  std::map<int, int> rank2label;
+  std::vector<int> rank2label;
 
   std::map<std::string, scalar_type> scalar_parameter;//del_loc
   std::map<std::string, std::vector<scalar_type> > vector_parameter;//del_loc
@@ -78,7 +78,7 @@ public:
   std::map<std::string, std::shared_ptr<bpp::PhyloNode>> name_node;
   std::map<std::shared_ptr<bpp::PhyloNode>, std::string> node_name;
   std::map<std::string, std::map<std::string, int> > ancestral_names;
-  std::map<int, std::map<int, int> > ancestral;
+  std::vector<std::vector<int> > ancestral;
   std::vector<std::vector<int> > ancestors; // contains the ancestors of a given branch; useful to forbid transfers to them.
 
   std::vector<scalar_type> fm; // Fraction of genes missing at the tips
