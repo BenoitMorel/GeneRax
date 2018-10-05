@@ -11,8 +11,8 @@ using namespace std;
 
 int main(int argc, char * argv[]) {
   auto start = chrono::high_resolution_clock::now();
-  double dupCost = 2;
-  double lossCost = 1;
+  double dupRate = 2;
+  double lossRate = 1;
   Arguments::init(argc, argv);
   Arguments::printCommand();
   cout << endl;
@@ -21,11 +21,15 @@ int main(int argc, char * argv[]) {
   auto jointTree = make_shared<ParallelJointTree>(Arguments::geneTree,
       Arguments::alignment,
       Arguments::speciesTree,
-      dupCost,
-      lossCost,
+      dupRate,
+      lossRate,
       Arguments::threads
       );
   jointTree->optimizeParameters();
+  if (Arguments::costsEstimation) {
+    cout << "Starting cost estimation..." << endl;
+    jointTree->optimizeDTRates();
+  }
   if (Arguments::strategy == "SPR") {
     cout << "Starting SPR search" << endl;
     SPRSearch::applySPRSearch(*jointTree);

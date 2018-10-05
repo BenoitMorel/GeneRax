@@ -27,32 +27,20 @@ void printLibpllTreeRooted(pll_unode_t *root, ostream &os);
 void addFromLibpll(BPPTree tree, BPPNode bppFather, pll_unode_s *libpllNode);
 std::shared_ptr<bpp::PhyloTree> buildFromLibpll(std::shared_ptr<LibpllEvaluation> evaluation, pll_unode_s *libpllRoot);
 
-/*
-class AbstractJointTree {
-  public:
-    virtual ~AbstractJointTree() {};
-    virtual void optimizeParameters() = 0;
-    virtual JointTree& getThreadInstance() = 0; 
-    virtual void applyMove(shared_ptr<Move> move) = 0;
-    virtual int getThreadsNumber() const { return 1; };
-    virtual bool checkConsistency() {return true;}
-};
-*/
-
 class JointTree {
 public:
     JointTree(const string &newick_file,
               const string &alignment_file,
               const string &speciestree_file,
-              double dupCost,
-              double lossCost);
+              double dupRate,
+              double lossRate);
 
     JointTree(BPPTree geneTree,
               const LibpllAlignmentInfo *alignment,
               BPPTree speciesTree,
               const SpeciesGeneMap &map,
-              double dupCost,
-              double lossCost);
+              double dupRate,
+              double lossRate);
 
     virtual ~JointTree() {}
     void printLibpllTree() const;
@@ -71,16 +59,16 @@ public:
     BPPTree getGeneTree();
     shared_ptr<pllmod_treeinfo_t> getTreeInfo();
     virtual JointTree& getThreadInstance();
-
+    void setRates(double dup, double loss) { dupRate_ = dup; lossRate_ = loss;}
 private:
     std::shared_ptr<LibpllEvaluation> evaluation_;
     BPPTree geneTree_;
     BPPTree speciesTree_;
     SpeciesGeneMap map_;
     LibpllAlignmentInfo info_;
-    double dupCost_;
-    double lossCost_;
-    double transferCost_;
+    double dupRate_;
+    double lossRate_;
+    double transferRate_;
     stack<shared_ptr<Rollback> > rollbacks_;
     double aleWeight_;
 };
@@ -91,15 +79,15 @@ public:
     const LibpllAlignmentInfo *alignment,
     BPPTree speciesTree,
     const SpeciesGeneMap &map,
-    double dupCost,
-    double lossCost,
+    double dupRate,
+    double lossRate,
     int threads);
   
   ParallelJointTree(const string &newick_file,
             const string &alignment_file,
             const string &speciestree_file,
-            double dupCost,
-            double lossCost,
+            double dupRate,
+            double lossRate,
             int threads);
 
   virtual ~ParallelJointTree() {}
@@ -109,6 +97,7 @@ public:
   virtual JointTree& getThreadInstance();
   virtual void applyMove(shared_ptr<Move> move);
   virtual bool checkConsistency();
+  void optimizeDTRates();
 
   private:
     vector<shared_ptr<JointTree> > trees_;

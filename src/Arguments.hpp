@@ -24,6 +24,7 @@ public:
   static bool check;
   static bool verbose;
   static double aleWeight;
+  static bool costsEstimation;
 };
 
 #endif

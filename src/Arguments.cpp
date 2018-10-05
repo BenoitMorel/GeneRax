@@ -12,6 +12,7 @@ string Arguments::output("jointSearch");
 bool Arguments::check = false;
 bool Arguments::verbose = false;
 double Arguments::aleWeight = 1.0;
+bool Arguments::costsEstimation = false;
 
 void Arguments::init(int argc, char * argv[])
 {
@@ -38,6 +39,8 @@ void Arguments::init(int argc, char * argv[])
       threads = atoi(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
       output = string(argv[++i]);
+    } else if (arg == "-c" || arg == "--cost-estimation") {
+      costsEstimation = true;
     } else if (arg == "--check") {
       check = true;
     } else if (arg == "--verbose") {

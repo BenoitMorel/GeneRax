@@ -2,6 +2,7 @@
 #include <treeSearch/Moves.h>
 #include <chrono>
 #include "Arguments.hpp"
+#include<limits>
 
 void printLibpllNode(pll_unode_s *node, ostream &os, bool isRoot)
 {
@@ -65,11 +66,11 @@ std::shared_ptr<bpp::PhyloTree> buildFromLibpll(std::shared_ptr<LibpllEvaluation
 JointTree::JointTree(const string &newick_file,
     const string &alignment_file,
     const string &speciestree_file,
-    double dupCost,
-    double lossCost):
-  dupCost_(dupCost),
-  lossCost_(lossCost),
-  transferCost_(0.0),
+    double dupRate,
+    double lossRate):
+  dupRate_(dupRate),
+  lossRate_(lossRate),
+  transferRate_(0.0),
   aleWeight_(Arguments::aleWeight)
 {
 
@@ -87,15 +88,15 @@ JointTree::JointTree(BPPTree geneTree,
     const LibpllAlignmentInfo *alignment,
     BPPTree speciesTree,
     const SpeciesGeneMap &map,
-    double dupCost,
-    double lossCost):
+    double dupRate,
+    double lossRate):
   evaluation_(LibpllEvaluation::buildFromPhylo(geneTree, *alignment)),
   speciesTree_(speciesTree),
   map_(map),
   info_(*alignment),
-  dupCost_(dupCost),
-  lossCost_(lossCost),
-  transferCost_(0.0),
+  dupRate_(dupRate),
+  lossRate_(lossRate),
+  transferRate_(0.0),
   aleWeight_(Arguments::aleWeight)
 {
   updateBPPTree();
@@ -125,7 +126,7 @@ double JointTree::computeLibpllLoglk() {
 double JointTree::computeALELoglk () {
   auto genetree_copy = PhyloTreeToolBox::cloneTree(*geneTree_);
   PhyloTreeToolBox::removeArtificialGenes(*genetree_copy);
-  double ale_loglk = ALEevaluation::evaluate(*genetree_copy, *speciesTree_, map_, 1, 1, dupCost_, transferCost_, lossCost_);
+  double ale_loglk = ALEevaluation::evaluate(*genetree_copy, *speciesTree_, map_, 1, 1, dupRate_, transferRate_, lossRate_);
   return aleWeight_ * ale_loglk;
 }
 
@@ -188,26 +189,26 @@ ParallelJointTree::ParallelJointTree(BPPTree geneTree,
     const LibpllAlignmentInfo *alignment,
     BPPTree speciesTree,
     const SpeciesGeneMap &map,
-    double dupCost,
-    double lossCost,
+    double dupRate,
+    double lossRate,
     int threads)
 {
   for (int i = 0; i < threads; ++i) {
     trees_.push_back(make_shared<JointTree>(geneTree,
-          alignment, speciesTree, map, dupCost, lossCost));
+          alignment, speciesTree, map, dupRate, lossRate));
   }
 }
 
 ParallelJointTree::ParallelJointTree(const string &newick_file,
     const string &alignment_file,
     const string &speciestree_file,
-    double dupCost,
-    double lossCost,
+    double dupRate,
+    double lossRate,
     int threads)
 {
   for (int i = 0; i < threads; ++i) {
     trees_.push_back(make_shared<JointTree>(newick_file,
-          alignment_file, speciestree_file,dupCost, lossCost));
+          alignment_file, speciestree_file,dupRate, lossRate));
   }
 }
 
@@ -255,5 +256,34 @@ bool ParallelJointTree::checkConsistency() {
 }
 
 
+void ParallelJointTree::optimizeDTRates() {
+  double bestLL = numeric_limits<double>::lowest();
+  double bestDup = 0.0;
+  double bestLoss = 0.0;
+  double min = 0.001;
+  double max = 2.0;
+  int steps = 15;
+  #pragma omp parallel for num_threads(getThreadsNumber())
+  for (int i = 0; i < steps; ++i) {
+    for (int j = 0; j < steps; ++j) {
+      double dup = min + (max - min) * double(i) / double(steps);
+      double loss = min + (max - min) * double(j) / double(steps);
+      int tid = omp_get_thread_num();
+      auto &tree = *trees_[tid];
+      tree.setRates(dup, loss);
+      double newLL = tree.computeALELoglk();
+      #pragma omp critical
+      if (newLL > bestLL) { 
+        bestDup = dup;
+        bestLoss = loss;
+        bestLL = newLL;
+      }
+    }
+  }
+  for (auto tree: trees_) {
+    tree->setRates(bestDup, bestLoss);
+  }
+  cout << " best rates: " << bestDup << " " << bestLoss << endl;
+}
 
 
