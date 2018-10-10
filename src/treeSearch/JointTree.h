@@ -58,8 +58,8 @@ public:
     void updateBPPTree();
     BPPTree getGeneTree();
     shared_ptr<pllmod_treeinfo_t> getTreeInfo();
-    virtual JointTree& getThreadInstance();
     void setRates(double dup, double loss) { dupRate_ = dup; lossRate_ = loss;}
+    void optimizeDTRates();
 private:
     std::shared_ptr<LibpllEvaluation> evaluation_;
     BPPTree geneTree_;
@@ -73,35 +73,6 @@ private:
     double aleWeight_;
 };
 
-class ParallelJointTree {
-public:
-  ParallelJointTree(BPPTree geneTree,
-    const LibpllAlignmentInfo *alignment,
-    BPPTree speciesTree,
-    const SpeciesGeneMap &map,
-    double dupRate,
-    double lossRate,
-    int threads);
-  
-  ParallelJointTree(const string &newick_file,
-            const string &alignment_file,
-            const string &speciestree_file,
-            double dupRate,
-            double lossRate,
-            int threads);
-
-  virtual ~ParallelJointTree() {}
-    
-  void optimizeParameters();
-  virtual int getThreadsNumber() const;
-  virtual JointTree& getThreadInstance();
-  virtual void applyMove(shared_ptr<Move> move);
-  virtual bool checkConsistency();
-  void optimizeDTRates();
-
-  private:
-    vector<shared_ptr<JointTree> > trees_;
-};
 #endif
 
 

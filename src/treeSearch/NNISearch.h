@@ -1,12 +1,12 @@
 #ifndef _NNI_SEARCH_H_
 #define _NNI_SEARCH_H_
 
-class ParallelJointTree;
+class JointTree;
 
 class NNISearch {
 public:
-    static void applyNNISearch(ParallelJointTree &jointTree);
-    static bool applyNNIRound(ParallelJointTree &jointTree, double &bestLoglk);
+    static void applyNNISearch(JointTree &jointTree);
+    static bool applyNNIRound(JointTree &jointTree, double &bestLoglk);
 };
 
 #endif

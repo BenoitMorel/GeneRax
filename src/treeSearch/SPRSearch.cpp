@@ -93,29 +93,29 @@ void getRegrafts(JointTree &jointTree, int pruneIndex, int maxRadius, vector<SPR
   getRegraftsRec(pruneIndex, pruneNode->next->next->back, maxRadius, path, moves);
 }
 
-bool SPRSearch::applySPRRound(ParallelJointTree &jointTree, int radius, double &bestLoglk) {
+bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLoglk) {
   if (Arguments::verbose) {
     cout << "SPR ROUND WITH RADIUS " << radius << endl;
   }
     shared_ptr<Move> bestMove(0);
   vector<int> allNodes;
-  getAllPruneIndices(jointTree.getThreadInstance(), allNodes);
-  const size_t edgesNumber = jointTree.getThreadInstance().getTreeInfo()->tree->edge_count;
+  getAllPruneIndices(jointTree, allNodes);
+  const size_t edgesNumber = jointTree.getTreeInfo()->tree->edge_count;
   bool foundBetterMove = false;
  
   vector<SPRMoveDesc> movesToExplore;
   for (int i = 0; i < allNodes.size(); ++i) {
       int pruneIndex = allNodes[i];
-      getRegrafts(jointTree.getThreadInstance(), pruneIndex, radius, movesToExplore);
+      getRegrafts(jointTree, pruneIndex, radius, movesToExplore);
   }
 
-  #pragma omp parallel for num_threads(jointTree.getThreadsNumber())
+  //#pragma omp parallel for num_threads(jointTree.getThreadsNumber())
   for (int i = 0; i < movesToExplore.size(); ++i) {
     if (true) {
         double newLoglk;
         shared_ptr<Move> newMove;
-        if (testSPRMove(jointTree.getThreadInstance(), movesToExplore[i], bestLoglk, newLoglk, newMove)) {
-          #pragma omp critical
+        if (testSPRMove(jointTree, movesToExplore[i], bestLoglk, newLoglk, newMove)) {
+          //#pragma omp critical
           if (bestLoglk < newLoglk) {
             foundBetterMove = true;
             bestMove = newMove;
@@ -134,10 +134,10 @@ bool SPRSearch::applySPRRound(ParallelJointTree &jointTree, int radius, double &
 }
 
 
-void SPRSearch::applySPRSearch(ParallelJointTree &jointTree)
+void SPRSearch::applySPRSearch(JointTree &jointTree)
 { 
-  jointTree.getThreadInstance().printLoglk();
-  double startingLoglk = jointTree.getThreadInstance().computeJointLoglk();
+  jointTree.printLoglk();
+  double startingLoglk = jointTree.computeJointLoglk();
   double bestLoglk = startingLoglk;
   while (applySPRRound(jointTree, 1, bestLoglk)) {}
   jointTree.optimizeParameters();

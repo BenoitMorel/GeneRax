@@ -181,98 +181,19 @@ shared_ptr<pllmod_treeinfo_t> JointTree::getTreeInfo() {
   return evaluation_->getTreeInfo();
 }
 
-JointTree& JointTree::getThreadInstance() {
-  return *this;
-}
-
-ParallelJointTree::ParallelJointTree(BPPTree geneTree,
-    const LibpllAlignmentInfo *alignment,
-    BPPTree speciesTree,
-    const SpeciesGeneMap &map,
-    double dupRate,
-    double lossRate,
-    int threads)
-{
-  for (int i = 0; i < threads; ++i) {
-    trees_.push_back(make_shared<JointTree>(geneTree,
-          alignment, speciesTree, map, dupRate, lossRate));
-  }
-}
-
-ParallelJointTree::ParallelJointTree(const string &newick_file,
-    const string &alignment_file,
-    const string &speciestree_file,
-    double dupRate,
-    double lossRate,
-    int threads)
-{
-  for (int i = 0; i < threads; ++i) {
-    trees_.push_back(make_shared<JointTree>(newick_file,
-          alignment_file, speciestree_file,dupRate, lossRate));
-  }
-}
-
-
-void ParallelJointTree::optimizeParameters() {
-#pragma omp parallel for num_threads(getThreadsNumber())
-  for (int i = 0; i < trees_.size(); ++i) {
-    trees_[i]->optimizeParameters();
-  }
-}
-
-int ParallelJointTree::getThreadsNumber() const {
-  return trees_.size();
-}
-
-JointTree& ParallelJointTree::getThreadInstance() {
-  int tid = omp_get_thread_num();
-  if (tid >= trees_.size()) {
-    cerr << "invalid index " << trees_.size() << " in getThreadInstance" << endl;
-    exit(1);
-  }
-  return *trees_[tid];
-}
-
-void ParallelJointTree::applyMove(shared_ptr<Move> move) {
-  for (auto &tree: trees_) {
-    tree->applyMove(move);
-  }
-}
-
-bool ParallelJointTree::checkConsistency() {
-  cerr << "check consistency" << endl;
-  vector<double> ll(getThreadsNumber());
-#pragma omp parallel for num_threads(getThreadsNumber())
-  for (int i = 0; i < trees_.size(); ++i) {
-    ll[i] = trees_[i]->computeJointLoglk();
-  }
-  auto refll = ll[0];
-  for (int i = 0; i < trees_.size(); ++i) {
-    if (ll[i] != refll) {
-      cerr << "Error, one tree at least has a different ll" << endl;
-      exit(1);
-    }
-  }
-}
-
-
-void ParallelJointTree::optimizeDTRates() {
+void JointTree::optimizeDTRates() {
   double bestLL = numeric_limits<double>::lowest();
   double bestDup = 0.0;
   double bestLoss = 0.0;
   double min = 0.001;
   double max = 2.0;
   int steps = 15;
-  #pragma omp parallel for num_threads(getThreadsNumber())
   for (int i = 0; i < steps; ++i) {
     for (int j = 0; j < steps; ++j) {
       double dup = min + (max - min) * double(i) / double(steps);
       double loss = min + (max - min) * double(j) / double(steps);
-      int tid = omp_get_thread_num();
-      auto &tree = *trees_[tid];
-      tree.setRates(dup, loss);
-      double newLL = tree.computeALELoglk();
-      #pragma omp critical
+      setRates(dup, loss);
+      double newLL = computeALELoglk();
       if (newLL > bestLL) { 
         bestDup = dup;
         bestLoss = loss;
@@ -280,10 +201,7 @@ void ParallelJointTree::optimizeDTRates() {
       }
     }
   }
-  for (auto tree: trees_) {
-    tree->setRates(bestDup, bestLoss);
-  }
+  setRates(bestDup, bestLoss);
   cout << " best rates: " << bestDup << " " << bestLoss << endl;
 }
-
 

@@ -1,6 +1,5 @@
 #include "NNISearch.h"
 #include <algorithm>
-#include <omp.h>
 #include "Arguments.hpp"
 #include <Bpp/Phyl/Tree/PhyloTree.h>
 #include <ale/containers/GeneMap.h>
@@ -57,22 +56,22 @@ bool testNNIMove(JointTree &jointTree,
   return newLoglk > bestLoglk;
 }
 
-bool NNISearch::applyNNIRound(ParallelJointTree &jointTree, double &bestLoglk) {
+bool NNISearch::applyNNIRound(JointTree &jointTree, double &bestLoglk) {
   if (Arguments::verbose) {
     cout << "Start NNI Round" << endl;
   }
   shared_ptr<Move> bestMove(0);
   vector<int> allNodes;
-  getAllNNIIndices(jointTree.getThreadInstance(), allNodes);
+  getAllNNIIndices(jointTree, allNodes);
   bool foundBetterMove = false;
-  #pragma omp parallel for num_threads(jointTree.getThreadsNumber())
+  //#pragma omp parallel for num_threads(jointTree.getThreadsNumber())
   for (int j = 0; j < allNodes.size(); ++j) {
     if (!foundBetterMove) { 
       for (int moveType = 0; moveType < 2; ++moveType) {
         shared_ptr<Move> newMove;
         double loglk;
-        if (testNNIMove(jointTree.getThreadInstance(), allNodes[j], moveType, bestLoglk, loglk, newMove)) {
-          #pragma omp critical
+        if (testNNIMove(jointTree, allNodes[j], moveType, bestLoglk, loglk, newMove)) {
+          //#pragma omp critical
           if (!foundBetterMove) {
             foundBetterMove = true;
             bestMove = newMove;
@@ -92,10 +91,10 @@ bool NNISearch::applyNNIRound(ParallelJointTree &jointTree, double &bestLoglk) {
 }
 
 
-void NNISearch::applyNNISearch(ParallelJointTree &jointTree)
+void NNISearch::applyNNISearch(JointTree &jointTree)
 {
-  jointTree.getThreadInstance().printLoglk();
-  double bestLoglk = jointTree.getThreadInstance().computeJointLoglk();
+  jointTree.printLoglk();
+  double bestLoglk = jointTree.computeJointLoglk();
   bool foundBetterMove = true;
   while (applyNNIRound(jointTree, bestLoglk)) {
   }

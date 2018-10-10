@@ -1,4 +1,5 @@
 #include "Arguments.hpp"
+#include "ParallelContext.hpp"
 #include <ale/tools/IO/IO.h>
 #include <ale/tools/Utils.h>
 #include <treeSearch/JointTree.h>
@@ -10,6 +11,7 @@ using namespace std;
 
 
 int main(int argc, char * argv[]) {
+  ParallelContext::init();
   auto start = chrono::high_resolution_clock::now();
   double dupRate = 2;
   double lossRate = 1;
@@ -18,12 +20,11 @@ int main(int argc, char * argv[]) {
   cout << endl;
   Arguments::printSummary();
   cout << endl;
-  auto jointTree = make_shared<ParallelJointTree>(Arguments::geneTree,
+  auto jointTree = make_shared<JointTree>(Arguments::geneTree,
       Arguments::alignment,
       Arguments::speciesTree,
       dupRate,
-      lossRate,
-      Arguments::threads
+      lossRate
       );
   jointTree->optimizeParameters();
   if (Arguments::costsEstimation) {
@@ -46,16 +47,17 @@ int main(int argc, char * argv[]) {
     NNISearch::applyNNISearch(*jointTree);
   }
 
-  jointTree->getThreadInstance().printLoglk();
-  jointTree->getThreadInstance().save(Arguments::output + ".newick");
+  jointTree->printLoglk();
+  jointTree->save(Arguments::output + ".newick");
 
   auto finish = chrono::high_resolution_clock::now();
   
   ofstream os(Arguments::output + ".stats");
-  jointTree->getThreadInstance().printLoglk(true, true, true, os);
+  jointTree->printLoglk(true, true, true, os);
 
   chrono::duration<double> elapsed = finish - start;
   cout<<"Elapsed time is :  "<< chrono::duration_cast<chrono::milliseconds>(elapsed).count() / 1000.0 << "s" <<endl;  
+  ParallelContext::finalize();
   return 0;
 }
 
