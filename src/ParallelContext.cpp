@@ -1,5 +1,5 @@
 #include "ParallelContext.hpp"
-
+#include <algorithm>
 
 ofstream ParallelContext::sink("/dev/null");
 MPI_Comm ParallelContext::comm(MPI_COMM_WORLD);
@@ -38,4 +38,53 @@ void ParallelContext::setComm(MPI_Comm newComm)
   comm = newComm;
 }
 
+
+
+int ParallelContext::getBegin(int elems)
+{
+  int perRankElements = elems / getSize();
+  return getRank() * perRankElements;
+}
+ 
+int ParallelContext::getEnd(int elems)
+{
+  int perRankElements = elems / getSize();
+  return min(elems, (getRank() + 1) * perRankElements);
+
+}
+
+void ParallelContext::allGatherDouble(double localValue, vector<double> &allValues) {
+  allValues.resize(getSize());
+  MPI_Allgather(
+    &localValue,
+    1,
+    MPI_DOUBLE,
+    &(allValues[0]),
+    1,
+    MPI_DOUBLE,
+    comm);
+}
+  
+void ParallelContext::broadcoastInt(int fromRank, int &value)
+{
+  MPI_Bcast(
+    &value,
+    1,
+    MPI_INT,
+    fromRank,
+    comm);
+}
+
+int ParallelContext::getRankWithBestLL(double myLL, int &bestRank)
+{
+  vector<double> allValues;
+  allGatherDouble(myLL, allValues);
+  bestRank = 0;
+  for (int i = 0; i < allValues.size(); ++i) {
+    if (allValues[i] > allValues[bestRank]) {
+      bestRank = i;
+    }
+  }
+  return bestRank;
+}
 

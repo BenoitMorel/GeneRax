@@ -2,6 +2,7 @@
 
 #include <treeSearch/JointTree.h>
 #include <Arguments.hpp>
+#include <ParallelContext.hpp>
 
 void SearchUtils::testMove(JointTree &jointTree,
     shared_ptr<Move> move,
@@ -29,13 +30,13 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
     int &bestMoveIndex)
 {
   bestMoveIndex = -1;
-  bool foundBetterMove = false;
-  for (int i = 0; i < allMoves.size(); ++i) {
+  int begin = ParallelContext::getBegin(allMoves.size());
+  int end = ParallelContext::getEnd(allMoves.size());
+  for (int i = begin; i < end; ++i) {
     auto move = allMoves[i];
     double loglk;
     SearchUtils::testMove(jointTree, move, bestLoglk, loglk);
     if (loglk > bestLoglk) {
-      foundBetterMove = true;
       bestLoglk = loglk;
       bestMoveIndex = i;
       if (Arguments::verbose) {
@@ -43,6 +44,12 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
       }
     }
   }
-  return foundBetterMove;
+  int bestRank = 0;
+  cout << "getrank with best ll" << endl;
+  ParallelContext::getRankWithBestLL(bestLoglk, bestRank);
+  cout << "broadcast from " << bestRank << endl;
+  ParallelContext::broadcoastInt(bestRank, bestMoveIndex);
+  cout << "end" << endl;
+  return bestMoveIndex != -1;
 }
 
