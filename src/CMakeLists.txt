@@ -8,6 +8,7 @@ add_executable(${PROJECT_NAME} JointSearch.cpp
   treeSearch/JointTree.cpp
   treeSearch/Moves.cpp
   treeSearch/Rollbacks.cpp
+  treeSearch/SearchUtils.cpp
   treeSearch/NNISearch.cpp
   treeSearch/SPRSearch.cpp
   )

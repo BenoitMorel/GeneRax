@@ -4,6 +4,9 @@
 #include <ale/containers/GeneMap.h>
 #include <treeSearch/JointTree.h>
 #include <treeSearch/Moves.h>
+#include <treeSearch/SearchUtils.hpp>
+
+
 
 struct SPRMoveDesc {
   SPRMoveDesc(int prune, int regraft, const vector<int> &edges):
@@ -41,38 +44,7 @@ bool isValidSPRMove(shared_ptr<pllmod_treeinfo_t> treeinfo, pll_unode_s *prune, 
   return !sprYeldsSameTree(prune, regraft);
 }
 
-bool testSPRMove(JointTree &jointTree,
-    const SPRMoveDesc &move,
-    double bestLoglk,
-    double &newLoglk,
-    shared_ptr<Move> &newMove)
-{
-  int pruneIndex = move.pruneIndex;
-  int regraftIndex = move.regraftIndex;
-  if (!isValidSPRMove(jointTree.getTreeInfo(), jointTree.getNode(pruneIndex), jointTree.getNode(regraftIndex))) {
-    return false;
-  }
-  bool res = false;
-  double initialLoglk = 0.0;
-  if (Arguments::check) {
-    initialLoglk = jointTree.computeJointLoglk();
-  }
-  newMove = Move::createSPRMove(pruneIndex, regraftIndex, move.path);
-  jointTree.applyMove(newMove);
-  newLoglk = jointTree.computeLibpllLoglk();
-  if (newLoglk > bestLoglk) {
-     newLoglk += jointTree.computeALELoglk();
-  }
-  jointTree.rollbackLastMove();
-  
-  if(Arguments::check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
-    cerr.precision(17);
-    cerr << "rollback lead to different likelihoods: " << initialLoglk
-      << " " << jointTree.computeJointLoglk() << endl;
-    exit(1);
-  }
-  return newLoglk > bestLoglk;
-}
+
 
 void getRegraftsRec(int pruneIndex, pll_unode_t *regraft, int maxRadius, vector<int> &path, vector<SPRMoveDesc> &moves)
 {
@@ -101,34 +73,25 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
   vector<int> allNodes;
   getAllPruneIndices(jointTree, allNodes);
   const size_t edgesNumber = jointTree.getTreeInfo()->tree->edge_count;
-  bool foundBetterMove = false;
  
-  vector<SPRMoveDesc> movesToExplore;
+  vector<SPRMoveDesc> potentialMoves;
+  vector<shared_ptr<Move> > allMoves;
   for (int i = 0; i < allNodes.size(); ++i) {
       int pruneIndex = allNodes[i];
-      getRegrafts(jointTree, pruneIndex, radius, movesToExplore);
+      getRegrafts(jointTree, pruneIndex, radius, potentialMoves);
   }
-
-  //#pragma omp parallel for num_threads(jointTree.getThreadsNumber())
-  for (int i = 0; i < movesToExplore.size(); ++i) {
-    if (true) {
-        double newLoglk;
-        shared_ptr<Move> newMove;
-        if (testSPRMove(jointTree, movesToExplore[i], bestLoglk, newLoglk, newMove)) {
-          //#pragma omp critical
-          if (bestLoglk < newLoglk) {
-            foundBetterMove = true;
-            bestMove = newMove;
-            bestLoglk = newLoglk;
-            if (Arguments::verbose) {
-              cout << "found a better move with loglk " << newLoglk << endl;
-            }
-          }
-        }
+  for (auto &move: potentialMoves) {
+    int pruneIndex = move.pruneIndex;
+    int regraftIndex = move.regraftIndex;
+    if (!isValidSPRMove(jointTree.getTreeInfo(), jointTree.getNode(pruneIndex), jointTree.getNode(regraftIndex))) {
+      continue;
     }
+    allMoves.push_back(Move::createSPRMove(pruneIndex, regraftIndex, move.path));
   }
+  int bestMoveIndex = -1;
+  bool foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex); 
   if (foundBetterMove) {
-    jointTree.applyMove(bestMove);
+    jointTree.applyMove(allMoves[bestMoveIndex]);
   }
   return foundBetterMove;
 }

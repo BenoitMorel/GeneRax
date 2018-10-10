@@ -6,6 +6,7 @@
 #include <treeSearch/JointTree.h>
 #include <treeSearch/Moves.h>
 #include <ale/tools/SpeciesGeneMapper.h>
+#include <treeSearch/SearchUtils.hpp>
 
 void queryNNIIndicesRec(pll_unode_t * node,
                                vector<int> &buffer,
@@ -28,64 +29,23 @@ void getAllNNIIndices(JointTree &tree, vector<int> &allNodeIndices) {
 }
 
 
-bool testNNIMove(JointTree &jointTree,
-    int nodeIndex,
-    int nniType,
-    double bestLoglk,
-    double &newLoglk,
-    shared_ptr<Move> &newMove
-    )
-{
-  double initialLoglk = 0.0;
-  if (Arguments::check) {
-    jointTree.computeJointLoglk();
-  }
-  newMove = Move::createNNIMove(nodeIndex, nniType, true);
-  jointTree.applyMove(newMove);
-  newLoglk = jointTree.computeLibpllLoglk();
-  if (newLoglk > bestLoglk) {
-    newLoglk += jointTree.computeALELoglk();
-  }
-  jointTree.rollbackLastMove();
-  if(Arguments::check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
-    cerr.precision(17);
-    cerr << "rollback lead to different likelihoods: " << initialLoglk
-      << " " << jointTree.computeJointLoglk() << endl;
-    exit(1);
-  }
-  return newLoglk > bestLoglk;
-}
-
 bool NNISearch::applyNNIRound(JointTree &jointTree, double &bestLoglk) {
   if (Arguments::verbose) {
     cout << "Start NNI Round" << endl;
   }
   shared_ptr<Move> bestMove(0);
   vector<int> allNodes;
+  vector<shared_ptr<Move> > allMoves;
   getAllNNIIndices(jointTree, allNodes);
-  bool foundBetterMove = false;
-  //#pragma omp parallel for num_threads(jointTree.getThreadsNumber())
   for (int j = 0; j < allNodes.size(); ++j) {
-    if (!foundBetterMove) { 
       for (int moveType = 0; moveType < 2; ++moveType) {
-        shared_ptr<Move> newMove;
-        double loglk;
-        if (testNNIMove(jointTree, allNodes[j], moveType, bestLoglk, loglk, newMove)) {
-          //#pragma omp critical
-          if (!foundBetterMove) {
-            foundBetterMove = true;
-            bestMove = newMove;
-            bestLoglk = loglk;
-            if (Arguments::verbose) {
-              cout << "found a better move with loglk " << loglk << endl;
-            }
-          }
-        }
+        allMoves.push_back(Move::createNNIMove(allNodes[j], moveType, true));
       }
-    }
   }
+  int bestMoveIndex = -1;
+  bool foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex); 
   if (foundBetterMove) {
-    jointTree.applyMove(bestMove);
+    jointTree.applyMove(allMoves[bestMoveIndex]);
   }
   return foundBetterMove;
 }
