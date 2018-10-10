@@ -9,7 +9,7 @@ using namespace std;
 
 class ParallelContext {
 public:
-  static void init();
+  static void init(void *commPtr);
   static void finalize();
   static int getRank();
   static int getSize();
@@ -25,6 +25,7 @@ public:
 private:
   static ofstream sink;
   static MPI_Comm comm;
+  static bool ownMPIContext;
   
 };
 

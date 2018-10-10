@@ -1,7 +1,9 @@
 # Add executable JointSearch
 
+#add_executable(${PROJECT_NAME} JointSearch.cpp
 
-add_executable(${PROJECT_NAME} JointSearch.cpp
+
+set(JOINTSEARCH_SOURCES JointSearch.cpp
   Arguments.cpp
   ParallelContext.cpp
   likelihoods/LibpllEvaluation.cpp
@@ -12,6 +14,14 @@ add_executable(${PROJECT_NAME} JointSearch.cpp
   treeSearch/NNISearch.cpp
   treeSearch/SPRSearch.cpp
   )
+
+if (JOINTSEARCH_BUILD_AS_LIBRARY)
+  message(STATUS "${PROJECT_NAME} will be built as a library.")
+  add_library(${PROJECT_NAME} MODULE ${JOINTSEARCH_SOURCES})
+else()
+  add_executable(${PROJECT_NAME} ${JOINTSEARCH_SOURCES})
+endif()
+
 
 target_link_libraries(${PROJECT_NAME}
   ale)
@@ -43,3 +53,6 @@ target_include_directories(${PROJECT_NAME}
 target_compile_definitions(${PROJECT_NAME}
   PRIVATE "-DVERSION_NUMBER=${PROJECT_VERSION}")
 
+if (BUILD_AS_LIBRARY AND NOT APPLE)
+  target_link_libraries(${PROJECT_NAME} gcc_s gcc)
+endif()

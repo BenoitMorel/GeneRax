@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.0.1)
 
-project(JointTreeSearch
+project(JointSearch
         VERSION 0.0)
+
+set(JOINTSEARCH_BUILD_AS_LIBRARY OFF CACHE BOOL "Build JointSearch as shared library (instead of stand-alone executable)")
+
+if(JOINTSEARCH_BUILD_AS_LIBRARY)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_JOINTSEARCH_BUILD_AS_LIB -fPIC")
+endif()
 
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG(-std=c++14 CXX_STANDARD_14_SUPPORT)

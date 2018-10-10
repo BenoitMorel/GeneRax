@@ -3,10 +3,18 @@
 
 ofstream ParallelContext::sink("/dev/null");
 MPI_Comm ParallelContext::comm(MPI_COMM_WORLD);
+bool ParallelContext::ownMPIContext(true);
 
-void ParallelContext::init()
+void ParallelContext::init(void *commPtr)
 {
-  MPI_Init(0, 0);
+  if (comm) {
+    comm = *((MPI_Comm*)commPtr);
+    ownMPIContext = false; 
+  }
+
+  if (ownMPIContext) {
+    MPI_Init(0, 0);
+  }
   if (getRank() != 0) {
     std::cout.rdbuf(sink.rdbuf());
     std::cerr.rdbuf(sink.rdbuf());      
@@ -16,7 +24,9 @@ void ParallelContext::init()
 
 void ParallelContext::finalize()
 {
-  MPI_Finalize();
+  if (ownMPIContext) {
+    MPI_Finalize();
+  }
 }
 
 int ParallelContext::getRank() 

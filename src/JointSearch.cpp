@@ -10,8 +10,9 @@
 using namespace std;
 
 
-int main(int argc, char * argv[]) {
-  ParallelContext::init();
+int internal_main(int argc, char** argv, void* comm)
+{
+  ParallelContext::init(comm);
   auto start = chrono::high_resolution_clock::now();
   double dupRate = 2;
   double lossRate = 1;
@@ -60,4 +61,21 @@ int main(int argc, char * argv[]) {
   ParallelContext::finalize();
   return 0;
 }
+
+
+#ifdef JOINSEARCH_BUILD_AS_LIB
+
+extern "C" int dll_main(int argc, char** argv, void* comm)
+{
+  return internal_main(argc, argv, comm);
+}
+
+#else
+
+int main(int argc, char** argv)
+{
+  return internal_main(argc, argv, 0);
+}
+
+#endif
 
