@@ -5,17 +5,13 @@
 
 void SearchUtils::testMove(JointTree &jointTree,
     shared_ptr<Move> move,
-    double bestLoglk,
+    double initialLoglk,
     double &newLoglk
     )
 {
-  double initialLoglk = 0.0;
-  if (Arguments::check) {
-    jointTree.computeJointLoglk();
-  }
   jointTree.applyMove(move);
   newLoglk = jointTree.computeLibpllLoglk();
-  if (newLoglk > bestLoglk) {
+  if (newLoglk > initialLoglk) {
     newLoglk += jointTree.computeALELoglk();
   }
   jointTree.rollbackLastMove();
@@ -36,18 +32,14 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
   bool foundBetterMove = false;
   for (int i = 0; i < allMoves.size(); ++i) {
     auto move = allMoves[i];
-    if (!foundBetterMove) {
-      double loglk;
-      SearchUtils::testMove(jointTree, move, bestLoglk, loglk);
-      if (loglk > bestLoglk) {
-        if (!foundBetterMove) {
-          foundBetterMove = true;
-          bestLoglk = loglk;
-          bestMoveIndex = i;
-          if (Arguments::verbose) {
-            cout << "found a better move with loglk " << loglk << endl;
-          }
-        }
+    double loglk;
+    SearchUtils::testMove(jointTree, move, bestLoglk, loglk);
+    if (loglk > bestLoglk) {
+      foundBetterMove = true;
+      bestLoglk = loglk;
+      bestMoveIndex = i;
+      if (Arguments::verbose) {
+        cout << "found a better move with loglk " << loglk << endl;
       }
     }
   }

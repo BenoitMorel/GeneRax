@@ -12,7 +12,7 @@ class SearchUtils {
 public:
   static void testMove(JointTree &jointTree,
     shared_ptr<Move> move,
-    double bestLoglk,
+    double initialLoglk,
     double &newLoglk
     );
  
