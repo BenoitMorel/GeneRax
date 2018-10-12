@@ -7,7 +7,7 @@ bool ParallelContext::ownMPIContext(true);
 
 void ParallelContext::init(void *commPtr)
 {
-  if (comm) {
+  if (commPtr) {
     comm = *((MPI_Comm*)commPtr);
     ownMPIContext = false; 
   }
