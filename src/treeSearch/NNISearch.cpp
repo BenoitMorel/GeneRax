@@ -31,9 +31,6 @@ void getAllNNIIndices(JointTree &tree, vector<int> &allNodeIndices) {
 
 
 bool NNISearch::applyNNIRound(JointTree &jointTree, double &bestLoglk) {
-  if (Arguments::verbose) {
-    Logger::timed << "Start NNI Round (best ll=" << bestLoglk << ")" << endl;
-  }
   shared_ptr<Move> bestMove(0);
   vector<int> allNodes;
   vector<shared_ptr<Move> > allMoves;
@@ -43,6 +40,7 @@ bool NNISearch::applyNNIRound(JointTree &jointTree, double &bestLoglk) {
         allMoves.push_back(Move::createNNIMove(allNodes[j], moveType, true));
       }
   }
+  Logger::timed << "Start NNI Round (best ll=" << bestLoglk << ", " << allMoves.size() << "moves to try)" << endl;
   int bestMoveIndex = -1;
   bool foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex); 
   if (foundBetterMove) {

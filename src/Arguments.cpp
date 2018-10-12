@@ -1,5 +1,6 @@
 #include "Arguments.hpp"
 #include <Logger.hpp>
+#include <ParallelContext.hpp>
 
 int Arguments::argc = 0;
 char ** Arguments::argv = 0;
@@ -7,10 +8,8 @@ string Arguments::geneTree;
 string Arguments::alignment;
 string Arguments::speciesTree;
 string Arguments::strategy("NNI");
-int Arguments::threads = 1;
 string Arguments::output("jointSearch");
 bool Arguments::check = false;
-bool Arguments::verbose = false;
 double Arguments::aleWeight = 1.0;
 bool Arguments::costsEstimation = false;
 
@@ -35,16 +34,12 @@ void Arguments::init(int argc, char * argv[])
       speciesTree = string(argv[++i]);
     } else if (arg == "--strategy") {
       strategy = string(argv[++i]);
-    } else if (arg == "-t" || arg == "--threads") {
-      threads = atoi(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
       output = string(argv[++i]);
     } else if (arg == "-c" || arg == "--cost-estimation") {
       costsEstimation = true;
     } else if (arg == "--check") {
       check = true;
-    } else if (arg == "--verbose") {
-      verbose = true;
     } else if (arg == "--ale-weight") {
       aleWeight = atof(argv[++i]);
     } else {
@@ -84,7 +79,6 @@ void Arguments::printHelp() {
   Logger::info << "-t, --threads <THREADS NUMBER>" << endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
   Logger::info << "--check" << endl;
-  Logger::info << "--verbose" << endl;
   Logger::info << endl;
 
 }
@@ -105,8 +99,7 @@ void Arguments::printSummary() {
   Logger::info << "Species tree: " << speciesTree << endl;
   Logger::info << "Strategy: " << strategy << endl;
   Logger::info << "Prefix: " << output << endl;
-  Logger::info << "Cores: " << threads << endl;
   Logger::info << "Check mode: " << boolStr[check] << endl;
-  Logger::info << "Verbose mode: " << boolStr[verbose] << endl;
+  Logger::info << "MPI Ranks: " << ParallelContext::getSize() << endl;
   Logger::info << endl;
 }

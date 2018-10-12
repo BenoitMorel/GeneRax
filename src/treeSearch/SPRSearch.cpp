@@ -67,12 +67,7 @@ void getRegrafts(JointTree &jointTree, int pruneIndex, int maxRadius, vector<SPR
 }
 
 bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLoglk) {
-  if (Arguments::verbose) {
-    Logger::timed << "Start SPR round with radius " << radius 
-      << "(best ll=" << bestLoglk << ")"
-      << endl;
-  }
-    shared_ptr<Move> bestMove(0);
+  shared_ptr<Move> bestMove(0);
   vector<int> allNodes;
   getAllPruneIndices(jointTree, allNodes);
   const size_t edgesNumber = jointTree.getTreeInfo()->tree->edge_count;
@@ -91,6 +86,9 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
     }
     allMoves.push_back(Move::createSPRMove(pruneIndex, regraftIndex, move.path));
   }
+  Logger::timed << "Start SPR round " 
+    << "(best ll=" << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
+    << endl;
   int bestMoveIndex = -1;
   bool foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex); 
   if (foundBetterMove) {

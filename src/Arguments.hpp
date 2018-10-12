@@ -19,10 +19,8 @@ public:
   static string alignment;
   static string speciesTree;
   static string strategy;
-  static int threads;
   static string output;
   static bool check;
-  static bool verbose;
   static double aleWeight;
   static bool costsEstimation;
 };
