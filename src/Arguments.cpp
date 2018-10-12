@@ -76,16 +76,16 @@ void Arguments::checkInputs() {
 }
 
 void Arguments::printHelp() {
-  Logger::error << "-h, --help" << endl;
-  Logger::error << "-g, --gene-tree <GENE TREE>" << endl;
-  Logger::error << "-a, --alignment <ALIGNMENT>" << endl;
-  Logger::error << "-s, --species-tree <SPECIES TREE>" << endl;
-  Logger::error << "--strategy <STRATEGY>" << endl;
-  Logger::error << "-t, --threads <THREADS NUMBER>" << endl;
-  Logger::error << "-p, --prefix <OUTPUT PREFIX>" << endl;
-  Logger::error << "--check" << endl;
-  Logger::error << "--verbose" << endl;
-  Logger::error << endl;
+  Logger::info << "-h, --help" << endl;
+  Logger::info << "-g, --gene-tree <GENE TREE>" << endl;
+  Logger::info << "-a, --alignment <ALIGNMENT>" << endl;
+  Logger::info << "-s, --species-tree <SPECIES TREE>" << endl;
+  Logger::info << "--strategy <STRATEGY>" << endl;
+  Logger::info << "-t, --threads <THREADS NUMBER>" << endl;
+  Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
+  Logger::info << "--check" << endl;
+  Logger::info << "--verbose" << endl;
+  Logger::info << endl;
 
 }
 

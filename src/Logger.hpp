@@ -15,8 +15,7 @@ private:
     lt_info, lt_error, lt_timed, lt_silent
   };
   LoggerType _type;
-  ostream *_os;
-  
+  ostream *_os; 
   Logger();
 
   void setStream(ostream &os) {_os = &os;}
@@ -25,6 +24,8 @@ private:
 
 public:
   static void init();
+  
+  static void initFileOutput(const string &output);
 
   template <typename T>
     Logger& operator<<(T&& t)
@@ -40,11 +41,19 @@ public:
         seconds = seconds % 60;
         char s[25];
         sprintf(s, "%02d:%02d:%02d", hours, minutes, seconds);
-        *_os << "[" << s << "] ";
-        *_os << t;
+        *_os << "[" << s << "] " << t;
+        if (logFile) 
+          *logFile << "[" << s << "] " << t;
+        return Logger::info;
+      } else if (_type == lt_error) {
+        *_os << "[Error] " << t;
+        if (logFile)
+          *logFile << "[Error] " << t;
         return Logger::info;
       } else {
         *_os << t;
+        if (logFile) 
+          *logFile << t;
         return *this;
       }
     }
@@ -53,6 +62,8 @@ public:
   {
     if (_type != lt_silent) {
       manip(*_os);
+      if (logFile) 
+        manip(*logFile);
     }
     return *this;
   }
@@ -61,6 +72,7 @@ public:
   static Logger error;
   static Logger timed;
   static TimePoint start;
+  static ofstream *logFile;
 };
 
 #endif

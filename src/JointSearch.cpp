@@ -12,11 +12,13 @@ using namespace std;
 int internal_main(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm);
-  Logger::init();
   double dupRate = 2;
   double lossRate = 1;
   
+  Logger::init();
   Arguments::init(argc, argv);
+  Arguments::checkInputs();
+  Logger::initFileOutput(Arguments::output);
   Arguments::printCommand();
   Arguments::printSummary();
   auto jointTree = make_shared<JointTree>(Arguments::geneTree,
