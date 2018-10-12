@@ -6,18 +6,21 @@
 #include <treeSearch/NNISearch.h>
 #include <treeSearch/SPRSearch.h>
 #include <chrono>
-
+#include <Logger.hpp>
 using namespace std;
 
 
 int internal_main(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm);
+  Logger::init();
   auto start = chrono::high_resolution_clock::now();
   double dupRate = 2;
   double lossRate = 1;
+  
   Arguments::init(argc, argv);
   Arguments::printCommand();
+  
   cout << endl;
   Arguments::printSummary();
   cout << endl;
@@ -52,7 +55,6 @@ int internal_main(int argc, char** argv, void* comm)
   jointTree->save(Arguments::output + ".newick");
 
   auto finish = chrono::high_resolution_clock::now();
-  
   ofstream os(Arguments::output + ".stats");
   jointTree->printLoglk(true, true, true, os);
 
@@ -63,7 +65,7 @@ int internal_main(int argc, char** argv, void* comm)
 }
 
 
-#ifdef JOINSEARCH_BUILD_AS_LIB
+#ifdef JOINTSEARCH_BUILD_AS_LIB
 
 extern "C" int dll_main(int argc, char** argv, void* comm)
 {

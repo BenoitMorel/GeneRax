@@ -6,6 +6,7 @@
 set(JOINTSEARCH_SOURCES JointSearch.cpp
   Arguments.cpp
   ParallelContext.cpp
+  Logger.cpp
   likelihoods/LibpllEvaluation.cpp
   treeSearch/JointTree.cpp
   treeSearch/Moves.cpp
@@ -36,7 +37,7 @@ if (WITH_MPI)
   target_link_libraries(${PROJECT_NAME} ${MPI_LIBRARIES})
   if(MPI_COMPILE_FLAGS)
     set_target_properties(${PROJECT_NAME} PROPERTIES
-      COMPILE_FLAGS "${MPI_COMPILE_FLAGS}")
+      COMPILE_FLAGS "-g ${MPI_COMPILE_FLAGS}")
   endif()
 
   if(MPI_LINK_FLAGS)
