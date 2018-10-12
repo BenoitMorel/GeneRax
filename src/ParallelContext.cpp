@@ -81,6 +81,16 @@ void ParallelContext::broadcoastInt(int fromRank, int &value)
     comm);
 }
 
+void ParallelContext::broadcoastDouble(int fromRank, double &value)
+{
+  MPI_Bcast(
+    &value,
+    1,
+    MPI_DOUBLE,
+    fromRank,
+    comm);
+}
+
 int ParallelContext::getRankWithBestLL(double myLL, int &bestRank)
 {
   vector<double> allValues;

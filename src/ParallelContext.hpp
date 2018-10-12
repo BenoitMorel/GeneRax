@@ -16,6 +16,7 @@ public:
   static void setComm(MPI_Comm newComm);
   static void allGatherDouble(double localValue, vector<double> &allValues);
   static void broadcoastInt(int fromRank, int &value);
+  static void broadcoastDouble(int fromRank, double &value);
   static int getRankWithBestLL(double myLL, int &bestRank);
   
 
