@@ -8,7 +8,7 @@ using namespace std;
 
 using TimePoint = chrono::high_resolution_clock::time_point;
 
-class Logger
+class Logger: public ofstream
 {
 private:
   enum LoggerType {
@@ -34,10 +34,15 @@ public:
       } else if (_type == lt_timed) {
         auto finish = chrono::high_resolution_clock::now();
         chrono::duration<double> elapsed = finish - start;
-        *_os << "[" <<  chrono::duration_cast<chrono::milliseconds>(elapsed).count() / 1000.0
-          << "s] ";
+        auto seconds = chrono::duration_cast<chrono::seconds>(elapsed).count();
+        auto hours  = seconds / 3600;
+        auto minutes = (seconds % 3600) / 60;
+        seconds = seconds % 60;
+        char s[25];
+        sprintf(s, "%02d:%02d:%02d", hours, minutes, seconds);
+        *_os << "[" << s << "] ";
         *_os << t;
-        return *this;
+        return Logger::info;
       } else {
         *_os << t;
         return *this;
@@ -46,7 +51,10 @@ public:
     
   Logger& operator<<(std::ostream & (*manip)(std::ostream &)) 
   {
-    manip(*_os);
+    if (_type != lt_silent) {
+      manip(*_os);
+    }
+    return *this;
   }
 
   static Logger info;

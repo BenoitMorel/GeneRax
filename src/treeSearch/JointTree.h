@@ -10,6 +10,7 @@
 #include <likelihoods/LibpllEvaluation.h>
 #include <ale/tools/ALE/ALEevaluation.h>
 
+#include <Logger.hpp>
 #include <treeSearch/Moves.h>
 #include <omp.h>
 
@@ -50,7 +51,7 @@ public:
     double computeLibpllLoglk();
     double computeALELoglk ();
     double computeJointLoglk();
-    void printLoglk(bool libpll = true, bool ale = true, bool joint = true, ostream &os = cout);
+    void printLoglk(bool libpll = true, bool ale = true, bool joint = true, ostream &os = Logger::info);
     pll_unode_t *getNode(int index);
     void applyMove(shared_ptr<Move> move);
     void rollbackLastMove();

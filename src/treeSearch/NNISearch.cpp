@@ -7,6 +7,7 @@
 #include <treeSearch/Moves.h>
 #include <ale/tools/SpeciesGeneMapper.h>
 #include <treeSearch/SearchUtils.hpp>
+#include <Logger.hpp>
 
 void queryNNIIndicesRec(pll_unode_t * node,
                                vector<int> &buffer,
@@ -31,7 +32,7 @@ void getAllNNIIndices(JointTree &tree, vector<int> &allNodeIndices) {
 
 bool NNISearch::applyNNIRound(JointTree &jointTree, double &bestLoglk) {
   if (Arguments::verbose) {
-    cout << "Start NNI Round" << endl;
+    Logger::timed << "Start NNI Round (best ll=" << bestLoglk << ")" << endl;
   }
   shared_ptr<Move> bestMove(0);
   vector<int> allNodes;

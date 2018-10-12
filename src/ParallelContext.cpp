@@ -15,10 +15,6 @@ void ParallelContext::init(void *commPtr)
   if (ownMPIContext) {
     MPI_Init(0, 0);
   }
-  if (getRank() != 0) {
-    std::cout.rdbuf(sink.rdbuf());
-    std::cerr.rdbuf(sink.rdbuf());      
-  }
 }
 
 

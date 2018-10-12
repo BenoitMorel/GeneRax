@@ -1,5 +1,6 @@
 #include <treeSearch/Moves.h>
 #include <treeSearch/JointTree.h>
+#include <Logger.hpp>
 
 // constants taken from RAXML
 #define DEF_LH_EPSILON            0.1
@@ -99,11 +100,11 @@ SPRMove::SPRMove(int pruneIndex, int regraftIndex, const vector<int> &path):
 
 void printNode(pll_unode_s *node)
 {
-  cout << node;
+  Logger::info << node;
   if (node->next) {
-    cout << " " << node->next << " " << node->next->next;
+    Logger::info << " " << node->next << " " << node->next->next;
   }
-  cout << endl;
+  Logger::info << endl;
 }
 
 

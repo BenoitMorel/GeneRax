@@ -104,15 +104,15 @@ JointTree::JointTree(BPPTree geneTree,
 
 
 void JointTree::printLibpllTree() const {
-  printLibpllTreeRooted(evaluation_->getTreeInfo()->root, cout);
+  printLibpllTreeRooted(evaluation_->getTreeInfo()->root, Logger::info);
 }
 
 void JointTree::printBPPTree() const {
-  IO::write(*geneTree_, cout);
+  IO::write(*geneTree_, Logger::info);
 }
 
 void JointTree::printSpeciesTree() const {
-  IO::write(*speciesTree_, cout);
+  IO::write(*speciesTree_, Logger::info);
 }
 
 void JointTree::optimizeParameters() {
@@ -202,6 +202,6 @@ void JointTree::optimizeDTRates() {
     }
   }
   setRates(bestDup, bestLoss);
-  cout << " best rates: " << bestDup << " " << bestLoss << endl;
+  Logger::info << " best rates: " << bestDup << " " << bestLoss << endl;
 }
 

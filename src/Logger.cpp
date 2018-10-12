@@ -19,9 +19,11 @@ void Logger::init() {
     return;
   }
   info.setType(lt_info);
+  error.setStream(cout);
   error.setType(lt_error);
   error.setStream(cerr);
   timed.setType(lt_timed);
+  timed.setStream(cout);
   start = chrono::high_resolution_clock::now(); 
 }
 

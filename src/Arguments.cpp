@@ -1,5 +1,5 @@
 #include "Arguments.hpp"
-#include <iostream>
+#include <Logger.hpp>
 
 int Arguments::argc = 0;
 char ** Arguments::argv = 0;
@@ -48,8 +48,8 @@ void Arguments::init(int argc, char * argv[])
     } else if (arg == "--ale-weight") {
       aleWeight = atof(argv[++i]);
     } else {
-      cerr << "Unrecognized argument " << arg << endl;
-      cerr << "Aborting" << endl;
+      Logger::error << "Unrecognized argument " << arg << endl;
+      Logger::error << "Aborting" << endl;
       exit(1);
     }
   }
@@ -58,53 +58,55 @@ void Arguments::init(int argc, char * argv[])
 void Arguments::checkInputs() {
   bool ok = true;
   if (!geneTree.size()) {
-    cerr << "You need to provide a gene tree." << endl;
+    Logger::error << "You need to provide a gene tree." << endl;
     ok = false;
   }
   if (!alignment.size()) {
-    cerr << "You need to provide an alignment." << endl;
+    Logger::error << "You need to provide an alignment." << endl;
     ok = false;
   }
   if (!speciesTree.size()) {
-    cerr << "You need to provide a species tree." << endl;
+    Logger::error << "You need to provide a species tree." << endl;
     ok = false;
   }
   if (!ok) {
-    cerr << "Aborting." << endl;
+    Logger::error << "Aborting." << endl;
     exit(1);
   }
 }
 
 void Arguments::printHelp() {
-  cerr << "-h, --help" << endl;
-  cerr << "-g, --gene-tree <GENE TREE>" << endl;
-  cerr << "-a, --alignment <ALIGNMENT>" << endl;
-  cerr << "-s, --species-tree <SPECIES TREE>" << endl;
-  cerr << "--strategy <STRATEGY>" << endl;
-  cerr << "-t, --threads <THREADS NUMBER>" << endl;
-  cerr << "-p, --prefix <OUTPUT PREFIX>" << endl;
-  cerr << "--check" << endl;
-  cerr << "--verbose" << endl;
+  Logger::error << "-h, --help" << endl;
+  Logger::error << "-g, --gene-tree <GENE TREE>" << endl;
+  Logger::error << "-a, --alignment <ALIGNMENT>" << endl;
+  Logger::error << "-s, --species-tree <SPECIES TREE>" << endl;
+  Logger::error << "--strategy <STRATEGY>" << endl;
+  Logger::error << "-t, --threads <THREADS NUMBER>" << endl;
+  Logger::error << "-p, --prefix <OUTPUT PREFIX>" << endl;
+  Logger::error << "--check" << endl;
+  Logger::error << "--verbose" << endl;
+  Logger::error << endl;
 
 }
 
 void Arguments::printCommand() {
-  cout << "JointSearch was called as follow:" << endl;
+  Logger::info << "JointSearch was called as follow:" << endl;
   for (int i = 0; i < argc; ++i) {
-    cout << argv[i] << " ";
+    Logger::info << argv[i] << " ";
   }
-  cout << endl;
+  Logger::info << endl << endl;
 }
 
 void Arguments::printSummary() {
   string boolStr[2] = {string("OFF"), string("ON")};
-  cout << "Parameters summary: " << endl;
-  cout << "Gene tree: " << geneTree << endl;
-  cout << "Alignment: " << alignment << endl; 
-  cout << "Species tree: " << speciesTree << endl;
-  cout << "Strategy: " << strategy << endl;
-  cout << "Prefix: " << output << endl;
-  cout << "Threads: " << threads << endl;
-  cout << "Check mode: " << boolStr[check] << endl;
-  cout << "Verbose mode: " << boolStr[verbose] << endl;
+  Logger::info << "Parameters summary: " << endl;
+  Logger::info << "Gene tree: " << geneTree << endl;
+  Logger::info << "Alignment: " << alignment << endl; 
+  Logger::info << "Species tree: " << speciesTree << endl;
+  Logger::info << "Strategy: " << strategy << endl;
+  Logger::info << "Prefix: " << output << endl;
+  Logger::info << "Cores: " << threads << endl;
+  Logger::info << "Check mode: " << boolStr[check] << endl;
+  Logger::info << "Verbose mode: " << boolStr[verbose] << endl;
+  Logger::info << endl;
 }

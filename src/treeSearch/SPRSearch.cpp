@@ -5,6 +5,7 @@
 #include <treeSearch/JointTree.h>
 #include <treeSearch/Moves.h>
 #include <treeSearch/SearchUtils.hpp>
+#include <Logger.hpp>
 
 
 
@@ -67,7 +68,9 @@ void getRegrafts(JointTree &jointTree, int pruneIndex, int maxRadius, vector<SPR
 
 bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLoglk) {
   if (Arguments::verbose) {
-    cout << "SPR ROUND WITH RADIUS " << radius << endl;
+    Logger::timed << "Start SPR round with radius " << radius 
+      << "(best ll=" << bestLoglk << ")"
+      << endl;
   }
     shared_ptr<Move> bestMove(0);
   vector<int> allNodes;
