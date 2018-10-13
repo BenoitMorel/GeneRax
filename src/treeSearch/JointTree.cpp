@@ -206,7 +206,7 @@ void JointTree::optimizeDTRates() {
     }
   }
   int bestRank = 0;
-  ParallelContext::getRankWithBestLL(bestLL, bestRank);
+  ParallelContext::getBestLL(bestLL, bestRank);
   ParallelContext::broadcoastDouble(bestRank, bestDup);
   ParallelContext::broadcoastDouble(bestRank, bestLoss);
   setRates(bestDup, bestLoss);

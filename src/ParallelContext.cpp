@@ -91,16 +91,17 @@ void ParallelContext::broadcoastDouble(int fromRank, double &value)
     comm);
 }
 
-int ParallelContext::getRankWithBestLL(double myLL, int &bestRank)
+int ParallelContext::getBestLL(double &bestLL, int &bestRank)
 {
   vector<double> allValues;
-  allGatherDouble(myLL, allValues);
+  allGatherDouble(bestLL, allValues);
   bestRank = 0;
   for (int i = 0; i < allValues.size(); ++i) {
     if (allValues[i] > allValues[bestRank]) {
       bestRank = i;
     }
   }
+  bestLL = allValues[bestRank];
   return bestRank;
 }
 

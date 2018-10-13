@@ -17,7 +17,7 @@ public:
   static void allGatherDouble(double localValue, vector<double> &allValues);
   static void broadcoastInt(int fromRank, int &value);
   static void broadcoastDouble(int fromRank, double &value);
-  static int getRankWithBestLL(double myLL, int &bestRank);
+  static int getBestLL(double &bestLL, int &bestRank);
   
 
   static int getBegin(int elems);
