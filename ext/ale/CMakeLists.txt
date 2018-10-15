@@ -12,6 +12,7 @@ set(ale_SOURCE_FILES
   tools/IO/Nhx.cpp
   tools/ALE/ALE.cpp
   tools/ALE/exODT.cpp
+  tools/ALE/exODT_DL.cpp
   tools/ALE/fractionMissing.cpp
   tools/ALE/ALEevaluation.cpp
   )

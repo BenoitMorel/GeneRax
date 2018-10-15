@@ -7,7 +7,8 @@
 
 // Include ALE
 #include "ALE.h"
-#include "exODT.h"
+//#include "exODT.h"
+#include "exODT_DL.h"
 #include "fractionMissing.h"
 
 // Include Treerecs tools
@@ -33,7 +34,7 @@ static double evaluate(
       , long double beta = 1
       , long double O_R = 1
       , long double delta = 0.01
-      , long double tau = 0.01//0.01
+      , long double tau = 0.0//0.01
       , long double lambda = 0.1
   ) {
     auto gene_tree_str = IO::PhyloTreeToNewick(genetree);
@@ -46,7 +47,7 @@ static double evaluate(
     ale->observation(gene_tree_strs);
 
     // We initialise a coarse grained reconciliation model for calculating the sum
-    exODT_model model;
+    exODT_DL_model model;
 
     // Constructing the ALE_undated object and computing the logLk.
     model.setMap(SpeciesGeneMapper::nodeMapsToStrings(map));
@@ -57,7 +58,6 @@ static double evaluate(
     model.set_model_parameter("seq_beta", beta);
     model.set_model_parameter("O_R", O_R);
     model.set_model_parameter("delta", delta);
-    model.set_model_parameter("tau", tau);
     model.set_model_parameter("lambda", lambda);
 
     //calculate_EGb() must always be called after changing rates to calculate E-s and G-s
