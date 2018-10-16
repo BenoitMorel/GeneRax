@@ -429,7 +429,7 @@ void exODT_DL_model::inner_loop(std::shared_ptr<approx_posterior> ale, bool g_is
     }
     // DL event
     //uq_sum += PD * (uq[i][e] * uE[e] * 2);
-    if (uq_sum < EPSILON) uq_sum = EPSILON;
+    //if (uq_sum < EPSILON) uq_sum = EPSILON;
     
     uq[i][e] = uq_sum / (1.0 - 2.0 * PD * uE[e]);
   }
