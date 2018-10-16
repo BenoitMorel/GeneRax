@@ -29,7 +29,6 @@ exODT_DL_model::exODT_DL_model() {
   scalar_parameter["min_D"] = 3;
   //number of subdiscretizations for ODE calculations
   scalar_parameter["DD"] = 10;
-
 }
 
 
@@ -279,7 +278,6 @@ void exODT_DL_model::construct_undated(const std::string &Sstring, const std::st
 void exODT_DL_model::calculate_undatedEs() {
   uE.clear();
   fm.clear();
-  mPTE_ancestral_correction.clear();
 
   for (int e = 0; e < last_branch; e++) {
     scalar_type P_D = vector_parameter["delta"][e];
@@ -298,43 +296,25 @@ void exODT_DL_model::calculate_undatedEs() {
     } else {
       fm.push_back(0);
     }
-    mPTE_ancestral_correction.push_back(0);
   }
-
+  mPTE = 0;
 
 // In the loop below with 4 iterations, we calculate the mean probability mPTE for a gene to become extinct across all branches.
-  mPTE = 0;
   for (int i = 0; i < 4; i++) {
-    scalar_type newmPTE = 0;
-    if (i > 0) // There should be no need for this loop at the first iteration, because then it leaves mPTE_ancestral_correction at 0.
-    {
-      for (int edge = 0; edge < last_branch; edge++) {
-        mPTE_ancestral_correction[edge] = 0;
-        for (auto it = ancestors[edge].begin(); it != ancestors[edge].end(); it++) {
-          int f = (*it);
-          mPTE_ancestral_correction[edge] +=
-              (PT / (scalar_type) last_branch) * uE[f]; //That's how we forbid transfers to ancestors of a branch
-        }
-      }
-    }
-
     for (int e = 0; e < last_branch; e++) {
       if (e < last_leaf) // we are at a leaf, there cannot be a speciation event, but the gene has been lost
       {
-        uE[e] = PL + PD * uE[e] * uE[e] + uE[e] * (mPTE - mPTE_ancestral_correction[e]);
+        uE[e] = PL + PD * uE[e] * uE[e];
       } else // Not at a leaf: the gene was lost once on branch e, or on all descendants, including after speciation
       {
         int f = daughter[e];
         int g = son[e];
-        uE[e] = PL + PS * uE[f] * uE[g] + PD * uE[e] * uE[e] + uE[e] * (mPTE - mPTE_ancestral_correction[e]);
+        uE[e] = PL + PS * uE[f] * uE[g] + PD * uE[e] * uE[e];
       }
-      newmPTE += (PT / (scalar_type) last_branch) * uE[e];
     }
-    mPTE = newmPTE;
   } // End of the loop to compute mPTE
 
   // Now we add one more update of mPTE to take into account the fraction of missing genes, which had been ignored so far.
-  scalar_type newmPTE = 0;
   for (int e = 0; e < last_branch; e++) {
     if (e < last_leaf) // we are at a leaf: either the gene has been lost, or it is one of those missing genes
     {
@@ -343,19 +323,15 @@ void exODT_DL_model::calculate_undatedEs() {
     {
       int f = daughter[e];
       int g = son[e];
-      uE[e] = PL + PS * uE[f] * uE[g] + PD * uE[e] * uE[e] + uE[e] * (mPTE - mPTE_ancestral_correction[e]);
+      uE[e] = PL + PS * uE[f] * uE[g] + PD * uE[e] * uE[e];
     }
-    newmPTE += (PT / (scalar_type) last_branch) * uE[e];
   }
-  mPTE = newmPTE;
 
 }
 
 void  exODT_DL_model::clear_all()
 {
-  mPTuq_ancestral_correction.clear();
   uq.clear();
-  mPTuq.clear();//XX
 
   //directed partitions and their sizes
   g_ids.clear();
@@ -413,51 +389,50 @@ void exODT_DL_model::gene_secies_mapping(std::shared_ptr<approx_posterior> ale)
   }
 }
 
-void exODT_DL_model::inner_loop(std::shared_ptr<approx_posterior> ale, bool is_a_leaf,
+void exODT_DL_model::inner_loop(std::shared_ptr<approx_posterior> ale, bool g_is_a_leaf,
                              long int &g_id,
                              std::vector<int> &gp_is,
                              std::vector<long int> &gpp_is,
                              std::vector<scalar_type> &p_part,
-                             int i,
-                             scalar_type &new_mPTuq) {
+                             int i) {
   for (int e = 0; e < last_branch; e++) {
+    bool s_is_leaf = (e < last_leaf);
     int f = 0;
     int g = 0;
-    if (not(e < last_leaf)) {
+    if (not s_is_leaf) {
       f = daughter[e];
       g = son[e];
     }
     scalar_type uq_sum = 0;
     // S leaf and G leaf
-    if (e < last_leaf and is_a_leaf and extant_species[e] == gid_sps[g_id]) {
+    if (e < last_leaf and g_is_a_leaf and extant_species[e] == gid_sps[g_id]) {
       // present
-      uq_sum += PS * 1;
+      uq_sum += PS;
     }
     // G internal
-    if (not is_a_leaf) {
+    if (not g_is_a_leaf) {
       int N_parts = gp_is.size();
       for (int i = 0; i < N_parts; i++) {
         int gp_i = gp_is[i];
         int gpp_i = gpp_is[i];
         scalar_type pp = p_part[i];
-        if (not(e < last_leaf)) {
+        if (not s_is_leaf) {
           uq_sum += PS * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]) * pp;
         }
         // D event
         uq_sum += PD * (uq[gp_i][e] * uq[gpp_i][e] * 2) * pp;
       }
     }
-    if (not(e < last_leaf)) {
+    if (not s_is_leaf) {
       // SL event
       uq_sum += PS * (uq[i][f] * uE[g] + uq[i][g] * uE[f]);
     }
     // DL event
-    uq_sum += PD * (uq[i][e] * uE[e] * 2);
+    //uq_sum += PD * (uq[i][e] * uE[e] * 2);
     if (uq_sum < EPSILON) uq_sum = EPSILON;
-    uq[i][e] = uq_sum;
+    
+    uq[i][e] = uq_sum / (1.0 - 2.0 * PD * uE[e]);
   }
-  mPTuq[i] = new_mPTuq;
-
 }
 
 scalar_type exODT_DL_model::pun(std::shared_ptr<approx_posterior> ale, bool verbose) {
@@ -480,27 +455,20 @@ scalar_type exODT_DL_model::pun(std::shared_ptr<approx_posterior> ale, bool verb
     if (not(i < (int) uq.size())) {
       std::vector<scalar_type> tmp;
       uq.push_back(tmp);
-      std::vector<scalar_type> tmp2;
-      mPTuq_ancestral_correction.push_back(tmp2);
 
-      mPTuq.push_back(0);
-    } else
-      mPTuq[i] = 0;
+    } 
 
     for (int e = 0; e < last_branch; e++)
       if (not(e < (int) uq[i].size())) {
         uq[i].push_back(0);
-        mPTuq_ancestral_correction[i].push_back(0);
       } else {
         uq[i][e] = 0;
-        mPTuq_ancestral_correction[i][e] = 0;
       }
   }
 
-  for (int iter = 0; iter < 4; iter++) {
+  for (int iter = 0; iter < 1; iter++) {
     for (int i = 0; i < (int) g_ids.size(); i++) {
 
-      scalar_type new_mPTuq = 0;
 
       // directed partition (dip) gamma's id
       bool is_a_leaf = false;
@@ -510,7 +478,7 @@ scalar_type exODT_DL_model::pun(std::shared_ptr<approx_posterior> ale, bool verb
       std::vector<int> gp_is;
       std::vector<long int> gpp_is;
       std::vector<scalar_type> p_part;
-      if (g_id != -1)
+      if (g_id != -1) {
         for (std::unordered_map<std::pair<long int, long int>, scalar_type>::iterator kt = ale->Dip_counts[g_id].begin();
              kt != ale->Dip_counts[g_id].end(); kt++) {
           std::pair<long int, long int> parts = (*kt).first;
@@ -526,7 +494,7 @@ scalar_type exODT_DL_model::pun(std::shared_ptr<approx_posterior> ale, bool verb
             p_part.push_back(
                 pow((scalar_type) ale->p_dip(g_id, gp_id, gpp_id), (scalar_type) scalar_parameter["seq_beta"]));//set pp
         }
-      else {
+      } else {
         //XX
         //root bipartition needs to be handled separately
         std::map<std::set<long int>, int> bip_parts;
@@ -571,7 +539,7 @@ scalar_type exODT_DL_model::pun(std::shared_ptr<approx_posterior> ale, bool verb
       //#########################################INNNER LOOP##################################################################
       //######################################################################################################################
 
-      inner_loop(ale, is_a_leaf, g_id, gp_is, gpp_is, p_part, i, new_mPTuq);
+      inner_loop(ale, is_a_leaf, g_id, gp_is, gpp_is, p_part, i);
       //######################################################################################################################
       //#########################################INNNER LOOP##################################################################
       //######################################################################################################################

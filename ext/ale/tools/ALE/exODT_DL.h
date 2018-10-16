@@ -63,7 +63,6 @@ public:
   int root_i;
   std::vector<std::vector<scalar_type> > uq;
   std::vector<scalar_type> mPTuq;
-  std::vector<std::vector<scalar_type> > mPTuq_ancestral_correction;
 
   scalar_type PD; // Duplication probability, per branch
   scalar_type PT; // Transfer probability, per branch
@@ -84,13 +83,13 @@ public:
   void clear_all();
   void step_one(std::shared_ptr<approx_posterior> ale);
   void gene_secies_mapping(std::shared_ptr<approx_posterior> ale);
-  void inner_loop(std::shared_ptr<approx_posterior> ale, bool is_a_leaf,
+  void inner_loop(std::shared_ptr<approx_posterior> ale, bool g_is_a_leaf,
                   long int &g_id,
                   std::vector<int> &gp_is,
                   std::vector<long int> &gpp_is,
                   std::vector<scalar_type> &p_part,
-                  int i,
-                  scalar_type &new_mPTuq);
+                  int i
+                  );
   scalar_type pun(std::shared_ptr<approx_posterior> ale, bool verbose = false);
   //std::string feSPR(int e, int f);
   //std::vector<std::string> NNIs(int e);

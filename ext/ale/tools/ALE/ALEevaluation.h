@@ -5,10 +5,15 @@
 #ifndef TREERECS_ALEEVALUATION_H
 #define TREERECS_ALEEVALUATION_H
 
+//#define DTL
+
 // Include ALE
 #include "ALE.h"
-//#include "exODT.h"
+#ifdef DTL
+#include "exODT.h"
+#else
 #include "exODT_DL.h"
+#endif
 #include "fractionMissing.h"
 
 // Include Treerecs tools
@@ -34,7 +39,7 @@ static double evaluate(
       , long double beta = 1
       , long double O_R = 1
       , long double delta = 0.01
-      , long double tau = 0.0//0.01
+      , long double tau = 0.01
       , long double lambda = 0.1
   ) {
     auto gene_tree_str = IO::PhyloTreeToNewick(genetree);
@@ -47,8 +52,11 @@ static double evaluate(
     ale->observation(gene_tree_strs);
 
     // We initialise a coarse grained reconciliation model for calculating the sum
+#ifdef DTL
+    exODT_model model;
+#else
     exODT_DL_model model;
-
+#endif
     // Constructing the ALE_undated object and computing the logLk.
     model.setMap(SpeciesGeneMapper::nodeMapsToStrings(map));
     model.set_model_parameter("BOOTSTRAP_LABELS", "yes");
@@ -58,6 +66,7 @@ static double evaluate(
     model.set_model_parameter("seq_beta", beta);
     model.set_model_parameter("O_R", O_R);
     model.set_model_parameter("delta", delta);
+    model.set_model_parameter("tau", tau);
     model.set_model_parameter("lambda", lambda);
 
     //calculate_EGb() must always be called after changing rates to calculate E-s and G-s
