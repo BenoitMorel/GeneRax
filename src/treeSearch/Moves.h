@@ -1,7 +1,7 @@
 #ifndef _MOVES_H_
 #define _MOVES_H_
 
-#include <likelihoods/LibpllEvaluation.h>
+#include <likelihoods/LibpllEvaluation.hpp>
 #include <treeSearch/Rollbacks.hpp>
 #include <memory>
 

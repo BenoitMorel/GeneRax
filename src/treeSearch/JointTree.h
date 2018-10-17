@@ -7,8 +7,8 @@
 #include <ale/tools/Utils.h>
 #include <ale/tools/SpeciesGeneMapper.h>
 
-#include <likelihoods/LibpllEvaluation.h>
-#include <ale/tools/ALE/ALEevaluation.h>
+#include <likelihoods/LibpllEvaluation.hpp>
+#include <likelihoods/ALEEvaluation.hpp>
 
 #include <Logger.hpp>
 #include <treeSearch/Moves.h>

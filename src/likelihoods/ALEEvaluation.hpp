@@ -1,20 +1,15 @@
-// Treerecs – Copyright © by INRIA – All rights reserved – 2017
-// Created by comten on 14/08/17.
-//
 
-#ifndef TREERECS_ALEEVALUATION_H
-#define TREERECS_ALEEVALUATION_H
-
-//#define DTL
+#ifndef JOINTSEARCH_ALEEVALUATION_HPP
+#define JOINTSEARCH_ALEEVALUATION_HPP
 
 // Include ALE
-#include "ALE.h"
+#include <ale/tools/ALE/ALE.h>
 #ifdef DTL
-#include "exODT.h"
+#include <ale/tools/ALE/exODT.h>
 #else
-#include "exODT_DL.h"
+#include <ale/tools/ALE/exODT_DL.h>
 #endif
-#include "fractionMissing.h"
+#include <ale/tools/ALE/fractionMissing.h>
 
 // Include Treerecs tools
 #include <ale/tools/SpeciesGeneMapper.h>
@@ -72,7 +67,6 @@ static double evaluate(
     //calculate_EGb() must always be called after changing rates to calculate E-s and G-s
     //cf. http://arxiv.org/abs/1211.4606
     model.calculate_undatedEs();
-    double loglK1 = (double)std::log(model.pun(ale, false));
     double loglK = (double)std::log(model.pun(ale, false));
 
     return loglK;

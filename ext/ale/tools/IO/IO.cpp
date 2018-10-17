@@ -2,7 +2,6 @@
 // Created by Nicolas Comte on 28/12/16.
 //
 
-#include <tools/ALE/ALEevaluation.h>
 #include "IO.h"
 
 // Include Bpp
@@ -10,7 +9,6 @@
 
 // Include Treerecs-code
 #include <ale/tools/PhyloTreeToolBox.h>
-#include <ale/tools/ALE/ALEevaluation.h>
 #include <ale/tools/Utils.h>
 
 /// bpp::Newick module.

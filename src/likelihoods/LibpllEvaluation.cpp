@@ -6,7 +6,7 @@ extern "C" {
   #include <pllmod_common.h>
 }
 
-#include "LibpllEvaluation.h"
+#include "LibpllEvaluation.hpp"
 #include <Bpp/Phyl/Tree/PhyloTree.h>
 #include <ale/tools/IO/Newick.h>
 #include <map>

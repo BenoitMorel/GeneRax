@@ -14,7 +14,6 @@ set(ale_SOURCE_FILES
   tools/ALE/exODT.cpp
   tools/ALE/exODT_DL.cpp
   tools/ALE/fractionMissing.cpp
-  tools/ALE/ALEevaluation.cpp
   )
 
 add_library(ale

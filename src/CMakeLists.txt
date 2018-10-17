@@ -8,6 +8,7 @@ set(JOINTSEARCH_SOURCES JointSearch.cpp
   ParallelContext.cpp
   Logger.cpp
   likelihoods/LibpllEvaluation.cpp
+  likelihoods/ALEEvaluation.cpp
   treeSearch/JointTree.cpp
   treeSearch/Moves.cpp
   treeSearch/Rollbacks.cpp
