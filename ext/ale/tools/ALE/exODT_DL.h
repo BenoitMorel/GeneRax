@@ -24,12 +24,8 @@ public:
 
   std::map<std::string, std::shared_ptr<bpp::PhyloNode>> name_node;
   std::map<std::shared_ptr<bpp::PhyloNode>, std::string> node_name;
-  std::vector<std::vector<int> > ancestral;
-  std::vector<std::vector<int> > ancestors; // contains the ancestors of a given branch; useful to forbid transfers to them.
 
   std::vector<scalar_type> uE; // Probability for a gene to become extinct on each branch
-  scalar_type mPTE; // Mean probability across all branches for a gene to be transferred to branch h and then become extinct on that branch h
-  int root_i;
   std::vector<std::vector<scalar_type> > uq;
 
   scalar_type PD; // Duplication probability, per branch

@@ -72,6 +72,7 @@ static double evaluate(
     //calculate_EGb() must always be called after changing rates to calculate E-s and G-s
     //cf. http://arxiv.org/abs/1211.4606
     model.calculate_undatedEs();
+    double loglK1 = (double)std::log(model.pun(ale, false));
     double loglK = (double)std::log(model.pun(ale, false));
 
     return loglK;

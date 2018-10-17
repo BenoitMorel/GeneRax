@@ -14,21 +14,6 @@ using namespace bpp;
 using namespace std;
 
 exODT_DL_model::exODT_DL_model() {
-  //some default parameters
-  string_parameter["BOOTSTRAP_LABELS"] = "no";
-  string_parameter["gene_name_separators"] = "_@";
-  scalar_parameter["species_field"] = 0;
-  scalar_parameter["event_node"] = 0;
-  scalar_parameter["min_bip_count"] = -1;
-  scalar_parameter["min_branch_lenghts"] = 0;
-  // length of "stem" branch above root
-  scalar_parameter["stem_length"] = 1;
-  //number of discretization slices (subslices) per time slice
-  scalar_parameter["D"] = 3;
-  scalar_parameter["grid_delta_t"] = 0.005;
-  scalar_parameter["min_D"] = 3;
-  //number of subdiscretizations for ODE calculations
-  scalar_parameter["DD"] = 10;
 }
 
 
@@ -55,17 +40,13 @@ void exODT_DL_model::set_model_parameter(std::string name, scalar_type value) {
 }
 
 
-static scalar_type EPSILON = std::numeric_limits<scalar_type>::min();
-
 void exODT_DL_model::construct_undated(const std::string &Sstring, const std::string &fractionMissingFile) {
   daughter.clear();
   son.clear();
   name_node.clear();
   node_name.clear();
   node_ids.clear();
-
-  string_parameter["S_un"] = Sstring;
-  S = std::shared_ptr<tree_type>(IO::newickToPhyloTree(string_parameter["S_un"], true));
+  S = std::shared_ptr<tree_type>(IO::newickToPhyloTree(Sstring, true));
   // For each node from the speciestree
   //std::vector<std::shared_ptr<bpp::PhyloNode>> nodes = S->getAllNodes();
   auto nodes = PhyloTreeToolBox::getNodesInPostOrderTraversalRecursive_list(*S);
@@ -145,18 +126,14 @@ void exODT_DL_model::construct_undated(const std::string &Sstring, const std::st
         auto sons = S->getSons(father);
         decltype(node) sister;
 
-        if (sons[0] == node) sister = sons[1];
-        else sister = sons[0];
+        if (sons[0] == node) 
+          sister = sons[1];
+        else 
+          sister = sons[0];
 
         if (not node_ids.count(father) and saw.count(sister)) {
           node_ids[father] = last_branch;
-          std::stringstream name;
-          name << last_branch;
-          if (S->hasFather(father) and S->getEdgeToFather(father))
-              S->getEdgeToFather(father)->setProperty("ID", BppString(name.str()));
-
           last_branch++;
-
           saw.insert(father);
           new_generation.push_back(father);
         }
@@ -167,72 +144,6 @@ void exODT_DL_model::construct_undated(const std::string &Sstring, const std::st
          it != new_generation.end(); it++)
       next_generation.push_back((*it));
   }
-  // End of the ad-hoc post-order constitution
-
-  // Collect each bootstrap value (from upper branch of a given node).
-  // If the edge has no bootstrap, set default value as -1.
-  // This, labels the bootstrap.
-  // Each branch is edited with a property "ID".
-  for (auto it = node_ids.begin(); it != node_ids.end(); it++) {
-    auto node = (*it).first;
-    int branch = (*it).second;
-    std::stringstream out;
-    std::stringstream out1;
-    std::stringstream out2;
-    out1 << 0.0;
-    out2 << 0.0;
-    int rank = branch;
-    out << rank;
-    if (S->hasFather(node) and S->getEdgeToFather(node))
-      S->getEdgeToFather(node)->setProperty("ID", BppString(out.str()));
-  }
-
-  // Save the resulting speciestree with the "ID" label at each branch.
-  string_parameter["S_with_ranks"] = IO::PhyloTreeToNewick(*S, false, "ID");
-
-  // Initialize the ancestor matrix (nb_branches x bn_branches) with zeros.
-  // Value take one if node has parent's relationship with an other.
-  ancestral.clear();
-  ancestral.resize(last_branch);
-  for (int e = 0; e < last_branch; e++) {
-    ancestral[e].resize(last_branch);
-    ancestors.push_back(std::vector<int>());
-    for (int f = 0; f < last_branch; f++)
-      ancestral[e][f] = 0;
-  }
-
-  // For each node in the species tree, fill ancestral_names and ancestral which are both binary matrices.
-  for (auto it = nodes.begin(); it != nodes.end(); it++) {
-    auto node = (*it);
-    int edge = node_ids[node];
-    std::stringstream name_from; //contains node name or edge if it's root.
-    if (edge < last_leaf)
-      name_from << node_name[node];
-    else
-      name_from << edge;
-
-    std::map<std::string, int> tmp;
-    while (S->hasFather(node)) { //While we are not at the root.
-      std::stringstream name_to;
-      int f = node_ids[node];
-      if (f < last_leaf)
-        name_to << node_name[node];
-      else
-        name_to << f;
-
-      node = S->getFather(node);
-      if (not ancestral[edge][f])
-        ancestors[edge].push_back(f);
-
-      ancestral[edge][f] = 1;
-    }
-    std::stringstream name_to;
-    int f = node_ids[node];
-    name_to << f;
-    if (not ancestral[edge][f])
-      ancestors[edge].push_back(f);
-    ancestral[edge][f] = 1;
-  }
 
   // Fill daughter and son maps. Daughter contains son left and son son right of a node.
   for (auto it = name_node.begin(); it != name_node.end(); it++) {
@@ -242,17 +153,10 @@ void exODT_DL_model::construct_undated(const std::string &Sstring, const std::st
       auto sons = S->getSons(node);//node->getSons();
       daughter[node_ids[node]] = node_ids[sons[0]];
       son[node_ids[node]] = node_ids[sons[1]];
-      //cout << node_ids[node] << " => " << node_ids[sons[0]] << " & " << node_ids[sons[1]] << endl;
-      //cout << node_name[node] << " => " << node_name[sons[0]] << " & " << node_name[sons[1]] << endl;
-
     }
   }
-
-
   last_rank = last_branch;
   set_model_parameter("N", 1);
-
-
 }
 
 void exODT_DL_model::calculate_undatedEs() {
@@ -289,8 +193,6 @@ void  exODT_DL_model::step_one(std::shared_ptr<approx_posterior> ale) {
   //root bipartition needs to be handled separately
   g_ids.push_back(-1);
   g_id_sizes.push_back(ale->Gamma_size);
-
-  root_i = g_ids.size() - 1;
 }
 
 void exODT_DL_model::gene_secies_mapping(std::shared_ptr<approx_posterior> ale)
@@ -375,96 +277,81 @@ scalar_type exODT_DL_model::pun(std::shared_ptr<approx_posterior> ale, bool verb
   scalar_type survive = 0;
   scalar_type root_sum = 0;
   scalar_type O_norm = 0;
-
-  uq.clear();
+  
   g_ids.clear();
   g_id_sizes.clear();
   step_one(ale);
   gene_secies_mapping(ale);
 
-
   for (int i = 0; i < (int) g_ids.size(); i++) {
     long int g_id = g_ids[i];
     g_id2i[g_id] = i;
-
-    if (not(i < (int) uq.size())) {
-      std::vector<scalar_type> tmp;
-      uq.push_back(tmp);
-
-    } 
-
-    for (int e = 0; e < last_branch; e++)
-      if (not(e < (int) uq[i].size())) {
-        uq[i].push_back(0);
-      } else {
-        uq[i][e] = 0;
-      }
   }
+  vector<scalar_type> zeros(last_branch, 0.0);
+  uq = vector<vector<scalar_type>>(g_ids.size(),zeros);
 
-  for (int iter = 0; iter < 1; iter++) {
-    for (int i = 0; i < (int) g_ids.size(); i++) {
-      // directed partition (dip) gamma's id
-      long int g_id = g_ids[i];
-      bool is_a_leaf = (g_id_sizes[i] == 1);
-      std::vector<int> gp_is;
-      std::vector<long int> gpp_is;
-      if (g_id != -1) {
-        for (std::unordered_map<std::pair<long int, long int>, scalar_type>::iterator kt = ale->Dip_counts[g_id].begin();
-             kt != ale->Dip_counts[g_id].end(); kt++) {
-          std::pair<long int, long int> parts = (*kt).first;
-          long int gp_id = parts.first;
-          long int gpp_id = parts.second;
-          int gp_i = g_id2i[parts.first];
-          int gpp_i = g_id2i[parts.second];
-          gp_is.push_back(gp_i);
-          gpp_is.push_back(gpp_i);
-        }
-      } else {
-        //XX
-        //root bipartition needs to be handled separately
-        std::map<std::set<long int>, int> bip_parts;
-        for (std::map<long int, scalar_type>::iterator it = ale->Bip_counts.begin();
-             it != ale->Bip_counts.end(); it++) {
-          long int gp_id = (*it).first;
-          boost::dynamic_bitset<> gamma = ale->id_sets.at(gp_id);
-          boost::dynamic_bitset<> not_gamma = ~gamma;
-          not_gamma[0] = 0;
-          long int gpp_id = ale->set_ids.at(not_gamma);
-
-          std::set<long int> parts;
-          parts.insert(gp_id);
-          parts.insert(gpp_id);
-          bip_parts[parts] = 1;
-        }
-        for (std::map<std::set<long int>, int>::iterator kt = bip_parts.begin(); kt != bip_parts.end(); kt++) {
-          std::vector<long int> parts;
-          for (std::set<long int>::iterator sit = (*kt).first.begin(); sit != (*kt).first.end(); sit++) {
-            parts.push_back((*sit));
-          }
-          long int gp_id = parts[0];
-          int gp_i = g_id2i[parts[0]];
-          int gpp_i = g_id2i[parts[1]];
-          gp_is.push_back(gp_i);
-          gpp_is.push_back(gpp_i);
-        }
-        bip_parts.clear();
+  for (int i = 0; i < (int) g_ids.size(); i++) {
+    // directed partition (dip) gamma's id
+    long int g_id = g_ids[i];
+    bool is_a_leaf = (g_id_sizes[i] == 1);
+    std::vector<int> gp_is;
+    std::vector<long int> gpp_is;
+    if (g_id != -1) {
+      for (std::unordered_map<std::pair<long int, long int>, scalar_type>::iterator kt = ale->Dip_counts[g_id].begin();
+          kt != ale->Dip_counts[g_id].end(); kt++) {
+        std::pair<long int, long int> parts = (*kt).first;
+        long int gp_id = parts.first;
+        long int gpp_id = parts.second;
+        int gp_i = g_id2i[parts.first];
+        int gpp_i = g_id2i[parts.second];
+        gp_is.push_back(gp_i);
+        gpp_is.push_back(gpp_i);
       }
-      inner_loop(ale, is_a_leaf, g_id, gp_is, gpp_is, i);
+    } else {
+      //XX
+      //root bipartition needs to be handled separately
+      std::map<std::set<long int>, int> bip_parts;
+      for (std::map<long int, scalar_type>::iterator it = ale->Bip_counts.begin();
+          it != ale->Bip_counts.end(); it++) {
+        long int gp_id = (*it).first;
+        boost::dynamic_bitset<> gamma = ale->id_sets.at(gp_id);
+        boost::dynamic_bitset<> not_gamma = ~gamma;
+        not_gamma[0] = 0;
+        long int gpp_id = ale->set_ids.at(not_gamma);
+
+        std::set<long int> parts;
+        parts.insert(gp_id);
+        parts.insert(gpp_id);
+        bip_parts[parts] = 1;
+      }
+      for (std::map<std::set<long int>, int>::iterator kt = bip_parts.begin(); kt != bip_parts.end(); kt++) {
+        std::vector<long int> parts;
+        for (std::set<long int>::iterator sit = (*kt).first.begin(); sit != (*kt).first.end(); sit++) {
+          parts.push_back((*sit));
+        }
+        long int gp_id = parts[0];
+        int gp_i = g_id2i[parts[0]];
+        int gpp_i = g_id2i[parts[1]];
+        gp_is.push_back(gp_i);
+        gpp_is.push_back(gpp_i);
+      }
+      bip_parts.clear();
     }
-    survive = 0;
-    root_sum = 0;
-    O_norm = 0;
-    for (int e = 0; e < last_branch; e++) {
-      scalar_type O_p = 1;
-      if (e == (last_branch - 1)) O_p = scalar_parameter["O_R"];
-      O_norm += O_p;
-      root_sum += uq[root_i][e] * O_p;
-      survive += (1 - uE[e]);
-    }
+    inner_loop(ale, is_a_leaf, g_id, gp_is, gpp_is, i);
+  }
+  survive = 0;
+  root_sum = 0;
+  O_norm = 0;
+  for (int e = 0; e < last_branch; e++) {
+    scalar_type O_p = 1;
+    if (e == (last_branch - 1)) 
+      O_p = scalar_parameter["O_R"];
+    O_norm += O_p;
+    root_sum += uq[g_ids.size() - 1][e] * O_p;
+    survive += (1 - uE[e]);
   }
   return root_sum / survive / O_norm * (last_branch);
-
 }
-  
+
 exODT_DL_model::~exODT_DL_model() { }
 
