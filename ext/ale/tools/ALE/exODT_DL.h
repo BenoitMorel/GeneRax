@@ -6,10 +6,6 @@
 
 class exODT_DL_model {
 public:
-  std::map<std::string, scalar_type> scalar_parameter;//del_loc
-  std::map<std::string, std::vector<scalar_type> > vector_parameter;//del_loc
-  std::map<std::string, std::string> string_parameter;//del_loc
-
   int alpha;
   int last_branch;
   int last_rank;
@@ -40,9 +36,20 @@ public:
   std::vector<long int> g_id_sizes;
   std::map<long int, int> g_id2i;
 
+  scalar_type O_R;
+  scalar_type delta;
+  scalar_type lambda;
 
 
 public:
+  void setRates( 
+    scalar_type OR,
+    scalar_type dupRate,
+    scalar_type lossRate) {
+    O_R = OR;
+    delta = dupRate;
+    lambda = lossRate;
+  }
   void construct_undated(const std::string &Sstring,
                          const std::string &fractionMissingFile = ""); //Constructs an object given a species tree and file containing fractions of missing genes per species.
   void calculate_undatedEs();
@@ -63,12 +70,7 @@ public:
 
   exODT_DL_model();
   ~exODT_DL_model();
-  void set_model_parameter(std::string name, std::string value);    //Sets the value of a string parameter.
-  void set_model_parameter(std::string, scalar_type);               //Sets the value of a scalar parameter.
   void reset() {
-    scalar_parameter.clear();
-    vector_parameter.clear();
-    string_parameter.clear();
     uE.clear();
     uq.clear();
     gid_sps.clear();

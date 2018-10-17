@@ -59,7 +59,7 @@ public:
     void updateBPPTree();
     BPPTree getGeneTree();
     shared_ptr<pllmod_treeinfo_t> getTreeInfo();
-    void setRates(double dup, double loss) { dupRate_ = dup; lossRate_ = loss;}
+    void setRates(double dup, double loss);
     void optimizeDTRates();
 private:
     shared_ptr<LibpllEvaluation> evaluation_;
@@ -73,6 +73,8 @@ private:
     double transferRate_;
     stack<shared_ptr<Rollback> > rollbacks_;
     double aleWeight_;
+    double aleLL_;
+    bool needAleRecomputation_;
 };
 
 #endif

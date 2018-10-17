@@ -19,18 +19,9 @@ public:
   ALEEvaluation(const bpp::PhyloTree& speciestree,
     const SpeciesGeneMap& map);
 
-  void setRates(double dupRate, double lossRates);
+  void setRates(double dupRate, double lossRate);
 
-  double evaluate(const bpp::PhyloTree& genetree,
-    const bpp::PhyloTree& speciestree,
-    const SpeciesGeneMap& map,
-    long double beta = 1,
-    long double O_R = 1,
-    long double delta = 0.01,
-    long double tau = 0.01,
-    long double lambda = 0.1
-    );
-
+  double evaluate(const bpp::PhyloTree& genetree);
 private:
 #ifdef DTL
   exODT_model model;

@@ -17,25 +17,6 @@ exODT_DL_model::exODT_DL_model() {
 }
 
 
-void exODT_DL_model::set_model_parameter(std::string name, std::string value) {
-  string_parameter[name] = value;
-}
-
-
-void exODT_DL_model::set_model_parameter(std::string name, scalar_type value) {
-  if (name == "delta" or name == "lambda") {
-    vector_parameter[name].clear();
-    for (int branch = 0; branch < last_branch; branch++)
-      vector_parameter[name].push_back(value);
-    scalar_parameter[name + "_avg"] = value;
-
-  } else if (name == "Delta_bar" or name == "Lambda_bar") {
-    vector_parameter[name].clear();
-    for (int rank = 0; rank < last_rank; rank++)
-      vector_parameter[name].push_back(value);
-  } else
-    scalar_parameter[name] = value;
-}
 
 
 void exODT_DL_model::construct_undated(const std::string &Sstring, const std::string &fractionMissingFile) {
@@ -157,8 +138,8 @@ void exODT_DL_model::construct_undated(const std::string &Sstring, const std::st
 }
 
 void exODT_DL_model::calculate_undatedEs() {
-  scalar_type P_D = vector_parameter["delta"][0];
-  scalar_type P_L = vector_parameter["lambda"][0];
+  scalar_type P_D = delta;
+  scalar_type P_L = lambda;
   scalar_type P_S = 1;
   scalar_type sum = P_D + P_L + P_S;
   PD = P_D / sum;
@@ -342,7 +323,7 @@ scalar_type exODT_DL_model::pun(std::shared_ptr<approx_posterior> ale, bool verb
   for (int e = 0; e < last_branch; e++) {
     scalar_type O_p = 1;
     if (e == (last_branch - 1)) 
-      O_p = scalar_parameter["O_R"];
+      O_p = O_R;
     O_norm += O_p;
     root_sum += uq[g_ids.size() - 1][e] * O_p;
     survive += (1 - uE[e]);

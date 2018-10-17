@@ -72,9 +72,9 @@ JointTree::JointTree(const string &newick_file,
   dupRate_(dupRate),
   lossRate_(lossRate),
   transferRate_(0.0),
-  aleWeight_(Arguments::aleWeight)
+  aleWeight_(Arguments::aleWeight),
+  needAleRecomputation_(true)
 {
-
   info_.alignmentFilename = alignment_file;
   info_.model = "GTR";
   evaluation_ = LibpllEvaluation::buildFromFile(newick_file, info_);
@@ -84,6 +84,7 @@ JointTree::JointTree(const string &newick_file,
   map_ = SpeciesGeneMapper::map(
       geneTrees.begin(), geneTrees.end(), *speciesTree_, trees)[0];
   aleEvaluation_ = make_shared<ALEEvaluation>(*speciesTree_, map_);
+  setRates(dupRate, lossRate);
 }
 
 JointTree::JointTree(BPPTree geneTree,
@@ -99,9 +100,12 @@ JointTree::JointTree(BPPTree geneTree,
   dupRate_(dupRate),
   lossRate_(lossRate),
   transferRate_(0.0),
-  aleWeight_(Arguments::aleWeight)
+  aleWeight_(Arguments::aleWeight),
+  needAleRecomputation_(true)
 {
   updateBPPTree();
+  aleEvaluation_ = make_shared<ALEEvaluation>(*speciesTree_, map_);
+  setRates(dupRate, lossRate);
 }
 
 
@@ -126,11 +130,11 @@ double JointTree::computeLibpllLoglk() {
 }
 
 double JointTree::computeALELoglk () {
-  auto genetree_copy = PhyloTreeToolBox::cloneTree(*geneTree_);
-  PhyloTreeToolBox::removeArtificialGenes(*genetree_copy);
-  aleEvaluation_->setRates(dupRate_, lossRate_);
-  double ale_loglk = aleEvaluation_->evaluate(*genetree_copy, *speciesTree_, map_, 1, 1, dupRate_, transferRate_, lossRate_);
-  return aleWeight_ * ale_loglk;
+  if (needAleRecomputation_) {
+    aleLL_ = aleEvaluation_->evaluate(*geneTree_);
+    needAleRecomputation_ = false;
+  }
+  return aleWeight_ * aleLL_;
 }
 
 double JointTree::computeJointLoglk() {
@@ -174,6 +178,7 @@ void JointTree::save(const string &fileName) {
 
 void JointTree::updateBPPTree() {
   geneTree_ = buildFromLibpll(evaluation_, evaluation_->getTreeInfo()->root);
+  needAleRecomputation_ = true;
 }
 
 BPPTree JointTree::getGeneTree() {
@@ -213,5 +218,12 @@ void JointTree::optimizeDTRates() {
   ParallelContext::broadcoastDouble(bestRank, bestLoss);
   setRates(bestDup, bestLoss);
   Logger::info << " best rates: " << bestDup << " " << bestLoss << endl;
+}
+
+void JointTree::setRates(double dup, double loss) { 
+  dupRate_ = dup; 
+  lossRate_ = loss;
+  aleEvaluation_->setRates(dup, loss);
+  needAleRecomputation_ = true;
 }
 
