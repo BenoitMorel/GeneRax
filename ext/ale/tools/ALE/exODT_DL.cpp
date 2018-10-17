@@ -23,15 +23,13 @@ void exODT_DL_model::set_model_parameter(std::string name, std::string value) {
 
 
 void exODT_DL_model::set_model_parameter(std::string name, scalar_type value) {
-
   if (name == "delta" or name == "lambda") {
-    scalar_type N = vector_parameter["N"][0];
     vector_parameter[name].clear();
     for (int branch = 0; branch < last_branch; branch++)
       vector_parameter[name].push_back(value);
     scalar_parameter[name + "_avg"] = value;
 
-  } else if (name == "N" or name == "Delta_bar" or name == "Lambda_bar") {
+  } else if (name == "Delta_bar" or name == "Lambda_bar") {
     vector_parameter[name].clear();
     for (int rank = 0; rank < last_rank; rank++)
       vector_parameter[name].push_back(value);
@@ -156,7 +154,6 @@ void exODT_DL_model::construct_undated(const std::string &Sstring, const std::st
     }
   }
   last_rank = last_branch;
-  set_model_parameter("N", 1);
 }
 
 void exODT_DL_model::calculate_undatedEs() {

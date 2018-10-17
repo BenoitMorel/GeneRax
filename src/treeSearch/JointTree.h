@@ -62,7 +62,8 @@ public:
     void setRates(double dup, double loss) { dupRate_ = dup; lossRate_ = loss;}
     void optimizeDTRates();
 private:
-    std::shared_ptr<LibpllEvaluation> evaluation_;
+    shared_ptr<LibpllEvaluation> evaluation_;
+    shared_ptr<ALEEvaluation> aleEvaluation_;
     BPPTree geneTree_;
     BPPTree speciesTree_;
     SpeciesGeneMap map_;

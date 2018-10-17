@@ -83,6 +83,7 @@ JointTree::JointTree(const string &newick_file,
   vector<BPPTree> geneTrees(1, geneTree_);
   map_ = SpeciesGeneMapper::map(
       geneTrees.begin(), geneTrees.end(), *speciesTree_, trees)[0];
+  aleEvaluation_ = make_shared<ALEEvaluation>(*speciesTree_, map_);
 }
 
 JointTree::JointTree(BPPTree geneTree,
@@ -127,7 +128,8 @@ double JointTree::computeLibpllLoglk() {
 double JointTree::computeALELoglk () {
   auto genetree_copy = PhyloTreeToolBox::cloneTree(*geneTree_);
   PhyloTreeToolBox::removeArtificialGenes(*genetree_copy);
-  double ale_loglk = ALEevaluation::evaluate(*genetree_copy, *speciesTree_, map_, 1, 1, dupRate_, transferRate_, lossRate_);
+  aleEvaluation_->setRates(dupRate_, lossRate_);
+  double ale_loglk = aleEvaluation_->evaluate(*genetree_copy, *speciesTree_, map_, 1, 1, dupRate_, transferRate_, lossRate_);
   return aleWeight_ * ale_loglk;
 }
 

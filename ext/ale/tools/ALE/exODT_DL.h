@@ -36,6 +36,10 @@ public:
   std::map<long int, std::string> gid_sps;                                     //del-loc. Map between clade id (from the approx_posterior object) and species included in that clade.
   GeneMap<std::string, std::string> speciesGeneMap;                                     // Map between gene and species names.
   std::map<std::string, scalar_type> fraction_missing;
+  std::vector<long int> g_ids;
+  std::vector<long int> g_id_sizes;
+  std::map<long int, int> g_id2i;
+
 
 
 public:
@@ -53,9 +57,6 @@ public:
                   );
   scalar_type pun(std::shared_ptr<approx_posterior> ale, bool verbose = false);
 
-  std::vector<long int> g_ids;
-  std::vector<long int> g_id_sizes;
-  std::map<long int, int> g_id2i;
 
   //implemented in exODT.cpp
   void setMap(const GeneMap<std::string, std::string> &map_) { speciesGeneMap = map_; }
@@ -64,5 +65,17 @@ public:
   ~exODT_DL_model();
   void set_model_parameter(std::string name, std::string value);    //Sets the value of a string parameter.
   void set_model_parameter(std::string, scalar_type);               //Sets the value of a scalar parameter.
+  void reset() {
+    scalar_parameter.clear();
+    vector_parameter.clear();
+    string_parameter.clear();
+    uE.clear();
+    uq.clear();
+    gid_sps.clear();
+    fraction_missing.clear();
+    g_ids.clear();
+    g_id_sizes.clear();
+    g_id2i.clear();
+  }
 
 };
