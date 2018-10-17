@@ -82,11 +82,6 @@ public:
   void observation(std::vector<std::string> trees);     //Given a vector of trees, fills an approx_posterior object by recursively calling decompose, and then doing some more counts.
   /// Computes the probability of a string tree. Calls recompose on the tree, and then uses the map returned by recompose to compute the probability of the whole tree.
   
-  /// Recursive function that, given a bipartition id and a map associating bipartition ids to their maximum a posteriori value, builds the maximum a posteriori tree, complete with (average) branch lengths.
-  std::string mpp_backtrack(long int g_id, std::map<long int, scalar_type > * qmpp) const;//Recursive function that, given a bipartition id and a map associating bipartition ids to their maximum a posteriori value, builds the maximum a posteriori tree, complete with (average) branch lengths.
-  //std::string random_tree() const;                                                      //Function that returns a random tree with unit branch lengths. Calls random_split.
-  /// del-loc. Builds all rooted trees that can be built based on the complete set of leaves.
-  //std::vector<std::string>  all_trees() const {return all_trees(Gamma);};                 //del-loc. Builds all rooted trees that can be built based on the complete set of leaves.
 
 
   //no need to load
@@ -96,10 +91,6 @@ public:
   boost::dynamic_bitset<> Gamma;                                                     //bit vector with all bits to 1 (all species present)
   /// Number of leaves.
   int Gamma_size;                                                                    //Number of leaves.
-  // size_t nbint;                                                                   //Number of ints in a bitvector used to store a partition
-  // int filterForXor;                                                               //Integer used for xor operations to leave the unused bits of the last integer of the bitvector to 0
-  /// Number of bipartitions of Gamma.
-  //scalar_type K_Gamma;                                                               //number of bipartitions of Gamma.
   /// Number of unrooted trees on Gamma_size leaves.
   long double N_Gamma;                                                               //number of unrooted trees on Gamma_size leaves
   /// Character used between leaf names when writing the content of a leaf set.
@@ -143,8 +134,6 @@ public:
   //algorithmic
   /// Parses a tree in string format and updates the approx_prior object accordingly (notably updates the Bip_bls, Bip_counts, Dip_counts, and set_ids + id_sets through set2id).
   void decompose(std::string G_string,std::set<int> * bip_ids=NULL , scalar_type weight=1.0);                //Parses a tree in string format and updates the approx_prior object accordingly (notably updates the Bip_bls, Bip_counts, Dip_counts, and set_ids + id_sets through set2id)
-  /// For a given input tree string, returns a map between all sets of leaves contained in the tree and their corresponding conditional clade probability.
-  std::map < boost::dynamic_bitset<> ,scalar_type> recompose(std::string G_string) const;  //For a given input tree string, returns a map between all sets of leaves contained in the tree and their corresponding conditional clade probability.
   //void register_leafset(std::string);
   // If the set exists, returns the set id, otherwise creates a new set id for this set and returns it.
   long int set2id( boost::dynamic_bitset<>  leaf_set) ;                                    //If the set exists, returns the set id, otherwise creates a new set id for this set and returns it.

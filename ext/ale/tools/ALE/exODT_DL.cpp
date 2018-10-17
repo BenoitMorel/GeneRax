@@ -19,15 +19,15 @@ exODT_DL_model::exODT_DL_model() {
 
 
 
-void exODT_DL_model::construct_undated(const std::string &Sstring, const std::string &fractionMissingFile) {
+void exODT_DL_model::construct_undated(const string &Sstring, const string &fractionMissingFile) {
   daughter.clear();
   son.clear();
   name_node.clear();
   node_name.clear();
   node_ids.clear();
-  S = std::shared_ptr<tree_type>(IO::newickToPhyloTree(Sstring, true));
+  S = shared_ptr<tree_type>(IO::newickToPhyloTree(Sstring, true));
   // For each node from the speciestree
-  //std::vector<std::shared_ptr<bpp::PhyloNode>> nodes = S->getAllNodes();
+  //vector<shared_ptr<bpp::PhyloNode>> nodes = S->getAllNodes();
   auto nodes = PhyloTreeToolBox::getNodesInPostOrderTraversalRecursive_list(*S);
 
   // Set each branch length to 1.
@@ -49,9 +49,9 @@ void exODT_DL_model::construct_undated(const std::string &Sstring, const std::st
       name_node[(*it)->getName()] = (*it);
       node_name[(*it)] = (*it)->getName();
     } else {
-      std::vector <std::string> leafnames = PhyloTreeToolBox::getLeavesNames(*S, (*it));
-      std::sort(leafnames.begin(), leafnames.end());
-      std::stringstream name;
+      vector <string> leafnames = PhyloTreeToolBox::getLeavesNames(*S, (*it));
+      sort(leafnames.begin(), leafnames.end());
+      stringstream name;
       for (auto leafname = leafnames.begin(); leafname != leafnames.end(); leafname++)
         name << (*leafname) << ".";
 
@@ -64,13 +64,13 @@ void exODT_DL_model::construct_undated(const std::string &Sstring, const std::st
 
   // register species
   last_branch = 0;
-  last_leaf = 0;
+  speciesLastLeaf = 0;
 
   // associate each node to an id (node_ids and i_nodes).
-  // this will determines the number of leaves (last_leaf)
+  // this will determines the number of leaves (speciesLastLeaf)
   // and starting to determine the number of branches.
   // \todo Use PhyloTreeToolBox to get direct post-order.
-  std::set<std::shared_ptr<bpp::PhyloNode>> saw;
+  set<shared_ptr<bpp::PhyloNode>> saw;
   
   for (auto it = name_node.begin(); it != name_node.end(); it++)
     if (S->isLeaf((*it).second)) {
@@ -78,7 +78,7 @@ void exODT_DL_model::construct_undated(const std::string &Sstring, const std::st
       extant_species[last_branch] = node->getName();
       node_ids[node] = last_branch;
       last_branch++;
-      last_leaf++;
+      speciesLastLeaf++;
       saw.insert(node);
       // a leaf
       daughter[last_branch] = -1;
@@ -89,7 +89,7 @@ void exODT_DL_model::construct_undated(const std::string &Sstring, const std::st
   //ad-hoc postorder, each internal node is associated to an id and an id to an internal node
   //During the node exploration, set "ID" property to each node with value as the name.
   //
-  std::vector<std::shared_ptr<bpp::PhyloNode>> next_generation;
+  vector<shared_ptr<bpp::PhyloNode>> next_generation;
   for (auto it = name_node.begin(); it != name_node.end(); it++)
     if (S->isLeaf((*it).second)) {
       auto node = (*it).second;
@@ -97,7 +97,7 @@ void exODT_DL_model::construct_undated(const std::string &Sstring, const std::st
     }
 
   while (next_generation.size()) {
-    std::vector<std::shared_ptr<bpp::PhyloNode>> new_generation;
+    vector<shared_ptr<bpp::PhyloNode>> new_generation;
     for (auto it = next_generation.begin(); it != next_generation.end(); it++) {
       auto node = (*it);
       if (S->hasFather(node)) {
@@ -146,13 +146,13 @@ void exODT_DL_model::calculate_undatedEs() {
   PL = P_L / sum;
   PS = P_S / sum;
   uE = vector<scalar_type>(last_branch, 0.0);
-  for (int e = 0; e < last_leaf; ++e) {
+  for (int e = 0; e < speciesLastLeaf; ++e) {
     scalar_type a = PD;
     scalar_type b = -1.0;
     scalar_type c = PL;
     uE[e] = (-b - sqrt(b * b - 4 * a * c)) / (2.0 * a);
   }
-  for (int e = last_leaf; e < last_branch; ++e) {
+  for (int e = speciesLastLeaf; e < last_branch; ++e) {
     int f = daughter[e];
     int g = son[e];
     scalar_type a = PD;
@@ -162,7 +162,7 @@ void exODT_DL_model::calculate_undatedEs() {
   }
 }
 
-void  exODT_DL_model::step_one(std::shared_ptr<approx_posterior> ale) {
+void  exODT_DL_model::step_one(shared_ptr<approx_posterior> ale) {
   for (auto it = ale->size_ordered_bips.begin(); it != ale->size_ordered_bips.end(); it++)
     for (auto jt = (*it).second.begin(); jt != (*it).second.end(); jt++) {
       g_ids.push_back((*jt));
@@ -173,14 +173,13 @@ void  exODT_DL_model::step_one(std::shared_ptr<approx_posterior> ale) {
   g_id_sizes.push_back(ale->Gamma_size);
 }
 
-void exODT_DL_model::gene_secies_mapping(std::shared_ptr<approx_posterior> ale)
+void exODT_DL_model::gene_species_mapping(shared_ptr<approx_posterior> ale)
 {
-
   // gene<->species mapping
   if (gid_sps.size() == 0) // If the mapping has not been done yet
   {
     //Test that the species associated to genes are really in the species tree
-    std::set<std::string> species_set;
+    set<string> species_set;
     for (auto iter = extant_species.begin(); iter != extant_species.end(); ++iter) {
       species_set.insert(iter->second);
     }
@@ -197,13 +196,13 @@ void exODT_DL_model::gene_secies_mapping(std::shared_ptr<approx_posterior> ale)
           }
         }
 
-        std::string gene_name = ale->id_leaves[id];
+        string gene_name = ale->id_leaves[id];
         // Set associated species in gid_sps[g_id]
-        std::string species_name = speciesGeneMap.getAssociatedSpecies(gene_name);
+        string species_name = speciesGeneMap.getAssociatedSpecies(gene_name);
         gid_sps[g_id] = species_name;
         if (species_set.find(species_name) == species_set.end()) {
-          std::cout << "Error: gene name " << gene_name << " is associated to species name " << species_name
-                    << " that cannot be found in the species tree." << std::endl;
+          cout << "Error: gene name " << gene_name << " is associated to species name " << species_name
+                    << " that cannot be found in the species tree." << endl;
           exit(-1);
         }
       }
@@ -211,13 +210,13 @@ void exODT_DL_model::gene_secies_mapping(std::shared_ptr<approx_posterior> ale)
   }
 }
 
-void exODT_DL_model::inner_loop(std::shared_ptr<approx_posterior> ale, bool g_is_a_leaf,
+void exODT_DL_model::inner_loop(bool g_is_a_leaf,
                              long int &g_id,
-                             std::vector<int> &gp_is,
-                             std::vector<long int> &gpp_is,
+                             vector<int> &gp_is,
+                             vector<long int> &gpp_is,
                              int i) {
   for (int e = 0; e < last_branch; e++) {
-    bool s_is_leaf = (e < last_leaf);
+    bool s_is_leaf = (e < speciesLastLeaf);
     int f = 0;
     int g = 0;
     if (not s_is_leaf) {
@@ -226,7 +225,7 @@ void exODT_DL_model::inner_loop(std::shared_ptr<approx_posterior> ale, bool g_is
     }
     scalar_type uq_sum = 0;
     // S leaf and G leaf
-    if (e < last_leaf and g_is_a_leaf and extant_species[e] == gid_sps[g_id]) {
+    if (e < speciesLastLeaf and g_is_a_leaf and extant_species[e] == gid_sps[g_id]) {
       // present
       uq_sum += PS;
     }
@@ -251,7 +250,7 @@ void exODT_DL_model::inner_loop(std::shared_ptr<approx_posterior> ale, bool g_is
   }
 }
 
-scalar_type exODT_DL_model::pun(std::shared_ptr<approx_posterior> ale, bool verbose) {
+scalar_type exODT_DL_model::pun(shared_ptr<approx_posterior> ale, bool verbose) {
   scalar_type survive = 0;
   scalar_type root_sum = 0;
   scalar_type O_norm = 0;
@@ -259,7 +258,7 @@ scalar_type exODT_DL_model::pun(std::shared_ptr<approx_posterior> ale, bool verb
   g_ids.clear();
   g_id_sizes.clear();
   step_one(ale);
-  gene_secies_mapping(ale);
+  gene_species_mapping(ale);
 
   for (int i = 0; i < (int) g_ids.size(); i++) {
     long int g_id = g_ids[i];
@@ -272,12 +271,12 @@ scalar_type exODT_DL_model::pun(std::shared_ptr<approx_posterior> ale, bool verb
     // directed partition (dip) gamma's id
     long int g_id = g_ids[i];
     bool is_a_leaf = (g_id_sizes[i] == 1);
-    std::vector<int> gp_is;
-    std::vector<long int> gpp_is;
+    vector<int> gp_is;
+    vector<long int> gpp_is;
     if (g_id != -1) {
-      for (std::unordered_map<std::pair<long int, long int>, scalar_type>::iterator kt = ale->Dip_counts[g_id].begin();
+      for (unordered_map<pair<long int, long int>, scalar_type>::iterator kt = ale->Dip_counts[g_id].begin();
           kt != ale->Dip_counts[g_id].end(); kt++) {
-        std::pair<long int, long int> parts = (*kt).first;
+        pair<long int, long int> parts = (*kt).first;
         long int gp_id = parts.first;
         long int gpp_id = parts.second;
         int gp_i = g_id2i[parts.first];
@@ -288,8 +287,8 @@ scalar_type exODT_DL_model::pun(std::shared_ptr<approx_posterior> ale, bool verb
     } else {
       //XX
       //root bipartition needs to be handled separately
-      std::map<std::set<long int>, int> bip_parts;
-      for (std::map<long int, scalar_type>::iterator it = ale->Bip_counts.begin();
+      map<set<long int>, int> bip_parts;
+      for (map<long int, scalar_type>::iterator it = ale->Bip_counts.begin();
           it != ale->Bip_counts.end(); it++) {
         long int gp_id = (*it).first;
         boost::dynamic_bitset<> gamma = ale->id_sets.at(gp_id);
@@ -297,14 +296,14 @@ scalar_type exODT_DL_model::pun(std::shared_ptr<approx_posterior> ale, bool verb
         not_gamma[0] = 0;
         long int gpp_id = ale->set_ids.at(not_gamma);
 
-        std::set<long int> parts;
+        set<long int> parts;
         parts.insert(gp_id);
         parts.insert(gpp_id);
         bip_parts[parts] = 1;
       }
-      for (std::map<std::set<long int>, int>::iterator kt = bip_parts.begin(); kt != bip_parts.end(); kt++) {
-        std::vector<long int> parts;
-        for (std::set<long int>::iterator sit = (*kt).first.begin(); sit != (*kt).first.end(); sit++) {
+      for (map<set<long int>, int>::iterator kt = bip_parts.begin(); kt != bip_parts.end(); kt++) {
+        vector<long int> parts;
+        for (set<long int>::iterator sit = (*kt).first.begin(); sit != (*kt).first.end(); sit++) {
           parts.push_back((*sit));
         }
         long int gp_id = parts[0];
@@ -315,7 +314,7 @@ scalar_type exODT_DL_model::pun(std::shared_ptr<approx_posterior> ale, bool verb
       }
       bip_parts.clear();
     }
-    inner_loop(ale, is_a_leaf, g_id, gp_is, gpp_is, i);
+    inner_loop(is_a_leaf, g_id, gp_is, gpp_is, i);
   }
   survive = 0;
   root_sum = 0;
