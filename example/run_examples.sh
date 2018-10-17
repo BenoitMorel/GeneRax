@@ -7,9 +7,9 @@ prefix=output
 
 echo "Running NNI example"
 strategy=NNI
-../build/bin/JointTreeSearch -g ${gene_tree} -a ${alignment} -s ${species_tree} --strategy ${strategy} -t ${threads} -p ${prefix}_${strategy} --verbose
+../build/bin/JointSearch -g ${gene_tree} -a ${alignment} -s ${species_tree} --strategy ${strategy} -t ${threads} -p ${prefix}_${strategy} --verbose
 
 echo "Running SPR example"
 strategy=SPR
-../build/bin/JointTreeSearch -g ${gene_tree} -a ${alignment} -s ${species_tree} --strategy ${strategy} -t ${threads} -p ${prefix}_${strategy} --verbose
+../build/bin/JointSearch -g ${gene_tree} -a ${alignment} -s ${species_tree} --strategy ${strategy} -t ${threads} -p ${prefix}_${strategy} --verbose
 

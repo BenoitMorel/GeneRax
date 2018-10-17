@@ -383,6 +383,9 @@ void  exODT_model::step_one(std::shared_ptr<approx_posterior> ale) {
     }
   //root bipartition needs to be handled separately
   g_ids.push_back(-1);
+  for (auto gid: g_id_sizes) {
+    cout << gid << " " ;
+  }
   g_id_sizes.push_back(ale->Gamma_size);
 
   root_i = g_ids.size() - 1;
