@@ -45,11 +45,11 @@ int internal_main(int argc, char** argv, void* comm)
   }
   Logger::timed << "End of search" << endl;
   jointTree->printLoglk();
-  jointTree->save(Arguments::output + ".newick");
-
-  ofstream os(Arguments::output + ".stats");
-  jointTree->printLoglk(true, true, true, os);
-
+  if (!ParallelContext::getRank()) {
+    jointTree->save(Arguments::output + ".newick");
+    ofstream os(Arguments::output + ".stats");
+    jointTree->printLoglk(true, true, true, os);
+  }
   Logger::timed << "End of JointSearch execution" << endl;
   ParallelContext::finalize();
   return 0;
