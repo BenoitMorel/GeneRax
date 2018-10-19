@@ -85,7 +85,7 @@ JointTree::JointTree(const string &newick_file,
   assert(pllSpeciesTree_);
   map_ = SpeciesGeneMapper::map(
       geneTrees.begin(), geneTrees.end(), *speciesTree_, trees)[0];
-  aleEvaluation_ = make_shared<ALEEvaluation>(*speciesTree_, pllSpeciesTree_,  map_);
+  aleEvaluation_ = make_shared<ALEEvaluation>(pllSpeciesTree_,  map_);
   setRates(dupRate, lossRate);
 
 }

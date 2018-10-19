@@ -12,8 +12,7 @@
 class ALEEvaluation {
 
 public:
-  ALEEvaluation(const bpp::PhyloTree& speciestree,
-    pll_rtree_t *pllSpeciesTree,
+  ALEEvaluation(pll_rtree_t *speciesTree,
     const SpeciesGeneMap& map);
 
   void setRates(double dupRate, double lossRate);

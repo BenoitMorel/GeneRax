@@ -8,7 +8,7 @@ using namespace std;
 
 class UndatedDLModel {
 public:
-  int last_branch;
+  int speciesNodesCount;
 
   // model
   double PD; // Duplication probability, per branch
@@ -20,7 +20,6 @@ public:
   shared_ptr<bpp::PhyloTree> S;//Species tree
   vector<int> daughter;
   vector<int> son;
-  int speciesLastLeaf;
   vector<double> uE; // Probability for a gene to become extinct on each brance
   
   // SPECIES libpll
@@ -32,23 +31,16 @@ public:
   
   map<string, string> geneNameToSpeciesName;
   map<string, int> speciesNameToId;
-  map<string, int> speciesNameToLibpllId;
  
 
   vector<int> geneIds;
-  vector<int> inverseGeneIds;
   vector<int> geneToSpecies;
   
-  /*
-  vector<long int> g_ids;
-  vector<long int> g_id_sizes;
-  map<long int, int> g_id2i;
-*/
 
 
 public:
   void setRates(double dupRate, double lossRate);
-  void setSpeciesTree(const string &Sstring, pll_rtree_t *geneTree);
+  void setSpeciesTree(pll_rtree_t *geneTree);
   double pun(shared_ptr<pllmod_treeinfo_t> treeinfo);
   
 

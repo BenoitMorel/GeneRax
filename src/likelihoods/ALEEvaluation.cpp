@@ -1,13 +1,11 @@
 
 #include "ALEEvaluation.hpp"
 
-ALEEvaluation::ALEEvaluation(const bpp::PhyloTree& speciestree,
-    pll_rtree_t *pllSpeciesTree,
+ALEEvaluation::ALEEvaluation(pll_rtree_t *speciesTree,
   const SpeciesGeneMap& map)
 {
   undatedDLModel.setMap(SpeciesGeneMapper::nodeMapsToStrings(map));
-  auto species_tree_str = IO::PhyloTreeToNewick(speciestree);
-  undatedDLModel.setSpeciesTree(species_tree_str, pllSpeciesTree);
+  undatedDLModel.setSpeciesTree(speciesTree);
 }
 
 
