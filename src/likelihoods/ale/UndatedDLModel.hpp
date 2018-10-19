@@ -22,13 +22,17 @@ public:
   vector<int> son;
   int speciesLastLeaf;
   vector<double> uE; // Probability for a gene to become extinct on each brance
-
+  
+  // SPECIES libpll
+  vector <pll_rnode_t *> speciesNodes;
+  
   // CLVs
   vector<vector<double> > uq;
   vector<double> ll; 
   
   map<string, string> geneNameToSpeciesName;
   map<string, int> speciesNameToId;
+  map<string, int> speciesNameToLibpllId;
  
 
   vector<int> geneIds;
@@ -44,7 +48,7 @@ public:
 
 public:
   void setRates(double dupRate, double lossRate);
-  void construct_undated(const string &Sstring);
+  void setSpeciesTree(const string &Sstring, pll_rtree_t *geneTree);
   double pun(shared_ptr<pllmod_treeinfo_t> treeinfo);
   
 

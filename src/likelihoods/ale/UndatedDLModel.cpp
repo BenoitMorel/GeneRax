@@ -17,9 +17,19 @@ UndatedDLModel::UndatedDLModel() :
 
 
 
+void fillNodesPostOrder(pll_rnode_t *node, vector<pll_rnode_t *> &nodes) 
+{
+  if (node->left) {
+    assert(node->right);
+    fillNodesPostOrder(node->left, nodes);
+    fillNodesPostOrder(node->right, nodes);
+  }
+  nodes.push_back(node);
+}
 
 
-void UndatedDLModel::construct_undated(const string &Sstring) {
+void UndatedDLModel::setSpeciesTree(const string &Sstring, pll_rtree_t *speciesTree)
+{
   daughter.clear();
   son.clear();
   map<string, shared_ptr<bpp::PhyloNode>> name_node;
@@ -134,6 +144,15 @@ void UndatedDLModel::construct_undated(const string &Sstring) {
     }
   }
   
+  speciesNodes.clear();
+  fillNodesPostOrder(speciesTree->root, speciesNodes);
+  speciesNameToLibpllId.clear();
+  for (auto node: speciesNodes) {
+    if (!node->left) {
+      speciesNameToLibpllId[node->label] = node->node_index;
+    }
+  }
+
   
   for (auto node: nodes) {
     if (S->isLeaf(node)) {

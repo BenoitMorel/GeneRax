@@ -13,11 +13,11 @@ class ALEEvaluation {
 
 public:
   ALEEvaluation(const bpp::PhyloTree& speciestree,
+    pll_rtree_t *pllSpeciesTree,
     const SpeciesGeneMap& map);
 
   void setRates(double dupRate, double lossRate);
 
-  double evaluate(const bpp::PhyloTree& genetree);
   double evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo);
 private:
   exODT_DL_model model;

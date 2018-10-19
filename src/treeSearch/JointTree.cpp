@@ -75,39 +75,20 @@ JointTree::JointTree(const string &newick_file,
   aleWeight_(Arguments::aleWeight),
   needAleRecomputation_(true)
 {
-  info_.alignmentFilename = alignment_file;
+   info_.alignmentFilename = alignment_file;
   info_.model = "GTR";
   evaluation_ = LibpllEvaluation::buildFromFile(newick_file, info_);
   updateBPPTree();
   speciesTree_ = IO::readTreeFile(speciestree_file);
   vector<BPPTree> geneTrees(1, geneTree_);
+  pllSpeciesTree_ = pll_rtree_parse_newick(speciestree_file.c_str());
+  assert(pllSpeciesTree_);
   map_ = SpeciesGeneMapper::map(
       geneTrees.begin(), geneTrees.end(), *speciesTree_, trees)[0];
-  aleEvaluation_ = make_shared<ALEEvaluation>(*speciesTree_, map_);
+  aleEvaluation_ = make_shared<ALEEvaluation>(*speciesTree_, pllSpeciesTree_,  map_);
   setRates(dupRate, lossRate);
-}
 
-JointTree::JointTree(BPPTree geneTree,
-    const LibpllAlignmentInfo *alignment,
-    BPPTree speciesTree,
-    const SpeciesGeneMap &map,
-    double dupRate,
-    double lossRate):
-  evaluation_(LibpllEvaluation::buildFromPhylo(geneTree, *alignment)),
-  speciesTree_(speciesTree),
-  map_(map),
-  info_(*alignment),
-  dupRate_(dupRate),
-  lossRate_(lossRate),
-  transferRate_(0.0),
-  aleWeight_(Arguments::aleWeight),
-  needAleRecomputation_(true)
-{
-  updateBPPTree();
-  aleEvaluation_ = make_shared<ALEEvaluation>(*speciesTree_, map_);
-  setRates(dupRate, lossRate);
 }
-
 
 void JointTree::printLibpllTree() const {
   printLibpllTreeRooted(evaluation_->getTreeInfo()->root, Logger::info);
@@ -173,6 +154,7 @@ void JointTree::rollbackLastMove() {
 }
 
 void JointTree::save(const string &fileName) {
+  updateBPPTree();
   ofstream os(fileName);
   IO::write(*geneTree_, os);
 }

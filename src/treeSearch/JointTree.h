@@ -36,12 +36,6 @@ public:
               double dupRate,
               double lossRate);
 
-    JointTree(BPPTree geneTree,
-              const LibpllAlignmentInfo *alignment,
-              BPPTree speciesTree,
-              const SpeciesGeneMap &map,
-              double dupRate,
-              double lossRate);
 
     virtual ~JointTree() {}
     void printLibpllTree() const;
@@ -66,6 +60,7 @@ private:
     shared_ptr<ALEEvaluation> aleEvaluation_;
     BPPTree geneTree_;
     BPPTree speciesTree_;
+    pll_rtree_t *pllSpeciesTree_;
     SpeciesGeneMap map_;
     LibpllAlignmentInfo info_;
     double dupRate_;
