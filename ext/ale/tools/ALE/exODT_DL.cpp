@@ -23,9 +23,9 @@ exODT_DL_model::exODT_DL_model() :
 void exODT_DL_model::construct_undated(const string &Sstring) {
   daughter.clear();
   son.clear();
-  name_node.clear();
-  node_name.clear();
-  node_ids.clear();
+  map<string, shared_ptr<bpp::PhyloNode>> name_node;
+  map<shared_ptr<bpp::PhyloNode>, string> node_name;
+  map<shared_ptr<bpp::PhyloNode>, int> node_ids;                         //Map between node and its id.
   S = shared_ptr<tree_type>(IO::newickToPhyloTree(Sstring, true));
   // For each node from the speciestree
   //vector<shared_ptr<bpp::PhyloNode>> nodes = S->getAllNodes();
@@ -135,7 +135,6 @@ void exODT_DL_model::construct_undated(const string &Sstring) {
       son[node_ids[node]] = node_ids[sons[1]];
     }
   }
-  last_rank = last_branch;
 }
 
 void exODT_DL_model::calculate_undatedEs() {
@@ -183,9 +182,9 @@ void exODT_DL_model::gene_species_mapping(shared_ptr<approx_posterior> ale)
 
       if (g_id_sizes[i] == 1) {
         int id = 0;
-        for (auto i = 0; i < ale->Gamma_size + 1; ++i) {
-          if (ale->id_sets[g_id][i]) {
-            id = i;
+        for (auto j = 0; j < ale->Gamma_size + 1; ++j) {
+          if (ale->id_sets[g_id][j]) {
+            id = j;
             break;
           }
         }

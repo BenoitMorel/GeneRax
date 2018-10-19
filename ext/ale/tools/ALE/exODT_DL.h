@@ -8,28 +8,27 @@ using namespace std;
 
 class exODT_DL_model {
 public:
-  int alpha;
   int last_branch;
-  int last_rank;
 
-  vector<int> daughter;
-  vector<int> son;
-  map<int, string> extant_species;                   //del-loc. Map between leaf id (0 to # of leaves) and leaf name.
-
-  shared_ptr<tree_type> S;                                             //Species tree
-  map<shared_ptr<bpp::PhyloNode>, int> node_ids;                         //Map between node and its id.
-
-
-  map<string, shared_ptr<bpp::PhyloNode>> name_node;
-  map<shared_ptr<bpp::PhyloNode>, string> node_name;
-
-  vector<scalar_type> uE; // Probability for a gene to become extinct on each branch
-  vector<vector<scalar_type> > uq;
-
+  // model
   scalar_type PD; // Duplication probability, per branch
   scalar_type PL; // Loss probability, per branch
   scalar_type PS; // Speciation probability, per branch
+  const scalar_type O_R; // what is this?
+
+  // SPECIES
+  shared_ptr<tree_type> S;                                             //Species tree
+  vector<int> daughter;
+  vector<int> son;
+  map<int, string> extant_species;                   //del-loc. Map between leaf id (0 to # of leaves) and leaf name.
   int speciesLastLeaf;
+
+
+
+  // CLVs
+  vector<scalar_type> uE; // Probability for a gene to become extinct on each branch
+  vector<vector<scalar_type> > uq;
+
 
   map<long int, string> gid_sps;                                     //del-loc. Map between clade id (from the approx_posterior object) and species included in that clade.
   GeneMap<string, string> speciesGeneMap;                                     // Map between gene and species names.
@@ -37,7 +36,6 @@ public:
   vector<long int> g_id_sizes;
   map<long int, int> g_id2i;
 
-  const scalar_type O_R; // what is this?
 
 
 public:
@@ -48,6 +46,7 @@ public:
   
 
   void step_one(shared_ptr<approx_posterior> ale);
+  void step_one_plop(shared_ptr<approx_posterior> ale);
   void gene_species_mapping(shared_ptr<approx_posterior> ale);
   void inner_loop(bool g_is_a_leaf,
                   long int &g_id,
