@@ -131,7 +131,8 @@ double JointTree::computeLibpllLoglk() {
 
 double JointTree::computeALELoglk () {
   if (needAleRecomputation_) {
-    aleLL_ = aleEvaluation_->evaluate(*geneTree_);
+    aleLL_ = aleEvaluation_->evaluate(evaluation_->getTreeInfo());
+    //aleLL_ = aleEvaluation_->evaluate(*geneTree_);
     needAleRecomputation_ = false;
   }
   return aleWeight_ * aleLL_;

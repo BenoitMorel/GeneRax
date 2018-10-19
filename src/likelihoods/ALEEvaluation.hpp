@@ -4,13 +4,10 @@
 
 // Include ALE
 #include <ale/tools/ALE/ALE.h>
-#ifdef DTL
-#include <ale/tools/ALE/exODT.h>
-#else
 #include <ale/tools/ALE/exODT_DL.h>
-#endif
 #include <ale/tools/SpeciesGeneMapper.h>
 #include <ale/tools/IO/IO.h>
+#include <likelihoods/ale/UndatedDLModel.hpp>
 
 class ALEEvaluation {
 
@@ -21,12 +18,10 @@ public:
   void setRates(double dupRate, double lossRate);
 
   double evaluate(const bpp::PhyloTree& genetree);
+  double evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo);
 private:
-#ifdef DTL
-  exODT_model model;
-#else
   exODT_DL_model model;
-#endif
+  UndatedDLModel undatedDLModel;
 };
 
 

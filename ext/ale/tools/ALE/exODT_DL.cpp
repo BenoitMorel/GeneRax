@@ -76,7 +76,6 @@ void exODT_DL_model::construct_undated(const string &Sstring) {
   for (auto it = name_node.begin(); it != name_node.end(); it++)
     if (S->isLeaf((*it).second)) {
       auto node = (*it).second;
-      extant_species[last_branch] = node->getName();
       node_ids[node] = last_branch;
       last_branch++;
       speciesLastLeaf++;
@@ -135,6 +134,11 @@ void exODT_DL_model::construct_undated(const string &Sstring) {
       son[node_ids[node]] = node_ids[sons[1]];
     }
   }
+  for (auto node: nodes) {
+    if (S->isLeaf(node)) {
+      speciesNameToId[node->getName()] = node_ids[node];
+    }
+  }
 }
 
 void exODT_DL_model::calculate_undatedEs() {
@@ -172,11 +176,6 @@ void exODT_DL_model::gene_species_mapping(shared_ptr<approx_posterior> ale)
   if (gid_sps.size() == 0) // If the mapping has not been done yet
   {
     //Test that the species associated to genes are really in the species tree
-    set<string> species_set;
-    for (auto iter = extant_species.begin(); iter != extant_species.end(); ++iter) {
-      species_set.insert(iter->second);
-    }
-
     for (int i = 0; i < (int) g_ids.size(); i++) {
       long int g_id = g_ids[i];
 
@@ -192,12 +191,7 @@ void exODT_DL_model::gene_species_mapping(shared_ptr<approx_posterior> ale)
         string gene_name = ale->id_leaves[id];
         // Set associated species in gid_sps[g_id]
         string species_name = speciesGeneMap.getAssociatedSpecies(gene_name);
-        gid_sps[g_id] = species_name;
-        if (species_set.find(species_name) == species_set.end()) {
-          cout << "Error: gene name " << gene_name << " is associated to species name " << species_name
-                    << " that cannot be found in the species tree." << endl;
-          exit(-1);
-        }
+        gid_sps[g_id] = speciesNameToId[species_name];
       }
     }
   }
@@ -218,10 +212,11 @@ void exODT_DL_model::inner_loop(bool g_is_a_leaf,
     }
     scalar_type uq_sum = 0;
     // S leaf and G leaf
-    if (e < speciesLastLeaf and g_is_a_leaf and extant_species[e] == gid_sps[g_id]) {
+    if (e < speciesLastLeaf and g_is_a_leaf and e == gid_sps[g_id]) {
       // present
       uq_sum += PS;
     }
+
     // G internal
     if (not g_is_a_leaf) {
       int N_parts = gp_is.size();
@@ -259,7 +254,7 @@ scalar_type exODT_DL_model::pun(shared_ptr<approx_posterior> ale) {
   }
   vector<scalar_type> zeros(last_branch, 0.0);
   uq = vector<vector<scalar_type>>(g_ids.size(),zeros);
-
+  
   for (int i = 0; i < (int) g_ids.size(); i++) {
     // directed partition (dip) gamma's id
     long int g_id = g_ids[i];
@@ -308,7 +303,10 @@ scalar_type exODT_DL_model::pun(shared_ptr<approx_posterior> ale) {
       bip_parts.clear();
     }
     inner_loop(is_a_leaf, g_id, gp_is, gpp_is, i);
+    //cout << uq[i][49] << " ";
+  
   }
+  //cout << endl;
   survive = 0;
   root_sum = 0;
   O_norm = 0;

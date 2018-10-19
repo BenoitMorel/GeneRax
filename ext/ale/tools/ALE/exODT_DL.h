@@ -20,7 +20,6 @@ public:
   shared_ptr<tree_type> S;                                             //Species tree
   vector<int> daughter;
   vector<int> son;
-  map<int, string> extant_species;                   //del-loc. Map between leaf id (0 to # of leaves) and leaf name.
   int speciesLastLeaf;
 
 
@@ -30,7 +29,8 @@ public:
   vector<vector<scalar_type> > uq;
 
 
-  map<long int, string> gid_sps;                                     //del-loc. Map between clade id (from the approx_posterior object) and species included in that clade.
+  map<long int, int> gid_sps;                                     //del-loc. Map between clade id (from the approx_posterior object) and species included in that clade.
+  map<string, int> speciesNameToId;
   GeneMap<string, string> speciesGeneMap;                                     // Map between gene and species names.
   vector<long int> g_ids;
   vector<long int> g_id_sizes;
@@ -43,10 +43,9 @@ public:
   void calculate_undatedEs();
   
   void construct_undated(const string &Sstring);
-  
+ 
 
   void step_one(shared_ptr<approx_posterior> ale);
-  void step_one_plop(shared_ptr<approx_posterior> ale);
   void gene_species_mapping(shared_ptr<approx_posterior> ale);
   void inner_loop(bool g_is_a_leaf,
                   long int &g_id,
