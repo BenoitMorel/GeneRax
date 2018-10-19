@@ -55,7 +55,7 @@ public:
                   vector<long int> &gpp_is,
                   int i
                   );
-  scalar_type pun(shared_ptr<approx_posterior> ale, bool verbose = false);
+  scalar_type pun(shared_ptr<approx_posterior> ale);
 
 
   //implemented in exODT.cpp

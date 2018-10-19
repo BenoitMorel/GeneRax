@@ -26,6 +26,6 @@ double ALEEvaluation::evaluate(const bpp::PhyloTree& genetree)
   std::vector<std::string> gene_tree_strs;
   gene_tree_strs.push_back(gene_tree_str);
   ale->observation(gene_tree_strs);
-  return (double)std::log(model.pun(ale, false));
+  return (double)std::log(model.pun(ale));
 }
 

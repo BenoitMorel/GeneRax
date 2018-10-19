@@ -244,7 +244,7 @@ void exODT_DL_model::inner_loop(bool g_is_a_leaf,
   }
 }
 
-scalar_type exODT_DL_model::pun(shared_ptr<approx_posterior> ale, bool verbose) {
+scalar_type exODT_DL_model::pun(shared_ptr<approx_posterior> ale) {
   scalar_type survive = 0;
   scalar_type root_sum = 0;
   scalar_type O_norm = 0;
