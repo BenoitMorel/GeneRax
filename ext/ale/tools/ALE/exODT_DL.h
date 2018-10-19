@@ -33,28 +33,19 @@ public:
 
   map<long int, string> gid_sps;                                     //del-loc. Map between clade id (from the approx_posterior object) and species included in that clade.
   GeneMap<string, string> speciesGeneMap;                                     // Map between gene and species names.
-  map<string, scalar_type> fraction_missing;
   vector<long int> g_ids;
   vector<long int> g_id_sizes;
   map<long int, int> g_id2i;
 
-  scalar_type O_R;
-  scalar_type delta;
-  scalar_type lambda;
+  const scalar_type O_R; // what is this?
 
 
 public:
-  void setRates( 
-    scalar_type OR,
-    scalar_type dupRate,
-    scalar_type lossRate) {
-    O_R = OR;
-    delta = dupRate;
-    lambda = lossRate;
-  }
-  void construct_undated(const string &Sstring,
-                         const string &fractionMissingFile = ""); //Constructs an object given a species tree and file containing fractions of missing genes per species.
+  void setRates(scalar_type dupRate, scalar_type lossRate);
   void calculate_undatedEs();
+  
+  void construct_undated(const string &Sstring);
+  
 
   void step_one(shared_ptr<approx_posterior> ale);
   void gene_species_mapping(shared_ptr<approx_posterior> ale);
@@ -76,7 +67,6 @@ public:
     uE.clear();
     uq.clear();
     gid_sps.clear();
-    fraction_missing.clear();
     g_ids.clear();
     g_id_sizes.clear();
     g_id2i.clear();

@@ -6,13 +6,13 @@ ALEEvaluation::ALEEvaluation(const bpp::PhyloTree& speciestree,
 {
   model.setMap(SpeciesGeneMapper::nodeMapsToStrings(map));
   auto species_tree_str = IO::PhyloTreeToNewick(speciestree);
-  model.construct_undated(species_tree_str, "");
+  model.construct_undated(species_tree_str);
 }
 
 
 void ALEEvaluation::setRates(double dupRate, double lossRate)
 {
-  model.setRates(1, dupRate, lossRate);
+  model.setRates(dupRate, lossRate);
   model.calculate_undatedEs();
 }
 

@@ -1,6 +1,5 @@
 // Modified by N.Comte for Treerecs – Copyright © by INRIA – All rights reserved – 2017
 #include "exODT_DL.h"
-#include "fractionMissing.h"
 
 // Bpp includes
 #include <Bpp/BppString.h>
@@ -13,13 +12,15 @@
 using namespace bpp;
 using namespace std;
 
-exODT_DL_model::exODT_DL_model() {
+exODT_DL_model::exODT_DL_model() :
+  O_R(1)
+{
 }
 
 
 
 
-void exODT_DL_model::construct_undated(const string &Sstring, const string &fractionMissingFile) {
+void exODT_DL_model::construct_undated(const string &Sstring) {
   daughter.clear();
   son.clear();
   name_node.clear();
@@ -138,13 +139,6 @@ void exODT_DL_model::construct_undated(const string &Sstring, const string &frac
 }
 
 void exODT_DL_model::calculate_undatedEs() {
-  scalar_type P_D = delta;
-  scalar_type P_L = lambda;
-  scalar_type P_S = 1;
-  scalar_type sum = P_D + P_L + P_S;
-  PD = P_D / sum;
-  PL = P_L / sum;
-  PS = P_S / sum;
   uE = vector<scalar_type>(last_branch, 0.0);
   for (int e = 0; e < speciesLastLeaf; ++e) {
     scalar_type a = PD;
@@ -329,6 +323,16 @@ scalar_type exODT_DL_model::pun(shared_ptr<approx_posterior> ale, bool verbose) 
   }
   return root_sum / survive / O_norm * (last_branch);
 }
+  
+void exODT_DL_model::setRates(scalar_type dupRate, scalar_type lossRate) {
+    PD = dupRate;
+    PL = lossRate;
+    PS = 1;
+    scalar_type sum = PD + PL + PS;
+    PD /= sum;
+    PL /= sum;
+    PS /= sum;
+  }
 
 exODT_DL_model::~exODT_DL_model() { }
 

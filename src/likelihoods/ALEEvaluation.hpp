@@ -9,7 +9,6 @@
 #else
 #include <ale/tools/ALE/exODT_DL.h>
 #endif
-#include <ale/tools/ALE/fractionMissing.h>
 #include <ale/tools/SpeciesGeneMapper.h>
 #include <ale/tools/IO/IO.h>
 

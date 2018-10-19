@@ -11,9 +11,7 @@ set(ale_SOURCE_FILES
   tools/IO/Newick.cpp
   tools/IO/Nhx.cpp
   tools/ALE/ALE.cpp
-  tools/ALE/exODT.cpp
   tools/ALE/exODT_DL.cpp
-  tools/ALE/fractionMissing.cpp
   )
 
 add_library(ale
