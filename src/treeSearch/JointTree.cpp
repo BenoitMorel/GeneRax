@@ -5,7 +5,7 @@
 #include "Arguments.hpp"
 #include<limits>
 
-void printLibpllNode(pll_unode_s *node, ostream &os, bool isRoot)
+void printLibpllNode(pll_unode_s *node, Logger &os, bool isRoot)
 {
   if (node->next) {
     os << "(";
@@ -19,7 +19,7 @@ void printLibpllNode(pll_unode_s *node, ostream &os, bool isRoot)
   os << ":" << (isRoot ? node->length / 2.0 : node->length);
 }
 
-void printLibpllTreeRooted(pll_unode_t *root, ostream &os){
+void printLibpllTreeRooted(pll_unode_t *root, Logger &os){
   os << "(";
   printLibpllNode(root, os, true);
   os << ",";
@@ -104,6 +104,9 @@ void JointTree::printSpeciesTree() const {
 
 void JointTree::optimizeParameters() {
   evaluation_->optimizeAllParameters();
+  if (Arguments::costsEstimation) {
+    optimizeDTRates();
+  }
 }
 
 double JointTree::computeLibpllLoglk() {
@@ -113,7 +116,6 @@ double JointTree::computeLibpllLoglk() {
 double JointTree::computeALELoglk () {
   if (needAleRecomputation_) {
     aleLL_ = aleEvaluation_->evaluate(evaluation_->getTreeInfo());
-    //aleLL_ = aleEvaluation_->evaluate(*geneTree_);
     needAleRecomputation_ = false;
   }
   return aleWeight_ * aleLL_;
@@ -123,7 +125,7 @@ double JointTree::computeJointLoglk() {
   return computeLibpllLoglk() + computeALELoglk();
 }
 
-void JointTree::printLoglk(bool libpll, bool ale, bool joint, ostream &os) {
+void JointTree::printLoglk(bool libpll, bool ale, bool joint, Logger &os) {
   if (joint)
     os << "joint: " << computeJointLoglk() << "  ";
   if (libpll)
@@ -141,7 +143,6 @@ pll_unode_t *JointTree::getNode(int index) {
 
 
 void JointTree::applyMove(shared_ptr<Move> move) {
-
   auto rollback = move->applyMove(*this);
   rollbacks_.push(rollback);
 }

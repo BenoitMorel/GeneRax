@@ -52,6 +52,7 @@ public:
         return Logger::info;
       } else {
         *_os << t;
+        _os->flush();
         if (logFile) 
           *logFile << t;
         return *this;

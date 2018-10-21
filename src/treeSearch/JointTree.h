@@ -45,7 +45,7 @@ public:
     double computeLibpllLoglk();
     double computeALELoglk ();
     double computeJointLoglk();
-    void printLoglk(bool libpll = true, bool ale = true, bool joint = true, ostream &os = Logger::info);
+    void printLoglk(bool libpll = true, bool ale = true, bool joint = true, Logger &os = Logger::info);
     pll_unode_t *getNode(int index);
     void applyMove(shared_ptr<Move> move);
     void rollbackLastMove();

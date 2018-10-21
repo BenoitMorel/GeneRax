@@ -12,10 +12,7 @@ void SearchUtils::testMove(JointTree &jointTree,
     )
 {
   jointTree.applyMove(move);
-  newLoglk = jointTree.computeLibpllLoglk();
-  if (newLoglk > initialLoglk) {
-    newLoglk += jointTree.computeALELoglk();
-  }
+  newLoglk = jointTree.computeJointLoglk();
   jointTree.rollbackLastMove();
   if(Arguments::check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
     cerr.precision(17);
@@ -31,7 +28,7 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
     int &bestMoveIndex)
 {
   bestMoveIndex = -1;
-  double initialLoglk = bestLoglk;
+  double initialLoglk = bestLoglk; //jointTree.computeJointLoglk();
   int begin = ParallelContext::getBegin(allMoves.size());
   int end = ParallelContext::getEnd(allMoves.size());
   for (int i = begin; i < end; ++i) {

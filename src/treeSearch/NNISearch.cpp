@@ -55,6 +55,8 @@ void NNISearch::applyNNISearch(JointTree &jointTree)
   jointTree.printLoglk();
   double bestLoglk = jointTree.computeJointLoglk();
   bool foundBetterMove = true;
-  while (applyNNIRound(jointTree, bestLoglk)) {
-  }
+  while (applyNNIRound(jointTree, bestLoglk)) {}
+  jointTree.optimizeParameters();
+  bestLoglk = jointTree.computeJointLoglk();
+  while (applyNNIRound(jointTree, bestLoglk)) {}
 }

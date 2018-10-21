@@ -28,10 +28,6 @@ int internal_main(int argc, char** argv, void* comm)
       lossRate
       );
   jointTree->optimizeParameters();
-  if (Arguments::costsEstimation) {
-    Logger::timed << "Starting cost estimation..." << endl;
-    jointTree->optimizeDTRates();
-  }
   Logger::timed << "Starting search..." << endl;
   if (Arguments::strategy == "SPR") {
     SPRSearch::applySPRSearch(*jointTree);
@@ -49,8 +45,6 @@ int internal_main(int argc, char** argv, void* comm)
   jointTree->printLoglk();
   if (!ParallelContext::getRank()) {
     jointTree->save(Arguments::output + ".newick");
-    ofstream os(Arguments::output + ".stats");
-    jointTree->printLoglk(true, true, true, os);
   }
   Logger::timed << "End of JointSearch execution" << endl;
   ParallelContext::finalize();

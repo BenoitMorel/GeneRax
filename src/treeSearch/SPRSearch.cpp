@@ -92,6 +92,7 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
   int bestMoveIndex = -1;
   bool foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex); 
   if (foundBetterMove) {
+    Logger::info << "best move " << bestMoveIndex << endl;
     jointTree.applyMove(allMoves[bestMoveIndex]);
   }
   return foundBetterMove;
@@ -100,14 +101,14 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
 
 void SPRSearch::applySPRSearch(JointTree &jointTree)
 { 
+  jointTree.optimizeParameters();
   jointTree.printLoglk();
   double startingLoglk = jointTree.computeJointLoglk();
   double bestLoglk = startingLoglk;
+
   while (applySPRRound(jointTree, 1, bestLoglk)) {}
-  jointTree.optimizeParameters();
   while (applySPRRound(jointTree, 2, bestLoglk)) {}
-  jointTree.optimizeParameters();
   while (applySPRRound(jointTree, 5, bestLoglk)) {}
-  while (applySPRRound(jointTree, 15, bestLoglk)) {}
+  while (applySPRRound(jointTree, 50, bestLoglk)) {}
 }
 

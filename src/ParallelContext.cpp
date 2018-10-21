@@ -49,13 +49,13 @@ void ParallelContext::setComm(MPI_Comm newComm)
 int ParallelContext::getBegin(int elems)
 {
   int perRankElements = elems / getSize();
-  return getRank() * perRankElements;
+  return (getRank() * elems) / getSize();
 }
  
 int ParallelContext::getEnd(int elems)
 {
   int perRankElements = elems / getSize();
-  return min(elems, (getRank() + 1) * perRankElements);
+  return min(elems, ((getRank() + 1) * elems) / getSize());
 
 }
 
