@@ -31,12 +31,13 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
     int &bestMoveIndex)
 {
   bestMoveIndex = -1;
+  double initialLoglk = bestLoglk;
   int begin = ParallelContext::getBegin(allMoves.size());
   int end = ParallelContext::getEnd(allMoves.size());
   for (int i = begin; i < end; ++i) {
     auto move = allMoves[i];
     double loglk;
-    SearchUtils::testMove(jointTree, move, bestLoglk, loglk);
+    SearchUtils::testMove(jointTree, move, initialLoglk, loglk);
     if (loglk > bestLoglk) {
       bestLoglk = loglk;
       bestMoveIndex = i;

@@ -40,7 +40,9 @@ int internal_main(int argc, char** argv, void* comm)
   } else if (Arguments::strategy == "EVAL") {
   } else if (Arguments::strategy == "HYBRID") {
     NNISearch::applyNNISearch(*jointTree);
+    jointTree->optimizeParameters();
     SPRSearch::applySPRSearch(*jointTree);
+    jointTree->optimizeParameters();
     NNISearch::applyNNISearch(*jointTree);
   }
   Logger::timed << "End of search" << endl;
