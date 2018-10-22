@@ -11,9 +11,9 @@ public:
   int speciesNodesCount;
 
   // model
-  double PD; // Duplication probability, per branch
-  double PL; // Loss probability, per branch
-  double PS; // Speciation probability, per branch
+  vector<double> PD; // Duplication probability, per branch
+  vector<double> PL; // Loss probability, per branch
+  vector<double> PS; // Speciation probability, per branch
   const double O_R; // what is this?
 
   // SPECIES

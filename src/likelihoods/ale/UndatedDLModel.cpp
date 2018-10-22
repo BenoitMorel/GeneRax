@@ -42,20 +42,24 @@ void UndatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
 }
 
 void UndatedDLModel::setRates(double dupRate, double lossRate) {
-  PD = dupRate;
-  PL = lossRate;
-  PS = 1;
-  double sum = PD + PL + PS;
-  PD /= sum;
-  PL /= sum;
-  PS /= sum;
+  PD = vector<double>(speciesNodesCount, dupRate);
+  PL = vector<double>(speciesNodesCount, lossRate);
+  PS = vector<double>(speciesNodesCount, 1.0);
+  for (auto speciesNode: speciesNodes) {
+    int e = speciesNode->node_index;
+    double sum = PD[e] + PL[e] + PS[e];
+    PD[e] /= sum;
+    PL[e] /= sum;
+    PS[e] /= sum;
+  } 
   uE = vector<double>(speciesNodesCount, 0.0);
   for (auto speciesNode: speciesNodes) {
-    double a = PD;
+    int e = speciesNode->node_index;
+    double a = PD[e];
     double b = -1.0;
-    double c = PL;
+    double c = PL[e];
     if (speciesNode->left) {
-      c += PS * uE[speciesNode->left->node_index]  * uE[speciesNode->right->node_index];
+      c += PS[e] * uE[speciesNode->left->node_index]  * uE[speciesNode->right->node_index];
     }  
     uE[speciesNode->node_index] = (-b - sqrt(b * b - 4 * a * c)) / (2.0 * a);
   }
@@ -112,22 +116,22 @@ void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
       double uq_sum = 0;
       if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies[gid]) {
         // present
-        uq_sum += PS;
+        uq_sum += PS[e];
       }
       if (not isGeneLeaf) {
         int gp_i = leftGeneNode->node_index;
         int gpp_i = rightGeneNode->node_index;
         if (not isSpeciesLeaf) {
-          uq_sum += PS * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]);
+          uq_sum += PS[e] * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]);
         }
         // D event
-        uq_sum += PD * (uq[gp_i][e] * uq[gpp_i][e] * 2);
+        uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
       }
       if (not isSpeciesLeaf) {
         // SL event
-        uq_sum += PS * (uq[gid][f] * uE[g] + uq[gid][g] * uE[f]);
+        uq_sum += PS[e] * (uq[gid][f] * uE[g] + uq[gid][g] * uE[f]);
       }
-      uq[gid][e] = uq_sum / (1.0 - 2.0 * PD * uE[e]);
+      uq[gid][e] = uq_sum / (1.0 - 2.0 * PD[e] * uE[e]);
     }
   }
 }
@@ -160,21 +164,23 @@ void UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
       f = speciesNode->left->node_index;
       g = speciesNode->right->node_index;
     }
-    double uq_sum = 0;
+    double uq_e = 0;
     for (auto root: roots) {
+      double uq_sum = 0;
       int gp_i = root->node_index;
       int gpp_i = root->back->node_index;
       if (not isSpeciesLeaf) {
-        uq_sum += PS * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]);
+        uq_sum += PS[e] * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]);
       }
       // D event
-      uq_sum += PD * (uq[gp_i][e] * uq[gpp_i][e] * 2);
+      uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
+      uq_e += uq_sum;
     }
     if (not isSpeciesLeaf) {
       // SL event
-      uq_sum += PS * (ll[f] * uE[g] + ll[g] * uE[f]); //todobenoit I am not sure why ll here
+      uq_e += PS[e] * (ll[f] * uE[g] + ll[g] * uE[f]); 
     }
-    ll[e] = uq_sum / (1.0 - 2.0 * PD * uE[e]);
+    ll[e] = uq_e / (1.0 - 2.0 * PD[e] * uE[e]);
   }
 }
 
