@@ -40,9 +40,6 @@ public:
   virtual std::shared_ptr<Rollback> applyMove(JointTree &tree);
   virtual std::ostream& print(std::ostream & os) const;
 private:
-  void applyBLO(JointTree &tree, 
-    pll_unode_t *prune,
-    pll_unode_t *regraft);
   int pruneIndex_;
   int regraftIndex_;
   vector<int> path_;

@@ -36,9 +36,11 @@ NNIMove::NNIMove(int nodeIndex, bool left, bool blo):
 void optimizeBranches(JointTree &tree,
     const std::vector<pll_unode_t *> &nodesToOptimize)
 {
+    auto root = tree.getTreeInfo()->root;
     // could be incremental and thus faster
     unsigned int params_indices[4] = {0,0,0,0};
     auto treeinfo = tree.getTreeInfo();
+    for (int j = 0; j < 3; ++j) 
     for (unsigned int i = 0; i < nodesToOptimize.size(); ++i) {
         pllmod_treeinfo_set_root(treeinfo.get(), nodesToOptimize[i]);
         double oldLoglk = tree.computeLibpllLoglk(); // update CLVs
@@ -54,6 +56,7 @@ void optimizeBranches(JointTree &tree,
             true);
        assert(oldLoglk <= newLoglk);
     }
+    pllmod_treeinfo_set_root(treeinfo.get(), root);
 
 }
 
@@ -140,36 +143,10 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
 
 ostream& SPRMove::print(ostream & os) const {
   os << "SPR(";
-  os << pruneIndex_ << "," << regraftIndex_;
+  os << "prune:" <<pruneIndex_ << ", regraft:" << regraftIndex_;
+  os << ",path_size:" << path_.size();
   os << ")";
   return os;
 }
 
-void SPRMove::applyBLO(JointTree &tree, 
-    pll_unode_t *prune,
-    pll_unode_t *regraft) 
-{
-    std::vector<pll_unode_t *> nodesToOptimize;
-    nodesToOptimize.push_back(prune);
-    if (prune->next) {
-        nodesToOptimize.push_back(prune->next);
-        nodesToOptimize.push_back(prune->next->next);
-    }
-    /*
-    if (prune->back && prune->back->next) {
-        nodesToOptimize.push_back(prune->back->next);
-        nodesToOptimize.push_back(prune->back->next->next);
-    }
-    */
-    //nodesToOptimize.push_back(regraft);
-    /*
-    if (regraft->next) {
-        nodesToOptimize.push_back(regraft->next);
-        nodesToOptimize.push_back(regraft->next->next);
-    }
-    if (regraft->back && regraft->back->next) {
-        nodesToOptimize.push_back(regraft->back->next);
-        nodesToOptimize.push_back(regraft->back->next->next);
-    }*/
-}
 

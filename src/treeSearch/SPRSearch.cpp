@@ -6,8 +6,17 @@
 #include <treeSearch/Moves.h>
 #include <treeSearch/SearchUtils.hpp>
 #include <Logger.hpp>
+#include <ParallelContext.hpp>
 
 
+int getTreeHash(pll_unode_t *node, int depth = 1) {
+  int res = node->node_index * depth;
+  if (node->next) {
+    res += getTreeHash(node->next->back, depth + 1);
+    res += getTreeHash(node->next->next->back, depth + 2);
+  }
+  return res;
+}
 
 struct SPRMoveDesc {
   SPRMoveDesc(int prune, int regraft, const vector<int> &edges):
@@ -92,7 +101,6 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
   int bestMoveIndex = -1;
   bool foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex); 
   if (foundBetterMove) {
-    Logger::info << "best move " << bestMoveIndex << endl;
     jointTree.applyMove(allMoves[bestMoveIndex]);
   }
   return foundBetterMove;

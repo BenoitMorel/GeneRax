@@ -18,6 +18,8 @@ void SearchUtils::testMove(JointTree &jointTree,
     cerr.precision(17);
     cerr << "rollback lead to different likelihoods: " << initialLoglk
       << " " << jointTree.computeJointLoglk() << endl;
+    cerr << " rank " << ParallelContext::getRank() << endl;
+    cerr << "Move: " << *move << endl;
     exit(1);
   }
 }
