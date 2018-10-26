@@ -82,7 +82,6 @@ std::shared_ptr<Rollback> NNIMove::applyMove(JointTree &tree) {
     if (blo_) {
         applyBLO(tree, edge);
     }
-    tree.updateBPPTree();
     return std::make_shared<NNIRollback>(tree, rollback);
 }
 
@@ -137,7 +136,6 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
   assert(PLL_SUCCESS == pllmod_utree_spr(prune, regraft, &pll_rollback));
   auto rollback = std::make_shared<SPRRollback>(tree, pll_rollback, savedBranches);
   optimizeBranches(tree, branchesToOptimize);
-  tree.updateBPPTree();
   return rollback;
 }
 

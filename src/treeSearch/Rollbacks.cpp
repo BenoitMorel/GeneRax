@@ -4,7 +4,6 @@
 
 void NNIRollback::applyRollback() {
   assert(PLL_SUCCESS == pllmod_tree_rollback(&rollback_));
-  tree_.updateBPPTree();
 }
 
 void SavedBranch::restore() {
@@ -16,6 +15,5 @@ void SPRRollback::applyRollback() {
   assert(PLL_SUCCESS == pllmod_tree_rollback(&rollback_));
   for (auto &b: branches_)
     b.restore();
-  tree_.updateBPPTree();
 }
 

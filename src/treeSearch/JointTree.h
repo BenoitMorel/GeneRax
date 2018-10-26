@@ -69,7 +69,6 @@ private:
     stack<shared_ptr<Rollback> > rollbacks_;
     double aleWeight_;
     double aleLL_;
-    bool needAleRecomputation_;
 };
 
 #endif

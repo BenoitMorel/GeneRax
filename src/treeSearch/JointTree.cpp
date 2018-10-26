@@ -72,8 +72,7 @@ JointTree::JointTree(const string &newick_file,
   dupRate_(dupRate),
   lossRate_(lossRate),
   transferRate_(0.0),
-  aleWeight_(Arguments::aleWeight),
-  needAleRecomputation_(true)
+  aleWeight_(Arguments::aleWeight)
 {
    info_.alignmentFilename = alignment_file;
   info_.model = "GTR";
@@ -114,10 +113,7 @@ double JointTree::computeLibpllLoglk() {
 }
 
 double JointTree::computeALELoglk () {
-  if (needAleRecomputation_) {
-    aleLL_ = aleEvaluation_->evaluate(evaluation_->getTreeInfo());
-    needAleRecomputation_ = false;
-  }
+  aleLL_ = aleEvaluation_->evaluate(evaluation_->getTreeInfo());
   return aleWeight_ * aleLL_;
 }
 
@@ -162,7 +158,6 @@ void JointTree::save(const string &fileName) {
 
 void JointTree::updateBPPTree() {
   geneTree_ = buildFromLibpll(evaluation_, evaluation_->getTreeInfo()->root);
-  needAleRecomputation_ = true;
 }
 
 BPPTree JointTree::getGeneTree() {
@@ -208,6 +203,5 @@ void JointTree::setRates(double dup, double loss) {
   dupRate_ = dup; 
   lossRate_ = loss;
   aleEvaluation_->setRates(dup, loss);
-  needAleRecomputation_ = true;
 }
 
