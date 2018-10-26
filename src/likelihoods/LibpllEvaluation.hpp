@@ -79,7 +79,7 @@ public:
    *  @brief Compute the likelihood of the tree given the alignment
    *  @return the likelihood of the tree
    */
-  double computeLikelihood();
+  double computeLikelihood(bool incremental = false);
 
   double optimizeAllParameters();
 

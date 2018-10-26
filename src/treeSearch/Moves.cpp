@@ -1,17 +1,18 @@
 #include <treeSearch/Moves.h>
 #include <treeSearch/JointTree.h>
 #include <Logger.hpp>
+#include <Arguments.hpp>
 
 // constants taken from RAXML
 #define DEF_LH_EPSILON            0.1
 #define OPT_LH_EPSILON            0.1
 #define RAXML_PARAM_EPSILON       0.001  //0.01
 #define RAXML_BFGS_FACTOR         1e7
-#define RAXML_BRLEN_SMOOTHINGS    32
+#define RAXML_BRLEN_SMOOTHINGS    5
 #define RAXML_BRLEN_DEFAULT       0.1
 #define RAXML_BRLEN_MIN           1.0e-6
 #define RAXML_BRLEN_MAX           100.
-#define RAXML_BRLEN_TOLERANCE     1.0e-7
+#define RAXML_BRLEN_TOLERANCE     1.0e-9
 #define RAXML_FREERATE_MIN        0.001
 #define RAXML_FREERATE_MAX        100.
 #define RAXML_BRLEN_SCALER_MIN    0.01
@@ -33,7 +34,31 @@ NNIMove::NNIMove(int nodeIndex, bool left, bool blo):
 {
 }
 
-void optimizeBranches(JointTree &tree,
+void NNIOptimizeBranches(JointTree &tree, pll_unode_t *edge)
+{
+    auto root = tree.getTreeInfo()->root;
+    // could be incremental and thus faster
+    unsigned int params_indices[4] = {0,0,0,0};
+    auto treeinfo = tree.getTreeInfo();
+    //for (int j = 0; j < 3; ++j) {
+      pllmod_treeinfo_set_root(treeinfo.get(), edge);
+      double oldLoglk = tree.computeLibpllLoglk(); // update CLVs
+      double newLoglk = pllmod_opt_optimize_branch_lengths_local(
+          treeinfo->partitions[0],
+          edge,
+          params_indices,
+          RAXML_BRLEN_MIN,
+          RAXML_BRLEN_MAX,
+          RAXML_BRLEN_TOLERANCE,
+          RAXML_BRLEN_SMOOTHINGS,
+          2,
+          true);
+   // }
+    pllmod_treeinfo_set_root(treeinfo.get(), root);
+
+}
+
+void optimizeBranchesSlow(JointTree &tree,
     const std::vector<pll_unode_t *> &nodesToOptimize)
 {
     auto root = tree.getTreeInfo()->root;
@@ -59,8 +84,8 @@ void optimizeBranches(JointTree &tree,
     pllmod_treeinfo_set_root(treeinfo.get(), root);
 
 }
-
 void NNIMove::applyBLO(JointTree &tree, pll_unode_t *edge) {
+  if (!Arguments::incr) {
     std::vector<pll_unode_t *> nodesToOptimize;
     nodesToOptimize.push_back(edge);
     if (edge->next) {
@@ -71,7 +96,10 @@ void NNIMove::applyBLO(JointTree &tree, pll_unode_t *edge) {
         nodesToOptimize.push_back(edge->back->next);
         nodesToOptimize.push_back(edge->back->next->next);
     }
-    optimizeBranches(tree, nodesToOptimize);
+    optimizeBranchesSlow(tree, nodesToOptimize);
+  } else {
+    NNIOptimizeBranches(tree, edge);
+  }
 }
 
 std::shared_ptr<Rollback> NNIMove::applyMove(JointTree &tree) {
@@ -135,7 +163,7 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
   
   assert(PLL_SUCCESS == pllmod_utree_spr(prune, regraft, &pll_rollback));
   auto rollback = std::make_shared<SPRRollback>(tree, pll_rollback, savedBranches);
-  optimizeBranches(tree, branchesToOptimize);
+  optimizeBranchesSlow(tree, branchesToOptimize);
   return rollback;
 }
 

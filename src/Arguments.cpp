@@ -10,6 +10,7 @@ string Arguments::speciesTree;
 string Arguments::strategy("NNI");
 string Arguments::output("jointSearch");
 bool Arguments::check = false;
+bool Arguments::incr = false;
 double Arguments::aleWeight = 1.0;
 bool Arguments::costsEstimation = false;
 
@@ -40,6 +41,8 @@ void Arguments::init(int argc, char * argv[])
       costsEstimation = true;
     } else if (arg == "--check") {
       check = true;
+    } else if (arg == "--incr") {
+      incr = true;
     } else if (arg == "--ale-weight") {
       aleWeight = atof(argv[++i]);
     } else {
@@ -79,6 +82,7 @@ void Arguments::printHelp() {
   Logger::info << "-t, --threads <THREADS NUMBER>" << endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
   Logger::info << "--check" << endl;
+  Logger::info << "--incr" << endl;
   Logger::info << endl;
 
 }
@@ -100,6 +104,7 @@ void Arguments::printSummary() {
   Logger::info << "Strategy: " << strategy << endl;
   Logger::info << "Prefix: " << output << endl;
   Logger::info << "Check mode: " << boolStr[check] << endl;
+  Logger::info << "Incremental likelihood mode: " << boolStr[incr] << endl;
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << endl;
   Logger::info << endl;
 }

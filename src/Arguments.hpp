@@ -21,6 +21,7 @@ public:
   static string strategy;
   static string output;
   static bool check;
+  static bool incr;
   static double aleWeight;
   static bool costsEstimation;
 };

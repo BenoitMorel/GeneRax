@@ -56,7 +56,8 @@ unsigned int getBestLibpllAttribute() {
   } else if (pll_hardware.sse_present) {
     arch = PLL_ATTRIB_ARCH_SSE;
   }
-  return PLL_ATTRIB_SITE_REPEATS | arch;
+  arch |= PLL_ATTRIB_SITE_REPEATS;
+  return  arch;
 }
 
 void utreeDestroy(pll_utree_t *utree) {
@@ -279,9 +280,9 @@ void LibpllEvaluation::parseAlignmentInfo(const string &filename,
   }
 }
 
-double LibpllEvaluation::computeLikelihood()
+double LibpllEvaluation::computeLikelihood(bool incremental)
 {
-  return pllmod_treeinfo_compute_loglh(treeinfo_.get(), 0);
+  return pllmod_treeinfo_compute_loglh(treeinfo_.get(), incremental);
 }
 
 double LibpllEvaluation::optimizeAllParameters()

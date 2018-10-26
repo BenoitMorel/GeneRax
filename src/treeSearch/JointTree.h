@@ -55,6 +55,7 @@ public:
     shared_ptr<pllmod_treeinfo_t> getTreeInfo();
     void setRates(double dup, double loss);
     void optimizeDTRates();
+    pll_rtree_t *getSpeciesTree() {return pllSpeciesTree_;}
 private:
     shared_ptr<LibpllEvaluation> evaluation_;
     shared_ptr<ALEEvaluation> aleEvaluation_;
