@@ -102,15 +102,35 @@ void NNIMove::applyBLO(JointTree &tree, pll_unode_t *edge) {
   }
 }
 
+bool equals(pll_unode_t *node1, pll_unode_t *node2) {
+  return node1 == node2 || (node1->next && (node1->next == node2 || node1->next->next == node2));
+}
+
 std::shared_ptr<Rollback> NNIMove::applyMove(JointTree &tree) {
     auto edge = tree.getNode(nodeIndex_);
+    auto treeRoot = tree.getAleEvaluation()->getRoot();
+    bool rootAffected = false;
+    if (treeRoot) {
+      rootAffected = equals(treeRoot, edge) || equals(treeRoot, edge->back);
+      if (edge->next) {
+        rootAffected = rootAffected || equals(treeRoot, edge->next->back);
+        rootAffected = rootAffected || equals(treeRoot, edge->next->next->back);
+      }
+      if (edge->back->next) {
+        rootAffected = rootAffected || equals(treeRoot, edge->back->next->back);
+        rootAffected = rootAffected || equals(treeRoot, edge->back->next->next->back);
+      }
+      if (rootAffected) {
+        tree.getAleEvaluation()->setRoot(0);
+      }
+    }
     unsigned int move = left_ ? PLL_UTREE_MOVE_NNI_LEFT : PLL_UTREE_MOVE_NNI_RIGHT;
     pll_tree_rollback_t rollback;
     assert(PLL_SUCCESS == pllmod_utree_nni(edge, move, &rollback));
     if (blo_) {
         applyBLO(tree, edge);
     }
-    return std::make_shared<NNIRollback>(tree, rollback);
+    return std::make_shared<NNIRollback>(tree, rollback, rootAffected);
 }
 
 ostream& NNIMove::print(ostream & os) const {

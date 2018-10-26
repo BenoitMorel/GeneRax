@@ -45,6 +45,7 @@ void UndatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
 }
 
 void UndatedDLModel::setRates(double dupRate, double lossRate) {
+  geneRoot = 0;
   PD = vector<double>(speciesNodesCount, dupRate);
   PL = vector<double>(speciesNodesCount, lossRate);
   PS = vector<double>(speciesNodesCount, 1.0);
@@ -196,7 +197,7 @@ pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
       } else {
         uq_e += uq_sum;
       }
-    }
+      }
     if (not isSpeciesLeaf) {
       // SL event
       uq_e += PS[e] * (ll[f] * uE[g] + ll[g] * uE[f]); 

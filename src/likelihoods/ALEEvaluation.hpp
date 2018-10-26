@@ -16,6 +16,8 @@ public:
 
   void setRates(double dupRate, double lossRate);
 
+  pll_unode_t * getRoot() {return undatedDLModel.getRoot();}
+  void setRoot(pll_unode_t *root) {undatedDLModel.setRoot(root);}
   double evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo);
 private:
   UndatedDLModel undatedDLModel;

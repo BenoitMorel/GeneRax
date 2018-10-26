@@ -39,6 +39,8 @@ public:
   pll_unode_t *geneRoot;
 public:
   void setRates(double dupRate, double lossRate);
+  void setRoot(pll_unode_t * root) {geneRoot = root;}
+  pll_unode_t *getRoot() {return geneRoot;}
   void setSpeciesTree(pll_rtree_t *geneTree);
   void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
   double pun(shared_ptr<pllmod_treeinfo_t> treeinfo);

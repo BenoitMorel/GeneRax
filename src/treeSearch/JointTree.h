@@ -48,6 +48,7 @@ public:
     void printLoglk(bool libpll = true, bool ale = true, bool joint = true, Logger &os = Logger::info);
     pll_unode_t *getNode(int index);
     void applyMove(shared_ptr<Move> move);
+    
     void rollbackLastMove();
     void save(const string &fileName);
     void updateBPPTree();
@@ -57,6 +58,7 @@ public:
     void optimizeDTRates();
     pll_rtree_t *getSpeciesTree() {return pllSpeciesTree_;}
     int getTreeHash();
+    shared_ptr<ALEEvaluation> getAleEvaluation() {return aleEvaluation_;}
 private:
     shared_ptr<LibpllEvaluation> evaluation_;
     shared_ptr<ALEEvaluation> aleEvaluation_;
