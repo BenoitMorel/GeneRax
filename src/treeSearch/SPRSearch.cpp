@@ -9,14 +9,6 @@
 #include <ParallelContext.hpp>
 
 
-int getTreeHash(pll_unode_t *node, int depth = 1) {
-  int res = node->node_index * depth;
-  if (node->next) {
-    res += getTreeHash(node->next->back, depth + 1);
-    res += getTreeHash(node->next->next->back, depth + 2);
-  }
-  return res;
-}
 
 struct SPRMoveDesc {
   SPRMoveDesc(int prune, int regraft, const vector<int> &edges):

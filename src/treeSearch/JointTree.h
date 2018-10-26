@@ -56,6 +56,7 @@ public:
     void setRates(double dup, double loss);
     void optimizeDTRates();
     pll_rtree_t *getSpeciesTree() {return pllSpeciesTree_;}
+    int getTreeHash();
 private:
     shared_ptr<LibpllEvaluation> evaluation_;
     shared_ptr<ALEEvaluation> aleEvaluation_;

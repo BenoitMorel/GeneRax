@@ -5,6 +5,20 @@
 #include "Arguments.hpp"
 #include<limits>
 
+int getTreeHashRec(pll_unode_t *node, int depth = 1) {
+  int res = node->node_index * depth;
+  if (node->next) {
+    res += getTreeHashRec(node->next->back, depth + 1);
+    res += getTreeHashRec(node->next->next->back, depth + 2);
+  }
+  return res;
+}
+    
+int JointTree::getTreeHash()
+{
+  return getTreeHashRec(getTreeInfo()->root);
+}
+
 void printLibpllNode(pll_unode_s *node, Logger &os, bool isRoot)
 {
   if (node->next) {

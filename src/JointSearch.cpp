@@ -58,6 +58,7 @@ int internal_main(int argc, char** argv, void* comm)
   }
   Logger::timed << "End of search" << endl;
   jointTree->printLoglk();
+  Logger::info << "Final tree hash: " << jointTree->getTreeHash() << endl;
   if (!ParallelContext::getRank()) {
     jointTree->save(Arguments::output + ".newick");
   }
