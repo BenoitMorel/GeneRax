@@ -7,6 +7,8 @@
 #include <ale/tools/IO/IO.h>
 #include <ale/tools/PhyloTreeToolBox.h>
 
+#include <Arguments.hpp>
+
 using namespace bpp;
 using namespace std;
 
@@ -174,7 +176,11 @@ void UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
       }
       // D event
       uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
-      uq_e += uq_sum;
+      if (Arguments::aleRooted) {
+        uq_e = max(uq_sum, uq_e);
+      } else {
+        uq_e += uq_sum;
+      }
     }
     if (not isSpeciesLeaf) {
       // SL event
@@ -197,16 +203,18 @@ void UndatedDLModel::mapGenesToSpecies(pllmod_treeinfo_t &treeinfo)
 }
 
 
+void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
+{
+  mapGenesToSpecies(*treeinfo);
+}
+
 double UndatedDLModel::pun(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   double survive = 0;
   double root_sum = 0;
   double O_norm = 0;
-
-  // init gene ids
-  
   getIdsPostOrder(*treeinfo, geneIds);
-  mapGenesToSpecies(*treeinfo);
+
  
   // init ua with zeros
   vector<double> zeros(speciesNodesCount, 0.0);

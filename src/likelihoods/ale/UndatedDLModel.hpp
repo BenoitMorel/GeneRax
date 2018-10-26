@@ -37,10 +37,10 @@ public:
   vector<int> geneToSpecies;
   
 
-
 public:
   void setRates(double dupRate, double lossRate);
   void setSpeciesTree(pll_rtree_t *geneTree);
+  void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
   double pun(shared_ptr<pllmod_treeinfo_t> treeinfo);
   
 
@@ -48,10 +48,6 @@ public:
 
   UndatedDLModel();
   ~UndatedDLModel();
-  void reset() {
-    uE.clear();
-    uq.clear();
-  }
 
 
   void mapGenesToSpecies(pllmod_treeinfo_t &treeinfo);

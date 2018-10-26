@@ -2,7 +2,8 @@
 #include "ALEEvaluation.hpp"
 
 ALEEvaluation::ALEEvaluation(pll_rtree_t *speciesTree,
-  const SpeciesGeneMap& map)
+  const SpeciesGeneMap& map):
+  firstCall(true)
 {
   undatedDLModel.setMap(SpeciesGeneMapper::nodeMapsToStrings(map));
   undatedDLModel.setSpeciesTree(speciesTree);
@@ -17,7 +18,9 @@ void ALEEvaluation::setRates(double dupRate, double lossRate)
 
 double ALEEvaluation::evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
-  undatedDLModel.reset();
+  if (firstCall) {
+    undatedDLModel.setInitialGeneTree(treeinfo);
+  }
   return (double)std::log(undatedDLModel.pun(treeinfo));
 }
 

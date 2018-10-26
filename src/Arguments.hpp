@@ -22,6 +22,7 @@ public:
   static string output;
   static bool check;
   static bool incr;
+  static bool aleRooted;
   static double aleWeight;
   static bool costsEstimation;
 };
