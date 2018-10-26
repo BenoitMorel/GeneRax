@@ -9,6 +9,20 @@
 using namespace std;
 
 
+void printJointTreeInfo(shared_ptr<JointTree> tree) 
+{
+  auto treeInfo = tree->getTreeInfo();
+  int speciesLeaves = tree->getSpeciesTree()->tip_count;
+  int geneLeaves = treeInfo->tip_count;;
+  int sites = treeInfo->partitions[0]->sites;
+
+
+  Logger::info << "Species leaves: " << speciesLeaves << endl;
+  Logger::info << "Gene leaves: " << geneLeaves << endl;
+  Logger::info << "Sites: " << sites << endl;
+  Logger::info << endl;
+}
+
 int internal_main(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm);
@@ -27,6 +41,7 @@ int internal_main(int argc, char** argv, void* comm)
       dupRate,
       lossRate
       );
+  printJointTreeInfo(jointTree);
   jointTree->optimizeParameters();
   Logger::timed << "Starting search..." << endl;
   if (Arguments::strategy == "SPR") {
