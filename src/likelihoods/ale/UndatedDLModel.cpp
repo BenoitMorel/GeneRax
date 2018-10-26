@@ -13,7 +13,8 @@ using namespace bpp;
 using namespace std;
 
 UndatedDLModel::UndatedDLModel() :
-  O_R(1)
+  O_R(1),
+  geneRoot(0)
 {
 }
 
@@ -85,10 +86,16 @@ void getIdsPostOrderRec(pll_unode_t *node,
   marked[node->node_index] = true;
 }
 
-void getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds) {
+void UndatedDLModel::getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds) {
   int nodesNumber = tree.subnode_count;
   nodeIds.clear();
   vector<bool> marked(nodesNumber, false);
+  if (Arguments::aleRooted && geneRoot) {
+    getIdsPostOrderRec(geneRoot, marked, nodeIds);
+    getIdsPostOrderRec(geneRoot->back, marked, nodeIds);
+    return;
+  } 
+  
   for (int i = 0; i < nodesNumber; ++i) {
     getIdsPostOrderRec(tree.subnodes[i], marked, nodeIds);
   }
@@ -140,6 +147,11 @@ void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
 
 void UndatedDLModel::getRoots(pllmod_treeinfo_t &treeinfo, vector<pll_unode_t *> &roots)
 {
+  roots.clear();
+  if (Arguments::aleRooted && geneRoot) {
+    roots.push_back(geneRoot);
+    return;
+  }
   vector<bool> marked(geneIds.size(), false);
   for (auto id: geneIds) {
     auto node = treeinfo.subnodes[id];
@@ -152,11 +164,11 @@ void UndatedDLModel::getRoots(pllmod_treeinfo_t &treeinfo, vector<pll_unode_t *>
 
 }
 
-void UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
+pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
 {
   vector<pll_unode_t *> roots;
   getRoots(treeinfo, roots);
-
+  pll_unode_t *bestRoot = 0;
   for (auto speciesNode: speciesNodes) {
     bool isSpeciesLeaf = !speciesNode->left;
     int e = speciesNode->node_index;
@@ -177,7 +189,10 @@ void UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
       // D event
       uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
       if (Arguments::aleRooted) {
-        uq_e = max(uq_sum, uq_e);
+        if (uq_sum > uq_e) {
+          uq_e = max(uq_sum, uq_e);
+          bestRoot = root;
+        }
       } else {
         uq_e += uq_sum;
       }
@@ -188,6 +203,7 @@ void UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
     }
     ll[e] = uq_e / (1.0 - 2.0 * PD[e] * uE[e]);
   }
+  return bestRoot;
 }
 
 void UndatedDLModel::mapGenesToSpecies(pllmod_treeinfo_t &treeinfo)
@@ -213,17 +229,23 @@ double UndatedDLModel::pun(shared_ptr<pllmod_treeinfo_t> treeinfo)
   double survive = 0;
   double root_sum = 0;
   double O_norm = 0;
-  getIdsPostOrder(*treeinfo, geneIds);
 
- 
+  getIdsPostOrder(*treeinfo, geneIds); 
+  int maxId = 0;
+  for (auto gid: geneIds)
+    maxId = max(maxId, gid);
   // init ua with zeros
   vector<double> zeros(speciesNodesCount, 0.0);
-  uq = vector<vector<double>>(geneIds.size(),zeros);
+  uq = vector<vector<double>>(maxId + 1,zeros);
   ll = vector<double>(speciesNodesCount, 0.0);
 
   // main loop
   updateCLVs(*treeinfo);
-  computeLikelihoods(*treeinfo);
+  
+  auto bestRoot = computeLikelihoods(*treeinfo);
+  if (bestRoot) {
+    geneRoot = bestRoot;
+  }
   for (int e = 0; e < speciesNodesCount; e++) {
     double O_p = 1;
     if (e == (speciesNodesCount - 1)) 

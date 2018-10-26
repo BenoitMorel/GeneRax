@@ -36,7 +36,7 @@ public:
   vector<int> geneIds;
   vector<int> geneToSpecies;
   
-
+  pll_unode_t *geneRoot;
 public:
   void setRates(double dupRate, double lossRate);
   void setSpeciesTree(pll_rtree_t *geneTree);
@@ -50,9 +50,10 @@ public:
   ~UndatedDLModel();
 
 
+  void getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds);
   void mapGenesToSpecies(pllmod_treeinfo_t &treeinfo);
   void updateCLVs(pllmod_treeinfo_t &treeinfo);
-  void computeLikelihoods(pllmod_treeinfo_t &treeinfo);
+  pll_unode_t *computeLikelihoods(pllmod_treeinfo_t &treeinfo);
   void getRoots(pllmod_treeinfo_t &treeinfo, vector<pll_unode_t *> &roots);
 
 };
