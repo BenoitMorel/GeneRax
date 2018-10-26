@@ -51,7 +51,7 @@ void NNIOptimizeBranches(JointTree &tree, pll_unode_t *edge)
           RAXML_BRLEN_MAX,
           RAXML_BRLEN_TOLERANCE,
           RAXML_BRLEN_SMOOTHINGS,
-          2,
+          3,
           true);
    // }
     pllmod_treeinfo_set_root(treeinfo.get(), root);
