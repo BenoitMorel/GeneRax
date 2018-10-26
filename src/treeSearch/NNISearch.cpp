@@ -30,14 +30,14 @@ void getAllNNIIndices(JointTree &tree, vector<int> &allNodeIndices) {
 }
 
 
-bool NNISearch::applyNNIRound(JointTree &jointTree, double &bestLoglk) {
+bool NNISearch::applyNNIRound(JointTree &jointTree, double &bestLoglk, int bloRadius) {
   shared_ptr<Move> bestMove(0);
   vector<int> allNodes;
   vector<shared_ptr<Move> > allMoves;
   getAllNNIIndices(jointTree, allNodes);
   for (int j = 0; j < allNodes.size(); ++j) {
       for (int moveType = 0; moveType < 2; ++moveType) {
-        allMoves.push_back(Move::createNNIMove(allNodes[j], moveType, true));
+        allMoves.push_back(Move::createNNIMove(allNodes[j], moveType, true, bloRadius));
       }
   }
   Logger::timed << "Start NNI Round (best ll=" << bestLoglk << ", " << allMoves.size() << " moves to try)" << endl;
@@ -55,8 +55,8 @@ void NNISearch::applyNNISearch(JointTree &jointTree)
   jointTree.printLoglk();
   double bestLoglk = jointTree.computeJointLoglk();
   bool foundBetterMove = true;
-  while (applyNNIRound(jointTree, bestLoglk)) {}
+  while (applyNNIRound(jointTree, bestLoglk, 1)) {}
   jointTree.optimizeParameters();
   bestLoglk = jointTree.computeJointLoglk();
-  while (applyNNIRound(jointTree, bestLoglk)) {}
+  while (applyNNIRound(jointTree, bestLoglk, 3)) {}
 }

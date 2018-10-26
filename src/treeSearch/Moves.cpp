@@ -19,22 +19,23 @@
 #define RAXML_BRLEN_SCALER_MAX 100.
   
 
-std::shared_ptr<Move> Move::createNNIMove(int nodeIndex, bool left, bool blo) {
-  return make_shared<NNIMove>(nodeIndex, left, blo);
+std::shared_ptr<Move> Move::createNNIMove(int nodeIndex, bool left, bool blo, int bloRadius) {
+  return make_shared<NNIMove>(nodeIndex, left, blo, bloRadius);
 }
 
 std::shared_ptr<Move> Move::createSPRMove(int pruneIndex, int regraftIndex, const vector<int> &path) {
   return make_shared<SPRMove>(pruneIndex, regraftIndex, path);
 }
 
-NNIMove::NNIMove(int nodeIndex, bool left, bool blo):
+NNIMove::NNIMove(int nodeIndex, bool left, bool blo, int bloRadius):
     nodeIndex_(nodeIndex),
     left_(left),
-    blo_(blo)
+    blo_(blo),
+    bloRadius_(bloRadius)
 {
 }
 
-void NNIOptimizeBranches(JointTree &tree, pll_unode_t *edge)
+void NNIOptimizeBranches(JointTree &tree, pll_unode_t *edge, int radius)
 {
     auto root = tree.getTreeInfo()->root;
     // could be incremental and thus faster
@@ -51,7 +52,7 @@ void NNIOptimizeBranches(JointTree &tree, pll_unode_t *edge)
           RAXML_BRLEN_MAX,
           RAXML_BRLEN_TOLERANCE,
           RAXML_BRLEN_SMOOTHINGS,
-          3,
+          radius,
           true);
    // }
     pllmod_treeinfo_set_root(treeinfo.get(), root);
@@ -98,7 +99,7 @@ void NNIMove::applyBLO(JointTree &tree, pll_unode_t *edge) {
     }
     optimizeBranchesSlow(tree, nodesToOptimize);
   } else {
-    NNIOptimizeBranches(tree, edge);
+    NNIOptimizeBranches(tree, edge, bloRadius_);
   }
 }
 
