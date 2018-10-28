@@ -1,7 +1,5 @@
 #include "Arguments.hpp"
 #include "ParallelContext.hpp"
-#include <ale/tools/IO/IO.h>
-#include <ale/tools/Utils.h>
 #include <treeSearch/JointTree.h>
 #include <treeSearch/NNISearch.h>
 #include <treeSearch/SPRSearch.h>
@@ -38,6 +36,7 @@ int internal_main(int argc, char** argv, void* comm)
   auto jointTree = make_shared<JointTree>(Arguments::geneTree,
       Arguments::alignment,
       Arguments::speciesTree,
+      Arguments::geneSpeciesMap,
       dupRate,
       lossRate
       );

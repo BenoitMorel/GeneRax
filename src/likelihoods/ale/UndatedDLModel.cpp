@@ -1,15 +1,6 @@
 #include "UndatedDLModel.hpp"
-
-// Bpp includes
-#include <Bpp/BppString.h>
-#include <Bpp/Numeric/Random/RandomTools.h>
-
-#include <ale/tools/IO/IO.h>
-#include <ale/tools/PhyloTreeToolBox.h>
-
 #include <Arguments.hpp>
 
-using namespace bpp;
 using namespace std;
 
 UndatedDLModel::UndatedDLModel() :
@@ -258,14 +249,8 @@ double UndatedDLModel::pun(shared_ptr<pllmod_treeinfo_t> treeinfo)
   return root_sum / survive / O_norm * (speciesNodesCount);
 }
 
-void UndatedDLModel::setMap(const GeneMap<string, string> &geneMap) { 
-  geneNameToSpeciesName.clear();
-  auto species = geneMap.getSpecies();
-  for (auto s: species) {
-    auto genes = geneMap.getGenes(s);
-    for (auto g: genes) {
-      geneNameToSpeciesName[g] = s; 
-    }
-  }
+void UndatedDLModel::setGeneSpeciesMap(const GeneSpeciesMapping &map)
+{
+  geneNameToSpeciesName = map.getMap();
 }
 

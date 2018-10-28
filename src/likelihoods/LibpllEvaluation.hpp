@@ -19,9 +19,7 @@ extern "C" {
 #include <memory>
 #include <exception>
 #include <vector>
-#include <Bpp/Phyl/Tree/PhyloTree.h>
 
-class PhyloTree;
 struct pll_sequence;
 using pll_sequence_ptr = std::shared_ptr<pll_sequence>;
 using pll_sequences = std::vector<pll_sequence_ptr>;
@@ -70,8 +68,6 @@ public:
   static std::shared_ptr<LibpllEvaluation> buildFromFile(const std::string &newickTree,
       const LibpllAlignmentInfo &info);
 
-  static std::shared_ptr<LibpllEvaluation> buildFromPhylo(std::shared_ptr<bpp::PhyloTree> phyloTree,
-      const LibpllAlignmentInfo &info);
 
   static void parseAlignmentInfo(const std::string &filename, 
       std::vector<LibpllAlignmentInfo> &infos, const int tree_index = -1);

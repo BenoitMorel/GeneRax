@@ -7,6 +7,7 @@ char ** Arguments::argv = 0;
 string Arguments::geneTree;
 string Arguments::alignment;
 string Arguments::speciesTree;
+string Arguments::geneSpeciesMap;
 string Arguments::strategy("NNI");
 string Arguments::output("jointSearch");
 bool Arguments::check = false;
@@ -34,6 +35,8 @@ void Arguments::init(int argc, char * argv[])
       alignment = string(argv[++i]);
     } else if (arg == "-s" || arg == "--species-tree") {
       speciesTree = string(argv[++i]);
+    } else if (arg == "-m" || arg == "--map") {
+      geneSpeciesMap = string(argv[++i]);
     } else if (arg == "--strategy") {
       strategy = string(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
@@ -56,6 +59,15 @@ void Arguments::init(int argc, char * argv[])
   }
 }
 
+void assertFileExists(const string &file) 
+{
+  ifstream f(file);
+  if (!f) {
+    Logger::error << "File " << file << " does not exist. Aborting." << endl;
+    exit(1);
+  }
+}
+
 void Arguments::checkInputs() {
   bool ok = true;
   if (!geneTree.size()) {
@@ -70,10 +82,18 @@ void Arguments::checkInputs() {
     Logger::error << "You need to provide a species tree." << endl;
     ok = false;
   }
+  if (!geneSpeciesMap.size()) {
+    Logger::error << "You need to provide a gene species map file." << endl;
+    ok = false;
+  }
   if (!ok) {
     Logger::error << "Aborting." << endl;
     exit(1);
   }
+  assertFileExists(geneTree);
+  assertFileExists(speciesTree);
+  assertFileExists(geneSpeciesMap);
+  assertFileExists(alignment);
 }
 
 void Arguments::printHelp() {
@@ -105,6 +125,7 @@ void Arguments::printSummary() {
   Logger::info << "Gene tree: " << geneTree << endl;
   Logger::info << "Alignment: " << alignment << endl; 
   Logger::info << "Species tree: " << speciesTree << endl;
+  Logger::info << "Gene species map: " << geneSpeciesMap << endl;
   Logger::info << "Strategy: " << strategy << endl;
   Logger::info << "Prefix: " << output << endl;
   Logger::info << "Check mode: " << boolStr[check] << endl;
