@@ -10,6 +10,9 @@ set(JOINTSEARCH_SOURCES JointSearch.cpp
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ALEEvaluation.cpp
   likelihoods/ale/UndatedDLModel.cpp
+  likelihoods/dated_ale/exODT.cpp
+  likelihoods/dated_ale/ALE.cpp
+  likelihoods/dated_ale/model.cpp
   treeSearch/JointTree.cpp
   treeSearch/Moves.cpp
   treeSearch/Rollbacks.cpp
