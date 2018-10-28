@@ -25,8 +25,10 @@ if(MPI_FOUND)
   add_definitions(-DWITH_MPI)
 endif()
 
-set(JOINTSEARCH_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src 
-   ${CMAKE_CURRENT_SOURCE_DIR}/ext)
-
 add_subdirectory(ext)
+
+set(JOINTSEARCH_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src 
+   ${CMAKE_CURRENT_SOURCE_DIR}/ext
+   ${PLLMOD_EXPORTED_INCLUDE_PATH})
+
 add_subdirectory(src)

@@ -27,8 +27,6 @@ else()
 endif()
 
 
-target_link_libraries(${PROJECT_NAME}
-  ale)
 set_target_properties(${PROJECT_NAME}
   PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
@@ -56,6 +54,17 @@ target_include_directories(${PROJECT_NAME}
 
 target_compile_definitions(${PROJECT_NAME}
   PRIVATE "-DVERSION_NUMBER=${PROJECT_VERSION}")
+
+set(PLL_LIBRARIES 
+    pllmodalgorithm_static
+    pllmodbinary_static
+    pllmodmsa_static
+    pllmodoptimize_static
+    pllmodtree_static
+    pllmodutil_static
+   )
+
+target_link_libraries(${PROJECT_NAME} ${PLL_LIBRARIES})
 
 if (BUILD_AS_LIBRARY AND NOT APPLE)
   target_link_libraries(${PROJECT_NAME} gcc_s gcc)

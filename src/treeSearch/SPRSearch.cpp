@@ -1,7 +1,5 @@
 #include "SPRSearch.h"
 #include "Arguments.hpp"
-#include <Bpp/Phyl/Tree/PhyloTree.h>
-#include <ale/containers/GeneMap.h>
 #include <treeSearch/JointTree.h>
 #include <treeSearch/Moves.h>
 #include <treeSearch/SearchUtils.hpp>

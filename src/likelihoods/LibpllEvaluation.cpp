@@ -7,7 +7,6 @@ extern "C" {
 }
 
 #include "LibpllEvaluation.hpp"
-#include <Bpp/Phyl/Tree/PhyloTree.h>
 #include <map>
 #include <fstream>
 #include <iostream>

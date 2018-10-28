@@ -1,11 +1,8 @@
 #include "NNISearch.h"
 #include <algorithm>
 #include "Arguments.hpp"
-#include <Bpp/Phyl/Tree/PhyloTree.h>
-#include <ale/containers/GeneMap.h>
 #include <treeSearch/JointTree.h>
 #include <treeSearch/Moves.h>
-#include <ale/tools/SpeciesGeneMapper.h>
 #include <treeSearch/SearchUtils.hpp>
 #include <Logger.hpp>
 
