@@ -4,7 +4,6 @@
 
 // Include ALE
 
-#include <ale/tools/SpeciesGeneMapper.h>
 #include <parsers/GeneSpeciesMapping.hpp>
 #include <likelihoods/ale/UndatedDLModel.hpp>
 

@@ -41,42 +41,6 @@ void printLibpllTreeRooted(pll_unode_t *root, Logger &os){
   os << ");" << endl;
 }
 
-BPPNode createNode(BPPTree tree, BPPNode father = 0, const std::string&name = "", double branchLength = 0.0) {
-  BPPNode node(new bpp::PhyloNode(name));
-  if (!father) {
-    tree->createNode(node);
-  } else {
-    BPPBranch branch(new bpp::PhyloBranch);
-    if (tree->hasFather(father)) {
-      branch->setLength(branchLength);
-    } else {
-      // special case: this branch corresponds to half the branch
-      // of the root in the unrooted tree
-      branch->setLength(branchLength / 2.0);
-    }
-    tree->createNode(father, node, branch);
-  }
-  return node;
-}
-
-void addFromLibpll(BPPTree tree, BPPNode bppFather, pll_unode_s *libpllNode)
-{
-  BPPNode newNode = createNode(tree, bppFather, libpllNode->label ? libpllNode->label : "", libpllNode->length);
-  if (libpllNode->next) {
-    addFromLibpll(tree, newNode, libpllNode->next->back);
-    addFromLibpll(tree, newNode, libpllNode->next->next->back);
-  }
-}
-
-std::shared_ptr<bpp::PhyloTree> buildFromLibpll(std::shared_ptr<LibpllEvaluation> evaluation, pll_unode_s *libpllRoot)
-{
-  std::shared_ptr<bpp::PhyloTree> tree(new bpp::PhyloTree(true));
-  BPPNode root = createNode(tree, 0, "root");
-  tree->setRoot(root);
-  addFromLibpll(tree, root, libpllRoot);
-  addFromLibpll(tree, root, libpllRoot->back);
-  return tree;
-}
 
 JointTree::JointTree(const string &newick_file,
     const string &alignment_file,
@@ -92,13 +56,8 @@ JointTree::JointTree(const string &newick_file,
    info_.alignmentFilename = alignment_file;
   info_.model = "GTR";
   evaluation_ = LibpllEvaluation::buildFromFile(newick_file, info_);
-  updateBPPTree();
-  speciesTree_ = IO::readTreeFile(speciestree_file);
-  vector<BPPTree> geneTrees(1, geneTree_);
   pllSpeciesTree_ = pll_rtree_parse_newick(speciestree_file.c_str());
   assert(pllSpeciesTree_);
-  map_ = SpeciesGeneMapper::map(
-      geneTrees.begin(), geneTrees.end(), *speciesTree_, trees)[0];
   aleEvaluation_ = make_shared<ALEEvaluation>(pllSpeciesTree_,  geneSpeciesMap_);
   setRates(dupRate, lossRate);
 
@@ -108,13 +67,7 @@ void JointTree::printLibpllTree() const {
   printLibpllTreeRooted(evaluation_->getTreeInfo()->root, Logger::info);
 }
 
-void JointTree::printBPPTree() const {
-  IO::write(*geneTree_, Logger::info);
-}
 
-void JointTree::printSpeciesTree() const {
-  IO::write(*speciesTree_, Logger::info);
-}
 
 void JointTree::optimizeParameters() {
   evaluation_->optimizeAllParameters();
@@ -169,14 +122,6 @@ void JointTree::save(const string &fileName) {
   ofstream os(fileName);
   char *newick = pll_utree_export_newick(getTreeInfo()->root, 0);
   os << newick;
-}
-
-void JointTree::updateBPPTree() {
-  geneTree_ = buildFromLibpll(evaluation_, evaluation_->getTreeInfo()->root);
-}
-
-BPPTree JointTree::getGeneTree() {
-  return geneTree_;
 }
 
 shared_ptr<pllmod_treeinfo_t> JointTree::getTreeInfo() {

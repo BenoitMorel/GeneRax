@@ -1,7 +1,6 @@
 #ifndef JOINTSEARCH_UNDATEDDLMODEL_HPP_
 #define JOINTSEARCH_UNDATEDDLMODEL_HPP_
 
-#include <ale/containers/GeneMap.h>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <parsers/GeneSpeciesMapping.hpp>
 
@@ -18,7 +17,6 @@ public:
   const double O_R; // what is this?
 
   // SPECIES
-  shared_ptr<bpp::PhyloTree> S;//Species tree
   vector<int> daughter;
   vector<int> son;
   vector<double> uE; // Probability for a gene to become extinct on each brance
@@ -47,7 +45,6 @@ public:
   double pun(shared_ptr<pllmod_treeinfo_t> treeinfo);
   
 
-  void setMap(const GeneMap<string, string> &map);
   void setGeneSpeciesMap(const GeneSpeciesMapping &map);
 
   UndatedDLModel();

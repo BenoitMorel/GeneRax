@@ -8,7 +8,6 @@ extern "C" {
 
 #include "LibpllEvaluation.hpp"
 #include <Bpp/Phyl/Tree/PhyloTree.h>
-#include <ale/tools/IO/Newick.h>
 #include <map>
 #include <fstream>
 #include <iostream>
@@ -237,17 +236,6 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromFile(const string &newic
 }
 
 
-shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromPhylo(shared_ptr<bpp::PhyloTree> phyloTree,
-  const LibpllAlignmentInfo &info)
-{
-  Newick newick;
-  string str = newick.treeToParenthesis(*phyloTree.get());
-  return buildFromString(str,
-      info.alignmentFilename,
-      info.model);
-}
-
-  
 void LibpllEvaluation::parseAlignmentInfo(const string &filename, 
       vector<LibpllAlignmentInfo> &infos, const int tree_index)
 {

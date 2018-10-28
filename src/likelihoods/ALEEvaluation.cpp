@@ -1,5 +1,6 @@
 
 #include "ALEEvaluation.hpp"
+#include <cmath>
 
 ALEEvaluation::ALEEvaluation(pll_rtree_t *speciesTree,
   const GeneSpeciesMapping& map):

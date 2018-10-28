@@ -254,14 +254,3 @@ void UndatedDLModel::setGeneSpeciesMap(const GeneSpeciesMapping &map)
   geneNameToSpeciesName = map.getMap();
 }
 
-void UndatedDLModel::setMap(const GeneMap<string, string> &geneMap) { 
-  geneNameToSpeciesName.clear();
-  auto species = geneMap.getSpecies();
-  for (auto s: species) {
-    auto genes = geneMap.getGenes(s);
-    for (auto g: genes) {
-      geneNameToSpeciesName[g] = s; 
-    }
-  }
-}
-
