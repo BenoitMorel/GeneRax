@@ -67,7 +67,15 @@ set(PLL_LIBRARIES
     pllmodutil_static
    )
 
-target_link_libraries(${PROJECT_NAME} ${PLL_LIBRARIES})
+set(BPP_LIBS 
+  /usr/lib/x86_64-linux-gnu/libbpp-phyl.a
+  /usr/lib/x86_64-linux-gnu/libbpp-seq.a
+  /usr/lib/x86_64-linux-gnu/libbpp-core.a
+)
+
+
+
+target_link_libraries(${PROJECT_NAME} ${PLL_LIBRARIES} ${BPP_LIBS})
 
 if (BUILD_AS_LIBRARY AND NOT APPLE)
   target_link_libraries(${PROJECT_NAME} gcc_s gcc)

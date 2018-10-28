@@ -58,8 +58,7 @@ void exODT_model::construct(const string& Sstring, const scalar_type& N, const s
   alpha=-1;
   last_branch=0;
 
-  //todobenoit
-  //S=TreeTemplateTools::parenthesisToTree(string_parameter["S_in"],  (string_parameter["BOOTSTRAP_LABELS"]=="yes"));
+  S=TreeTemplateTools::parenthesisToTree(string_parameter["S_in"],  (string_parameter["BOOTSTRAP_LABELS"]=="yes"));
   //S=IO::newickToPhyloTree(string_parameter["S_in"],  (string_parameter["BOOTSTRAP_LABELS"]=="yes"));//del-loc
 
   S_root = S->getRootNode();//del-loc
@@ -348,8 +347,7 @@ void exODT_model::construct(const string& Sstring, const scalar_type& N, const s
 	}
       node->setBranchProperty("ID",BppString(out.str()));
     }
-    //todobenoit
-  string_parameter["S_with_ranks"]= "";//TreeTemplateTools::treeToParenthesis(*S,false,"ID");
+  string_parameter["S_with_ranks"]= TreeTemplateTools::treeToParenthesis(*S,false,"ID");
   cout << string_parameter["S_with_ranks"] << endl;//XX
   for (map <Node *,int >::iterator it=node_ids.begin();it!=node_ids.end();it++ )
     (*it).first->setBranchProperty("ID",BppString(""));

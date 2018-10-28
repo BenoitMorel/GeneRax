@@ -22,7 +22,7 @@
 #include <boost/dynamic_bitset.hpp>
 
 
-#include "ale/tools/ALE/pairHasher.h"
+#include "pairHasher.h"
 
 //#include <boost/mpi.hpp>
 
