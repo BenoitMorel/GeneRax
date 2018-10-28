@@ -81,11 +81,12 @@ std::shared_ptr<bpp::PhyloTree> buildFromLibpll(std::shared_ptr<LibpllEvaluation
 JointTree::JointTree(const string &newick_file,
     const string &alignment_file,
     const string &speciestree_file,
+    const string &geneSpeciesMap_file,
     double dupRate,
     double lossRate):
+  geneSpeciesMap_(geneSpeciesMap_file),
   dupRate_(dupRate),
   lossRate_(lossRate),
-  transferRate_(0.0),
   aleWeight_(Arguments::aleWeight)
 {
    info_.alignmentFilename = alignment_file;
@@ -98,7 +99,7 @@ JointTree::JointTree(const string &newick_file,
   assert(pllSpeciesTree_);
   map_ = SpeciesGeneMapper::map(
       geneTrees.begin(), geneTrees.end(), *speciesTree_, trees)[0];
-  aleEvaluation_ = make_shared<ALEEvaluation>(pllSpeciesTree_,  map_);
+  aleEvaluation_ = make_shared<ALEEvaluation>(pllSpeciesTree_,  geneSpeciesMap_);
   setRates(dupRate, lossRate);
 
 }
@@ -165,9 +166,9 @@ void JointTree::rollbackLastMove() {
 }
 
 void JointTree::save(const string &fileName) {
-  updateBPPTree();
   ofstream os(fileName);
-  IO::write(*geneTree_, os);
+  char *newick = pll_utree_export_newick(getTreeInfo()->root, 0);
+  os << newick;
 }
 
 void JointTree::updateBPPTree() {

@@ -14,6 +14,8 @@
 #include <treeSearch/Moves.h>
 #include <omp.h>
 
+#include <parsers/GeneSpeciesMapping.hpp>
+
 #include <sstream>
 #include <stack>
 
@@ -33,6 +35,7 @@ public:
     JointTree(const string &newick_file,
               const string &alignment_file,
               const string &speciestree_file,
+              const string &geneSpeciesMap_file,
               double dupRate,
               double lossRate);
 
@@ -66,10 +69,10 @@ private:
     BPPTree speciesTree_;
     pll_rtree_t *pllSpeciesTree_;
     SpeciesGeneMap map_;
+    GeneSpeciesMapping geneSpeciesMap_;
     LibpllAlignmentInfo info_;
     double dupRate_;
     double lossRate_;
-    double transferRate_;
     stack<shared_ptr<Rollback> > rollbacks_;
     double aleWeight_;
     double aleLL_;

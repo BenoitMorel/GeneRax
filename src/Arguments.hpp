@@ -18,6 +18,7 @@ public:
   static string geneTree;
   static string alignment;
   static string speciesTree;
+  static string geneSpeciesMap;
   static string strategy;
   static string output;
   static bool check;

@@ -3,6 +3,7 @@
 
 #include <ale/containers/GeneMap.h>
 #include <likelihoods/LibpllEvaluation.hpp>
+#include <parsers/GeneSpeciesMapping.hpp>
 
 using namespace std;
 
@@ -47,6 +48,7 @@ public:
   
 
   void setMap(const GeneMap<string, string> &map);
+  void setGeneSpeciesMap(const GeneSpeciesMapping &map);
 
   UndatedDLModel();
   ~UndatedDLModel();

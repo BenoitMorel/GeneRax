@@ -249,6 +249,11 @@ double UndatedDLModel::pun(shared_ptr<pllmod_treeinfo_t> treeinfo)
   return root_sum / survive / O_norm * (speciesNodesCount);
 }
 
+void UndatedDLModel::setGeneSpeciesMap(const GeneSpeciesMapping &map)
+{
+  geneNameToSpeciesName = map.getMap();
+}
+
 void UndatedDLModel::setMap(const GeneMap<string, string> &geneMap) { 
   geneNameToSpeciesName.clear();
   auto species = geneMap.getSpecies();

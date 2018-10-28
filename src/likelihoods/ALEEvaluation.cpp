@@ -2,10 +2,10 @@
 #include "ALEEvaluation.hpp"
 
 ALEEvaluation::ALEEvaluation(pll_rtree_t *speciesTree,
-  const SpeciesGeneMap& map):
+  const GeneSpeciesMapping& map):
   firstCall(true)
 {
-  undatedDLModel.setMap(SpeciesGeneMapper::nodeMapsToStrings(map));
+  undatedDLModel.setGeneSpeciesMap(map);
   undatedDLModel.setSpeciesTree(speciesTree);
 }
 

@@ -38,6 +38,7 @@ int internal_main(int argc, char** argv, void* comm)
   auto jointTree = make_shared<JointTree>(Arguments::geneTree,
       Arguments::alignment,
       Arguments::speciesTree,
+      Arguments::geneSpeciesMap,
       dupRate,
       lossRate
       );
