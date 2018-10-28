@@ -1,15 +1,6 @@
 #include "UndatedDLModel.hpp"
-
-// Bpp includes
-#include <Bpp/BppString.h>
-#include <Bpp/Numeric/Random/RandomTools.h>
-
-#include <ale/tools/IO/IO.h>
-#include <ale/tools/PhyloTreeToolBox.h>
-
 #include <Arguments.hpp>
 
-using namespace bpp;
 using namespace std;
 
 UndatedDLModel::UndatedDLModel() :

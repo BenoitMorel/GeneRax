@@ -10,8 +10,6 @@ set(ale_SOURCE_FILES
   tools/IO/IO.cpp
   tools/IO/Newick.cpp
   tools/IO/Nhx.cpp
-  tools/ALE/ALE.cpp
-  tools/ALE/exODT_DL.cpp
   )
 
 add_library(ale
