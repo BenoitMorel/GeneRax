@@ -122,6 +122,7 @@ void JointTree::save(const string &fileName) {
   ofstream os(fileName);
   char *newick = pll_utree_export_newick(getTreeInfo()->root, 0);
   os << newick;
+  // todobenoit free
 }
 
 shared_ptr<pllmod_treeinfo_t> JointTree::getTreeInfo() {

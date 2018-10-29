@@ -21,6 +21,11 @@ public:
 private:
   UndatedDLModel undatedDLModel;
   bool firstCall;
+
+  double dupRate_;
+  double lossRate_;
+  double transferRate_;
+  string speciesTreeStr_;
 };
 
 

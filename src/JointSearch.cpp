@@ -4,6 +4,7 @@
 #include <treeSearch/NNISearch.h>
 #include <treeSearch/SPRSearch.h>
 #include <Logger.hpp>
+#include <fenv.h>
 using namespace std;
 
 
@@ -25,9 +26,9 @@ int internal_main(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm);
   double dupRate = 2;
-  double lossRate = 1;
-  
-  Logger::init();
+  double lossRate = 1; 
+   feenableexcept(FE_INVALID | FE_OVERFLOW); 
+  Logger::init(); 
   Arguments::init(argc, argv);
   Arguments::checkInputs();
   Logger::initFileOutput(Arguments::output);

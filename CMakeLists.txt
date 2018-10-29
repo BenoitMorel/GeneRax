@@ -4,6 +4,8 @@ project(JointSearch
         VERSION 0.0)
 
 set(JOINTSEARCH_BUILD_AS_LIBRARY OFF CACHE BOOL "Build JointSearch as shared library (instead of stand-alone executable)")
+  
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 if(JOINTSEARCH_BUILD_AS_LIBRARY)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJOINTSEARCH_BUILD_AS_LIB -fPIC")

@@ -38,7 +38,7 @@ set_target_properties(${PROJECT_NAME}
 if (WITH_MPI)
   find_package(MPI REQUIRED)
   include_directories(${MPI_INCLUDE_PATH})
-  target_link_libraries(${PROJECT_NAME} ${MPI_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME} "-g ${MPI_LIBRARIES}")
   if(MPI_COMPILE_FLAGS)
     set_target_properties(${PROJECT_NAME} PROPERTIES
       COMPILE_FLAGS "-g ${MPI_COMPILE_FLAGS}")
