@@ -1,9 +1,9 @@
-#include "UndatedDLModel.hpp"
+#include "UndatedDTLModel.hpp"
 #include <Arguments.hpp>
 
 using namespace std;
 
-UndatedDLModel::UndatedDLModel() :
+UndatedDTLModel::UndatedDTLModel() :
   O_R(1),
   geneRoot(0)
 {
@@ -11,7 +11,7 @@ UndatedDLModel::UndatedDLModel() :
 
 
 
-void UndatedDLModel::fillNodesPostOrder(pll_rnode_t *node, vector<pll_rnode_t *> &nodes) 
+void UndatedDTLModel::fillNodesPostOrder(pll_rnode_t *node, vector<pll_rnode_t *> &nodes) 
 {
   if (node->left) {
     assert(node->right);
@@ -22,7 +22,7 @@ void UndatedDLModel::fillNodesPostOrder(pll_rnode_t *node, vector<pll_rnode_t *>
 }
 
 
-void UndatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
+void UndatedDTLModel::setSpeciesTree(pll_rtree_t *speciesTree)
 {
   speciesNodesCount = speciesTree->tip_count + speciesTree->inner_count;
   speciesNodes.clear();
@@ -35,16 +35,20 @@ void UndatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
   }
 }
 
-void UndatedDLModel::setRates(double dupRate, double lossRate) {
+void UndatedDTLModel::setRates(double dupRate, 
+  double lossRate,
+  double transferRate) {
   geneRoot = 0;
   PD = vector<double>(speciesNodesCount, dupRate);
   PL = vector<double>(speciesNodesCount, lossRate);
+  PT = vector<double>(speciesNodesCount, transferRate);
   PS = vector<double>(speciesNodesCount, 1.0);
   for (auto speciesNode: speciesNodes) {
     int e = speciesNode->node_index;
-    double sum = PD[e] + PL[e] + PS[e];
+    double sum = PD[e] + PL[e] + PS[e] + PT[e];
     PD[e] /= sum;
     PL[e] /= sum;
+    PT[e] /= sum;
     PS[e] /= sum;
   } 
   uE = vector<double>(speciesNodesCount, 0.0);
@@ -60,10 +64,10 @@ void UndatedDLModel::setRates(double dupRate, double lossRate) {
   }
 }
 
-UndatedDLModel::~UndatedDLModel() { }
+UndatedDTLModel::~UndatedDTLModel() { }
 
 
-void getIdsPostOrderRec(pll_unode_t *node, 
+void UndatedDTLModel::getIdsPostOrderRec(pll_unode_t *node, 
     vector<bool> &marked,
     vector<int> &nodeIds)
 {
@@ -78,7 +82,7 @@ void getIdsPostOrderRec(pll_unode_t *node,
   marked[node->node_index] = true;
 }
 
-void UndatedDLModel::getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds) {
+void UndatedDTLModel::getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds) {
   int nodesNumber = tree.subnode_count;
   nodeIds.clear();
   vector<bool> marked(nodesNumber, false);
@@ -93,7 +97,7 @@ void UndatedDLModel::getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeI
   }
 }
 
-void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
+void UndatedDTLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
 {
   for (int i = 0; i < (int) geneIds.size(); i++) {
     auto gid = geneIds[i];
@@ -137,7 +141,7 @@ void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
   }
 }
 
-void UndatedDLModel::getRoots(pllmod_treeinfo_t &treeinfo, vector<pll_unode_t *> &roots)
+void UndatedDTLModel::getRoots(pllmod_treeinfo_t &treeinfo, vector<pll_unode_t *> &roots)
 {
   roots.clear();
   if (Arguments::aleRooted && geneRoot) {
@@ -156,7 +160,7 @@ void UndatedDLModel::getRoots(pllmod_treeinfo_t &treeinfo, vector<pll_unode_t *>
 
 }
 
-pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
+pll_unode_t * UndatedDTLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
 {
   vector<pll_unode_t *> roots;
   getRoots(treeinfo, roots);
@@ -198,7 +202,7 @@ pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
   return bestRoot;
 }
 
-void UndatedDLModel::mapGenesToSpecies(pllmod_treeinfo_t &treeinfo)
+void UndatedDTLModel::mapGenesToSpecies(pllmod_treeinfo_t &treeinfo)
 {
   geneToSpecies.resize(treeinfo.subnode_count);
   for (int i = 0; i < treeinfo.subnode_count; ++i) {
@@ -211,12 +215,12 @@ void UndatedDLModel::mapGenesToSpecies(pllmod_treeinfo_t &treeinfo)
 }
 
 
-void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
+void UndatedDTLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   mapGenesToSpecies(*treeinfo);
 }
 
-double UndatedDLModel::pun(shared_ptr<pllmod_treeinfo_t> treeinfo)
+double UndatedDTLModel::pun(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   double survive = 0;
   double root_sum = 0;
@@ -249,7 +253,7 @@ double UndatedDLModel::pun(shared_ptr<pllmod_treeinfo_t> treeinfo)
   return root_sum / survive / O_norm * (speciesNodesCount);
 }
 
-void UndatedDLModel::setGeneSpeciesMap(const GeneSpeciesMapping &map)
+void UndatedDTLModel::setGeneSpeciesMap(const GeneSpeciesMapping &map)
 {
   geneNameToSpeciesName = map.getMap();
 }

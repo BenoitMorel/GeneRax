@@ -10,6 +10,7 @@ set(JOINTSEARCH_SOURCES JointSearch.cpp
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ALEEvaluation.cpp
   likelihoods/ale/UndatedDLModel.cpp
+  likelihoods/ale/UndatedDTLModel.cpp
   parsers/GeneSpeciesMapping.cpp
   treeSearch/JointTree.cpp
   treeSearch/Moves.cpp

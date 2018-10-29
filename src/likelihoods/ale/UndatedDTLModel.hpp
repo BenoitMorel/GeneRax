@@ -1,18 +1,18 @@
-#ifndef JOINTSEARCH_UNDATEDDLMODEL_HPP_
-#define JOINTSEARCH_UNDATEDDLMODEL_HPP_
+#pragma once
 
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <parsers/GeneSpeciesMapping.hpp>
 
 using namespace std;
 
-class UndatedDLModel {
+class UndatedDTLModel {
 public:
   int speciesNodesCount;
 
   // model
   vector<double> PD; // Duplication probability, per branch
   vector<double> PL; // Loss probability, per branch
+  vector<double> PT; // Transfer probability, per branch
   vector<double> PS; // Speciation probability, per branch
   const double O_R; // what is this?
 
@@ -37,7 +37,7 @@ public:
   
   pll_unode_t *geneRoot;
 public:
-  void setRates(double dupRate, double lossRate);
+  void setRates(double dupRate, double lossRate, double transferRate);
   void setRoot(pll_unode_t * root) {geneRoot = root;}
   pll_unode_t *getRoot() {return geneRoot;}
   void setSpeciesTree(pll_rtree_t *geneTree);
@@ -47,10 +47,13 @@ public:
 
   void setGeneSpeciesMap(const GeneSpeciesMapping &map);
 
-  UndatedDLModel();
-  ~UndatedDLModel();
+  UndatedDTLModel();
+  ~UndatedDTLModel();
 
 
+  void getIdsPostOrderRec(pll_unode_t *node, 
+    vector<bool> &marked,
+    vector<int> &nodeIds);
   void fillNodesPostOrder(pll_rnode_t *node, vector<pll_rnode_t *> &nodes) ;
   void getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds);
   void mapGenesToSpecies(pllmod_treeinfo_t &treeinfo);
@@ -60,5 +63,4 @@ public:
 
 };
 
-#endif
 
