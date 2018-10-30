@@ -5,6 +5,7 @@
 ALEEvaluation::ALEEvaluation(pll_rtree_t *speciesTree,
   const GeneSpeciesMapping& map,
   bool transfers):
+  transfers(transfers),
   firstCall(true)
 {
   if (transfers) {
