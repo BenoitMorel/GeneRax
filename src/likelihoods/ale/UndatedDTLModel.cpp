@@ -5,6 +5,7 @@ using namespace std;
 
 UndatedDTLModel::UndatedDTLModel() :
   O_R(1),
+  mPTE(0.0),
   geneRoot(0)
 {
 }
@@ -114,34 +115,52 @@ void UndatedDTLModel::updateCLV(pll_unode_t *geneNode)
     leftGeneNode = geneNode->next->back;
     rightGeneNode = geneNode->next->next->back;
   }
-  for (auto speciesNode: speciesNodes) {
-    bool isSpeciesLeaf = !speciesNode->left;
-    int e = speciesNode->node_index;
-    int f = 0;
-    int g = 0;
-    if (!isSpeciesLeaf) {
-      f = speciesNode->left->node_index;
-      g = speciesNode->right->node_index;
-    }
-    double uq_sum = 0;
-    if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies[gid]) {
-      // present
-      uq_sum += PS[e];
-    }
-    if (not isGeneLeaf) {
-      int gp_i = leftGeneNode->node_index;
-      int gpp_i = rightGeneNode->node_index;
-      if (not isSpeciesLeaf) {
-        uq_sum += PS[e] * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]);
+  mPTuq[gid] = 0.0;
+  // the vector uq[gid] depends on its average
+  // for this reason, we set the average to 0
+  // and iterate several times
+  for (int i = 0; i < 4; ++i) {
+    double newmPTuq = 0.0;
+    for (auto speciesNode: speciesNodes) {
+      bool isSpeciesLeaf = !speciesNode->left;
+      int e = speciesNode->node_index;
+      int f = 0;
+      int g = 0;
+      if (!isSpeciesLeaf) {
+        f = speciesNode->left->node_index;
+        g = speciesNode->right->node_index;
       }
-      // D event
-      uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
+      double uq_sum = 0;
+      if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies[gid]) {
+        // present
+        uq_sum += PS[e];
+      }
+      if (not isGeneLeaf) {
+        int gLeft = leftGeneNode->node_index;
+        int gRight = rightGeneNode->node_index;
+        if (not isSpeciesLeaf) {
+          uq_sum += PS[e] * (uq[gLeft][f] * uq[gRight][g] + uq[gLeft][g] * uq[gRight][f]);
+        }
+        // D event
+        uq_sum += PD[e] * (uq[gLeft][e] * uq[gRight][e] * 2);
+        // T event
+        uq_sum += uq[gLeft][e] * mPTuq[gRight] + uq[gRight][e] * mPTuq[gLeft];
+      }
+      if (not isSpeciesLeaf) {
+        // SL event
+        uq_sum += PS[e] * (uq[gid][f] * uE[g] + uq[gid][g] * uE[f]);
+      }
+      // TL event
+      uq_sum += mPTuq[i] * uE[e];
+      double uqFrac = 1.0;
+      // DL event
+      uqFrac -= 2.0 * PD[e] * uE[e];
+      // TL event
+      uqFrac -= mPTE;
+      uq[gid][e] = uq_sum / uqFrac;
+      newmPTuq += uq[gid][e] * PT[e] / double(speciesNodes.size()); 
     }
-    if (not isSpeciesLeaf) {
-      // SL event
-      uq_sum += PS[e] * (uq[gid][f] * uE[g] + uq[gid][g] * uE[f]);
-    }
-    uq[gid][e] = uq_sum / (1.0 - 2.0 * PD[e] * uE[e]);
+    mPTuq[gid] = newmPTuq;   
   }
 }
 
@@ -181,13 +200,13 @@ pll_unode_t * UndatedDTLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
     double uq_e = 0;
     for (auto root: roots) {
       double uq_sum = 0;
-      int gp_i = root->node_index;
-      int gpp_i = root->back->node_index;
+      int gLeft = root->node_index;
+      int gRight = root->back->node_index;
       if (not isSpeciesLeaf) {
-        uq_sum += PS[e] * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]);
+        uq_sum += PS[e] * (uq[gLeft][f] * uq[gRight][g] + uq[gLeft][g] * uq[gRight][f]);
       }
       // D event
-      uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
+      uq_sum += PD[e] * (uq[gLeft][e] * uq[gRight][e] * 2);
       if (Arguments::aleRooted) {
         if (uq_sum > uq_e) {
           uq_e = max(uq_sum, uq_e);
@@ -196,7 +215,7 @@ pll_unode_t * UndatedDTLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
       } else {
         uq_e += uq_sum;
       }
-      }
+    }
     if (not isSpeciesLeaf) {
       // SL event
       uq_e += PS[e] * (ll[f] * uE[g] + ll[g] * uE[f]); 
@@ -238,6 +257,7 @@ double UndatedDTLModel::pun(shared_ptr<pllmod_treeinfo_t> treeinfo)
   vector<double> zeros(speciesNodesCount, 0.0);
   uq = vector<vector<double>>(maxId + 1,zeros);
   ll = vector<double>(speciesNodesCount, 0.0);
+  mPTuq = vector<double>(speciesNodesCount, maxId + 1);
 
   // main loop
   updateCLVs(*treeinfo);

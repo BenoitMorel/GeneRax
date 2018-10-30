@@ -20,14 +20,21 @@ public:
   vector<int> daughter;
   vector<int> son;
   vector<double> uE; // Probability for a gene to become extinct on each brance
+  vector<double> ll; 
   
   // SPECIES libpll
   vector <pll_rnode_t *> speciesNodes;
   
   // CLVs
   vector<vector<double> > uq;
-  vector<double> ll; 
+  // for each gene node, average (over the species nodes)
+  // transfer even probability
+  vector<double> mPTuq;  
   
+  // average (over the species nodes)
+  // extinction probability
+  double mPTE;
+
   map<string, string> geneNameToSpeciesName;
   map<string, int> speciesNameToId;
  
