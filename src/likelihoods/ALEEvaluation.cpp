@@ -51,8 +51,8 @@ double evalDated(const string &geneTreeStr,
   cout << "eval dated " << endl;
   cout << geneTreeStr << endl;
   cout << speciesTreeStr << endl;
-  cout << dupRate << " " << lossRate << " " << transferRate << endl;
   */
+  cout << dupRate << " " << lossRate << " " << transferRate << endl;
   auto ale = observe_ALE_from_string(geneTreeStr);
   auto model = new exODT_model();
   model->set_model_parameter("min_D",3);
@@ -61,17 +61,16 @@ double evalDated(const string &geneTreeStr,
   
   model->set_model_parameter("event_node",0);
   model->set_model_parameter("leaf_events",1);
-  model->set_model_parameter("N",1);
 
   model->set_model_parameter("delta", dupRate);
   model->set_model_parameter("tau", transferRate);
   model->set_model_parameter("lambda", lossRate);
   model->set_model_parameter("delta_avg", dupRate);
-  model->set_model_parameter("tau_avg", transferRate);
-  model->set_model_parameter("lambda_avg", lossRate);
   model->set_model_parameter("sigma_hat", 1);
   model->calculate_EGb();
-  return  model->p(ale);
+  auto res = model->p(ale);
+  cout << "evalDated " << res << endl;
+  return res;
 }
 
 double ALEEvaluation::evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo)

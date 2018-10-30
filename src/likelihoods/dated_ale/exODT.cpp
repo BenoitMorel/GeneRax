@@ -336,15 +336,16 @@ void exODT_model::construct(const string& Sstring, const scalar_type& N, const s
       out2<< t_end[branch];
       int rank=id_ranks[branch];
       out<<rank;
-      if ( node->hasBranchProperty("bootstrap") )
-	{
-	  rank2label[rank]=node->getBootstrapValue();
-	  //cout <<rank2label[rank]<<"->"<<rank<< endl;
-	}
+      // todobenoit why do I need a false,
+      if (false &&  node->hasBranchProperty("bootstrap") )
+	    {
+	      rank2label[rank]=node->getBootstrapValue();
+	      //cout <<rank2label[rank]<<"->"<<rank<< endl;
+  	  }
       else
-	{
-	  rank2label[rank]=-1;
-	}
+	    {
+	      rank2label[rank]=-1;
+	    }
       node->setBranchProperty("ID",BppString(out.str()));
     }
   string_parameter["S_with_ranks"]= TreeTemplateTools::treeToParenthesis(*S,false,"ID");
@@ -359,7 +360,7 @@ void exODT_model::construct(const string& Sstring, const scalar_type& N, const s
   set_model_parameter("event_node",0);
   //the calculation of depends only very weakly on the value of N
   //default value of N=1e6 is set in exODT.h
-  set_model_parameter("N",1);
+  set_model_parameter("N",N);
   set_model_parameter("sigma_hat",1);
 
   //if we assume the that height of the species tree is equal to its expected value under the colaescent
