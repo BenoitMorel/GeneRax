@@ -100,44 +100,48 @@ void UndatedDTLModel::getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &node
 void UndatedDTLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
 {
   for (int i = 0; i < (int) geneIds.size(); i++) {
-    auto gid = geneIds[i];
-    pll_unode_t *geneNode = treeinfo.subnodes[gid];
-    pll_unode_t *leftGeneNode = 0;     
-    pll_unode_t *rightGeneNode = 0;     
-    bool isGeneLeaf = !geneNode->next;
-    if (!isGeneLeaf) {
-      leftGeneNode = geneNode->next->back;
-      rightGeneNode = geneNode->next->next->back;
+    updateCLV(treeinfo.subnodes[geneIds[i]]);
+  }
+}
+
+void UndatedDTLModel::updateCLV(pll_unode_t *geneNode)
+{
+  int gid = geneNode->node_index;
+  pll_unode_t *leftGeneNode = 0;     
+  pll_unode_t *rightGeneNode = 0;     
+  bool isGeneLeaf = !geneNode->next;
+  if (!isGeneLeaf) {
+    leftGeneNode = geneNode->next->back;
+    rightGeneNode = geneNode->next->next->back;
+  }
+  for (auto speciesNode: speciesNodes) {
+    bool isSpeciesLeaf = !speciesNode->left;
+    int e = speciesNode->node_index;
+    int f = 0;
+    int g = 0;
+    if (!isSpeciesLeaf) {
+      f = speciesNode->left->node_index;
+      g = speciesNode->right->node_index;
     }
-    for (auto speciesNode: speciesNodes) {
-      bool isSpeciesLeaf = !speciesNode->left;
-      int e = speciesNode->node_index;
-      int f = 0;
-      int g = 0;
-      if (!isSpeciesLeaf) {
-        f = speciesNode->left->node_index;
-        g = speciesNode->right->node_index;
-      }
-      double uq_sum = 0;
-      if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies[gid]) {
-        // present
-        uq_sum += PS[e];
-      }
-      if (not isGeneLeaf) {
-        int gp_i = leftGeneNode->node_index;
-        int gpp_i = rightGeneNode->node_index;
-        if (not isSpeciesLeaf) {
-          uq_sum += PS[e] * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]);
-        }
-        // D event
-        uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
-      }
+    double uq_sum = 0;
+    if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies[gid]) {
+      // present
+      uq_sum += PS[e];
+    }
+    if (not isGeneLeaf) {
+      int gp_i = leftGeneNode->node_index;
+      int gpp_i = rightGeneNode->node_index;
       if (not isSpeciesLeaf) {
-        // SL event
-        uq_sum += PS[e] * (uq[gid][f] * uE[g] + uq[gid][g] * uE[f]);
+        uq_sum += PS[e] * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]);
       }
-      uq[gid][e] = uq_sum / (1.0 - 2.0 * PD[e] * uE[e]);
+      // D event
+      uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
     }
+    if (not isSpeciesLeaf) {
+      // SL event
+      uq_sum += PS[e] * (uq[gid][f] * uE[g] + uq[gid][g] * uE[f]);
+    }
+    uq[gid][e] = uq_sum / (1.0 - 2.0 * PD[e] * uE[e]);
   }
 }
 

@@ -57,6 +57,7 @@ public:
   void fillNodesPostOrder(pll_rnode_t *node, vector<pll_rnode_t *> &nodes) ;
   void getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds);
   void mapGenesToSpecies(pllmod_treeinfo_t &treeinfo);
+  void updateCLV(pll_unode_t *geneNode);
   void updateCLVs(pllmod_treeinfo_t &treeinfo);
   pll_unode_t *computeLikelihoods(pllmod_treeinfo_t &treeinfo);
   void getRoots(pllmod_treeinfo_t &treeinfo, vector<pll_unode_t *> &roots);
