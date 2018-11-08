@@ -6,7 +6,7 @@ project(JointSearch
 set(JOINTSEARCH_BUILD_AS_LIBRARY OFF CACHE BOOL "Build JointSearch as shared library (instead of stand-alone executable)")
 
 if(JOINTSEARCH_BUILD_AS_LIBRARY)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJOINTSEARCH_BUILD_AS_LIB -fPIC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJOINTSEARCH_BUILD_AS_LIB=ON -fPIC")
 endif()
 
 include(CheckCXXCompilerFlag)
@@ -24,6 +24,7 @@ if(MPI_FOUND)
   set(WITH_MPI TRUE)
   add_definitions(-DWITH_MPI)
 endif()
+
 
 add_subdirectory(ext)
 

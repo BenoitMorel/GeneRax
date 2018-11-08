@@ -35,7 +35,9 @@ void UndatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
   }
 }
 
-void UndatedDLModel::setRates(double dupRate, double lossRate) {
+void UndatedDLModel::setRates(double dupRate, 
+  double lossRate,
+  double transferRates) {
   geneRoot = 0;
   PD = vector<double>(speciesNodesCount, dupRate);
   PL = vector<double>(speciesNodesCount, lossRate);
@@ -220,7 +222,7 @@ void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
   mapGenesToSpecies(*treeinfo);
 }
 
-double UndatedDLModel::pun(shared_ptr<pllmod_treeinfo_t> treeinfo)
+double UndatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   double survive = 0;
   double root_sum = 0;

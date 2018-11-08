@@ -3,8 +3,10 @@
 #define JOINTSEARCH_ALEEVALUATION_HPP
 
 #include <parsers/GeneSpeciesMapping.hpp>
-#include <likelihoods/ale/UndatedDLModel.hpp>
-#include <likelihoods/ale/UndatedDTLModel.hpp>
+#include <likelihoods/ale/AbstractReconciliationModel.hpp>
+#include <memory>
+
+using namespace std;
 
 class ALEEvaluation {
 
@@ -16,13 +18,11 @@ public:
   void setRates(double dupRate, double lossRate, 
     double transfers = 0.0);
 
-  pll_unode_t * getRoot() {return undatedDLModel.getRoot();}
-  void setRoot(pll_unode_t *root) {undatedDLModel.setRoot(root);}
+  pll_unode_t * getRoot() {return reconciliationModel->getRoot();}
+  void setRoot(pll_unode_t *root) {reconciliationModel->setRoot(root);}
   double evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo);
 private:
-  bool transfers;
-  UndatedDLModel undatedDLModel;
-  UndatedDTLModel undatedDTLModel;
+  shared_ptr<AbstractReconciliationModel> reconciliationModel;
   bool firstCall;
 };
 

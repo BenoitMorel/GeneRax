@@ -27,6 +27,10 @@ else()
   add_executable(${PROJECT_NAME} ${JOINTSEARCH_SOURCES})
 endif()
 
+if (JOINTSEARCH_BUILD_AS_LIBRARY AND NOT APPLE)
+  target_link_libraries(JointSearch gcc_s gcc)
+endif()
+
 
 set_target_properties(${PROJECT_NAME}
   PROPERTIES
@@ -67,6 +71,3 @@ set(PLL_LIBRARIES
 
 target_link_libraries(${PROJECT_NAME} ${PLL_LIBRARIES})
 
-if (BUILD_AS_LIBRARY AND NOT APPLE)
-  target_link_libraries(${PROJECT_NAME} gcc_s gcc)
-endif()

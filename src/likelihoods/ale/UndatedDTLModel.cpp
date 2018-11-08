@@ -243,7 +243,7 @@ void UndatedDTLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
   mapGenesToSpecies(*treeinfo);
 }
 
-double UndatedDTLModel::pun(shared_ptr<pllmod_treeinfo_t> treeinfo)
+double UndatedDTLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   double survive = 0;
   double root_sum = 0;

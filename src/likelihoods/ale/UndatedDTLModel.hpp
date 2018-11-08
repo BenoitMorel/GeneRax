@@ -1,11 +1,12 @@
 #pragma once
 
+#include <likelihoods/ale/AbstractReconciliationModel.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <parsers/GeneSpeciesMapping.hpp>
 
 using namespace std;
 
-class UndatedDTLModel {
+class UndatedDTLModel: public AbstractReconciliationModel {
 public:
   int speciesNodesCount;
 
@@ -44,19 +45,17 @@ public:
   
   pll_unode_t *geneRoot;
 public:
-  void setRates(double dupRate, double lossRate, double transferRate);
-  void setRoot(pll_unode_t * root) {geneRoot = root;}
-  pll_unode_t *getRoot() {return geneRoot;}
-  void setSpeciesTree(pll_rtree_t *geneTree);
-  void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
-  double pun(shared_ptr<pllmod_treeinfo_t> treeinfo);
-  
-
-  void setGeneSpeciesMap(const GeneSpeciesMapping &map);
-
   UndatedDTLModel();
-  ~UndatedDTLModel();
-
+  virtual ~UndatedDTLModel();
+  
+  // unherited from parents
+  virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);
+  virtual void setSpeciesTree(pll_rtree_t *geneTree);
+  virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  virtual void setGeneSpeciesMap(const GeneSpeciesMapping &map);
+  virtual void setRoot(pll_unode_t * root) {geneRoot = root;}
+  virtual pll_unode_t *getRoot() {return geneRoot;}
+  virtual double computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
 
   void getIdsPostOrderRec(pll_unode_t *node, 
     vector<bool> &marked,
