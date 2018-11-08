@@ -84,7 +84,7 @@ void UndatedDLModel::getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeI
   int nodesNumber = tree.subnode_count;
   nodeIds.clear();
   vector<bool> marked(nodesNumber, false);
-  if (Arguments::aleRooted && geneRoot) {
+  if (Arguments::rootedGeneTree && geneRoot) {
     getIdsPostOrderRec(geneRoot, marked, nodeIds);
     getIdsPostOrderRec(geneRoot->back, marked, nodeIds);
     return;
@@ -146,7 +146,7 @@ void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
 void UndatedDLModel::getRoots(pllmod_treeinfo_t &treeinfo, vector<pll_unode_t *> &roots)
 {
   roots.clear();
-  if (Arguments::aleRooted && geneRoot) {
+  if (Arguments::rootedGeneTree && geneRoot) {
     roots.push_back(geneRoot);
     return;
   }
@@ -186,7 +186,7 @@ pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
       }
       // D event
       uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
-      if (Arguments::aleRooted) {
+      if (Arguments::rootedGeneTree) {
         if (uq_sum > uq_e) {
           uq_e = max(uq_sum, uq_e);
           bestRoot = root;

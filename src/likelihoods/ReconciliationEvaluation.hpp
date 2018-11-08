@@ -1,9 +1,9 @@
 
-#ifndef JOINTSEARCH_ALEEVALUATION_HPP
-#define JOINTSEARCH_ALEEVALUATION_HPP
+#ifndef JOINTSEARCH_RECONCILIATIONEVALUATION_HPP
+#define JOINTSEARCH_RECONCILIATIONEVALUATION_HPP
 
 #include <parsers/GeneSpeciesMapping.hpp>
-#include <likelihoods/ale/AbstractReconciliationModel.hpp>
+#include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 #include <memory>
 
 using namespace std;
@@ -26,5 +26,4 @@ private:
   bool firstCall;
 };
 
-
-#endif //TREERECS_ALEEVALUATION_H
+#endif

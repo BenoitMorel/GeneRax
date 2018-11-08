@@ -109,7 +109,7 @@ bool equals(pll_unode_t *node1, pll_unode_t *node2) {
 
 std::shared_ptr<Rollback> NNIMove::applyMove(JointTree &tree) {
     auto edge = tree.getNode(nodeIndex_);
-    auto treeRoot = tree.getAleEvaluation()->getRoot();
+    auto treeRoot = tree.getReconciliationEvaluation()->getRoot();
     bool rootAffected = false;
     if (treeRoot) {
       rootAffected = equals(treeRoot, edge) || equals(treeRoot, edge->back);
@@ -122,7 +122,7 @@ std::shared_ptr<Rollback> NNIMove::applyMove(JointTree &tree) {
         rootAffected = rootAffected || equals(treeRoot, edge->back->next->next->back);
       }
       if (rootAffected) {
-        tree.getAleEvaluation()->setRoot(0);
+        tree.getReconciliationEvaluation()->setRoot(0);
       }
     }
     unsigned int move = left_ ? PLL_UTREE_MOVE_NNI_LEFT : PLL_UTREE_MOVE_NNI_RIGHT;

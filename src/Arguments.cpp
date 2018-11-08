@@ -12,8 +12,7 @@ string Arguments::strategy("NNI");
 string Arguments::output("jointSearch");
 bool Arguments::check = false;
 bool Arguments::incr = false;
-bool Arguments::aleRooted = false;
-double Arguments::aleWeight = 1.0;
+bool Arguments::rootedGeneTree = false;
 bool Arguments::costsEstimation = false;
 
 void Arguments::init(int argc, char * argv[])
@@ -47,10 +46,8 @@ void Arguments::init(int argc, char * argv[])
       check = true;
     } else if (arg == "--incr") {
       incr = true;
-    } else if (arg == "--ale-rooted") {
-      aleRooted = true;
-    } else if (arg == "--ale-weight") {
-      aleWeight = atof(argv[++i]);
+    } else if (arg == "--rooted-gene-tree") {
+      rootedGeneTree = true;
     } else {
       Logger::error << "Unrecognized argument " << arg << endl;
       Logger::error << "Aborting" << endl;
@@ -106,7 +103,7 @@ void Arguments::printHelp() {
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
   Logger::info << "--check" << endl;
   Logger::info << "--incr" << endl;
-  Logger::info << "--ale-rooted" << endl;
+  Logger::info << "--rooted-gebe-tree" << endl;
   Logger::info << endl;
 
 }
@@ -130,7 +127,7 @@ void Arguments::printSummary() {
   Logger::info << "Prefix: " << output << endl;
   Logger::info << "Check mode: " << boolStr[check] << endl;
   Logger::info << "Incremental likelihood mode: " << boolStr[incr] << endl;
-  Logger::info << "Rooted ale likelihood: " << boolStr[aleRooted] << endl;
+  Logger::info << "Rooted gene tree: " << boolStr[rootedGeneTree] << endl;
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << endl;
   Logger::info << endl;
 }

@@ -1,7 +1,7 @@
 #ifndef JOINTSEARCH_UNDATEDDLMODEL_HPP_
 #define JOINTSEARCH_UNDATEDDLMODEL_HPP_
 
-#include <likelihoods/ale/AbstractReconciliationModel.hpp>
+#include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <parsers/GeneSpeciesMapping.hpp>
 

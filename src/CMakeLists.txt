@@ -9,8 +9,8 @@ set(JOINTSEARCH_SOURCES JointSearch.cpp
   Logger.cpp
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ReconciliationEvaluation.cpp
-  likelihoods/ale/UndatedDLModel.cpp
-  likelihoods/ale/UndatedDTLModel.cpp
+  likelihoods/reconciliation_models/UndatedDLModel.cpp
+  likelihoods/reconciliation_models/UndatedDTLModel.cpp
   parsers/GeneSpeciesMapping.cpp
   treeSearch/JointTree.cpp
   treeSearch/Moves.cpp

@@ -1,7 +1,7 @@
 
 #include "ReconciliationEvaluation.hpp"
-#include <likelihoods/ale/UndatedDLModel.hpp>
-#include <likelihoods/ale/UndatedDTLModel.hpp>
+#include <likelihoods/reconciliation_models/UndatedDLModel.hpp>
+#include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <cmath>
 
 ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,

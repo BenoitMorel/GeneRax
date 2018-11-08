@@ -32,9 +32,9 @@ public:
     void printLibpllTree() const;
     void optimizeParameters();
     double computeLibpllLoglk();
-    double computeALELoglk ();
+    double computeReconciliationLoglk ();
     double computeJointLoglk();
-    void printLoglk(bool libpll = true, bool ale = true, bool joint = true, Logger &os = Logger::info);
+    void printLoglk(bool libpll = true, bool rec = true, bool joint = true, Logger &os = Logger::info);
     pll_unode_t *getNode(int index);
     void applyMove(shared_ptr<Move> move);
     
@@ -45,7 +45,7 @@ public:
     void optimizeDTRates();
     pll_rtree_t *getSpeciesTree() {return pllSpeciesTree_;}
     int getTreeHash();
-    shared_ptr<ReconciliationEvaluation> getAleEvaluation() {return reconciliationEvaluation_;}
+    shared_ptr<ReconciliationEvaluation> getReconciliationEvaluation() {return reconciliationEvaluation_;}
 private:
     shared_ptr<LibpllEvaluation> libpllEvaluation_;
     shared_ptr<ReconciliationEvaluation> reconciliationEvaluation_;
@@ -55,8 +55,7 @@ private:
     double dupRate_;
     double lossRate_;
     stack<shared_ptr<Rollback> > rollbacks_;
-    double aleWeight_;
-    double aleLL_;
+    double reconciliationLL_;
 };
 
 #endif

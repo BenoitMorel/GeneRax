@@ -50,8 +50,7 @@ JointTree::JointTree(const string &newick_file,
     double lossRate):
   geneSpeciesMap_(geneSpeciesMap_file),
   dupRate_(dupRate),
-  lossRate_(lossRate),
-  aleWeight_(Arguments::aleWeight)
+  lossRate_(lossRate)
 {
    info_.alignmentFilename = alignment_file;
   info_.model = "GTR";
@@ -80,22 +79,21 @@ double JointTree::computeLibpllLoglk() {
   return libpllEvaluation_->computeLikelihood();
 }
 
-double JointTree::computeALELoglk () {
-  aleLL_ = reconciliationEvaluation_->evaluate(libpllEvaluation_->getTreeInfo());
-  return aleWeight_ * aleLL_;
+double JointTree::computeReconciliationLoglk () {
+  return reconciliationEvaluation_->evaluate(libpllEvaluation_->getTreeInfo());
 }
 
 double JointTree::computeJointLoglk() {
-  return computeLibpllLoglk() + computeALELoglk();
+  return computeLibpllLoglk() + computeReconciliationLoglk();
 }
 
-void JointTree::printLoglk(bool libpll, bool ale, bool joint, Logger &os) {
+void JointTree::printLoglk(bool libpll, bool rec, bool joint, Logger &os) {
   if (joint)
     os << "joint: " << computeJointLoglk() << "  ";
   if (libpll)
     os << "libpll: " << computeLibpllLoglk() << "  ";
-  if (ale)
-    os << "ale: " << computeALELoglk() << "  ";
+  if (rec)
+    os << "reconciliation: " << computeReconciliationLoglk() << "  ";
   os << endl;
 }
 
@@ -144,7 +142,7 @@ void JointTree::optimizeDTRates() {
     double dup = min + (max - min) * double(i) / double(steps);
     double loss = min + (max - min) * double(j) / double(steps);
     setRates(dup, loss);
-    double newLL = computeALELoglk();
+    double newLL = computeReconciliationLoglk();
     if (newLL > bestLL) { 
       bestDup = dup;
       bestLoss = loss;
