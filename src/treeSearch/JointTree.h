@@ -2,7 +2,7 @@
 #define _JOINTTREE_H_
 
 #include <likelihoods/LibpllEvaluation.hpp>
-#include <likelihoods/ALEEvaluation.hpp>
+#include <likelihoods/ReconciliationEvaluation.hpp>
 
 #include <Logger.hpp>
 #include <treeSearch/Moves.h>
@@ -45,10 +45,10 @@ public:
     void optimizeDTRates();
     pll_rtree_t *getSpeciesTree() {return pllSpeciesTree_;}
     int getTreeHash();
-    shared_ptr<ALEEvaluation> getAleEvaluation() {return aleEvaluation_;}
+    shared_ptr<ReconciliationEvaluation> getAleEvaluation() {return reconciliationEvaluation_;}
 private:
-    shared_ptr<LibpllEvaluation> evaluation_;
-    shared_ptr<ALEEvaluation> aleEvaluation_;
+    shared_ptr<LibpllEvaluation> libpllEvaluation_;
+    shared_ptr<ReconciliationEvaluation> reconciliationEvaluation_;
     pll_rtree_t *pllSpeciesTree_;
     GeneSpeciesMapping geneSpeciesMap_;
     LibpllAlignmentInfo info_;

@@ -8,10 +8,10 @@
 
 using namespace std;
 
-class ALEEvaluation {
+class ReconciliationEvaluation {
 
 public:
-  ALEEvaluation(pll_rtree_t *speciesTree,
+  ReconciliationEvaluation(pll_rtree_t *speciesTree,
     const GeneSpeciesMapping& map,
     bool transfers = false);
 

@@ -55,33 +55,33 @@ JointTree::JointTree(const string &newick_file,
 {
    info_.alignmentFilename = alignment_file;
   info_.model = "GTR";
-  evaluation_ = LibpllEvaluation::buildFromFile(newick_file, info_);
+  libpllEvaluation_ = LibpllEvaluation::buildFromFile(newick_file, info_);
   pllSpeciesTree_ = pll_rtree_parse_newick(speciestree_file.c_str());
   assert(pllSpeciesTree_);
-  aleEvaluation_ = make_shared<ALEEvaluation>(pllSpeciesTree_,  geneSpeciesMap_);
+  reconciliationEvaluation_ = make_shared<ReconciliationEvaluation>(pllSpeciesTree_,  geneSpeciesMap_);
   setRates(dupRate, lossRate);
 
 }
 
 void JointTree::printLibpllTree() const {
-  printLibpllTreeRooted(evaluation_->getTreeInfo()->root, Logger::info);
+  printLibpllTreeRooted(libpllEvaluation_->getTreeInfo()->root, Logger::info);
 }
 
 
 
 void JointTree::optimizeParameters() {
-  evaluation_->optimizeAllParameters();
+  libpllEvaluation_->optimizeAllParameters();
   if (Arguments::costsEstimation) {
     optimizeDTRates();
   }
 }
 
 double JointTree::computeLibpllLoglk() {
-  return evaluation_->computeLikelihood();
+  return libpllEvaluation_->computeLikelihood();
 }
 
 double JointTree::computeALELoglk () {
-  aleLL_ = aleEvaluation_->evaluate(evaluation_->getTreeInfo());
+  aleLL_ = reconciliationEvaluation_->evaluate(libpllEvaluation_->getTreeInfo());
   return aleWeight_ * aleLL_;
 }
 
@@ -125,7 +125,7 @@ void JointTree::save(const string &fileName) {
 }
 
 shared_ptr<pllmod_treeinfo_t> JointTree::getTreeInfo() {
-  return evaluation_->getTreeInfo();
+  return libpllEvaluation_->getTreeInfo();
 }
 
 void JointTree::optimizeDTRates() {
@@ -162,6 +162,6 @@ void JointTree::optimizeDTRates() {
 void JointTree::setRates(double dup, double loss) { 
   dupRate_ = dup; 
   lossRate_ = loss;
-  aleEvaluation_->setRates(dup, loss);
+  reconciliationEvaluation_->setRates(dup, loss);
 }
 

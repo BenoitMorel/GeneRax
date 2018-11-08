@@ -1,10 +1,10 @@
 
-#include "ALEEvaluation.hpp"
+#include "ReconciliationEvaluation.hpp"
 #include <likelihoods/ale/UndatedDLModel.hpp>
 #include <likelihoods/ale/UndatedDTLModel.hpp>
 #include <cmath>
 
-ALEEvaluation::ALEEvaluation(pll_rtree_t *speciesTree,
+ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
   const GeneSpeciesMapping& map,
   bool transfers):
   firstCall(true)
@@ -16,13 +16,13 @@ ALEEvaluation::ALEEvaluation(pll_rtree_t *speciesTree,
   }
 }
 
-void ALEEvaluation::setRates(double dupRate, double lossRate,
+void ReconciliationEvaluation::setRates(double dupRate, double lossRate,
   double transferRate)
 {
   reconciliationModel->setRates(dupRate, lossRate);
 }
 
-double ALEEvaluation::evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo)
+double ReconciliationEvaluation::evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   if (firstCall) {
     reconciliationModel->setInitialGeneTree(treeinfo);
