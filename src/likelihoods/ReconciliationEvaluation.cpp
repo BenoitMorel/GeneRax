@@ -21,6 +21,8 @@ ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
     Logger::error << "Invalid reconciliation model!" << endl;
     exit(1);
   }
+  reconciliationModel->setGeneSpeciesMap(map);
+  reconciliationModel->setSpeciesTree(speciesTree);
 }
 
 void ReconciliationEvaluation::setRates(double dupRate, double lossRate,
