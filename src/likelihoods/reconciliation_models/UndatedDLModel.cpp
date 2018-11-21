@@ -1,5 +1,6 @@
 #include "UndatedDLModel.hpp"
 #include <Arguments.hpp>
+#include <Logger.hpp>
 
 using namespace std;
 
@@ -7,6 +8,7 @@ UndatedDLModel::UndatedDLModel() :
   O_R(1),
   geneRoot(0)
 {
+  Logger::info << "creating undated dl model" << endl;
 }
 
 

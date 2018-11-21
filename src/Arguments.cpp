@@ -9,11 +9,38 @@ string Arguments::alignment;
 string Arguments::speciesTree;
 string Arguments::geneSpeciesMap;
 string Arguments::strategy("NNI");
+Arguments::ReconciliationModel Arguments::reconciliationModel(UndatedDL);
 string Arguments::output("jointSearch");
 bool Arguments::check = false;
 bool Arguments::incr = false;
 bool Arguments::rootedGeneTree = false;
 bool Arguments::costsEstimation = false;
+  
+
+Arguments::ReconciliationModel getModelFromString(const string &modelStr)
+{
+  if (modelStr == "UndatedDL") {
+    return Arguments::UndatedDL;
+  } else if (modelStr == "UndatedDTL") {
+    return Arguments::UndatedDTL;
+  } else if (modelStr == "DatedDL") {
+    return Arguments::DatedDL;
+  } else {
+    return Arguments::InvalidModel;
+  }
+}
+
+string getStringFromModel(Arguments::ReconciliationModel model) {
+  if (model == Arguments::UndatedDL) {
+    return "UndatedDL";
+  } else if (model == Arguments::UndatedDTL) {
+    return "UndatedDTL";
+  } else if (model == Arguments::DatedDL) {
+    return "DatedDL";
+  } else {
+    return "InvalidModel";
+  }
+}
 
 void Arguments::init(int argc, char * argv[])
 {
@@ -38,6 +65,8 @@ void Arguments::init(int argc, char * argv[])
       geneSpeciesMap = string(argv[++i]);
     } else if (arg == "--strategy") {
       strategy = string(argv[++i]);
+    } else if (arg == "--reconciliation-model") {
+      reconciliationModel = getModelFromString(string(argv[++i]));
     } else if (arg == "-p" || arg == "--prefix") {
       output = string(argv[++i]);
     } else if (arg == "-c" || arg == "--cost-estimation") {
@@ -83,6 +112,10 @@ void Arguments::checkInputs() {
     Logger::error << "You need to provide a gene species map file." << endl;
     ok = false;
   }
+  if (reconciliationModel == Arguments::InvalidModel) {
+    Logger::error << "Invalid reconciliation model." << endl;
+    ok = false;
+  }
   if (!ok) {
     Logger::error << "Aborting." << endl;
     exit(1);
@@ -98,7 +131,8 @@ void Arguments::printHelp() {
   Logger::info << "-g, --gene-tree <GENE TREE>" << endl;
   Logger::info << "-a, --alignment <ALIGNMENT>" << endl;
   Logger::info << "-s, --species-tree <SPECIES TREE>" << endl;
-  Logger::info << "--strategy <STRATEGY>" << endl;
+  Logger::info << "--strategy <STRATEGY>  {NNI, SPR, HYBRID}" << endl;
+  Logger::info << "--reconciliation-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << endl;
   Logger::info << "-t, --threads <THREADS NUMBER>" << endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
   Logger::info << "--check" << endl;
@@ -124,6 +158,7 @@ void Arguments::printSummary() {
   Logger::info << "Species tree: " << speciesTree << endl;
   Logger::info << "Gene species map: " << geneSpeciesMap << endl;
   Logger::info << "Strategy: " << strategy << endl;
+  Logger::info << "Reconciliation model: " << getStringFromModel(reconciliationModel) << endl;
   Logger::info << "Prefix: " << output << endl;
   Logger::info << "Check mode: " << boolStr[check] << endl;
   Logger::info << "Incremental likelihood mode: " << boolStr[incr] << endl;

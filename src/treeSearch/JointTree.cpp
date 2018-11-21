@@ -2,7 +2,6 @@
 #include <treeSearch/Moves.h>
 #include <chrono>
 #include <ParallelContext.hpp>
-#include "Arguments.hpp"
 #include<limits>
 
 int getTreeHashRec(pll_unode_t *node, int depth = 1) {
@@ -46,6 +45,7 @@ JointTree::JointTree(const string &newick_file,
     const string &alignment_file,
     const string &speciestree_file,
     const string &geneSpeciesMap_file,
+    Arguments::ReconciliationModel reconciliationModel,
     double dupRate,
     double lossRate):
   geneSpeciesMap_(geneSpeciesMap_file),
@@ -57,7 +57,9 @@ JointTree::JointTree(const string &newick_file,
   libpllEvaluation_ = LibpllEvaluation::buildFromFile(newick_file, info_);
   pllSpeciesTree_ = pll_rtree_parse_newick(speciestree_file.c_str());
   assert(pllSpeciesTree_);
-  reconciliationEvaluation_ = make_shared<ReconciliationEvaluation>(pllSpeciesTree_,  geneSpeciesMap_);
+  reconciliationEvaluation_ = make_shared<ReconciliationEvaluation>(pllSpeciesTree_,  
+      geneSpeciesMap_, 
+      reconciliationModel);
   setRates(dupRate, lossRate);
 
 }

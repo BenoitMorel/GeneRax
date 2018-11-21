@@ -4,6 +4,7 @@
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <likelihoods/ReconciliationEvaluation.hpp>
 
+#include <Arguments.hpp>
 #include <Logger.hpp>
 #include <treeSearch/Moves.h>
 #include <omp.h>
@@ -24,6 +25,7 @@ public:
               const string &alignment_file,
               const string &speciestree_file,
               const string &geneSpeciesMap_file,
+              Arguments::ReconciliationModel reconciliationModel,
               double dupRate,
               double lossRate);
 

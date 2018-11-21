@@ -37,6 +37,7 @@ int internal_main(int argc, char** argv, void* comm)
       Arguments::alignment,
       Arguments::speciesTree,
       Arguments::geneSpeciesMap,
+      Arguments::reconciliationModel,
       dupRate,
       lossRate
       );
