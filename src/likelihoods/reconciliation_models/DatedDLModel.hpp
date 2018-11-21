@@ -9,6 +9,7 @@ using namespace std;
 
 class DatedDLModel: public AbstractReconciliationModel {
 public:
+  DatedDLModel();
   virtual ~DatedDLModel() {};
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);
   virtual void setSpeciesTree(pll_rtree_t *specieseTree);
@@ -20,6 +21,11 @@ public:
 
 private:
 
+  pll_rtree_t *speciesTree_;
+  double dupRate_;
+  double lossRate_;
+  double diffRates_;
+
   struct DDL_CLV {
     // probability of this directed gene
     // to be rooted at speciesId on subdivision 
@@ -28,9 +34,14 @@ private:
     vector<vector<double> > clv;
   };
 
-  pll_unode_t *geneRoot;
+  pll_unode_t *geneRoot_;
 
   // branch subdivision lengths
+  // by convention, the first subdvision of each species 
+  // has a 0 length, because it corresponds to the discontinuity
+  // between this branch and its sons
+  // then the subdivision go up to the parent node
+  //
   // branchSubdivisions[speciesId][subdivisionId]
   vector<vector<double > > branchSubdivisions_;
 
@@ -47,9 +58,15 @@ private:
   // clvs_[geneId]
   vector<DDL_CLV> clvs_;
 
-
+  // probability that an extant gene is sampled
+  // set to 1.0 fpr now
+  double probaGeneSampled_;
 private:
-  void buildSubdivisionsRec(pll_rnode_t *node);
+  
+  void computeExtinctionProbas(pll_rtree_t *speciesTree);
+  double propagateExtinctionProba(double initialProba, double branchLength); 
+  void computePropagationProbas(pll_rtree_t *speciesTree);
+  double propagatePropagationProba(double initialProba, double branchLength); 
 
 };
 
