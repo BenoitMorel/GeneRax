@@ -145,7 +145,7 @@ double DatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
 
 void DatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
-
+  Logger::info << "update clv " << geneNode->node_index << endl;
 }
 
 
