@@ -15,8 +15,6 @@ public:
   virtual void setSpeciesTree(pll_rtree_t *specieseTree);
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
   virtual void setGeneSpeciesMap(const GeneSpeciesMapping &map);
-  virtual void setRoot(pll_unode_t * root);
-  virtual pll_unode_t *getRoot();
   virtual double computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
 
 private:
@@ -34,7 +32,6 @@ private:
     vector<vector<double> > clv;
   };
 
-  pll_unode_t *geneRoot_;
 
   // branch subdivision lengths
   // by convention, the first subdvision of each species 
@@ -67,7 +64,7 @@ private:
   double propagateExtinctionProba(double initialProba, double branchLength); 
   void computePropagationProbas(pll_rtree_t *speciesTree);
   double propagatePropagationProba(double initialProba, double branchLength); 
-
+  void updateCLV(pll_unode_t *geneNode);
 };
 
 

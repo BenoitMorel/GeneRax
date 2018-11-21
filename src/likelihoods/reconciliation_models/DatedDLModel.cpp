@@ -94,7 +94,6 @@ double DatedDLModel::propagatePropagationProba(double initialProba, double branc
 
 
 DatedDLModel::DatedDLModel():
-  geneRoot_(0),
   probaGeneSampled_(1.0)
 {
 
@@ -112,11 +111,12 @@ void DatedDLModel::setRates(double dupRate, double lossRate, double transferRate
   
   computeExtinctionProbas(speciesTree_);
   computePropagationProbas(speciesTree_);
-
 }
 
 void DatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
 {
+  // todobenoit: check that we do not need to check that speciesTree nodes
+  // are ordered with postorder traversal (we do it in UndatedDLModel)
   speciesTree_ = speciesTree;
   // build subdivisions
   buildSubdivisions(speciesTree, branchSubdivisions_);
@@ -133,20 +133,20 @@ void DatedDLModel::setGeneSpeciesMap(const GeneSpeciesMapping &map)
 
 }
 
-void DatedDLModel::setRoot(pll_unode_t * root)
-{
-  geneRoot_ = root;
-}
-
-pll_unode_t *DatedDLModel::getRoot()
-{
-  return geneRoot_;
-}
-
 double DatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
-
+  vector<int> geneIds;
+  getIdsPostOrder(*treeinfo, geneIds);
+  for (auto geneId: geneIds) {
+    updateCLV(treeinfo->subnodes[geneIds[geneId]]);
+  }
   return 0;
 }
+
+void DatedDLModel::updateCLV(pll_unode_t *geneNode)
+{
+
+}
+
 
 

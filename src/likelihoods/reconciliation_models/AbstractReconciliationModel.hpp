@@ -6,14 +6,23 @@
 
 class AbstractReconciliationModel {
 public:
+  AbstractReconciliationModel();
   virtual ~AbstractReconciliationModel() {};
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0) = 0;
   virtual void setSpeciesTree(pll_rtree_t *geneTree) = 0;
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo) = 0;
   virtual void setGeneSpeciesMap(const GeneSpeciesMapping &map) = 0;
-  virtual void setRoot(pll_unode_t * root) = 0;
-  virtual pll_unode_t *getRoot() = 0;
   virtual double computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo) = 0;
+  
+  virtual void setRoot(pll_unode_t * root) {geneRoot_ = root;}
+  virtual pll_unode_t *getRoot() {return geneRoot_;}
+
+protected:
+  void getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds);
+  
+protected:
+  pll_unode_t *geneRoot_;
+
 };
 
 

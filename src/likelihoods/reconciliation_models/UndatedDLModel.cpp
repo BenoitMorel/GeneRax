@@ -5,8 +5,7 @@
 using namespace std;
 
 UndatedDLModel::UndatedDLModel() :
-  O_R(1),
-  geneRoot(0)
+  O_R(1)
 {
   Logger::info << "creating undated dl model" << endl;
 }
@@ -40,7 +39,7 @@ void UndatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
 void UndatedDLModel::setRates(double dupRate, 
   double lossRate,
   double transferRates) {
-  geneRoot = 0;
+  geneRoot_ = 0;
   PD = vector<double>(speciesNodesCount, dupRate);
   PL = vector<double>(speciesNodesCount, lossRate);
   PS = vector<double>(speciesNodesCount, 1.0);
@@ -67,35 +66,6 @@ void UndatedDLModel::setRates(double dupRate,
 UndatedDLModel::~UndatedDLModel() { }
 
 
-void getIdsPostOrderRec(pll_unode_t *node, 
-    vector<bool> &marked,
-    vector<int> &nodeIds)
-{
-  if (marked[node->node_index]) {
-    return;
-  }
-  if (node->next) {
-    getIdsPostOrderRec(node->next->back, marked, nodeIds);
-    getIdsPostOrderRec(node->next->next->back, marked, nodeIds);
-  }
-  nodeIds.push_back(node->node_index);
-  marked[node->node_index] = true;
-}
-
-void UndatedDLModel::getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds) {
-  int nodesNumber = tree.subnode_count;
-  nodeIds.clear();
-  vector<bool> marked(nodesNumber, false);
-  if (Arguments::rootedGeneTree && geneRoot) {
-    getIdsPostOrderRec(geneRoot, marked, nodeIds);
-    getIdsPostOrderRec(geneRoot->back, marked, nodeIds);
-    return;
-  } 
-  
-  for (int i = 0; i < nodesNumber; ++i) {
-    getIdsPostOrderRec(tree.subnodes[i], marked, nodeIds);
-  }
-}
 
 void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
 {
@@ -148,8 +118,8 @@ void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
 void UndatedDLModel::getRoots(pllmod_treeinfo_t &treeinfo, vector<pll_unode_t *> &roots)
 {
   roots.clear();
-  if (Arguments::rootedGeneTree && geneRoot) {
-    roots.push_back(geneRoot);
+  if (Arguments::rootedGeneTree && geneRoot_) {
+    roots.push_back(geneRoot_);
     return;
   }
   vector<bool> marked(geneIds.size(), false);
@@ -244,7 +214,7 @@ double UndatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
   
   auto bestRoot = computeLikelihoods(*treeinfo);
   if (bestRoot) {
-    geneRoot = bestRoot;
+    geneRoot_ = bestRoot;
   }
   for (int e = 0; e < speciesNodesCount; e++) {
     double O_p = 1;
