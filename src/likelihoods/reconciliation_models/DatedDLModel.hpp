@@ -66,7 +66,9 @@ private:
   double propagatePropagationProba(double initialProba, double branchLength); 
   void updateCLV(pll_unode_t *geneNode);
   double computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode);
+  double computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, int subdivision);
   double getRecProba(int geneId, int speciesId);
+  double getRecProba(int geneId, int speciesId, int subdivision);
   double getExtProba(int speciesId);
 };
 

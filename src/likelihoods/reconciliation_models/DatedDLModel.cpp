@@ -127,7 +127,15 @@ double DatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
   for (auto geneId: geneIds) {
     updateCLV(treeinfo->subnodes[geneId]);
   }
-  return 0;
+  vector<pll_unode_t *> roots;
+  getRoots(*treeinfo, roots, geneIds);
+  double ll = 0;
+  for (auto geneRoot: roots) {
+    for (auto species: speciesNodes_) {
+      ll += getRecProba(geneRoot->node_index, species->node_index);
+    }
+  }
+  return ll;
 }
 
 void DatedDLModel::updateCLV(pll_unode_t *geneNode)
@@ -141,7 +149,7 @@ void DatedDLModel::updateCLV(pll_unode_t *geneNode)
     clv[speciesId] = vector<double>(subdivisions, 0.0);
     clv[speciesId][0] = computeRecProbaInterBranch(geneNode, speciesNode);
     for (int subdivision = 1; subdivision < subdivisions; ++subdivision) {
-      //clv[speciesId][subdivision] = computeRecProbaIntraBranch();
+      clv[speciesId][subdivision] = computeRecProbaIntraBranch(geneNode, speciesNode, subdivision);
     }
   }
 }
@@ -179,10 +187,36 @@ double DatedDLModel::computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode
   }
   return res;
 }
+  
+double DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, int subdivision)
+{
+  bool isGeneLeaf = !geneNode->next;
+  int geneId = geneNode->node_index;
+  int speciesId = speciesNode->node_index;
+  double res = 0.0;
+  // No event case
+  res += getRecProba(geneId, speciesId, subdivision - 1);
+  // duplication case
+  if (!isGeneLeaf) {
+    int leftGeneId = geneNode->next->back->node_index;
+    int rightGeneId = geneNode->next->next->back->node_index;
+    double l = branchSubdivisions_[speciesId][subdivision];
+    double leftProba = getRecProba(leftGeneId, speciesId, subdivision - 1);
+    double rightProba = getRecProba(rightGeneId, speciesId, subdivision - 1);
+    res += 2.0 * dupRate_ * l * leftProba * rightProba;
+  }
+  return res;
+
+}
 
 double DatedDLModel::getRecProba(int geneId, int speciesId)
 {
   return clvs_[geneId].clv[speciesId].back();
+}
+
+double DatedDLModel::getRecProba(int geneId, int speciesId, int subdivision)
+{
+  return clvs_[geneId].clv[speciesId][subdivision];
 }
 
 double DatedDLModel::getExtProba(int speciesId)

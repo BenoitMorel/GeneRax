@@ -20,6 +20,9 @@ public:
 protected:
   void getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds);
   void mapGenesToSpecies(pllmod_treeinfo_t &treeinfo);
+  void getRoots(pllmod_treeinfo_t &treeinfo, 
+    vector<pll_unode_t *> &roots,
+    const vector<int> &geneIds);
   
 protected:
   pll_unode_t *geneRoot_;

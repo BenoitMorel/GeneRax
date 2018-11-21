@@ -91,29 +91,11 @@ void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
   }
 }
 
-void UndatedDLModel::getRoots(pllmod_treeinfo_t &treeinfo, vector<pll_unode_t *> &roots)
-{
-  roots.clear();
-  if (Arguments::rootedGeneTree && geneRoot_) {
-    roots.push_back(geneRoot_);
-    return;
-  }
-  vector<bool> marked(geneIds.size(), false);
-  for (auto id: geneIds) {
-    auto node = treeinfo.subnodes[id];
-    if (marked[node->clv_index] || marked[node->back->clv_index]) {
-      continue;
-    }
-    roots.push_back(node);
-    marked[node->clv_index] = true;
-  }
-
-}
 
 pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
 {
   vector<pll_unode_t *> roots;
-  getRoots(treeinfo, roots);
+  getRoots(treeinfo, roots, geneIds);
   pll_unode_t *bestRoot = 0;
   for (auto speciesNode: speciesNodes_) {
     bool isSpeciesLeaf = !speciesNode->left;
