@@ -12,46 +12,22 @@ UndatedDLModel::UndatedDLModel() :
 
 
 
-void UndatedDLModel::fillNodesPostOrder(pll_rnode_t *node, vector<pll_rnode_t *> &nodes) 
-{
-  if (node->left) {
-    assert(node->right);
-    fillNodesPostOrder(node->left, nodes);
-    fillNodesPostOrder(node->right, nodes);
-  }
-  nodes.push_back(node);
-}
-
-
-void UndatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
-{
-  speciesNodesCount = speciesTree->tip_count + speciesTree->inner_count;
-  speciesNodes.clear();
-  fillNodesPostOrder(speciesTree->root, speciesNodes);
-  speciesNameToId.clear();
-  for (auto node: speciesNodes) {
-    if (!node->left) {
-      speciesNameToId[node->label] = node->node_index;
-    }
-  }
-}
-
 void UndatedDLModel::setRates(double dupRate, 
   double lossRate,
   double transferRates) {
   geneRoot_ = 0;
-  PD = vector<double>(speciesNodesCount, dupRate);
-  PL = vector<double>(speciesNodesCount, lossRate);
-  PS = vector<double>(speciesNodesCount, 1.0);
-  for (auto speciesNode: speciesNodes) {
+  PD = vector<double>(speciesNodesCount_, dupRate);
+  PL = vector<double>(speciesNodesCount_, lossRate);
+  PS = vector<double>(speciesNodesCount_, 1.0);
+  for (auto speciesNode: speciesNodes_) {
     int e = speciesNode->node_index;
     double sum = PD[e] + PL[e] + PS[e];
     PD[e] /= sum;
     PL[e] /= sum;
     PS[e] /= sum;
   } 
-  uE = vector<double>(speciesNodesCount, 0.0);
-  for (auto speciesNode: speciesNodes) {
+  uE = vector<double>(speciesNodesCount_, 0.0);
+  for (auto speciesNode: speciesNodes_) {
     int e = speciesNode->node_index;
     double a = PD[e];
     double b = -1.0;
@@ -84,7 +60,7 @@ void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
     leftGeneNode = geneNode->next->back;
     rightGeneNode = geneNode->next->next->back;
   }
-  for (auto speciesNode: speciesNodes) {
+  for (auto speciesNode: speciesNodes_) {
     bool isSpeciesLeaf = !speciesNode->left;
     int e = speciesNode->node_index;
     int f = 0;
@@ -94,7 +70,7 @@ void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
       g = speciesNode->right->node_index;
     }
     double uq_sum = 0;
-    if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies[gid]) {
+    if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) {
       // present
       uq_sum += PS[e];
     }
@@ -139,7 +115,7 @@ pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
   vector<pll_unode_t *> roots;
   getRoots(treeinfo, roots);
   pll_unode_t *bestRoot = 0;
-  for (auto speciesNode: speciesNodes) {
+  for (auto speciesNode: speciesNodes_) {
     bool isSpeciesLeaf = !speciesNode->left;
     int e = speciesNode->node_index;
     int f = 0;
@@ -176,23 +152,8 @@ pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
   return bestRoot;
 }
 
-void UndatedDLModel::mapGenesToSpecies(pllmod_treeinfo_t &treeinfo)
-{
-  geneToSpecies.resize(treeinfo.subnode_count);
-  for (int i = 0; i < treeinfo.subnode_count; ++i) {
-    auto node = treeinfo.subnodes[i];
-    if (!node->next) {
-      string speciesName = geneNameToSpeciesName[string(node->label)]; 
-      geneToSpecies[node->node_index] = speciesNameToId[speciesName];
-    }
-  }
-}
 
 
-void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
-{
-  mapGenesToSpecies(*treeinfo);
-}
 
 double UndatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
@@ -205,9 +166,9 @@ double UndatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
   for (auto gid: geneIds)
     maxId = max(maxId, gid);
   // init ua with zeros
-  vector<double> zeros(speciesNodesCount, 0.0);
+  vector<double> zeros(speciesNodesCount_, 0.0);
   uq = vector<vector<double>>(maxId + 1,zeros);
-  ll = vector<double>(speciesNodesCount, 0.0);
+  ll = vector<double>(speciesNodesCount_, 0.0);
 
   // main loop
   updateCLVs(*treeinfo);
@@ -216,19 +177,15 @@ double UndatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
   if (bestRoot) {
     geneRoot_ = bestRoot;
   }
-  for (int e = 0; e < speciesNodesCount; e++) {
+  for (int e = 0; e < speciesNodesCount_; e++) {
     double O_p = 1;
-    if (e == (speciesNodesCount - 1)) 
+    if (e == (speciesNodesCount_ - 1)) 
       O_p = O_R;
     O_norm += O_p;
     root_sum += ll[e] * O_p;
     survive += (1 - uE[e]);
   }
-  return root_sum / survive / O_norm * (speciesNodesCount);
+  return root_sum / survive / O_norm * (speciesNodesCount_);
 }
 
-void UndatedDLModel::setGeneSpeciesMap(const GeneSpeciesMapping &map)
-{
-  geneNameToSpeciesName = map.getMap();
-}
 

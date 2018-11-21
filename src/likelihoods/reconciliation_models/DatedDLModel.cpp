@@ -21,21 +21,19 @@ void buildSubdivisions(pll_rtree_t *speciesTree,
 
 void DatedDLModel::computeExtinctionProbas(pll_rtree_t *speciesTree)
 {
-  int speciesNumber = speciesTree->tip_count + speciesTree->inner_count;
-  extinctionProba_.resize(speciesNumber);
-  for (int i = 0; i < speciesNumber; ++i) {
-    auto node = speciesTree->nodes[i];
-    int speciesId = node->node_index;
+  extinctionProba_.resize(speciesNodesCount_);
+  for (auto speciesNode: speciesNodes_) {
+    int speciesId = speciesNode->node_index;
     int subdivisions = branchSubdivisions_[speciesId].size();
     extinctionProba_[speciesId].resize(subdivisions);
     // first branch subdivision
-    if (!node->left) {
+    if (!speciesNode->left) {
       // species leaf
       extinctionProba_[speciesId][0] = 1 - probaGeneSampled_; 
     } else {
       // species internal node
-      extinctionProba_[speciesId][0] = extinctionProba_[node->left->node_index].back() *
-        extinctionProba_[node->right->node_index].back();
+      extinctionProba_[speciesId][0] = getExtProba(speciesNode->left->node_index) *
+        getExtProba(speciesNode->right->node_index);
     }
     // go up in the branch
     for (int s = 1; s < subdivisions; ++s) {
@@ -60,11 +58,9 @@ double DatedDLModel::propagateExtinctionProba(double initialProba, double branch
 
 void DatedDLModel::computePropagationProbas(pll_rtree_t *speciesTree)
 {
-  int speciesNumber = speciesTree->tip_count + speciesTree->inner_count;
-  propagationProba_.resize(speciesNumber);
-  for (int i = 0; i < speciesNumber; ++i) {
-    auto node = speciesTree->nodes[i];
-    int speciesId = node->node_index;
+  propagationProba_.resize(speciesNodesCount_);
+  for (auto speciesNode: speciesNodes_) {
+    int speciesId = speciesNode->node_index;
     int subdivisions = branchSubdivisions_[speciesId].size();
     propagationProba_[speciesId].resize(subdivisions);
     // first branch subdivision
@@ -115,38 +111,82 @@ void DatedDLModel::setRates(double dupRate, double lossRate, double transferRate
 
 void DatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
 {
+  AbstractReconciliationModel::setSpeciesTree(speciesTree);
   // todobenoit: check that we do not need to check that speciesTree nodes
   // are ordered with postorder traversal (we do it in UndatedDLModel)
-  speciesTree_ = speciesTree;
   // build subdivisions
   buildSubdivisions(speciesTree, branchSubdivisions_);
 }
 
 
-void DatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
-{
-
-}
-
-void DatedDLModel::setGeneSpeciesMap(const GeneSpeciesMapping &map)
-{
-
-}
-
 double DatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   vector<int> geneIds;
   getIdsPostOrder(*treeinfo, geneIds);
+  clvs_.resize(geneIds.size());
   for (auto geneId: geneIds) {
-    updateCLV(treeinfo->subnodes[geneIds[geneId]]);
+    updateCLV(treeinfo->subnodes[geneId]);
   }
   return 0;
 }
 
 void DatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
-  Logger::info << "update clv " << geneNode->node_index << endl;
+  int geneId = geneNode->node_index;
+  auto &clv = clvs_[geneId].clv;
+  clv = vector<vector<double > >(speciesNodesCount_);
+  for (auto speciesNode: speciesNodes_) {
+    int speciesId = speciesNode->node_index;
+    int subdivisions = branchSubdivisions_[speciesId].size();
+    clv[speciesId] = vector<double>(subdivisions, 0.0);
+    clv[speciesId][0] = computeRecProbaInterBranch(geneNode, speciesNode);
+    for (int subdivision = 1; subdivision < subdivisions; ++subdivision) {
+      //clv[speciesId][subdivision] = computeRecProbaIntraBranch();
+    }
+  }
 }
 
+double DatedDLModel::computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode)
+{
+  bool isGeneLeaf = !geneNode->next;
+  bool isSpeciesLeaf = !speciesNode->left;
+  int geneId = geneNode->node_index;
+  int speciesId = speciesNode->node_index;
+  
+  if (isGeneLeaf && isSpeciesLeaf) {
+    // trivial case
+    return (geneToSpecies_[geneId] == speciesId) ? 1 : 0; 
+  }
+  if (isSpeciesLeaf) {
+    return 0.0; // todobenoit I am not sure about this
+  }
+  int leftSpeciesId = speciesNode->left->node_index;
+  int rightSpeciesId = speciesNode->right->node_index;
 
+  double res = 0.0;
+  // todobenoit check that...
+  // Speciation-Loss case
+  res += getRecProba(geneId, leftSpeciesId) * getExtProba(rightSpeciesId);  
+  res += getRecProba(geneId, rightSpeciesId) * getExtProba(leftSpeciesId);  
+  
+  if (!isGeneLeaf) {
+    int leftGeneId = geneNode->next->back->node_index;
+    int rightGeneId = geneNode->next->next->back->node_index;
+    // Speciation case
+    res += getRecProba(leftGeneId, leftSpeciesId) * getRecProba(rightGeneId, rightSpeciesId);
+    res += getRecProba(rightGeneId, leftSpeciesId) * getRecProba(leftGeneId, rightSpeciesId);
+
+  }
+  return res;
+}
+
+double DatedDLModel::getRecProba(int geneId, int speciesId)
+{
+  return clvs_[geneId].clv[speciesId].back();
+}
+
+double DatedDLModel::getExtProba(int speciesId)
+{
+  return extinctionProba_[speciesId].back();
+}
 

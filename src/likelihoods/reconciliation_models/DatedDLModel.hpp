@@ -12,14 +12,11 @@ public:
   DatedDLModel();
   virtual ~DatedDLModel() {};
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);
-  virtual void setSpeciesTree(pll_rtree_t *specieseTree);
-  virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
-  virtual void setGeneSpeciesMap(const GeneSpeciesMapping &map);
+  virtual void setSpeciesTree(pll_rtree_t *speciesTree);
   virtual double computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
 
 private:
 
-  pll_rtree_t *speciesTree_;
   double dupRate_;
   double lossRate_;
   double diffRates_;
@@ -58,6 +55,9 @@ private:
   // probability that an extant gene is sampled
   // set to 1.0 fpr now
   double probaGeneSampled_;
+  
+  // map between extant genes and extant species
+  vector<int> geneToSpecies;
 private:
   
   void computeExtinctionProbas(pll_rtree_t *speciesTree);
@@ -65,6 +65,9 @@ private:
   void computePropagationProbas(pll_rtree_t *speciesTree);
   double propagatePropagationProba(double initialProba, double branchLength); 
   void updateCLV(pll_unode_t *geneNode);
+  double computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode);
+  double getRecProba(int geneId, int speciesId);
+  double getExtProba(int speciesId);
 };
 
 
