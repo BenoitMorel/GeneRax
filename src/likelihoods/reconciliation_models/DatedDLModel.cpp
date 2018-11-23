@@ -12,10 +12,18 @@ void buildSubdivisions(pll_rtree_t *speciesTree,
   for (int i = 0; i < maxSpeciesNodeIndex; ++i) {
     int speciesId = speciesTree->nodes[i]->node_index;
     double branchLength = max(speciesTree->nodes[i]->length, EPSILON);
-    // todobenoit: have different number of subdivisions depending on the
-    // length of the branchs
-    branchSubdivisions[speciesId] = vector<double>(subdivisionsNumber + 1, branchLength / subdivisionsNumber);
-    branchSubdivisions[speciesId][0] = 0.0;
+    double subdivisionSize = 0.05;
+    int minSubdivisions = 5;
+    if (minSubdivisions * subdivisionSize > branchLength) {
+      subdivisionSize = branchLength / minSubdivisions;
+    }
+    branchSubdivisions[speciesId].push_back(0);
+    while (branchLength > subdivisionSize) {
+      branchSubdivisions[speciesId].push_back(subdivisionSize);
+      branchLength -= subdivisionSize;
+    }
+    if (branchLength > 0)
+      branchSubdivisions[speciesId].push_back(branchLength);
   }
 }
 
@@ -40,7 +48,6 @@ void DatedDLModel::computeExtinctionProbas(pll_rtree_t *speciesTree)
       extinctionProba_[speciesId][s] = propagateExtinctionProba(extinctionProba_[speciesId][s-1],
           branchSubdivisions_[speciesId][s]);
     }
-    
   }
 }
 
@@ -67,10 +74,11 @@ void DatedDLModel::computePropagationProbas(pll_rtree_t *speciesTree)
     propagationProba_[speciesId][0] = 1.0; 
     // go up in the branch
     for (int s = 1; s < subdivisions; ++s) {
-      propagationProba_[speciesId][s] = propagatePropagationProba(propagationProba_[speciesId][s-1],
+      propagationProba_[speciesId][s] = propagatePropagationProba(extinctionProba_[speciesId][s-1],
           branchSubdivisions_[speciesId][s]);
+      //if (propagationProba_[speciesId][s] > 1.01) 
+        //Logger::info << "BUGGG " << speciesId << " " << s << "  " << propagationProba_[speciesId][s] << endl;
     }
-    
   }
 }
 
@@ -104,7 +112,6 @@ void DatedDLModel::setRates(double dupRate, double lossRate, double transferRate
   dupRate_ = dupRate;
   lossRate_ = lossRate;
   diffRates_ = dupRate - lossRate;
-  
   computeExtinctionProbas(speciesTree_);
   computePropagationProbas(speciesTree_);
 }
@@ -112,9 +119,6 @@ void DatedDLModel::setRates(double dupRate, double lossRate, double transferRate
 void DatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
 {
   AbstractReconciliationModel::setSpeciesTree(speciesTree);
-  // todobenoit: check that we do not need to check that speciesTree nodes
-  // are ordered with postorder traversal (we do it in UndatedDLModel)
-  // build subdivisions
   buildSubdivisions(speciesTree, branchSubdivisions_);
 }
 
@@ -130,12 +134,18 @@ double DatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
   vector<pll_unode_t *> roots;
   getRoots(*treeinfo, roots, geneIds);
   double ll = 0;
+  double norm = 0;
   for (auto geneRoot: roots) {
     for (auto species: speciesNodes_) {
-      ll += getRecProba(geneRoot->node_index, species->node_index);
+      int speciesId = species->node_index;
+      for (int i = 0; i < branchSubdivisions_[speciesId].size(); ++i) {
+        ll = max(ll, getRecProba(geneRoot->node_index, speciesId, i));
+        norm +=  1 - extinctionProba_[speciesId][i];
+      }
     }
   }
   return ll;
+  //return ll / norm;
 }
 
 void DatedDLModel::updateCLV(pll_unode_t *geneNode)
@@ -176,7 +186,6 @@ double DatedDLModel::computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode
   // Speciation-Loss case
   res += getRecProba(geneId, leftSpeciesId) * getExtProba(rightSpeciesId);  
   res += getRecProba(geneId, rightSpeciesId) * getExtProba(leftSpeciesId);  
-  
   if (!isGeneLeaf) {
     int leftGeneId = geneNode->next->back->node_index;
     int rightGeneId = geneNode->next->next->back->node_index;
