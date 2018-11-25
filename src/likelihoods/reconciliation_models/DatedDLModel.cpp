@@ -76,9 +76,13 @@ void DatedDLModel::computePropagationProbas(pll_rtree_t *speciesTree)
     for (int s = 1; s < subdivisions; ++s) {
       propagationProba_[speciesId][s] = propagatePropagationProba(extinctionProba_[speciesId][s-1],
           branchSubdivisions_[speciesId][s]);
-      //if (propagationProba_[speciesId][s] > 1.01) 
-        //Logger::info << "BUGGG " << speciesId << " " << s << "  " << propagationProba_[speciesId][s] << endl;
     }
+    /*
+    for (int s = 0; s < subdivisions; ++s) {
+      Logger::info << propagationProba_[speciesId][s] << " ";  
+    }
+    Logger::info << endl;
+    */
   }
 }
 
@@ -86,13 +90,19 @@ double DatedDLModel::propagatePropagationProba(double initialProba, double branc
 {
   if (dupRate_ == lossRate_) {
     double x = lossRate_ * (initialProba - 1.0) * branchLength - 1.0;
-    return 1.0 / pow(x, 2.0);
+    double res = 1.0 / pow(x, 2.0);
+     if (res > 1.01) {
+        Logger::error << res << " " << x << " " << initialProba << endl;
+     }
+     return res;
+
   }
-  double x = exp(diffRates_ * branchLength);
+  double x = exp(-diffRates_ * branchLength);
   double a = x * pow(diffRates_, 2.0);
   double b = dupRate_ - x * lossRate_;
   double c = (x - 1.0) * dupRate_ * initialProba;
-  return a / pow(b + c, 2.0);
+  double res = a / pow(b + c, 2.0);
+  return res;
 }
 
 
@@ -204,7 +214,7 @@ double DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode
   int speciesId = speciesNode->node_index;
   double res = 0.0;
   // No event case
-  res += getRecProba(geneId, speciesId, subdivision - 1);
+  res += propagationProba_[speciesId][subdivision] * getRecProba(geneId, speciesId, subdivision - 1);
   // duplication case
   if (!isGeneLeaf) {
     int leftGeneId = geneNode->next->back->node_index;
