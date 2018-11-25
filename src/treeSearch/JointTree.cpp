@@ -141,6 +141,10 @@ void JointTree::optimizeDTRates() {
   for (int s = begin; s < end; ++s) {
     int i = s / 15;
     int j = s % 15;
+    /*
+    if (i == j)
+      continue;
+      */
     double dup = min + (max - min) * double(i) / double(steps);
     double loss = min + (max - min) * double(j) / double(steps);
     setRates(dup, loss);

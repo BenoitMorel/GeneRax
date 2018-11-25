@@ -48,6 +48,12 @@ void DatedDLModel::computeExtinctionProbas(pll_rtree_t *speciesTree)
       extinctionProba_[speciesId][s] = propagateExtinctionProba(extinctionProba_[speciesId][s-1],
           branchSubdivisions_[speciesId][s]);
     }
+    /*
+    for (int s = 0; s < subdivisions; ++s) {
+      Logger::info << extinctionProba_[speciesId][s] << " ";
+    }
+    Logger::info << endl;
+    */
   }
 }
 
@@ -91,10 +97,7 @@ double DatedDLModel::propagatePropagationProba(double initialProba, double branc
   if (dupRate_ == lossRate_) {
     double x = lossRate_ * (initialProba - 1.0) * branchLength - 1.0;
     double res = 1.0 / pow(x, 2.0);
-     if (res > 1.01) {
-        Logger::error << res << " " << x << " " << initialProba << endl;
-     }
-     return res;
+    return res;
 
   }
   double x = exp(-diffRates_ * branchLength);
@@ -145,17 +148,24 @@ double DatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
   getRoots(*treeinfo, roots, geneIds);
   double ll = 0;
   double norm = 0;
+  bool selectMax = true;
   for (auto geneRoot: roots) {
     for (auto species: speciesNodes_) {
       int speciesId = species->node_index;
       for (int i = 0; i < branchSubdivisions_[speciesId].size(); ++i) {
-        ll = max(ll, getRecProba(geneRoot->node_index, speciesId, i));
-        norm +=  1 - extinctionProba_[speciesId][i];
+        double localLL =  getRecProba(geneRoot->node_index, speciesId, i) * getRecProba(geneRoot->back->node_index, speciesId, i); 
+        if (selectMax) {
+          ll = max(ll, localLL);
+        } else {
+          ll += localLL;
+          norm +=  1 - extinctionProba_[speciesId][i];
+        }
       }
     }
   }
+  if (!selectMax) 
+    ll /= norm;
   return ll;
-  //return ll / norm;
 }
 
 void DatedDLModel::updateCLV(pll_unode_t *geneNode)
@@ -170,6 +180,11 @@ void DatedDLModel::updateCLV(pll_unode_t *geneNode)
     clv[speciesId][0] = computeRecProbaInterBranch(geneNode, speciesNode);
     for (int subdivision = 1; subdivision < subdivisions; ++subdivision) {
       clv[speciesId][subdivision] = computeRecProbaIntraBranch(geneNode, speciesNode, subdivision);
+    }
+    for (int i = 0; i < subdivisions; ++i) {
+      double d = clv[speciesId][i];
+      if (d < 0 || d > 1.0)
+        Logger::info << d << endl;
     }
   }
 }
