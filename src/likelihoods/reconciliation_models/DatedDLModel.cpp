@@ -8,7 +8,6 @@ void buildSubdivisions(pll_rtree_t *speciesTree,
 {
   int maxSpeciesNodeIndex = speciesTree->tip_count + speciesTree->inner_count;
   branchSubdivisions = vector<vector<double> >(maxSpeciesNodeIndex);
-  int subdivisionsNumber = 5;
   for (int i = 0; i < maxSpeciesNodeIndex; ++i) {
     int speciesId = speciesTree->nodes[i]->node_index;
     double branchLength = max(speciesTree->nodes[i]->length, EPSILON);
