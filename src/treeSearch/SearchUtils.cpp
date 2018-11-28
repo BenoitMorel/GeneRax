@@ -37,7 +37,7 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
     auto move = allMoves[i];
     double loglk;
     SearchUtils::testMove(jointTree, move, initialLoglk, loglk);
-    if (loglk > bestLoglk) {
+    if (loglk > bestLoglk + 0.000000001) {
       bestLoglk = loglk;
       bestMoveIndex = i;
     }

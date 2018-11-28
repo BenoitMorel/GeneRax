@@ -30,7 +30,7 @@ std::shared_ptr<Move> Move::createSPRMove(int pruneIndex, int regraftIndex, cons
 NNIMove::NNIMove(int nodeIndex, bool left, bool blo, int bloRadius):
     nodeIndex_(nodeIndex),
     left_(left),
-    blo_(blo),
+    blo_(blo && !Arguments::noFelsensteinLikelihood),
     bloRadius_(bloRadius)
 {
 }

@@ -15,7 +15,7 @@ bool Arguments::check = false;
 bool Arguments::incr = false;
 bool Arguments::rootedGeneTree = false;
 bool Arguments::costsEstimation = false;
-  
+bool Arguments::noFelsensteinLikelihood = false;  
 
 Arguments::ReconciliationModel getModelFromString(const string &modelStr)
 {
@@ -77,6 +77,8 @@ void Arguments::init(int argc, char * argv[])
       incr = true;
     } else if (arg == "--rooted-gene-tree") {
       rootedGeneTree = true;
+    } else if (arg == "--no-felsenstein-likelihood") {
+      noFelsensteinLikelihood = true;
     } else {
       Logger::error << "Unrecognized argument " << arg << endl;
       Logger::error << "Aborting" << endl;
@@ -137,7 +139,8 @@ void Arguments::printHelp() {
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
   Logger::info << "--check" << endl;
   Logger::info << "--incr" << endl;
-  Logger::info << "--rooted-gebe-tree" << endl;
+  Logger::info << "--rooted-gene-tree" << endl;
+  Logger::info << "--no-felsenstein-likelihood" << endl;
   Logger::info << endl;
 
 }
@@ -163,6 +166,7 @@ void Arguments::printSummary() {
   Logger::info << "Check mode: " << boolStr[check] << endl;
   Logger::info << "Incremental likelihood mode: " << boolStr[incr] << endl;
   Logger::info << "Rooted gene tree: " << boolStr[rootedGeneTree] << endl;
+  Logger::info << "Ignoring felsenstein likelihood: " << boolStr[noFelsensteinLikelihood] << endl;
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << endl;
   Logger::info << endl;
 }

@@ -34,6 +34,7 @@ public:
   static bool incr;
   static bool rootedGeneTree;
   static bool costsEstimation;
+  static bool noFelsensteinLikelihood;
 };
 
 #endif

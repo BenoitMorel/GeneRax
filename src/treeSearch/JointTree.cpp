@@ -71,13 +71,18 @@ void JointTree::printLibpllTree() const {
 
 
 void JointTree::optimizeParameters() {
-  libpllEvaluation_->optimizeAllParameters();
+  if (!Arguments::noFelsensteinLikelihood) {
+    libpllEvaluation_->optimizeAllParameters();
+  }
   if (Arguments::costsEstimation) {
     optimizeDTRates();
   }
 }
 
 double JointTree::computeLibpllLoglk() {
+  if (Arguments::noFelsensteinLikelihood) {
+    return 0;
+  }
   return libpllEvaluation_->computeLikelihood();
 }
 
@@ -134,7 +139,7 @@ void JointTree::optimizeDTRates() {
   double bestLoss = 0.0;
   double min = 0.001;
   double max = 5.0;
-  int steps = 15;
+  int steps = 25;
   int begin = ParallelContext::getBegin(steps * steps);
   int end = ParallelContext::getEnd(steps * steps);
   
@@ -149,6 +154,7 @@ void JointTree::optimizeDTRates() {
     double loss = min + (max - min) * double(j) / double(steps);
     setRates(dup, loss);
     double newLL = computeReconciliationLoglk();
+    Logger::error << dup << " " << loss << " " << newLL << endl;
     if (newLL > bestLL) { 
       bestDup = dup;
       bestLoss = loss;
