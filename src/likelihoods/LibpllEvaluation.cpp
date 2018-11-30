@@ -139,7 +139,7 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
       pll_rtree_destroy(rtree, free);
     }
     if (!utree) 
-      throw LibpllException("Error while reading tree from ", newickString);
+      throw LibpllException("Error while reading tree ", newickString);
   }
   // partition
   unsigned int attribute = getBestLibpllAttribute();

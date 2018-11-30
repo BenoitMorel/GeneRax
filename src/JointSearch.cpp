@@ -4,6 +4,8 @@
 #include <treeSearch/NNISearch.h>
 #include <treeSearch/SPRSearch.h>
 #include <Logger.hpp>
+#include <algorithm>
+#include <limits>
 using namespace std;
 
 
@@ -21,6 +23,8 @@ void printJointTreeInfo(shared_ptr<JointTree> tree)
   Logger::info << endl;
 }
 
+
+
 int internal_main(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm);
@@ -33,35 +37,58 @@ int internal_main(int argc, char** argv, void* comm)
   Logger::initFileOutput(Arguments::output);
   Arguments::printCommand();
   Arguments::printSummary();
-  auto jointTree = make_shared<JointTree>(Arguments::geneTree,
-      Arguments::alignment,
-      Arguments::speciesTree,
-      Arguments::geneSpeciesMap,
-      Arguments::reconciliationModel,
-      dupRate,
-      lossRate
-      );
-  printJointTreeInfo(jointTree);
-  jointTree->optimizeParameters();
-  Logger::timed << "Starting search..." << endl;
-  if (Arguments::strategy == "SPR") {
-    SPRSearch::applySPRSearch(*jointTree);
-  } else if (Arguments::strategy == "NNI") {
-    NNISearch::applyNNISearch(*jointTree);
-  } else if (Arguments::strategy == "EVAL") {
-  } else if (Arguments::strategy == "HYBRID") {
-    NNISearch::applyNNISearch(*jointTree);
-    jointTree->optimizeParameters();
-    SPRSearch::applySPRSearch(*jointTree);
-    jointTree->optimizeParameters();
-    NNISearch::applyNNISearch(*jointTree);
+  
+  vector<string> geneTreeStrings;
+  string geneTreeString;
+  ifstream treeStream(Arguments::geneTree);
+  while(getline(treeStream, geneTreeString)) {
+    geneTreeString.erase(remove(geneTreeString.begin(), geneTreeString.end(), '\n'), geneTreeString.end());
+    if (geneTreeString.empty()) {
+      continue;
+    }
+    geneTreeStrings.push_back(geneTreeString);
   }
-  Logger::timed << "End of search" << endl;
-  jointTree->printLoglk();
-  Logger::info << "Final tree hash: " << jointTree->getTreeHash() << endl;
-  if (!ParallelContext::getRank()) {
-    jointTree->save(Arguments::output + ".newick");
-  }
+  bool firstRun  = true; 
+  double bestLL = numeric_limits<double>::lowest();
+  for (auto &geneTreeString: geneTreeStrings) {
+    auto jointTree = make_shared<JointTree>(geneTreeString,
+        Arguments::alignment,
+        Arguments::speciesTree,
+        Arguments::geneSpeciesMap,
+        Arguments::reconciliationModel,
+        dupRate,
+        lossRate
+        );
+    
+    
+    printJointTreeInfo(jointTree);
+    jointTree->optimizeParameters();
+    Logger::timed << "Starting search..." << endl;
+    if (Arguments::strategy == "SPR") {
+      SPRSearch::applySPRSearch(*jointTree);
+    } else if (Arguments::strategy == "NNI") {
+      NNISearch::applyNNISearch(*jointTree);
+    } else if (Arguments::strategy == "EVAL") {
+    } else if (Arguments::strategy == "HYBRID") {
+      NNISearch::applyNNISearch(*jointTree);
+      jointTree->optimizeParameters();
+      SPRSearch::applySPRSearch(*jointTree);
+      jointTree->optimizeParameters();
+      NNISearch::applyNNISearch(*jointTree);
+    }
+    Logger::timed << "End of search" << endl;
+    jointTree->printLoglk();
+    Logger::info << "Final tree hash: " << jointTree->getTreeHash() << endl;
+    if (!ParallelContext::getRank()) {
+      double ll = jointTree->computeJointLoglk();
+      if (ll > bestLL) {
+        bestLL = ll;
+        jointTree->save(Arguments::output + ".newick", false);
+      }
+      jointTree->save(Arguments::output + "_all" + ".newick", !firstRun);
+    }
+    firstRun = false;
+  }  
   Logger::timed << "End of JointSearch execution" << endl;
   ParallelContext::finalize();
   return 0;

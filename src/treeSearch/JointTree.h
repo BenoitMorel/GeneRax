@@ -21,7 +21,7 @@ void printLibpllTreeRooted(pll_unode_t *root, ostream &os);
 
 class JointTree {
 public:
-    JointTree(const string &newick_file,
+    JointTree(const string &newick_string,
               const string &alignment_file,
               const string &speciestree_file,
               const string &geneSpeciesMap_file,
@@ -41,7 +41,7 @@ public:
     void applyMove(shared_ptr<Move> move);
     
     void rollbackLastMove();
-    void save(const string &fileName);
+    void save(const string &fileName, bool append);
     shared_ptr<pllmod_treeinfo_t> getTreeInfo();
     void setRates(double dup, double loss);
     void optimizeDTRates();

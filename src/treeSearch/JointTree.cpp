@@ -41,7 +41,7 @@ void printLibpllTreeRooted(pll_unode_t *root, Logger &os){
 }
 
 
-JointTree::JointTree(const string &newick_file,
+JointTree::JointTree(const string &newick_string,
     const string &alignment_file,
     const string &speciestree_file,
     const string &geneSpeciesMap_file,
@@ -54,7 +54,7 @@ JointTree::JointTree(const string &newick_file,
 {
    info_.alignmentFilename = alignment_file;
   info_.model = "GTR";
-  libpllEvaluation_ = LibpllEvaluation::buildFromFile(newick_file, info_);
+  libpllEvaluation_ = LibpllEvaluation::buildFromString(newick_string, info_.alignmentFilename, info_.model);
   pllSpeciesTree_ = pll_rtree_parse_newick(speciestree_file.c_str());
   assert(pllSpeciesTree_);
   reconciliationEvaluation_ = make_shared<ReconciliationEvaluation>(pllSpeciesTree_,  
@@ -123,8 +123,8 @@ void JointTree::rollbackLastMove() {
   rollbacks_.pop();
 }
 
-void JointTree::save(const string &fileName) {
-  ofstream os(fileName);
+void JointTree::save(const string &fileName, bool append) {
+  ofstream os(fileName, (append ? ofstream::app : ofstream::out));
   char *newick = pll_utree_export_newick(getTreeInfo()->root, 0);
   os << newick;
 }
@@ -154,7 +154,6 @@ void JointTree::optimizeDTRates() {
     double loss = min + (max - min) * double(j) / double(steps);
     setRates(dup, loss);
     double newLL = computeReconciliationLoglk();
-    Logger::error << dup << " " << loss << " " << newLL << endl;
     if (newLL > bestLL) { 
       bestDup = dup;
       bestLoss = loss;
