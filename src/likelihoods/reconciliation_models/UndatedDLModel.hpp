@@ -10,6 +10,10 @@ using namespace std;
 class UndatedDLModel: public AbstractReconciliationModel {
 public:
 
+  enum Event {
+    SPEC = 0, DUP, SPECLOSS, LAST
+  };
+
   // model
   vector<double> PD; // Duplication probability, per branch
   vector<double> PL; // Loss probability, per branch
@@ -21,6 +25,7 @@ public:
   
   // CLVs
   vector<vector<double> > uq;
+  vector<vector<vector<int> > > eventsCount;
   vector<double> ll; 
   
   vector<int> geneIds;

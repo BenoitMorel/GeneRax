@@ -65,28 +65,59 @@ void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
     int e = speciesNode->node_index;
     int f = 0;
     int g = 0;
+    int gp_i = 0;
+    int gpp_i = 0;
     if (!isSpeciesLeaf) {
       f = speciesNode->left->node_index;
       g = speciesNode->right->node_index;
     }
     double uq_sum = 0;
+    double uq_Sevent1 = 0;
+    double uq_Sevent2 = 0;
+    double uq_Devent = 0;
+    double uq_SLevent1 = 0;
+    double uq_SLevent2 = 0;
     if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) {
       // present
       uq_sum += PS[e];
     }
     if (not isGeneLeaf) {
-      int gp_i = leftGeneNode->node_index;
-      int gpp_i = rightGeneNode->node_index;
+      gp_i = leftGeneNode->node_index;
+      gpp_i = rightGeneNode->node_index;
       if (not isSpeciesLeaf) {
-        uq_sum += PS[e] * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]);
+        // S event
+        uq_Sevent1 += PS[e] * uq[gp_i][f] * uq[gpp_i][g];
+        uq_Sevent2 += PS[e] * uq[gp_i][g] * uq[gpp_i][f];
       }
       // D event
-      uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
+      uq_Devent += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
     }
     if (not isSpeciesLeaf) {
       // SL event
-      uq_sum += PS[e] * (uq[gid][f] * uE[g] + uq[gid][g] * uE[f]);
+      uq_SLevent1 += PS[e] * uq[gid][f] * uE[g];
+      uq_SLevent2 += PS[e] * uq[gid][g] * uE[f];
     }
+    double uq_internal_sum = uq_Sevent1 + uq_Sevent2 + uq_Devent + uq_SLevent1 + uq_SLevent2;
+    uq_sum += uq_internal_sum;
+      
+    for (int event = 0; event < (int)LAST; ++event) {
+      eventsCount[gid][e][event] = 0;
+    }
+    if (uq_Sevent1 != 0) {
+      uq_Sevent1 /= uq_internal_sum;
+      for (int event = 0; event < (int)LAST; ++event) {
+        eventsCount[gid][e][event] += uq_Sevent1 * eventsCount[gp_i][f][event];
+      }
+      eventsCount[gid][e][(int)SPEC] += uq_Sevent1;
+    }
+    if (uq_Sevent2 != 0) {
+      uq_Sevent2 /= uq_internal_sum;
+      for (int event = 0; event < (int)LAST; ++event) {
+        eventsCount[gid][e][event] += uq_Sevent2 * eventsCount[gpp_i][g][event];
+      }
+      eventsCount[gid][e][(int)SPEC] += uq_Sevent2;
+    }
+    // DL event
     uq[gid][e] = uq_sum / (1.0 - 2.0 * PD[e] * uE[e]);
   }
 }
@@ -124,7 +155,8 @@ pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
       } else {
         uq_e += uq_sum;
       }
-      }
+    }
+
     if (not isSpeciesLeaf) {
       // SL event
       uq_e += PS[e] * (ll[f] * uE[g] + ll[g] * uE[f]); 
@@ -151,7 +183,10 @@ double UndatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
   vector<double> zeros(speciesNodesCount_, 0.0);
   uq = vector<vector<double>>(maxId + 1,zeros);
   ll = vector<double>(speciesNodesCount_, 0.0);
-
+  
+  vector<int> zerosCounts(LAST, 0);
+  vector<vector <int> > zerosEvents(speciesNodesCount_, zerosCounts);
+  eventsCount = vector<  vector<vector <int> > >(maxId + 1, zerosEvents);
   // main loop
   updateCLVs(*treeinfo);
   
