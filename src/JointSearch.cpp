@@ -78,7 +78,7 @@ int internal_main(int argc, char** argv, void* comm)
     }
     Logger::timed << "End of search" << endl;
     jointTree->printLoglk();
-    Logger::info << "Final tree hash: " << jointTree->getTreeHash() << endl;
+    Logger::info << "Final tree hash: " << jointTree->getUnrootedTreeHash() << endl;
     if (!ParallelContext::getRank()) {
       double ll = jointTree->computeJointLoglk();
       if (ll > bestLL) {

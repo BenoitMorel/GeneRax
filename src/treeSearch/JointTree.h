@@ -46,7 +46,7 @@ public:
     void setRates(double dup, double loss);
     void optimizeDTRates();
     pll_rtree_t *getSpeciesTree() {return pllSpeciesTree_;}
-    int getTreeHash();
+    size_t getUnrootedTreeHash();
     shared_ptr<ReconciliationEvaluation> getReconciliationEvaluation() {return reconciliationEvaluation_;}
 private:
     shared_ptr<LibpllEvaluation> libpllEvaluation_;

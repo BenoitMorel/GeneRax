@@ -37,7 +37,9 @@ bool NNISearch::applyNNIRound(JointTree &jointTree, double &bestLoglk, int bloRa
         allMoves.push_back(Move::createNNIMove(allNodes[j], moveType, true, bloRadius));
       }
   }
-  Logger::timed << "Start NNI Round (best ll=" << bestLoglk << ", " << allMoves.size() << " moves to try)" << endl;
+  Logger::timed << "Start NNI Round "
+    << "(hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" << bestLoglk << ", possible moves: " << allMoves.size() << ")"
+    << endl;
   int bestMoveIndex = -1;
   bool foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex); 
   if (foundBetterMove) {

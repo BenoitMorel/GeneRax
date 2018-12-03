@@ -86,7 +86,7 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
     allMoves.push_back(Move::createSPRMove(pruneIndex, regraftIndex, move.path));
   }
   Logger::timed << "Start SPR round " 
-    << "(best ll=" << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
+    << "(hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
     << endl;
   int bestMoveIndex = -1;
   bool foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex); 

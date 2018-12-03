@@ -3,19 +3,70 @@
 #include <chrono>
 #include <ParallelContext.hpp>
 #include<limits>
+#include <functional>
 
-int getTreeHashRec(pll_unode_t *node, int depth = 1) {
-  int res = node->node_index * depth;
-  if (node->next) {
-    res += getTreeHashRec(node->next->back, depth + 1);
-    res += getTreeHashRec(node->next->next->back, depth + 2);
+
+size_t leafHash(pll_unode_t *leaf) {
+  hash<string> hash_fn;
+  return hash_fn(string(leaf->label));
+}
+
+size_t getTreeHashRec(pll_unode_t *node, size_t i) {
+  if (i == 0) 
+    i = 1;
+  if (!node->next) {
+    return leafHash(node);
   }
-  return res;
+  int hash1 = getTreeHashRec(node->next->back, i + 1);
+  int hash2 = getTreeHashRec(node->next->next->back, i + 1);
+  //Logger::info << "(" << hash1 << "," << hash2 << ") ";
+  hash<int> hash_fn;
+  int m = min(hash1, hash2);
+  int M = max(hash1, hash2);
+  return hash_fn(m * i + M);
+
+}
+
+pll_unode_t *findMinimumHashLeafRec(pll_unode_t * root, size_t &hash)
+{
+  if (!root->next) {
+    hash = leafHash(root);
+    return root;
+  }
+  auto n1 = root->next->back;
+  auto n2 = root->next->next->back;
+  size_t hash1, hash2;
+  auto min1 = findMinimumHashLeafRec(n1, hash1);
+  auto min2 = findMinimumHashLeafRec(n2, hash2);
+  if (hash1 < hash2) {
+    hash = hash1;
+    return min1;
+  } else {
+    hash = hash2;
+    return min2;
+  }
+}
+
+pll_unode_t *findMinimumHashLeaf(pll_unode_t * root) 
+{
+  auto n1 = root;
+  auto n2 = root->back;
+  size_t hash1, hash2;
+  auto min1 = findMinimumHashLeafRec(n1, hash1);
+  auto min2 = findMinimumHashLeafRec(n2, hash2);
+  if (hash1 < hash2) {
+    return min1;
+  } else {
+    return min2;
+  }
 }
     
-int JointTree::getTreeHash()
+size_t JointTree::getUnrootedTreeHash()
 {
-  return getTreeHashRec(getTreeInfo()->root);
+  auto minHashLeaf = findMinimumHashLeaf(getTreeInfo()->root);
+  auto res = getTreeHashRec(minHashLeaf, 0) + getTreeHashRec(minHashLeaf->back, 0);
+  //Logger::info << endl;
+  return res % 10000;
 }
 
 void printLibpllNode(pll_unode_s *node, Logger &os, bool isRoot)
