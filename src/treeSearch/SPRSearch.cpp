@@ -57,6 +57,16 @@ void getRegraftsRec(int pruneIndex, pll_unode_t *regraft, int maxRadius, vector<
   }
 }
 
+void printPossibleMoves(JointTree &jointTree, vector<shared_ptr<Move> > &allMoves)
+{
+  Logger::info << "Possible moves from " << jointTree.getUnrootedTreeHash() << endl;
+  for (auto move: allMoves) {
+    jointTree.applyMove(move);
+    Logger::info << jointTree.getUnrootedTreeHash() << endl;
+    jointTree.rollbackLastMove();
+  }
+}
+
 void getRegrafts(JointTree &jointTree, int pruneIndex, int maxRadius, vector<SPRMoveDesc> &moves) 
 {
   pll_unode_t *pruneNode = jointTree.getNode(pruneIndex);
@@ -85,6 +95,7 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
     }
     allMoves.push_back(Move::createSPRMove(pruneIndex, regraftIndex, move.path));
   }
+  
   Logger::timed << "Start SPR round " 
     << "(hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
     << endl;
@@ -105,8 +116,15 @@ void SPRSearch::applySPRSearch(JointTree &jointTree)
   double bestLoglk = startingLoglk;
 
   while (applySPRRound(jointTree, 1, bestLoglk)) {}
+  jointTree.optimizeParameters();
+  bestLoglk = jointTree.computeJointLoglk();
+  while (applySPRRound(jointTree, 1, bestLoglk)) {}
+  jointTree.optimizeParameters();
+  bestLoglk = jointTree.computeJointLoglk();
   while (applySPRRound(jointTree, 2, bestLoglk)) {}
+  jointTree.optimizeParameters();
+  bestLoglk = jointTree.computeJointLoglk();
   while (applySPRRound(jointTree, 5, bestLoglk)) {}
-  while (applySPRRound(jointTree, 50, bestLoglk)) {}
+  //while (applySPRRound(jointTree, 50, bestLoglk)) {}
 }
 

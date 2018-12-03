@@ -65,8 +65,7 @@ size_t JointTree::getUnrootedTreeHash()
 {
   auto minHashLeaf = findMinimumHashLeaf(getTreeInfo()->root);
   auto res = getTreeHashRec(minHashLeaf, 0) + getTreeHashRec(minHashLeaf->back, 0);
-  //Logger::info << endl;
-  return res % 10000;
+  return res % 100000;
 }
 
 void printLibpllNode(pll_unode_s *node, Logger &os, bool isRoot)
