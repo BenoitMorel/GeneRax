@@ -48,6 +48,10 @@ public:
     pll_rtree_t *getSpeciesTree() {return pllSpeciesTree_;}
     size_t getUnrootedTreeHash();
     shared_ptr<ReconciliationEvaluation> getReconciliationEvaluation() {return reconciliationEvaluation_;}
+
+
+    void printRates(double min, double max, int resolution, const string &output);
+
 private:
     shared_ptr<LibpllEvaluation> libpllEvaluation_;
     shared_ptr<ReconciliationEvaluation> reconciliationEvaluation_;

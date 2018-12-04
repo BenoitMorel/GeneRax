@@ -187,15 +187,15 @@ void JointTree::optimizeDTRates() {
   double bestLL = numeric_limits<double>::lowest();
   double bestDup = 0.0;
   double bestLoss = 0.0;
-  double min = 0.001;
+  double min = 0.1;
   double max = 5.0;
   int steps = 25;
   int begin = ParallelContext::getBegin(steps * steps);
   int end = ParallelContext::getEnd(steps * steps);
   
   for (int s = begin; s < end; ++s) {
-    int i = s / 15;
-    int j = s % 15;
+    int i = s / steps;
+    int j = s % steps;
     /*
     if (i == j)
       continue;
@@ -222,5 +222,50 @@ void JointTree::setRates(double dup, double loss) {
   dupRate_ = dup; 
   lossRate_ = loss;
   reconciliationEvaluation_->setRates(dup, loss);
+}
+
+void printPGM(const string &output, vector<vector<double > > &array) {
+  const int dimx = array.size(), dimy = array[0].size();
+  FILE *fp = fopen(output.c_str(), "wb"); /* b - binary mode */
+  (void) fprintf(fp, "P6\n%d %d\n255\n", dimx, dimy);
+  for (int j = 0; j < dimy; ++j)
+  {
+    for (int i = 0; i < dimx; ++i)
+    {
+      static unsigned char color[3];
+      color[0] = array[i][j] * 255.0;  /* red */
+      color[1] = (1 - array[i][j]) * 255.0;  /* green */
+      color[2] = (1 - array[i][j]) * 255.0;  /* blue */
+      (void) fwrite(color, 1, 3, fp);
+    }
+  }
+  (void) fclose(fp);
+}
+    
+void JointTree::printRates(double min, double max, int resolution, const string &output)
+{
+  double maxLL = numeric_limits<double>::lowest();
+  double minLL = numeric_limits<double>::max();
+  vector<double> zeros(resolution, 0);
+  vector<vector<double > > ll(resolution, zeros);
+  for (int i = 0; i < resolution; ++i) {
+    for (int j = 0; j < resolution; ++j) {
+      double dup = min + (max - min) * double(i) / double(resolution);
+      double loss = min + (max - min) * double(j) / double(resolution);
+      setRates(dup, loss);
+      ll[i][j] = computeReconciliationLoglk();
+      maxLL = std::max(maxLL, ll[i][j]);
+      minLL = std::min(minLL, ll[i][j]);
+    }
+  }
+
+  for (int i = 0; i < resolution; ++i) {
+    for (int j = 0; j < resolution; ++j) {
+      ll[i][j] = (ll[i][j] - minLL) / (maxLL - minLL);
+    }
+  }
+  printPGM(output, ll); 
+
+
 }
 
