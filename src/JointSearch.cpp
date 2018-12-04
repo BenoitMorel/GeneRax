@@ -88,8 +88,7 @@ int internal_main(int argc, char** argv, void* comm)
       jointTree->save(Arguments::output + "_all" + ".newick", !firstRun);
     }
     firstRun = false;
-    //jointTree->printRates(0.01, 5, 50, (Arguments::output + ".pgm"));
-  }
+  }  
   Logger::timed << "End of JointSearch execution" << endl;
   ParallelContext::finalize();
   return 0;
