@@ -33,6 +33,7 @@ public:
   virtual double computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
   
 private:
+  double getProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, bool virtualRoot = false);
   void updateCLV(pll_unode_t *geneNode);
   void updateCLVs(pllmod_treeinfo_t &treeinfo);
   pll_unode_t *computeLikelihoods(pllmod_treeinfo_t &treeinfo);

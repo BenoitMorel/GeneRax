@@ -52,45 +52,58 @@ void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
 
 void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
+  for (auto speciesNode: speciesNodes_) {
+    uq[geneNode->node_index][speciesNode->node_index] = getProbability(geneNode, speciesNode);
+  }
+}
+
+double UndatedDLModel::getProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, bool virtualRoot)
+{
   int gid = geneNode->node_index;
   pll_unode_t *leftGeneNode = 0;     
   pll_unode_t *rightGeneNode = 0;     
   bool isGeneLeaf = !geneNode->next;
   if (!isGeneLeaf) {
-    leftGeneNode = geneNode->next->back;
-    rightGeneNode = geneNode->next->next->back;
+    if (!virtualRoot) {
+      leftGeneNode = geneNode->next->back;
+      rightGeneNode = geneNode->next->next->back;
+    } else {
+      leftGeneNode = geneNode->next;
+      rightGeneNode = geneNode->next->back;
+    }
   }
-  for (auto speciesNode: speciesNodes_) {
-    bool isSpeciesLeaf = !speciesNode->left;
-    int e = speciesNode->node_index;
-    int f = 0;
-    int g = 0;
-    if (!isSpeciesLeaf) {
-      f = speciesNode->left->node_index;
-      g = speciesNode->right->node_index;
-    }
-    double uq_sum = 0;
-    if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) {
-      // present
-      uq_sum += PS[e];
-    }
-    if (not isGeneLeaf) {
-      int gp_i = leftGeneNode->node_index;
-      int gpp_i = rightGeneNode->node_index;
-      if (not isSpeciesLeaf) {
-        uq_sum += PS[e] * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]);
-      }
-      // D event
-      uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
-    }
+  bool isSpeciesLeaf = !speciesNode->left;
+  int e = speciesNode->node_index;
+  int f = 0;
+  int g = 0;
+  if (!isSpeciesLeaf) {
+    f = speciesNode->left->node_index;
+    g = speciesNode->right->node_index;
+  }
+  double uq_sum = 0;
+  if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) {
+    // present
+    uq_sum += PS[e];
+  }
+  if (not isGeneLeaf) {
+    int gp_i = leftGeneNode->node_index;
+    int gpp_i = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
-      // SL event
-      uq_sum += PS[e] * (uq[gid][f] * uE[g] + uq[gid][g] * uE[f]);
+      uq_sum += PS[e] * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]);
     }
-    uq[gid][e] = uq_sum / (1.0 - 2.0 * PD[e] * uE[e]);
+    // D event
+    uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
   }
+  if (not isSpeciesLeaf) {
+    // SL event
+    if (!virtualRoot) {
+      uq_sum += PS[e] * (uq[gid][f] * uE[g] + uq[gid][g] * uE[f]);
+    } else {
+      uq_sum += PS[e] * (ll[f] * uE[g] + ll[g] * uE[f]);
+    }
+  }
+  return uq_sum / (1.0 - 2.0 * PD[e] * uE[e]);
 }
-
 
 pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
 {
@@ -108,28 +121,19 @@ pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
     }
     double uq_e = 0;
     for (auto root: roots) {
-      double uq_sum = 0;
-      int gp_i = root->node_index;
-      int gpp_i = root->back->node_index;
-      if (not isSpeciesLeaf) {
-        uq_sum += PS[e] * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]);
-      }
-      // D event
-      uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
+      pll_unode_t virtual_root;
+      virtual_root.next = root;
+      double p = getProbability(&virtual_root, speciesNode, true);
       if (Arguments::rootedGeneTree) {
-        if (uq_sum > uq_e) {
-          uq_e = max(uq_sum, uq_e);
+        if (p > uq_e) {
+          uq_e = p;
           bestRoot = root;
         }
       } else {
-        uq_e += uq_sum;
+        uq_e += getProbability(&virtual_root, speciesNode, true);
       }
-      }
-    if (not isSpeciesLeaf) {
-      // SL event
-      uq_e += PS[e] * (ll[f] * uE[g] + ll[g] * uE[f]); 
     }
-    ll[e] = uq_e / (1.0 - 2.0 * PD[e] * uE[e]);
+    ll[e] = uq_e;
   }
   return bestRoot;
 }

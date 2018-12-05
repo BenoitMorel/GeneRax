@@ -28,8 +28,8 @@ void printJointTreeInfo(shared_ptr<JointTree> tree)
 int internal_main(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm);
-  double dupRate = 2;
-  double lossRate = 1;
+  double dupRate = 0.2;
+  double lossRate = 0.1;
   
   Logger::init();
   Arguments::init(argc, argv);

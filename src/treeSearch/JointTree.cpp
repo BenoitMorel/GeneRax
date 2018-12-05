@@ -188,14 +188,14 @@ void JointTree::optimizeDTRates() {
   double bestDup = 0.0;
   double bestLoss = 0.0;
   double min = 0.001;
-  double max = 5.0;
-  int steps = 25;
+  double max = 10.0;
+  int steps = 100;
   int begin = ParallelContext::getBegin(steps * steps);
   int end = ParallelContext::getEnd(steps * steps);
   
   for (int s = begin; s < end; ++s) {
-    int i = s / 15;
-    int j = s % 15;
+    int i = s / steps;
+    int j = s % steps;
     /*
     if (i == j)
       continue;
