@@ -111,29 +111,20 @@ pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
   getRoots(treeinfo, roots, geneIds);
   pll_unode_t *bestRoot = 0;
   for (auto speciesNode: speciesNodes_) {
-    bool isSpeciesLeaf = !speciesNode->left;
     int e = speciesNode->node_index;
-    int f = 0;
-    int g = 0;
-    if (!isSpeciesLeaf) {
-      f = speciesNode->left->node_index;
-      g = speciesNode->right->node_index;
-    }
-    double uq_e = 0;
     for (auto root: roots) {
       pll_unode_t virtual_root;
       virtual_root.next = root;
       double p = getProbability(&virtual_root, speciesNode, true);
       if (Arguments::rootedGeneTree) {
-        if (p > uq_e) {
-          uq_e = p;
+        if (p > ll[e]) {
+          ll[e] = p;
           bestRoot = root;
         }
       } else {
-        uq_e += getProbability(&virtual_root, speciesNode, true);
+        ll[e] += getProbability(&virtual_root, speciesNode, true);
       }
     }
-    ll[e] = uq_e;
   }
   return bestRoot;
 }
