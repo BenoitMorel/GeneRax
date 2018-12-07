@@ -51,6 +51,7 @@ private:
   // (conditional likelihood vectors, per analogy with libpll)
   // clvs_[geneId]
   vector<DDL_CLV> clvs_;
+  DDL_CLV virtualCLV_;
 
   // probability that an extant gene is sampled
   // set to 1.0 fpr now

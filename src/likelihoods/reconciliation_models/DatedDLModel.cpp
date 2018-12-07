@@ -149,10 +149,15 @@ double DatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
   double norm = 0;
   bool selectMax = false;
   for (auto geneRoot: roots) {
+    virtualCLV_.clv = vector<vector<double > >(speciesNodesCount_);
     for (auto species: speciesNodes_) {
       int speciesId = species->node_index;
+      pll_unode_t virtualRoot;
+      virtualRoot.next = geneRoot;
+      virtualRoot.node_index = -1;
+      computeCLVCell(&virtualRoot, species, virtualCLV_.clv[speciesId], true);
       for (int i = 0; i < branchSubdivisions_[speciesId].size(); ++i) {
-        double localLL =  getRecProba(geneRoot->node_index, speciesId, i) * getRecProba(geneRoot->back->node_index, speciesId, i); 
+        double localLL =  virtualCLV_.clv[speciesId][i]; //getRecProba(geneRoot->node_index, speciesId, i) * getRecProba(geneRoot->back->node_index, speciesId, i); 
         if (selectMax) {
           ll = max(ll, localLL);
         } else {
@@ -243,11 +248,17 @@ double DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode
 
 double DatedDLModel::getRecProba(int geneId, int speciesId)
 {
+  if (geneId < 0) {
+    return virtualCLV_.clv[speciesId].back();
+  }
   return clvs_[geneId].clv[speciesId].back();
 }
 
 double DatedDLModel::getRecProba(int geneId, int speciesId, int subdivision)
 {
+  if (geneId < 0) {
+    return virtualCLV_.clv[speciesId][subdivision];
+  }
   return clvs_[geneId].clv[speciesId][subdivision];
 }
 
