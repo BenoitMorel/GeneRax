@@ -173,22 +173,21 @@ void DatedDLModel::updateCLV(pll_unode_t *geneNode)
   auto &clv = clvs_[geneId].clv;
   clv = vector<vector<double > >(speciesNodesCount_);
   for (auto speciesNode: speciesNodes_) {
-    int speciesId = speciesNode->node_index;
-    int subdivisions = branchSubdivisions_[speciesId].size();
-    clv[speciesId] = vector<double>(subdivisions, 0.0);
-    clv[speciesId][0] = computeRecProbaInterBranch(geneNode, speciesNode);
-    for (int subdivision = 1; subdivision < subdivisions; ++subdivision) {
-      clv[speciesId][subdivision] = computeRecProbaIntraBranch(geneNode, speciesNode, subdivision);
-    }
-    for (int i = 0; i < subdivisions; ++i) {
-      double d = clv[speciesId][i];
-      if (d < 0 || d > 1.0)
-        Logger::info << d << endl;
-    }
+    computeCLVCell(geneNode, speciesNode, clv[speciesNode->node_index], false);
   }
 }
 
-double DatedDLModel::computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode)
+void DatedDLModel::computeCLVCell(pll_unode_t *geneNode, pll_rnode_t *speciesNode, vector<double> &speciesCell, bool isVirtualRoot)
+{
+  int subdivisions = branchSubdivisions_[speciesNode->node_index].size();
+  speciesCell = vector<double>(subdivisions, 0.0);
+  speciesCell[0] = computeRecProbaInterBranch(geneNode, speciesNode, isVirtualRoot);
+  for (int subdivision = 1; subdivision < subdivisions; ++subdivision) {
+    speciesCell[subdivision] = computeRecProbaIntraBranch(geneNode, speciesNode, subdivision, isVirtualRoot);
+  }
+}
+
+double DatedDLModel::computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, bool isVirtualRoot)
 {
   bool isGeneLeaf = !geneNode->next;
   bool isSpeciesLeaf = !speciesNode->left;
@@ -211,8 +210,8 @@ double DatedDLModel::computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode
   res += getRecProba(geneId, leftSpeciesId) * getExtProba(rightSpeciesId);  
   res += getRecProba(geneId, rightSpeciesId) * getExtProba(leftSpeciesId);  
   if (!isGeneLeaf) {
-    int leftGeneId = geneNode->next->back->node_index;
-    int rightGeneId = geneNode->next->next->back->node_index;
+    int leftGeneId = getLeft(geneNode, isVirtualRoot)->node_index;
+    int rightGeneId = getRight(geneNode, isVirtualRoot)->node_index;
     // Speciation case
     res += getRecProba(leftGeneId, leftSpeciesId) * getRecProba(rightGeneId, rightSpeciesId);
     res += getRecProba(rightGeneId, leftSpeciesId) * getRecProba(leftGeneId, rightSpeciesId);
@@ -221,7 +220,7 @@ double DatedDLModel::computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode
   return res;
 }
   
-double DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, int subdivision)
+double DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, int subdivision, bool isVirtualRoot)
 {
   bool isGeneLeaf = !geneNode->next;
   int geneId = geneNode->node_index;
@@ -231,8 +230,8 @@ double DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode
   res += propagationProba_[speciesId][subdivision] * getRecProba(geneId, speciesId, subdivision - 1);
   // duplication case
   if (!isGeneLeaf) {
-    int leftGeneId = geneNode->next->back->node_index;
-    int rightGeneId = geneNode->next->next->back->node_index;
+    int leftGeneId = getLeft(geneNode, isVirtualRoot)->node_index;
+    int rightGeneId = getRight(geneNode, isVirtualRoot)->node_index;
     double l = branchSubdivisions_[speciesId][subdivision];
     double leftProba = getRecProba(leftGeneId, speciesId, subdivision - 1);
     double rightProba = getRecProba(rightGeneId, speciesId, subdivision - 1);

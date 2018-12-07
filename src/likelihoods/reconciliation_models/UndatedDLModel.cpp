@@ -53,19 +53,19 @@ void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
 void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
   for (auto speciesNode: speciesNodes_) {
-    uq[geneNode->node_index][speciesNode->node_index] = getProbability(geneNode, speciesNode);
+    uq[geneNode->node_index][speciesNode->node_index] = computeProbability(geneNode, speciesNode);
   }
 }
 
-double UndatedDLModel::getProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, bool virtualRoot)
+double UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, bool isVirtualRoot)
 {
   int gid = geneNode->node_index;
   pll_unode_t *leftGeneNode = 0;     
   pll_unode_t *rightGeneNode = 0;     
   bool isGeneLeaf = !geneNode->next;
   if (!isGeneLeaf) {
-    leftGeneNode = getLeft(geneNode, virtualRoot);
-    rightGeneNode = getRight(geneNode, virtualRoot);
+    leftGeneNode = getLeft(geneNode, isVirtualRoot);
+    rightGeneNode = getRight(geneNode, isVirtualRoot);
   }
   bool isSpeciesLeaf = !speciesNode->left;
   int e = speciesNode->node_index;
@@ -91,7 +91,7 @@ double UndatedDLModel::getProbability(pll_unode_t *geneNode, pll_rnode_t *specie
   }
   if (not isSpeciesLeaf) {
     // SL event
-    if (!virtualRoot) {
+    if (!isVirtualRoot) {
       uq_sum += PS[e] * (uq[gid][f] * uE[g] + uq[gid][g] * uE[f]);
     } else {
       uq_sum += PS[e] * (ll[f] * uE[g] + ll[g] * uE[f]);
@@ -110,14 +110,14 @@ pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
     for (auto root: roots) {
       pll_unode_t virtual_root;
       virtual_root.next = root;
-      double p = getProbability(&virtual_root, speciesNode, true);
+      double p = computeProbability(&virtual_root, speciesNode, true);
       if (Arguments::rootedGeneTree) {
         if (p > ll[e]) {
           ll[e] = p;
           bestRoot = root;
         }
       } else {
-        ll[e] += getProbability(&virtual_root, speciesNode, true);
+        ll[e] += computeProbability(&virtual_root, speciesNode, true);
       }
     }
   }

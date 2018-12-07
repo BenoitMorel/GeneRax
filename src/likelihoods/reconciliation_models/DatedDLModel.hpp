@@ -64,9 +64,11 @@ private:
   double propagateExtinctionProba(double initialProba, double branchLength); 
   void computePropagationProbas(pll_rtree_t *speciesTree);
   double propagatePropagationProba(double initialProba, double branchLength); 
+  void computeCLVCell(pll_unode_t *geneNode, pll_rnode_t *speciesNode, vector<double> &speciesCell, bool isVirtualRoot);
   void updateCLV(pll_unode_t *geneNode);
-  double computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode);
-  double computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, int subdivision);
+  void computeCLV(pll_unode_t *geneNode, pll_rnode_t *speciesNode, DDL_CLV *clv, bool isVirtualRoot = false);
+  double computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, bool isVirtualRoot);
+  double computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, int subdivision, bool isVirtualRoot);
   double getRecProba(int geneId, int speciesId);
   double getRecProba(int geneId, int speciesId, int subdivision);
   double getExtProba(int speciesId);
