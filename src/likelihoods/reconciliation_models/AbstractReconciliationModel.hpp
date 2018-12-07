@@ -23,7 +23,8 @@ protected:
   void getRoots(pllmod_treeinfo_t &treeinfo, 
     vector<pll_unode_t *> &roots,
     const vector<int> &geneIds);
-  
+  pll_unode_t *getLeft(pll_unode_t *node, bool virtualRoot);  
+  pll_unode_t *getRight(pll_unode_t *node, bool virtualRoot);  
 protected:
   pll_unode_t *geneRoot_;
   int speciesNodesCount_;

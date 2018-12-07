@@ -64,13 +64,8 @@ double UndatedDLModel::getProbability(pll_unode_t *geneNode, pll_rnode_t *specie
   pll_unode_t *rightGeneNode = 0;     
   bool isGeneLeaf = !geneNode->next;
   if (!isGeneLeaf) {
-    if (!virtualRoot) {
-      leftGeneNode = geneNode->next->back;
-      rightGeneNode = geneNode->next->next->back;
-    } else {
-      leftGeneNode = geneNode->next;
-      rightGeneNode = geneNode->next->back;
-    }
+    leftGeneNode = getLeft(geneNode, virtualRoot);
+    rightGeneNode = getRight(geneNode, virtualRoot);
   }
   bool isSpeciesLeaf = !speciesNode->left;
   int e = speciesNode->node_index;

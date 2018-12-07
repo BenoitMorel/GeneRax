@@ -147,7 +147,7 @@ double DatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
   getRoots(*treeinfo, roots, geneIds);
   double ll = 0;
   double norm = 0;
-  bool selectMax = true;
+  bool selectMax = false;
   for (auto geneRoot: roots) {
     for (auto species: speciesNodes_) {
       int speciesId = species->node_index;

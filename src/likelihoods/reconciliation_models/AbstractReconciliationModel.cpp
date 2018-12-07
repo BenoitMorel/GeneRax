@@ -104,3 +104,14 @@ void AbstractReconciliationModel::getRoots(pllmod_treeinfo_t &treeinfo,
   }
 }
 
+pll_unode_t *AbstractReconciliationModel::getLeft(pll_unode_t *node, bool virtualRoot)
+{
+  return virtualRoot ? node->next : node->next->back;
+}
+
+pll_unode_t *AbstractReconciliationModel::getRight(pll_unode_t *node, bool virtualRoot)
+{
+  return virtualRoot ? node->next->back : node->next->next->back;
+}
+
+  
