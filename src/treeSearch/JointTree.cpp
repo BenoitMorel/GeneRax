@@ -215,31 +215,72 @@ void JointTree::findBestRates(double minDup, double maxDup,
   
 }
 
-
 void JointTree::optimizeDTRates() {
   double bestLL = numeric_limits<double>::lowest();
   double newLL = 0;
   double bestDup = 0.0;
   double bestLoss = 0.0;
   double minDup = 0.0;
-  double maxDup = 10.0;
+  double maxDup = 100.0;
   double minLoss = 0.0;
-  double maxLoss = 10.0;
-  int steps = 8;
+  double maxLoss = 100.0;
+  int steps = 10;
   double epsilon = 0.001;
-  do
-  {
+
+
+  bool firstIt = true;
+  do {
     bestLL = newLL;
     findBestRates(minDup, maxDup, minLoss, maxLoss, steps, bestDup, bestLoss, newLL);
+    while(firstIt && isinf(newLL) && minLoss > epsilon) {
+      maxDup /= 10;
+      maxLoss /= 10;
+      findBestRates(minDup, maxDup, minLoss, maxLoss, steps, bestDup, bestLoss, newLL);
+    }
     Logger::info << " best rates: " << bestDup << " " << bestLoss <<  " " << newLL << endl;
-    double offsetDup = (maxDup - minDup) / steps;
-    double offsetLoss = (maxLoss - minLoss) / steps;
-    minDup = bestDup - offsetDup;
+    double offsetDup = 2 * (maxDup - minDup) / steps;
+    double offsetLoss = 2* (maxLoss - minLoss) / steps;
+    minDup = max(0.0, bestDup - offsetDup);
     maxDup = bestDup + offsetDup;
-    minLoss = bestLoss - offsetLoss;
+    minLoss = max(0.0, bestLoss - offsetLoss);
     maxLoss = bestLoss + offsetLoss;
+    firstIt = false;
   } while (fabs(newLL - bestLL) > epsilon);
 }
+
+
+/*
+void JointTree::optimizeDTRates() {
+  double bestLL = numeric_limits<double>::lowest();
+  double bestDup = 0.0;
+  double bestLoss = 0.0;
+  double min = 0.001;
+  double max = 2.0;
+  int steps = 20;
+  int begin = ParallelContext::getBegin(steps * steps);
+  int end = ParallelContext::getEnd(steps * steps);
+
+  for (int s = begin; s < end; ++s) {
+    int i = s / steps;
+    int j = s % steps;
+    double dup = min + (max - min) * double(i) / double(steps);
+    double loss = min + (max - min) * double(j) / double(steps);
+    setRates(dup, loss);
+    double newLL = computeReconciliationLoglk();
+    if (newLL > bestLL) { 
+      bestDup = dup;
+      bestLoss = loss;
+      bestLL = newLL;
+    }
+  }
+  int bestRank = 0;
+  ParallelContext::getBestLL(bestLL, bestRank);
+  ParallelContext::broadcoastDouble(bestRank, bestDup);
+  ParallelContext::broadcoastDouble(bestRank, bestLoss);
+  setRates(bestDup, bestLoss);
+  Logger::info << " best rates: " << bestDup << " " << bestLoss << endl;
+}
+*/
 
 void JointTree::setRates(double dup, double loss) { 
   dupRate_ = dup; 
