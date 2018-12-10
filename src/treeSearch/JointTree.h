@@ -49,6 +49,11 @@ public:
     size_t getUnrootedTreeHash();
     shared_ptr<ReconciliationEvaluation> getReconciliationEvaluation() {return reconciliationEvaluation_;}
 private:
+    void findBestRates(double minDup, double maxDup,
+        double minLoss, double maxLoss, int steps,
+        double &bestDup,
+        double &bestLoss,
+        double &bestLL);
     shared_ptr<LibpllEvaluation> libpllEvaluation_;
     shared_ptr<ReconciliationEvaluation> reconciliationEvaluation_;
     pll_rtree_t *pllSpeciesTree_;
