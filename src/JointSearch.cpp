@@ -81,7 +81,8 @@ int internal_main(int argc, char** argv, void* comm)
     Logger::info << "Final tree hash: " << jointTree->getUnrootedTreeHash() << endl;
     if (!ParallelContext::getRank()) {
       double ll = jointTree->computeJointLoglk();
-      if (ll > bestLL) {
+      assert(!isnan(ll));
+      if (ll >= bestLL) {
         bestLL = ll;
         jointTree->save(Arguments::output + ".newick", false);
       }
