@@ -225,14 +225,15 @@ void JointTree::optimizeDTRates() {
   double minLoss = 0.0;
   double maxLoss = 100.0;
   int steps = 10;
-  double epsilon = 0.001;
+  double epsilon = 0.0001;
 
 
   bool firstIt = true;
   do {
     bestLL = newLL;
     findBestRates(minDup, maxDup, minLoss, maxLoss, steps, bestDup, bestLoss, newLL);
-    while(firstIt && isinf(newLL) && minLoss > epsilon) {
+    while(firstIt && isinf(newLL) && maxLoss > epsilon) {
+      Logger::info << "ooo" << endl;
       maxDup /= 10;
       maxLoss /= 10;
       findBestRates(minDup, maxDup, minLoss, maxLoss, steps, bestDup, bestLoss, newLL);
