@@ -135,7 +135,7 @@ void DatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
 }
 
 
-double DatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
+double DatedDLModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   vector<int> geneIds;
   getIdsPostOrder(*treeinfo, geneIds);
@@ -169,7 +169,7 @@ double DatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
   }
   if (!selectMax) 
     ll /= norm;
-  return ll;
+  return log(ll);
 }
 
 void DatedDLModel::updateCLV(pll_unode_t *geneNode)

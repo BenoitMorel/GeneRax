@@ -141,7 +141,7 @@ pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
 
 
 
-double UndatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
+double UndatedDLModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   double survive = 0;
   double root_sum = 0;
@@ -171,7 +171,8 @@ double UndatedDLModel::computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
     root_sum += ll[e] * O_p;
     survive += (1 - uE[e]);
   }
-  return root_sum / survive / O_norm * (speciesNodesCount_);
+  double res = log(root_sum / survive / O_norm * (speciesNodesCount_));
+  return res;
 }
 
 

@@ -9,7 +9,7 @@ public:
   AbstractReconciliationModel();
   virtual ~AbstractReconciliationModel() {};
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0) = 0;
-  virtual double computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo) = 0;
+  virtual double computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo) = 0;
   
   virtual void setSpeciesTree(pll_rtree_t *geneTree);
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);

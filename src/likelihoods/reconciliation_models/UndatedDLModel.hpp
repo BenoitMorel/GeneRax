@@ -31,7 +31,7 @@ public:
   
   // unherited from parents
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);
-  virtual double computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  virtual double computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
   
 private:
   double computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, bool isVirtualRoot = false);

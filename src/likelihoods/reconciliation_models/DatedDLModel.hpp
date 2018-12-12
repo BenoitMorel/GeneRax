@@ -13,7 +13,7 @@ public:
   virtual ~DatedDLModel() {};
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);
   virtual void setSpeciesTree(pll_rtree_t *speciesTree);
-  virtual double computeLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  virtual double computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
 
 private:
 
