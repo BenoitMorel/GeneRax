@@ -221,9 +221,9 @@ void JointTree::optimizeDTRates() {
   double bestDup = 0.0;
   double bestLoss = 0.0;
   double minDup = 0.0;
-  double maxDup = 100.0;
+  double maxDup = 10.0;
   double minLoss = 0.0;
-  double maxLoss = 100.0;
+  double maxLoss = 10.0;
   int steps = 10;
   double epsilon = 0.0001;
 
@@ -232,7 +232,7 @@ void JointTree::optimizeDTRates() {
   do {
     bestLL = newLL;
     findBestRates(minDup, maxDup, minLoss, maxLoss, steps, bestDup, bestLoss, newLL);
-    while(firstIt && isinf(newLL) && maxLoss > epsilon) {
+    while(firstIt && isinf(newLL) || newLL < -100000000 && maxLoss > epsilon) {
       Logger::info << "ooo" << endl;
       maxDup /= 10;
       maxLoss /= 10;

@@ -17,7 +17,7 @@ public:
   ScaledValue():value(0), scaler(INT_MAX) {
   }
 
-  ScaledValue(double v, int s):value(v), scaler(s) {
+  explicit ScaledValue(double v, int s = 0):value(v), scaler(s) {
     if (value == 0) {
       scaler = INT_MAX;
       value = 0;
@@ -70,6 +70,10 @@ public:
     return value < v.value;
   }
 
+  bool isNull() {
+    return value == 0.0;
+  }
+
   double getLogValue() {
     if (scaler == INT_MAX) {
       return -std::numeric_limits<double>::infinity();
@@ -80,6 +84,12 @@ public:
   friend ostream& operator<<(ostream& os, const ScaledValue &v) {
     os << "(" << v.value << "," << v.scaler << ")";
     return os;
+  }
+  
+  void printNoNull() {
+    if (!isNull()) {
+      cout << *this << endl;
+    }
   }
 
 private:

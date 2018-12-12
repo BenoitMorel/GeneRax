@@ -145,11 +145,11 @@ double DatedDLModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo
   }
   vector<pll_unode_t *> roots;
   getRoots(*treeinfo, roots, geneIds);
-  double ll = 0;
+  ScaledValue ll;
   double norm = 0;
   bool selectMax = false;
   for (auto geneRoot: roots) {
-    virtualCLV_.clv = vector<vector<double > >(speciesNodesCount_);
+    virtualCLV_.clv = vector<vector<ScaledValue> >(speciesNodesCount_);
     for (auto species: speciesNodes_) {
       int speciesId = species->node_index;
       pll_unode_t virtualRoot;
@@ -157,9 +157,11 @@ double DatedDLModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo
       virtualRoot.node_index = -1;
       computeCLVCell(&virtualRoot, species, virtualCLV_.clv[speciesId], true);
       for (int i = 0; i < branchSubdivisions_[speciesId].size(); ++i) {
-        double localLL =  virtualCLV_.clv[speciesId][i]; //getRecProba(geneRoot->node_index, speciesId, i) * getRecProba(geneRoot->back->node_index, speciesId, i); 
+        ScaledValue localLL =  virtualCLV_.clv[speciesId][i];  
         if (selectMax) {
-          ll = max(ll, localLL);
+          if (ll < localLL) {
+            ll = localLL;
+          }
         } else {
           ll += localLL;
           norm +=  1 - extinctionProba_[speciesId][i];
@@ -169,30 +171,30 @@ double DatedDLModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo
   }
   if (!selectMax) 
     ll /= norm;
-  return log(ll);
+  return ll.getLogValue();
 }
 
 void DatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
   int geneId = geneNode->node_index;
   auto &clv = clvs_[geneId].clv;
-  clv = vector<vector<double > >(speciesNodesCount_);
+  clv = vector<vector<ScaledValue> >(speciesNodesCount_);
   for (auto speciesNode: speciesNodes_) {
     computeCLVCell(geneNode, speciesNode, clv[speciesNode->node_index], false);
   }
 }
 
-void DatedDLModel::computeCLVCell(pll_unode_t *geneNode, pll_rnode_t *speciesNode, vector<double> &speciesCell, bool isVirtualRoot)
+void DatedDLModel::computeCLVCell(pll_unode_t *geneNode, pll_rnode_t *speciesNode, vector<ScaledValue> &speciesCell, bool isVirtualRoot)
 {
   int subdivisions = branchSubdivisions_[speciesNode->node_index].size();
-  speciesCell = vector<double>(subdivisions, 0.0);
+  speciesCell = vector<ScaledValue>(subdivisions);
   speciesCell[0] = computeRecProbaInterBranch(geneNode, speciesNode, isVirtualRoot);
   for (int subdivision = 1; subdivision < subdivisions; ++subdivision) {
     speciesCell[subdivision] = computeRecProbaIntraBranch(geneNode, speciesNode, subdivision, isVirtualRoot);
   }
 }
 
-double DatedDLModel::computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, bool isVirtualRoot)
+ScaledValue DatedDLModel::computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, bool isVirtualRoot)
 {
   bool isGeneLeaf = !geneNode->next;
   bool isSpeciesLeaf = !speciesNode->left;
@@ -201,17 +203,16 @@ double DatedDLModel::computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode
   
   if (isGeneLeaf && isSpeciesLeaf) {
     // trivial case
-    return (geneToSpecies_[geneId] == speciesId) ? 1 : 0; 
+    return (geneToSpecies_[geneId] == speciesId) ? ScaledValue(1) : ScaledValue(); 
   }
+  ScaledValue res;
   if (isSpeciesLeaf) {
-    return 0.0; // todobenoit I am not sure about this
+    return res; // todobenoit I am not sure about this
   }
   int leftSpeciesId = speciesNode->left->node_index;
   int rightSpeciesId = speciesNode->right->node_index;
 
-  double res = 0.0;
-  // todobenoit check that...
-  // Speciation-Loss case
+
   res += getRecProba(geneId, leftSpeciesId) * getExtProba(rightSpeciesId);  
   res += getRecProba(geneId, rightSpeciesId) * getExtProba(leftSpeciesId);  
   if (!isGeneLeaf) {
@@ -220,33 +221,32 @@ double DatedDLModel::computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode
     // Speciation case
     res += getRecProba(leftGeneId, leftSpeciesId) * getRecProba(rightGeneId, rightSpeciesId);
     res += getRecProba(rightGeneId, leftSpeciesId) * getRecProba(leftGeneId, rightSpeciesId);
-
   }
   return res;
 }
   
-double DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, int subdivision, bool isVirtualRoot)
+ScaledValue DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, int subdivision, bool isVirtualRoot)
 {
   bool isGeneLeaf = !geneNode->next;
   int geneId = geneNode->node_index;
   int speciesId = speciesNode->node_index;
-  double res = 0.0;
+  ScaledValue res;
   // No event case
-  res += propagationProba_[speciesId][subdivision] * getRecProba(geneId, speciesId, subdivision - 1);
+  res += getRecProba(geneId, speciesId, subdivision - 1) * propagationProba_[speciesId][subdivision];
   // duplication case
   if (!isGeneLeaf) {
     int leftGeneId = getLeft(geneNode, isVirtualRoot)->node_index;
     int rightGeneId = getRight(geneNode, isVirtualRoot)->node_index;
     double l = branchSubdivisions_[speciesId][subdivision];
-    double leftProba = getRecProba(leftGeneId, speciesId, subdivision - 1);
-    double rightProba = getRecProba(rightGeneId, speciesId, subdivision - 1);
-    res += 2.0 * dupRate_ * l * leftProba * rightProba;
+    auto leftProba = getRecProba(leftGeneId, speciesId, subdivision - 1);
+    auto rightProba = getRecProba(rightGeneId, speciesId, subdivision - 1);
+    res += leftProba * rightProba * 2.0 * dupRate_ * l;
   }
   return res;
 
 }
 
-double DatedDLModel::getRecProba(int geneId, int speciesId)
+ScaledValue DatedDLModel::getRecProba(int geneId, int speciesId)
 {
   if (geneId < 0) {
     return virtualCLV_.clv[speciesId].back();
@@ -254,7 +254,7 @@ double DatedDLModel::getRecProba(int geneId, int speciesId)
   return clvs_[geneId].clv[speciesId].back();
 }
 
-double DatedDLModel::getRecProba(int geneId, int speciesId, int subdivision)
+ScaledValue DatedDLModel::getRecProba(int geneId, int speciesId, int subdivision)
 {
   if (geneId < 0) {
     return virtualCLV_.clv[speciesId][subdivision];
