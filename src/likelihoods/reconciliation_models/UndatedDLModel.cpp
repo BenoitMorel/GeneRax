@@ -65,11 +65,18 @@ void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
 void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
   for (auto speciesNode: speciesNodes_) {
-    uq[geneNode->node_index][speciesNode->node_index] = computeProbability(geneNode, speciesNode);
+    int scaler = 0;
+    ScaledValue proba;
+    computeProbability(geneNode, speciesNode, proba);
+    uq[geneNode->node_index][speciesNode->node_index] = proba.value;
+    uq_scalers[geneNode->node_index][speciesNode->node_index] = proba.scaler;
   }
 }
 
-double UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, bool isVirtualRoot)
+
+void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+      ScaledValue &proba,
+      bool isVirtualRoot)
 {
   int gid = geneNode->node_index;
   pll_unode_t *leftGeneNode = 0;     
@@ -87,31 +94,39 @@ double UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *sp
     f = speciesNode->left->node_index;
     g = speciesNode->right->node_index;
   }
-  double uq_sum = 0;
+  ListScaledValue total;
   if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) {
     // present
-    uq_sum += PS[e];
+    total.add(PS[e], 0);
   }
   if (not isGeneLeaf) {
     int gp_i = leftGeneNode->node_index;
     int gpp_i = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
-      uq_sum += PS[e] * (uq[gp_i][f] * uq[gpp_i][g] + uq[gp_i][g] * uq[gpp_i][f]);
+      total.add(PS[e] * uq[gp_i][f] * uq[gpp_i][g], 
+          uq_scalers[gp_i][f] + uq_scalers[gpp_i][g]);
+      total.add(PS[e] * uq[gp_i][g] * uq[gpp_i][f], 
+          uq_scalers[gp_i][g] + uq_scalers[gpp_i][f]);
     }
     // D event
-    uq_sum += PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2);
+    total.add(PD[e] * (uq[gp_i][e] * uq[gpp_i][e] * 2),
+        uq_scalers[gp_i][e] + uq_scalers[gpp_i][e]);
   }
   if (not isSpeciesLeaf) {
     // SL event
     if (!isVirtualRoot) {
-      uq_sum += PS[e] * (uq[gid][f] * uE[g] + uq[gid][g] * uE[f]);
+      total.add(PS[e] * uq[gid][f] * uE[g], uq_scalers[gid][f]);
+      total.add(PS[e] * uq[gid][g] * uE[f], uq_scalers[gid][g]);
+      //uq_sum += PS[e] * (uq[gid][f] * uE[g] + uq[gid][g] * uE[f]);
     } else {
-      uq_sum += PS[e] * (ll[f] * uE[g] + ll[g] * uE[f]);
+      total.add(PS[e] * ll[f] * uE[g], ll_scalers[f]);
+      total.add(PS[e] * ll[g] * uE[f], ll_scalers[g]);
+      
+      //uq_sum += PS[e] * (ll[f] * uE[g] + ll[g] * uE[f]);
     }
   }
-  double res = uq_sum / (1.0 - 2.0 * PD[e] * uE[e]);
-  ASSERT_PROBA(res)
-  return res;
+  proba = total.total;
+  proba.value /= (1.0 - 2.0 * PD[e] * uE[e]); 
 }
 
 pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
@@ -121,19 +136,26 @@ pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
   pll_unode_t *bestRoot = 0;
   for (auto speciesNode: speciesNodes_) {
     int e = speciesNode->node_index;
+    ListScaledValue total;
     for (auto root: roots) {
       pll_unode_t virtual_root;
       virtual_root.next = root;
-      double p = computeProbability(&virtual_root, speciesNode, true);
+      ScaledValue value;
+      computeProbability(&virtual_root, speciesNode, value, true);
       if (Arguments::rootedGeneTree) {
+        assert(false);
+        /*
         if (p > ll[e]) {
           ll[e] = p;
           bestRoot = root;
         }
+        */
       } else {
-        ll[e] += computeProbability(&virtual_root, speciesNode, true);
+        total.add(value);
       }
     }
+    ll[e] = total.total.value;
+    ll_scalers[e] = total.total.scaler;
   }
   return bestRoot;
 }
@@ -155,6 +177,10 @@ double UndatedDLModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treein
   vector<double> zeros(speciesNodesCount_, 0.0);
   uq = vector<vector<double>>(maxId + 1,zeros);
   ll = vector<double>(speciesNodesCount_, 0.0);
+  
+  vector<int> zerosInt(speciesNodesCount_, 0);
+  uq_scalers = vector<vector<int>>(maxId + 1,zerosInt);
+  ll_scalers = vector<int>(speciesNodesCount_, 0);
 
   // main loop
   updateCLVs(*treeinfo);
@@ -163,15 +189,14 @@ double UndatedDLModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treein
   if (bestRoot) {
     geneRoot_ = bestRoot;
   }
+  ListScaledValue total;
   for (int e = 0; e < speciesNodesCount_; e++) {
-    double O_p = 1;
-    if (e == (speciesNodesCount_ - 1)) 
-      O_p = O_R;
-    O_norm += O_p;
-    root_sum += ll[e] * O_p;
+    O_norm += 1;
+    total.add(ll[e], ll_scalers[e]);
+    //root_sum += ll[e];
     survive += (1 - uE[e]);
   }
-  double res = log(root_sum / survive / O_norm * (speciesNodesCount_));
+  double res = total.total.getLogValue(); //log(root_sum / survive / O_norm * (speciesNodesCount_));
   return res;
 }
 
