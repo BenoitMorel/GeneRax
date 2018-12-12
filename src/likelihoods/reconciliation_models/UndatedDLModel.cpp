@@ -10,7 +10,14 @@ UndatedDLModel::UndatedDLModel() :
   Logger::info << "creating undated dl model" << endl;
 }
 
+#define IS_PROBA(x) ((x) >= 0 && (x) <= 1 && !isnan(x))
+#define ASSERT_PROBA(x) assert(IS_PROBA(x));
 
+
+double solveSecondDegreePolynome(double a, double b, double c) 
+{
+  return 2 * c / (-b + sqrt(b * b - 4 * a * c));
+}
 
 void UndatedDLModel::setRates(double dupRate, 
   double lossRate,
@@ -34,9 +41,14 @@ void UndatedDLModel::setRates(double dupRate,
     double c = PL[e];
     if (speciesNode->left) {
       c += PS[e] * uE[speciesNode->left->node_index]  * uE[speciesNode->right->node_index];
-    }  
-    uE[speciesNode->node_index] = (-b - sqrt(b * b - 4 * a * c)) / (2.0 * a);
+    }
+    double proba = solveSecondDegreePolynome(a, b, c);
+    ASSERT_PROBA(proba)
+    uE[speciesNode->node_index] = proba;
+    
   }
+
+
 }
 
 UndatedDLModel::~UndatedDLModel() { }
@@ -97,7 +109,9 @@ double UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *sp
       uq_sum += PS[e] * (ll[f] * uE[g] + ll[g] * uE[f]);
     }
   }
-  return uq_sum / (1.0 - 2.0 * PD[e] * uE[e]);
+  double res = uq_sum / (1.0 - 2.0 * PD[e] * uE[e]);
+  ASSERT_PROBA(res)
+  return res;
 }
 
 pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)

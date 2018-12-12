@@ -249,38 +249,6 @@ void JointTree::optimizeDTRates() {
 }
 
 
-/*
-void JointTree::optimizeDTRates() {
-  double bestLL = numeric_limits<double>::lowest();
-  double bestDup = 0.0;
-  double bestLoss = 0.0;
-  double min = 0.001;
-  double max = 2.0;
-  int steps = 20;
-  int begin = ParallelContext::getBegin(steps * steps);
-  int end = ParallelContext::getEnd(steps * steps);
-
-  for (int s = begin; s < end; ++s) {
-    int i = s / steps;
-    int j = s % steps;
-    double dup = min + (max - min) * double(i) / double(steps);
-    double loss = min + (max - min) * double(j) / double(steps);
-    setRates(dup, loss);
-    double newLL = computeReconciliationLoglk();
-    if (newLL > bestLL) { 
-      bestDup = dup;
-      bestLoss = loss;
-      bestLL = newLL;
-    }
-  }
-  int bestRank = 0;
-  ParallelContext::getBestLL(bestLL, bestRank);
-  ParallelContext::broadcoastDouble(bestRank, bestDup);
-  ParallelContext::broadcoastDouble(bestRank, bestLoss);
-  setRates(bestDup, bestLoss);
-  Logger::info << " best rates: " << bestDup << " " << bestLoss << endl;
-}
-*/
 
 void JointTree::setRates(double dup, double loss) { 
   dupRate_ = dup; 
