@@ -23,21 +23,26 @@ void queryPruneIndicesRec(pll_unode_t * node,
     queryPruneIndicesRec(node->next->back, buffer);
     queryPruneIndicesRec(node->next->next->back, buffer);
     buffer.push_back(node->node_index);
+    if (node->back->next) {
+      buffer.push_back(node->back->node_index);
+    }
   }
 }
 
 void getAllPruneIndices(JointTree &tree, vector<int> &allNodeIndices) {
   auto treeinfo = tree.getTreeInfo();
-  vector<int> allNodes;
-  queryPruneIndicesRec(treeinfo->root->back, allNodeIndices);
-  queryPruneIndicesRec(treeinfo->root, allNodeIndices);
+  for (int i = 0; i < treeinfo->subnode_count; ++i) {
+    if (treeinfo->subnodes[i]->next) {
+      allNodeIndices.push_back(treeinfo->subnodes[i]->node_index);
+    }
+  }
 }
 
 
-bool sprYeldsSameTree(pll_unode_t *n1, pll_unode_t *n2)
+bool sprYeldsSameTree(pll_unode_t *p, pll_unode_t *r)
 {
-  return (n2 == n1) || (n2 == n1->next) || (n2 == n1->next->next)
-    || (n2->back == n1) || (n2->back == n1->next) || (n2->back == n1->next->next);
+  return (r == p) || (r == p->next) || (r == p->next->next)
+    || (r == p->back) || (r == p->next->back) || (r == p->next->next->back);
 }
 
 bool isValidSPRMove(shared_ptr<pllmod_treeinfo_t> treeinfo, pll_unode_s *prune, pll_unode_s *regraft) {
@@ -48,7 +53,9 @@ bool isValidSPRMove(shared_ptr<pllmod_treeinfo_t> treeinfo, pll_unode_s *prune, 
 
 void getRegraftsRec(int pruneIndex, pll_unode_t *regraft, int maxRadius, vector<int> &path, vector<SPRMoveDesc> &moves)
 {
-  moves.push_back(SPRMoveDesc(pruneIndex, regraft->node_index, path));
+  if (path.size()) {
+    moves.push_back(SPRMoveDesc(pruneIndex, regraft->node_index, path));
+  }
   if (path.size() < maxRadius && regraft->next) {
     path.push_back(regraft->node_index);
     getRegraftsRec(pruneIndex, regraft->next->back, maxRadius, path, moves);
@@ -62,7 +69,7 @@ void printPossibleMoves(JointTree &jointTree, vector<shared_ptr<Move> > &allMove
   Logger::info << "Possible moves from " << jointTree.getUnrootedTreeHash() << endl;
   for (auto move: allMoves) {
     jointTree.applyMove(move);
-    Logger::info << jointTree.getUnrootedTreeHash() << endl;
+    cout << jointTree.getUnrootedTreeHash() << endl;
     jointTree.rollbackLastMove();
   }
 }
@@ -95,6 +102,7 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
     }
     allMoves.push_back(Move::createSPRMove(pruneIndex, regraftIndex, move.path));
   }
+  //printPossibleMoves(jointTree, allMoves);
   
   Logger::timed << "Start SPR round " 
     << "(hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
@@ -110,7 +118,6 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
 
 void SPRSearch::applySPRSearch(JointTree &jointTree)
 { 
-  jointTree.optimizeParameters();
   jointTree.printLoglk();
   double startingLoglk = jointTree.computeJointLoglk();
   double bestLoglk = startingLoglk;

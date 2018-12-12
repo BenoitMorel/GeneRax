@@ -179,9 +179,8 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
       savedBranches.push_back(tree.getNode(branchIndex));
       branchesToOptimize.push_back(tree.getNode(branchIndex));
     }
-    
   } 
-  
+
   assert(PLL_SUCCESS == pllmod_utree_spr(prune, regraft, &pll_rollback));
   auto rollback = std::make_shared<SPRRollback>(tree, pll_rollback, savedBranches);
   optimizeBranchesSlow(tree, branchesToOptimize);
