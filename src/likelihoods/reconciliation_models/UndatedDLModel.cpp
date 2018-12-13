@@ -227,10 +227,6 @@ pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo,
 
 double UndatedDLModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
-  double survive = 0;
-  double root_sum = 0;
-  double O_norm = 0;
-
   getIdsPostOrder(*treeinfo, geneIds); 
 
   // main loop
@@ -243,10 +239,7 @@ double UndatedDLModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treein
   ScaledValue total;
   if (!Arguments::rootedGeneTree) {
     for (int e = 0; e < speciesNodesCount_; e++) {
-      //O_norm += 1;
       total += ll[e];
-      //root_sum += ll[e];
-      //survive += (1 - uE[e]);
     }
   } else {
     total = bestValue;

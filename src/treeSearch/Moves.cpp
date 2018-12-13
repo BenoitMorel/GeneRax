@@ -66,11 +66,12 @@ void optimizeBranchesSlow(JointTree &tree,
     // could be incremental and thus faster
     unsigned int params_indices[4] = {0,0,0,0};
     auto treeinfo = tree.getTreeInfo();
-    tree.computeLibpllLoglk();
+    
+    tree.computeLibpllLoglk(); // update CLVs
     for (int j = 0; j < 3; ++j) 
     for (unsigned int i = 0; i < nodesToOptimize.size(); ++i) {
         pllmod_treeinfo_set_root(treeinfo.get(), nodesToOptimize[i]);
-        double oldLoglk = tree.computeLibpllLoglk(true); // update CLVs
+        double oldLoglk = tree.computeLibpllLoglk(true);
         double newLoglk = pllmod_opt_optimize_branch_lengths_local(
             treeinfo->partitions[0],
             treeinfo->root,
@@ -188,6 +189,7 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
     branchesToOptimize.push_back(prune->next->back);
     branchesToOptimize.push_back(regraft->back);
     branchesToOptimize.push_back(regraft);
+    
     for (int branchIndex: path_) {
       savedBranches.push_back(tree.getNode(branchIndex));
       branchesToOptimize.push_back(tree.getNode(branchIndex));

@@ -246,12 +246,10 @@ void JointTree::optimizeDTRates() {
     bestLL = newLL;
     findBestRates(minDup, maxDup, minLoss, maxLoss, steps, bestDup, bestLoss, newLL);
     while(firstIt && isinf(newLL) || newLL < -100000000 && maxLoss > epsilon) {
-      Logger::info << "ooo" << endl;
       maxDup /= 10;
       maxLoss /= 10;
       findBestRates(minDup, maxDup, minLoss, maxLoss, steps, bestDup, bestLoss, newLL);
     }
-    Logger::info << " best rates: " << bestDup << " " << bestLoss <<  " " << newLL << endl;
     double offsetDup = 2 * (maxDup - minDup) / steps;
     double offsetLoss = 2* (maxLoss - minLoss) / steps;
     minDup = max(0.0, bestDup - offsetDup);
@@ -260,6 +258,7 @@ void JointTree::optimizeDTRates() {
     maxLoss = bestLoss + offsetLoss;
     firstIt = false;
   } while (fabs(newLL - bestLL) > epsilon);
+  Logger::info << " best rates: " << bestDup << " " << bestLoss <<  " " << newLL << endl;
 }
     
 void JointTree::invalidateCLV(pll_unode_s *node)
