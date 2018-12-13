@@ -235,37 +235,6 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromFile(const string &newic
 }
 
 
-void LibpllEvaluation::parseAlignmentInfo(const string &filename, 
-      vector<LibpllAlignmentInfo> &infos, const int tree_index)
-{
-  infos.clear();
-  if (!filename.size())
-    return;
-  LibpllAlignmentInfo alignmentInfo;
-  ifstream reader(filename);
-  if (!reader)
-    throw LibpllException("Cannot read alignments in ",filename);
-  
-  string line;
-  // read alphabet type
-  getNextLine(reader, alignmentInfo.model);
-  size_t base_dir_pos = filename.find_last_of("/\\");
-  string base_dir = (string::npos == base_dir_pos) ? "" : filename.substr(0, base_dir_pos + 1);
-  int current_tree_index = 0;
-  while (getNextLine(reader, line)) {
-    if (line[0] == '/') { 
-      // absolute path
-      alignmentInfo.alignmentFilename = line;
-    } else { 
-      // relative path 
-      alignmentInfo.alignmentFilename = base_dir + line;
-    }
-    if((tree_index == -1) or (current_tree_index == tree_index))
-      infos.push_back(alignmentInfo);
-
-    current_tree_index++;
-  }
-}
 
 double LibpllEvaluation::computeLikelihood(bool incremental)
 {
@@ -471,4 +440,9 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo)
   return new_loglh;
 }
 
+void LibpllEvaluation::invalidateCLV(int nodeIndex)
+{
+  pllmod_treeinfo_invalidate_clv(treeinfo_.get(), getNode(nodeIndex));
+  pllmod_treeinfo_invalidate_pmatrix(treeinfo_.get(), getNode(nodeIndex));
+}
 

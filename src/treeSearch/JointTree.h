@@ -33,7 +33,7 @@ public:
     virtual ~JointTree() {}
     void printLibpllTree() const;
     void optimizeParameters();
-    double computeLibpllLoglk();
+    double computeLibpllLoglk(bool incremental = false);
     double computeReconciliationLoglk ();
     double computeJointLoglk();
     void printLoglk(bool libpll = true, bool rec = true, bool joint = true, Logger &os = Logger::info);

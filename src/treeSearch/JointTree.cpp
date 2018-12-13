@@ -143,11 +143,11 @@ void JointTree::optimizeParameters() {
   }
 }
 
-double JointTree::computeLibpllLoglk() {
+double JointTree::computeLibpllLoglk(bool incremental) {
   if (Arguments::noFelsensteinLikelihood) {
     return 0;
   }
-  return libpllEvaluation_->computeLikelihood();
+  return libpllEvaluation_->computeLikelihood(incremental);
 }
 
 double JointTree::computeReconciliationLoglk () {
@@ -226,7 +226,6 @@ void JointTree::findBestRates(double minDup, double maxDup,
   ParallelContext::broadcoastDouble(bestRank, bestDup);
   ParallelContext::broadcoastDouble(bestRank, bestLoss);
   setRates(bestDup, bestLoss);
-  
 }
 
 void JointTree::optimizeDTRates() {
@@ -266,6 +265,7 @@ void JointTree::optimizeDTRates() {
 void JointTree::invalidateCLV(pll_unode_s *node)
 {
   reconciliationEvaluation_->invalidateCLV(node->node_index);
+  libpllEvaluation_->invalidateCLV(node->node_index);
 }
 
 

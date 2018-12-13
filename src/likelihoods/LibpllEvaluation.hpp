@@ -69,8 +69,6 @@ public:
       const LibpllAlignmentInfo &info);
 
 
-  static void parseAlignmentInfo(const std::string &filename, 
-      std::vector<LibpllAlignmentInfo> &infos, const int tree_index = -1);
   /*
    *  @brief Compute the likelihood of the tree given the alignment
    *  @return the likelihood of the tree
@@ -80,6 +78,8 @@ public:
   double optimizeAllParameters();
 
   std::shared_ptr<pllmod_treeinfo_t> getTreeInfo() {return treeinfo_;}
+
+  void invalidateCLV(int nodeIndex);
 private:
   
   /**
@@ -120,6 +120,7 @@ private:
 
   static double optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo);
   
+  pll_unode_t *getNode(int nodeIndex) {return treeinfo_->subnodes[nodeIndex];}
 private:
   std::shared_ptr<pllmod_treeinfo_t> treeinfo_;
   std::shared_ptr<pll_utree_t> utree_;

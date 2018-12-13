@@ -54,7 +54,7 @@ private:
       bool isVirtualRoot = false);
   void updateCLV(pll_unode_t *geneNode);
   void updateCLVs(pllmod_treeinfo_t &treeinfo);
-  pll_unode_t *computeLikelihoods(pllmod_treeinfo_t &treeinfo);
+  pll_unode_t *computeLikelihoods(pllmod_treeinfo_t &treeinfo, ScaledValue &bestValue);
 };
 
 #endif
