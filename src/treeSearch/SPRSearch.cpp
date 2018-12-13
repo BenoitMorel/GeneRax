@@ -64,12 +64,15 @@ void getRegraftsRec(int pruneIndex, pll_unode_t *regraft, int maxRadius, vector<
   }
 }
 
+
 void printPossibleMoves(JointTree &jointTree, vector<shared_ptr<Move> > &allMoves)
 {
+  Logger::info << "Nodes: " << endl;
+  jointTree.printAllNodes(cout);
   Logger::info << "Possible moves from " << jointTree.getUnrootedTreeHash() << endl;
   for (auto move: allMoves) {
     jointTree.applyMove(move);
-    cout << jointTree.getUnrootedTreeHash() << endl;
+    cerr << *move << " "  << jointTree.getUnrootedTreeHash() << endl;
     jointTree.rollbackLastMove();
   }
 }

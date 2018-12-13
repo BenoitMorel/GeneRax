@@ -60,6 +60,20 @@ pll_unode_t *findMinimumHashLeaf(pll_unode_t * root)
     return min2;
   }
 }
+
+void JointTree::printAllNodes(ostream &os)
+{
+  auto treeinfo = getTreeInfo();
+  for (int i = 0; i < treeinfo->subnode_count; ++i) {
+    auto node = treeinfo->subnodes[i];
+    os << "node:" << node->node_index << " back:" << node->back->node_index;
+    if (node->next) {
+      os << " left:" << node->next->node_index << " right:" << node->next->next->node_index  << endl;
+    } else {
+      os << " label:" << node->label << endl;
+    }
+  }
+}
     
 size_t JointTree::getUnrootedTreeHash()
 {

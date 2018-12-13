@@ -39,7 +39,8 @@ public:
     void printLoglk(bool libpll = true, bool rec = true, bool joint = true, Logger &os = Logger::info);
     pll_unode_t *getNode(int index);
     void applyMove(shared_ptr<Move> move);
-    
+   
+    void printAllNodes(ostream &os);
     void rollbackLastMove();
     void save(const string &fileName, bool append);
     shared_ptr<pllmod_treeinfo_t> getTreeInfo();
