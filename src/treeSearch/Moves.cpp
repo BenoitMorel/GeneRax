@@ -165,6 +165,18 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
   bool blo = true;
   auto prune = tree.getNode(pruneIndex_);
   auto regraft = tree.getNode(regraftIndex_);
+  
+  tree.invalidateCLV(prune->next->back);
+  tree.invalidateCLV(prune->next->next);
+  tree.invalidateCLV(prune->next);
+  tree.invalidateCLV(prune->next->next->back);
+  tree.invalidateCLV(regraft);
+  tree.invalidateCLV(regraft->back);
+  for (int branchIndex: path_) {
+    tree.invalidateCLV(tree.getNode(branchIndex));
+    tree.invalidateCLV(tree.getNode(branchIndex)->back);
+  }
+  
   pll_tree_rollback_t pll_rollback;
 
   vector<SavedBranch> savedBranches;;
@@ -180,6 +192,7 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
       branchesToOptimize.push_back(tree.getNode(branchIndex));
     }
   } 
+  
 
   assert(PLL_SUCCESS == pllmod_utree_spr(prune, regraft, &pll_rollback));
   auto rollback = std::make_shared<SPRRollback>(tree, pll_rollback, savedBranches);

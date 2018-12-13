@@ -5,7 +5,8 @@
 using namespace std;
 
 UndatedDLModel::UndatedDLModel() :
-  O_R(1)
+  O_R(1),
+  allCLVInvalid(true)
 {
   Logger::info << "creating undated dl model" << endl;
 }
@@ -13,6 +14,20 @@ UndatedDLModel::UndatedDLModel() :
 #define IS_PROBA(x) ((x) >= 0 && (x) <= 1 && !isnan(x))
 #define ASSERT_PROBA(x) assert(IS_PROBA(x));
 
+  
+void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
+{
+  AbstractReconciliationModel::setInitialGeneTree(treeinfo);
+  getIdsPostOrder(*treeinfo, geneIds); 
+  int maxId = 0;
+  for (auto gid: geneIds)
+    maxId = max(maxId, gid);
+  // init ua with zeros
+  vector<ScaledValue> zeros(speciesNodesCount_);
+  uq = vector<vector<ScaledValue> >(maxId + 1,zeros);
+  ll = vector<ScaledValue>(speciesNodesCount_);
+  vector<int> zerosInt(speciesNodesCount_, 0);
+}
 
 double solveSecondDegreePolynome(double a, double b, double c) 
 {
@@ -46,17 +61,70 @@ void UndatedDLModel::setRates(double dupRate,
     ASSERT_PROBA(proba)
     uE[speciesNode->node_index] = proba;
   }
+  allCLVInvalid = true;
 }
 
 UndatedDLModel::~UndatedDLModel() { }
 
+bool isPresent(pll_unode_t *node, const unordered_set<int> &set) 
+{
+  return set.find(node->node_index) != set.end();
+}
 
+bool getCLVsToUpdateRec(pll_unode_t *node, 
+  const unordered_set<int> &invalidCLVs, 
+  unordered_set<int> &nodesToUpdate, 
+  unordered_set<int> &marked) 
+{
+  if (isPresent(node, marked)) {
+    return isPresent(node, nodesToUpdate);
+  }
+  marked.insert(node->node_index);
+  bool needToUpdate = false; 
+  if (isPresent(node, invalidCLVs)) {
+    needToUpdate = true;
+  }
+  if (node->next) {
+    needToUpdate |= getCLVsToUpdateRec(node->next->back, invalidCLVs, nodesToUpdate, marked);
+    needToUpdate |= getCLVsToUpdateRec(node->next->next->back, invalidCLVs, nodesToUpdate, marked);
+  }
+  if (needToUpdate) {
+    nodesToUpdate.insert(node->node_index);
+  }  
+  return needToUpdate;
+}
+
+void UndatedDLModel::getCLVsToUpdate(pllmod_treeinfo_t &treeinfo, unordered_set<int> &nodesToUpdate)
+{
+  nodesToUpdate.clear();
+  if (allCLVInvalid) {
+    for (int i = 0; i < (int) geneIds.size(); i++) {
+      nodesToUpdate.insert(geneIds[i]);
+    }
+  } else {
+    unordered_set<int> marked;
+    for (int i = 0; i < (int) geneIds.size(); i++) {
+      auto node = treeinfo.subnodes[geneIds[i]];    
+      getCLVsToUpdateRec(node, invalidCLVs, nodesToUpdate, marked);
+    }
+  }
+}
 
 void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
 {
-  for (int i = 0; i < (int) geneIds.size(); i++) {
-    updateCLV(treeinfo.subnodes[geneIds[i]]);
+  unordered_set<int>  nodesToUpdate;
+  if (!allCLVInvalid) {
+    getCLVsToUpdate(treeinfo, nodesToUpdate);
+    //Logger::info << "Update CLV " << nodesToUpdate.size() << "/" << geneIds.size() << endl;
   }
+  for (int i = 0; i < (int) geneIds.size(); i++) {
+    auto node = treeinfo.subnodes[geneIds[i]];
+    if (allCLVInvalid || isPresent(node, nodesToUpdate)) {
+      updateCLV(node);
+    }
+  }
+  allCLVInvalid = false;
+  invalidCLVs.clear();
 }
 
 void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
@@ -66,6 +134,10 @@ void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
   }
 }
 
+void UndatedDLModel::invalidateCLV(int nodeIndex)
+{
+  invalidCLVs.insert(nodeIndex);
+}
 
 void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
@@ -152,15 +224,6 @@ double UndatedDLModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treein
   double O_norm = 0;
 
   getIdsPostOrder(*treeinfo, geneIds); 
-  int maxId = 0;
-  for (auto gid: geneIds)
-    maxId = max(maxId, gid);
-  // init ua with zeros
-  vector<ScaledValue> zeros(speciesNodesCount_);
-  uq = vector<vector<ScaledValue> >(maxId + 1,zeros);
-  ll = vector<ScaledValue>(speciesNodesCount_);
-  
-  vector<int> zerosInt(speciesNodesCount_, 0);
 
   // main loop
   updateCLVs(*treeinfo);

@@ -33,5 +33,11 @@ double ReconciliationEvaluation::evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo
   if (firstCall) {
     reconciliationModel->setInitialGeneTree(treeinfo);
   }
+  firstCall = false;
   return reconciliationModel->computeLogLikelihood(treeinfo);
+}
+
+void ReconciliationEvaluation::invalidateCLV(int nodeIndex)
+{
+  reconciliationModel->invalidateCLV(nodeIndex);
 }

@@ -15,6 +15,7 @@ public:
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
   virtual void setGeneSpeciesMap(const GeneSpeciesMapping &map);
   virtual void setRoot(pll_unode_t * root) {geneRoot_ = root;}
+  virtual void invalidateCLV(int nodeIndex) {}
   virtual pll_unode_t *getRoot() {return geneRoot_;}
 
 protected:

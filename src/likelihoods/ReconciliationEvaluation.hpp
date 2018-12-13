@@ -23,7 +23,7 @@ public:
   pll_unode_t * getRoot() {return reconciliationModel->getRoot();}
   void setRoot(pll_unode_t *root) {reconciliationModel->setRoot(root);}
   double evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo);
-
+  void invalidateCLV(int nodeIndex);
 private:
   shared_ptr<AbstractReconciliationModel> reconciliationModel;
   bool firstCall;

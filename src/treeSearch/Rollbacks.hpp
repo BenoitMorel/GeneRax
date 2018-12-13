@@ -38,6 +38,7 @@ public:
   {}
 
   void restore();
+  pll_unode_t *getNode() {return branch_;}
 private:
   pll_unode_t *branch_;
   double length_;

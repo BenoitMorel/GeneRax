@@ -262,6 +262,11 @@ void JointTree::optimizeDTRates() {
     firstIt = false;
   } while (fabs(newLL - bestLL) > epsilon);
 }
+    
+void JointTree::invalidateCLV(pll_unode_s *node)
+{
+  reconciliationEvaluation_->invalidateCLV(node->node_index);
+}
 
 
 

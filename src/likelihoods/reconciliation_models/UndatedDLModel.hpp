@@ -5,10 +5,16 @@
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <parsers/GeneSpeciesMapping.hpp>
 #include <maths/ScaledValue.hpp>
+#include <unordered_set>
 
 using namespace std;
 
-
+/*
+* Implement the undated model described here:
+* https://github.com/ssolo/ALE/blob/master/misc/undated.pdf
+* In this implementation, we do not allow transfers, which 
+* allows a lot of algorithmic shortcuts
+*/
 class UndatedDLModel: public AbstractReconciliationModel {
 public:
 
@@ -26,6 +32,10 @@ public:
   vector<ScaledValue> ll;
   
   vector<int> geneIds;
+
+  bool allCLVInvalid;
+  unordered_set<int> invalidCLVs;
+
 public:
   UndatedDLModel();
   virtual ~UndatedDLModel();
@@ -33,15 +43,18 @@ public:
   // unherited from parents
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);
   virtual double computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  virtual void invalidateCLV(int nodeIndex);
+  virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
   
+
 private:
+  void getCLVsToUpdate(pllmod_treeinfo_t &treeinfo, unordered_set<int> &nodesToUpdate);
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
       bool isVirtualRoot = false);
   void updateCLV(pll_unode_t *geneNode);
   void updateCLVs(pllmod_treeinfo_t &treeinfo);
   pll_unode_t *computeLikelihoods(pllmod_treeinfo_t &treeinfo);
-
 };
 
 #endif
