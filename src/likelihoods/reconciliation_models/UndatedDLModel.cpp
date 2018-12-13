@@ -105,13 +105,15 @@ void UndatedDLModel::getCLVsToUpdate(pllmod_treeinfo_t &treeinfo, unordered_set<
     }
   } else {
     unordered_set<int> marked;
-    if (getRoot()) {
+    if (!getRoot()) {
       for (int i = 0; i < (int) geneIds.size(); i++) {
         auto node = treeinfo.subnodes[geneIds[i]];    
+        assert(node);
         getCLVsToUpdateRec(node, invalidCLVs, nodesToUpdate, marked);
       }
     } else {
       getCLVsToUpdateRec(getRoot(), invalidCLVs, nodesToUpdate, marked);
+      getCLVsToUpdateRec(getRoot()->back, invalidCLVs, nodesToUpdate, marked);
     }
   }
 }
@@ -122,7 +124,6 @@ void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
   unordered_set<int>  nodesToUpdate;
   if (!allCLVInvalid) {
     getCLVsToUpdate(treeinfo, nodesToUpdate);
-    //Logger::info << "Update CLV " << nodesToUpdate.size() << "/" << geneIds.size() << endl;
   }
   for (int i = 0; i < (int) geneIds.size(); i++) {
     auto node = treeinfo.subnodes[geneIds[i]];
