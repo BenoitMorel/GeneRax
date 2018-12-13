@@ -66,10 +66,11 @@ void optimizeBranchesSlow(JointTree &tree,
     // could be incremental and thus faster
     unsigned int params_indices[4] = {0,0,0,0};
     auto treeinfo = tree.getTreeInfo();
+    tree.computeLibpllLoglk();
     for (int j = 0; j < 3; ++j) 
     for (unsigned int i = 0; i < nodesToOptimize.size(); ++i) {
         pllmod_treeinfo_set_root(treeinfo.get(), nodesToOptimize[i]);
-        double oldLoglk = tree.computeLibpllLoglk(); // update CLVs
+        double oldLoglk = tree.computeLibpllLoglk(true); // update CLVs
         double newLoglk = pllmod_opt_optimize_branch_lengths_local(
             treeinfo->partitions[0],
             treeinfo->root,
