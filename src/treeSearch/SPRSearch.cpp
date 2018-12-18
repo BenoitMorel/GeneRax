@@ -5,8 +5,8 @@
 #include <treeSearch/SearchUtils.hpp>
 #include <Logger.hpp>
 #include <ParallelContext.hpp>
-
-
+#include <unordered_set>
+#include <array>
 
 struct SPRMoveDesc {
   SPRMoveDesc(int prune, int regraft, const vector<int> &edges):
@@ -67,14 +67,17 @@ void getRegraftsRec(int pruneIndex, pll_unode_t *regraft, int maxRadius, vector<
 
 void printPossibleMoves(JointTree &jointTree, vector<shared_ptr<Move> > &allMoves)
 {
-  Logger::info << "Nodes: " << endl;
-  jointTree.printAllNodes(cout);
+  //Logger::info << "Nodes: " << endl;
+  //jointTree.printAllNodes(cout);
   Logger::info << "Possible moves from " << jointTree.getUnrootedTreeHash() << endl;
+  unordered_set<int> hashs;
   for (auto move: allMoves) {
     jointTree.applyMove(move);
-    cerr << *move << " "  << jointTree.getUnrootedTreeHash() << endl;
+    auto hash = jointTree.getUnrootedTreeHash();
+    hashs.insert(hash);
     jointTree.rollbackLastMove();
   }
+  Logger::info << "Unique moves" << hashs.size() << endl;
 }
 
 void getRegrafts(JointTree &jointTree, int pruneIndex, int maxRadius, vector<SPRMoveDesc> &moves) 
@@ -97,12 +100,28 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
       int pruneIndex = allNodes[i];
       getRegrafts(jointTree, pruneIndex, radius, potentialMoves);
   }
+  vector<array<bool, 2> > redundantNNIMoves(jointTree.getTreeInfo()->subnode_count, array<bool, 2>{{false,false}});
   for (auto &move: potentialMoves) {
     int pruneIndex = move.pruneIndex;
     int regraftIndex = move.regraftIndex;
     if (!isValidSPRMove(jointTree.getTreeInfo(), jointTree.getNode(pruneIndex), jointTree.getNode(regraftIndex))) {
       continue;
     }
+    // in case of a radius 1, SPR moves are actually NNI moves
+    // the traversal algorithm produces redundant moves, so we 
+    // get rid of them here
+    if (move.path.size() == 1) { 
+      auto nniEdge = jointTree.getNode(move.path[0]);
+      bool isPruneNext = nniEdge->back->next->node_index == pruneIndex;
+      bool isRegraftNext = nniEdge->next->back->node_index == regraftIndex;
+      int nniType = (isPruneNext == isRegraftNext);
+      int nniBranchIndex = min(nniEdge->node_index, nniEdge->back->node_index);
+      if (redundantNNIMoves[nniBranchIndex][nniType]) {
+        continue;
+      }
+      redundantNNIMoves[nniBranchIndex][nniType] = true; 
+    }
+
     allMoves.push_back(Move::createSPRMove(pruneIndex, regraftIndex, move.path));
   }
   //printPossibleMoves(jointTree, allMoves);

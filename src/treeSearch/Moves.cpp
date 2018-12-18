@@ -43,7 +43,7 @@ void NNIOptimizeBranches(JointTree &tree, pll_unode_t *edge, int radius)
     auto treeinfo = tree.getTreeInfo();
     //for (int j = 0; j < 3; ++j) {
       pllmod_treeinfo_set_root(treeinfo.get(), edge);
-      double oldLoglk = tree.computeLibpllLoglk(); // update CLVs
+      double oldLoglk = tree.computeLibpllLoglk(true); // update CLVs
       double newLoglk = pllmod_opt_optimize_branch_lengths_local(
           treeinfo->partitions[0],
           edge,
@@ -186,13 +186,25 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
   vector<pll_unode_t *> branchesToOptimize;
   if (blo) {
     branchesToOptimize.push_back(prune);
-    branchesToOptimize.push_back(prune->next->back);
+    //branchesToOptimize.push_back(prune->next->back);
     branchesToOptimize.push_back(regraft->back);
     branchesToOptimize.push_back(regraft);
     
     for (int branchIndex: path_) {
-      savedBranches.push_back(tree.getNode(branchIndex));
-      branchesToOptimize.push_back(tree.getNode(branchIndex));
+      auto node = tree.getNode(branchIndex);
+      savedBranches.push_back(node);
+      branchesToOptimize.push_back(node);
+      if (path_.size() == 1) {
+        savedBranches.push_back(node->next);
+        branchesToOptimize.push_back(node->next);
+        savedBranches.push_back(node->next->next);
+        branchesToOptimize.push_back(node->next->next);
+        node = node->back;
+        savedBranches.push_back(node->next);
+        branchesToOptimize.push_back(node->next);
+        savedBranches.push_back(node->next->next);
+        branchesToOptimize.push_back(node->next->next);
+      }
     }
   } 
   
