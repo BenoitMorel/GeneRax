@@ -68,7 +68,7 @@ void optimizeBranchesSlow(JointTree &tree,
     auto treeinfo = tree.getTreeInfo();
     
     tree.computeLibpllLoglk(); // update CLVs
-    for (int j = 0; j < 3; ++j) 
+    for (int j = 0; j < 2; ++j) 
     for (unsigned int i = 0; i < nodesToOptimize.size(); ++i) {
         pllmod_treeinfo_set_root(treeinfo.get(), nodesToOptimize[i]);
         double oldLoglk = tree.computeLibpllLoglk(true);
