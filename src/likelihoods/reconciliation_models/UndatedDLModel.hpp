@@ -36,6 +36,9 @@ public:
   bool allCLVInvalid;
   unordered_set<int> invalidCLVs;
 
+  // repeats
+  vector<int> repeatsId; // repeatsId[geneId]
+
 public:
   UndatedDLModel();
   virtual ~UndatedDLModel();

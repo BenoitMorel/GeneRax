@@ -32,7 +32,7 @@ public:
 
     virtual ~JointTree() {}
     void printLibpllTree() const;
-    void optimizeParameters();
+    void optimizeParameters(bool felsenstein = true, bool reconciliation = true);
     double computeLibpllLoglk(bool incremental = false);
     double computeReconciliationLoglk ();
     double computeJointLoglk();

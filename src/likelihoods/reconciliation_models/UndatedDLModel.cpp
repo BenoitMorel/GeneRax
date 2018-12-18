@@ -26,7 +26,7 @@ void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
   vector<ScaledValue> zeros(speciesNodesCount_);
   uq = vector<vector<ScaledValue> >(maxId + 1,zeros);
   ll = vector<ScaledValue>(speciesNodesCount_);
-  vector<int> zerosInt(speciesNodesCount_, 0);
+  repeatsId = vector<int>(maxId + 1, 0);
 }
 
 double solveSecondDegreePolynome(double a, double b, double c) 
@@ -136,6 +136,7 @@ void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
 
 void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
+
   for (auto speciesNode: speciesNodes_) {
     computeProbability(geneNode, speciesNode, uq[geneNode->node_index][speciesNode->node_index]);
   }

@@ -134,11 +134,11 @@ void JointTree::printLibpllTree() const {
 
 
 
-void JointTree::optimizeParameters() {
-  if (!Arguments::noFelsensteinLikelihood) {
+void JointTree::optimizeParameters(bool felsenstein, bool reconciliation) {
+  if (felsenstein && !Arguments::noFelsensteinLikelihood) {
     libpllEvaluation_->optimizeAllParameters();
   }
-  if (Arguments::costsEstimation) {
+  if (reconciliation && Arguments::costsEstimation) {
     optimizeDTRates();
   }
 }
