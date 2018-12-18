@@ -1,5 +1,6 @@
 #include "AbstractReconciliationModel.hpp"
 #include <Arguments.hpp>
+#include <Logger.hpp>
 
 AbstractReconciliationModel::AbstractReconciliationModel():
   geneRoot_(0)
@@ -44,14 +45,47 @@ void AbstractReconciliationModel::setGeneSpeciesMap(const GeneSpeciesMapping &ma
 
 void AbstractReconciliationModel::mapGenesToSpecies(pllmod_treeinfo_t &treeinfo)
 {
+  vector<bool> speciesPresent(speciesNodesCount_, false);
+  vector<bool> speciesToKeep(speciesNodesCount_, false);
   geneToSpecies_.resize(treeinfo.subnode_count);
+  speciesToPrunedSpecies_.resize(speciesNodesCount_);
   for (int i = 0; i < treeinfo.subnode_count; ++i) {
     auto node = treeinfo.subnodes[i];
     if (!node->next) {
       string speciesName = geneNameToSpeciesName_[string(node->label)]; 
       geneToSpecies_[node->node_index] = speciesNameToId_[speciesName];
+      speciesPresent[geneToSpecies_[node->node_index]] = true;
+      speciesToKeep[geneToSpecies_[node->node_index]] = true;
     }
   }
+  for (int e = 0; e < speciesNodesCount_; e++) {
+    auto node = speciesNodes_[e];
+    if (node->left) {
+      speciesPresent[node->node_index] = speciesPresent[node->left->node_index] || speciesPresent[node->right->node_index];
+      speciesToKeep[node->node_index] = speciesPresent[node->left->node_index] && speciesPresent[node->right->node_index];
+    }
+
+    // prunedSpeciesNodes_
+    if ( speciesToKeep[node->node_index]) {
+      speciesToPrunedSpecies_[node->node_index] = prunedSpeciesNodes_.size();
+      prunedSpeciesNodes_.push_back(node);
+    }
+  }
+  
+  for (int i = 0; i < getPrunedSpeciesCount(); ++i) {
+    assert(getPrunedSpeciesIndex(getPrunedSpecies()[i]) == i);
+  }
+  vector<bool> marked(getPrunedSpeciesCount(), false);
+  for (auto speciesNode: getPrunedSpecies()) {
+    if (speciesNode->left) {
+      assert(marked[getPrunedSpeciesIndex(speciesNode->left)]);
+      assert(marked[getPrunedSpeciesIndex(speciesNode->right)]);
+    }
+    assert(!marked[getPrunedSpeciesIndex(speciesNode)]);
+    marked[getPrunedSpeciesIndex(speciesNode)] = true;
+  }
+  Logger::info << "pruned species nodes " << prunedSpeciesNodes_.size() << endl;
+  Logger::info << "species nodes " << speciesNodesCount_ << endl;
 }
 
 void AbstractReconciliationModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)

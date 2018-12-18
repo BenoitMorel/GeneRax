@@ -24,14 +24,20 @@ protected:
   void getRoots(pllmod_treeinfo_t &treeinfo, 
     vector<pll_unode_t *> &roots,
     const vector<int> &geneIds);
+  size_t getPrunedSpeciesCount() {return prunedSpeciesNodes_.size();}
+  int getPrunedSpeciesIndex(pll_rnode_t *node) {return speciesToPrunedSpecies_[node->node_index];}
+  const vector<pll_rnode_t *> &getPrunedSpecies() {return prunedSpeciesNodes_;}
   pll_unode_t *getLeft(pll_unode_t *node, bool virtualRoot);  
   pll_unode_t *getRight(pll_unode_t *node, bool virtualRoot);  
 protected:
   pll_unode_t *geneRoot_;
   int speciesNodesCount_;
-  vector <pll_rnode_t *> speciesNodes_;
+  vector<pll_rnode_t *> speciesNodes_;
   pll_rtree_t *speciesTree_;
   vector<int> geneToSpecies_;
+  
+  vector<int> speciesToPrunedSpecies_;
+  vector<pll_rnode_t *> prunedSpeciesNodes_;
 
 private:
   void fillNodesPostOrder(pll_rnode_t *node, vector<pll_rnode_t *> &nodes) ;

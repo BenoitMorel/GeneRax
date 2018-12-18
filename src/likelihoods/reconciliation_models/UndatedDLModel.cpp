@@ -6,7 +6,9 @@ using namespace std;
 
 UndatedDLModel::UndatedDLModel() :
   O_R(1),
-  allCLVInvalid(true)
+  allCLVInvalid(true),
+  dupRate_(0),
+  lossRate_(0)
 {
   Logger::info << "creating undated dl model" << endl;
 }
@@ -23,10 +25,11 @@ void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
   for (auto gid: geneIds)
     maxId = max(maxId, gid);
   // init ua with zeros
-  vector<ScaledValue> zeros(speciesNodesCount_);
+  vector<ScaledValue> zeros(getPrunedSpeciesCount());
   uq = vector<vector<ScaledValue> >(maxId + 1,zeros);
-  ll = vector<ScaledValue>(speciesNodesCount_);
-  repeatsId = vector<int>(maxId + 1, 0);
+  ll = vector<ScaledValue>(getPrunedSpeciesCount());
+  repeatsId = vector<unsigned long>(maxId + 1, 0);
+  setRates(dupRate_, lossRate_);
 }
 
 double solveSecondDegreePolynome(double a, double b, double c) 
@@ -36,30 +39,37 @@ double solveSecondDegreePolynome(double a, double b, double c)
 
 void UndatedDLModel::setRates(double dupRate, 
   double lossRate,
-  double transferRates) {
+  double transferRate) {
   geneRoot_ = 0;
-  PD = vector<double>(speciesNodesCount_, dupRate);
-  PL = vector<double>(speciesNodesCount_, lossRate);
-  PS = vector<double>(speciesNodesCount_, 1.0);
-  for (auto speciesNode: speciesNodes_) {
-    int e = speciesNode->node_index;
+  dupRate_ = dupRate;
+  lossRate_ = lossRate;
+  if (!getPrunedSpeciesCount()) {
+    return;
+  }
+  PD = vector<double>(getPrunedSpeciesCount(), dupRate);
+  PL = vector<double>(getPrunedSpeciesCount(), lossRate);
+  PS = vector<double>(getPrunedSpeciesCount(), 1.0);
+
+
+  for (auto speciesNode: getPrunedSpecies()) {
+    int e = getPrunedSpeciesIndex(speciesNode);
     double sum = PD[e] + PL[e] + PS[e];
     PD[e] /= sum;
     PL[e] /= sum;
     PS[e] /= sum;
   } 
-  uE = vector<double>(speciesNodesCount_, 0.0);
-  for (auto speciesNode: speciesNodes_) {
-    int e = speciesNode->node_index;
+  uE = vector<double>(getPrunedSpeciesCount(), 0.0);
+  for (auto speciesNode: getPrunedSpecies()) {
+    int e = getPrunedSpeciesIndex(speciesNode);
     double a = PD[e];
     double b = -1.0;
     double c = PL[e];
     if (speciesNode->left) {
-      c += PS[e] * uE[speciesNode->left->node_index]  * uE[speciesNode->right->node_index];
+      c += PS[e] * getExtProba(speciesNode->left)  * getExtProba(speciesNode->right);
     }
     double proba = solveSecondDegreePolynome(a, b, c);
     ASSERT_PROBA(proba)
-    uE[speciesNode->node_index] = proba;
+    getExtProba(speciesNode) = proba;
   }
   allCLVInvalid = true;
 }
@@ -136,9 +146,15 @@ void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
 
 void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
-
-  for (auto speciesNode: speciesNodes_) {
-    computeProbability(geneNode, speciesNode, uq[geneNode->node_index][speciesNode->node_index]);
+  if (!geneNode->next) {
+    repeatsId[geneNode->node_index] = geneToSpecies_[geneNode->node_index]; 
+  } else {
+    long left = repeatsId[geneNode->next->back->node_index];
+    long right = repeatsId[geneNode->next->next->back->node_index];
+    repeatsId[geneNode->node_index] = min(right, left) + 42 * max(right, left);
+  }
+  for (auto speciesNode: getPrunedSpecies()) {
+    computeProbability(geneNode, speciesNode, uq[geneNode->node_index][getPrunedSpeciesIndex(speciesNode)]);
   }
 }
 
@@ -160,15 +176,15 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
     rightGeneNode = getRight(geneNode, isVirtualRoot);
   }
   bool isSpeciesLeaf = !speciesNode->left;
-  int e = speciesNode->node_index;
+  int e = getPrunedSpeciesIndex(speciesNode);
   int f = 0;
   int g = 0;
   if (!isSpeciesLeaf) {
-    f = speciesNode->left->node_index;
-    g = speciesNode->right->node_index;
+    f = getPrunedSpeciesIndex(speciesNode->left);
+    g = getPrunedSpeciesIndex(speciesNode->right);
   }
   proba = ScaledValue();
-  if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) {
+  if (isSpeciesLeaf and isGeneLeaf and speciesNode->node_index == geneToSpecies_[gid]) {
     // present
     proba = ScaledValue(PS[e], 0);
   }
@@ -209,8 +225,8 @@ pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo,
   vector<pll_unode_t *> roots;
   getRoots(treeinfo, roots, geneIds);
   pll_unode_t *bestRoot = 0;
-  for (auto speciesNode: speciesNodes_) {
-    int e = speciesNode->node_index;
+  for (auto speciesNode: getPrunedSpecies()) {
+    int e = getPrunedSpeciesIndex(speciesNode);
     ScaledValue total;
     for (auto root: roots) {
       pll_unode_t virtual_root;
@@ -240,6 +256,14 @@ double UndatedDLModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treein
 
   // main loop
   updateCLVs(*treeinfo);
+  
+  /*
+  unordered_set<unsigned long> plop;
+  for (auto r: repeatsId) {
+    plop.insert(r);
+  } 
+  Logger::info << plop.size() << "/" << geneIds.size() << endl;
+*/
   ScaledValue bestValue;
   auto bestRoot = computeLikelihoods(*treeinfo, bestValue);
   if (bestRoot) {
@@ -247,7 +271,7 @@ double UndatedDLModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treein
   }
   ScaledValue total;
   if (!Arguments::rootedGeneTree) {
-    for (int e = 0; e < speciesNodesCount_; e++) {
+    for (int e = 0; e < getPrunedSpeciesCount(); e++) {
       total += ll[e];
     }
   } else {

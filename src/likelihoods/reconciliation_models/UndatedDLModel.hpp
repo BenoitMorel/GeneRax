@@ -37,12 +37,15 @@ public:
   unordered_set<int> invalidCLVs;
 
   // repeats
-  vector<int> repeatsId; // repeatsId[geneId]
+  vector<unsigned long> repeatsId; // repeatsId[geneId]
 
+  double dupRate_;
+  double lossRate_;
 public:
   UndatedDLModel();
   virtual ~UndatedDLModel();
   
+
   // unherited from parents
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);
   virtual double computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
@@ -58,6 +61,7 @@ private:
   void updateCLV(pll_unode_t *geneNode);
   void updateCLVs(pllmod_treeinfo_t &treeinfo);
   pll_unode_t *computeLikelihoods(pllmod_treeinfo_t &treeinfo, ScaledValue &bestValue);
+  double &getExtProba(pll_rnode_t *speciesNode) {return uE[getPrunedSpeciesIndex(speciesNode)];}
 };
 
 #endif
