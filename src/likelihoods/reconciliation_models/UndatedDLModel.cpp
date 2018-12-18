@@ -175,20 +175,28 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
     int gp_i = leftGeneNode->node_index;
     int gpp_i = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
-      proba += uq[gp_i][f] * uq[gpp_i][g] * PS[e];
-      proba += uq[gp_i][g] * uq[gpp_i][f] * PS[e]; 
+      proba += ScaledValue::superMult1(uq[gp_i][f], uq[gpp_i][g],
+          uq[gp_i][g], uq[gpp_i][f],
+          PS[e]);
     }
     // D event
-    proba += uq[gp_i][e] * uq[gpp_i][e] * 2.0 * PD[e];
+    ScaledValue temp = uq[gp_i][e];
+    temp *= uq[gpp_i][e];
+    temp *= 2.0 * PD[e];
+    proba += temp;
   }
   if (not isSpeciesLeaf) {
     // SL event
     if (!isVirtualRoot) {
-      proba += uq[gid][f] * uE[g] * PS[e];
-      proba += uq[gid][g] * uE[f] * PS[e];
+      proba += ScaledValue::superMult2(
+          uq[gid][f], uE[g],
+          uq[gid][g], uE[f],
+          PS[e]);
     } else {
-      proba += ll[f] * uE[g] * PS[e];
-      proba += ll[g] * uE[f] * PS[e];
+      proba += ScaledValue::superMult2(
+          ll[f], uE[g],
+          ll[g], uE[f],
+          PS[e]);
     }
   }
   proba /= (1.0 - 2.0 * PD[e] * uE[e]); 

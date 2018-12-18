@@ -29,12 +29,40 @@ public:
       }
     }
   } 
- 
-  ScaledValue& operator/=(double v) {
+
+  // return (x1*x2 + y1 * y2) * factor 
+  static inline ScaledValue superMult1(const ScaledValue &x1, const ScaledValue &x2,
+      const ScaledValue &y1, const ScaledValue &y2,
+      double factor)
+  {
+    ScaledValue res(x1);
+    res *= x2;
+    ScaledValue temp(y1);
+    temp *= y2;
+    res += temp;
+    res *= factor;
+    return res;
+  }
+
+  // return (x1*x2 + y1 * y2) * factor 
+  static inline ScaledValue superMult2(const ScaledValue &x1, double &x2,
+      const ScaledValue &y1, const double &y2,
+      double factor)
+  {
+    ScaledValue res(x1);
+    res *= x2;
+    ScaledValue temp(y1);
+    temp *= y2;
+    res += temp;
+    res *= factor;
+    return res;
+  }
+
+  inline ScaledValue& operator/=(double v) {
     value /= v;
   }
 
-  ScaledValue& operator+=(const ScaledValue& v) {
+  inline ScaledValue& operator+=(const ScaledValue& v) {
     if (v.scaler == scaler) {
       value += v.value;
     } else if (v.scaler < scaler) {
@@ -44,7 +72,7 @@ public:
     return *this;
   }
   
-  ScaledValue operator+(const ScaledValue& v) {
+  inline ScaledValue operator+(const ScaledValue& v) {
     if (v.scaler == scaler) {
       return ScaledValue(v.value + value, scaler);
     } else if (v.scaler < scaler) {
@@ -54,15 +82,30 @@ public:
     }
   }
   
-  ScaledValue operator*(const ScaledValue& v) {
+  inline ScaledValue operator*(const ScaledValue& v) {
     return ScaledValue (v.value * value, v.scaler + scaler);  
   }
+  
+  inline ScaledValue& operator*=(const ScaledValue& v) {
+    value *= v.value;
+    if (scaler != INT_MAX) {
+      scaler += v.scaler;   
+    }
+    return *this;
+  }
 
-  ScaledValue operator*(double v) {
+
+  inline ScaledValue operator*(double v) {
     return ScaledValue(v * value, scaler);
   }
 
-  bool operator <(const ScaledValue& v)
+  inline ScaledValue& operator*=(double v) {
+    value *= v;
+    return *this;
+  }
+
+
+  inline bool operator <(const ScaledValue& v)
   {
     if (scaler != v.scaler) {
       return scaler > v.scaler;
@@ -70,11 +113,11 @@ public:
     return value < v.value;
   }
 
-  bool isNull() {
+  inline bool isNull() {
     return value == 0.0;
   }
 
-  double getLogValue() {
+  inline double getLogValue() {
     if (scaler == INT_MAX) {
       return -std::numeric_limits<double>::infinity();
     }
@@ -85,7 +128,8 @@ public:
     os << "(" << v.value << "," << v.scaler << ")";
     return os;
   }
-  
+ 
+
   void printNoNull() {
     if (!isNull()) {
       cout << *this << endl;

@@ -153,7 +153,7 @@ void SPRSearch::applySPRSearch(JointTree &jointTree)
   while (applySPRRound(jointTree, 2, bestLoglk)) {}
   jointTree.optimizeParameters();
   bestLoglk = jointTree.computeJointLoglk();
-  while (applySPRRound(jointTree, 5, bestLoglk)) {}
+  while (applySPRRound(jointTree, 3, bestLoglk)) {}
   //while (applySPRRound(jointTree, 50, bestLoglk)) {}
 }
 
