@@ -3,6 +3,7 @@
 #include <Logger.hpp>
 
 using namespace std;
+const int CACHE_SIZE = 100000;
 
 UndatedDLModel::UndatedDLModel() :
   O_R(1),
@@ -26,7 +27,7 @@ void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
   vector<ScaledValue> zeros(speciesNodesCount_);
   uq = vector<vector<ScaledValue> >(maxId + 1,zeros);
   ll = vector<ScaledValue>(speciesNodesCount_);
-  repeatsId = vector<int>(maxId + 1, 0);
+  repeatsId = vector<unsigned long>(maxId + 1, 0);
 }
 
 double solveSecondDegreePolynome(double a, double b, double c) 
@@ -38,6 +39,8 @@ void UndatedDLModel::setRates(double dupRate,
   double lossRate,
   double transferRates) {
   geneRoot_ = 0;
+  cache_.clear();
+  cache_.resize(CACHE_SIZE);
   PD = vector<double>(speciesNodesCount_, dupRate);
   PL = vector<double>(speciesNodesCount_, lossRate);
   PS = vector<double>(speciesNodesCount_, 1.0);
@@ -133,13 +136,48 @@ void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
   allCLVInvalid = false;
   invalidCLVs.clear();
 }
+void UndatedDLModel::computeGeneProbabilities(pll_unode_t *geneNode,
+  vector<ScaledValue> &clv)
+{
+  for (auto speciesNode: speciesNodes_) {
+    computeProbability(geneNode, 
+        speciesNode, 
+        clv[speciesNode->node_index]);
+  }
+}
+
 
 void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
-
-  for (auto speciesNode: speciesNodes_) {
-    computeProbability(geneNode, speciesNode, uq[geneNode->node_index][speciesNode->node_index]);
+#ifndef REPEATS
+  computeGeneProbabilities(geneNode, uq[geneNode->node_index]);
+#else
+  int repeatId = 0;
+  if (!geneNode->next) {
+    repeatId = geneToSpecies_[geneNode->node_index] + 1;
+  } else {
+    long left = repeatsId[getLeft(geneNode, false)->node_index];
+    long right = repeatsId[getRight(geneNode, false)->node_index];
+    if (left * right) {
+      repeatId = min(right, left) + (speciesNodesCount_+1) * max(right, left);// todobenoit this is wrong
+    }
   }
+  if (repeatId >= cache_.size()) {
+    repeatId = 0;
+  }
+  repeatsId[geneNode->node_index] = repeatId;
+  if (repeatId) {
+    auto &cachedCLV = cache_[repeatId];
+    if (!cachedCLV.size()) {
+      computeGeneProbabilities(geneNode, uq[geneNode->node_index]);
+      cachedCLV = uq[geneNode->node_index];
+    } else {
+      uq[geneNode->node_index] = cachedCLV;
+    }
+  } else {
+    computeGeneProbabilities(geneNode, uq[geneNode->node_index]);
+  }
+#endif
 }
 
 void UndatedDLModel::invalidateCLV(int nodeIndex)
@@ -176,13 +214,13 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
     int gp_i = leftGeneNode->node_index;
     int gpp_i = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
-      proba += ScaledValue::superMult1(uq[gp_i][f], uq[gpp_i][g],
-          uq[gp_i][g], uq[gpp_i][f],
+      proba += ScaledValue::superMult1(getUq(gp_i,f), getUq(gpp_i,g),
+          getUq(gp_i,g), getUq(gpp_i, f),
           PS[e]);
     }
     // D event
-    ScaledValue temp = uq[gp_i][e];
-    temp *= uq[gpp_i][e];
+    ScaledValue temp = getUq(gp_i, e);
+    temp *= getUq(gpp_i, e);
     temp *= 2.0 * PD[e];
     proba += temp;
   }
@@ -190,8 +228,8 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
     // SL event
     if (!isVirtualRoot) {
       proba += ScaledValue::superMult2(
-          uq[gid][f], uE[g],
-          uq[gid][g], uE[f],
+          getUq(gid,f), uE[g],
+          getUq(gid, g), uE[f],
           PS[e]);
     } else {
       proba += ScaledValue::superMult2(

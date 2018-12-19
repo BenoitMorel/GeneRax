@@ -36,9 +36,11 @@ public:
   bool allCLVInvalid;
   unordered_set<int> invalidCLVs;
 
-  // repeats
-  vector<int> repeatsId; // repeatsId[geneId]
 
+
+  // repeats
+  vector<unsigned long> repeatsId; // repeatsId[geneId]
+  vector<vector<ScaledValue> > cache_;
 public:
   UndatedDLModel();
   virtual ~UndatedDLModel();
@@ -51,10 +53,13 @@ public:
   
 
 private:
+  inline ScaledValue &getUq(int geneId, int speciesId) {return uq[geneId][speciesId];}
   void getCLVsToUpdate(pllmod_treeinfo_t &treeinfo, unordered_set<int> &nodesToUpdate);
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
       bool isVirtualRoot = false);
+  void computeGeneProbabilities(pll_unode_t *geneNode, 
+      vector<ScaledValue> &clv);
   void updateCLV(pll_unode_t *geneNode);
   void updateCLVs(pllmod_treeinfo_t &treeinfo);
   pll_unode_t *computeLikelihoods(pllmod_treeinfo_t &treeinfo, ScaledValue &bestValue);
