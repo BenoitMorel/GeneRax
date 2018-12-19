@@ -53,7 +53,6 @@ public:
   
 
 private:
-  inline ScaledValue &getUq(int geneId, int speciesId) {return uq[geneId][speciesId];}
   void getCLVsToUpdate(pllmod_treeinfo_t &treeinfo, unordered_set<int> &nodesToUpdate);
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,

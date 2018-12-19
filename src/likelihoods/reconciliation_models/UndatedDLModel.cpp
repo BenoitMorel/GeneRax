@@ -214,13 +214,13 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
     int gp_i = leftGeneNode->node_index;
     int gpp_i = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
-      proba += ScaledValue::superMult1(getUq(gp_i,f), getUq(gpp_i,g),
-          getUq(gp_i,g), getUq(gpp_i, f),
+      proba += ScaledValue::superMult1(uq[gp_i][f], uq[gpp_i][g],
+          uq[gp_i][g], uq[gpp_i][f],
           PS[e]);
     }
     // D event
-    ScaledValue temp = getUq(gp_i, e);
-    temp *= getUq(gpp_i, e);
+    ScaledValue temp = uq[gp_i][e];
+    temp *= uq[gpp_i][e];
     temp *= 2.0 * PD[e];
     proba += temp;
   }
@@ -228,8 +228,8 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
     // SL event
     if (!isVirtualRoot) {
       proba += ScaledValue::superMult2(
-          getUq(gid,f), uE[g],
-          getUq(gid, g), uE[f],
+          uq[gid][f], uE[g],
+          uq[gid][g], uE[f],
           PS[e]);
     } else {
       proba += ScaledValue::superMult2(
