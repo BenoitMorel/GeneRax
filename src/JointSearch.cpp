@@ -8,31 +8,14 @@
 using namespace std;
 
 
-void printJointTreeInfo(shared_ptr<JointTree> tree) 
-{
-  auto treeInfo = tree->getTreeInfo();
-  int speciesLeaves = tree->getSpeciesTree()->tip_count;
-  int geneLeaves = treeInfo->tip_count;;
-  int sites = treeInfo->partitions[0]->sites;
-
-
-  Logger::info << "Species leaves: " << speciesLeaves << endl;
-  Logger::info << "Gene leaves: " << geneLeaves << endl;
-  Logger::info << "Sites: " << sites << endl;
-  Logger::info << endl;
-}
 
 
 
 int internal_main(int argc, char** argv, void* comm)
 {
-  ParallelContext::init(comm);
-  double dupRate = 0.2;
-  double lossRate = 0.1;
-  
+  ParallelContext::init(comm); 
   Logger::init();
   Arguments::init(argc, argv);
-  Arguments::checkInputs();
   Logger::initFileOutput(Arguments::output);
   Arguments::printCommand();
   Arguments::printSummary();
@@ -54,13 +37,9 @@ int internal_main(int argc, char** argv, void* comm)
         Arguments::alignment,
         Arguments::speciesTree,
         Arguments::geneSpeciesMap,
-        Arguments::reconciliationModel,
-        dupRate,
-        lossRate
-        );
-    
-    
-    printJointTreeInfo(jointTree);
+        Arguments::reconciliationModel);
+    jointTree->printInfo();;
+    Logger::timed << "Starting parameters optimization..." << endl;
     jointTree->optimizeParameters();
     Logger::timed << "Starting search..." << endl;
     if (Arguments::strategy == "SPR") {

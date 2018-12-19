@@ -138,7 +138,7 @@ void JointTree::optimizeParameters(bool felsenstein, bool reconciliation) {
   if (felsenstein && !Arguments::noFelsensteinLikelihood) {
     libpllEvaluation_->optimizeAllParameters();
   }
-  if (reconciliation && Arguments::costsEstimation) {
+  if (reconciliation) {
     optimizeDTRates();
   }
 }
@@ -276,5 +276,17 @@ void JointTree::setRates(double dup, double loss) {
   dupRate_ = dup; 
   lossRate_ = loss;
   reconciliationEvaluation_->setRates(dup, loss);
+}
+
+void JointTree::printInfo() 
+{
+  auto treeInfo = getTreeInfo();
+  int speciesLeaves = getSpeciesTree()->tip_count;
+  int geneLeaves = treeInfo->tip_count;;
+  int sites = treeInfo->partitions[0]->sites;
+  Logger::info << "Species leaves: " << speciesLeaves << endl;
+  Logger::info << "Gene leaves: " << geneLeaves << endl;
+  Logger::info << "Sites: " << sites << endl;
+  Logger::info << endl;
 }
 

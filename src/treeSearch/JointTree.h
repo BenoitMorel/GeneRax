@@ -26,8 +26,8 @@ public:
               const string &speciestree_file,
               const string &geneSpeciesMap_file,
               Arguments::ReconciliationModel reconciliationModel,
-              double dupRate,
-              double lossRate);
+              double dupRate = 2.0,
+              double lossRate = 1.0);
 
 
     virtual ~JointTree() {}
@@ -43,6 +43,7 @@ public:
   
     void invalidateCLV(pll_unode_s *node);
     void printAllNodes(ostream &os);
+    void printInfo();
     void rollbackLastMove();
     void save(const string &fileName, bool append);
     shared_ptr<pllmod_treeinfo_t> getTreeInfo();

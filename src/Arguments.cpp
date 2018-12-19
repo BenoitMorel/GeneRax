@@ -8,21 +8,17 @@ string Arguments::geneTree;
 string Arguments::alignment;
 string Arguments::speciesTree;
 string Arguments::geneSpeciesMap;
-string Arguments::strategy("NNI");
+string Arguments::strategy("SPR");
 Arguments::ReconciliationModel Arguments::reconciliationModel(UndatedDL);
 string Arguments::output("jointSearch");
 bool Arguments::check = false;
-bool Arguments::incr = false;
 bool Arguments::rootedGeneTree = false;
-bool Arguments::costsEstimation = false;
 bool Arguments::noFelsensteinLikelihood = false;  
 
 Arguments::ReconciliationModel getModelFromString(const string &modelStr)
 {
   if (modelStr == "UndatedDL") {
     return Arguments::UndatedDL;
-  } else if (modelStr == "UndatedDTL") {
-    return Arguments::UndatedDTL;
   } else if (modelStr == "DatedDL") {
     return Arguments::DatedDL;
   } else {
@@ -33,8 +29,6 @@ Arguments::ReconciliationModel getModelFromString(const string &modelStr)
 string getStringFromModel(Arguments::ReconciliationModel model) {
   if (model == Arguments::UndatedDL) {
     return "UndatedDL";
-  } else if (model == Arguments::UndatedDTL) {
-    return "UndatedDTL";
   } else if (model == Arguments::DatedDL) {
     return "DatedDL";
   } else {
@@ -69,12 +63,8 @@ void Arguments::init(int argc, char * argv[])
       reconciliationModel = getModelFromString(string(argv[++i]));
     } else if (arg == "-p" || arg == "--prefix") {
       output = string(argv[++i]);
-    } else if (arg == "-c" || arg == "--cost-estimation") {
-      costsEstimation = true;
     } else if (arg == "--check") {
       check = true;
-    } else if (arg == "--incr") {
-      incr = true;
     } else if (arg == "--rooted-gene-tree") {
       rootedGeneTree = true;
     } else if (arg == "--no-felsenstein-likelihood") {
@@ -85,6 +75,7 @@ void Arguments::init(int argc, char * argv[])
       exit(1);
     }
   }
+  checkInputs();
 }
 
 void assertFileExists(const string &file) 
@@ -134,11 +125,10 @@ void Arguments::printHelp() {
   Logger::info << "-a, --alignment <ALIGNMENT>" << endl;
   Logger::info << "-s, --species-tree <SPECIES TREE>" << endl;
   Logger::info << "--strategy <STRATEGY>  {NNI, SPR, HYBRID}" << endl;
-  Logger::info << "--reconciliation-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << endl;
+  Logger::info << "--reconciliation-model <reconciliationModel>  {UndatedDL, DatedDL}" << endl;
   Logger::info << "-t, --threads <THREADS NUMBER>" << endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
   Logger::info << "--check" << endl;
-  Logger::info << "--incr" << endl;
   Logger::info << "--rooted-gene-tree" << endl;
   Logger::info << "--no-felsenstein-likelihood" << endl;
   Logger::info << endl;
@@ -164,7 +154,6 @@ void Arguments::printSummary() {
   Logger::info << "Reconciliation model: " << getStringFromModel(reconciliationModel) << endl;
   Logger::info << "Prefix: " << output << endl;
   Logger::info << "Check mode: " << boolStr[check] << endl;
-  Logger::info << "Incremental likelihood mode: " << boolStr[incr] << endl;
   Logger::info << "Rooted gene tree: " << boolStr[rootedGeneTree] << endl;
   Logger::info << "Ignoring felsenstein likelihood: " << boolStr[noFelsensteinLikelihood] << endl;
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << endl;

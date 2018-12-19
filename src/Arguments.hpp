@@ -9,7 +9,6 @@ class Arguments {
 public:
   enum ReconciliationModel {
     UndatedDL,
-    UndatedDTL,
     DatedDL,
     InvalidModel
   };
@@ -31,9 +30,7 @@ public:
   static ReconciliationModel reconciliationModel;
   static string output;
   static bool check;
-  static bool incr;
   static bool rootedGeneTree;
-  static bool costsEstimation;
   static bool noFelsensteinLikelihood;
 };
 
