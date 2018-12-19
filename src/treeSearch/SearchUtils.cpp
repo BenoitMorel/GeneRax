@@ -11,9 +11,15 @@ void SearchUtils::testMove(JointTree &jointTree,
     double &newLoglk
     )
 {
+  //Logger::info << "Move " << endl;
+  //jointTree.printLoglk();
   jointTree.applyMove(move);
   newLoglk = jointTree.computeJointLoglk();
+  //jointTree.printLoglk();
   jointTree.rollbackLastMove();
+  //if (initialLoglk < newLoglk) {
+  //  Logger::info << "Best move ! " << endl;
+  //}
   if(Arguments::check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
     cerr.precision(17);
     cerr << "rollback lead to different likelihoods: " << initialLoglk

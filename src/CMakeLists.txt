@@ -17,7 +17,6 @@ set(JOINTSEARCH_SOURCES JointSearch.cpp
   treeSearch/Moves.cpp
   treeSearch/Rollbacks.cpp
   treeSearch/SearchUtils.cpp
-  treeSearch/NNISearch.cpp
   treeSearch/SPRSearch.cpp
   )
 

@@ -14,22 +14,6 @@ public:
   virtual void applyRollback() = 0;
 };
 
-class NNIRollback: public Rollback {
-public:
-  NNIRollback(JointTree &tree, pll_tree_rollback_t &rollback, bool resetRoot):
-    tree_(tree),
-    rollback_(rollback),
-    resetRoot_(resetRoot)
-  {}
-
-  virtual void applyRollback();
-
-private:
-  JointTree &tree_;
-  pll_tree_rollback_t rollback_;
-  bool resetRoot_;
-};
-
 class SavedBranch {
 public:
   SavedBranch(pll_unode_s *branch): 

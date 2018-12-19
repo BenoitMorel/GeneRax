@@ -1,7 +1,6 @@
 #include "Arguments.hpp"
 #include "ParallelContext.hpp"
 #include <treeSearch/JointTree.h>
-#include <treeSearch/NNISearch.h>
 #include <treeSearch/SPRSearch.h>
 #include <Logger.hpp>
 #include <algorithm>
@@ -66,15 +65,7 @@ int internal_main(int argc, char** argv, void* comm)
     Logger::timed << "Starting search..." << endl;
     if (Arguments::strategy == "SPR") {
       SPRSearch::applySPRSearch(*jointTree);
-    } else if (Arguments::strategy == "NNI") {
-      NNISearch::applyNNISearch(*jointTree);
     } else if (Arguments::strategy == "EVAL") {
-    } else if (Arguments::strategy == "HYBRID") {
-      NNISearch::applyNNISearch(*jointTree);
-      jointTree->optimizeParameters();
-      SPRSearch::applySPRSearch(*jointTree);
-      jointTree->optimizeParameters();
-      NNISearch::applyNNISearch(*jointTree);
     }
     Logger::timed << "End of search" << endl;
     jointTree->printLoglk();
