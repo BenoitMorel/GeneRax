@@ -78,10 +78,8 @@ void printNode(pll_unode_s *node)
 
 std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
 {
-  bool blo = true;
   auto prune = tree.getNode(pruneIndex_);
   auto regraft = tree.getNode(regraftIndex_);
-  
   tree.invalidateCLV(prune->next->back);
   tree.invalidateCLV(prune->next->next);
   tree.invalidateCLV(prune->next);
@@ -92,41 +90,35 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
     tree.invalidateCLV(tree.getNode(branchIndex));
     tree.invalidateCLV(tree.getNode(branchIndex)->back);
   }
-  
   pll_tree_rollback_t pll_rollback;
-
   vector<SavedBranch> savedBranches;;
     
-  vector<pll_unode_t *> branchesToOptimize;
-  if (blo) {
-    branchesToOptimize.push_back(prune);
-    //branchesToOptimize.push_back(prune->next->back);
-    branchesToOptimize.push_back(regraft->back);
-    branchesToOptimize.push_back(regraft);
-    
-    for (int branchIndex: path_) {
-      auto node = tree.getNode(branchIndex);
-      savedBranches.push_back(node);
-      branchesToOptimize.push_back(node);
-      if (path_.size() == 1) {
-        savedBranches.push_back(node->next);
-        branchesToOptimize.push_back(node->next);
-        savedBranches.push_back(node->next->next);
-        branchesToOptimize.push_back(node->next->next);
-        node = node->back;
-        savedBranches.push_back(node->next);
-        branchesToOptimize.push_back(node->next);
-        savedBranches.push_back(node->next->next);
-        branchesToOptimize.push_back(node->next->next);
-      }
+  branchesToOptimize_.push_back(prune);
+  branchesToOptimize_.push_back(regraft->back);
+  branchesToOptimize_.push_back(regraft);
+  for (int branchIndex: path_) {
+    auto node = tree.getNode(branchIndex);
+    branchesToOptimize_.push_back(node);
+    if (path_.size() == 1) {
+      branchesToOptimize_.push_back(node->next);
+      branchesToOptimize_.push_back(node->next->next);
+      node = node->back;
+      branchesToOptimize_.push_back(node->next);
+      branchesToOptimize_.push_back(node->next->next);
     }
-  } 
-  
-
+  }
+  for (auto branch: branchesToOptimize_) {
+    savedBranches.push_back(branch);
+  }
   assert(PLL_SUCCESS == pllmod_utree_spr(prune, regraft, &pll_rollback));
-  auto rollback = std::make_shared<SPRRollback>(tree, pll_rollback, savedBranches);
-  optimizeBranchesSlow(tree, branchesToOptimize);
-  return rollback;
+  rollback_ = std::make_shared<SPRRollback>(tree, pll_rollback, savedBranches);
+  return rollback_;
+}
+  
+void SPRMove::optimizeMove(JointTree &tree)
+{
+  optimizeBranchesSlow(tree, branchesToOptimize_);
+  branchesToOptimize_.clear();
 }
 
 ostream& SPRMove::print(ostream & os) const {

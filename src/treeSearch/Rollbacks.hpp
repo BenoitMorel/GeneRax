@@ -38,6 +38,11 @@ public:
     branches_(branches)
   {}
   
+  void saveBranch(const SavedBranch &branch)
+  {
+    branches_.push_back(branch);
+  }
+
   virtual void applyRollback();
 
 private:

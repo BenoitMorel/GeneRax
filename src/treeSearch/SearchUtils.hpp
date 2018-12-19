@@ -12,7 +12,9 @@ class SearchUtils {
 public:
   static void testMove(JointTree &jointTree,
     shared_ptr<Move> move,
-    double initialLoglk,
+    double initialReconciliationLoglk,
+    double initialLibpllLoglk,
+    double &averageReconciliationDiff,
     double &newLoglk
     );
  
@@ -20,7 +22,6 @@ public:
     vector<shared_ptr<Move> > &allMoves,
     double &bestLoglk,
     int &bestMoveIndex);
-
 };
 
 #endif

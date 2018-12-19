@@ -169,7 +169,6 @@ void JointTree::printLoglk(bool libpll, bool rec, bool joint, Logger &os) {
 }
 
 
-// todobenoit make it faster
 pll_unode_t *JointTree::getNode(int index) {
   return getTreeInfo()->subnodes[index];
 }
@@ -178,6 +177,10 @@ pll_unode_t *JointTree::getNode(int index) {
 void JointTree::applyMove(shared_ptr<Move> move) {
   auto rollback = move->applyMove(*this);
   rollbacks_.push(rollback);
+}
+
+void JointTree::optimizeMove(shared_ptr<Move> move) {
+  move->optimizeMove(*this);
 }
 
 

@@ -133,6 +133,7 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
   bool foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex); 
   if (foundBetterMove) {
     jointTree.applyMove(allMoves[bestMoveIndex]);
+    jointTree.optimizeMove(allMoves[bestMoveIndex]);
   }
   return foundBetterMove;
 }
