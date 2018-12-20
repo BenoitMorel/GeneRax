@@ -71,7 +71,7 @@ void ParallelContext::allGatherDouble(double localValue, vector<double> &allValu
     comm);
 }
   
-void ParallelContext::broadcoastInt(int fromRank, int &value)
+void ParallelContext::broadcastInt(int fromRank, int &value)
 {
   MPI_Bcast(
     &value,
@@ -81,7 +81,7 @@ void ParallelContext::broadcoastInt(int fromRank, int &value)
     comm);
 }
 
-void ParallelContext::broadcoastDouble(int fromRank, double &value)
+void ParallelContext::broadcastDouble(int fromRank, double &value)
 {
   MPI_Bcast(
     &value,
@@ -91,17 +91,17 @@ void ParallelContext::broadcoastDouble(int fromRank, double &value)
     comm);
 }
 
-int ParallelContext::getBestLL(double &bestLL, int &bestRank)
+int ParallelContext::getMax(double &value, int &bestRank)
 {
   vector<double> allValues;
-  allGatherDouble(bestLL, allValues);
+  allGatherDouble(value, allValues);
   bestRank = 0;
   for (int i = 0; i < allValues.size(); ++i) {
     if (allValues[i] > allValues[bestRank]) {
       bestRank = i;
     }
   }
-  bestLL = allValues[bestRank];
+  value = allValues[bestRank];
   return bestRank;
 }
 

@@ -17,41 +17,47 @@ using namespace std;
 */
 class UndatedDLModel: public AbstractReconciliationModel {
 public:
-
+  UndatedDLModel(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map);
+  virtual ~UndatedDLModel();
+  
+  // overloaded from parent
+  virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);  
+  // overloaded from parent
+  virtual void invalidateCLV(int nodeIndex);
+  
+protected:
+  virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  virtual double computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo);
+private:
   // model
   vector<double> PD; // Duplication probability, per branch
   vector<double> PL; // Loss probability, per branch
   vector<double> PS; // Speciation probability, per branch
-  const double O_R; // what is this?
 
   // SPECIES
   vector<double> uE; // Probability for a gene to become extinct on each brance
   
   // CLVs
+  // uq[geneId][speciesId] = probability of a gene node rooted at a species node
+  // to produce the subtree of this gene node
   vector<vector<ScaledValue> > uq;
-  vector<ScaledValue> ll;
-  
+
+  // ll[speciesId] = likelihood of a gene tree to be present under a species node
+  vector<ScaledValue> ll; // sam
+ 
+  // geme ids in postorder 
   vector<int> geneIds;
 
+  // should we update all the clvs at next updateCLVs call?
   bool allCLVInvalid;
+
+  // set of invalid CLVs. All the CLVs from these CLVs to
+  // the root(s) need to be recomputed
   unordered_set<int> invalidCLVs;
-
-
 
   // repeats
   vector<unsigned long> repeatsId; // repeatsId[geneId]
   vector<vector<ScaledValue> > cache_;
-public:
-  UndatedDLModel();
-  virtual ~UndatedDLModel();
-  
-  // unherited from parents
-  virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);
-  virtual double computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
-  virtual void invalidateCLV(int nodeIndex);
-  virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
-  
-
 private:
   void getCLVsToUpdate(pllmod_treeinfo_t &treeinfo, unordered_set<int> &nodesToUpdate);
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 

@@ -5,8 +5,8 @@
 using namespace std;
 const int CACHE_SIZE = 100000;
 
-UndatedDLModel::UndatedDLModel() :
-  O_R(1),
+UndatedDLModel::UndatedDLModel(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map) :
+  AbstractReconciliationModel(speciesTree, map),
   allCLVInvalid(true)
 {
   Logger::info << "creating undated dl model" << endl;
@@ -272,7 +272,7 @@ pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo,
 
 
 
-double UndatedDLModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
+double UndatedDLModel::computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   getIdsPostOrder(*treeinfo, geneIds); 
 

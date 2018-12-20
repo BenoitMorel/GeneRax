@@ -3,20 +3,31 @@
 
 #include <limits>
 #include <climits>
+#include <iostream>
+
 #define JS_SCALE_FACTOR 115792089237316195423570985008687907853269984665640564039457584007913129639936.0  /*  2**256 (exactly)  */
 #define JS_SCALE_THRESHOLD (1.0/JS_SCALE_FACTOR)
-#include <iostream>
 
 
 /*
- *  Scaled double, for operations on very small values
+ *  Class representing a double value with a high precision. It stores a double
+ *  value, and a integer scaling value to represent very small values
+ *
+ *  When the value is null, the scaler is set to INT_MAX
  */
 class ScaledValue {
 public:
-  
+  /**
+   * Constructor for a null value
+   */
   ScaledValue():value(0), scaler(INT_MAX) {
   }
 
+  /**
+   * General constructor
+   * @param v: value
+   * @param s: scaler
+   */
   explicit ScaledValue(double v, int s = 0):value(v), scaler(s) {
     if (value == 0) {
       scaler = INT_MAX;
@@ -30,7 +41,105 @@ public:
     }
   } 
 
-  // return (x1*x2 + y1 * y2) * factor 
+  /**
+   * ScaledValue sum operator
+   */
+  inline ScaledValue& operator+=(const ScaledValue& v) {
+    if (v.scaler == scaler) {
+      value += v.value;
+    } else if (v.scaler < scaler) {
+      value = v.value;
+      scaler = v.scaler;
+    }
+    return *this;
+  }
+  
+  /**
+   * ScaledValue sum operator
+   */
+  inline ScaledValue operator+(const ScaledValue& v) {
+    if (v.scaler == scaler) {
+      return ScaledValue(v.value + value, scaler);
+    } else if (v.scaler < scaler) {
+      return v;
+    } else {
+      return *this;
+    }
+  }
+  
+  /**
+   * ScaledValue multiplication operator
+   */
+  inline ScaledValue operator*(const ScaledValue& v) {
+    return ScaledValue (v.value * value, v.scaler + scaler);  
+  }
+  
+  /**
+   * ScaledValue multiplication operator
+   */
+  inline ScaledValue& operator*=(const ScaledValue& v) {
+    value *= v.value;
+    if (scaler != INT_MAX) {
+      scaler += v.scaler;   
+    }
+    return *this;
+  }
+
+  /**
+   * double multiplication operator
+   */
+  inline ScaledValue operator*(double v) {
+    return ScaledValue(v * value, scaler);
+  }
+
+  /**
+   * double multiplication operator
+   */
+  inline ScaledValue& operator*=(double v) {
+    value *= v;
+    return *this;
+  }
+  
+  /**
+   * Division operator
+   */
+  inline ScaledValue& operator/=(double v) {
+    value /= v;
+  }
+
+
+  /**
+   * Comparison with ScaledValue operator
+   */
+  inline bool operator <(const ScaledValue& v)
+  {
+    if (scaler != v.scaler) {
+      return scaler > v.scaler;
+    }
+    return value < v.value;
+  }
+
+  /**
+   * @return true if value is 0
+   */
+  inline bool isNull() {
+    return value == 0.0;
+  }
+
+  /**
+   * @return the logarithm value as a double
+   */
+  inline double getLogValue() {
+    if (scaler == INT_MAX) {
+      return -std::numeric_limits<double>::infinity();
+    }
+    return log(value) + scaler * log(JS_SCALE_THRESHOLD);
+  }
+
+  /**
+   *  Special sequence of operation often used in JointSearch
+   *  @return (x1*x2 + y1 * y2) * factor
+   */
   static inline ScaledValue superMult1(const ScaledValue &x1, const ScaledValue &x2,
       const ScaledValue &y1, const ScaledValue &y2,
       double factor)
@@ -44,7 +153,10 @@ public:
     return res;
   }
 
-  // return (x1*x2 + y1 * y2) * factor 
+  /**
+   *  Special sequence of operation often used in JointSearch
+   *  @return (x1*x2 + y1 * y2) * factor
+   */
   static inline ScaledValue superMult2(const ScaledValue &x1, double &x2,
       const ScaledValue &y1, const double &y2,
       double factor)
@@ -58,84 +170,14 @@ public:
     return res;
   }
 
-  inline ScaledValue& operator/=(double v) {
-    value /= v;
-  }
-
-  inline ScaledValue& operator+=(const ScaledValue& v) {
-    if (v.scaler == scaler) {
-      value += v.value;
-    } else if (v.scaler < scaler) {
-      value = v.value;
-      scaler = v.scaler;
-    }
-    return *this;
-  }
-  
-  inline ScaledValue operator+(const ScaledValue& v) {
-    if (v.scaler == scaler) {
-      return ScaledValue(v.value + value, scaler);
-    } else if (v.scaler < scaler) {
-      return v;
-    } else {
-      return *this;
-    }
-  }
-  
-  inline ScaledValue operator*(const ScaledValue& v) {
-    return ScaledValue (v.value * value, v.scaler + scaler);  
-  }
-  
-  inline ScaledValue& operator*=(const ScaledValue& v) {
-    value *= v.value;
-    if (scaler != INT_MAX) {
-      scaler += v.scaler;   
-    }
-    return *this;
-  }
-
-
-  inline ScaledValue operator*(double v) {
-    return ScaledValue(v * value, scaler);
-  }
-
-  inline ScaledValue& operator*=(double v) {
-    value *= v;
-    return *this;
-  }
-
-
-  inline bool operator <(const ScaledValue& v)
-  {
-    if (scaler != v.scaler) {
-      return scaler > v.scaler;
-    }
-    return value < v.value;
-  }
-
-  inline bool isNull() {
-    return value == 0.0;
-  }
-
-  inline double getLogValue() {
-    if (scaler == INT_MAX) {
-      return -std::numeric_limits<double>::infinity();
-    }
-    return log(value) + scaler * log(JS_SCALE_THRESHOLD);
-  }
-
+  /**
+   *  ofstream operator
+   */
   friend ostream& operator<<(ostream& os, const ScaledValue &v) {
     os << "(" << v.value << "," << v.scaler << ")";
     return os;
   }
  
-
-  void printNoNull() {
-    if (!isNull()) {
-      cout << *this << endl;
-    }
-  }
-
 private:
   double value;
   int scaler;

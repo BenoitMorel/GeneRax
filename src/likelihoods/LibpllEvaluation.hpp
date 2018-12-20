@@ -1,7 +1,3 @@
-//
-// Created by BenoitMorel on 23/01/18.
-//
-
 #ifndef TREERECS_LIBPLLEVALUATE_H
 #define TREERECS_LIBPLLEVALUATE_H
 
@@ -20,68 +16,61 @@ extern "C" {
 #include <exception>
 #include <vector>
 
+using namespace std;
+
 struct pll_sequence;
-using pll_sequence_ptr = std::shared_ptr<pll_sequence>;
-using pll_sequences = std::vector<pll_sequence_ptr>;
+using pll_sequence_ptr = shared_ptr<pll_sequence>;
+using pll_sequences = vector<pll_sequence_ptr>;
 
-
-
-/*
- *  @brief Exception thrown from LibpllEvaluation
- */
-class LibpllException: public std::exception {
-public:
-  LibpllException(const std::string &s): msg_(s) {}
-  LibpllException(const std::string &s1, 
-      const std::string s2): msg_(s1 + s2) {}
-  virtual const char* what() const throw() { return msg_.c_str(); }
-  void append(const std::string &str) {msg_ += str;}
-
-private:
-  std::string msg_;
-};
 
 struct LibpllAlignmentInfo {
-  std::string alignmentFilename;
-  std::string model;
+  string alignmentFilename;
+  string model;
 };
 
 /*
- * @brief Libpll wraper to compute the phylogenetic likelihood of a tree.
- * 
- * LibpllEvaluation provides methods to compute the phylogenetic
- * likelihood of tree using Felsenstein pruning algorithm.
+ * Libpll wraper to compute the phylogenetic likelihood of a tree.
  */
 class LibpllEvaluation {
 public:
   /*
-   * @brief Build a LibpllEvaluation instance
+   * Build a LibpllEvaluation instance
    * @param newickString the tree in newick format
    * @param alignmentFilename path to the msa file
    * @param modelStr a string representing the model (GTR, DAYOFF...)
    * @return a shared pointer wraping the LibpllEvaluation instance
    */
-  static std::shared_ptr<LibpllEvaluation> buildFromString(const std::string &newickString,
-      const std::string& alignmentFilename,
-      const std::string &modelStr);
-
-  static std::shared_ptr<LibpllEvaluation> buildFromFile(const std::string &newickTree,
+  static shared_ptr<LibpllEvaluation> buildFromString(const string &newickString,
+      const string& alignmentFilename,
+      const string &modelStr);
+  static shared_ptr<LibpllEvaluation> buildFromFile(const string &newickTree,
       const LibpllAlignmentInfo &info);
 
-
   /*
-   *  @brief Compute the likelihood of the tree given the alignment
-   *  @return the likelihood of the tree
+   *  Compute the likelihood of the tree given the alignment
+   *  @param incremental: if true, only recompute invalid CLVs
+   *  @return the log likelihood of the tree
    */
   double computeLikelihood(bool incremental = false);
 
+  /**
+   *  Optimize branch lengths and model parameters
+   *  @return the log likeihood of the tree
+   */
   double optimizeAllParameters();
 
-  std::shared_ptr<pllmod_treeinfo_t> getTreeInfo() {return treeinfo_;}
+  /**
+   *  Accessor to the wrapped treeinfo structure
+   */
+  shared_ptr<pllmod_treeinfo_t> getTreeInfo() {return treeinfo_;}
 
+  /**
+   *  Invalidate a CLV at a given node index
+   *  Relevant for computeLikelihood(true) calls
+   */
   void invalidateCLV(int nodeIndex);
+
 private:
-  
   /**
    * Constructors
    */
@@ -89,13 +78,13 @@ private:
   LibpllEvaluation(const LibpllEvaluation &) = delete;
   
   /**
-   * @brief set all the null branch lenghts to length
+   * set all the null branch lenghts to length
    */
   static void setMissingBL(pll_utree_t * tree, 
     double length);
 
   /**
-   *  @brief parse sequences and pattern weights from fasta file
+   *  parse sequences and pattern weights from fasta file
    *  @param fasta_file Input file
    *  @param map state map
    *  @param sequences Compressed (each site appears only once) sequences
@@ -107,7 +96,7 @@ private:
     unsigned int *&weights);
 
   /**
-   *  @brief parse sequences and pattern weights from phylip file
+   *  parse sequences and pattern weights from phylip file
    *  @param phylip_file Input file
    *  @param map state map
    *  @param sequences Compressed (each site appears only once) sequences
@@ -122,8 +111,8 @@ private:
   
   pll_unode_t *getNode(int nodeIndex) {return treeinfo_->subnodes[nodeIndex];}
 private:
-  std::shared_ptr<pllmod_treeinfo_t> treeinfo_;
-  std::shared_ptr<pll_utree_t> utree_;
+  shared_ptr<pllmod_treeinfo_t> treeinfo_;
+  shared_ptr<pll_utree_t> utree_;
 };
 
 #endif

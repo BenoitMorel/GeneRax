@@ -7,19 +7,16 @@
 
 ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
   const GeneSpeciesMapping& map,
-  Arguments::ReconciliationModel model):
-  firstCall(true)
+  Arguments::ReconciliationModel model)
 {
   if (model == Arguments::UndatedDL) {
-    reconciliationModel = make_shared<UndatedDLModel>();
+    reconciliationModel = make_shared<UndatedDLModel>(speciesTree, map);
   } else if (model == Arguments::DatedDL) {
-    reconciliationModel = make_shared<DatedDLModel>();
+    reconciliationModel = make_shared<DatedDLModel>(speciesTree, map);
   } else {
     Logger::error << "Invalid reconciliation model!" << endl;
     exit(1);
   }
-  reconciliationModel->setGeneSpeciesMap(map);
-  reconciliationModel->setSpeciesTree(speciesTree);
 }
 
 void ReconciliationEvaluation::setRates(double dupRate, double lossRate,
@@ -30,11 +27,6 @@ void ReconciliationEvaluation::setRates(double dupRate, double lossRate,
 
 double ReconciliationEvaluation::evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
-  if (firstCall) {
-    reconciliationModel->setInitialGeneTree(treeinfo);
-  }
-  firstCall = false;
-  //cout << reconciliationModel->computeLogLikelihood(treeinfo) << " " << reconciliationModel->computeLogLikelihood(treeinfo) << endl;
   return reconciliationModel->computeLogLikelihood(treeinfo);
 }
 

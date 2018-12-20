@@ -1,10 +1,12 @@
 #include "AbstractReconciliationModel.hpp"
 #include <Arguments.hpp>
 
-AbstractReconciliationModel::AbstractReconciliationModel():
-  geneRoot_(0)
+AbstractReconciliationModel::AbstractReconciliationModel(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map):
+  geneRoot_(0),
+  firstCall_(true)
 {
-
+  setSpeciesTree(speciesTree);
+  setGeneSpeciesMap(map);
 }
 
 void getIdsPostOrderRec(pll_unode_t *node, 
@@ -102,6 +104,15 @@ void AbstractReconciliationModel::getRoots(pllmod_treeinfo_t &treeinfo,
     roots.push_back(node);
     marked[node->clv_index] = true;
   }
+}
+  
+double AbstractReconciliationModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
+{
+  if (firstCall_) {
+    setInitialGeneTree(treeinfo);
+    firstCall_ = false;
+  }
+  return computeLogLikelihoodInternal(treeinfo);
 }
 
 pll_unode_t *AbstractReconciliationModel::getLeft(pll_unode_t *node, bool virtualRoot)

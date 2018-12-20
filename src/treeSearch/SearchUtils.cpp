@@ -66,8 +66,8 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
     }
   }
   int bestRank = 0;
-  ParallelContext::getBestLL(bestLoglk, bestRank);
-  ParallelContext::broadcoastInt(bestRank, bestMoveIndex);
+  ParallelContext::getMax(bestLoglk, bestRank);
+  ParallelContext::broadcastInt(bestRank, bestMoveIndex);
   return bestMoveIndex != -1;
 }
 

@@ -226,9 +226,9 @@ void JointTree::findBestRates(double minDup, double maxDup,
     }
   }
   int bestRank = 0;
-  ParallelContext::getBestLL(bestLL, bestRank);
-  ParallelContext::broadcoastDouble(bestRank, bestDup);
-  ParallelContext::broadcoastDouble(bestRank, bestLoss);
+  ParallelContext::getMax(bestLL, bestRank);
+  ParallelContext::broadcastDouble(bestRank, bestDup);
+  ParallelContext::broadcastDouble(bestRank, bestLoss);
   setRates(bestDup, bestLoss);
 }
 

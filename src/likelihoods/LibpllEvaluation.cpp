@@ -32,6 +32,21 @@ const double TOLERANCE = 0.5;
 
 using namespace std;
 
+/*
+ *  @brief Exception thrown from LibpllEvaluation
+ */
+class LibpllException: public exception {
+public:
+  LibpllException(const string &s): msg_(s) {}
+  LibpllException(const string &s1, 
+      const string s2): msg_(s1 + s2) {}
+  virtual const char* what() const throw() { return msg_.c_str(); }
+  void append(const string &str) {msg_ += str;}
+
+private:
+  string msg_;
+};
+
 struct pll_sequence {
   pll_sequence(char *label, char *seq, unsigned int len):
     label(label),
@@ -78,7 +93,7 @@ bool getNextLine(ifstream &is, string &os)
 {
   while (getline(is, os)) {
     #if defined _WIN32 || defined __CYGWIN__
-    os.erase(std::remove(os.begin(), os.end(), '\r'), os.end());
+    os.erase(remove(os.begin(), os.end(), '\r'), os.end());
     #endif
     auto end = os.find("#");
     if (string::npos != end)

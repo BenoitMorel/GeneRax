@@ -109,7 +109,8 @@ double DatedDLModel::propagatePropagationProba(double initialProba, double branc
 
 
 
-DatedDLModel::DatedDLModel():
+DatedDLModel::DatedDLModel(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map):
+  AbstractReconciliationModel(speciesTree, map),
   probaGeneSampled_(1.0)
 {
 
@@ -135,7 +136,7 @@ void DatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
 }
 
 
-double DatedDLModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
+double DatedDLModel::computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   vector<int> geneIds;
   getIdsPostOrder(*treeinfo, geneIds);
