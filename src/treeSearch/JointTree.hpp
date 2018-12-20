@@ -3,14 +3,12 @@
 
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <likelihoods/ReconciliationEvaluation.hpp>
-
 #include <Arguments.hpp>
 #include <Logger.hpp>
-#include <treeSearch/Moves.h>
-#include <omp.h>
-
+#include <treeSearch/Moves.hpp>
 #include <parsers/GeneSpeciesMapping.hpp>
 
+#include <omp.h>
 #include <sstream>
 #include <stack>
 

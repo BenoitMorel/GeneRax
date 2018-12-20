@@ -1,6 +1,7 @@
 #include "Logger.hpp"
 #include "ParallelContext.hpp"
 
+
 Logger Logger::info;
 Logger Logger::error;
 Logger Logger::timed;

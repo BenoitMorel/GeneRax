@@ -1,10 +1,11 @@
-#include "SPRSearch.h"
-#include "Arguments.hpp"
-#include <treeSearch/JointTree.h>
-#include <treeSearch/Moves.h>
+#include <treeSearch/SPRSearch.hpp>
+#include <treeSearch/JointTree.hpp>
+#include <treeSearch/Moves.hpp>
 #include <treeSearch/SearchUtils.hpp>
 #include <Logger.hpp>
+#include <Arguments.hpp>
 #include <ParallelContext.hpp>
+
 #include <unordered_set>
 #include <array>
 

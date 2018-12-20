@@ -1,8 +1,9 @@
-#include <treeSearch/JointTree.h>
-#include <treeSearch/Moves.h>
-#include <chrono>
+#include <treeSearch/JointTree.hpp>
+#include <treeSearch/Moves.hpp>
 #include <ParallelContext.hpp>
-#include<limits>
+
+#include <chrono>
+#include <limits>
 #include <functional>
 
 

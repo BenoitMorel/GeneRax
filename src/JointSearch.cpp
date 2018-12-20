@@ -1,15 +1,13 @@
-#include "Arguments.hpp"
-#include "ParallelContext.hpp"
-#include <treeSearch/JointTree.h>
-#include <treeSearch/SPRSearch.h>
+#include <Arguments.hpp>
+#include <ParallelContext.hpp>
+#include <treeSearch/JointTree.hpp>
+#include <treeSearch/SPRSearch.hpp>
 #include <Logger.hpp>
+
 #include <algorithm>
 #include <limits>
+
 using namespace std;
-
-
-
-
 
 int internal_main(int argc, char** argv, void* comm)
 {

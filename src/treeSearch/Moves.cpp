@@ -1,5 +1,5 @@
-#include <treeSearch/Moves.h>
-#include <treeSearch/JointTree.h>
+#include <treeSearch/Moves.hpp>
+#include <treeSearch/JointTree.hpp>
 #include <Logger.hpp>
 #include <Arguments.hpp>
 
@@ -20,13 +20,13 @@
   
 
 
-std::shared_ptr<Move> Move::createSPRMove(int pruneIndex, int regraftIndex, const vector<int> &path) {
+shared_ptr<Move> Move::createSPRMove(int pruneIndex, int regraftIndex, const vector<int> &path) {
   return make_shared<SPRMove>(pruneIndex, regraftIndex, path);
 }
 
 
 void optimizeBranchesSlow(JointTree &tree,
-    const std::vector<pll_unode_t *> &nodesToOptimize)
+    const vector<pll_unode_t *> &nodesToOptimize)
 {
     auto root = tree.getTreeInfo()->root;
     // could be incremental and thus faster
@@ -76,7 +76,7 @@ void printNode(pll_unode_s *node)
 
 
 
-std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
+shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
 {
   auto prune = tree.getNode(pruneIndex_);
   auto regraft = tree.getNode(regraftIndex_);
@@ -111,7 +111,7 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
     savedBranches.push_back(branch);
   }
   assert(PLL_SUCCESS == pllmod_utree_spr(prune, regraft, &pll_rollback));
-  rollback_ = std::make_shared<SPRRollback>(tree, pll_rollback, savedBranches);
+  rollback_ = make_shared<SPRRollback>(tree, pll_rollback, savedBranches);
   return rollback_;
 }
   

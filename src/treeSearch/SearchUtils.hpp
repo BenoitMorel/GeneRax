@@ -1,8 +1,9 @@
 #ifndef JOINT_TREE_SEARCH_SEARCH_UTILS_HPP_
 #define JOINT_TREE_SEARCH_SEARCH_UTILS_HPP_
 
+#include <treeSearch/Moves.hpp>
+
 #include <memory>
-#include <treeSearch/Moves.h>
 
 using namespace std;
 

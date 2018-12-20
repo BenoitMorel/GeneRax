@@ -4,9 +4,23 @@
 #include <chrono>
 #include <iostream>
 #include <fstream>
+
 using namespace std;
 
 using TimePoint = chrono::high_resolution_clock::time_point;
+
+/**
+ *  All logs are printed to cout.
+ *  In parallel runs, only the master can log. 
+ *  init() must be called before using the Logger
+ *  if initFileOutput is called, logs are also printed
+ *  to the given file
+ *
+ *  Logger::info is used for normal logs
+ *  Logger::error is used for errors and prefixes messages with [Error]
+ *  Logger::time also pints the elapsed time since the start of the programm
+ *
+ */
 
 class Logger: public ofstream
 {
