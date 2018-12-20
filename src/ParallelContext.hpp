@@ -1,5 +1,4 @@
-#ifndef _JOINTSEARCH_PARALLEL_CONTEXT_HPP_
-#define _JOINTSEARCH_PARALLEL_CONTEXT_HPP_
+#pragma once
 
 #include <fstream>
 #include <vector>
@@ -71,5 +70,3 @@ private:
   
 };
 
-
-#endif

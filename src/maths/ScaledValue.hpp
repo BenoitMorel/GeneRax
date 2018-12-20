@@ -1,5 +1,4 @@
-#ifndef __SCALED_VALUE_HPP__ 
-#define __SCALED_VALUE_HPP__
+#pragma once
 
 #include <limits>
 #include <climits>
@@ -184,5 +183,3 @@ private:
 };
 
 
-
-#endif

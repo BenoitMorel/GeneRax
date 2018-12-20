@@ -1,5 +1,4 @@
-#ifndef _JOINTTREE_H_
-#define _JOINTTREE_H_
+#pragma once
 
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <likelihoods/ReconciliationEvaluation.hpp>
@@ -66,7 +65,5 @@ private:
     stack<shared_ptr<Rollback> > rollbacks_;
     double reconciliationLL_;
 };
-
-#endif
 
 

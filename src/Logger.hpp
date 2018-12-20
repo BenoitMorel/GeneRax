@@ -1,5 +1,4 @@
-#ifndef _JOINTSEQRCH_LOGGER_HPP_
-#define _JOINTSEQRCH_LOGGER_HPP_
+#pragma once
 
 #include <chrono>
 #include <iostream>
@@ -89,6 +88,4 @@ public:
   static TimePoint start;
   static ofstream *logFile;
 };
-
-#endif
 

@@ -1,6 +1,4 @@
-
-#ifndef JOINTSEARCH_RECONCILIATIONEVALUATION_HPP
-#define JOINTSEARCH_RECONCILIATIONEVALUATION_HPP
+#pragma once
 
 #include <Arguments.hpp>
 #include <parsers/GeneSpeciesMapping.hpp>
@@ -49,4 +47,3 @@ private:
   shared_ptr<AbstractReconciliationModel> reconciliationModel;
 };
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef _JOINTSEARCH_ARGUMENTS_HPP
-#define _JOINTSEARCH_ARGUMENTS_HPP
+#pragma once
 
 #include <string>
 using namespace std;
@@ -34,4 +33,3 @@ public:
   static bool noFelsensteinLikelihood;
 };
 
-#endif

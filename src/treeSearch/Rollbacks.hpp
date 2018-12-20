@@ -1,5 +1,4 @@
-#ifndef _ROLLBACKS_H_
-#define _ROLLBACKS_H_
+#pragma once
 
 #include <likelihoods/LibpllEvaluation.hpp>
 
@@ -52,5 +51,3 @@ private:
   vector<SavedBranch> branches_;
 };
 
-
-#endif

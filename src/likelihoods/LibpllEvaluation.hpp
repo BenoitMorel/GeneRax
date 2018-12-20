@@ -1,5 +1,4 @@
-#ifndef TREERECS_LIBPLLEVALUATE_H
-#define TREERECS_LIBPLLEVALUATE_H
+#pragma once
 
 extern "C" {
 #include <pll.h>
@@ -115,4 +114,3 @@ private:
   shared_ptr<pll_utree_t> utree_;
 };
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef _MOVES_H_
-#define _MOVES_H_
+#pragma once
 
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <treeSearch/Rollbacks.hpp>
@@ -39,4 +38,3 @@ private:
   shared_ptr<SPRRollback> rollback_;
 };
 
-#endif

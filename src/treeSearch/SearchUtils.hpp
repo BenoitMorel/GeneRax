@@ -1,5 +1,4 @@
-#ifndef JOINT_TREE_SEARCH_SEARCH_UTILS_HPP_
-#define JOINT_TREE_SEARCH_SEARCH_UTILS_HPP_
+#pragma once
 
 #include <treeSearch/Moves.hpp>
 
@@ -25,4 +24,3 @@ public:
     int &bestMoveIndex);
 };
 
-#endif

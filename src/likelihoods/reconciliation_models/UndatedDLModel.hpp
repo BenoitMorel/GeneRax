@@ -1,5 +1,4 @@
-#ifndef JOINTSEARCH_UNDATEDDLMODEL_HPP_
-#define JOINTSEARCH_UNDATEDDLMODEL_HPP_
+#pragma once
 
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
@@ -69,6 +68,4 @@ private:
   void updateCLVs(pllmod_treeinfo_t &treeinfo);
   pll_unode_t *computeLikelihoods(pllmod_treeinfo_t &treeinfo, ScaledValue &bestValue);
 };
-
-#endif
 

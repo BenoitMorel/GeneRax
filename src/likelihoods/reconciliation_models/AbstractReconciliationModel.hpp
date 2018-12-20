@@ -1,5 +1,4 @@
-#ifndef _ABSTRACT_MODEL_HPP_
-#define _ABSTRACT_MODEL_HPP_
+#pragma once
 
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <parsers/GeneSpeciesMapping.hpp>
@@ -60,4 +59,3 @@ private:
 };
 
 
-#endif

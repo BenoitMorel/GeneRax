@@ -1,5 +1,4 @@
-#ifndef _SPR_SEARCH_H_
-#define _SPR_SEARCH_H_
+#pragma once
 
 class JointTree;
 
@@ -9,4 +8,3 @@ public:
     static bool applySPRRound(JointTree &jointTree, int radius, double &bestLoglk);
 };
 
-#endif
