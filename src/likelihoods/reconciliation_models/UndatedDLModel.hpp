@@ -23,7 +23,7 @@ public:
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);  
   // overloaded from parent
   virtual void invalidateCLV(int nodeIndex);
-  
+    
 protected:
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
   virtual double computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo);
@@ -56,8 +56,10 @@ private:
 
   // set of invalid CLVs. All the CLVs from these CLVs to
   // the root(s) need to be recomputed
-  unordered_set<int> invalidCLVs;
+  unordered_set<int> invalidatedNodes;
 
+  // is the CLV up to date?
+  vector<bool> isCLVUpdated;
 
   int maxId;
 
@@ -65,7 +67,7 @@ private:
   vector<unsigned long> repeatsId; // repeatsId[geneId]
   vector<vector<ScaledValue> > cache_;
 private:
-  void getCLVsToUpdate(pllmod_treeinfo_t &treeinfo, unordered_set<int> &nodesToUpdate);
+  void getCLVsToUpdate(pllmod_treeinfo_t &treeinfo);
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
       bool isVirtualRoot = false) const;
@@ -76,5 +78,9 @@ private:
   void computeLikelihoods(pllmod_treeinfo_t &treeinfo);
   void updateRoot(pllmod_treeinfo_t &treeinfo);
   double getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  void invalidateAllCLVs();
+  void updateCLVsRec(pll_unode_t *node);
+  void markInvalidatedNodes(pllmod_treeinfo_t &treeinfo);
+  void markInvalidatedNodesRec(pll_unode_t *node);
 };
 

@@ -136,6 +136,10 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
     jointTree.applyMove(allMoves[bestMoveIndex]);
     jointTree.optimizeMove(allMoves[bestMoveIndex]);
     double ll = jointTree.computeJointLoglk();
+    if (fabs(ll - bestLoglk) > 0.00000001) {
+      cerr << ll << " " << bestLoglk << " " 
+        << jointTree.computeJointLoglk() << endl;
+    }
     assert(fabs(ll - bestLoglk) < 0.00000001);
   }
   return foundBetterMove;

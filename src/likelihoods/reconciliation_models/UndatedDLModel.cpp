@@ -9,6 +9,7 @@ UndatedDLModel::UndatedDLModel(pll_rtree_t *speciesTree, const GeneSpeciesMappin
   AbstractReconciliationModel(speciesTree, map),
   allCLVInvalid(true)
 {
+  maxId = 1;
   Logger::info << "creating undated dl model" << endl;
 }
 
@@ -28,6 +29,7 @@ void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
   uq = vector<vector<ScaledValue> >(maxId + 1,zeros);
   virtual_uq = vector<vector<ScaledValue> > (maxId + 1,zeros);
   repeatsId = vector<unsigned long>(maxId + 1, 0);
+  invalidateAllCLVs();
 }
 
 double solveSecondDegreePolynome(double a, double b, double c) 
@@ -64,83 +66,51 @@ void UndatedDLModel::setRates(double dupRate,
     ASSERT_PROBA(proba)
     uE[speciesNode->node_index] = proba;
   }
-  allCLVInvalid = true;
+  invalidateAllCLVs();
 }
 
 UndatedDLModel::~UndatedDLModel() { }
 
-bool isPresent(pll_unode_t *node, const unordered_set<int> &set) 
+void UndatedDLModel::markInvalidatedNodesRec(pll_unode_t *node)
 {
-  assert(node);
-  return set.find(node->node_index) != set.end();
+  isCLVUpdated[node->node_index] = false;
+  if (node->back->next) {
+    markInvalidatedNodesRec(node->back->next);
+    markInvalidatedNodesRec(node->back->next->next);
+  }
 }
 
-bool getCLVsToUpdateRec(pll_unode_t *node, 
-  const unordered_set<int> &invalidCLVs, 
-  unordered_set<int> &nodesToUpdate, 
-  unordered_set<int> &marked) 
+void UndatedDLModel::markInvalidatedNodes(pllmod_treeinfo_t &treeinfo)
 {
-  assert(node);
-  if (isPresent(node, marked)) {
-    return isPresent(node, nodesToUpdate);
+  for (int nodeIndex: invalidatedNodes) {
+    auto node = treeinfo.subnodes[nodeIndex];
+    markInvalidatedNodesRec(node);
   }
-  marked.insert(node->node_index);
-  bool needToUpdate = false; 
-  if (isPresent(node, invalidCLVs)) {
-    needToUpdate = true;
+  invalidatedNodes.clear();
+}
+
+void UndatedDLModel::updateCLVsRec(pll_unode_t *node)
+{
+  if (isCLVUpdated[node->node_index]) {
+    return;
   }
   if (node->next) {
-    needToUpdate |= getCLVsToUpdateRec(node->next->back, invalidCLVs, nodesToUpdate, marked);
-    needToUpdate |= getCLVsToUpdateRec(node->next->next->back, invalidCLVs, nodesToUpdate, marked);
+    updateCLVsRec(node->next->back);
+    updateCLVsRec(node->next->next->back);
   }
-  if (needToUpdate) {
-    nodesToUpdate.insert(node->node_index);
-  }  
-  return needToUpdate;
-}
-
-void UndatedDLModel::getCLVsToUpdate(pllmod_treeinfo_t &treeinfo, unordered_set<int> &nodesToUpdate)
-{
-  nodesToUpdate.clear();
-  if (allCLVInvalid) {
-    for (int i = 0; i < (int) geneIds.size(); i++) {
-      nodesToUpdate.insert(geneIds[i]);
-    }
-  } else {
-    unordered_set<int> marked;
-    if (!getRoot()) {
-      for (int i = 0; i < (int) geneIds.size(); i++) {
-        auto node = treeinfo.subnodes[geneIds[i]];    
-        assert(node);
-        getCLVsToUpdateRec(node, invalidCLVs, nodesToUpdate, marked);
-      }
-    } else {
-      vector<pll_unode_t *> roots;
-      getRoots(treeinfo, roots, geneIds);
-      for (auto root: roots) {
-        getCLVsToUpdateRec(root, invalidCLVs, nodesToUpdate, marked);
-        getCLVsToUpdateRec(root->back, invalidCLVs, nodesToUpdate, marked);
-
-      }
-    }
-  }
+  updateCLV(node);
+  isCLVUpdated[node->node_index] = true;
 }
 
 void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
 {
-  unordered_set<int>  nodesToUpdate;
-  allCLVInvalid = true; // TODO BENOIT
-  if (!allCLVInvalid) {
-    getCLVsToUpdate(treeinfo, nodesToUpdate);
+  markInvalidatedNodes(treeinfo);
+  vector<pll_unode_t *> roots;
+  getRoots(treeinfo, roots, geneIds);
+  for (auto root: roots) {
+    updateCLVsRec(root);
+    updateCLVsRec(root->back);
   }
-  for (int i = 0; i < (int) geneIds.size(); i++) {
-    auto node = treeinfo.subnodes[geneIds[i]];
-    if (allCLVInvalid || isPresent(node, nodesToUpdate)) {
-      updateCLV(node);
-    }
-  }
-  allCLVInvalid = false;
-  invalidCLVs.clear();
 }
 void UndatedDLModel::computeGeneProbabilities(pll_unode_t *geneNode,
   vector<ScaledValue> &clv)
@@ -188,7 +158,12 @@ void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
 
 void UndatedDLModel::invalidateCLV(int nodeIndex)
 {
-  invalidCLVs.insert(nodeIndex);
+  invalidatedNodes.insert(nodeIndex);
+}
+  
+void UndatedDLModel::invalidateAllCLVs()
+{
+  isCLVUpdated = vector<bool>(maxId + 1, false);
 }
 
 void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
