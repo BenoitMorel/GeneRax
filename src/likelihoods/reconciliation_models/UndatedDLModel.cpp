@@ -227,7 +227,7 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
     // D event
     ScaledValue temp = uq[gp_i][e];
     temp *= uq[gpp_i][e];
-    temp *= 2.0 * PD[e];
+    temp *= PD[e];
     proba += temp;
   }
   if (not isSpeciesLeaf) {
