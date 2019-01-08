@@ -43,9 +43,9 @@ private:
 
   // likelihoods[geneId][speciesId] = probability of a virtual root present at 
   // a species node to produce the tree under this virtual root
-  vector<vector<ScaledValue> > likelihoods;
+  vector<vector<ScaledValue> > virtual_uq;
 
-  // ll[speciesId] = likelihood of a gene tree to be present under a species node
+  // ll[speciesId] = likelihood of the (rooted or unrooted) gene tree to be present under a species node
   vector<ScaledValue> ll; // sam
  
   // geme ids in postorder 
@@ -73,6 +73,8 @@ private:
       vector<ScaledValue> &clv);
   void updateCLV(pll_unode_t *geneNode);
   void updateCLVs(pllmod_treeinfo_t &treeinfo);
-  pll_unode_t *computeLikelihoods(pllmod_treeinfo_t &treeinfo);
+  void computeLikelihoods(pllmod_treeinfo_t &treeinfo);
+  void updateRoot(pllmod_treeinfo_t &treeinfo);
+  double getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
 };
 

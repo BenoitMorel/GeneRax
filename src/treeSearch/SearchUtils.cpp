@@ -25,7 +25,7 @@ void SearchUtils::testMove(JointTree &jointTree,
     jointTree.rollbackLastMove();
     if(Arguments::check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
       cerr.precision(17);
-      cerr << "rollback lead to different likelihoods: " << initialLoglk
+      cerr << "small rollback lead to different likelihoods: " << initialLoglk
         << " " << jointTree.computeJointLoglk() << endl;
       cerr << " rank " << ParallelContext::getRank() << endl;
       cerr << "Move: " << *move << endl;
@@ -36,13 +36,18 @@ void SearchUtils::testMove(JointTree &jointTree,
   jointTree.optimizeMove(move);
   newLoglk = recLoglk +  jointTree.computeLibpllLoglk(true);
   jointTree.rollbackLastMove();
-  if(Arguments::check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
-    cerr.precision(17);
-    cerr << "rollback lead to different likelihoods: " << initialLoglk
-      << " " << jointTree.computeJointLoglk() << endl;
-    cerr << " rank " << ParallelContext::getRank() << endl;
-    cerr << "Move: " << *move << endl;
-    exit(1);
+  if(Arguments::check) {
+    auto newLoglk = jointTree.computeJointLoglk();
+    if (fabs(initialLoglk - newLoglk) > 0.000001) {
+      jointTree.printLoglk();
+      cerr.precision(17);
+      cerr << "rollback lead to different likelihoods: " << initialLoglk
+        << " " << newLoglk << endl;
+      cerr << "recomputing the ll again: " << jointTree.computeJointLoglk() << endl;
+      cerr << " rank " << ParallelContext::getRank() << endl;
+      cerr << "Move: " << *move << endl;
+      exit(1);
+    }
   }
 }
   
@@ -51,9 +56,8 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
     double &bestLoglk,
     int &bestMoveIndex)
 {
-  cout << "best before " << bestLoglk << endl;
   bestMoveIndex = -1;
-  double initialLoglk = jointTree.computeJointLoglk();
+  double initialLoglk = bestLoglk; //jointTree.computeJointLoglk();
   double initialReconciliationLoglk = jointTree.computeReconciliationLoglk();
   double initialLibpllLoglk = jointTree.computeLibpllLoglk();
   double averageReconciliationDiff = 0;
@@ -77,7 +81,6 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
   int bestRank = 0;
   ParallelContext::getMax(bestLoglk, bestRank);
   ParallelContext::broadcastInt(bestRank, bestMoveIndex);
-  cout << "best " << bestLoglk << endl;
   return bestMoveIndex != -1;
 }
 

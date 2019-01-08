@@ -29,12 +29,13 @@ void AbstractReconciliationModel::getIdsPostOrder(pllmod_treeinfo_t &tree, vecto
   int nodesNumber = tree.subnode_count;
   nodeIds.clear();
   vector<bool> marked(nodesNumber, false);
+  /*
   if (Arguments::rootedGeneTree && geneRoot_) {
     getIdsPostOrderRec(geneRoot_, marked, nodeIds);
     getIdsPostOrderRec(geneRoot_->back, marked, nodeIds);
     return;
   } 
-  
+  */
   for (int i = 0; i < nodesNumber; ++i) {
     getIdsPostOrderRec(tree.subnodes[i], marked, nodeIds);
   }
@@ -94,7 +95,6 @@ void AbstractReconciliationModel::getRoots(pllmod_treeinfo_t &treeinfo,
   roots.clear();
   if (Arguments::rootedGeneTree && geneRoot_) {
     roots.push_back(geneRoot_);
-    /*
     if (geneRoot_->next) {
       roots.push_back(geneRoot_->next);
       roots.push_back(geneRoot_->next->next);
@@ -103,7 +103,6 @@ void AbstractReconciliationModel::getRoots(pllmod_treeinfo_t &treeinfo,
       roots.push_back(geneRoot_->back->next);
       roots.push_back(geneRoot_->back->next->next);
     }
-    */
     return;
   }
   vector<bool> marked(geneIds.size(), false);

@@ -21,9 +21,6 @@ void SPRRollback::applyRollback() {
   tree_.invalidateCLV(prune->next->next->back);
   tree_.invalidateCLV(regraft);
   tree_.invalidateCLV(regraft->back);
-  if (tree_.getRoot() != root_) {
-    cout << "root change" << endl;
-    tree_.setRoot(root_);
-  }
+  tree_.setRoot(root_);
 }
 
