@@ -41,6 +41,10 @@ private:
   // to produce the subtree of this gene node
   vector<vector<ScaledValue> > uq;
 
+  // likelihoods[geneId][speciesId] = probability of a virtual root present at 
+  // a species node to produce the tree under this virtual root
+  vector<vector<ScaledValue> > likelihoods;
+
   // ll[speciesId] = likelihood of a gene tree to be present under a species node
   vector<ScaledValue> ll; // sam
  
@@ -54,6 +58,9 @@ private:
   // the root(s) need to be recomputed
   unordered_set<int> invalidCLVs;
 
+
+  int maxId;
+
   // repeats
   vector<unsigned long> repeatsId; // repeatsId[geneId]
   vector<vector<ScaledValue> > cache_;
@@ -61,11 +68,11 @@ private:
   void getCLVsToUpdate(pllmod_treeinfo_t &treeinfo, unordered_set<int> &nodesToUpdate);
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
-      bool isVirtualRoot = false);
+      bool isVirtualRoot = false) const;
   void computeGeneProbabilities(pll_unode_t *geneNode, 
       vector<ScaledValue> &clv);
   void updateCLV(pll_unode_t *geneNode);
   void updateCLVs(pllmod_treeinfo_t &treeinfo);
-  pll_unode_t *computeLikelihoods(pllmod_treeinfo_t &treeinfo, ScaledValue &bestValue);
+  pll_unode_t *computeLikelihoods(pllmod_treeinfo_t &treeinfo);
 };
 

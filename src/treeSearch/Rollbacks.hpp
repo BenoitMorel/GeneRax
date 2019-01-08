@@ -32,10 +32,12 @@ class SPRRollback: public Rollback {
 public:
   SPRRollback(JointTree &tree, 
       pll_tree_rollback_t &rollback,
-      const vector<SavedBranch> &branches):
+      const vector<SavedBranch> &branches,
+      pll_unode_t *root):
     tree_(tree),
     rollback_(rollback),
-    branches_(branches)
+    branches_(branches),
+    root_(root)
   {}
   
   void saveBranch(const SavedBranch &branch)
@@ -49,5 +51,6 @@ private:
   JointTree &tree_;
   pll_tree_rollback_t rollback_;
   vector<SavedBranch> branches_;
+  pll_unode_t *root_;
 };
 

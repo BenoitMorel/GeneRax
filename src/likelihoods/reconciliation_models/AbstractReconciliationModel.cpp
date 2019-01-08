@@ -1,5 +1,6 @@
 #include "AbstractReconciliationModel.hpp"
 #include <Arguments.hpp>
+#include <Logger.hpp>
 
 AbstractReconciliationModel::AbstractReconciliationModel(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map):
   geneRoot_(0),
@@ -93,16 +94,26 @@ void AbstractReconciliationModel::getRoots(pllmod_treeinfo_t &treeinfo,
   roots.clear();
   if (Arguments::rootedGeneTree && geneRoot_) {
     roots.push_back(geneRoot_);
+    /*
+    if (geneRoot_->next) {
+      roots.push_back(geneRoot_->next);
+      roots.push_back(geneRoot_->next->next);
+    }
+    if (geneRoot_->back->next) {
+      roots.push_back(geneRoot_->back->next);
+      roots.push_back(geneRoot_->back->next->next);
+    }
+    */
     return;
   }
   vector<bool> marked(geneIds.size(), false);
   for (auto id: geneIds) {
     auto node = treeinfo.subnodes[id];
-    if (marked[node->clv_index] || marked[node->back->clv_index]) {
+    if (marked[node->node_index] || marked[node->back->node_index]) {
       continue;
     }
-    roots.push_back(node);
-    marked[node->clv_index] = true;
+    roots.push_back(node->back);
+    marked[node->node_index] = true;
   }
 }
   

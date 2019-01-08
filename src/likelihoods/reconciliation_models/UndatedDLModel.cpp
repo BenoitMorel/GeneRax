@@ -20,12 +20,13 @@ void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   AbstractReconciliationModel::setInitialGeneTree(treeinfo);
   getIdsPostOrder(*treeinfo, geneIds); 
-  int maxId = 0;
+  maxId = 0;
   for (auto gid: geneIds)
     maxId = max(maxId, gid);
   // init ua with zeros
   vector<ScaledValue> zeros(speciesNodesCount_);
   uq = vector<vector<ScaledValue> >(maxId + 1,zeros);
+  likelihoods = vector<vector<ScaledValue> > (maxId + 1,zeros);
   ll = vector<ScaledValue>(speciesNodesCount_);
   repeatsId = vector<unsigned long>(maxId + 1, 0);
 }
@@ -115,8 +116,13 @@ void UndatedDLModel::getCLVsToUpdate(pllmod_treeinfo_t &treeinfo, unordered_set<
         getCLVsToUpdateRec(node, invalidCLVs, nodesToUpdate, marked);
       }
     } else {
-      getCLVsToUpdateRec(getRoot(), invalidCLVs, nodesToUpdate, marked);
-      getCLVsToUpdateRec(getRoot()->back, invalidCLVs, nodesToUpdate, marked);
+      vector<pll_unode_t *> roots;
+      getRoots(treeinfo, roots, geneIds);
+      for (auto root: roots) {
+        getCLVsToUpdateRec(root, invalidCLVs, nodesToUpdate, marked);
+        getCLVsToUpdateRec(root->back, invalidCLVs, nodesToUpdate, marked);
+
+      }
     }
   }
 }
@@ -187,7 +193,7 @@ void UndatedDLModel::invalidateCLV(int nodeIndex)
 
 void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
-      bool isVirtualRoot)
+      bool isVirtualRoot) const
 {
   int gid = geneNode->node_index;
   pll_unode_t *leftGeneNode = 0;     
@@ -232,64 +238,82 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
           uq[gid][g], uE[f],
           PS[e]);
     } else {
+      /*
       proba += ScaledValue::superMult2(
           ll[f], uE[g],
           ll[g], uE[f],
           PS[e]);
+          */
     }
   }
   proba /= (1.0 - 2.0 * PD[e] * uE[e]); 
 }
 
-pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo,
-    ScaledValue &bestValue)
+pll_unode_t * UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
 {
+  for (auto speciesNode: speciesNodes_) {
+    ll[speciesNode->node_index] = ScaledValue();
+  }
+  vector<ScaledValue> zeros(speciesNodesCount_); 
   vector<pll_unode_t *> roots;
   getRoots(treeinfo, roots, geneIds);
-  pll_unode_t *bestRoot = 0;
-  for (auto speciesNode: speciesNodes_) {
-    int e = speciesNode->node_index;
-    ScaledValue total;
-    for (auto root: roots) {
+  for (auto root: roots) {
+    int u = root->node_index;
+    int uprime = root->back->node_index;
+    ScaledValue rootLL;
+    for (auto speciesNode: speciesNodes_) {
+      int e = speciesNode->node_index;
       pll_unode_t virtual_root;
       virtual_root.next = root;
-      ScaledValue value;
-      computeProbability(&virtual_root, speciesNode, value, true);
-      if (Arguments::rootedGeneTree) {
-        if (bestValue < value) {
-          bestValue = value;
-          bestRoot = root;
-        }
-      } else {
-        total += value;
+      computeProbability(&virtual_root, speciesNode, likelihoods[u][e], true);
+      likelihoods[uprime][e] = likelihoods[u][e];
+      rootLL += likelihoods[u][e];
+    }
+  }
+  if (Arguments::rootedGeneTree && !getRoot()) {
+    // find the best root
+    ScaledValue max;
+    for (auto root: roots) {
+      ScaledValue sum;
+      int u = root->node_index;
+      for (auto speciesNode: speciesNodes_) {
+        int e = speciesNode->node_index;
+        sum += likelihoods[u][e];
+      }
+      if (max < sum) {
+        setRoot(root);
+        max = sum;
       }
     }
-    ll[e] = total;
   }
-  return bestRoot;
+ 
+  if (Arguments::rootedGeneTree) {
+    getRoots(treeinfo, roots, geneIds);
+  }
+
+  for (auto root: roots) {
+    int u = root->node_index;
+    ScaledValue rootLL;
+    for (auto speciesNode: speciesNodes_) {
+      int e = speciesNode->node_index;
+      ll[e] += likelihoods[u][e];
+      rootLL += likelihoods[u][e];
+    }
+  }
+  return 0;
 }
-
-
 
 
 double UndatedDLModel::computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   getIdsPostOrder(*treeinfo, geneIds); 
-
   // main loop
+  bool noRoot = !getRoot() && Arguments::rootedGeneTree ;
   updateCLVs(*treeinfo);
-  ScaledValue bestValue;
-  auto bestRoot = computeLikelihoods(*treeinfo, bestValue);
-  if (bestRoot) {
-    geneRoot_ = bestRoot;
-  }
+  computeLikelihoods(*treeinfo);
   ScaledValue total;
-  if (!Arguments::rootedGeneTree) {
-    for (int e = 0; e < speciesNodesCount_; e++) {
-      total += ll[e];
-    }
-  } else {
-    total = bestValue;
+  for (int e = 0; e < speciesNodesCount_; e++) {
+    total += ll[e];
   }
   double res = total.getLogValue(); //log(root_sum / survive / O_norm * (speciesNodesCount_));
   return res;

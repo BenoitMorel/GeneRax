@@ -32,6 +32,9 @@ public:
   void setRates(double dupRate, double lossRate, 
     double transferRate = 0.0);
 
+  pll_unode_t *getRoot() {return reconciliationModel->getRoot();}
+  void setRoot(pll_unode_t * root) {reconciliationModel->setRoot(root);}
+
   /**
    *  @param input treeinfo
    *  @return the reconciliation likelihood of this tree

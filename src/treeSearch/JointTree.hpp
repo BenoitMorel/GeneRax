@@ -49,6 +49,9 @@ public:
     pll_rtree_t *getSpeciesTree() {return pllSpeciesTree_;}
     size_t getUnrootedTreeHash();
     shared_ptr<ReconciliationEvaluation> getReconciliationEvaluation() {return reconciliationEvaluation_;}
+    
+    pll_unode_t *getRoot() {return reconciliationEvaluation_->getRoot();}
+    void setRoot(pll_unode_t * root) {reconciliationEvaluation_->setRoot(root);}
 private:
     void findBestRates(double minDup, double maxDup,
         double minLoss, double maxLoss, int steps,

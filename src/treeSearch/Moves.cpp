@@ -78,6 +78,7 @@ void printNode(pll_unode_s *node)
 
 shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
 {
+  auto root = tree.getRoot();
   auto prune = tree.getNode(pruneIndex_);
   auto regraft = tree.getNode(regraftIndex_);
   tree.invalidateCLV(prune->next->back);
@@ -111,7 +112,7 @@ shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
     savedBranches.push_back(branch);
   }
   assert(PLL_SUCCESS == pllmod_utree_spr(prune, regraft, &pll_rollback));
-  rollback_ = make_shared<SPRRollback>(tree, pll_rollback, savedBranches);
+  rollback_ = make_shared<SPRRollback>(tree, pll_rollback, savedBranches, root);
   return rollback_;
 }
   

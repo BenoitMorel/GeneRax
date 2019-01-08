@@ -21,6 +21,8 @@ public:
   
   virtual void invalidateCLV(int nodeIndex) {}
   
+  virtual void setRoot(pll_unode_t * root) {geneRoot_ = root;}
+  virtual pll_unode_t *getRoot() {return geneRoot_;}
 
 protected:
   // called by the constructor
@@ -32,17 +34,16 @@ protected:
   // Called by computeLogLikelihood
   virtual double computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo) = 0;
  
-  virtual void setRoot(pll_unode_t * root) {geneRoot_ = root;}
-
-  virtual pll_unode_t *getRoot() {return geneRoot_;}
   
   void getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds);
   void mapGenesToSpecies(pllmod_treeinfo_t &treeinfo);
+  
+  
   void getRoots(pllmod_treeinfo_t &treeinfo, 
     vector<pll_unode_t *> &roots,
     const vector<int> &geneIds);
-  pll_unode_t *getLeft(pll_unode_t *node, bool virtualRoot);  
-  pll_unode_t *getRight(pll_unode_t *node, bool virtualRoot);  
+  static pll_unode_t *getLeft(pll_unode_t *node, bool virtualRoot);  
+  static pll_unode_t *getRight(pll_unode_t *node, bool virtualRoot) ;  
 protected:
   pll_unode_t *geneRoot_;
   int speciesNodesCount_;

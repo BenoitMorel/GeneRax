@@ -135,6 +135,8 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
   if (foundBetterMove) {
     jointTree.applyMove(allMoves[bestMoveIndex]);
     jointTree.optimizeMove(allMoves[bestMoveIndex]);
+    double ll = jointTree.computeJointLoglk();
+    assert(fabs(ll - bestLoglk) < 0.00000001);
   }
   return foundBetterMove;
 }
@@ -148,7 +150,14 @@ void SPRSearch::applySPRSearch(JointTree &jointTree)
 
   while (applySPRRound(jointTree, 1, bestLoglk)) {}
   jointTree.optimizeParameters();
+  cout << "ll " << jointTree.computeLibpllLoglk() << endl;
+  cout << "ll " << jointTree.computeLibpllLoglk() << endl;
+  cout << "ll " << jointTree.computeLibpllLoglk() << endl;
+  cout << "lr " << jointTree.computeReconciliationLoglk() << endl;
+  cout << "lr " << jointTree.computeReconciliationLoglk() << endl;
+  cout << "lr " << jointTree.computeReconciliationLoglk() << endl;
   bestLoglk = jointTree.computeJointLoglk();
+  cout << "bestLoglk " << bestLoglk << endl;
   while (applySPRRound(jointTree, 1, bestLoglk)) {}
   jointTree.optimizeParameters(true, false);
   bestLoglk = jointTree.computeJointLoglk();

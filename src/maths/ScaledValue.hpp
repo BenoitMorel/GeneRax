@@ -7,29 +7,25 @@
 #define JS_SCALE_FACTOR 115792089237316195423570985008687907853269984665640564039457584007913129639936.0  /*  2**256 (exactly)  */
 #define JS_SCALE_THRESHOLD (1.0/JS_SCALE_FACTOR)
 
+const int NULL_SCALER = INT_MAX / 2 - 1;
 
 /*
  *  Class representing a double value with a high precision. It stores a double
  *  value, and a integer scaling value to represent very small values
  *
- *  When the value is null, the scaler is set to INT_MAX
+ *  When the value is null, the scaler is set to NULL_SCALER
  */
 class ScaledValue {
 public:
   /**
    * Constructor for a null value
    */
-  ScaledValue():value(0), scaler(INT_MAX) {
+  ScaledValue():value(0), scaler(NULL_SCALER) {
   }
 
-  /**
-   * General constructor
-   * @param v: value
-   * @param s: scaler
-   */
-  explicit ScaledValue(double v, int s = 0):value(v), scaler(s) {
+  void scale() {
     if (value == 0) {
-      scaler = INT_MAX;
+      scaler = NULL_SCALER;
       value = 0;
     }
     else {
@@ -38,7 +34,30 @@ public:
         value *= JS_SCALE_FACTOR;
       }
     }
+  }
+
+  /**
+   * General constructor
+   * @param v: value
+   * @param s: scaler
+   */
+  explicit ScaledValue(double v, int s = 0):value(v), scaler(s) {
+    scale();
   } 
+
+  /*
+  ScaledValue(const ScaledValue &v):value(v.value), scaler(v.scaler) {
+    if (value == 0) {
+      scaler = NULL_SCALER;
+      value = 0;
+    }
+    else {
+      while (value < JS_SCALE_THRESHOLD) {
+        scaler += 1;
+        value *= JS_SCALE_FACTOR;
+      }
+    }
+  } */
 
   /**
    * ScaledValue sum operator
@@ -78,9 +97,9 @@ public:
    */
   inline ScaledValue& operator*=(const ScaledValue& v) {
     value *= v.value;
-    if (scaler != INT_MAX) {
+    if (scaler != NULL_SCALER) {
       scaler += v.scaler;   
-    }
+    } 
     return *this;
   }
 
@@ -129,7 +148,7 @@ public:
    * @return the logarithm value as a double
    */
   inline double getLogValue() {
-    if (scaler == INT_MAX) {
+    if (scaler == NULL_SCALER) {
       return -std::numeric_limits<double>::infinity();
     }
     return log(value) + scaler * log(JS_SCALE_THRESHOLD);
@@ -156,7 +175,7 @@ public:
    *  Special sequence of operation often used in JointSearch
    *  @return (x1*x2 + y1 * y2) * factor
    */
-  static inline ScaledValue superMult2(const ScaledValue &x1, double &x2,
+  static inline ScaledValue superMult2(const ScaledValue &x1, double x2,
       const ScaledValue &y1, const double &y2,
       double factor)
   {
