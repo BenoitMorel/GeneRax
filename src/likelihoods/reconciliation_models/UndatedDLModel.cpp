@@ -195,7 +195,7 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
       ScaledValue &proba,
       bool isVirtualRoot) const
 {
-  int gid = geneNode->node_index;
+  int gid = isVirtualRoot ? geneNode->next->node_index : geneNode->node_index;
   pll_unode_t *leftGeneNode = 0;     
   pll_unode_t *rightGeneNode = 0;     
   bool isGeneLeaf = !geneNode->next;
@@ -238,12 +238,10 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
           uq[gid][g], uE[f],
           PS[e]);
     } else {
-      /*
       proba += ScaledValue::superMult2(
-          ll[f], uE[g],
-          ll[g], uE[f],
+          likelihoods[gid][f], uE[g],
+          likelihoods[gid][g], uE[f],
           PS[e]);
-          */
     }
   }
   proba /= (1.0 - 2.0 * PD[e] * uE[e]); 

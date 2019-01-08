@@ -150,14 +150,7 @@ void SPRSearch::applySPRSearch(JointTree &jointTree)
 
   while (applySPRRound(jointTree, 1, bestLoglk)) {}
   jointTree.optimizeParameters();
-  cout << "ll " << jointTree.computeLibpllLoglk() << endl;
-  cout << "ll " << jointTree.computeLibpllLoglk() << endl;
-  cout << "ll " << jointTree.computeLibpllLoglk() << endl;
-  cout << "lr " << jointTree.computeReconciliationLoglk() << endl;
-  cout << "lr " << jointTree.computeReconciliationLoglk() << endl;
-  cout << "lr " << jointTree.computeReconciliationLoglk() << endl;
   bestLoglk = jointTree.computeJointLoglk();
-  cout << "bestLoglk " << bestLoglk << endl;
   while (applySPRRound(jointTree, 1, bestLoglk)) {}
   jointTree.optimizeParameters(true, false);
   bestLoglk = jointTree.computeJointLoglk();
