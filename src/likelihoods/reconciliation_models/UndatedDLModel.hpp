@@ -16,7 +16,7 @@ using namespace std;
 */
 class UndatedDLModel: public AbstractReconciliationModel {
 public:
-  UndatedDLModel(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map);
+  UndatedDLModel();
   virtual ~UndatedDLModel();
   
   // overloaded from parent

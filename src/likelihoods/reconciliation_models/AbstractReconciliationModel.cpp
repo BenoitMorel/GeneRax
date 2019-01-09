@@ -2,9 +2,12 @@
 #include <Arguments.hpp>
 #include <Logger.hpp>
 
-AbstractReconciliationModel::AbstractReconciliationModel(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map):
+AbstractReconciliationModel::AbstractReconciliationModel():
   geneRoot_(0),
   firstCall_(true)
+{
+}
+void AbstractReconciliationModel::init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map)
 {
   setSpeciesTree(speciesTree);
   setGeneSpeciesMap(map);

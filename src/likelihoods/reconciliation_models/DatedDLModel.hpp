@@ -10,7 +10,7 @@ using namespace std;
 
 class DatedDLModel: public AbstractReconciliationModel {
 public:
-  DatedDLModel(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map);
+  DatedDLModel();
   virtual ~DatedDLModel() {};
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);
 protected:

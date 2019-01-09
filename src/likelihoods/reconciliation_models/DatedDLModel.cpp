@@ -109,11 +109,9 @@ double DatedDLModel::propagatePropagationProba(double initialProba, double branc
 
 
 
-DatedDLModel::DatedDLModel(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map):
-  AbstractReconciliationModel(speciesTree, map),
+DatedDLModel::DatedDLModel():
   probaGeneSampled_(1.0)
 {
-
 }
 
 void DatedDLModel::setRates(double dupRate, double lossRate, double transferRate)

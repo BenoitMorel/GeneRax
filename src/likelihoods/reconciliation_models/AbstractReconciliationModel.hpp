@@ -11,7 +11,14 @@
  */
 class AbstractReconciliationModel {
 public:
-  AbstractReconciliationModel(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map);
+  AbstractReconciliationModel();
+     
+  /**
+   *  Has to be called just after the constructor before anything else
+   *  We do not call it in the constructor because it is virtual and
+   *  calls virtual functions
+   */
+  virtual void init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map);
   
   virtual ~AbstractReconciliationModel() {};
   

@@ -10,13 +10,14 @@ ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
   Arguments::ReconciliationModel model)
 {
   if (model == Arguments::UndatedDL) {
-    reconciliationModel = make_shared<UndatedDLModel>(speciesTree, map);
+    reconciliationModel = make_shared<UndatedDLModel>();
   } else if (model == Arguments::DatedDL) {
-    reconciliationModel = make_shared<DatedDLModel>(speciesTree, map);
+    reconciliationModel = make_shared<DatedDLModel>();
   } else {
     Logger::error << "Invalid reconciliation model!" << endl;
     exit(1);
   }
+  reconciliationModel->init(speciesTree, map);
 }
 
 void ReconciliationEvaluation::setRates(double dupRate, double lossRate,

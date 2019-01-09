@@ -5,8 +5,7 @@
 using namespace std;
 const int CACHE_SIZE = 100000;
 
-UndatedDLModel::UndatedDLModel(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map) :
-  AbstractReconciliationModel(speciesTree, map),
+UndatedDLModel::UndatedDLModel():
   allCLVInvalid(true)
 {
   maxId = 1;
