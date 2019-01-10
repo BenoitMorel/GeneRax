@@ -201,6 +201,9 @@ shared_ptr<pllmod_treeinfo_t> JointTree::getTreeInfo() {
   return libpllEvaluation_->getTreeInfo();
 }
 
+bool isValidLikelihood(double ll) {
+  return isnormal(ll) && ll < 100000000000;
+}
 
 void JointTree::findBestRates(double minDup, double maxDup,
     double minLoss, double maxLoss, int steps,
@@ -219,6 +222,9 @@ void JointTree::findBestRates(double minDup, double maxDup,
     double loss = minLoss + (maxLoss - minLoss) * double(j) / double(steps);
     setRates(dup, loss);
     double newLL = computeReconciliationLoglk();
+    if (!isValidLikelihood(newLL)) {
+      continue;
+    }
     if (newLL > bestLL) { 
       bestDup = dup;
       bestLoss = loss;
@@ -231,6 +237,7 @@ void JointTree::findBestRates(double minDup, double maxDup,
   ParallelContext::broadcastDouble(bestRank, bestLoss);
   setRates(bestDup, bestLoss);
 }
+
 
 void JointTree::optimizeDTRates() {
   double bestLL = numeric_limits<double>::lowest();
@@ -263,6 +270,10 @@ void JointTree::optimizeDTRates() {
     firstIt = false;
   } while (fabs(newLL - bestLL) > epsilon);
   Logger::info << " best rates: " << bestDup << " " << bestLoss <<  " " << newLL << endl;
+  if  (!isValidLikelihood(newLL)) {
+    Logger::error << "Invalid likelihood " << newLL << endl;
+    ParallelContext::abort(10);
+  }
 }
     
 void JointTree::invalidateCLV(pll_unode_s *node)

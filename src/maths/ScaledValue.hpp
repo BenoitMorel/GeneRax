@@ -69,6 +69,7 @@ public:
       value = v.value;
       scaler = v.scaler;
     }
+    scale();
     return *this;
   }
   
@@ -81,6 +82,7 @@ public:
     } else if (v.scaler < scaler) {
       return v;
     } else {
+      scale();
       return *this;
     }
   }
@@ -100,6 +102,7 @@ public:
     if (scaler != NULL_SCALER) {
       scaler += v.scaler;   
     } 
+    scale();
     return *this;
   }
 
@@ -196,9 +199,9 @@ public:
     return os;
   }
  
+  int scaler;
 private:
   double value;
-  int scaler;
 };
 
 

@@ -239,7 +239,7 @@ ScaledValue DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_
     double l = branchSubdivisions_[speciesId][subdivision];
     auto leftProba = getRecProba(leftGeneId, speciesId, subdivision - 1);
     auto rightProba = getRecProba(rightGeneId, speciesId, subdivision - 1);
-    res += leftProba * rightProba * 2.0 * dupRate_ * l;
+    res += leftProba * rightProba * dupRate_ * l;
   }
   return res;
 

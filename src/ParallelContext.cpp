@@ -104,4 +104,14 @@ int ParallelContext::getMax(double &value, int &bestRank)
   value = allValues[bestRank];
   return bestRank;
 }
+  
+void ParallelContext::abort(int errorCode)
+{ 
+  if (ownMPIContext) {
+    MPI_Finalize();
+    exit(errorCode);
+  } else {
+    throw ParallelException(errorCode); 
+  }
+}
 

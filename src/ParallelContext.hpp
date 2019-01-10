@@ -5,6 +5,22 @@
 #include <mpi.h>
 
 using namespace std;
+class ParallelException: public exception
+{
+public:
+  ParallelException(int errorCode):errorCode_(errorCode) 
+  {
+    msg_ = "Program failed with error " + to_string(errorCode);
+  }
+
+  virtual const char* what() const throw()
+  {
+    return msg_.c_str();
+  }
+private:
+  int errorCode_;
+  string msg_;
+};
 
 class ParallelContext {
 public:
@@ -62,6 +78,7 @@ public:
   static int getBegin(int elems);
   static int getEnd(int elems);
 
+  static void abort(int errorCode);
 private:
   static void setComm(MPI_Comm newComm);
   static ofstream sink;

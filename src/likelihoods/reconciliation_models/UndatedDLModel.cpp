@@ -15,7 +15,6 @@ UndatedDLModel::UndatedDLModel():
 #define IS_PROBA(x) ((x) >= 0 && (x) <= 1 && !isnan(x))
 #define ASSERT_PROBA(x) assert(IS_PROBA(x));
 
-  
 void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   AbstractReconciliationModel::setInitialGeneTree(treeinfo);
