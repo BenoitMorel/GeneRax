@@ -124,6 +124,7 @@ void UndatedDTLModel::computeGeneProbabilities(pll_unode_t *geneNode,
   for (auto speciesNode: speciesNodes_) {
     clv[speciesNode->node_index] = ScaledValue();
   }
+  survivingTransferSums[gid] = ScaledValue();
   for (int it = 0; it < IT; ++it) {
     for (auto speciesNode: speciesNodes_) {
       computeProbability(geneNode, 
@@ -246,7 +247,7 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
 
   // DL event
   proba += oldProba * (2.0 * PD[e] * uE[e]); 
-  assert(proba.isProba());
+  //assert(proba.isProba());
 }
 
 void UndatedDTLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
@@ -260,7 +261,9 @@ void UndatedDTLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
     for (auto speciesNode: speciesNodes_) {
       int e = speciesNode->node_index;
       virtual_uq[u][e] = ScaledValue();
+      virtual_uq[uprime][e] = ScaledValue();
     }
+    virtualSurvivingTransferSums[u] = ScaledValue();
     for (int it = 0; it < IT; ++it) {
       for (auto speciesNode: speciesNodes_) {
         int e = speciesNode->node_index;

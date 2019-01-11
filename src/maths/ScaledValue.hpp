@@ -141,6 +141,9 @@ public:
 
   inline bool operator <=(const ScaledValue& v) const
   {
+    if (isNull()) {
+      return true;
+    }
     if (scaler != v.scaler) {
       return scaler > v.scaler;
     }
@@ -150,7 +153,7 @@ public:
   /**
    * @return true if value is 0
    */
-  inline bool isNull() {
+  inline bool isNull() const {
     return value == 0.0;
   }
 
