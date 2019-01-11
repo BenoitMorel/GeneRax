@@ -21,6 +21,8 @@ Arguments::ReconciliationModel getModelFromString(const string &modelStr)
     return Arguments::UndatedDL;
   } else if (modelStr == "DatedDL") {
     return Arguments::DatedDL;
+  } else if (modelStr == "UndatedDTL") {
+    return Arguments::UndatedDTL;
   } else {
     return Arguments::InvalidModel;
   }
@@ -29,6 +31,8 @@ Arguments::ReconciliationModel getModelFromString(const string &modelStr)
 string getStringFromModel(Arguments::ReconciliationModel model) {
   if (model == Arguments::UndatedDL) {
     return "UndatedDL";
+  } else if (model == Arguments::UndatedDTL) {
+    return "UndatedDTL";
   } else if (model == Arguments::DatedDL) {
     return "DatedDL";
   } else {

@@ -12,6 +12,7 @@ set(JOINTSEARCH_SOURCES JointSearch.cpp
   likelihoods/reconciliation_models/AbstractReconciliationModel.cpp
   likelihoods/reconciliation_models/DatedDLModel.cpp
   likelihoods/reconciliation_models/UndatedDLModel.cpp
+  likelihoods/reconciliation_models/UndatedDTLModel.cpp
   parsers/GeneSpeciesMapping.cpp
   treeSearch/JointTree.cpp
   treeSearch/Moves.cpp

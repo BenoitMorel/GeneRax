@@ -8,6 +8,7 @@ class Arguments {
 public:
   enum ReconciliationModel {
     UndatedDL,
+    UndatedDTL,
     DatedDL,
     InvalidModel
   };
