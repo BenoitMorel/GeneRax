@@ -188,11 +188,13 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
   if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) {
     // present
     proba = ScaledValue(PS[e], 0);
+    return;
   }
   if (not isGeneLeaf) {
     int gp_i = leftGeneNode->node_index;
     int gpp_i = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
+      // S event
       proba += ScaledValue::superMult1(uq[gp_i][f], uq[gpp_i][g],
           uq[gp_i][g], uq[gpp_i][f],
           PS[e]);
@@ -217,7 +219,9 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
           PS[e]);
     }
   }
+  // DL event
   proba /= (1.0 - 2.0 * PD[e] * uE[e]); 
+  assert(proba.isProba());
 }
 
 void UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)

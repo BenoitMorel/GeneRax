@@ -4,6 +4,7 @@
 
 using namespace std;
 const int CACHE_SIZE = 100000;
+const int IT = 4;
 
 UndatedDTLModel::UndatedDTLModel():
   allCLVInvalid(true)
@@ -25,14 +26,11 @@ void UndatedDTLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
   // init ua with zeros
   vector<ScaledValue> zeros(speciesNodesCount_);
   uq = vector<vector<ScaledValue> >(maxId + 1,zeros);
+  survivingTransferSums = vector<ScaledValue>(maxId + 1);
   virtual_uq = vector<vector<ScaledValue> > (maxId + 1,zeros);
+  virtualSurvivingTransferSums = vector<ScaledValue>(maxId + 1);
   repeatsId = vector<unsigned long>(maxId + 1, 0);
   invalidateAllCLVs();
-}
-
-static double solveSecondDegreePolynome(double a, double b, double c) 
-{
-  return 2 * c / (-b + sqrt(b * b - 4 * a * c));
 }
 
 void UndatedDTLModel::setRates(double dupRate, 
@@ -55,23 +53,23 @@ void UndatedDTLModel::setRates(double dupRate,
     PS[e] /= sum;
   } 
   uE = vector<double>(speciesNodesCount_, 0.0);
-  globalTransferSum = 0.0;
-  for (int it = 0; it < 4; ++it) {
+  transferExtinctionSum = 0.0;
+  for (int it = 0; it < IT; ++it) {
     for (auto speciesNode: speciesNodes_) {
       int e = speciesNode->node_index;
-      double proba = PL[e] + PD[e] * uE[e] * uE[e] + globalTransferSum;
+      double proba = PL[e] + PD[e] * uE[e] * uE[e] + transferExtinctionSum;
       if (speciesNode->left) {
         proba += PS[e] * uE[speciesNode->left->node_index]  * uE[speciesNode->right->node_index];
       }
       ASSERT_PROBA(proba)
       uE[speciesNode->node_index] = proba;
     }
-    globalTransferSum = 0.0;
+    transferExtinctionSum = 0.0;
     for (auto speciesNode: speciesNodes_) {
       int e = speciesNode->node_index;
-      globalTransferSum += PT[e] * uE[e];
+      transferExtinctionSum += PT[e] * uE[e];
     }
-    globalTransferSum /= speciesNodes_.size();
+    transferExtinctionSum /= speciesNodes_.size();
   }
   invalidateAllCLVs();
 }
@@ -122,10 +120,23 @@ void UndatedDTLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
 void UndatedDTLModel::computeGeneProbabilities(pll_unode_t *geneNode,
   vector<ScaledValue> &clv)
 {
+  int gid = geneNode->node_index;
   for (auto speciesNode: speciesNodes_) {
-    computeProbability(geneNode, 
-        speciesNode, 
-        clv[speciesNode->node_index]);
+    clv[speciesNode->node_index] = ScaledValue();
+  }
+  for (int it = 0; it < IT; ++it) {
+    for (auto speciesNode: speciesNodes_) {
+      computeProbability(geneNode, 
+          speciesNode, 
+          clv[speciesNode->node_index]);
+    }
+    survivingTransferSums[gid] = ScaledValue();
+    for (auto speciesNode: speciesNodes_) {
+      int e = speciesNode->node_index;
+       survivingTransferSums[gid] += clv[e] * PT[e];
+    }
+    survivingTransferSums[gid] /= double(speciesNodes_.size());
+    
   }
 }
 
@@ -178,27 +189,34 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
       bool isVirtualRoot) const
 {
   int gid = isVirtualRoot ? geneNode->next->node_index : geneNode->node_index;
+  bool isGeneLeaf = !geneNode->next;
+  bool isSpeciesLeaf = !speciesNode->left;
+  int e = speciesNode->node_index;
+  
+  if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) {
+    proba = ScaledValue(PS[e], 0);
+    return;
+  }
+  
+  ScaledValue oldProba = proba;
+  proba = ScaledValue();
+  
   pll_unode_t *leftGeneNode = 0;     
   pll_unode_t *rightGeneNode = 0;     
-  bool isGeneLeaf = !geneNode->next;
   if (!isGeneLeaf) {
     leftGeneNode = getLeft(geneNode, isVirtualRoot);
     rightGeneNode = getRight(geneNode, isVirtualRoot);
   }
-  bool isSpeciesLeaf = !speciesNode->left;
-  int e = speciesNode->node_index;
   int f = 0;
   int g = 0;
   if (!isSpeciesLeaf) {
     f = speciesNode->left->node_index;
     g = speciesNode->right->node_index;
   }
-  proba = ScaledValue();
-  if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) {
-    // present
-    proba = ScaledValue(PS[e], 0);
-  }
+  auto &clv = isVirtualRoot ? virtual_uq : uq;
+  auto &surviving = isVirtualRoot ? virtualSurvivingTransferSums : survivingTransferSums;
   if (not isGeneLeaf) {
+    // S event
     int gp_i = leftGeneNode->node_index;
     int gpp_i = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
@@ -211,22 +229,24 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
     temp *= uq[gpp_i][e];
     temp *= PD[e];
     proba += temp;
+    // T event
+    proba += surviving[gp_i] * clv[gpp_i][e]; 
+    proba += surviving[gpp_i] * clv[gp_i][e]; 
   }
   if (not isSpeciesLeaf) {
     // SL event
-    if (!isVirtualRoot) {
-      proba += ScaledValue::superMult2(
-          uq[gid][f], uE[g],
-          uq[gid][g], uE[f],
-          PS[e]);
-    } else {
-      proba += ScaledValue::superMult2(
-          virtual_uq[gid][f], uE[g],
-          virtual_uq[gid][g], uE[f],
-          PS[e]);
-    }
+    proba += ScaledValue::superMult2(
+        clv[gid][f], uE[g],
+        clv[gid][g], uE[f],
+        PS[e]);
   }
-  proba /= (1.0 - 2.0 * PD[e] * uE[e]); 
+  // TL event
+  proba += oldProba * transferExtinctionSum;
+  proba += surviving[gid] * uE[e];
+
+  // DL event
+  proba += oldProba * (2.0 * PD[e] * uE[e]); 
+  assert(proba.isProba());
 }
 
 void UndatedDTLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
@@ -239,10 +259,23 @@ void UndatedDTLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
     int uprime = root->back->node_index;
     for (auto speciesNode: speciesNodes_) {
       int e = speciesNode->node_index;
-      pll_unode_t virtual_root;
-      virtual_root.next = root;
-      computeProbability(&virtual_root, speciesNode, virtual_uq[u][e], true);
-      virtual_uq[uprime][e] = virtual_uq[u][e];
+      virtual_uq[u][e] = ScaledValue();
+    }
+    for (int it = 0; it < IT; ++it) {
+      for (auto speciesNode: speciesNodes_) {
+        int e = speciesNode->node_index;
+        pll_unode_t virtual_root;
+        virtual_root.next = root;
+        computeProbability(&virtual_root, speciesNode, virtual_uq[u][e], true);
+        virtual_uq[uprime][e] = virtual_uq[u][e];
+      }
+      virtualSurvivingTransferSums[u] = ScaledValue();
+      for (auto speciesNode: speciesNodes_) {
+        int e = speciesNode->node_index;
+         virtualSurvivingTransferSums[u] += virtual_uq[u][e] * PT[e];
+      }
+      virtualSurvivingTransferSums[u] /= double(speciesNodes_.size());
+      virtualSurvivingTransferSums[uprime] = virtualSurvivingTransferSums[u];
     }
   }
 }

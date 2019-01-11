@@ -76,13 +76,12 @@ public:
   /**
    * ScaledValue sum operator
    */
-  inline ScaledValue operator+(const ScaledValue& v) {
+  inline ScaledValue operator+(const ScaledValue& v) const {
     if (v.scaler == scaler) {
       return ScaledValue(v.value + value, scaler);
     } else if (v.scaler < scaler) {
       return v;
     } else {
-      scale();
       return *this;
     }
   }
@@ -90,7 +89,7 @@ public:
   /**
    * ScaledValue multiplication operator
    */
-  inline ScaledValue operator*(const ScaledValue& v) {
+  inline ScaledValue operator*(const ScaledValue& v) const {
     return ScaledValue (v.value * value, v.scaler + scaler);  
   }
   
@@ -109,7 +108,7 @@ public:
   /**
    * double multiplication operator
    */
-  inline ScaledValue operator*(double v) {
+  inline ScaledValue operator*(double v) const {
     return ScaledValue(v * value, scaler);
   }
 
@@ -132,12 +131,20 @@ public:
   /**
    * Comparison with ScaledValue operator
    */
-  inline bool operator <(const ScaledValue& v)
+  inline bool operator <(const ScaledValue& v) const
   {
     if (scaler != v.scaler) {
       return scaler > v.scaler;
     }
     return value < v.value;
+  }
+
+  inline bool operator <=(const ScaledValue& v) const
+  {
+    if (scaler != v.scaler) {
+      return scaler > v.scaler;
+    }
+    return value <= v.value;
   }
 
   /**
@@ -190,6 +197,10 @@ public:
     res *= factor;
     return res;
   }
+  
+  bool isProba() const {
+    return *this <= ScaledValue(1.0) && ScaledValue() <= *this;
+  }
 
   /**
    *  ofstream operator
@@ -199,6 +210,7 @@ public:
     return os;
   }
  
+
   int scaler;
 private:
   double value;
