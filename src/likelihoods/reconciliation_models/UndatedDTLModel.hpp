@@ -47,10 +47,6 @@ private:
   vector<vector<ScaledValue> > uq;
   vector<ScaledValue> survivingTransferSums;
 
-  // likelihoods[geneId][speciesId] = probability of a virtual root present at 
-  // a species node to produce the tree under this virtual root
-  vector<vector<ScaledValue> > virtual_uq;
-  vector<ScaledValue> virtualSurvivingTransferSums;
 
   // ll[speciesId] = likelihood of the (rooted or unrooted) gene tree to be present under a species node
   vector<ScaledValue> ll; // sam

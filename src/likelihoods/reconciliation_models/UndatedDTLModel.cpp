@@ -25,10 +25,8 @@ void UndatedDTLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
     maxId = max(maxId, gid);
   // init ua with zeros
   vector<ScaledValue> zeros(speciesNodesCount_);
-  uq = vector<vector<ScaledValue> >(maxId + 1,zeros);
-  survivingTransferSums = vector<ScaledValue>(maxId + 1);
-  virtual_uq = vector<vector<ScaledValue> > (maxId + 1,zeros);
-  virtualSurvivingTransferSums = vector<ScaledValue>(maxId + 1);
+  uq = vector<vector<ScaledValue> >(2 * (maxId + 1),zeros);
+  survivingTransferSums = vector<ScaledValue>(2 * (maxId + 1));
   repeatsId = vector<unsigned long>(maxId + 1, 0);
   invalidateAllCLVs();
 }
@@ -188,7 +186,7 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
       ScaledValue &proba,
       bool isVirtualRoot) const
 {
-  int gid = isVirtualRoot ? geneNode->next->node_index : geneNode->node_index;
+  int gid = geneNode->node_index;
   bool isGeneLeaf = !geneNode->next;
   bool isSpeciesLeaf = !speciesNode->left;
   int e = speciesNode->node_index;
@@ -213,8 +211,6 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
     f = speciesNode->left->node_index;
     g = speciesNode->right->node_index;
   }
-  auto &clv = isVirtualRoot ? virtual_uq : uq;
-  auto &surviving = isVirtualRoot ? virtualSurvivingTransferSums : survivingTransferSums;
   if (not isGeneLeaf) {
     // S event
     int gp_i = leftGeneNode->node_index;
@@ -230,19 +226,19 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
     temp *= PD[e];
     proba += temp;
     // T event
-    proba += surviving[gp_i] * clv[gpp_i][e]; 
-    proba += surviving[gpp_i] * clv[gp_i][e]; 
+    proba += survivingTransferSums[gp_i] * uq[gpp_i][e]; 
+    proba += survivingTransferSums[gpp_i] * uq[gp_i][e]; 
   }
   if (not isSpeciesLeaf) {
     // SL event
     proba += ScaledValue::superMult2(
-        clv[gid][f], uE[g],
-        clv[gid][g], uE[f],
+        uq[gid][f], uE[g],
+        uq[gid][g], uE[f],
         PS[e]);
   }
   // TL event
   proba += oldProba * transferExtinctionSum;
-  proba += surviving[gid] * uE[e];
+  proba += survivingTransferSums[gid] * uE[e];
 
   // DL event
   proba += oldProba * (2.0 * PD[e] * uE[e]); 
@@ -255,29 +251,30 @@ void UndatedDTLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
   vector<pll_unode_t *> roots;
   getRoots(treeinfo, roots, geneIds);
   for (auto root: roots) {
-    int u = root->node_index;
-    int uprime = root->back->node_index;
+    int u = root->node_index + maxId + 1;
+    int uprime = root->back->node_index + maxId + 1;
     for (auto speciesNode: speciesNodes_) {
       int e = speciesNode->node_index;
-      virtual_uq[u][e] = ScaledValue();
-      virtual_uq[uprime][e] = ScaledValue();
+      uq[u][e] = ScaledValue();
+      uq[uprime][e] = ScaledValue();
     }
-    virtualSurvivingTransferSums[u] = ScaledValue();
+    survivingTransferSums[u] = ScaledValue();
     for (int it = 0; it < IT; ++it) {
       for (auto speciesNode: speciesNodes_) {
         int e = speciesNode->node_index;
         pll_unode_t virtual_root;
         virtual_root.next = root;
-        computeProbability(&virtual_root, speciesNode, virtual_uq[u][e], true);
-        virtual_uq[uprime][e] = virtual_uq[u][e];
+        virtual_root.node_index = root->node_index + maxId + 1;
+        computeProbability(&virtual_root, speciesNode, uq[u][e], true);
+        uq[uprime][e] = uq[u][e];
       }
-      virtualSurvivingTransferSums[u] = ScaledValue();
+      survivingTransferSums[u] = ScaledValue();
       for (auto speciesNode: speciesNodes_) {
         int e = speciesNode->node_index;
-         virtualSurvivingTransferSums[u] += virtual_uq[u][e] * PT[e];
+         survivingTransferSums[u] += uq[u][e] * PT[e];
       }
-      virtualSurvivingTransferSums[u] /= double(speciesNodes_.size());
-      virtualSurvivingTransferSums[uprime] = virtualSurvivingTransferSums[u];
+      survivingTransferSums[u] /= double(speciesNodes_.size());
+      survivingTransferSums[uprime] = survivingTransferSums[u];
     }
   }
 }
@@ -290,10 +287,10 @@ void UndatedDTLModel::updateRoot(pllmod_treeinfo_t &treeinfo)
   ScaledValue max;
   for (auto root: roots) {
     ScaledValue sum;
-    int u = root->node_index;
+    int u = root->node_index + maxId + 1;;
     for (auto speciesNode: speciesNodes_) {
       int e = speciesNode->node_index;
-      sum += virtual_uq[u][e];
+      sum += uq[u][e];
     }
     if (max < sum) {
       setRoot(root);
@@ -307,12 +304,12 @@ double UndatedDTLModel::getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
   vector<pll_unode_t *> roots;
   getRoots(*treeinfo, roots, geneIds);
   for (auto root: roots) {
-    int u = root->node_index;
+    int u = root->node_index + maxId + 1;
     ScaledValue sum;
     for (auto speciesNode: speciesNodes_) {
       int e = speciesNode->node_index;
-      total += virtual_uq[u][e];
-      sum += virtual_uq[u][e];
+      total += uq[u][e];
+      sum += uq[u][e];
     }
   }
   double res = total.getLogValue(); //log(root_sum / survive / O_norm * (speciesNodesCount_));
