@@ -34,6 +34,8 @@ public:
 
   pll_unode_t *getRoot() {return reconciliationModel->getRoot();}
   void setRoot(pll_unode_t * root) {reconciliationModel->setRoot(root);}
+  
+  bool implementsTransfers() {return reconciliationModel->implementsTransfers();}
 
   /**
    *  @param input treeinfo

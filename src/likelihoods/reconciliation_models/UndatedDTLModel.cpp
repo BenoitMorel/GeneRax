@@ -36,7 +36,6 @@ void UndatedDTLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
 void UndatedDTLModel::setRates(double dupRate, 
   double lossRate,
   double transferRate) {
-  transferRate = dupRate; // todobenoit
   geneRoot_ = 0;
   cache_.clear();
   cache_.resize(CACHE_SIZE);

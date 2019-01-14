@@ -24,7 +24,8 @@ public:
               const string &geneSpeciesMap_file,
               Arguments::ReconciliationModel reconciliationModel,
               double dupRate = 2.0,
-              double lossRate = 1.0);
+              double lossRate = 1.0,
+              double transRate = 0.0);
 
 
     virtual ~JointTree() {}
@@ -44,8 +45,9 @@ public:
     void rollbackLastMove();
     void save(const string &fileName, bool append);
     shared_ptr<pllmod_treeinfo_t> getTreeInfo();
-    void setRates(double dup, double loss);
-    void optimizeDTRates();
+    void setRates(double dup, double loss, double trans = 0);
+    void optimizeDLRates();
+    void optimizeDTLRates();
     pll_rtree_t *getSpeciesTree() {return pllSpeciesTree_;}
     size_t getUnrootedTreeHash();
     shared_ptr<ReconciliationEvaluation> getReconciliationEvaluation() {return reconciliationEvaluation_;}
@@ -58,6 +60,14 @@ private:
         double &bestDup,
         double &bestLoss,
         double &bestLL);
+    void findBestRatesDTL(double minDup, double maxDup,
+      double minLoss, double maxLoss, 
+      double minTrans, double maxTrans, 
+      int steps,
+      double &bestDup,
+      double &bestLoss,
+      double &bestTrans,
+      double &bestLL);
     shared_ptr<LibpllEvaluation> libpllEvaluation_;
     shared_ptr<ReconciliationEvaluation> reconciliationEvaluation_;
     pll_rtree_t *pllSpeciesTree_;
@@ -65,6 +75,7 @@ private:
     LibpllAlignmentInfo info_;
     double dupRate_;
     double lossRate_;
+    double transRate_;
     stack<shared_ptr<Rollback> > rollbacks_;
     double reconciliationLL_;
 };

@@ -112,10 +112,12 @@ JointTree::JointTree(const string &newick_string,
     const string &geneSpeciesMap_file,
     Arguments::ReconciliationModel reconciliationModel,
     double dupRate,
-    double lossRate):
+    double lossRate,
+    double transRate):
   geneSpeciesMap_(geneSpeciesMap_file),
   dupRate_(dupRate),
-  lossRate_(lossRate)
+  lossRate_(lossRate),
+  transRate_(transRate)
 {
    info_.alignmentFilename = alignment_file;
   info_.model = "GTR";
@@ -140,7 +142,11 @@ void JointTree::optimizeParameters(bool felsenstein, bool reconciliation) {
     libpllEvaluation_->optimizeAllParameters();
   }
   if (reconciliation) {
-    optimizeDTRates();
+    if (reconciliationEvaluation_->implementsTransfers()) {  
+      optimizeDTLRates();
+    } else {
+      optimizeDLRates();
+    }
   }
 }
 
@@ -238,8 +244,48 @@ void JointTree::findBestRates(double minDup, double maxDup,
   setRates(bestDup, bestLoss);
 }
 
+void JointTree::findBestRatesDTL(double minDup, double maxDup,
+    double minLoss, double maxLoss, 
+    double minTrans, double maxTrans, 
+    int steps,
+    double &bestDup,
+    double &bestLoss,
+    double &bestTrans,
+    double &bestLL) 
+{
+  bestLL = numeric_limits<double>::lowest();
+  int totalSteps = pow(steps, 3);
+  int begin = ParallelContext::getBegin(totalSteps);
+  int end = ParallelContext::getEnd(totalSteps);
+  for (int s = begin; s < end; ++s) {
+    int i = s / (steps * steps);
+    int j = (s / steps) % steps;
+    int k = s % steps;
+    double dup = minDup + (maxDup - minDup) * double(i) / double(steps);
+    double loss = minLoss + (maxLoss - minLoss) * double(j) / double(steps);
+    double trans = minTrans + (maxTrans - minTrans) * double(k) / double(steps);
+    setRates(dup, loss, trans);
+    double newLL = computeReconciliationLoglk();
+    if (!isValidLikelihood(newLL)) {
+      continue;
+    }
+    if (newLL > bestLL) { 
+      bestDup = dup;
+      bestLoss = loss;
+      bestTrans = trans;
+      bestLL = newLL;
+    }
+  }
+  int bestRank = 0;
+  ParallelContext::getMax(bestLL, bestRank);
+  ParallelContext::broadcastDouble(bestRank, bestDup);
+  ParallelContext::broadcastDouble(bestRank, bestLoss);
+  ParallelContext::broadcastDouble(bestRank, bestTrans);
+  setRates(bestDup, bestLoss, bestTrans);
+}
 
-void JointTree::optimizeDTRates() {
+
+void JointTree::optimizeDLRates() {
   double bestLL = numeric_limits<double>::lowest();
   double newLL = 0;
   double bestDup = 0.0;
@@ -250,8 +296,6 @@ void JointTree::optimizeDTRates() {
   double maxLoss = 10.0;
   int steps = 10;
   double epsilon = 0.0001;
-
-
   bool firstIt = true;
   do {
     bestLL = newLL;
@@ -276,6 +320,48 @@ void JointTree::optimizeDTRates() {
   }
 }
     
+void JointTree::optimizeDTLRates() {
+  double bestLL = numeric_limits<double>::lowest();
+  double newLL = 0;
+  double bestDup = 0.0;
+  double bestLoss = 0.0;
+  double bestTrans = 0.0;
+  double minDup = 0.0;
+  double maxDup = 10.0;
+  double minLoss = 0.0;
+  double maxLoss = 10.0;
+  double minTrans = 0.0;
+  double maxTrans = 10.0;
+  int steps = 5;
+  double epsilon = 0.0001;
+  bool firstIt = true;
+  do {
+    bestLL = newLL;
+    findBestRatesDTL(minDup, maxDup, minLoss, maxLoss, minTrans, maxTrans, steps, bestDup, bestLoss, bestTrans, newLL);
+    while(firstIt && isinf(newLL) || newLL < -100000000 && maxLoss > epsilon) {
+      maxDup /= 10;
+      maxLoss /= 10;
+      maxTrans /= 10;
+      findBestRatesDTL(minDup, maxDup, minLoss, maxLoss, minTrans, maxTrans, steps, bestDup, bestLoss, bestTrans, newLL);
+    }
+    double offsetDup = 2 * (maxDup - minDup) / steps;
+    double offsetLoss = 2* (maxLoss - minLoss) / steps;
+    double offsetTrans = 2* (maxTrans - minTrans) / steps;
+    minDup = max(0.0, bestDup - offsetDup);
+    maxDup = bestDup + offsetDup;
+    minLoss = max(0.0, bestLoss - offsetLoss);
+    maxLoss = bestLoss + offsetLoss;
+    minTrans = max(0.0, bestTrans - offsetTrans);
+    maxTrans = bestTrans + offsetTrans;
+    firstIt = false;
+  } while (fabs(newLL - bestLL) > epsilon);
+  Logger::info << " best rates: " << bestDup << " " << bestLoss <<  " " <<  bestTrans << " " << newLL << endl;
+  if  (!isValidLikelihood(newLL)) {
+    Logger::error << "Invalid likelihood " << newLL << endl;
+    ParallelContext::abort(10);
+  }
+}
+    
 void JointTree::invalidateCLV(pll_unode_s *node)
 {
   reconciliationEvaluation_->invalidateCLV(node->node_index);
@@ -284,10 +370,11 @@ void JointTree::invalidateCLV(pll_unode_s *node)
 
 
 
-void JointTree::setRates(double dup, double loss) { 
+void JointTree::setRates(double dup, double loss, double trans) { 
   dupRate_ = dup; 
   lossRate_ = loss;
-  reconciliationEvaluation_->setRates(dup, loss);
+  transRate_ = trans;
+  reconciliationEvaluation_->setRates(dup, loss, trans);
 }
 
 void JointTree::printInfo() 

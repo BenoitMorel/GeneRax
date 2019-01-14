@@ -24,6 +24,8 @@ public:
   // overloaded from parent
   virtual void invalidateCLV(int nodeIndex);
     
+  virtual bool implementsTransfers() {return true;}
+    
 protected:
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
   virtual double computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo);

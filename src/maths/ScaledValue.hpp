@@ -76,6 +76,24 @@ public:
   /**
    * ScaledValue sum operator
    */
+  inline ScaledValue operator-(const ScaledValue& v) const {
+    if (v.scaler == scaler) {
+      if (value - v.value < 0) {
+        cerr << *this << " - " << v << endl;
+      }
+      assert(value - v.value >= 0);
+      return ScaledValue(value - v.value, scaler);
+    } else if (v.scaler < scaler) {
+      assert(false); // we do not allow negative values for now
+      return v;
+    } else {
+      return *this;
+    }
+  }
+  
+  /**
+   * ScaledValue sum operator
+   */
   inline ScaledValue operator+(const ScaledValue& v) const {
     if (v.scaler == scaler) {
       return ScaledValue(v.value + value, scaler);

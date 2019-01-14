@@ -30,6 +30,8 @@ public:
   
   virtual void setRoot(pll_unode_t * root) {geneRoot_ = root;}
   virtual pll_unode_t *getRoot() {return geneRoot_;}
+  
+  virtual bool implementsTransfers() {return false;}
 
 protected:
   // called by the constructor
