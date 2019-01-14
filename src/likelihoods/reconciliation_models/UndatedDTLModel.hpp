@@ -27,6 +27,7 @@ public:
   virtual bool implementsTransfers() {return true;}
     
 protected:
+  virtual void setSpeciesTree(pll_rtree_t *speciesTree);
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
   virtual double computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo);
 private:
@@ -38,15 +39,15 @@ private:
 
   // SPECIES
   vector<double> uE; // Probability for a gene to become extinct on each brance
- 
   double transferExtinctionSum;
+  vector<vector<pll_rnode_t *> > invalidTransfers; // todobenoit this might not be the optimal implementation
 
   // CLVs
   // uq[geneId][speciesId] = probability of a gene node rooted at a species node
   // to produce the subtree of this gene node
   vector<vector<ScaledValue> > uq;
   vector<ScaledValue> survivingTransferSums;
-
+  vector<vector<ScaledValue> > ancestralCorrection;
 
   // ll[speciesId] = likelihood of the (rooted or unrooted) gene tree to be present under a species node
   vector<ScaledValue> ll; // sam
@@ -85,5 +86,6 @@ private:
   void updateCLVsRec(pll_unode_t *node);
   void markInvalidatedNodes(pllmod_treeinfo_t &treeinfo);
   void markInvalidatedNodesRec(pll_unode_t *node);
+  void updateTransferSums(int gid);
 };
 

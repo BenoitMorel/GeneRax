@@ -79,6 +79,10 @@ public:
   inline ScaledValue operator-(const ScaledValue& v) const {
     if (v.scaler == scaler) {
       if (value - v.value < 0) {
+        if (fabs(value - v.value) < 0.0000000001) {
+          return ScaledValue();
+        }
+        cerr.precision(17);
         cerr << *this << " - " << v << endl;
       }
       assert(value - v.value >= 0);
@@ -233,7 +237,6 @@ public:
  
 
   int scaler;
-private:
   double value;
 };
 

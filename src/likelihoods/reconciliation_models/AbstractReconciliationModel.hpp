@@ -35,7 +35,7 @@ public:
 
 protected:
   // called by the constructor
-  virtual void setSpeciesTree(pll_rtree_t *geneTree);
+  virtual void setSpeciesTree(pll_rtree_t *speciesTree);
   virtual void setGeneSpeciesMap(const GeneSpeciesMapping &map);
 
   // Called when computeLogLikelihood is called for the first time
