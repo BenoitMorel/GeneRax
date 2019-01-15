@@ -34,8 +34,9 @@ private:
   vector<double> _PS; // Speciation probability, per branch
 
   // SPECIES
-  vector<double> _uE; // Probability for a gene to become extinct on each brance
-  double _transferExtinctionSum;
+  vector<ScaledValue> _uE; // Probability for a gene to become extinct on each brance
+  ScaledValue _transferExtinctionSum;
+  vector<ScaledValue> _ancestralExctinctionCorrection;  
 
   // CLVs
   // _uq[geneId][speciesId] = probability of a gene node rooted at a species node
@@ -71,8 +72,10 @@ private:
   void updateCLVsRec(pll_unode_t *node);
   void markInvalidatedNodes(pllmod_treeinfo_t &treeinfo);
   void markInvalidatedNodesRec(pll_unode_t *node);
-  void updateExtinctionTransferSums(vector<double> &ancestralExctinctionCorrection);
-  void updateTransferSums(int gid);
-  void resetTransferSums(int gid);
+  void updateTransferSums(ScaledValue &transferExtinctionSum,
+    vector<ScaledValue> &ancestralExtinctionCorrection,
+    const vector<ScaledValue> &probabilities);
+  void resetTransferSums(ScaledValue &transferSum,
+    vector<ScaledValue> &ancestralCorrection);
 };
 
