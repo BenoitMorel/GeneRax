@@ -24,7 +24,6 @@ public:
   virtual bool implementsTransfers() {return true;}
 protected:
   // overloaded from parent
-  virtual void setSpeciesTree(pll_rtree_t *speciesTree);
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
   virtual double computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo);
 private:
@@ -38,7 +37,6 @@ private:
   vector<ScaledValue> _uE; // Probability for a gene to become extinct on each brance
   ScaledValue _transferExtinctionSum;
   vector<ScaledValue> _ancestralExctinctionCorrection;  
-  vector<int> _speciesDepths;
 
   // CLVs
   // _uq[geneId][speciesId] = probability of a gene node rooted at a species node
