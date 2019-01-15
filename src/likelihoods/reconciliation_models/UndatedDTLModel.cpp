@@ -4,7 +4,7 @@
 
 using namespace std;
 const int CACHE_SIZE = 100000;
-const int IT = 4;
+const int IT = 2;
 
 UndatedDTLModel::UndatedDTLModel()
 {
@@ -34,12 +34,6 @@ void UndatedDTLModel::updateTransferSums(ScaledValue &transferSum,
     const vector<ScaledValue> &probabilities)
 {
   transferSum = ScaledValue();
-  for (auto speciesNode: speciesNodes_) {
-    int e = speciesNode->node_index;
-    transferSum += probabilities[e] * _PT[e];
-  }
-  transferSum /= speciesNodes_.size();
-
   for (int i = speciesNodes_.size() - 1; i >= 0; --i) {
     auto speciesNode = speciesNodes_[i];
     int e = speciesNode->node_index;
@@ -52,7 +46,9 @@ void UndatedDTLModel::updateTransferSums(ScaledValue &transferSum,
   for (auto speciesNode: speciesNodes_) {
     int e = speciesNode->node_index;
     ancestralCorrection[e] /= double(speciesNodes_.size());
+    transferSum += probabilities[e] * _PT[e];
   }
+  transferSum /= speciesNodes_.size();
 }
 
 ScaledValue UndatedDTLModel::getCorrectedTransferExtinctionSum(int speciesNode) const
@@ -243,7 +239,7 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
 
   // DL event
   proba += oldProba * _uE[e] * (2.0 * _PD[e]); 
-  //assert(proba.isProba());
+  assert(proba.isProba());
 }
 
 void UndatedDTLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
