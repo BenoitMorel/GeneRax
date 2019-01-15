@@ -77,5 +77,7 @@ private:
     const vector<ScaledValue> &probabilities);
   void resetTransferSums(ScaledValue &transferSum,
     vector<ScaledValue> &ancestralCorrection);
+  ScaledValue getCorrectedTransferExtinctionSum(int speciesNode) const;
+  ScaledValue getCorrectedTransferSum(int geneId, int speciesId) const;
 };
 

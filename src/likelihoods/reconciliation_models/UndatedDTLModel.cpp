@@ -55,6 +55,16 @@ void UndatedDTLModel::updateTransferSums(ScaledValue &transferSum,
   }
 }
 
+ScaledValue UndatedDTLModel::getCorrectedTransferExtinctionSum(int speciesNode) const
+{
+  return _transferExtinctionSum - _ancestralExctinctionCorrection[speciesNode];
+}
+
+ScaledValue UndatedDTLModel::getCorrectedTransferSum(int geneId, int speciesId) const
+{
+  return _survivingTransferSums[geneId] - _ancestralCorrection[geneId][speciesId];
+}
+
 void UndatedDTLModel::setRates(double dupRate, 
   double lossRate,
   double transferRate) {
@@ -77,7 +87,7 @@ void UndatedDTLModel::setRates(double dupRate,
     for (auto speciesNode: speciesNodes_) {
       int e = speciesNode->node_index;
       ScaledValue proba(_PL[e]);
-      proba += _uE[e] * _uE[e] * _PD[e] + (_transferExtinctionSum - _ancestralExctinctionCorrection[e]) * _uE[e];
+      proba += _uE[e] * _uE[e] * _PD[e] + getCorrectedTransferExtinctionSum(e) * _uE[e];
       if (speciesNode->left) {
         proba += _uE[speciesNode->left->node_index]  * _uE[speciesNode->right->node_index] * _PS[e];
       }
@@ -217,8 +227,8 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
     temp *= _PD[e];
     proba += temp;
     // T event
-    proba += (_survivingTransferSums[gp_i] - _ancestralCorrection[gp_i][e]) * _uq[gpp_i][e]; 
-    proba += (_survivingTransferSums[gpp_i] - _ancestralCorrection[gpp_i][e]) * _uq[gp_i][e]; 
+    proba += getCorrectedTransferSum(gp_i, e) * _uq[gpp_i][e]; 
+    proba += getCorrectedTransferSum(gpp_i, e) * _uq[gp_i][e]; 
   }
   if (not isSpeciesLeaf) {
     // SL event
@@ -228,8 +238,8 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
         _PS[e]);
   }
   // TL event
-  proba += oldProba * (_transferExtinctionSum - _ancestralExctinctionCorrection[e]);
-  proba += (_survivingTransferSums[gid] - _ancestralCorrection[gid][e]) * _uE[e];
+  proba += oldProba * getCorrectedTransferExtinctionSum(e);
+  proba += getCorrectedTransferSum(gid, e) * _uE[e];
 
   // DL event
   proba += oldProba * _uE[e] * (2.0 * _PD[e]); 
