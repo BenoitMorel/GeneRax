@@ -223,6 +223,19 @@ public:
     return res;
   }
   
+  static inline ScaledValue superMult2(const ScaledValue &x1, const ScaledValue &x2,
+      const ScaledValue &y1, const ScaledValue &y2,
+      double factor)
+  {
+    ScaledValue res(x1);
+    res *= x2;
+    ScaledValue temp(y1);
+    temp *= y2;
+    res += temp;
+    res *= factor;
+    return res;
+  }
+  
   bool isProba() const {
     return *this <= ScaledValue(1.0) && ScaledValue() <= *this;
   }
