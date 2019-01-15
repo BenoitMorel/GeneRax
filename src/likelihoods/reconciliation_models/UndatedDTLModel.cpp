@@ -3,7 +3,6 @@
 #include <Logger.hpp>
 
 using namespace std;
-const int CACHE_SIZE = 100000;
 const int IT = 4;
 
 UndatedDTLModel::UndatedDTLModel()
@@ -27,6 +26,23 @@ void UndatedDTLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
   _survivingTransferSums = vector<ScaledValue>(2 * (_maxGeneId + 1));
   _ancestralCorrection = vector<vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
   invalidateAllCLVs();
+}
+  
+
+static void setDepthRec(pll_rnode_t *node, int depth, vector<int> &depths)
+{
+  depths[node->node_index] = depth;
+  if (node->left) {
+    setDepthRec(node->left, depth + 1, depths);
+    setDepthRec(node->right, depth + 1, depths);
+  }
+}
+
+void UndatedDTLModel::setSpeciesTree(pll_rtree_t *speciesTree)
+{
+  AbstractReconciliationModel::setSpeciesTree(speciesTree);
+  _speciesDepths = vector<int> (speciesNodesCount_);
+  setDepthRec(speciesTree->root, 1, _speciesDepths);
 }
 
 void UndatedDTLModel::updateTransferSums(ScaledValue &transferSum,
@@ -57,12 +73,16 @@ void UndatedDTLModel::updateTransferSums(ScaledValue &transferSum,
 
 ScaledValue UndatedDTLModel::getCorrectedTransferExtinctionSum(int speciesNode) const
 {
-  return _transferExtinctionSum - _ancestralExctinctionCorrection[speciesNode];
+  ScaledValue res = _transferExtinctionSum - _ancestralExctinctionCorrection[speciesNode];
+  res *= double(speciesNodesCount_) / double(speciesNodesCount_ - _speciesDepths[speciesNode]);
+  return res;
 }
 
 ScaledValue UndatedDTLModel::getCorrectedTransferSum(int geneId, int speciesId) const
 {
-  return _survivingTransferSums[geneId] - _ancestralCorrection[geneId][speciesId];
+  ScaledValue res =  _survivingTransferSums[geneId] - _ancestralCorrection[geneId][speciesId];
+  res *= double(speciesNodesCount_) / double(speciesNodesCount_ - _speciesDepths[speciesId]);
+  return res;
 }
 
 void UndatedDTLModel::setRates(double dupRate, 
