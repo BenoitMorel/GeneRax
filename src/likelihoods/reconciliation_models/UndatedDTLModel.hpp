@@ -75,8 +75,7 @@ private:
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
       bool isVirtualRoot = false) const;
-  void computeGeneProbabilities(pll_unode_t *geneNode, 
-      vector<ScaledValue> &clv);
+  void computeGeneProbabilities(pll_unode_t *geneNode);
   void updateCLV(pll_unode_t *geneNode);
   void updateCLVs(pllmod_treeinfo_t &treeinfo);
   void computeLikelihoods(pllmod_treeinfo_t &treeinfo);
@@ -86,6 +85,8 @@ private:
   void updateCLVsRec(pll_unode_t *node);
   void markInvalidatedNodes(pllmod_treeinfo_t &treeinfo);
   void markInvalidatedNodesRec(pll_unode_t *node);
+  void updateExtinctionTransferSums(vector<double> &ancestralExctinctionCorrection);
   void updateTransferSums(int gid);
+  void resetTransferSums(int gid);
 };
 

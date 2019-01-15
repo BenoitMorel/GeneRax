@@ -32,6 +32,56 @@ void UndatedDTLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
   invalidateAllCLVs();
 }
 
+void UndatedDTLModel::updateTransferSums(int gid)
+{
+  // sums
+  survivingTransferSums[gid] = ScaledValue();
+  for (auto speciesNode: speciesNodes_) {
+    int e = speciesNode->node_index;
+    survivingTransferSums[gid] += uq[gid][e] * PT[e];
+  }
+  survivingTransferSums[gid] /= double(speciesNodes_.size());
+  
+  // ancestral correction
+  for (int i = speciesNodes_.size() - 1; i >= 0; --i) {
+    auto speciesNode = speciesNodes_[i];
+    int e = speciesNode->node_index;
+    ancestralCorrection[gid][e] = uq[gid][e] * PT[e];
+    if (speciesNode->parent) {
+      int p = speciesNode->parent->node_index;
+      ancestralCorrection[gid][e] += ancestralCorrection[gid][p];
+    }
+  }
+  for (auto speciesNode: speciesNodes_) {
+    int e = speciesNode->node_index;
+    ancestralCorrection[gid][e] /= double(speciesNodes_.size());
+  }
+}
+
+void UndatedDTLModel::updateExtinctionTransferSums(vector<double> &ancestralExtinctionCorrection)
+{
+  transferExtinctionSum = 0.0;
+  for (auto speciesNode: speciesNodes_) {
+    int e = speciesNode->node_index;
+    transferExtinctionSum += PT[e] * uE[e];
+  }
+  transferExtinctionSum /= speciesNodes_.size();
+
+  for (int i = speciesNodes_.size() - 1; i >= 0; --i) {
+    auto speciesNode = speciesNodes_[i];
+    int e = speciesNode->node_index;
+    ancestralExtinctionCorrection[e] = uE[e] * PT[e];
+    if (speciesNode->parent) {
+      int p = speciesNode->parent->node_index;
+      ancestralExtinctionCorrection[e] += ancestralExtinctionCorrection[p];
+    }
+  }
+  for (auto speciesNode: speciesNodes_) {
+    int e = speciesNode->node_index;
+    ancestralExtinctionCorrection[e] /= double(speciesNodes_.size());
+  }
+}
+
 void UndatedDTLModel::setRates(double dupRate, 
   double lossRate,
   double transferRate) {
@@ -51,23 +101,19 @@ void UndatedDTLModel::setRates(double dupRate,
     PS[e] /= sum;
   } 
   uE = vector<double>(speciesNodesCount_, 0.0);
+  vector<double> ancestralExctinctionCorrection(speciesNodesCount_, 0.0);
   transferExtinctionSum = 0.0;
   for (int it = 0; it < IT; ++it) {
     for (auto speciesNode: speciesNodes_) {
       int e = speciesNode->node_index;
-      double proba = PL[e] + PD[e] * uE[e] * uE[e] + transferExtinctionSum;
+      double proba = PL[e] + PD[e] * uE[e] * uE[e] + (transferExtinctionSum - ancestralExctinctionCorrection[e]);
       if (speciesNode->left) {
         proba += PS[e] * uE[speciesNode->left->node_index]  * uE[speciesNode->right->node_index];
       }
       ASSERT_PROBA(proba)
       uE[speciesNode->node_index] = proba;
     }
-    transferExtinctionSum = 0.0;
-    for (auto speciesNode: speciesNodes_) {
-      int e = speciesNode->node_index;
-      transferExtinctionSum += PT[e] * uE[e];
-    }
-    transferExtinctionSum /= speciesNodes_.size();
+    updateExtinctionTransferSums(ancestralExctinctionCorrection);
   }
   invalidateAllCLVs();
 }
@@ -116,44 +162,27 @@ void UndatedDTLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
   }
 }
 
-void UndatedDTLModel::updateTransferSums(int gid)
+void UndatedDTLModel::resetTransferSums(int gid) 
 {
-  // sums
   survivingTransferSums[gid] = ScaledValue();
-    for (auto speciesNode: speciesNodes_) {
-      int e = speciesNode->node_index;
-      survivingTransferSums[gid] += uq[gid][e] * PT[e];
-    }
-  survivingTransferSums[gid] /= double(speciesNodes_.size());
-  
-  // ancestral correction
-  for (int i = speciesNodes_.size() - 1; i >= 0; --i) {
-    auto speciesNode = speciesNodes_[i];
-    int e = speciesNode->node_index;
-    ancestralCorrection[gid][e] = uq[gid][e] * PT[e];
-    if (speciesNode->parent) {
-      int p = speciesNode->parent->node_index;
-      ancestralCorrection[gid][e] += ancestralCorrection[gid][p];
-    }
-  }
   for (auto speciesNode: speciesNodes_) {
     int e = speciesNode->node_index;
-    ancestralCorrection[gid][e] /= double(speciesNodes_.size());
+    ancestralCorrection[gid][e] = ScaledValue();
   }
 }
-void UndatedDTLModel::computeGeneProbabilities(pll_unode_t *geneNode,
-  vector<ScaledValue> &clv)
+
+void UndatedDTLModel::computeGeneProbabilities(pll_unode_t *geneNode)
 {
   int gid = geneNode->node_index;
   for (auto speciesNode: speciesNodes_) {
-    clv[speciesNode->node_index] = ScaledValue();
+    uq[gid][speciesNode->node_index] = ScaledValue();
   }
-  survivingTransferSums[gid] = ScaledValue();
+  resetTransferSums(gid);
   for (int it = 0; it < IT; ++it) {
     for (auto speciesNode: speciesNodes_) {
       computeProbability(geneNode, 
           speciesNode, 
-          clv[speciesNode->node_index]);
+          uq[gid][speciesNode->node_index]);
     }
     updateTransferSums(gid);
   }
@@ -163,7 +192,7 @@ void UndatedDTLModel::computeGeneProbabilities(pll_unode_t *geneNode,
 void UndatedDTLModel::updateCLV(pll_unode_t *geneNode)
 {
 #ifndef REPEATS
-  computeGeneProbabilities(geneNode, uq[geneNode->node_index]);
+  computeGeneProbabilities(geneNode);
 #else
   int repeatId = 0;
   if (!geneNode->next) {
@@ -182,13 +211,13 @@ void UndatedDTLModel::updateCLV(pll_unode_t *geneNode)
   if (repeatId) {
     auto &cachedCLV = cache_[repeatId];
     if (!cachedCLV.size()) {
-      computeGeneProbabilities(geneNode, uq[geneNode->node_index]);
+      computeGeneProbabilities(geneNode);
       cachedCLV = uq[geneNode->node_index];
     } else {
       uq[geneNode->node_index] = cachedCLV;
     }
   } else {
-    computeGeneProbabilities(geneNode, uq[geneNode->node_index]);
+    computeGeneProbabilities(geneNode);
   }
 #endif
 }
