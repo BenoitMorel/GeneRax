@@ -290,16 +290,17 @@ void JointTree::optimizeDLRates() {
     Logger::info << "Skipping DL rates optimization (rates were defined by the user)" << endl;
     return;
   }
+  Logger::timed << "Start optimizing DL rates" << endl;
   double bestLL = numeric_limits<double>::lowest();
   double newLL = 0;
   double bestDup = 0.0;
   double bestLoss = 0.0;
   double minDup = 0.0;
-  double maxDup = 10.0;
+  double maxDup = 1.0;
   double minLoss = 0.0;
-  double maxLoss = 10.0;
+  double maxLoss = 1.0;
   int steps = 10;
-  double epsilon = 0.0001;
+  double epsilon = 0.001;
   bool firstIt = true;
   do {
     bestLL = newLL;
@@ -309,8 +310,8 @@ void JointTree::optimizeDLRates() {
       maxLoss /= 10;
       findBestRates(minDup, maxDup, minLoss, maxLoss, steps, bestDup, bestLoss, newLL);
     }
-    double offsetDup = 2 * (maxDup - minDup) / steps;
-    double offsetLoss = 2* (maxLoss - minLoss) / steps;
+    double offsetDup = (maxDup - minDup) / steps;
+    double offsetLoss =(maxLoss - minLoss) / steps;
     minDup = max(0.0, bestDup - offsetDup);
     maxDup = bestDup + offsetDup;
     minLoss = max(0.0, bestLoss - offsetLoss);
@@ -329,6 +330,7 @@ void JointTree::optimizeDTLRates() {
     Logger::info << "Skipping DL rates optimization (rates were defined by the user)" << endl;
     return;
   }
+  Logger::timed << "Start optimizing DTL rates" << endl;
   double bestLL = numeric_limits<double>::lowest();
   double newLL = 0;
   double bestDup = 0.0;

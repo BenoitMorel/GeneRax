@@ -11,6 +11,7 @@ extern "C" {
 #include <fstream>
 #include <iostream>
 #include <streambuf>
+#include <Logger.hpp>
 const double DEFAULT_BL = 0.000001;
 const double TOLERANCE = 0.5;
 
@@ -258,6 +259,7 @@ double LibpllEvaluation::computeLikelihood(bool incremental)
 
 double LibpllEvaluation::optimizeAllParameters()
 {
+  Logger::timed << "Starting libpll rates optimization" << endl;
   double previousLogl = computeLikelihood(); 
   double newLogl = previousLogl;
   do {

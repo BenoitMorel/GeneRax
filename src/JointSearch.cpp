@@ -69,7 +69,6 @@ int internal_main(int argc, char** argv, void* comm)
         lossRate,
         transferRate);
     jointTree->printInfo();;
-    Logger::timed << "Starting parameters optimization..." << endl;
     jointTree->optimizeParameters();
     double initialRecLL = jointTree->computeReconciliationLoglk();
     double initialLibpllLL = jointTree->computeLibpllLoglk();
