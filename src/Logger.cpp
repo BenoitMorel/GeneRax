@@ -32,6 +32,6 @@ void Logger::init() {
   
 void Logger::initFileOutput(const string &output)
 {
-  logFile = new ofstream(output + "joint_search.log");
+  logFile = new ofstream(output + ".log");
 }
 

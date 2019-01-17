@@ -128,8 +128,8 @@ void Arguments::printHelp() {
   Logger::info << "-g, --gene-tree <GENE TREE>" << endl;
   Logger::info << "-a, --alignment <ALIGNMENT>" << endl;
   Logger::info << "-s, --species-tree <SPECIES TREE>" << endl;
-  Logger::info << "--strategy <STRATEGY>  {NNI, SPR, HYBRID}" << endl;
-  Logger::info << "--reconciliation-model <reconciliationModel>  {UndatedDL, DatedDL}" << endl;
+  Logger::info << "--strategy <STRATEGY>  {EVAL, SPR}" << endl;
+  Logger::info << "--reconciliation-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << endl;
   Logger::info << "-t, --threads <THREADS NUMBER>" << endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
   Logger::info << "--check" << endl;

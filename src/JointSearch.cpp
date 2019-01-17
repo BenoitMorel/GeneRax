@@ -74,6 +74,13 @@ int internal_main(int argc, char** argv, void* comm)
       if (ll >= bestLL) {
         bestLL = ll;
         jointTree->save(Arguments::output + ".newick", false);
+        ofstream stats(Arguments::output + ".stats");
+        stats << "ll " << bestLL << endl;
+        stats << "llrec " << jointTree->computeReconciliationLoglk() << endl;
+        stats << "lllibpll " << jointTree->computeLibpllLoglk() << endl;
+        stats << "D " << jointTree->getDupRate() << endl;
+        stats << "L " << jointTree->getLossRate() << endl;
+        stats << "T " << jointTree->getTransferRate() << endl;
       }
       jointTree->save(Arguments::output + "_all" + ".newick", !firstRun);
     }

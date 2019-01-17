@@ -54,6 +54,9 @@ public:
     
     pll_unode_t *getRoot() {return reconciliationEvaluation_->getRoot();}
     void setRoot(pll_unode_t * root) {reconciliationEvaluation_->setRoot(root);}
+    double getDupRate() const {return dupRate_;}
+    double getLossRate() const {return lossRate_;}
+    double getTransferRate() const {return transRate_;}
 private:
     void findBestRates(double minDup, double maxDup,
         double minLoss, double maxLoss, int steps,
