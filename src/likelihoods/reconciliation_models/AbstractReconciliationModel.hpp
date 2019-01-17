@@ -47,10 +47,19 @@ protected:
   void getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds);
   void mapGenesToSpecies(pllmod_treeinfo_t &treeinfo);
   
-  
+  /**
+   *  - In rooted gene tree mode, and if the gene tree already has a virtual root,
+   *  return this root and its direct neighbors
+   *  - Else, return all the possible virtual roots
+   */
   void getRoots(pllmod_treeinfo_t &treeinfo, 
     vector<pll_unode_t *> &roots,
     const vector<int> &geneIds);
+
+  /**
+   *  Get the left or right child of node. If node is a virtual 
+   *  root, the implementation is different
+   */
   static pll_unode_t *getLeft(pll_unode_t *node, bool virtualRoot);  
   static pll_unode_t *getRight(pll_unode_t *node, bool virtualRoot) ;  
 protected:

@@ -146,7 +146,8 @@ void UndatedDTLModel::resetTransferSums(ScaledValue &transferSum,
   ancestralCorrection = vector<ScaledValue>(speciesNodesCount_);
 }
 
-void UndatedDTLModel::computeGeneProbabilities(pll_unode_t *geneNode)
+
+void UndatedDTLModel::updateCLV(pll_unode_t *geneNode)
 {
   int gid = geneNode->node_index;
   for (auto speciesNode: speciesNodes_) {
@@ -161,12 +162,6 @@ void UndatedDTLModel::computeGeneProbabilities(pll_unode_t *geneNode)
     }
     updateTransferSums(_survivingTransferSums[gid], _ancestralCorrection[gid], _uq[gid]);
   }
-}
-
-
-void UndatedDTLModel::updateCLV(pll_unode_t *geneNode)
-{
-  computeGeneProbabilities(geneNode);
 }
 
 void UndatedDTLModel::invalidateCLV(int nodeIndex)
@@ -249,11 +244,9 @@ void UndatedDTLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
   getRoots(treeinfo, roots, _geneIds);
   for (auto root: roots) {
     int u = root->node_index + _maxGeneId + 1;
-    int uprime = root->back->node_index + _maxGeneId + 1;
     for (auto speciesNode: speciesNodes_) {
       int e = speciesNode->node_index;
       _uq[u][e] = ScaledValue();
-      _uq[uprime][e] = ScaledValue();
     }
     resetTransferSums(_survivingTransferSums[u], _ancestralCorrection[u]);
     for (int it = 0; it < IT; ++it) {
@@ -263,11 +256,8 @@ void UndatedDTLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
         virtual_root.next = root;
         virtual_root.node_index = root->node_index + _maxGeneId + 1;
         computeProbability(&virtual_root, speciesNode, _uq[u][e], true);
-        _uq[uprime][e] = _uq[u][e];
       }
       updateTransferSums(_survivingTransferSums[u], _ancestralCorrection[u], _uq[u]);
-      _survivingTransferSums[uprime] = _survivingTransferSums[u];
-      _ancestralCorrection[uprime] = _ancestralCorrection[u];
     }
   }
 }
@@ -276,7 +266,6 @@ void UndatedDTLModel::updateRoot(pllmod_treeinfo_t &treeinfo)
 {
   vector<pll_unode_t *> roots;
   getRoots(treeinfo, roots, _geneIds);
-  // find the best root
   ScaledValue max;
   for (auto root: roots) {
     ScaledValue sum;
@@ -298,24 +287,20 @@ double UndatedDTLModel::getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
   getRoots(*treeinfo, roots, _geneIds);
   for (auto root: roots) {
     int u = root->node_index + _maxGeneId + 1;
-    ScaledValue sum;
     for (auto speciesNode: speciesNodes_) {
       int e = speciesNode->node_index;
       total += _uq[u][e];
-      sum += _uq[u][e];
     }
   }
-  double res = total.getLogValue(); //log(root_sum / survive / O_norm * (speciesNodesCount_));
-  return res;
+  return total.getLogValue();
 }
 
 double UndatedDTLModel::computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   auto root = getRoot();
-  getIdsPostOrder(*treeinfo, _geneIds); 
   updateCLVs(*treeinfo);
   computeLikelihoods(*treeinfo);
-  if (Arguments::rootedGeneTree) {// && !getRoot()) {
+  if (Arguments::rootedGeneTree) {
     updateRoot(*treeinfo);
     while (root != getRoot()) {
       updateCLVs(*treeinfo);
