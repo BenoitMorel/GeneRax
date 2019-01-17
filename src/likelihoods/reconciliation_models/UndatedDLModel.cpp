@@ -35,12 +35,12 @@ static double solveSecondDegreePolynome(double a, double b, double c)
   return 2 * c / (-b + sqrt(b * b - 4 * a * c));
 }
 
+
+
 void UndatedDLModel::setRates(double dupRate, 
   double lossRate,
   double transferRates) {
   geneRoot_ = 0;
-  cache_.clear();
-  cache_.resize(CACHE_SIZE);
   PD = vector<double>(speciesNodesCount_, dupRate);
   PL = vector<double>(speciesNodesCount_, lossRate);
   PS = vector<double>(speciesNodesCount_, 1.0);
@@ -50,7 +50,7 @@ void UndatedDLModel::setRates(double dupRate,
     PD[e] /= sum;
     PL[e] /= sum;
     PS[e] /= sum;
-  } 
+  }
   uE = vector<double>(speciesNodesCount_, 0.0);
   for (auto speciesNode: speciesNodes_) {
     int e = speciesNode->node_index;
@@ -123,35 +123,7 @@ void UndatedDLModel::computeGeneProbabilities(pll_unode_t *geneNode,
 
 void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
-#ifndef REPEATS
   computeGeneProbabilities(geneNode, uq[geneNode->node_index]);
-#else
-  int repeatId = 0;
-  if (!geneNode->next) {
-    repeatId = geneToSpecies_[geneNode->node_index] + 1;
-  } else {
-    long left = repeatsId[getLeft(geneNode, false)->node_index];
-    long right = repeatsId[getRight(geneNode, false)->node_index];
-    if (left * right) {
-      repeatId = min(right, left) + (speciesNodesCount_+1) * max(right, left);// todobenoit this is wrong
-    }
-  }
-  if (repeatId >= cache_.size()) {
-    repeatId = 0;
-  }
-  repeatsId[geneNode->node_index] = repeatId;
-  if (repeatId) {
-    auto &cachedCLV = cache_[repeatId];
-    if (!cachedCLV.size()) {
-      computeGeneProbabilities(geneNode, uq[geneNode->node_index]);
-      cachedCLV = uq[geneNode->node_index];
-    } else {
-      uq[geneNode->node_index] = cachedCLV;
-    }
-  } else {
-    computeGeneProbabilities(geneNode, uq[geneNode->node_index]);
-  }
-#endif
 }
 
 void UndatedDLModel::invalidateCLV(int nodeIndex)

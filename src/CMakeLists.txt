@@ -7,6 +7,7 @@ set(JOINTSEARCH_SOURCES JointSearch.cpp
   Arguments.cpp
   ParallelContext.cpp
   Logger.cpp
+  treeSearch/SPRSearch.cpp
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ReconciliationEvaluation.cpp
   likelihoods/reconciliation_models/AbstractReconciliationModel.cpp
@@ -18,7 +19,6 @@ set(JOINTSEARCH_SOURCES JointSearch.cpp
   treeSearch/Moves.cpp
   treeSearch/Rollbacks.cpp
   treeSearch/SearchUtils.cpp
-  treeSearch/SPRSearch.cpp
   )
 
 if (JOINTSEARCH_BUILD_AS_LIBRARY)
