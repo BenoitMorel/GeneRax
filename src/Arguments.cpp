@@ -14,6 +14,10 @@ string Arguments::output("jointSearch");
 bool Arguments::check = false;
 bool Arguments::rootedGeneTree = false;
 bool Arguments::noFelsensteinLikelihood = false;  
+bool Arguments::userDTLRates = false;
+double Arguments::dupRate = -1.0;
+double Arguments::lossRate = -1.0;
+double Arguments::transferRate = -1.0;
 
 Arguments::ReconciliationModel getModelFromString(const string &modelStr)
 {
@@ -73,6 +77,15 @@ void Arguments::init(int argc, char * argv[])
       rootedGeneTree = true;
     } else if (arg == "--no-felsenstein-likelihood") {
       noFelsensteinLikelihood = true;
+    } else if (arg == "--dupRate") {
+      dupRate = atof(argv[++i]);
+      userDTLRates = true;
+    } else if (arg == "--lossRate") {
+      lossRate = atof(argv[++i]);
+      userDTLRates = true;
+    } else if (arg == "--transferRate") {
+      transferRate = atof(argv[++i]);
+      userDTLRates = true;
     } else {
       Logger::error << "Unrecognized argument " << arg << endl;
       Logger::error << "Aborting" << endl;
@@ -111,6 +124,10 @@ void Arguments::checkInputs() {
   }
   if (reconciliationModel == Arguments::InvalidModel) {
     Logger::error << "Invalid reconciliation model." << endl;
+    ok = false;
+  }
+  if (userDTLRates && (dupRate < 0.0 || dupRate < 0.0 || lossRate < 0.0 || transferRate < 0.0 )) {
+    Logger::error << "You specified at least one of the DTL rates, but not all of them." << endl;
     ok = false;
   }
   if (!ok) {

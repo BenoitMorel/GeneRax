@@ -52,14 +52,27 @@ int internal_main(int argc, char** argv, void* comm)
   bool firstRun  = true; 
   double bestLL = numeric_limits<double>::lowest();
   for (auto &geneTreeString: geneTreeStrings) {
+    double dupRate = 1;
+    double lossRate = 1;
+    double transferRate = 1;
+    if (Arguments::userDTLRates) {
+      dupRate = Arguments::dupRate;
+      lossRate = Arguments::lossRate;
+      transferRate = Arguments::transferRate;
+    }
     auto jointTree = make_shared<JointTree>(geneTreeString,
         Arguments::alignment,
         Arguments::speciesTree,
         Arguments::geneSpeciesMap,
-        Arguments::reconciliationModel);
+        Arguments::reconciliationModel,
+        dupRate,
+        lossRate,
+        transferRate);
     jointTree->printInfo();;
     Logger::timed << "Starting parameters optimization..." << endl;
     jointTree->optimizeParameters();
+    double initialRecLL = jointTree->computeReconciliationLoglk();
+    double initialLibpllLL = jointTree->computeLibpllLoglk();
     Logger::timed << "Starting search..." << endl;
     if (Arguments::strategy == "SPR") {
       SPRSearch::applySPRSearch(*jointTree);
@@ -75,6 +88,9 @@ int internal_main(int argc, char** argv, void* comm)
         bestLL = ll;
         jointTree->save(Arguments::output + ".newick", false);
         ofstream stats(Arguments::output + ".stats");
+        stats << "initial_ll " << initialRecLL + initialLibpllLL << endl;
+        stats << "initial_llrec " << initialRecLL << endl;
+        stats << "initial_lllibpll " << initialLibpllLL << endl;
         stats << "ll " << bestLL << endl;
         stats << "llrec " << jointTree->computeReconciliationLoglk() << endl;
         stats << "lllibpll " << jointTree->computeLibpllLoglk() << endl;

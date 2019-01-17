@@ -32,5 +32,9 @@ public:
   static bool check;
   static bool rootedGeneTree;
   static bool noFelsensteinLikelihood;
+  static bool userDTLRates;
+  static double dupRate;
+  static double lossRate;
+  static double transferRate;
 };
 
