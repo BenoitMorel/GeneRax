@@ -1,3 +1,4 @@
+#ifdef DISABLED_CODE
 #include "DatedDLModel.hpp"
 #include <Logger.hpp>
 
@@ -265,4 +266,4 @@ double DatedDLModel::getExtProba(int speciesId)
 {
   return extinctionProba_[speciesId].back();
 }
-
+#endif

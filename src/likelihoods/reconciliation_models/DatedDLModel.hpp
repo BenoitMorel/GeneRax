@@ -1,3 +1,5 @@
+#ifdef DISABLED_CODE
+
 #pragma once
 
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
@@ -77,4 +79,4 @@ private:
   double getExtProba(int speciesId);
 };
 
-
+#endif
