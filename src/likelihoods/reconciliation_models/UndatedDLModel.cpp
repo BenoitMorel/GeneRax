@@ -8,7 +8,7 @@ const int CACHE_SIZE = 100000;
 UndatedDLModel::UndatedDLModel():
   allCLVInvalid(true)
 {
-  maxId = 1;
+  _maxGeneId = 1;
   Logger::info << "creating undated dl model" << endl;
 }
 
@@ -19,14 +19,12 @@ void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   AbstractReconciliationModel::setInitialGeneTree(treeinfo);
   getIdsPostOrder(*treeinfo, geneIds); 
-  maxId = 0;
+  _maxGeneId = 0;
   for (auto gid: geneIds)
-    maxId = max(maxId, gid);
+    _maxGeneId = max(_maxGeneId, gid);
   // init ua with zeros
   vector<ScaledValue> zeros(speciesNodesCount_);
-  uq = vector<vector<ScaledValue> >(maxId + 1,zeros);
-  virtual_uq = vector<vector<ScaledValue> > (maxId + 1,zeros);
-  repeatsId = vector<unsigned long>(maxId + 1, 0);
+  uq = vector<vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
   invalidateAllCLVs();
 }
 
@@ -133,14 +131,14 @@ void UndatedDLModel::invalidateCLV(int nodeIndex)
   
 void UndatedDLModel::invalidateAllCLVs()
 {
-  isCLVUpdated = vector<bool>(maxId + 1, false);
+  isCLVUpdated = vector<bool>(_maxGeneId + 1, false);
 }
 
 void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
       bool isVirtualRoot) const
 {
-  int gid = isVirtualRoot ? geneNode->next->node_index : geneNode->node_index;
+  int gid = geneNode->node_index;
   pll_unode_t *leftGeneNode = 0;     
   pll_unode_t *rightGeneNode = 0;     
   bool isGeneLeaf = !geneNode->next;
@@ -179,17 +177,10 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
   }
   if (not isSpeciesLeaf) {
     // SL event
-    if (!isVirtualRoot) {
-      proba += ScaledValue::superMult2(
-          uq[gid][f], uE[g],
-          uq[gid][g], uE[f],
-          PS[e]);
-    } else {
-      proba += ScaledValue::superMult2(
-          virtual_uq[gid][f], uE[g],
-          virtual_uq[gid][g], uE[f],
-          PS[e]);
-    }
+    proba += ScaledValue::superMult2(
+        uq[gid][f], uE[g],
+        uq[gid][g], uE[f],
+        PS[e]);
   }
   // DL event
   proba /= (1.0 - 2.0 * PD[e] * uE[e]); 
@@ -202,14 +193,13 @@ void UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
   vector<pll_unode_t *> roots;
   getRoots(treeinfo, roots, geneIds);
   for (auto root: roots) {
-    int u = root->node_index;
-    int uprime = root->back->node_index;
+    int u = root->node_index + _maxGeneId + 1;;
     for (auto speciesNode: speciesNodes_) {
       int e = speciesNode->node_index;
       pll_unode_t virtual_root;
       virtual_root.next = root;
-      computeProbability(&virtual_root, speciesNode, virtual_uq[u][e], true);
-      virtual_uq[uprime][e] = virtual_uq[u][e];
+      virtual_root.node_index = root->node_index + _maxGeneId + 1;
+      computeProbability(&virtual_root, speciesNode, uq[u][e], true);
     }
   }
 }
@@ -222,10 +212,10 @@ void UndatedDLModel::updateRoot(pllmod_treeinfo_t &treeinfo)
   ScaledValue max;
   for (auto root: roots) {
     ScaledValue sum;
-    int u = root->node_index;
+    int u = root->node_index + _maxGeneId + 1;;
     for (auto speciesNode: speciesNodes_) {
       int e = speciesNode->node_index;
-      sum += virtual_uq[u][e];
+      sum += uq[u][e];
     }
     if (max < sum) {
       setRoot(root);
@@ -239,16 +229,14 @@ double UndatedDLModel::getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
   vector<pll_unode_t *> roots;
   getRoots(*treeinfo, roots, geneIds);
   for (auto root: roots) {
-    int u = root->node_index;
+    int u = root->node_index + _maxGeneId + 1;
     ScaledValue sum;
     for (auto speciesNode: speciesNodes_) {
       int e = speciesNode->node_index;
-      total += virtual_uq[u][e];
-      sum += virtual_uq[u][e];
+      total += uq[u][e];
     }
   }
-  double res = total.getLogValue(); //log(root_sum / survive / O_norm * (speciesNodesCount_));
-  return res;
+  return total.getLogValue(); 
 }
 
 double UndatedDLModel::computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo)

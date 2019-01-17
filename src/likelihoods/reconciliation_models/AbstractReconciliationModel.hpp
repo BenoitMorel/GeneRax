@@ -42,6 +42,7 @@ protected:
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
   // Called by computeLogLikelihood
   virtual double computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo) = 0;
+  virtual void updateCLV(pll_unode_t *geneNode) = 0;
  
   
   void getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds);

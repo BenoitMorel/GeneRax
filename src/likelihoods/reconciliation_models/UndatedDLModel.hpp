@@ -25,8 +25,12 @@ public:
   virtual void invalidateCLV(int nodeIndex);
     
 protected:
+  // overload from parent
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  // overload from parent
   virtual double computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  // overload from parent
+  virtual void updateCLV(pll_unode_t *geneNode);
 private:
   // model
   vector<double> PD; // Duplication probability, per branch
@@ -41,13 +45,6 @@ private:
   // to produce the subtree of this gene node
   vector<vector<ScaledValue> > uq;
 
-  // likelihoods[geneId][speciesId] = probability of a virtual root present at 
-  // a species node to produce the tree under this virtual root
-  vector<vector<ScaledValue> > virtual_uq;
-
-  // ll[speciesId] = likelihood of the (rooted or unrooted) gene tree to be present under a species node
-  vector<ScaledValue> ll; // sam
- 
   // geme ids in postorder 
   vector<int> geneIds;
 
@@ -61,11 +58,8 @@ private:
   // is the CLV up to date?
   vector<bool> isCLVUpdated;
 
-  int maxId;
+  int _maxGeneId;
 
-  // repeats
-  vector<unsigned long> repeatsId; // repeatsId[geneId]
-  vector<vector<ScaledValue> > cache_;
 private:
   void getCLVsToUpdate(pllmod_treeinfo_t &treeinfo);
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
@@ -73,7 +67,6 @@ private:
       bool isVirtualRoot = false) const;
   void computeGeneProbabilities(pll_unode_t *geneNode, 
       vector<ScaledValue> &clv);
-  void updateCLV(pll_unode_t *geneNode);
   void updateCLVs(pllmod_treeinfo_t &treeinfo);
   void computeLikelihoods(pllmod_treeinfo_t &treeinfo);
   void updateRoot(pllmod_treeinfo_t &treeinfo);
