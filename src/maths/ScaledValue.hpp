@@ -147,6 +147,7 @@ public:
    */
   inline ScaledValue& operator/=(double v) {
     value /= v;
+    return *this;
   }
 
 
@@ -249,8 +250,8 @@ public:
   }
  
 
-  int scaler;
   double value;
+  int scaler;
 };
 
 

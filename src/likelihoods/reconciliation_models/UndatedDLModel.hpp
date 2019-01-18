@@ -20,37 +20,32 @@ public:
   
   // overloaded from parent
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);  
+  // overloaded from parent
+  virtual bool implementsTransfers() {return false;}
 protected:
   // overload from parent
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
   // overload from parent
-  virtual double computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo);
-  // overload from parent
   virtual void updateCLV(pll_unode_t *geneNode);
+  // overload from parent
+  virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *root) const;
+  // overload from parent
+  virtual void computeRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *virtualRoot);
 private:
-  // model
-  vector<double> PD; // Duplication probability, per branch
-  vector<double> PL; // Loss probability, per branch
-  vector<double> PS; // Speciation probability, per branch
-
-  // SPECIES
-  vector<double> uE; // Probability for a gene to become extinct on each brance
+  vector<double> _PD; // Duplication probability, per species branch
+  vector<double> _PL; // Loss probability, per species branch
+  vector<double> _PS; // Speciation probability, per species branch
+  vector<double> _uE; // Extinction probability, per species branch
   
-  // CLVs
   // uq[geneId][speciesId] = probability of a gene node rooted at a species node
   // to produce the subtree of this gene node
-  vector<vector<ScaledValue> > uq;
-
-
+  vector<vector<ScaledValue> > _uq;
 
 private:
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
       bool isVirtualRoot = false) const;
-  void computeGeneProbabilities(pll_unode_t *geneNode, 
-      vector<ScaledValue> &clv);
-  void computeLikelihoods(pllmod_treeinfo_t &treeinfo);
-  void updateRoot(pllmod_treeinfo_t &treeinfo);
-  double getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
 };
 

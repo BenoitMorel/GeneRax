@@ -131,7 +131,19 @@ double AbstractReconciliationModel::computeLogLikelihood(shared_ptr<pllmod_treei
     setInitialGeneTree(treeinfo);
     firstCall_ = false;
   }
-  return computeLogLikelihoodInternal(treeinfo);
+  auto root = getRoot();
+  updateCLVs(*treeinfo);
+  computeLikelihoods(*treeinfo);
+  if (Arguments::rootedGeneTree) {
+    updateRoot(*treeinfo);
+    while (root != getRoot()) {
+      updateCLVs(*treeinfo);
+      computeLikelihoods(*treeinfo);
+      root = getRoot();
+      updateRoot(*treeinfo);
+    }
+  }
+  return getSumLikelihood(treeinfo);
 }
 
 pll_unode_t *AbstractReconciliationModel::getLeft(pll_unode_t *node, bool virtualRoot)
@@ -194,5 +206,44 @@ void AbstractReconciliationModel::invalidateCLV(int nodeIndex)
 void AbstractReconciliationModel::invalidateAllCLVs()
 {
   _isCLVUpdated = vector<bool>(_maxGeneId + 1, false);
+}
+
+void AbstractReconciliationModel::updateRoot(pllmod_treeinfo_t &treeinfo) 
+{
+  vector<pll_unode_t *> roots;
+  getRoots(treeinfo, roots, _geneIds);
+  ScaledValue max;
+  for (auto root: roots) {
+    ScaledValue rootProba = getRootLikelihood(treeinfo, root);
+    if (max < rootProba) {
+      setRoot(root);
+      max = rootProba;
+    }
+  }
+}
+
+double AbstractReconciliationModel::getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
+{
+  ScaledValue total;
+  vector<pll_unode_t *> roots;
+  getRoots(*treeinfo, roots, _geneIds);
+  for (auto root: roots) {
+    total += getRootLikelihood(*treeinfo, root);
+  }
+  return total.getLogValue(); 
+}
+
+
+void AbstractReconciliationModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
+{
+  vector<ScaledValue> zeros(speciesNodesCount_); 
+  vector<pll_unode_t *> roots;
+  getRoots(treeinfo, roots, _geneIds);
+  for (auto root: roots) {
+    pll_unode_t virtualRoot;
+    virtualRoot.next = root;
+    virtualRoot.node_index = root->node_index + _maxGeneId + 1;
+    computeRootLikelihood(treeinfo, &virtualRoot);
+  }
 }
   

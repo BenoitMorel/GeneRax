@@ -18,7 +18,7 @@ void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   AbstractReconciliationModel::setInitialGeneTree(treeinfo);
   vector<ScaledValue> zeros(speciesNodesCount_);
-  uq = vector<vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
+  _uq = vector<vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
 }
 
 static double solveSecondDegreePolynome(double a, double b, double c) 
@@ -26,34 +26,32 @@ static double solveSecondDegreePolynome(double a, double b, double c)
   return 2 * c / (-b + sqrt(b * b - 4 * a * c));
 }
 
-
-
 void UndatedDLModel::setRates(double dupRate, 
   double lossRate,
   double transferRates) {
   geneRoot_ = 0;
-  PD = vector<double>(speciesNodesCount_, dupRate);
-  PL = vector<double>(speciesNodesCount_, lossRate);
-  PS = vector<double>(speciesNodesCount_, 1.0);
+  _PD = vector<double>(speciesNodesCount_, dupRate);
+  _PL = vector<double>(speciesNodesCount_, lossRate);
+  _PS = vector<double>(speciesNodesCount_, 1.0);
   for (auto speciesNode: speciesNodes_) {
     int e = speciesNode->node_index;
-    double sum = PD[e] + PL[e] + PS[e];
-    PD[e] /= sum;
-    PL[e] /= sum;
-    PS[e] /= sum;
+    double sum = _PD[e] + _PL[e] + _PS[e];
+    _PD[e] /= sum;
+    _PL[e] /= sum;
+    _PS[e] /= sum;
   }
-  uE = vector<double>(speciesNodesCount_, 0.0);
+  _uE = vector<double>(speciesNodesCount_, 0.0);
   for (auto speciesNode: speciesNodes_) {
     int e = speciesNode->node_index;
-    double a = PD[e];
+    double a = _PD[e];
     double b = -1.0;
-    double c = PL[e];
+    double c = _PL[e];
     if (speciesNode->left) {
-      c += PS[e] * uE[speciesNode->left->node_index]  * uE[speciesNode->right->node_index];
+      c += _PS[e] * _uE[speciesNode->left->node_index]  * _uE[speciesNode->right->node_index];
     }
     double proba = solveSecondDegreePolynome(a, b, c);
     ASSERT_PROBA(proba)
-    uE[speciesNode->node_index] = proba;
+    _uE[speciesNode->node_index] = proba;
   }
   invalidateAllCLVs();
 }
@@ -61,20 +59,14 @@ void UndatedDLModel::setRates(double dupRate,
 UndatedDLModel::~UndatedDLModel() { }
 
 
-void UndatedDLModel::computeGeneProbabilities(pll_unode_t *geneNode,
-  vector<ScaledValue> &clv)
+
+void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
   for (auto speciesNode: speciesNodes_) {
     computeProbability(geneNode, 
         speciesNode, 
-        clv[speciesNode->node_index]);
+        _uq[geneNode->node_index][speciesNode->node_index]);
   }
-}
-
-
-void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
-{
-  computeGeneProbabilities(geneNode, uq[geneNode->node_index]);
 }
 
 
@@ -101,7 +93,7 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
   proba = ScaledValue();
   if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) {
     // present
-    proba = ScaledValue(PS[e], 0);
+    proba = ScaledValue(_PS[e], 0);
     return;
   }
   if (not isGeneLeaf) {
@@ -109,96 +101,46 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
     int gpp_i = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
       // S event
-      proba += ScaledValue::superMult1(uq[gp_i][f], uq[gpp_i][g],
-          uq[gp_i][g], uq[gpp_i][f],
-          PS[e]);
+      proba += ScaledValue::superMult1(_uq[gp_i][f], _uq[gpp_i][g],
+          _uq[gp_i][g], _uq[gpp_i][f],
+          _PS[e]);
     }
     // D event
-    ScaledValue temp = uq[gp_i][e];
-    temp *= uq[gpp_i][e];
-    temp *= PD[e];
+    ScaledValue temp = _uq[gp_i][e];
+    temp *= _uq[gpp_i][e];
+    temp *= _PD[e];
     proba += temp;
   }
   if (not isSpeciesLeaf) {
     // SL event
     proba += ScaledValue::superMult2(
-        uq[gid][f], uE[g],
-        uq[gid][g], uE[f],
-        PS[e]);
+        _uq[gid][f], _uE[g],
+        _uq[gid][g], _uE[f],
+        _PS[e]);
   }
   // DL event
-  proba /= (1.0 - 2.0 * PD[e] * uE[e]); 
+  proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
   assert(proba.isProba());
 }
-
-void UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
+  
+ScaledValue UndatedDLModel::getRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *root) const
 {
-  vector<ScaledValue> zeros(speciesNodesCount_); 
-  vector<pll_unode_t *> roots;
-  getRoots(treeinfo, roots, _geneIds);
-  for (auto root: roots) {
-    int u = root->node_index + _maxGeneId + 1;;
-    for (auto speciesNode: speciesNodes_) {
-      int e = speciesNode->node_index;
-      pll_unode_t virtual_root;
-      virtual_root.next = root;
-      virtual_root.node_index = root->node_index + _maxGeneId + 1;
-      computeProbability(&virtual_root, speciesNode, uq[u][e], true);
-    }
+  ScaledValue sum;
+  int u = root->node_index + _maxGeneId + 1;;
+  for (auto speciesNode: speciesNodes_) {
+    int e = speciesNode->node_index;
+    sum += _uq[u][e];
+  }
+  return sum;
+}
+void UndatedDLModel::computeRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *virtualRoot)
+{
+  int u = virtualRoot->node_index;
+  for (auto speciesNode: speciesNodes_) {
+    int e = speciesNode->node_index;
+    computeProbability(virtualRoot, speciesNode, _uq[u][e], true);
   }
 }
-
-void UndatedDLModel::updateRoot(pllmod_treeinfo_t &treeinfo) 
-{
-  vector<pll_unode_t *> roots;
-  getRoots(treeinfo, roots, _geneIds);
-  // find the best root
-  ScaledValue max;
-  for (auto root: roots) {
-    ScaledValue sum;
-    int u = root->node_index + _maxGeneId + 1;;
-    for (auto speciesNode: speciesNodes_) {
-      int e = speciesNode->node_index;
-      sum += uq[u][e];
-    }
-    if (max < sum) {
-      setRoot(root);
-      max = sum;
-    }
-  }
-}
-double UndatedDLModel::getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
-{
-  ScaledValue total;
-  vector<pll_unode_t *> roots;
-  getRoots(*treeinfo, roots, _geneIds);
-  for (auto root: roots) {
-    int u = root->node_index + _maxGeneId + 1;
-    ScaledValue sum;
-    for (auto speciesNode: speciesNodes_) {
-      int e = speciesNode->node_index;
-      total += uq[u][e];
-    }
-  }
-  return total.getLogValue(); 
-}
-
-double UndatedDLModel::computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo)
-{
-  auto root = getRoot();
-  getIdsPostOrder(*treeinfo, _geneIds); 
-  updateCLVs(*treeinfo);
-  computeLikelihoods(*treeinfo);
-  if (Arguments::rootedGeneTree) {// && !getRoot()) {
-    updateRoot(*treeinfo);
-    while (root != getRoot()) {
-      updateCLVs(*treeinfo);
-      computeLikelihoods(*treeinfo);
-      root = getRoot();
-      updateRoot(*treeinfo);
-    }
-  }
-  return getSumLikelihood(treeinfo);
-}
-
 

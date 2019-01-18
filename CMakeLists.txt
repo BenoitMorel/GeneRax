@@ -9,6 +9,8 @@ if(JOINTSEARCH_BUILD_AS_LIBRARY)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJOINTSEARCH_BUILD_AS_LIB=ON -fPIC")
 endif()
 
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall")
+
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG(-std=c++14 CXX_STANDARD_14_SUPPORT -g)
 if(CXX_STANDARD_14_SUPPORT)
@@ -18,6 +20,7 @@ if(CXX_STANDARD_14_SUPPORT)
 else()
     message(FATAL_ERROR "Compiler ${CMAKE_CXX_COMPILER} has no C++14 support.")
 endif()
+
 
 include(FindMPI)
 if(MPI_FOUND)

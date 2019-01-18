@@ -4,7 +4,7 @@
 #include <parsers/GeneSpeciesMapping.hpp>
 
 #include <unordered_set>
-
+#include <maths/ScaledValue.hpp>
 
 /**
  *  Interface and common implementations for 
@@ -32,7 +32,7 @@ public:
   virtual void setRoot(pll_unode_t * root) {geneRoot_ = root;}
   virtual pll_unode_t *getRoot() {return geneRoot_;}
   
-  virtual bool implementsTransfers() {return false;}
+  virtual bool implementsTransfers() = 0;
   
   void invalidateAllCLVs();
   void invalidateCLV(int nodeIndex);
@@ -45,12 +45,18 @@ protected:
   // Called when computeLogLikelihood is called for the first time
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
   // Called by computeLogLikelihood
-  virtual double computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo) = 0;
   virtual void updateCLV(pll_unode_t *geneNode) = 0;
+  // Called by computeLogLikelihood
+  virtual void computeRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *virtualRoot) = 0;
+  // Called by computeLogLikelihood
+  virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *root) const = 0;
  
   
   void getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds);
   void mapGenesToSpecies(pllmod_treeinfo_t &treeinfo);
+  void updateRoot(pllmod_treeinfo_t &treeinfo);
   
   /**
    *  - In rooted gene tree mode, and if the gene tree already has a virtual root,
@@ -81,6 +87,8 @@ protected:
   int _maxGeneId;
 
 private:
+  virtual void computeLikelihoods(pllmod_treeinfo_t &treeinfo);
+  double getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
   void updateCLVsRec(pll_unode_t *node);
   void markInvalidatedNodes(pllmod_treeinfo_t &treeinfo);
   void markInvalidatedNodesRec(pll_unode_t *node);

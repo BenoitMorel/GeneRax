@@ -24,9 +24,13 @@ protected:
   // overloaded from parent
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
   // overloaded from parent
-  virtual double computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo);
-  // overloaded from parent
   virtual void updateCLV(pll_unode_t *geneNode);
+  // overloaded from parent
+  virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *root) const;
+  // overload from parent
+  virtual void computeRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *virtualRoot);
 private:
   // model
   vector<double> _PD; // Duplication probability, per branch
@@ -52,9 +56,6 @@ private:
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
       bool isVirtualRoot = false) const;
-  void computeLikelihoods(pllmod_treeinfo_t &treeinfo);
-  void updateRoot(pllmod_treeinfo_t &treeinfo);
-  double getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
   void updateTransferSums(ScaledValue &transferExtinctionSum,
     vector<ScaledValue> &ancestralExtinctionCorrection,
     const vector<ScaledValue> &probabilities);
