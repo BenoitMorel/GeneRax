@@ -32,7 +32,7 @@ void queryPruneIndicesRec(pll_unode_t * node,
 
 void getAllPruneIndices(JointTree &tree, vector<int> &allNodeIndices) {
   auto treeinfo = tree.getTreeInfo();
-  for (int i = 0; i < treeinfo->subnode_count; ++i) {
+  for (unsigned int i = 0; i < treeinfo->subnode_count; ++i) {
     if (treeinfo->subnodes[i]->next) {
       allNodeIndices.push_back(treeinfo->subnodes[i]->node_index);
     }
@@ -57,7 +57,7 @@ void getRegraftsRec(int pruneIndex, pll_unode_t *regraft, int maxRadius, vector<
   if (path.size()) {
     moves.push_back(SPRMoveDesc(pruneIndex, regraft->node_index, path));
   }
-  if (path.size() < maxRadius && regraft->next) {
+  if ((int)path.size() < maxRadius && regraft->next) {
     path.push_back(regraft->node_index);
     getRegraftsRec(pruneIndex, regraft->next->back, maxRadius, path, moves);
     getRegraftsRec(pruneIndex, regraft->next->next->back, maxRadius, path, moves);
@@ -93,18 +93,16 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
   shared_ptr<Move> bestMove(0);
   vector<int> allNodes;
   getAllPruneIndices(jointTree, allNodes);
-  const size_t edgesNumber = jointTree.getTreeInfo()->tree->edge_count;
- 
   vector<SPRMoveDesc> potentialMoves;
   vector<shared_ptr<Move> > allMoves;
-  for (int i = 0; i < allNodes.size(); ++i) {
+  for (unsigned int i = 0; i < allNodes.size(); ++i) {
       int pruneIndex = allNodes[i];
       getRegrafts(jointTree, pruneIndex, radius, potentialMoves);
   }
   vector<array<bool, 2> > redundantNNIMoves(jointTree.getTreeInfo()->subnode_count, array<bool, 2>{{false,false}});
   for (auto &move: potentialMoves) {
-    int pruneIndex = move.pruneIndex;
-    int regraftIndex = move.regraftIndex;
+    unsigned int pruneIndex = move.pruneIndex;
+    unsigned int regraftIndex = move.regraftIndex;
     if (!isValidSPRMove(jointTree.getTreeInfo(), jointTree.getNode(pruneIndex), jointTree.getNode(regraftIndex))) {
       continue;
     }

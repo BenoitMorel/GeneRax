@@ -23,19 +23,34 @@ public:
   virtual void init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map);
   
   virtual ~AbstractReconciliationModel() {};
-  
+ 
+  /**
+   * Set the DTL rates, and update probabilities relative to the species tree only
+   */
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0) = 0;
+ 
+  /**
+   * 
+   */
+  double computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
   
-  virtual double computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
   
-  
-  virtual void setRoot(pll_unode_t * root) {geneRoot_ = root;}
-  virtual pll_unode_t *getRoot() {return geneRoot_;}
-  
+  /**
+   *  Get/set the root of the gene tree (only relevant in rooted gene tree mode)
+   */ 
+  void setRoot(pll_unode_t * root) {geneRoot_ = root;}
+  pll_unode_t *getRoot() {return geneRoot_;}
+ 
+  /**
+   *  Does this model support transfer? Relevant to know which parameter to optimize
+   */
   virtual bool implementsTransfers() = 0;
-  
+ 
+  /**
+   * invalidate one or all the gene CLVs
+   */
   void invalidateAllCLVs();
-  void invalidateCLV(int nodeIndex);
+  void invalidateCLV(int geneNodeIndex);
 
 protected:
   // called by the constructor

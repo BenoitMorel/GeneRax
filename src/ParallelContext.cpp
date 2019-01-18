@@ -48,15 +48,12 @@ void ParallelContext::setComm(MPI_Comm newComm)
 
 int ParallelContext::getBegin(int elems)
 {
-  int perRankElements = elems / getSize();
   return (getRank() * elems) / getSize();
 }
  
 int ParallelContext::getEnd(int elems)
 {
-  int perRankElements = elems / getSize();
   return min(elems, ((getRank() + 1) * elems) / getSize());
-
 }
 
 void ParallelContext::allGatherDouble(double localValue, vector<double> &allValues) {
@@ -96,7 +93,7 @@ int ParallelContext::getMax(double &value, int &bestRank)
   vector<double> allValues;
   allGatherDouble(value, allValues);
   bestRank = 0;
-  for (int i = 0; i < allValues.size(); ++i) {
+  for (unsigned int i = 0; i < allValues.size(); ++i) {
     if (allValues[i] > allValues[bestRank]) {
       bestRank = i;
     }

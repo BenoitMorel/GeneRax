@@ -53,7 +53,7 @@ void AbstractReconciliationModel::setGeneSpeciesMap(const GeneSpeciesMapping &ma
 void AbstractReconciliationModel::mapGenesToSpecies(pllmod_treeinfo_t &treeinfo)
 {
   geneToSpecies_.resize(treeinfo.subnode_count);
-  for (int i = 0; i < treeinfo.subnode_count; ++i) {
+  for (unsigned int i = 0; i < treeinfo.subnode_count; ++i) {
     auto node = treeinfo.subnodes[i];
     if (!node->next) {
       string speciesName = geneNameToSpeciesName_[string(node->label)]; 

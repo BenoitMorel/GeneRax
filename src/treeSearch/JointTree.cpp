@@ -65,7 +65,7 @@ pll_unode_t *findMinimumHashLeaf(pll_unode_t * root)
 void JointTree::printAllNodes(ostream &os)
 {
   auto treeinfo = getTreeInfo();
-  for (int i = 0; i < treeinfo->subnode_count; ++i) {
+  for (unsigned int i = 0; i < treeinfo->subnode_count; ++i) {
     auto node = treeinfo->subnodes[i];
     os << "node:" << node->node_index << " back:" << node->back->node_index;
     if (node->next) {
@@ -301,22 +301,15 @@ void JointTree::optimizeDLRates() {
   double maxLoss = 1.0;
   int steps = 10;
   double epsilon = 0.001;
-  bool firstIt = true;
   do {
     bestLL = newLL;
     findBestRates(minDup, maxDup, minLoss, maxLoss, steps, bestDup, bestLoss, newLL);
-    while(firstIt && isinf(newLL) || newLL < -100000000 && maxLoss > epsilon) {
-      maxDup /= 10;
-      maxLoss /= 10;
-      findBestRates(minDup, maxDup, minLoss, maxLoss, steps, bestDup, bestLoss, newLL);
-    }
     double offsetDup = (maxDup - minDup) / steps;
     double offsetLoss =(maxLoss - minLoss) / steps;
     minDup = max(0.0, bestDup - offsetDup);
     maxDup = bestDup + offsetDup;
     minLoss = max(0.0, bestLoss - offsetLoss);
     maxLoss = bestLoss + offsetLoss;
-    firstIt = false;
   } while (fabs(newLL - bestLL) > epsilon);
   Logger::info << " best rates: " << bestDup << " " << bestLoss <<  " " << newLL << endl;
   if  (!isValidLikelihood(newLL)) {
@@ -344,7 +337,6 @@ void JointTree::optimizeDTLRates() {
   double maxTrans = 1.0;
   int steps = 5;
   double epsilon = 0.01;
-  bool firstIt = true;
   do {
     bestLL = newLL;
     findBestRatesDTL(minDup, maxDup, minLoss, maxLoss, minTrans, maxTrans, steps, bestDup, bestLoss, bestTrans, newLL);
@@ -357,7 +349,6 @@ void JointTree::optimizeDTLRates() {
     maxLoss = bestLoss + offsetLoss;
     minTrans = max(0.0, bestTrans - offsetTrans);
     maxTrans = bestTrans + offsetTrans;
-    firstIt = false;
   } while (fabs(newLL - bestLL) > epsilon);
   if  (!isValidLikelihood(newLL)) {
     Logger::error << "Invalid likelihood " << newLL << endl;

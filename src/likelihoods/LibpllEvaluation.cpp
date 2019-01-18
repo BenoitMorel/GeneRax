@@ -110,7 +110,6 @@ bool getNextLine(ifstream &is, string &os)
 
 
 pllmod_subst_model_t *getModel(const string &modelStr) {
-  pllmod_subst_model_t *model = nullptr;
   if (pllmod_util_model_exists_dna(modelStr.c_str())) {
     return pllmod_util_model_info_dna(modelStr.c_str());
   } else if (pllmod_util_model_exists_protein(modelStr.c_str())) {
@@ -306,13 +305,13 @@ void LibpllEvaluation::parseFasta(const char *fastaFile,
   }
   int count = sequences.size();;
   char** buffer = (char**)malloc(count * sizeof(char *));
-  for (unsigned int i = 0; i < count; ++i) {
+  for (int i = 0; i < count; ++i) {
     buffer[i] = sequences[i]->seq;
   }
   weights = pll_compress_site_patterns(buffer, map, count, &length);
   if (!weights) 
     throw LibpllException("Error while parsing fasta: cannot compress sites");
-  for (unsigned int i = 0; i < count; ++i) {
+  for (int i = 0; i < count; ++i) {
     sequences[i]->len = length;
   }
   free(buffer);
