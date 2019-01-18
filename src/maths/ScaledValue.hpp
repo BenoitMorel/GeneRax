@@ -24,6 +24,10 @@ public:
   }
 
   void scale() {
+    if (! (value >= 0)) {
+      cerr << value << " " << scaler << endl;
+    }
+    assert(value >= 0);
     if (value == 0) {
       scaler = NULL_SCALER;
       value = 0;

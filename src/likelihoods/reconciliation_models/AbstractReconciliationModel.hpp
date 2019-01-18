@@ -28,9 +28,14 @@ public:
    * Set the DTL rates, and update probabilities relative to the species tree only
    */
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0) = 0;
+  
+  /**
+   *  Does this model support transfer? Relevant to know which parameter to optimize
+   */
+  virtual bool implementsTransfers() = 0;
  
   /**
-   * 
+   * (incrementally) compute and return the likelihood of the input gene tree 
    */
   double computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
   
@@ -42,11 +47,6 @@ public:
   pll_unode_t *getRoot() {return geneRoot_;}
  
   /**
-   *  Does this model support transfer? Relevant to know which parameter to optimize
-   */
-  virtual bool implementsTransfers() = 0;
- 
-  /**
    * invalidate one or all the gene CLVs
    */
   void invalidateAllCLVs();
@@ -55,7 +55,6 @@ public:
 protected:
   // called by the constructor
   virtual void setSpeciesTree(pll_rtree_t *speciesTree);
-  virtual void setGeneSpeciesMap(const GeneSpeciesMapping &map);
 
   // Called when computeLogLikelihood is called for the first time
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);

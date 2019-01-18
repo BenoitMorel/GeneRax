@@ -1,8 +1,13 @@
-#ifdef DISABLED_CODE
 #include "DatedDLModel.hpp"
 #include <Logger.hpp>
 
 static const double EPSILON = 0.0000000001;
+
+void DatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
+{
+  AbstractReconciliationModel::setInitialGeneTree(treeinfo);
+  clvs_ = vector<DDL_CLV>((_maxGeneId + 1) * 2); 
+}
 
 void buildSubdivisions(pll_rtree_t *speciesTree,
   vector<vector<double> > &branchSubdivisions) 
@@ -48,25 +53,21 @@ void DatedDLModel::computeExtinctionProbas(pll_rtree_t *speciesTree)
       extinctionProba_[speciesId][s] = propagateExtinctionProba(extinctionProba_[speciesId][s-1],
           branchSubdivisions_[speciesId][s]);
     }
-    /*
-    for (int s = 0; s < subdivisions; ++s) {
-      Logger::info << extinctionProba_[speciesId][s] << " ";
-    }
-    Logger::info << endl;
-    */
   }
 }
 
 double DatedDLModel::propagateExtinctionProba(double initialProba, double branchLength)
 {
-  if (dupRate_ == lossRate_) {
+  if (fabs(diffRates_) < EPSILON) {
     double denom = lossRate_ * (initialProba - 1.0) * branchLength - 1.0;
     return 1 + (1 - initialProba) / denom;
   }
   double a = exp(diffRates_ * branchLength);
   double b = dupRate_ * (initialProba - 1.0);
   double c = lossRate_ - dupRate_ * initialProba;
-  return (lossRate_ + diffRates_ / (1.0 + a*b/c)) / dupRate_;
+  double res = (lossRate_ + diffRates_ / (1.0 + a*b/c)) / dupRate_;
+  assert(isnormal(res));
+  return res;
 }
 
 void DatedDLModel::computePropagationProbas(pll_rtree_t *speciesTree)
@@ -82,23 +83,17 @@ void DatedDLModel::computePropagationProbas(pll_rtree_t *speciesTree)
     for (int s = 1; s < subdivisions; ++s) {
       propagationProba_[speciesId][s] = propagatePropagationProba(extinctionProba_[speciesId][s-1],
           branchSubdivisions_[speciesId][s]);
+      assert(isnormal(propagationProba_[speciesId][s]));
     }
-    /*
-    for (int s = 0; s < subdivisions; ++s) {
-      Logger::info << propagationProba_[speciesId][s] << " ";  
-    }
-    Logger::info << endl;
-    */
   }
 }
 
 double DatedDLModel::propagatePropagationProba(double initialProba, double branchLength)
 {
-  if (dupRate_ == lossRate_) {
+  if (fabs(diffRates_) < EPSILON) {
     double x = lossRate_ * (initialProba - 1.0) * branchLength - 1.0;
     double res = 1.0 / pow(x, 2.0);
     return res;
-
   }
   double x = exp(-diffRates_ * branchLength);
   double a = x * pow(diffRates_, 2.0);
@@ -126,6 +121,7 @@ void DatedDLModel::setRates(double dupRate, double lossRate, double transferRate
   diffRates_ = dupRate - lossRate;
   computeExtinctionProbas(speciesTree_);
   computePropagationProbas(speciesTree_);
+  invalidateAllCLVs();
 }
 
 void DatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
@@ -134,45 +130,6 @@ void DatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
   buildSubdivisions(speciesTree, branchSubdivisions_);
 }
 
-
-double DatedDLModel::computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo)
-{
-  vector<int> geneIds;
-  getIdsPostOrder(*treeinfo, geneIds);
-  clvs_.resize(geneIds.size());
-  for (auto geneId: geneIds) {
-    updateCLV(treeinfo->subnodes[geneId]);
-  }
-  vector<pll_unode_t *> roots;
-  getRoots(*treeinfo, roots, geneIds);
-  ScaledValue ll;
-  double norm = 0;
-  bool selectMax = false;
-  for (auto geneRoot: roots) {
-    virtualCLV_.clv = vector<vector<ScaledValue> >(speciesNodesCount_);
-    for (auto species: speciesNodes_) {
-      int speciesId = species->node_index;
-      pll_unode_t virtualRoot;
-      virtualRoot.next = geneRoot;
-      virtualRoot.node_index = -1;
-      computeCLVCell(&virtualRoot, species, virtualCLV_.clv[speciesId], true);
-      for (int i = 0; i < branchSubdivisions_[speciesId].size(); ++i) {
-        ScaledValue localLL =  virtualCLV_.clv[speciesId][i];  
-        if (selectMax) {
-          if (ll < localLL) {
-            ll = localLL;
-          }
-        } else {
-          ll += localLL;
-          norm +=  1 - extinctionProba_[speciesId][i];
-        }
-      }
-    }
-  }
-  if (!selectMax) 
-    ll /= norm;
-  return ll.getLogValue();
-}
 
 void DatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
@@ -248,17 +205,11 @@ ScaledValue DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_
 
 ScaledValue DatedDLModel::getRecProba(int geneId, int speciesId)
 {
-  if (geneId < 0) {
-    return virtualCLV_.clv[speciesId].back();
-  }
   return clvs_[geneId].clv[speciesId].back();
 }
 
 ScaledValue DatedDLModel::getRecProba(int geneId, int speciesId, int subdivision)
 {
-  if (geneId < 0) {
-    return virtualCLV_.clv[speciesId][subdivision];
-  }
   return clvs_[geneId].clv[speciesId][subdivision];
 }
 
@@ -266,4 +217,28 @@ double DatedDLModel::getExtProba(int speciesId)
 {
   return extinctionProba_[speciesId].back();
 }
-#endif
+
+ScaledValue DatedDLModel::getRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *root) const
+{
+  ScaledValue sum;
+  int u = root->node_index + _maxGeneId + 1;;
+  for (auto speciesNode: speciesNodes_) {
+    int e = speciesNode->node_index;
+    sum += clvs_[u].clv[e].back();
+  }
+  return sum;
+}
+
+void DatedDLModel::computeRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *virtualRoot)
+{
+  int u = virtualRoot->node_index;
+  clvs_[u].clv = vector<vector<ScaledValue> >(speciesNodesCount_);
+  for (auto speciesNode: speciesNodes_) {
+    int e = speciesNode->node_index;
+    computeCLVCell(virtualRoot, speciesNode, clvs_[u].clv[e], true);
+  }
+}
+
+

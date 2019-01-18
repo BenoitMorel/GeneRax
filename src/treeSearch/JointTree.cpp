@@ -296,9 +296,9 @@ void JointTree::optimizeDLRates() {
   double bestDup = 0.0;
   double bestLoss = 0.0;
   double minDup = 0.0;
-  double maxDup = 1.0;
+  double maxDup = 10.0;
   double minLoss = 0.0;
-  double maxLoss = 1.0;
+  double maxLoss = 10.0;
   int steps = 10;
   double epsilon = 0.001;
   do {

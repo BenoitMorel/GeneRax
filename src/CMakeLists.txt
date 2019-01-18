@@ -10,7 +10,7 @@ set(JOINTSEARCH_SOURCES JointSearch.cpp
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ReconciliationEvaluation.cpp
   likelihoods/reconciliation_models/AbstractReconciliationModel.cpp
-  #likelihoods/reconciliation_models/DatedDLModel.cpp
+  likelihoods/reconciliation_models/DatedDLModel.cpp
   likelihoods/reconciliation_models/UndatedDLModel.cpp
   likelihoods/reconciliation_models/UndatedDTLModel.cpp
   parsers/GeneSpeciesMapping.cpp

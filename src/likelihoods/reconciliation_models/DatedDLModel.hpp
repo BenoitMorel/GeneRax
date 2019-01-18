@@ -1,5 +1,3 @@
-#ifdef DISABLED_CODE
-
 #pragma once
 
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
@@ -14,13 +12,25 @@ class DatedDLModel: public AbstractReconciliationModel {
 public:
   DatedDLModel();
   virtual ~DatedDLModel() {};
+  // overloaded from parent
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);
+  // overloaded from parent
+  virtual bool implementsTransfers() {return false;}
 protected:
-  virtual double computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  // overload from parent
+  virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  // overloaded from parent
   virtual void setSpeciesTree(pll_rtree_t *speciesTree);
+  // overloaded from parent
+  virtual void updateCLV(pll_unode_t *geneNode);
+  // overloaded from parent
+  virtual void computeRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *virtualRoot);
+  // overloaded from parent
+  virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *root) const;
 
 private:
-
   double dupRate_;
   double lossRate_;
   double diffRates_;
@@ -70,7 +80,6 @@ private:
   void computePropagationProbas(pll_rtree_t *speciesTree);
   double propagatePropagationProba(double initialProba, double branchLength); 
   void computeCLVCell(pll_unode_t *geneNode, pll_rnode_t *speciesNode, vector<ScaledValue> &speciesCell, bool isVirtualRoot);
-  void updateCLV(pll_unode_t *geneNode);
   void computeCLV(pll_unode_t *geneNode, pll_rnode_t *speciesNode, DDL_CLV *clv, bool isVirtualRoot = false);
   ScaledValue computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, bool isVirtualRoot);
   ScaledValue computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, int subdivision, bool isVirtualRoot);
@@ -79,4 +88,3 @@ private:
   double getExtProba(int speciesId);
 };
 
-#endif

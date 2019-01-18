@@ -14,8 +14,8 @@ ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
     reconciliationModel = make_shared<UndatedDLModel>();
   } else if (model == Arguments::UndatedDTL) {
     reconciliationModel = make_shared<UndatedDTLModel>();
-  //} else if (model == Arguments::DatedDL) {
-  //  reconciliationModel = make_shared<DatedDLModel>();
+  } else if (model == Arguments::DatedDL) {
+    reconciliationModel = make_shared<DatedDLModel>();
   } else {
     Logger::error << "Invalid reconciliation model!" << endl;
     exit(1);

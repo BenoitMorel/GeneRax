@@ -11,7 +11,7 @@ AbstractReconciliationModel::AbstractReconciliationModel():
 void AbstractReconciliationModel::init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map)
 {
   setSpeciesTree(speciesTree);
-  setGeneSpeciesMap(map);
+  geneNameToSpeciesName_ = map.getMap();
 }
 
 void getIdsPostOrderRec(pll_unode_t *node, 
@@ -33,22 +33,11 @@ void AbstractReconciliationModel::getIdsPostOrder(pllmod_treeinfo_t &tree, vecto
   int nodesNumber = tree.subnode_count;
   nodeIds.clear();
   vector<bool> marked(nodesNumber, false);
-  /*
-  if (Arguments::rootedGeneTree && geneRoot_) {
-    getIdsPostOrderRec(geneRoot_, marked, nodeIds);
-    getIdsPostOrderRec(geneRoot_->back, marked, nodeIds);
-    return;
-  } 
-  */
   for (int i = 0; i < nodesNumber; ++i) {
     getIdsPostOrderRec(tree.subnodes[i], marked, nodeIds);
   }
 }
 
-void AbstractReconciliationModel::setGeneSpeciesMap(const GeneSpeciesMapping &map)
-{
-  geneNameToSpeciesName_ = map.getMap();
-}
 
 void AbstractReconciliationModel::mapGenesToSpecies(pllmod_treeinfo_t &treeinfo)
 {
