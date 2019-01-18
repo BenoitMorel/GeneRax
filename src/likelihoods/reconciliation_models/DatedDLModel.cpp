@@ -16,7 +16,7 @@ void buildSubdivisions(pll_rtree_t *speciesTree,
   branchSubdivisions = vector<vector<double> >(maxSpeciesNodeIndex);
   for (int i = 0; i < maxSpeciesNodeIndex; ++i) {
     int speciesId = speciesTree->nodes[i]->node_index;
-    double branchLength = max(speciesTree->nodes[i]->length, EPSILON);
+    double branchLength = max(speciesTree->nodes[i]->length, 0.0001);
     double subdivisionSize = 0.05;
     int minSubdivisions = 5;
     if (minSubdivisions * subdivisionSize > branchLength) {
@@ -27,7 +27,7 @@ void buildSubdivisions(pll_rtree_t *speciesTree,
       branchSubdivisions[speciesId].push_back(subdivisionSize);
       branchLength -= subdivisionSize;
     }
-    if (branchLength > 0)
+    if (branchLength > EPSILON)
       branchSubdivisions[speciesId].push_back(branchLength);
   }
 }
@@ -58,6 +58,7 @@ void DatedDLModel::computeExtinctionProbas(pll_rtree_t *speciesTree)
 
 double DatedDLModel::propagateExtinctionProba(double initialProba, double branchLength)
 {
+  assert(branchLength > EPSILON);
   if (fabs(diffRates_) < EPSILON) {
     double denom = lossRate_ * (initialProba - 1.0) * branchLength - 1.0;
     return 1 + (1 - initialProba) / denom;
@@ -90,6 +91,7 @@ void DatedDLModel::computePropagationProbas(pll_rtree_t *speciesTree)
 
 double DatedDLModel::propagatePropagationProba(double initialProba, double branchLength)
 {
+  assert(branchLength > EPSILON);
   if (fabs(diffRates_) < EPSILON) {
     double x = lossRate_ * (initialProba - 1.0) * branchLength - 1.0;
     double res = 1.0 / pow(x, 2.0);
@@ -195,7 +197,7 @@ ScaledValue DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_
     int leftGeneId = getLeft(geneNode, isVirtualRoot)->node_index;
     int rightGeneId = getRight(geneNode, isVirtualRoot)->node_index;
     double l = branchSubdivisions_[speciesId][subdivision];
-    auto leftProba = getRecProba(leftGeneId, speciesId, subdivision - 1);
+   auto leftProba = getRecProba(leftGeneId, speciesId, subdivision - 1); 
     auto rightProba = getRecProba(rightGeneId, speciesId, subdivision - 1);
     res += leftProba * rightProba * dupRate_ * l;
   }
@@ -203,15 +205,6 @@ ScaledValue DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_
 
 }
 
-ScaledValue DatedDLModel::getRecProba(int geneId, int speciesId)
-{
-  return clvs_[geneId].clv[speciesId].back();
-}
-
-ScaledValue DatedDLModel::getRecProba(int geneId, int speciesId, int subdivision)
-{
-  return clvs_[geneId].clv[speciesId][subdivision];
-}
 
 double DatedDLModel::getExtProba(int speciesId)
 {

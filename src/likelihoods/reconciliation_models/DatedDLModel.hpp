@@ -83,8 +83,12 @@ private:
   void computeCLV(pll_unode_t *geneNode, pll_rnode_t *speciesNode, DDL_CLV *clv, bool isVirtualRoot = false);
   ScaledValue computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, bool isVirtualRoot);
   ScaledValue computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, int subdivision, bool isVirtualRoot);
-  ScaledValue getRecProba(int geneId, int speciesId);
-  ScaledValue getRecProba(int geneId, int speciesId, int subdivision);
+  const ScaledValue &getRecProba(int geneId, int speciesId) {
+    return clvs_[geneId].clv[speciesId].back();
+  }
+  const ScaledValue &getRecProba(int geneId, int speciesId, int subdivision) {
+    return clvs_[geneId].clv[speciesId][subdivision];
+  }
   double getExtProba(int speciesId);
 };
 

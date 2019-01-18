@@ -118,7 +118,9 @@ shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
   
 void SPRMove::optimizeMove(JointTree &tree)
 {
-  optimizeBranchesSlow(tree, branchesToOptimize_);
+  if (!Arguments::noFelsensteinLikelihood) {
+    optimizeBranchesSlow(tree, branchesToOptimize_);
+  }
   branchesToOptimize_.clear();
 }
 
