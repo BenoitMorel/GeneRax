@@ -4,7 +4,6 @@
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <parsers/GeneSpeciesMapping.hpp>
 #include <maths/ScaledValue.hpp>
-#include <unordered_set>
 
 using namespace std;
 
@@ -20,7 +19,6 @@ public:
   
   // overloaded from parent
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);  
-  virtual void invalidateCLV(int nodeIndex);
   virtual bool implementsTransfers() {return true;}
 protected:
   // overloaded from parent
@@ -48,31 +46,15 @@ private:
   vector<ScaledValue> _survivingTransferSums;
   vector<vector<ScaledValue> > _ancestralCorrection;
 
-  // geme ids in postorder 
-  vector<int> _geneIds;
 
-  // set of invalid CLVs. All the CLVs from these CLVs to
-  // the root(s) need to be recomputed
-  unordered_set<int> _invalidatedNodes;
-
-  // is the CLV up to date?
-  vector<bool> _isCLVUpdated;
-
-  int _maxGeneId;
 
 private:
-  void getCLVsToUpdate(pllmod_treeinfo_t &treeinfo);
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
       bool isVirtualRoot = false) const;
-  void updateCLVs(pllmod_treeinfo_t &treeinfo);
   void computeLikelihoods(pllmod_treeinfo_t &treeinfo);
   void updateRoot(pllmod_treeinfo_t &treeinfo);
   double getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
-  void invalidateAllCLVs();
-  void updateCLVsRec(pll_unode_t *node);
-  void markInvalidatedNodes(pllmod_treeinfo_t &treeinfo);
-  void markInvalidatedNodesRec(pll_unode_t *node);
   void updateTransferSums(ScaledValue &transferExtinctionSum,
     vector<ScaledValue> &ancestralExtinctionCorrection,
     const vector<ScaledValue> &probabilities);

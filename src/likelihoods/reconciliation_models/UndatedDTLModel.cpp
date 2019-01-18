@@ -17,16 +17,10 @@ UndatedDTLModel::UndatedDTLModel()
 void UndatedDTLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   AbstractReconciliationModel::setInitialGeneTree(treeinfo);
-  getIdsPostOrder(*treeinfo, _geneIds); 
-  _maxGeneId = 0;
-  for (auto gid: _geneIds)
-    _maxGeneId = max(_maxGeneId, gid);
-  // init ua with zeros
   vector<ScaledValue> zeros(speciesNodesCount_);
   _uq = vector<vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
   _survivingTransferSums = vector<ScaledValue>(2 * (_maxGeneId + 1));
   _ancestralCorrection = vector<vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
-  invalidateAllCLVs();
 }
 
 void UndatedDTLModel::updateTransferSums(ScaledValue &transferSum,
@@ -97,47 +91,6 @@ void UndatedDTLModel::setRates(double dupRate,
 
 UndatedDTLModel::~UndatedDTLModel() { }
 
-void UndatedDTLModel::markInvalidatedNodesRec(pll_unode_t *node)
-{
-  _isCLVUpdated[node->node_index] = false;
-  if (node->back->next) {
-    markInvalidatedNodesRec(node->back->next);
-    markInvalidatedNodesRec(node->back->next->next);
-  }
-}
-
-void UndatedDTLModel::markInvalidatedNodes(pllmod_treeinfo_t &treeinfo)
-{
-  for (int nodeIndex: _invalidatedNodes) {
-    auto node = treeinfo.subnodes[nodeIndex];
-    markInvalidatedNodesRec(node);
-  }
-  _invalidatedNodes.clear();
-}
-
-void UndatedDTLModel::updateCLVsRec(pll_unode_t *node)
-{
-  if (_isCLVUpdated[node->node_index]) {
-    return;
-  }
-  if (node->next) {
-    updateCLVsRec(node->next->back);
-    updateCLVsRec(node->next->next->back);
-  }
-  updateCLV(node);
-  _isCLVUpdated[node->node_index] = true;
-}
-
-void UndatedDTLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
-{
-  markInvalidatedNodes(treeinfo);
-  vector<pll_unode_t *> roots;
-  getRoots(treeinfo, roots, _geneIds);
-  for (auto root: roots) {
-    updateCLVsRec(root);
-    updateCLVsRec(root->back);
-  }
-}
 
 void UndatedDTLModel::resetTransferSums(ScaledValue &transferSum,
     vector<ScaledValue> &ancestralCorrection)
@@ -164,15 +117,6 @@ void UndatedDTLModel::updateCLV(pll_unode_t *geneNode)
   }
 }
 
-void UndatedDTLModel::invalidateCLV(int nodeIndex)
-{
-  _invalidatedNodes.insert(nodeIndex);
-}
-  
-void UndatedDTLModel::invalidateAllCLVs()
-{
-  _isCLVUpdated = vector<bool>(_maxGeneId + 1, false);
-}
 
 void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,

@@ -4,7 +4,6 @@
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <parsers/GeneSpeciesMapping.hpp>
 #include <maths/ScaledValue.hpp>
-#include <unordered_set>
 
 using namespace std;
 
@@ -21,9 +20,6 @@ public:
   
   // overloaded from parent
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);  
-  // overloaded from parent
-  virtual void invalidateCLV(int nodeIndex);
-    
 protected:
   // overload from parent
   virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
@@ -45,35 +41,16 @@ private:
   // to produce the subtree of this gene node
   vector<vector<ScaledValue> > uq;
 
-  // geme ids in postorder 
-  vector<int> geneIds;
 
-  // should we update all the clvs at next updateCLVs call?
-  bool allCLVInvalid;
-
-  // set of invalid CLVs. All the CLVs from these CLVs to
-  // the root(s) need to be recomputed
-  unordered_set<int> invalidatedNodes;
-
-  // is the CLV up to date?
-  vector<bool> isCLVUpdated;
-
-  int _maxGeneId;
 
 private:
-  void getCLVsToUpdate(pllmod_treeinfo_t &treeinfo);
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
       bool isVirtualRoot = false) const;
   void computeGeneProbabilities(pll_unode_t *geneNode, 
       vector<ScaledValue> &clv);
-  void updateCLVs(pllmod_treeinfo_t &treeinfo);
   void computeLikelihoods(pllmod_treeinfo_t &treeinfo);
   void updateRoot(pllmod_treeinfo_t &treeinfo);
   double getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
-  void invalidateAllCLVs();
-  void updateCLVsRec(pll_unode_t *node);
-  void markInvalidatedNodes(pllmod_treeinfo_t &treeinfo);
-  void markInvalidatedNodesRec(pll_unode_t *node);
 };
 

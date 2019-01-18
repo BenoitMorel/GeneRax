@@ -5,8 +5,7 @@
 using namespace std;
 const int CACHE_SIZE = 100000;
 
-UndatedDLModel::UndatedDLModel():
-  allCLVInvalid(true)
+UndatedDLModel::UndatedDLModel()
 {
   _maxGeneId = 1;
   Logger::info << "creating undated dl model" << endl;
@@ -18,14 +17,8 @@ UndatedDLModel::UndatedDLModel():
 void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   AbstractReconciliationModel::setInitialGeneTree(treeinfo);
-  getIdsPostOrder(*treeinfo, geneIds); 
-  _maxGeneId = 0;
-  for (auto gid: geneIds)
-    _maxGeneId = max(_maxGeneId, gid);
-  // init ua with zeros
   vector<ScaledValue> zeros(speciesNodesCount_);
   uq = vector<vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
-  invalidateAllCLVs();
 }
 
 static double solveSecondDegreePolynome(double a, double b, double c) 
@@ -67,47 +60,7 @@ void UndatedDLModel::setRates(double dupRate,
 
 UndatedDLModel::~UndatedDLModel() { }
 
-void UndatedDLModel::markInvalidatedNodesRec(pll_unode_t *node)
-{
-  isCLVUpdated[node->node_index] = false;
-  if (node->back->next) {
-    markInvalidatedNodesRec(node->back->next);
-    markInvalidatedNodesRec(node->back->next->next);
-  }
-}
 
-void UndatedDLModel::markInvalidatedNodes(pllmod_treeinfo_t &treeinfo)
-{
-  for (int nodeIndex: invalidatedNodes) {
-    auto node = treeinfo.subnodes[nodeIndex];
-    markInvalidatedNodesRec(node);
-  }
-  invalidatedNodes.clear();
-}
-
-void UndatedDLModel::updateCLVsRec(pll_unode_t *node)
-{
-  if (isCLVUpdated[node->node_index]) {
-    return;
-  }
-  if (node->next) {
-    updateCLVsRec(node->next->back);
-    updateCLVsRec(node->next->next->back);
-  }
-  updateCLV(node);
-  isCLVUpdated[node->node_index] = true;
-}
-
-void UndatedDLModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
-{
-  markInvalidatedNodes(treeinfo);
-  vector<pll_unode_t *> roots;
-  getRoots(treeinfo, roots, geneIds);
-  for (auto root: roots) {
-    updateCLVsRec(root);
-    updateCLVsRec(root->back);
-  }
-}
 void UndatedDLModel::computeGeneProbabilities(pll_unode_t *geneNode,
   vector<ScaledValue> &clv)
 {
@@ -124,15 +77,6 @@ void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
   computeGeneProbabilities(geneNode, uq[geneNode->node_index]);
 }
 
-void UndatedDLModel::invalidateCLV(int nodeIndex)
-{
-  invalidatedNodes.insert(nodeIndex);
-}
-  
-void UndatedDLModel::invalidateAllCLVs()
-{
-  isCLVUpdated = vector<bool>(_maxGeneId + 1, false);
-}
 
 void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
@@ -191,7 +135,7 @@ void UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
 {
   vector<ScaledValue> zeros(speciesNodesCount_); 
   vector<pll_unode_t *> roots;
-  getRoots(treeinfo, roots, geneIds);
+  getRoots(treeinfo, roots, _geneIds);
   for (auto root: roots) {
     int u = root->node_index + _maxGeneId + 1;;
     for (auto speciesNode: speciesNodes_) {
@@ -207,7 +151,7 @@ void UndatedDLModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
 void UndatedDLModel::updateRoot(pllmod_treeinfo_t &treeinfo) 
 {
   vector<pll_unode_t *> roots;
-  getRoots(treeinfo, roots, geneIds);
+  getRoots(treeinfo, roots, _geneIds);
   // find the best root
   ScaledValue max;
   for (auto root: roots) {
@@ -227,7 +171,7 @@ double UndatedDLModel::getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   ScaledValue total;
   vector<pll_unode_t *> roots;
-  getRoots(*treeinfo, roots, geneIds);
+  getRoots(*treeinfo, roots, _geneIds);
   for (auto root: roots) {
     int u = root->node_index + _maxGeneId + 1;
     ScaledValue sum;
@@ -242,7 +186,7 @@ double UndatedDLModel::getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
 double UndatedDLModel::computeLogLikelihoodInternal(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   auto root = getRoot();
-  getIdsPostOrder(*treeinfo, geneIds); 
+  getIdsPostOrder(*treeinfo, _geneIds); 
   updateCLVs(*treeinfo);
   computeLikelihoods(*treeinfo);
   if (Arguments::rootedGeneTree) {// && !getRoot()) {

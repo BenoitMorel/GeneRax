@@ -4,7 +4,8 @@
 
 AbstractReconciliationModel::AbstractReconciliationModel():
   geneRoot_(0),
-  firstCall_(true)
+  firstCall_(true),
+  _maxGeneId(1)
 {
 }
 void AbstractReconciliationModel::init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map)
@@ -64,6 +65,11 @@ void AbstractReconciliationModel::mapGenesToSpecies(pllmod_treeinfo_t &treeinfo)
 void AbstractReconciliationModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   mapGenesToSpecies(*treeinfo);
+  getIdsPostOrder(*treeinfo, _geneIds); 
+  _maxGeneId = 0;
+  for (auto gid: _geneIds)
+    _maxGeneId = max(_maxGeneId, gid);
+  invalidateAllCLVs();
 }
 
 void AbstractReconciliationModel::fillNodesPostOrder(pll_rnode_t *node, vector<pll_rnode_t *> &nodes) 
@@ -138,4 +144,55 @@ pll_unode_t *AbstractReconciliationModel::getRight(pll_unode_t *node, bool virtu
   return virtualRoot ? node->next->back : node->next->next->back;
 }
 
+void AbstractReconciliationModel::markInvalidatedNodesRec(pll_unode_t *node)
+{
+  _isCLVUpdated[node->node_index] = false;
+  if (node->back->next) {
+    markInvalidatedNodesRec(node->back->next);
+    markInvalidatedNodesRec(node->back->next->next);
+  }
+}
+
+void AbstractReconciliationModel::markInvalidatedNodes(pllmod_treeinfo_t &treeinfo)
+{
+  for (int nodeIndex: _invalidatedNodes) {
+    auto node = treeinfo.subnodes[nodeIndex];
+    markInvalidatedNodesRec(node);
+  }
+  _invalidatedNodes.clear();
+}
+
+void AbstractReconciliationModel::updateCLVsRec(pll_unode_t *node)
+{
+  if (_isCLVUpdated[node->node_index]) {
+    return;
+  }
+  if (node->next) {
+    updateCLVsRec(node->next->back);
+    updateCLVsRec(node->next->next->back);
+  }
+  updateCLV(node);
+  _isCLVUpdated[node->node_index] = true;
+}
+
+void AbstractReconciliationModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
+{
+  markInvalidatedNodes(treeinfo);
+  vector<pll_unode_t *> roots;
+  getRoots(treeinfo, roots, _geneIds);
+  for (auto root: roots) {
+    updateCLVsRec(root);
+    updateCLVsRec(root->back);
+  }
+}
+
+void AbstractReconciliationModel::invalidateCLV(int nodeIndex)
+{
+  _invalidatedNodes.insert(nodeIndex);
+}
+  
+void AbstractReconciliationModel::invalidateAllCLVs()
+{
+  _isCLVUpdated = vector<bool>(_maxGeneId + 1, false);
+}
   

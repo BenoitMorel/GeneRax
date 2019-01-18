@@ -3,6 +3,8 @@
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <parsers/GeneSpeciesMapping.hpp>
 
+#include <unordered_set>
+
 
 /**
  *  Interface and common implementations for 
@@ -26,12 +28,14 @@ public:
   
   virtual double computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
   
-  virtual void invalidateCLV(int nodeIndex) {}
   
   virtual void setRoot(pll_unode_t * root) {geneRoot_ = root;}
   virtual pll_unode_t *getRoot() {return geneRoot_;}
   
   virtual bool implementsTransfers() {return false;}
+  
+  void invalidateAllCLVs();
+  void invalidateCLV(int nodeIndex);
 
 protected:
   // called by the constructor
@@ -63,6 +67,8 @@ protected:
    */
   static pll_unode_t *getLeft(pll_unode_t *node, bool virtualRoot);  
   static pll_unode_t *getRight(pll_unode_t *node, bool virtualRoot) ;  
+  
+  void updateCLVs(pllmod_treeinfo_t &treeinfo);
 protected:
   pll_unode_t *geneRoot_;
   int speciesNodesCount_;
@@ -70,11 +76,24 @@ protected:
   pll_rtree_t *speciesTree_;
   vector<int> geneToSpecies_;
   bool firstCall_;
+  // gene ids in postorder 
+  vector<int> _geneIds;
+  int _maxGeneId;
 
 private:
+  void updateCLVsRec(pll_unode_t *node);
+  void markInvalidatedNodes(pllmod_treeinfo_t &treeinfo);
+  void markInvalidatedNodesRec(pll_unode_t *node);
   void fillNodesPostOrder(pll_rnode_t *node, vector<pll_rnode_t *> &nodes) ;
   map<string, string> geneNameToSpeciesName_;
   map<string, int> speciesNameToId_;
+  
+  // set of invalid CLVs. All the CLVs from these CLVs to
+  // the root(s) need to be recomputed
+  unordered_set<int> _invalidatedNodes;
+
+  // is the CLV up to date?
+  vector<bool> _isCLVUpdated;
 
 };
 
