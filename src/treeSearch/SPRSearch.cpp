@@ -2,8 +2,8 @@
 #include <treeSearch/JointTree.hpp>
 #include <treeSearch/Moves.hpp>
 #include <treeSearch/SearchUtils.hpp>
-#include <Logger.hpp>
-#include <Arguments.hpp>
+#include <IO/Logger.hpp>
+#include <IO/Arguments.hpp>
 #include <ParallelContext.hpp>
 
 #include <unordered_set>

@@ -1,5 +1,5 @@
-#include "Arguments.hpp"
-#include <Logger.hpp>
+#include "IO/Arguments.hpp"
+#include <IO/Logger.hpp>
 #include <ParallelContext.hpp>
 
 int Arguments::argc = 0;

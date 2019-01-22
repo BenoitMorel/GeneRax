@@ -1,8 +1,9 @@
-#include <Arguments.hpp>
+#include <IO/Arguments.hpp>
 #include <ParallelContext.hpp>
 #include <treeSearch/JointTree.hpp>
 #include <treeSearch/SPRSearch.hpp>
-#include <Logger.hpp>
+#include <IO/Logger.hpp>
+#include <Scenario.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -98,6 +99,10 @@ int internal_main(int argc, char** argv, void* comm)
         stats << "T " << jointTree->getTransferRate() << endl;
       }
       jointTree->save(Arguments::output + "_all" + ".newick", !firstRun);
+      Scenario scenario(Arguments::output + ".events");
+      jointTree->inferMLScenario(scenario);
+      Logger::info << endl;
+      scenario.printEventsCounts();
     }
     firstRun = false;
   }  

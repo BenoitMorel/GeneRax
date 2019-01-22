@@ -160,6 +160,9 @@ public:
    */
   inline bool operator <(const ScaledValue& v) const
   {
+    if (isNull()) {
+      return !v.isNull();
+    }
     if (scaler != v.scaler) {
       return scaler > v.scaler;
     }

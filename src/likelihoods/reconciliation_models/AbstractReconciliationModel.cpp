@@ -1,6 +1,8 @@
 #include "AbstractReconciliationModel.hpp"
-#include <Arguments.hpp>
-#include <Logger.hpp>
+#include <IO/Arguments.hpp>
+#include <IO/Logger.hpp>
+  
+const char *Scenario::eventNames[]  = {"D", "T", "S", "SL", "None", "Invalid"};
 
 AbstractReconciliationModel::AbstractReconciliationModel():
   geneRoot_(0),
@@ -197,18 +199,43 @@ void AbstractReconciliationModel::invalidateAllCLVs()
   _isCLVUpdated = vector<bool>(_maxGeneId + 1, false);
 }
 
-void AbstractReconciliationModel::updateRoot(pllmod_treeinfo_t &treeinfo) 
+void AbstractReconciliationModel::computeMLRoot(pllmod_treeinfo_t &treeinfo, 
+    pll_unode_t *&bestGeneRoot, pll_rnode_t *&bestSpeciesRoot) 
 {
+  vector<pll_unode_t *> roots;
+  getRoots(treeinfo, roots, _geneIds);
+  ScaledValue max;
+  for (auto root: roots) {
+    for (auto speciesNode: speciesNodes_) {
+      ScaledValue ll = getRootLikelihood(treeinfo, root, speciesNode);
+      if (max < ll) {
+        max = ll;
+        bestGeneRoot = root;
+        bestSpeciesRoot = speciesNode;
+      }
+    }
+  }
+}
+
+pll_unode_t *AbstractReconciliationModel::computeMLRoot(pllmod_treeinfo_t &treeinfo)
+{
+  pll_unode_t *bestRoot = 0;
   vector<pll_unode_t *> roots;
   getRoots(treeinfo, roots, _geneIds);
   ScaledValue max;
   for (auto root: roots) {
     ScaledValue rootProba = getRootLikelihood(treeinfo, root);
     if (max < rootProba) {
-      setRoot(root);
+      bestRoot = root;
       max = rootProba;
     }
   }
+  return bestRoot;
+}
+
+void AbstractReconciliationModel::updateRoot(pllmod_treeinfo_t &treeinfo) 
+{
+  setRoot(computeMLRoot(treeinfo));
 }
 
 double AbstractReconciliationModel::getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
@@ -234,5 +261,25 @@ void AbstractReconciliationModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo
     virtualRoot.node_index = root->node_index + _maxGeneId + 1;
     computeRootLikelihood(treeinfo, &virtualRoot);
   }
+}
+  
+void AbstractReconciliationModel::inferMLScenario(shared_ptr<pllmod_treeinfo_t> treeinfo, Scenario &scenario)
+{
+  // make sure the CLVs are filled
+  updateCLVs(*treeinfo);
+  computeLikelihoods(*treeinfo); 
+  
+  pll_unode_t *geneRoot = 0;
+  pll_rnode_t *speciesRoot = 0;
+  computeMLRoot(*treeinfo, geneRoot, speciesRoot);
+ /*
+  pll_unode_t *geneRoot = computeMLRoot(*treeinfo);
+  pll_rnode_t *speciesRoot = speciesTree_->root;
+  */
+  
+  pll_unode_t virtualRoot;
+  virtualRoot.next = geneRoot;
+  virtualRoot.node_index = geneRoot->node_index + _maxGeneId + 1;
+  backtrace(&virtualRoot, speciesRoot, scenario, true);
 }
   

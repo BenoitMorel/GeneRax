@@ -2,10 +2,13 @@
 
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
-#include <parsers/GeneSpeciesMapping.hpp>
+#include <IO/GeneSpeciesMapping.hpp>
 #include <maths/ScaledValue.hpp>
 
 using namespace std;
+
+
+
 
 /*
 * Implement the undated model described here:
@@ -30,9 +33,15 @@ protected:
   // overload from parent
   virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
     pll_unode_t *root) const;
+  virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *root, pll_rnode_t *speciesRoot) {return _uq[root->node_index + _maxGeneId + 1][speciesRoot->node_index];}
   // overload from parent
   virtual void computeRootLikelihood(pllmod_treeinfo_t &treeinfo,
     pll_unode_t *virtualRoot);
+  // overlead from parent
+  virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+      Scenario &scenario,
+      bool isVirtualRoot = false); //todobenoit make it pure virtual
 private:
   vector<double> _PD; // Duplication probability, per species branch
   vector<double> _PL; // Loss probability, per species branch

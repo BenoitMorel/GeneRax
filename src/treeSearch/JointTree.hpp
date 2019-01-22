@@ -2,10 +2,10 @@
 
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <likelihoods/ReconciliationEvaluation.hpp>
-#include <Arguments.hpp>
-#include <Logger.hpp>
+#include <IO/Arguments.hpp>
+#include <IO/Logger.hpp>
 #include <treeSearch/Moves.hpp>
-#include <parsers/GeneSpeciesMapping.hpp>
+#include <IO/GeneSpeciesMapping.hpp>
 
 #include <omp.h>
 #include <sstream>
@@ -57,6 +57,9 @@ public:
     double getDupRate() const {return dupRate_;}
     double getLossRate() const {return lossRate_;}
     double getTransferRate() const {return transRate_;}
+    void inferMLScenario(Scenario &scenario) {
+      reconciliationEvaluation_->inferMLScenario(libpllEvaluation_->getTreeInfo(), scenario);
+    }
 private:
     void findBestRates(double minDup, double maxDup,
         double minLoss, double maxLoss, int steps,

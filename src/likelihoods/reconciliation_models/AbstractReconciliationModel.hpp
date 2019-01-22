@@ -1,10 +1,12 @@
 #pragma once
 
 #include <likelihoods/LibpllEvaluation.hpp>
-#include <parsers/GeneSpeciesMapping.hpp>
+#include <IO/GeneSpeciesMapping.hpp>
+#include <Scenario.hpp>
 
 #include <unordered_set>
 #include <maths/ScaledValue.hpp>
+
 
 /**
  *  Interface and common implementations for 
@@ -52,6 +54,12 @@ public:
   void invalidateAllCLVs();
   void invalidateCLV(int geneNodeIndex);
 
+  /**
+   *  Fill scenario with the maximum likelihood set of 
+   *  events that would lead to treeinfo
+   **/
+  void inferMLScenario(shared_ptr<pllmod_treeinfo_t> treeinfo, Scenario &scenario);
+
 protected:
   // called by the constructor
   virtual void setSpeciesTree(pll_rtree_t *speciesTree);
@@ -66,6 +74,15 @@ protected:
   // Called by computeLogLikelihood
   virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
     pll_unode_t *root) const = 0;
+  virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *root, pll_rnode_t *speciesRoot) {assert(false); return ScaledValue();}
+  // Called by inferMLScenario
+  // fills scenario with the best likelihood set of events that 
+  // would lead to the subtree of geneNode under speciesNode
+  // Can assume that all the CLVs are filled
+  virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+      Scenario &scenario,
+      bool isVirtualRoot = false){ assert(false);}; //todobenoit make it pure virtual
  
   
   void getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds);
@@ -101,6 +118,9 @@ protected:
   int _maxGeneId;
 
 private:
+  pll_unode_t *computeMLRoot(pllmod_treeinfo_t &treeinfo);
+  void computeMLRoot(pllmod_treeinfo_t &treeinfo, 
+    pll_unode_t *&bestGeneRoot, pll_rnode_t *&bestSpeciesRoot);
   virtual void computeLikelihoods(pllmod_treeinfo_t &treeinfo);
   double getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
   void updateCLVsRec(pll_unode_t *node);

@@ -1,6 +1,6 @@
 
 #include "ReconciliationEvaluation.hpp"
-#include <Logger.hpp>
+#include <IO/Logger.hpp>
 #include <likelihoods/reconciliation_models/DatedDLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>

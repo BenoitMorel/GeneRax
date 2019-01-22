@@ -1,6 +1,6 @@
 #include "UndatedDTLModel.hpp"
-#include <Arguments.hpp>
-#include <Logger.hpp>
+#include <IO/Arguments.hpp>
+#include <IO/Logger.hpp>
 
 using namespace std;
 const int CACHE_SIZE = 100000;

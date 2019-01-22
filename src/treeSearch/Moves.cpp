@@ -1,7 +1,7 @@
 #include <treeSearch/Moves.hpp>
 #include <treeSearch/JointTree.hpp>
-#include <Logger.hpp>
-#include <Arguments.hpp>
+#include <IO/Logger.hpp>
+#include <IO/Arguments.hpp>
 
 // constants taken from RAXML
 #define DEF_LH_EPSILON            0.1

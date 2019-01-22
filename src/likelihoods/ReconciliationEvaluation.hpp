@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Arguments.hpp>
-#include <parsers/GeneSpeciesMapping.hpp>
+#include <IO/Arguments.hpp>
+#include <IO/GeneSpeciesMapping.hpp>
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 #include <memory>
 
@@ -48,6 +48,11 @@ public:
    *  Must be called on the nodes affected by a move 
    */
   void invalidateCLV(int nodeIndex);
+  
+  
+  void inferMLScenario(shared_ptr<pllmod_treeinfo_t> treeinfo, Scenario &scenario) {
+    reconciliationModel->inferMLScenario(treeinfo, scenario);
+  }
 private:
   shared_ptr<AbstractReconciliationModel> reconciliationModel;
 };

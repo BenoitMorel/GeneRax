@@ -2,7 +2,7 @@
 
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
-#include <parsers/GeneSpeciesMapping.hpp>
+#include <IO/GeneSpeciesMapping.hpp>
 #include <maths/ScaledValue.hpp>
 
 using namespace std;

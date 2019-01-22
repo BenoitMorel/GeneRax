@@ -4,16 +4,18 @@
 
 
 set(JOINTSEARCH_SOURCES JointSearch.cpp
-  Arguments.cpp
   ParallelContext.cpp
-  Logger.cpp
+  Scenario.cpp
+  IO/Arguments.cpp
+  IO/Logger.cpp
+  IO/ParallelOfstream.cpp
+  IO/GeneSpeciesMapping.cpp
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ReconciliationEvaluation.cpp
   likelihoods/reconciliation_models/AbstractReconciliationModel.cpp
   likelihoods/reconciliation_models/DatedDLModel.cpp
   likelihoods/reconciliation_models/UndatedDLModel.cpp
   likelihoods/reconciliation_models/UndatedDTLModel.cpp
-  parsers/GeneSpeciesMapping.cpp
   treeSearch/JointTree.cpp
   treeSearch/Moves.cpp
   treeSearch/Rollbacks.cpp
