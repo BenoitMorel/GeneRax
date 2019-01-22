@@ -7,22 +7,30 @@
 class Scenario {
 public:  
   enum EventType {
-    D = 0 , T, S, SL, None, Invalid
+    S = 0 , SL, D, T, None, Invalid
   };
 
-  static const char *eventNames[];
+  struct Event {
+    EventType type;
+    int geneNode;
+    int speciesNode;
+  };
+
 
   Scenario(const string &fileName): _eventsCount(int(Invalid), 0), _os(fileName) {}
   
   void addEvent(EventType type, int geneNode, int speciesNode);
 
-  void printEventsCounts() {
+  void saveEventsCounts() {
     for (int i = 0; i < int(Invalid); ++i) {
+      _os << eventNames[i] << ":" << _eventsCount[i] << endl;
       Logger::info << _eventsCount[i] << " " << eventNames[i] << " events." << endl;
     }
   }
 
 private:
+  static const char *eventNames[];
+  vector<Event> _events;
   vector<int> _eventsCount;
   ParallelOfstream _os;
 };

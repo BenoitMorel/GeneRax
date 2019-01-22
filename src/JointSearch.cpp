@@ -102,7 +102,7 @@ int internal_main(int argc, char** argv, void* comm)
       Scenario scenario(Arguments::output + ".events");
       jointTree->inferMLScenario(scenario);
       Logger::info << endl;
-      scenario.printEventsCounts();
+      scenario.saveEventsCounts();
     }
     firstRun = false;
   }  

@@ -2,8 +2,6 @@
 #include <IO/Arguments.hpp>
 #include <IO/Logger.hpp>
   
-const char *Scenario::eventNames[]  = {"D", "T", "S", "SL", "None", "Invalid"};
-
 AbstractReconciliationModel::AbstractReconciliationModel():
   geneRoot_(0),
   firstCall_(true),
