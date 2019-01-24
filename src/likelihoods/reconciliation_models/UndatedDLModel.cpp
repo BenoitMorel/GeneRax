@@ -117,13 +117,12 @@ void UndatedDLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
   }
 
   int maxValueIndex = distance(values.begin(), max_element(values.begin(), values.end()));
+  // safety check
   if (values[maxValueIndex].isNull()) {
     ScaledValue proba;
     computeProbability(geneNode, speciesNode, proba, isVirtualRoot);
-
     cerr << "warning: null ll scenario " << _uq[gid][e] << " " << proba  << endl;
     assert(false);
-    //return;
   }
   switch(maxValueIndex) {
     case 0: 

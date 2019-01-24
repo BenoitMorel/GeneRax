@@ -7,7 +7,7 @@
 class Scenario {
 public:  
   enum EventType {
-    S = 0 , SL, D, T, None, Invalid
+    S = 0 , SL, D, T, TL, None, Invalid
   };
 
   struct Event {

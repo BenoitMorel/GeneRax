@@ -1,6 +1,6 @@
 #include "Scenario.hpp"
 
-const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "None", "Invalid"};
+const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "None", "Invalid"};
 
 
 void Scenario::addEvent(EventType type, int geneNode, int speciesNode) {

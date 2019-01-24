@@ -107,6 +107,7 @@ int internal_main(int argc, char** argv, void* comm)
     firstRun = false;
   }  
   Logger::timed << "End of JointSearch execution" << endl;
+  Logger::timed << "See results in " + Arguments::output << endl;
   ParallelContext::finalize();
   return 0;
 }

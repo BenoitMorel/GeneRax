@@ -75,14 +75,14 @@ protected:
   virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
     pll_unode_t *root) const = 0;
   virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
-    pll_unode_t *root, pll_rnode_t *speciesRoot) {assert(false); return ScaledValue();}
+    pll_unode_t *root, pll_rnode_t *speciesRoot) = 0;
   // Called by inferMLScenario
   // fills scenario with the best likelihood set of events that 
   // would lead to the subtree of geneNode under speciesNode
   // Can assume that all the CLVs are filled
   virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       Scenario &scenario,
-      bool isVirtualRoot = false){ assert(false);}; //todobenoit make it pure virtual
+      bool isVirtualRoot = false) = 0;
  
   
   void getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds);

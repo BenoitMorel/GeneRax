@@ -31,6 +31,11 @@ protected:
   // overload from parent
   virtual void computeRootLikelihood(pllmod_treeinfo_t &treeinfo,
     pll_unode_t *virtualRoot);
+  virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *root, pll_rnode_t *speciesRoot) {return _uq[root->node_index + _maxGeneId + 1][speciesRoot->node_index];}
+  virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+      Scenario &scenario,
+      bool isVirtualRoot = false);
 private:
   // model
   vector<double> _PD; // Duplication probability, per branch
@@ -63,5 +68,6 @@ private:
     vector<ScaledValue> &ancestralCorrection);
   ScaledValue getCorrectedTransferExtinctionSum(int speciesNode) const;
   ScaledValue getCorrectedTransferSum(int geneId, int speciesId) const;
+  pll_rnode_t *getBestTransfer(int gid, pll_rnode_t *speciesNode); 
 };
 

@@ -29,6 +29,11 @@ protected:
   // overloaded from parent
   virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
     pll_unode_t *root) const;
+  virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
+    pll_unode_t *root, pll_rnode_t *speciesRoot) {return getRecProba(root->node_index + _maxGeneId + 1, speciesRoot->node_index);}
+  virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+      Scenario &scenario,
+      bool isVirtualRoot = false) {};
 
 private:
   double dupRate_;
