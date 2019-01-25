@@ -180,6 +180,7 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
     values[2] *= _uq[u_right][e];
     values[2] *= _PD[e];
     // T event
+    // @todobenoit we should actually look at the max value and not at the sum here
     values[3] = getCorrectedTransferSum(u_left, e) * _uq[u_right][e]; 
     values[4] = getCorrectedTransferSum(u_right, e) * _uq[u_left][e]; 
   }

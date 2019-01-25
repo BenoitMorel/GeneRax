@@ -120,7 +120,7 @@ JointTree::JointTree(const string &newick_string,
   transRate_(transRate)
 {
    info_.alignmentFilename = alignment_file;
-  info_.model = "GTR";
+  info_.model = Arguments::libpllModel;
   libpllEvaluation_ = LibpllEvaluation::buildFromString(newick_string, info_.alignmentFilename, info_.model);
   pllSpeciesTree_ = pll_rtree_parse_newick(speciestree_file.c_str());
   assert(pllSpeciesTree_);

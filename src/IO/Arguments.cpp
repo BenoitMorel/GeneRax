@@ -10,6 +10,7 @@ string Arguments::speciesTree;
 string Arguments::geneSpeciesMap;
 string Arguments::strategy("SPR");
 Arguments::ReconciliationModel Arguments::reconciliationModel(UndatedDL);
+string Arguments::libpllModel("GTR");
 string Arguments::output("jointSearch");
 bool Arguments::check = false;
 bool Arguments::rootedGeneTree = false;
@@ -69,6 +70,8 @@ void Arguments::init(int argc, char * argv[])
       strategy = string(argv[++i]);
     } else if (arg == "--reconciliation-model") {
       reconciliationModel = getModelFromString(string(argv[++i]));
+    } else if (arg == "--libpll-model") {
+      libpllModel = string(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
       output = string(argv[++i]);
     } else if (arg == "--check") {
@@ -147,6 +150,7 @@ void Arguments::printHelp() {
   Logger::info << "-s, --species-tree <SPECIES TREE>" << endl;
   Logger::info << "--strategy <STRATEGY>  {EVAL, SPR}" << endl;
   Logger::info << "--reconciliation-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << endl;
+  Logger::info << "--libpll-model <libpllModel>  {GTR, LG, DAYHOFF etc.}" << endl;
   Logger::info << "-t, --threads <THREADS NUMBER>" << endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
   Logger::info << "--check" << endl;
@@ -173,6 +177,7 @@ void Arguments::printSummary() {
   Logger::info << "Gene species map: " << geneSpeciesMap << endl;
   Logger::info << "Strategy: " << strategy << endl;
   Logger::info << "Reconciliation model: " << getStringFromModel(reconciliationModel) << endl;
+  Logger::info << "Libpll model: " << libpllModel << endl;
   Logger::info << "Prefix: " << output << endl;
   Logger::info << "Check mode: " << boolStr[check] << endl;
   Logger::info << "Rooted gene tree: " << boolStr[rootedGeneTree] << endl;

@@ -28,6 +28,7 @@ public:
   static string geneSpeciesMap;
   static string strategy;
   static ReconciliationModel reconciliationModel;
+  static string libpllModel;
   static string output;
   static bool check;
   static bool rootedGeneTree;
