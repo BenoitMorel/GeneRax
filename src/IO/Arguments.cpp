@@ -2,53 +2,21 @@
 #include <IO/Logger.hpp>
 #include <ParallelContext.hpp>
 
-int Arguments::argc = 0;
-char ** Arguments::argv = 0;
-string Arguments::geneTree;
-string Arguments::alignment;
-string Arguments::speciesTree;
-string Arguments::geneSpeciesMap;
-string Arguments::strategy("SPR");
-Arguments::ReconciliationModel Arguments::reconciliationModel(UndatedDL);
-string Arguments::libpllModel("GTR");
-string Arguments::output("jointSearch");
-bool Arguments::check = false;
-bool Arguments::rootedGeneTree = false;
-bool Arguments::noFelsensteinLikelihood = false;  
-bool Arguments::userDTLRates = false;
-double Arguments::dupRate = -1.0;
-double Arguments::lossRate = -1.0;
-double Arguments::transferRate = -1.0;
 
-Arguments::ReconciliationModel getModelFromString(const string &modelStr)
+
+Arguments::Arguments(int argc, char * argv[]):
+  argc(argc),
+  argv(argv),
+  reconciliationModel("UndatedDL"),
+  libpllModel("GTR"),
+  output("jointSearch"),
+  check(false),
+  rootedGeneTree(true),
+  userDTLRates(false),
+  dupRate(-1.0),
+  lossRate(-1.0),
+  transferRate(-1.0)
 {
-  if (modelStr == "UndatedDL") {
-    return Arguments::UndatedDL;
-  } else if (modelStr == "DatedDL") {
-    return Arguments::DatedDL;
-  } else if (modelStr == "UndatedDTL") {
-    return Arguments::UndatedDTL;
-  } else {
-    return Arguments::InvalidModel;
-  }
-}
-
-string getStringFromModel(Arguments::ReconciliationModel model) {
-  if (model == Arguments::UndatedDL) {
-    return "UndatedDL";
-  } else if (model == Arguments::UndatedDTL) {
-    return "UndatedDTL";
-  } else if (model == Arguments::DatedDL) {
-    return "DatedDL";
-  } else {
-    return "InvalidModel";
-  }
-}
-
-void Arguments::init(int argc, char * argv[])
-{
-  Arguments::argc = argc;
-  Arguments::argv = argv;
   if (argc == 1) {
     printHelp();
     exit(0);
@@ -68,18 +36,16 @@ void Arguments::init(int argc, char * argv[])
       geneSpeciesMap = string(argv[++i]);
     } else if (arg == "--strategy") {
       strategy = string(argv[++i]);
-    } else if (arg == "--reconciliation-model") {
-      reconciliationModel = getModelFromString(string(argv[++i]));
+    } else if (arg == "-r" || arg == "--reconciliation-model") {
+      reconciliationModel = string(argv[++i]);
     } else if (arg == "--libpll-model") {
       libpllModel = string(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
       output = string(argv[++i]);
     } else if (arg == "--check") {
       check = true;
-    } else if (arg == "--rooted-gene-tree") {
-      rootedGeneTree = true;
-    } else if (arg == "--no-felsenstein-likelihood") {
-      noFelsensteinLikelihood = true;
+    } else if (arg == "--unrooted-gene-tree") {
+      rootedGeneTree = false;
     } else if (arg == "--dupRate") {
       dupRate = atof(argv[++i]);
       userDTLRates = true;
@@ -125,12 +91,8 @@ void Arguments::checkInputs() {
     Logger::error << "You need to provide a gene species map file." << endl;
     ok = false;
   }
-  if (reconciliationModel == Arguments::InvalidModel) {
-    Logger::error << "Invalid reconciliation model." << endl;
-    ok = false;
-  }
-  if (userDTLRates && (dupRate < 0.0 || dupRate < 0.0 || lossRate < 0.0 || transferRate < 0.0 )) {
-    Logger::error << "You specified at least one of the DTL rates, but not all of them." << endl;
+  if (userDTLRates && (dupRate < 0.0 || lossRate < 0.0)) {
+    Logger::error << "You specified at least one of the duplication and loss rates, but not both of them." << endl;
     ok = false;
   }
   if (!ok) {
@@ -148,14 +110,16 @@ void Arguments::printHelp() {
   Logger::info << "-g, --gene-tree <GENE TREE>" << endl;
   Logger::info << "-a, --alignment <ALIGNMENT>" << endl;
   Logger::info << "-s, --species-tree <SPECIES TREE>" << endl;
+  Logger::info << "-m, --map <GENE_SPECIES_MAPPING>" << endl;
   Logger::info << "--strategy <STRATEGY>  {EVAL, SPR}" << endl;
-  Logger::info << "--reconciliation-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << endl;
+  Logger::info << "-r --reconciliation-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << endl;
   Logger::info << "--libpll-model <libpllModel>  {GTR, LG, DAYHOFF etc.}" << endl;
-  Logger::info << "-t, --threads <THREADS NUMBER>" << endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
   Logger::info << "--check" << endl;
-  Logger::info << "--rooted-gene-tree" << endl;
-  Logger::info << "--no-felsenstein-likelihood" << endl;
+  Logger::info << "--unrooted-gene-tree" << endl;
+  Logger::info << "--dupRate <duplication rate>" << endl;
+  Logger::info << "--lossRate <loss rate>" << endl;
+  Logger::info << "--transferRate <transfer rate>" << endl;
   Logger::info << endl;
 
 }
@@ -176,12 +140,11 @@ void Arguments::printSummary() {
   Logger::info << "Species tree: " << speciesTree << endl;
   Logger::info << "Gene species map: " << geneSpeciesMap << endl;
   Logger::info << "Strategy: " << strategy << endl;
-  Logger::info << "Reconciliation model: " << getStringFromModel(reconciliationModel) << endl;
+  Logger::info << "Reconciliation model: " << reconciliationModel << endl;
   Logger::info << "Libpll model: " << libpllModel << endl;
   Logger::info << "Prefix: " << output << endl;
   Logger::info << "Check mode: " << boolStr[check] << endl;
-  Logger::info << "Rooted gene tree: " << boolStr[rootedGeneTree] << endl;
-  Logger::info << "Ignoring felsenstein likelihood: " << boolStr[noFelsensteinLikelihood] << endl;
+  Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << endl;
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << endl;
   Logger::info << endl;
 }

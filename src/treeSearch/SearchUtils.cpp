@@ -1,6 +1,5 @@
 #include "SearchUtils.hpp"
 #include <treeSearch/JointTree.hpp>
-#include <IO/Arguments.hpp>
 #include <ParallelContext.hpp>
 #include <IO/Logger.hpp>
 
@@ -11,7 +10,8 @@ void SearchUtils::testMove(JointTree &jointTree,
     double initialReconciliationLoglk,
     double initialLibpllLoglk,
     double &averageReconciliationDiff,
-    double &newLoglk
+    double &newLoglk,
+    bool check
     )
 {
   double initialLoglk = initialReconciliationLoglk + initialLibpllLoglk;
@@ -23,7 +23,7 @@ void SearchUtils::testMove(JointTree &jointTree,
   averageReconciliationDiff /= 51;
   if (improvement < averageReconciliationDiff) {
     jointTree.rollbackLastMove();
-    if(Arguments::check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
+    if(check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
       cerr.precision(17);
       cerr << "small rollback lead to different likelihoods: " << initialLoglk
         << " " << jointTree.computeJointLoglk() << endl;
@@ -36,7 +36,7 @@ void SearchUtils::testMove(JointTree &jointTree,
   jointTree.optimizeMove(move);
   newLoglk = recLoglk +  jointTree.computeLibpllLoglk(true);
   jointTree.rollbackLastMove();
-  if(Arguments::check) {
+  if(check) {
     auto newLoglk = jointTree.computeJointLoglk();
     if (fabs(initialLoglk - newLoglk) > 0.000001) {
       jointTree.printLoglk();
@@ -54,7 +54,8 @@ void SearchUtils::testMove(JointTree &jointTree,
 bool SearchUtils::findBestMove(JointTree &jointTree,
     vector<shared_ptr<Move> > &allMoves,
     double &bestLoglk,
-    int &bestMoveIndex)
+    int &bestMoveIndex, 
+    bool check)
 {
   bestMoveIndex = -1;
   double initialLoglk = bestLoglk; //jointTree.computeJointLoglk();
@@ -72,7 +73,8 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
         initialReconciliationLoglk,
         initialLibpllLoglk, 
         averageReconciliationDiff,
-        loglk);
+        loglk,
+        check);
     if (loglk > bestLoglk + 0.000000001) {
       bestLoglk = loglk;
       bestMoveIndex = i;

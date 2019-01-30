@@ -1,12 +1,18 @@
 #pragma once
 
-#include <IO/Arguments.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 #include <memory>
 
 using namespace std;
-
+  
+enum ReconciliationModel {
+    UndatedDL,
+    UndatedDTL,
+    DatedDL,
+    InvalidModel
+  };
+  
 /**
  *  Wrapper around the reconciliation likelihood classes
  */
@@ -17,11 +23,13 @@ public:
    *  Constructor 
    *  @param speciesTree: rooted species tree (fixed)
    *  @param map: gene-to-species mapping
-   *  @param model: the reconciliation model to use
+   *  @param reconciliationModelStr: the reconciliation model to use
+   *  @param rootedGeneTree: should we compute the likelihood of a rooted or unrooted gene tree?
    */
   ReconciliationEvaluation(pll_rtree_t *speciesTree,
     const GeneSpeciesMapping& map,
-    Arguments::ReconciliationModel model);
+    const string &reconciliationModelStr,
+    bool rootedGeneTree);
 
   /**
    *  Set the DTL rates

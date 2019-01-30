@@ -2,7 +2,6 @@
 
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <likelihoods/ReconciliationEvaluation.hpp>
-#include <IO/Arguments.hpp>
 #include <IO/Logger.hpp>
 #include <treeSearch/Moves.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
@@ -22,7 +21,11 @@ public:
               const string &alignment_file,
               const string &speciestree_file,
               const string &geneSpeciesMap_file,
-              Arguments::ReconciliationModel reconciliationModel,
+              const string &substitutionModel,
+              const string &reconciliationModel,
+              bool rootedGeneTree,
+              bool safeMode = false,
+              bool optimizeDTLRates = true,
               double dupRate = 2.0,
               double lossRate = 1.0,
               double transRate = 0.0);
@@ -60,6 +63,7 @@ public:
     void inferMLScenario(Scenario &scenario) {
       reconciliationEvaluation_->inferMLScenario(libpllEvaluation_->getTreeInfo(), scenario);
     }
+    bool isSafeMode() {return safeMode_;}
 private:
     void findBestRates(double minDup, double maxDup,
         double minLoss, double maxLoss, int steps,
@@ -84,6 +88,8 @@ private:
     double transRate_;
     stack<shared_ptr<Rollback> > rollbacks_;
     double reconciliationLL_;
+    bool optimizeDTLRates_;
+    bool safeMode_;
 };
 
 

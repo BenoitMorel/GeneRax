@@ -15,12 +15,14 @@ public:
     double initialReconciliationLoglk,
     double initialLibpllLoglk,
     double &averageReconciliationDiff,
-    double &newLoglk
+    double &newLoglk,
+    bool check
     );
  
   static bool findBestMove(JointTree &jointTree,
     vector<shared_ptr<Move> > &allMoves,
     double &bestLoglk,
-    int &bestMoveIndex);
+    int &bestMoveIndex,
+    bool check);
 };
 

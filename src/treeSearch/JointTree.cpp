@@ -110,23 +110,30 @@ JointTree::JointTree(const string &newick_string,
     const string &alignment_file,
     const string &speciestree_file,
     const string &geneSpeciesMap_file,
-    Arguments::ReconciliationModel reconciliationModel,
+    const string &substitutionModel,
+    const string &reconciliationModel,
+    bool rootedGeneTree,
+    bool safeMode,
+    bool optimizeDTLRates,
     double dupRate,
     double lossRate,
     double transRate):
   geneSpeciesMap_(geneSpeciesMap_file),
   dupRate_(dupRate),
   lossRate_(lossRate),
-  transRate_(transRate)
+  transRate_(transRate),
+  optimizeDTLRates_(optimizeDTLRates),
+  safeMode_(safeMode)
 {
    info_.alignmentFilename = alignment_file;
-  info_.model = Arguments::libpllModel;
+  info_.model = substitutionModel;
   libpllEvaluation_ = LibpllEvaluation::buildFromString(newick_string, info_.alignmentFilename, info_.model);
   pllSpeciesTree_ = pll_rtree_parse_newick(speciestree_file.c_str());
   assert(pllSpeciesTree_);
   reconciliationEvaluation_ = make_shared<ReconciliationEvaluation>(pllSpeciesTree_,  
       geneSpeciesMap_, 
-      reconciliationModel);
+      reconciliationModel,
+      rootedGeneTree);
   setRates(dupRate, lossRate, transRate);
 
 }
@@ -138,7 +145,7 @@ void JointTree::printLibpllTree() const {
 
 
 void JointTree::optimizeParameters(bool felsenstein, bool reconciliation) {
-  if (felsenstein && !Arguments::noFelsensteinLikelihood) {
+  if (felsenstein) {
     libpllEvaluation_->optimizeAllParameters();
   }
   if (reconciliation) {
@@ -151,9 +158,6 @@ void JointTree::optimizeParameters(bool felsenstein, bool reconciliation) {
 }
 
 double JointTree::computeLibpllLoglk(bool incremental) {
-  if (Arguments::noFelsensteinLikelihood) {
-    return 0;
-  }
   return libpllEvaluation_->computeLikelihood(incremental);
 }
 
@@ -286,7 +290,7 @@ void JointTree::findBestRatesDTL(double minDup, double maxDup,
 
 
 void JointTree::optimizeDLRates() {
-  if (Arguments::userDTLRates) {
+  if (!optimizeDTLRates_) {
     Logger::info << "Skipping DL rates optimization (rates were defined by the user)" << endl;
     return;
   }
@@ -319,7 +323,7 @@ void JointTree::optimizeDLRates() {
 }
     
 void JointTree::optimizeDTLRates() {
-  if (Arguments::userDTLRates) {
+  if (!optimizeDTLRates_) {
     Logger::info << "Skipping DL rates optimization (rates were defined by the user)" << endl;
     return;
   }

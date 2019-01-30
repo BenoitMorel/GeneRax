@@ -41,14 +41,14 @@ int internal_main(int argc, char** argv, void* comm)
   // the order is very important
   ParallelContext::init(comm); 
   Logger::init();
-  Arguments::init(argc, argv);
-  Logger::initFileOutput(Arguments::output);
+  Arguments arguments(argc, argv);
+  Logger::initFileOutput(arguments.output);
   
-  Arguments::printCommand();
-  Arguments::printSummary();
+  arguments.printCommand();
+  arguments.printSummary();
   
   vector<string> geneTreeStrings;
-  getTreeStrings(Arguments::geneTree, geneTreeStrings);
+  getTreeStrings(arguments.geneTree, geneTreeStrings);
   
   bool firstRun  = true; 
   double bestLL = numeric_limits<double>::lowest();
@@ -56,16 +56,19 @@ int internal_main(int argc, char** argv, void* comm)
     double dupRate = 1;
     double lossRate = 1;
     double transferRate = 1;
-    if (Arguments::userDTLRates) {
-      dupRate = Arguments::dupRate;
-      lossRate = Arguments::lossRate;
-      transferRate = Arguments::transferRate;
+    if (arguments.userDTLRates) {
+      dupRate = arguments.dupRate;
+      lossRate = arguments.lossRate;
+      transferRate = arguments.transferRate;
     }
     auto jointTree = make_shared<JointTree>(geneTreeString,
-        Arguments::alignment,
-        Arguments::speciesTree,
-        Arguments::geneSpeciesMap,
-        Arguments::reconciliationModel,
+        arguments.alignment,
+        arguments.speciesTree,
+        arguments.geneSpeciesMap,
+        arguments.libpllModel,
+        arguments.reconciliationModel,
+        arguments.rootedGeneTree,
+        arguments.check,
         dupRate,
         lossRate,
         transferRate);
@@ -74,9 +77,9 @@ int internal_main(int argc, char** argv, void* comm)
     double initialRecLL = jointTree->computeReconciliationLoglk();
     double initialLibpllLL = jointTree->computeLibpllLoglk();
     Logger::timed << "Starting search..." << endl;
-    if (Arguments::strategy == "SPR") {
+    if (arguments.strategy == "SPR") {
       SPRSearch::applySPRSearch(*jointTree);
-    } else if (Arguments::strategy == "EVAL") {
+    } else if (arguments.strategy == "EVAL") {
     }
     Logger::timed << "End of search" << endl;
     jointTree->printLoglk();
@@ -86,8 +89,8 @@ int internal_main(int argc, char** argv, void* comm)
       assert(!isnan(ll));
       if (ll >= bestLL) {
         bestLL = ll;
-        jointTree->save(Arguments::output + ".newick", false);
-        ofstream stats(Arguments::output + ".stats");
+        jointTree->save(arguments.output + ".newick", false);
+        ofstream stats(arguments.output + ".stats");
         stats << "initial_ll " << initialRecLL + initialLibpllLL << endl;
         stats << "initial_llrec " << initialRecLL << endl;
         stats << "initial_lllibpll " << initialLibpllLL << endl;
@@ -98,8 +101,8 @@ int internal_main(int argc, char** argv, void* comm)
         stats << "L " << jointTree->getLossRate() << endl;
         stats << "T " << jointTree->getTransferRate() << endl;
       }
-      jointTree->save(Arguments::output + "_all" + ".newick", !firstRun);
-      Scenario scenario(Arguments::output + ".events");
+      jointTree->save(arguments.output + "_all" + ".newick", !firstRun);
+      Scenario scenario(arguments.output + ".events");
       jointTree->inferMLScenario(scenario);
       Logger::info << endl;
       scenario.saveEventsCounts();
@@ -107,7 +110,7 @@ int internal_main(int argc, char** argv, void* comm)
     firstRun = false;
   }  
   Logger::timed << "End of JointSearch execution" << endl;
-  Logger::timed << "See results in " + Arguments::output << endl;
+  Logger::timed << "See results in " + arguments.output << endl;
   ParallelContext::finalize();
   return 0;
 }

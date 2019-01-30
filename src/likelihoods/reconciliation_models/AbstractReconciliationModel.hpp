@@ -22,7 +22,7 @@ public:
    *  We do not call it in the constructor because it is virtual and
    *  calls virtual functions
    */
-  virtual void init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map);
+  virtual void init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map, bool rootedGeneTree);
   
   virtual ~AbstractReconciliationModel() {};
  
@@ -107,6 +107,7 @@ protected:
   
   void updateCLVs(pllmod_treeinfo_t &treeinfo);
 protected:
+  bool rootedGeneTree_;
   pll_unode_t *geneRoot_;
   int speciesNodesCount_;
   vector <pll_rnode_t *> speciesNodes_;

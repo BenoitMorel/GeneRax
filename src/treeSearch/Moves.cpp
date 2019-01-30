@@ -1,7 +1,6 @@
 #include <treeSearch/Moves.hpp>
 #include <treeSearch/JointTree.hpp>
 #include <IO/Logger.hpp>
-#include <IO/Arguments.hpp>
 
 // constants taken from RAXML
 #define DEF_LH_EPSILON            0.1
@@ -118,9 +117,7 @@ shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
   
 void SPRMove::optimizeMove(JointTree &tree)
 {
-  if (!Arguments::noFelsensteinLikelihood) {
-    optimizeBranchesSlow(tree, branchesToOptimize_);
-  }
+  optimizeBranchesSlow(tree, branchesToOptimize_);
   branchesToOptimize_.clear();
 }
 

@@ -1,15 +1,16 @@
 #include "AbstractReconciliationModel.hpp"
-#include <IO/Arguments.hpp>
 #include <IO/Logger.hpp>
   
 AbstractReconciliationModel::AbstractReconciliationModel():
+  rootedGeneTree_(false),
   geneRoot_(0),
   firstCall_(true),
   _maxGeneId(1)
 {
 }
-void AbstractReconciliationModel::init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map)
+void AbstractReconciliationModel::init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map, bool rootedGeneTree)
 {
+  rootedGeneTree_ = rootedGeneTree;
   setSpeciesTree(speciesTree);
   geneNameToSpeciesName_ = map.getMap();
 }
@@ -91,7 +92,7 @@ void AbstractReconciliationModel::getRoots(pllmod_treeinfo_t &treeinfo,
     const vector<int> &geneIds)
 {
   roots.clear();
-  if (Arguments::rootedGeneTree && geneRoot_) {
+  if (rootedGeneTree_ && geneRoot_) {
     roots.push_back(geneRoot_);
     if (geneRoot_->next) {
       roots.push_back(geneRoot_->next);
@@ -123,7 +124,7 @@ double AbstractReconciliationModel::computeLogLikelihood(shared_ptr<pllmod_treei
   auto root = getRoot();
   updateCLVs(*treeinfo);
   computeLikelihoods(*treeinfo);
-  if (Arguments::rootedGeneTree) {
+  if (rootedGeneTree_) {
     updateRoot(*treeinfo);
     while (root != getRoot()) {
       updateCLVs(*treeinfo);

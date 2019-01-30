@@ -3,7 +3,6 @@
 #include <treeSearch/Moves.hpp>
 #include <treeSearch/SearchUtils.hpp>
 #include <IO/Logger.hpp>
-#include <IO/Arguments.hpp>
 #include <ParallelContext.hpp>
 
 #include <unordered_set>
@@ -129,7 +128,7 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
     << "(hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
     << endl;
   int bestMoveIndex = -1;
-  bool foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex); 
+  bool foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex, jointTree.isSafeMode()); 
   if (foundBetterMove) {
     jointTree.applyMove(allMoves[bestMoveIndex]);
     jointTree.optimizeMove(allMoves[bestMoveIndex]);

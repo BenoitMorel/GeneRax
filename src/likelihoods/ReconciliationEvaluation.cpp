@@ -8,19 +8,20 @@
 
 ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
   const GeneSpeciesMapping& map,
-  Arguments::ReconciliationModel model)
+  const string &reconciliationModelStr,
+  bool rootedGeneTree)
 {
-  if (model == Arguments::UndatedDL) {
+  if (reconciliationModelStr == "UndatedDLModel") {
     reconciliationModel = make_shared<UndatedDLModel>();
-  } else if (model == Arguments::UndatedDTL) {
+  } else if (reconciliationModelStr == "UndatedDTL") {
     reconciliationModel = make_shared<UndatedDTLModel>();
-  } else if (model == Arguments::DatedDL) {
+  } else if (reconciliationModelStr == "DatedDL") {
     reconciliationModel = make_shared<DatedDLModel>();
   } else {
     Logger::error << "Invalid reconciliation model!" << endl;
     exit(1);
   }
-  reconciliationModel->init(speciesTree, map);
+  reconciliationModel->init(speciesTree, map, rootedGeneTree);
 }
 
 void ReconciliationEvaluation::setRates(double dupRate, double lossRate,
