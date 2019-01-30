@@ -4,9 +4,10 @@ A maximum likelihood gene tree inference tool, accounting for both MSAs and DTL 
 
 ## Requirement
 
+* A Linux environnement
 * gcc 5.0 or > 
 * CMake 3.6 or >
-* OpenMP
+* MPI
 
 ## Installation
 
