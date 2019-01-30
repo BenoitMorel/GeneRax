@@ -52,6 +52,12 @@ int internal_main(int argc, char** argv, void* comm)
   
   bool firstRun  = true; 
   double bestLL = numeric_limits<double>::lowest();
+  
+  string bestTreeFile = arguments.output + ".newick";
+  string allTreesFile = arguments.output + "_all" + ".newick";
+  string eventCountsFile = arguments.output + ".events";
+  string treeWithEventsFile = arguments.output + "_withevents.newick";
+  string statsFile = arguments.output + ".stats";
   for (auto &geneTreeString: geneTreeStrings) {
     double dupRate = 1;
     double lossRate = 1;
@@ -89,8 +95,8 @@ int internal_main(int argc, char** argv, void* comm)
       assert(!isnan(ll));
       if (ll >= bestLL) {
         bestLL = ll;
-        jointTree->save(arguments.output + ".newick", false);
-        ofstream stats(arguments.output + ".stats");
+        jointTree->save(bestTreeFile, false);
+        ParallelOfstream stats(statsFile);
         stats << "initial_ll " << initialRecLL + initialLibpllLL << endl;
         stats << "initial_llrec " << initialRecLL << endl;
         stats << "initial_lllibpll " << initialLibpllLL << endl;
@@ -101,16 +107,18 @@ int internal_main(int argc, char** argv, void* comm)
         stats << "L " << jointTree->getLossRate() << endl;
         stats << "T " << jointTree->getTransferRate() << endl;
       }
-      jointTree->save(arguments.output + "_all" + ".newick", !firstRun);
-      Scenario scenario(arguments.output + ".events");
+      jointTree->save(allTreesFile, !firstRun);
+      Scenario scenario;
       jointTree->inferMLScenario(scenario);
       Logger::info << endl;
-      scenario.saveEventsCounts();
+      scenario.saveEventsCounts(eventCountsFile);
+      scenario.saveTreeWithEvents(treeWithEventsFile);
     }
     firstRun = false;
   }  
+  Logger::info << "Best tree: " + bestTreeFile << endl;
+  Logger::info << "Best tree with events: " + treeWithEventsFile << endl;
   Logger::timed << "End of JointSearch execution" << endl;
-  Logger::timed << "See results in " + arguments.output << endl;
   ParallelContext::finalize();
   return 0;
 }

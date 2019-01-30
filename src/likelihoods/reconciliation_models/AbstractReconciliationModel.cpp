@@ -276,6 +276,7 @@ void AbstractReconciliationModel::inferMLScenario(shared_ptr<pllmod_treeinfo_t> 
   pll_rnode_t *speciesRoot = speciesTree_->root;
   */
   
+  scenario.setGeneRoot(geneRoot);
   pll_unode_t virtualRoot;
   virtualRoot.next = geneRoot;
   virtualRoot.node_index = geneRoot->node_index + _maxGeneId + 1;

@@ -1,8 +1,13 @@
 #pragma once
 
 #include <vector>
-#include <IO/Logger.hpp>
+#include <string>
+extern "C" {
+#include <pll.h>
+}
 #include <IO/ParallelOfstream.hpp>
+
+using namespace std;
 
 class Scenario {
 public:  
@@ -17,22 +22,26 @@ public:
   };
 
 
-  Scenario(const string &fileName): _eventsCount(int(Invalid), 0), _os(fileName) {}
-  
+  Scenario(): _eventsCount(int(Invalid), 0), _geneRoot(0) {}
+ 
+  void setGeneRoot(pll_unode_t *geneRoot) {_geneRoot = geneRoot;}
+
   void addEvent(EventType type, int geneNode, int speciesNode);
 
-  void saveEventsCounts() {
-    for (int i = 0; i < int(Invalid); ++i) {
-      _os << eventNames[i] << ":" << _eventsCount[i] << endl;
-      Logger::info << _eventsCount[i] << " " << eventNames[i] << " events." << endl;
-    }
-  }
+  void saveEventsCounts(const string &filename); 
+
+  void saveTreeWithEvents(const string &filename);
 
 private:
   static const char *eventNames[];
   vector<Event> _events;
   vector<int> _eventsCount;
-  ParallelOfstream _os;
+  vector<EventType> _geneIdToEvent;
+  pll_unode_t *_geneRoot;
+
+  void recursivelySaveTreeWithEvents(pll_unode_t *node, ParallelOfstream &os);
+
+
 };
 
 

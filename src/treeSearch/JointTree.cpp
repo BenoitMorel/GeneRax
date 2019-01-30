@@ -205,6 +205,8 @@ void JointTree::save(const string &fileName, bool append) {
   ofstream os(fileName, (append ? ofstream::app : ofstream::out));
   char *newick = pll_utree_export_newick(getTreeInfo()->root, 0);
   os << newick;
+  os.close();
+  free(newick);
 }
 
 shared_ptr<pllmod_treeinfo_t> JointTree::getTreeInfo() {
