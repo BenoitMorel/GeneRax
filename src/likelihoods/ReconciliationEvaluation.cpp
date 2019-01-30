@@ -11,7 +11,7 @@ ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
   const string &reconciliationModelStr,
   bool rootedGeneTree)
 {
-  if (reconciliationModelStr == "UndatedDLModel") {
+  if (reconciliationModelStr == "UndatedDL") {
     reconciliationModel = make_shared<UndatedDLModel>();
   } else if (reconciliationModelStr == "UndatedDTL") {
     reconciliationModel = make_shared<UndatedDTLModel>();
