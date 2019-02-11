@@ -94,6 +94,7 @@ void UndatedDLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
   }
   if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) {
     // present
+    scenario.addEvent(Scenario::None, gid, e);
     return;
   }
   if (not isGeneLeaf) {
@@ -176,9 +177,13 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
     g = speciesNode->right->node_index;
   }
   proba = ScaledValue();
-  if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) {
+  if (isSpeciesLeaf and isGeneLeaf) {
     // present
-    proba = ScaledValue(_PS[e], 0);
+    if (e == geneToSpecies_[gid]) {
+      proba = ScaledValue(_PS[e], 0);
+    } else {
+      proba = ScaledValue();
+    }
     return;
   }
   if (not isGeneLeaf) {

@@ -148,6 +148,7 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
   bool isSpeciesLeaf = !speciesNode->left;
   
   if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) {
+    scenario.addEvent(Scenario::None, gid, e);
     return;
   }
   
@@ -199,6 +200,7 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
     cerr << "warning: null ll scenario " << _uq[gid][e] << " " << proba  << endl;
     assert(false);
   }
+  pll_rnode_t *dest = 0;
   switch(maxValueIndex) {
     case 0: 
       scenario.addEvent(Scenario::S, gid, e);
@@ -216,13 +218,15 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
       backtrace(rightGeneNode, speciesNode, scenario); 
       break;
     case 3:
-      scenario.addEvent(Scenario::T, gid, e);
-      backtrace(leftGeneNode, getBestTransfer(u_left, speciesNode), scenario);
+      dest =  getBestTransfer(u_left, speciesNode);
+      scenario.addTransfer(Scenario::T, gid, e, e, dest->node_index);
+      backtrace(leftGeneNode, dest, scenario);
       backtrace(rightGeneNode, speciesNode, scenario);
       break;
     case 4:
-      scenario.addEvent(Scenario::T, gid, e);
-      backtrace(rightGeneNode, getBestTransfer(u_right, speciesNode), scenario);
+      dest =  getBestTransfer(u_right, speciesNode);
+      scenario.addTransfer(Scenario::T, gid, e, e, dest->node_index);
+      backtrace(rightGeneNode, dest, scenario);
       backtrace(leftGeneNode, speciesNode, scenario);
       break;
     case 5: 
@@ -234,8 +238,9 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
       backtrace(geneNode, speciesNode->right, scenario); 
       break;
     case 7:
-      scenario.addEvent(Scenario::TL, gid, e); 
-      backtrace(geneNode, getBestTransfer(gid, speciesNode), scenario); 
+      dest = getBestTransfer(gid, speciesNode);
+      scenario.addTransfer(Scenario::TL, gid, e, e, dest->node_index); 
+      backtrace(geneNode, dest, scenario); 
       break;
     default:
       cerr << "event " << maxValueIndex << endl;

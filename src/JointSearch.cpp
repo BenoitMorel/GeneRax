@@ -56,7 +56,7 @@ int internal_main(int argc, char** argv, void* comm)
   string bestTreeFile = arguments.output + ".newick";
   string allTreesFile = arguments.output + "_all" + ".newick";
   string eventCountsFile = arguments.output + ".events";
-  string treeWithEventsFile = arguments.output + "_withevents.newick";
+  string treeWithEventsFile = arguments.output + "_withevents.nhx";
   string statsFile = arguments.output + ".stats";
   for (auto &geneTreeString: geneTreeStrings) {
     double dupRate = 1;
