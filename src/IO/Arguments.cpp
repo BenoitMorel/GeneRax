@@ -99,7 +99,10 @@ void Arguments::checkInputs() {
     Logger::error << "Aborting." << endl;
     exit(1);
   }
-  assertFileExists(geneTree);
+  
+  if (geneTree.size() && geneTree != "__random__") {
+    assertFileExists(geneTree);
+  }
   assertFileExists(speciesTree);
   assertFileExists(geneSpeciesMap);
   assertFileExists(alignment);

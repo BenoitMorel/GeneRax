@@ -64,6 +64,7 @@ public:
       reconciliationEvaluation_->inferMLScenario(libpllEvaluation_->getTreeInfo(), scenario);
     }
     bool isSafeMode() {return safeMode_;}
+    void enableReconciliation(bool enable) {enableReconciliation_ = enable;}
 private:
     void findBestRates(double minDup, double maxDup,
         double minLoss, double maxLoss, int steps,
@@ -90,6 +91,7 @@ private:
     double reconciliationLL_;
     bool optimizeDTLRates_;
     bool safeMode_;
+    bool enableReconciliation_;
 };
 
 

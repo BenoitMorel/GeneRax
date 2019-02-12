@@ -150,12 +150,21 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
           charmap, sequences, patternWeights);
     }
     // tree
-    pll_rtree_t * rtree = pll_rtree_parse_newick_string(newickString.c_str());
-    if (!rtree) {
-      utree = pll_utree_parse_newick_string(newickString.c_str());
+    if (newickString == "__random__") {
+      vector<const char*> labels;
+      for (auto seq: sequences) {
+        labels.push_back(seq->label);
+      }
+      int seed = 0;
+      utree = pllmod_utree_create_random(labels.size(), &labels[0], seed);
     } else {
-      utree = pll_rtree_unroot(rtree);
-      pll_rtree_destroy(rtree, free);
+      pll_rtree_t * rtree = pll_rtree_parse_newick_string(newickString.c_str());
+      if (!rtree) {
+        utree = pll_utree_parse_newick_string(newickString.c_str());
+      } else {
+        utree = pll_rtree_unroot(rtree);
+        pll_rtree_destroy(rtree, free);
+      }
     }
     if (!utree) 
       throw LibpllException("Error while reading tree ", newickString);

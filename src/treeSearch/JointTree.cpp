@@ -123,7 +123,8 @@ JointTree::JointTree(const string &newick_string,
   lossRate_(lossRate),
   transRate_(transRate),
   optimizeDTLRates_(optimizeDTLRates),
-  safeMode_(safeMode)
+  safeMode_(safeMode),
+  enableReconciliation_(true)
 {
    info_.alignmentFilename = alignment_file;
   info_.model = substitutionModel;
