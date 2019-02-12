@@ -149,7 +149,7 @@ void JointTree::optimizeParameters(bool felsenstein, bool reconciliation) {
   if (felsenstein) {
     libpllEvaluation_->optimizeAllParameters();
   }
-  if (reconciliation) {
+  if (reconciliation && enableReconciliation_) {
     if (reconciliationEvaluation_->implementsTransfers()) {  
       optimizeDTLRates();
     } else {
@@ -163,6 +163,9 @@ double JointTree::computeLibpllLoglk(bool incremental) {
 }
 
 double JointTree::computeReconciliationLoglk () {
+  if (!enableReconciliation_) {
+    return 1.0;
+  }
   return reconciliationEvaluation_->evaluate(libpllEvaluation_->getTreeInfo());
 }
 

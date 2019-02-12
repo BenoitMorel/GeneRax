@@ -19,6 +19,10 @@ using namespace std;
 void getTreeStrings(const string &filename, vector<string> &treeStrings) 
 {
   string geneTreeString;
+  if (filename == "__random__" || filename.size() == 0) {
+    treeStrings.push_back("__random__");
+    return;
+  }
   ifstream treeStream(filename);
   while(getline(treeStream, geneTreeString)) {
     geneTreeString.erase(remove(geneTreeString.begin(), geneTreeString.end(), '\n'), geneTreeString.end());
@@ -84,6 +88,14 @@ int internal_main(int argc, char** argv, void* comm)
     double initialLibpllLL = jointTree->computeLibpllLoglk();
     Logger::timed << "Starting search..." << endl;
     if (arguments.strategy == "SPR") {
+      Logger::info << "plup" << endl;
+      if (!geneTreeString.size() or geneTreeString == "__random__") {
+        Logger::info << "plip" << endl;
+        jointTree->enableReconciliation(false);
+        SPRSearch::applySPRSearch(*jointTree);
+        Logger::info << "plop" << endl;
+        jointTree->enableReconciliation(true);
+      }
       SPRSearch::applySPRSearch(*jointTree);
     } else if (arguments.strategy == "EVAL") {
     }
