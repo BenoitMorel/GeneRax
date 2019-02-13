@@ -20,8 +20,8 @@ before_script:
 
 script: 
   - ./install.sh
-  - cd example && ./run_examples.sh
+  - python tests/run_tests.py
 
 branches:
     only:
-    - dev
+    - master
