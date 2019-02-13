@@ -118,6 +118,8 @@ int internal_main(int argc, char** argv, void* comm)
         stats << "D " << jointTree->getDupRate() << endl;
         stats << "L " << jointTree->getLossRate() << endl;
         stats << "T " << jointTree->getTransferRate() << endl;
+        stats << "hash " << jointTree->getUnrootedTreeHash() << endl;
+        stats << " " << endl;
       }
       jointTree->save(allTreesFile, !firstRun);
       Scenario scenario;
