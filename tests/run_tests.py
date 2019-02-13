@@ -21,12 +21,17 @@ def get_infered_hash(output_prefix):
     if line.startswith("hash"):
       return int(line.split(" ")[1][:-1])
 
-def test_family(family_dir):
+def test_family_with_parameters(family_dir, with_gene_tree):
+  if (with_gene_tree):
+    print("  with raxml starting gene tree")
+  else:
+    print ("  with random starting gene tree")
   alignment = os.path.join(family_dir, "alignment.msa")
   speciesTree = os.path.join(family_dir, "speciesTree.newick")
   mapping = os.path.join(family_dir, "mapping.link")
   true_hash = get_true_hash(family_dir)
   output_prefix = os.path.join(output_root, "test")
+  gene_tree = os.path.join(family_dir, "raxmlGeneTree.newick")
   command = []
   command.append(executable)
   command.append("-s")
@@ -39,6 +44,9 @@ def test_family(family_dir):
   command.append(output_prefix)
   command.append("--strategy")
   command.append("SPR")
+  if (with_gene_tree):
+    command.append("-g")
+    command.append(gene_tree)
   print("Executing " + " ".join(command))
   FNULL = open(os.devnull, 'w')
   subprocess.check_call(command, stdout = FNULL)
@@ -46,7 +54,10 @@ def test_family(family_dir):
   assert(infered_hash == true_hash)
   print("ok!")
 
-
+def test_family(family_dir):
+  print("Test family " + os.path.basename(family_dir) + ":")
+  test_family_with_parameters(family_dir, True)
+  test_family_with_parameters(family_dir, False)
 
 family_dir = os.path.join(data_dir, "simulated_1")
 test_family(family_dir)

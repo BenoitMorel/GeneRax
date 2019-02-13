@@ -75,10 +75,6 @@ void assertFileExists(const string &file)
 
 void Arguments::checkInputs() {
   bool ok = true;
-  if (geneTree.size() && geneTree != "__random__") {
-    Logger::error << "You need to provide a gene tree." << endl;
-    ok = false;
-  }
   if (!alignment.size()) {
     Logger::error << "You need to provide an alignment." << endl;
     ok = false;
