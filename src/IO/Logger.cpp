@@ -32,6 +32,9 @@ void Logger::init() {
   
 void Logger::initFileOutput(const string &output)
 {
+  if (ParallelContext::getRank()) {
+    return;
+  } 
   logFile = new ofstream(output + ".log");
 }
 

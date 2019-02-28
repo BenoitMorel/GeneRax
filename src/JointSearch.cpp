@@ -88,7 +88,6 @@ int internal_main(int argc, char** argv, void* comm)
     double initialLibpllLL = jointTree->computeLibpllLoglk();
     Logger::timed << "Starting search..." << endl;
     if (arguments.strategy == "SPR") {
-      Logger::info << "plup" << endl;
       if (!geneTreeString.size() or geneTreeString == "__random__") {
         Logger::info << "plip" << endl;
         jointTree->enableReconciliation(false);
