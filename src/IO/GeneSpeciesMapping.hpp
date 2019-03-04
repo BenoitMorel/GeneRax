@@ -2,6 +2,7 @@
 
 #include <string>
 #include <map>
+#include <fstream>
 
 using namespace std;
 
@@ -34,5 +35,7 @@ public:
 
 private:
   map<string, string> _map;
+  void buildFromPhyldogMapping(ifstream &f);
+  void buildFromTreerecsMapping(ifstream &f);
 };
 
