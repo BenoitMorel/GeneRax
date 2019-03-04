@@ -49,8 +49,6 @@ public:
     void save(const string &fileName, bool append);
     shared_ptr<pllmod_treeinfo_t> getTreeInfo();
     void setRates(double dup, double loss, double trans = 0);
-    void optimizeDLRates();
-    void optimizeDTLRates();
     pll_rtree_t *getSpeciesTree() {return pllSpeciesTree_;}
     size_t getUnrootedTreeHash();
     shared_ptr<ReconciliationEvaluation> getReconciliationEvaluation() {return reconciliationEvaluation_;}
@@ -66,19 +64,6 @@ public:
     bool isSafeMode() {return safeMode_;}
     void enableReconciliation(bool enable) {enableReconciliation_ = enable;}
 private:
-    void findBestRates(double minDup, double maxDup,
-        double minLoss, double maxLoss, int steps,
-        double &bestDup,
-        double &bestLoss,
-        double &bestLL);
-    void findBestRatesDTL(double minDup, double maxDup,
-      double minLoss, double maxLoss, 
-      double minTrans, double maxTrans, 
-      int steps,
-      double &bestDup,
-      double &bestLoss,
-      double &bestTrans,
-      double &bestLL);
     shared_ptr<LibpllEvaluation> libpllEvaluation_;
     shared_ptr<ReconciliationEvaluation> reconciliationEvaluation_;
     pll_rtree_t *pllSpeciesTree_;
