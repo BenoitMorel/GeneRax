@@ -8,7 +8,7 @@ Arguments::Arguments(int argc, char * argv[]):
   argc(argc),
   argv(argv),
   reconciliationModel("UndatedDL"),
-  reconciliationOpt("window"),
+  reconciliationOpt("simplex"),
   libpllModel("GTR"),
   output("jointSearch"),
   check(false),
