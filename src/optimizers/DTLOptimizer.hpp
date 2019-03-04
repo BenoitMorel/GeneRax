@@ -9,7 +9,7 @@ using namespace std;
 class DTLOptimizer {
 public:
   static void optimizeDLRates(JointTree &jointTree, const string &method);
-  static void optimizeDTLRates(JointTree &jointTree);
+  static void optimizeDTLRates(JointTree &jointTree, const string &method);
 private:
   static void findBestRatesDTL(JointTree &jointTree,
       double minDup, double maxDup,
@@ -27,8 +27,9 @@ private:
       double &bestDup,
       double &bestLoss,
       double &bestLL) ;
-  static void optimizeDLRateSimplex(JointTree &jointTree);
+  static void optimizeRateSimplex(JointTree &jointTree, bool transfers);
   static void optimizeDLRatesWindow(JointTree &jointTree);
+  static void optimizeDTLRatesWindow(JointTree &jointTree);
 };
 
 

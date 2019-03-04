@@ -10,7 +10,6 @@ const int IT = 5;
 UndatedDTLModel::UndatedDTLModel()
 {
   _maxGeneId = 1;
-  Logger::info << "creating undated dl model" << endl;
 }
 
 #define ASSERT_PROBA(x) assert(x.isProba());

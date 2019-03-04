@@ -9,7 +9,6 @@ const int CACHE_SIZE = 100000;
 UndatedDLModel::UndatedDLModel()
 {
   _maxGeneId = 1;
-  Logger::info << "creating undated dl model" << endl;
 }
 
 #define IS_PROBA(x) ((x) >= 0 && (x) <= 1 && !isnan(x))
