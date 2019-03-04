@@ -1,13 +1,14 @@
 #include "IO/Arguments.hpp"
 #include <IO/Logger.hpp>
 #include <ParallelContext.hpp>
-
-
+#include <algorithm>
+#include <vector>
 
 Arguments::Arguments(int argc, char * argv[]):
   argc(argc),
   argv(argv),
   reconciliationModel("UndatedDL"),
+  reconciliationOpt("window"),
   libpllModel("GTR"),
   output("jointSearch"),
   check(false),
@@ -36,8 +37,10 @@ Arguments::Arguments(int argc, char * argv[]):
       geneSpeciesMap = string(argv[++i]);
     } else if (arg == "--strategy") {
       strategy = string(argv[++i]);
-    } else if (arg == "-r" || arg == "--reconciliation-model") {
+    } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModel = string(argv[++i]);
+    } else if (arg == "--rec-opt") {
+      reconciliationOpt = string(argv[++i]);
     } else if (arg == "--libpll-model") {
       libpllModel = string(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
@@ -73,6 +76,10 @@ void assertFileExists(const string &file)
   }
 }
 
+bool isIn(const string &elem, const vector<string> &v) {
+  return find(v.begin(), v.end(), elem) != v.end();
+}
+
 void Arguments::checkInputs() {
   bool ok = true;
   if (!alignment.size()) {
@@ -89,6 +96,21 @@ void Arguments::checkInputs() {
   }
   if (userDTLRates && (dupRate < 0.0 || lossRate < 0.0)) {
     Logger::error << "You specified at least one of the duplication and loss rates, but not both of them." << endl;
+    ok = false;
+  }
+  vector<string> possibleReconciliationModels;
+  possibleReconciliationModels.push_back("UndatedDL");
+  possibleReconciliationModels.push_back("UndatedDTL");
+  possibleReconciliationModels.push_back("DatedDL");
+  if (!isIn(reconciliationModel, possibleReconciliationModels)) {
+    Logger::error << "Invalid reconciliation model " << reconciliationModel << endl;
+    ok = false;
+  }
+  vector <string> possibleRecOpts;
+  possibleRecOpts.push_back("window");
+  possibleRecOpts.push_back("simplex");
+  if (!isIn(reconciliationOpt, possibleRecOpts)) {
+    Logger::error << "Invalid reconciliation opt " << reconciliationOpt << endl;
     ok = false;
   }
   if (!ok) {
@@ -111,7 +133,8 @@ void Arguments::printHelp() {
   Logger::info << "-s, --species-tree <SPECIES TREE>" << endl;
   Logger::info << "-m, --map <GENE_SPECIES_MAPPING>" << endl;
   Logger::info << "--strategy <STRATEGY>  {EVAL, SPR}" << endl;
-  Logger::info << "-r --reconciliation-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << endl;
+  Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << endl;
+  Logger::info << "--rec-opt <reconciliationOpt>  {window, simplex}" << endl;
   Logger::info << "--libpll-model <libpllModel>  {GTR, LG, DAYHOFF etc.}" << endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
   Logger::info << "--check" << endl;
@@ -140,6 +163,7 @@ void Arguments::printSummary() {
   Logger::info << "Gene species map: " << geneSpeciesMap << endl;
   Logger::info << "Strategy: " << strategy << endl;
   Logger::info << "Reconciliation model: " << reconciliationModel << endl;
+  Logger::info << "Reconciliation opt: " << reconciliationOpt << endl;
   Logger::info << "Libpll model: " << libpllModel << endl;
   Logger::info << "Prefix: " << output << endl;
   Logger::info << "Check mode: " << boolStr[check] << endl;

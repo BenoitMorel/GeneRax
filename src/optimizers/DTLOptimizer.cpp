@@ -87,12 +87,14 @@ void DTLOptimizer::findBestRatesDTL(JointTree &jointTree,
 }
 
 
-void DTLOptimizer::optimizeDLRates(JointTree &jointTree) {
-  /*
-  Logger::info << "MN OPTIMIZATION" << endl;
-  optimizeDLRateMN(jointTree);
-  return;
-  */
+void DTLOptimizer::optimizeDLRates(JointTree &jointTree, const string &method) {
+  if (method == "window") {
+    optimizeDLRatesWindow(jointTree);
+  } else if (method == "simplex") {
+    optimizeDLRateSimplex(jointTree);
+  }
+}
+void DTLOptimizer::optimizeDLRatesWindow(JointTree &jointTree) {
   Logger::timed << "Start optimizing DL rates" << endl;
   
   double bestLL = numeric_limits<double>::lowest();
@@ -161,11 +163,13 @@ struct DLRates {
   double ll;
 
   DLRates(double d = 0.0, double l = 0.0): ll(0.0) {
-    rates[0] = max(0.0, d);
-    rates[1] = max(0.0, l);
+    rates[0] = d;
+    rates[1] = l;
   }
 
   void computeLL(JointTree &jointTree) {
+    rates[0] = max(0.0, rates[0]);
+    rates[1] = max(0.0, rates[1]);
     jointTree.setRates(rates[0], rates[1]);
     ll = jointTree.computeReconciliationLoglk();
     if (!isValidLikelihood(ll)) {
@@ -202,19 +206,27 @@ struct DLRates {
     os << "(" << v.rates[0] << ", " << v.rates[1] << ", " << v.ll  << ")";
     return os;
   }
+
+  inline double distance(const DLRates v) const {
+    double d = 0.0;
+    d += pow(rates[0] - v.rates[0], 2.0);
+    d += pow(rates[1] - v.rates[1], 2.0);
+    return sqrt(d);
+  }
 };
 
 
 
 DLRates findBestPoint(DLRates r1, DLRates r2, JointTree &jointTree) 
 {
+  r1.computeLL(jointTree);
   DLRates best = r1;
-  best.computeLL(jointTree);
   int iterations = 10;
   for (int i = 0; i < iterations; ++i) {
     double ratio = double(i) / double(iterations);
-    DLRates current = r1 + (r2 - r1) * ratio;
+    DLRates current = r1 + ((r2 - r1) * ratio);
     current.computeLL(jointTree);
+    //Logger::info << best.ll << " " << current.ll << endl;
     if (current < best) {
       best = current;
     }
@@ -223,12 +235,12 @@ DLRates findBestPoint(DLRates r1, DLRates r2, JointTree &jointTree)
 }
 
 
-void DTLOptimizer::optimizeDLRateMN(JointTree &jointTree)
+void DTLOptimizer::optimizeDLRateSimplex(JointTree &jointTree)
 {
   vector<DLRates> rates;
   rates.push_back(DLRates(0.01, 0.01));
-  rates.push_back(DLRates(1.0, 0.01));
-  rates.push_back(DLRates(0.01, 1.0));
+  rates.push_back(DLRates(5.0, 0.01));
+  rates.push_back(DLRates(0.01, 5.0));
   for (auto &r: rates) {
     r.computeLL(jointTree);
   }
@@ -238,14 +250,14 @@ void DTLOptimizer::optimizeDLRateMN(JointTree &jointTree)
   double sigma = 0.5;
 
 
-  for (int i = 0; i < 15; ++i) {
+  while (rates[0].distance(rates.back()) > 0.01) {
+  //for (int i = 0; i < 10; ++i) {
     sort(rates.begin(), rates.end());
     Logger::info << rates[0] << " " << rates[1] << " " << rates[2] <<  endl;
     // centroid
     DLRates x0 = (rates[0] + rates[1]) / 2.0;
     // reflexion
     DLRates xr = x0 + (x0 - rates.back()) * alpha;  
-    //xr = findBestPoint(xr, x0, jointTree);
     xr.computeLL(jointTree);
     if (rates[0] <= xr && xr < rates[rates.size() - 2] ) {
       rates.back() = xr;
@@ -254,6 +266,7 @@ void DTLOptimizer::optimizeDLRateMN(JointTree &jointTree)
     // expansion
     if (xr < rates[0]) {
       DLRates xe = x0 + (xr - x0) * gamma;
+      //xe = findBestRatesDL(x0, xr, jointTree);
       xe.computeLL(jointTree);
       if (xe < xr) {
         rates.back() = xe;
@@ -262,7 +275,7 @@ void DTLOptimizer::optimizeDLRateMN(JointTree &jointTree)
       }
       continue;
     }
-    // 
+    // contraction
     DLRates xc = x0 + (rates.back() - x0) * rho;
     xc.computeLL(jointTree); 
     if (xc < rates.back()) {
@@ -277,6 +290,5 @@ void DTLOptimizer::optimizeDLRateMN(JointTree &jointTree)
   }
   sort(rates.begin(), rates.end());
   rates[0].computeLL(jointTree);
-  Logger::info << rates[0] << endl;
 }
 

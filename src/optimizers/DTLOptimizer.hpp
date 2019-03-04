@@ -1,10 +1,14 @@
 #pragma once
 
 class JointTree;
+#include <string>
+
+using namespace std;
+
 
 class DTLOptimizer {
 public:
-  static void optimizeDLRates(JointTree &jointTree);
+  static void optimizeDLRates(JointTree &jointTree, const string &method);
   static void optimizeDTLRates(JointTree &jointTree);
 private:
   static void findBestRatesDTL(JointTree &jointTree,
@@ -23,7 +27,8 @@ private:
       double &bestDup,
       double &bestLoss,
       double &bestLL) ;
-  static void optimizeDLRateMN(JointTree &jointTree);
+  static void optimizeDLRateSimplex(JointTree &jointTree);
+  static void optimizeDLRatesWindow(JointTree &jointTree);
 };
 
 

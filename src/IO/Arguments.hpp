@@ -21,6 +21,7 @@ public:
    string geneSpeciesMap;
    string strategy;
    string reconciliationModel;
+   string reconciliationOpt;
    string libpllModel;
    string output;
    bool check;

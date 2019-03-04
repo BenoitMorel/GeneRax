@@ -113,6 +113,7 @@ JointTree::JointTree(const string &newick_string,
     const string &geneSpeciesMap_file,
     const string &substitutionModel,
     const string &reconciliationModel,
+    const string &reconciliationOpt,
     bool rootedGeneTree,
     bool safeMode,
     bool optimizeDTLRates,
@@ -125,7 +126,8 @@ JointTree::JointTree(const string &newick_string,
   transRate_(transRate),
   optimizeDTLRates_(optimizeDTLRates),
   safeMode_(safeMode),
-  enableReconciliation_(true)
+  enableReconciliation_(true),
+  recOpt_(reconciliationOpt)
 {
    info_.alignmentFilename = alignment_file;
   info_.model = substitutionModel;
@@ -154,7 +156,7 @@ void JointTree::optimizeParameters(bool felsenstein, bool reconciliation) {
     if (reconciliationEvaluation_->implementsTransfers()) {  
       DTLOptimizer::optimizeDTLRates(*this);
     } else {
-      DTLOptimizer::optimizeDLRates(*this);
+      DTLOptimizer::optimizeDLRates(*this, recOpt_);
     }
   }
 }

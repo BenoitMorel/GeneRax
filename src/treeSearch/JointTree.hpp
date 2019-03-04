@@ -23,6 +23,7 @@ public:
               const string &geneSpeciesMap_file,
               const string &substitutionModel,
               const string &reconciliationModel,
+              const string &reconciliationOpt,
               bool rootedGeneTree,
               bool safeMode = false,
               bool optimizeDTLRates = true,
@@ -77,6 +78,7 @@ private:
     bool optimizeDTLRates_;
     bool safeMode_;
     bool enableReconciliation_;
+    string recOpt_;
 };
 
 

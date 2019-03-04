@@ -77,6 +77,7 @@ int internal_main(int argc, char** argv, void* comm)
         arguments.geneSpeciesMap,
         arguments.libpllModel,
         arguments.reconciliationModel,
+        arguments.reconciliationOpt,
         arguments.rootedGeneTree,
         arguments.check,
         dupRate,
