@@ -255,11 +255,11 @@ DTLRates findBestPoint(DTLRates r1, DTLRates r2, JointTree &jointTree)
 void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
 {
   vector<DTLRates> rates;
-  rates.push_back(DTLRates(0.01, 0.01));
-  rates.push_back(DTLRates(1.0, 0.01));
-  rates.push_back(DTLRates(0.01, 1.0));
+  rates.push_back(DTLRates(0.01, 0.01, 0.01));
+  rates.push_back(DTLRates(1.0, 0.01, 0.01));
+  rates.push_back(DTLRates(0.01, 1.0, 1.0));
   if (transfers) {
-    rates.push_back(DTLRates(0.01, 0.1, 1.0));
+    rates.push_back(DTLRates(0.01, 0.01, 1.0));
   }
   for (auto &r: rates) {
     r.computeLL(jointTree);
@@ -270,12 +270,12 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
   double sigma = 0.5;
 
 
-  while (rates[0].distance(rates.back()) > 0.05) {
+  while (rates[0].distance(rates.back()) > 0.001) {
   //for (int i = 0; i < 10; ++i) {
     sort(rates.begin(), rates.end());
     // centroid
     DTLRates x0;
-    for (int i = 0; i < rates.size() - 1; ++i) {
+    for (unsigned int i = 0; i < rates.size() - 1; ++i) {
       x0 = x0 + rates[i];
     }
     x0 = x0 / double(rates.size() - 1);
@@ -313,5 +313,6 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
   }
   sort(rates.begin(), rates.end());
   rates[0].computeLL(jointTree);
+  Logger::info << " best rates: " << rates[0].rates[0] << " " << rates[0].rates[1] << " " << rates[0].rates[2] << " " << rates[0].ll <<  endl;
 }
 
