@@ -78,6 +78,7 @@ public:
   static int getBegin(int elems);
   static int getEnd(int elems);
 
+  static void barrier();
   static void abort(int errorCode);
 private:
   static void setComm(MPI_Comm newComm);

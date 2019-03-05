@@ -101,7 +101,12 @@ int ParallelContext::getMax(double &value, int &bestRank)
   value = allValues[bestRank];
   return bestRank;
 }
-  
+
+void ParallelContext::barrier()
+{
+  MPI_Barrier(comm);
+}
+
 void ParallelContext::abort(int errorCode)
 { 
   if (ownMPIContext) {

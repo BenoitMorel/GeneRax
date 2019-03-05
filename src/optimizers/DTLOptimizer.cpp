@@ -22,15 +22,18 @@ struct DTLRates {
   }
 
   void computeLL(JointTree &jointTree) {
-    rates[0] = max(0.0, rates[0]);
-    rates[1] = max(0.0, rates[1]);
-    rates[2] = max(0.0, rates[2]);
+    ensureValidity();
     jointTree.setRates(rates[0], rates[1], rates[2]);
     ll = jointTree.computeReconciliationLoglk();
     if (!isValidLikelihood(ll)) {
       ll = -100000000000;
     }
-
+  }
+  
+  inline void ensureValidity() {
+    rates[0] = max(0.0, rates[0]);
+    rates[1] = max(0.0, rates[1]);
+    rates[2] = max(0.0, rates[2]);
   }
 
   inline bool operator <(const DTLRates& v) const {
@@ -75,24 +78,34 @@ struct DTLRates {
 
 DTLRates findBestPoint(DTLRates r1, DTLRates r2, JointTree &jointTree) 
 {
-  r1.computeLL(jointTree);
+  //r1.computeLL(jointTree);
   DTLRates best = r1;
+  best.ll = -100000000000;
   int iterations = 10;
-  for (int i = 0; i < iterations; ++i) {
-    double ratio = double(i) / double(iterations);
-    DTLRates current = r1 + ((r2 - r1) * ratio);
+  int bestI = 0;
+  for (int i = ParallelContext::getRank(); i < iterations; i += ParallelContext::getSize()) {
+    DTLRates current = r1 + ((r2 - r1) * (double(i) / double(iterations)));
     current.computeLL(jointTree);
-    //Logger::info << best.ll << " " << current.ll << endl;
     if (current < best) {
       best = current;
+      bestI = i;
     }
   }
+  int bestRank = 0;
+  ParallelContext::getMax(best.ll, bestRank);
+  ParallelContext::broadcastInt(bestRank, bestI);
+  if (ParallelContext::getRank() != bestRank) {
+    best = r1 + ((r2 - r1) * (double(bestI) / double(iterations)));
+    best.ensureValidity();
+  }
+  ParallelContext::broadcastDouble(bestRank, best.ll);
   return best;
 }
 
 
 void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, bool transfers)
 {
+  Logger::timed << "Starting DTL rates optimization" << endl;
   vector<DTLRates> rates;
   rates.push_back(DTLRates(0.01, 0.01, 0.0));
   rates.push_back(DTLRates(1.0, 0.01, 0.0));
@@ -112,6 +125,11 @@ void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, bool transfers)
   while (rates[0].distance(rates.back()) > 0.001) {
   //for (int i = 0; i < 10; ++i) {
     sort(rates.begin(), rates.end());
+    
+    for (auto &rate: rates)  {
+      Logger::info << rate << " ";
+    }
+    Logger::info << endl;
     // centroid
     DTLRates x0;
     for (unsigned int i = 0; i < rates.size() - 1; ++i) {
@@ -120,8 +138,9 @@ void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, bool transfers)
     x0 = x0 / double(rates.size() - 1);
     // reflexion
     DTLRates xr = x0 + (x0 - rates.back()) * alpha;  
-    xr.computeLL(jointTree);
+    xr = findBestPoint(x0, x0 + (xr - x0), jointTree);
     if (rates[0] <= xr && xr < rates[rates.size() - 2] ) {
+      Logger::info << "reflexion" << endl;
       rates.back() = xr;
       continue;
     }
@@ -131,8 +150,10 @@ void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, bool transfers)
       //xe = findBestRatesDL(x0, xr, jointTree);
       xe.computeLL(jointTree);
       if (xe < xr) {
+        Logger::info << "expansion" << endl;
         rates.back() = xe;
       } else {
+        Logger::info << "reflexion/expansion" << endl;
         rates.back() = xr;
       }
       continue;
@@ -142,9 +163,11 @@ void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, bool transfers)
     xc.computeLL(jointTree); 
     if (xc < rates.back()) {
       rates.back() = xc;
+      Logger::info << "contraction" << endl;
       continue;
     }
     // shrink
+    Logger::info << "shrink" << endl;
     for (unsigned int r = 1; r < rates.size(); ++r) {
       rates[r] = rates[0] + (rates[r] - rates[0]) * sigma;
       rates[r].computeLL(jointTree);
