@@ -90,10 +90,8 @@ int internal_main(int argc, char** argv, void* comm)
     Logger::timed << "Starting search..." << endl;
     if (arguments.strategy == "SPR") {
       if (!geneTreeString.size() or geneTreeString == "__random__") {
-        Logger::info << "plip" << endl;
         jointTree->enableReconciliation(false);
         SPRSearch::applySPRSearch(*jointTree);
-        Logger::info << "plop" << endl;
         jointTree->enableReconciliation(true);
       }
       SPRSearch::applySPRSearch(*jointTree);

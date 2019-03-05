@@ -153,11 +153,7 @@ void JointTree::optimizeParameters(bool felsenstein, bool reconciliation) {
     libpllEvaluation_->optimizeAllParameters();
   }
   if (reconciliation && enableReconciliation_ && optimizeDTLRates_) {
-    if (reconciliationEvaluation_->implementsTransfers()) {  
-      DTLOptimizer::optimizeDTLRates(*this, recOpt_);
-    } else {
-      DTLOptimizer::optimizeDLRates(*this, recOpt_);
-    }
+    DTLOptimizer::optimizeDTLRates(*this, reconciliationEvaluation_->implementsTransfers());
   }
 }
 
