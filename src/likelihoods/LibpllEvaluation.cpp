@@ -113,10 +113,8 @@ pllmod_subst_model_t *getModel(const string &modelStr) {
   size_t pos = modelStr.find_first_of("+{[");
   const string modelName = pos == string::npos ? modelStr : modelStr.substr(0, pos);
   if (pllmod_util_model_exists_dna(modelName.c_str())) {
-    Logger::info << "dna " << endl;
     return pllmod_util_model_info_dna(modelName.c_str());
   } else if (pllmod_util_model_exists_protein(modelName.c_str())) {
-    Logger::info << "protein " << endl;
     return pllmod_util_model_info_protein(modelName.c_str());
   } else {
     throw LibpllException("Unknown model ", modelName);

@@ -7,7 +7,6 @@
 
 GeneSpeciesMapping::GeneSpeciesMapping(const string &mappingFile)
 {
-  cerr << "todo: do not open the file twice" << endl;
   ifstream f(mappingFile);
   string line;
   getline(f, line);
