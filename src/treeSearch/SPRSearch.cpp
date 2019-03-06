@@ -156,7 +156,7 @@ void SPRSearch::applySPRSearch(JointTree &jointTree)
   jointTree.optimizeParameters(true, false);
   bestLoglk = jointTree.computeJointLoglk();
   while (applySPRRound(jointTree, 2, bestLoglk)) {}
-  jointTree.optimizeParameters(true, true);
+  jointTree.optimizeParameters(true, false);
   bestLoglk = jointTree.computeJointLoglk();
   while (applySPRRound(jointTree, 3, bestLoglk)) {}
 }
