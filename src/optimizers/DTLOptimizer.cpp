@@ -84,7 +84,7 @@ DTLRates findBestPoint(DTLRates r1, DTLRates r2, JointTree &jointTree)
   int iterations = 10;
   int bestI = 0;
   for (int i = ParallelContext::getRank(); i < iterations; i += ParallelContext::getSize()) {
-    DTLRates current = r1 + ((r2 - r1) * (double(i) / double(iterations)));
+    DTLRates current = r1 + ((r2 - r1) * (double(i) / double(iterations - 1)));
     current.computeLL(jointTree);
     if (current < best) {
       best = current;
@@ -95,7 +95,7 @@ DTLRates findBestPoint(DTLRates r1, DTLRates r2, JointTree &jointTree)
   ParallelContext::getMax(best.ll, bestRank);
   ParallelContext::broadcastInt(bestRank, bestI);
   if (ParallelContext::getRank() != bestRank) {
-    best = r1 + ((r2 - r1) * (double(bestI) / double(iterations)));
+    best = r1 + ((r2 - r1) * (double(bestI) / double(iterations - 1)));
     best.ensureValidity();
   }
   ParallelContext::broadcastDouble(bestRank, best.ll);
@@ -123,9 +123,7 @@ void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, bool transfers)
 
 
   while (rates[0].distance(rates.back()) > 0.001) {
-  //for (int i = 0; i < 10; ++i) {
     sort(rates.begin(), rates.end());
-    
     for (auto &rate: rates)  {
       Logger::info << rate << " ";
     }
@@ -138,7 +136,7 @@ void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, bool transfers)
     x0 = x0 / double(rates.size() - 1);
     // reflexion
     DTLRates xr = x0 + (x0 - rates.back()) * alpha;  
-    xr = findBestPoint(x0, x0 + (xr - x0), jointTree);
+    xr = findBestPoint(x0, xr, jointTree);
     if (rates[0] <= xr && xr < rates[rates.size() - 2] ) {
       Logger::info << "reflexion" << endl;
       rates.back() = xr;
@@ -147,8 +145,9 @@ void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, bool transfers)
     // expansion
     if (xr < rates[0]) {
       DTLRates xe = x0 + (xr - x0) * gamma;
+      xe = findBestPoint(xe, xr, jointTree);
       //xe = findBestRatesDL(x0, xr, jointTree);
-      xe.computeLL(jointTree);
+      //xe.computeLL(jointTree);
       if (xe < xr) {
         Logger::info << "expansion" << endl;
         rates.back() = xe;
