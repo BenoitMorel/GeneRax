@@ -11,6 +11,167 @@ bool isValidLikelihood(double ll) {
   return isnormal(ll) && ll < -0.0000001;
 }
 
+void DTLOptimizer::findBestRatesDL(JointTree &jointTree,
+    double minDup, double maxDup,
+    double minLoss, double maxLoss, int steps,
+    double &bestDup,
+    double &bestLoss,
+    double &bestLL) 
+{
+  bestLL = numeric_limits<double>::lowest();
+  int totalSteps = pow(steps, 2);
+  int begin = ParallelContext::getBegin(totalSteps);
+  int end = ParallelContext::getEnd(totalSteps);
+  for (int s = begin; s < end; ++s) {
+    int i = s / steps;
+    int j = s % steps;
+    double dup = minDup + (maxDup - minDup) * double(i) / double(steps);
+    double loss = minLoss + (maxLoss - minLoss) * double(j) / double(steps);
+    jointTree.setRates(dup, loss);
+    double newLL = jointTree.computeReconciliationLoglk();
+    if (!isValidLikelihood(newLL)) {
+      continue;
+    }
+    if (newLL > bestLL) { 
+      bestDup = dup;
+      bestLoss = loss;
+      bestLL = newLL;
+    }
+  }
+  int bestRank = 0;
+  ParallelContext::getMax(bestLL, bestRank);
+  ParallelContext::broadcastDouble(bestRank, bestDup);
+  ParallelContext::broadcastDouble(bestRank, bestLoss);
+  jointTree.setRates(bestDup, bestLoss);
+}
+
+void DTLOptimizer::findBestRatesDTL(JointTree &jointTree,
+    double minDup, double maxDup,
+    double minLoss, double maxLoss, 
+    double minTrans, double maxTrans, 
+    int steps,
+    double &bestDup,
+    double &bestLoss,
+    double &bestTrans,
+    double &bestLL) 
+{
+  bestLL = numeric_limits<double>::lowest();
+  int totalSteps = pow(steps, 3);
+  int begin = ParallelContext::getBegin(totalSteps);
+  int end = ParallelContext::getEnd(totalSteps);
+  for (int s = begin; s < end; ++s) {
+    int i = s / (steps * steps);
+    int j = (s / steps) % steps;
+    int k = s % steps;
+    double dup = minDup + (maxDup - minDup) * double(i) / double(steps);
+    double loss = minLoss + (maxLoss - minLoss) * double(j) / double(steps);
+    double trans = minTrans + (maxTrans - minTrans) * double(k) / double(steps);
+    jointTree.setRates(dup, loss, trans);
+    double newLL = jointTree.computeReconciliationLoglk();
+    if (!isValidLikelihood(newLL)) {
+      continue;
+    }
+    if (newLL > bestLL) { 
+      bestDup = dup;
+      bestLoss = loss;
+      bestTrans = trans;
+      bestLL = newLL;
+    }
+  }
+  int bestRank = 0;
+  ParallelContext::getMax(bestLL, bestRank);
+  ParallelContext::broadcastDouble(bestRank, bestDup);
+  ParallelContext::broadcastDouble(bestRank, bestLoss);
+  ParallelContext::broadcastDouble(bestRank, bestTrans);
+  jointTree.setRates(bestDup, bestLoss, bestTrans);
+}
+
+
+void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, const string &method) {
+  if (method == "window") {
+    optimizeDTLRatesWindow(jointTree);
+  } else if (method == "simplex") {
+    optimizeRateSimplex(jointTree, true);
+  } else {
+    assert(false);
+  }
+}
+
+void DTLOptimizer::optimizeDLRates(JointTree &jointTree, const string &method) {
+  if (method == "window") {
+    optimizeDLRatesWindow(jointTree);
+  } else if (method == "simplex") {
+    optimizeRateSimplex(jointTree, false);
+  } else {
+    assert(false);
+  }
+}
+
+
+void DTLOptimizer::optimizeDLRatesWindow(JointTree &jointTree) {
+  Logger::timed << "Start optimizing DL rates" << endl;
+  
+  double bestLL = numeric_limits<double>::lowest();
+  double newLL = 0;
+  double bestDup = 0.0;
+  double bestLoss = 0.0;
+  double minDup = 0.0;
+  double maxDup = 10.0;
+  double minLoss = 0.0;
+  double maxLoss = 10.0;
+  int steps = 10;
+  double epsilon = 0.001;
+  do {
+    bestLL = newLL;
+    findBestRatesDL(jointTree, minDup, maxDup, minLoss, maxLoss, steps, bestDup, bestLoss, newLL);
+    double offsetDup = (maxDup - minDup) / steps;
+    double offsetLoss =(maxLoss - minLoss) / steps;
+    minDup = max(0.0, bestDup - offsetDup);
+    maxDup = bestDup + offsetDup;
+    minLoss = max(0.0, bestLoss - offsetLoss);
+    maxLoss = bestLoss + offsetLoss;
+  } while (fabs(newLL - bestLL) > epsilon);
+  Logger::info << " best rates: " << bestDup << " " << bestLoss <<  " " << newLL << endl;
+  if  (!isValidLikelihood(newLL)) {
+    Logger::error << "Invalid likelihood " << newLL << endl;
+    ParallelContext::abort(10);
+  }
+}
+    
+void DTLOptimizer::optimizeDTLRatesWindow(JointTree &jointTree) {
+  Logger::timed << "Start optimizing DTL rates" << endl;
+  double bestLL = numeric_limits<double>::lowest();
+  double newLL = 0;
+  double bestDup = 0.0;
+  double bestLoss = 0.0;
+  double bestTrans = 0.0;
+  double minDup = 0.0;
+  double maxDup = 1.0;
+  double minLoss = 0.0;
+  double maxLoss = 1.0;
+  double minTrans = 0.0;
+  double maxTrans = 1.0;
+  int steps = 5;
+  double epsilon = 0.01;
+  do {
+    bestLL = newLL;
+    findBestRatesDTL(jointTree, minDup, maxDup, minLoss, maxLoss, minTrans, maxTrans, steps, bestDup, bestLoss, bestTrans, newLL);
+    double offsetDup = (maxDup - minDup) / steps;
+    double offsetLoss = (maxLoss - minLoss) / steps;
+    double offsetTrans = (maxTrans - minTrans) / steps;
+    minDup = max(0.0, bestDup - offsetDup);
+    maxDup = bestDup + offsetDup;
+    minLoss = max(0.0, bestLoss - offsetLoss);
+    maxLoss = bestLoss + offsetLoss;
+    minTrans = max(0.0, bestTrans - offsetTrans);
+    maxTrans = bestTrans + offsetTrans;
+  } while (fabs(newLL - bestLL) > epsilon);
+  if  (!isValidLikelihood(newLL)) {
+    Logger::error << "Invalid likelihood " << newLL << endl;
+    ParallelContext::abort(10);
+  }
+}
+
 struct DTLRates {
   double rates[3];
   double ll;
@@ -103,13 +264,13 @@ DTLRates findBestPoint(DTLRates r1, DTLRates r2, JointTree &jointTree)
 }
 
 
-void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, bool transfers)
+void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
 {
   Logger::timed << "Starting DTL rates optimization" << endl;
   vector<DTLRates> rates;
-  rates.push_back(DTLRates(0.01, 0.01, 0.0));
-  rates.push_back(DTLRates(1.0, 0.01, 0.0));
-  rates.push_back(DTLRates(0.01, 1.0, 0.0));
+  rates.push_back(DTLRates(0.01, 0.01, 0.01));
+  rates.push_back(DTLRates(1.0, 0.01, 0.01));
+  rates.push_back(DTLRates(0.01, 1.0, 1.0));
   if (transfers) {
     rates.push_back(DTLRates(0.01, 0.01, 1.0));
   }
