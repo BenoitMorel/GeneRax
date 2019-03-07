@@ -22,17 +22,15 @@ else()
 endif()
 
 
-include(FindMPI)
-if(MPI_FOUND)
-  set(WITH_MPI TRUE)
-  add_definitions(-DWITH_MPI)
-endif()
-
-
 add_subdirectory(ext)
 
-set(JOINTSEARCH_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src 
+find_package(MPI REQUIRED)
+
+set(JOINTSEARCH_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src/core
    ${CMAKE_CURRENT_SOURCE_DIR}/ext
-   ${PLLMOD_EXPORTED_INCLUDE_PATH})
+   ${PLLMOD_EXPORTED_INCLUDE_PATH}
+   ${MPI_INCLUDE_PATH})
+  
 
 add_subdirectory(src)
+

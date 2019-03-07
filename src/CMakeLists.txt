@@ -1,39 +1,10 @@
-# Add executable JointSearch
-
-#add_executable(${PROJECT_NAME} JointSearch.cpp
 
 
+
+add_subdirectory(core)
 
 
 set(JOINTSEARCH_SOURCES JointSearch.cpp)
-
-set(jointsearch-core_SOURCES ParallelContext.cpp
-  Scenario.cpp
-  IO/Arguments.cpp
-  IO/Logger.cpp
-  IO/ParallelOfstream.cpp
-  IO/GeneSpeciesMapping.cpp
-  likelihoods/LibpllEvaluation.cpp
-  likelihoods/ReconciliationEvaluation.cpp
-  likelihoods/reconciliation_models/AbstractReconciliationModel.cpp
-  likelihoods/reconciliation_models/DatedDLModel.cpp
-  likelihoods/reconciliation_models/UndatedDLModel.cpp
-  likelihoods/reconciliation_models/UndatedDTLModel.cpp
-  optimizers/DTLOptimizer.cpp
-  treeSearch/JointTree.cpp
-  treeSearch/Moves.cpp
-  treeSearch/Rollbacks.cpp
-  treeSearch/SearchUtils.cpp
-  treeSearch/SPRSearch.cpp
-  )
-
-add_library(jointsearch-core ${jointsearch-core_SOURCES})
-
-target_include_directories(jointsearch-core
-  PUBLIC ${JOINTSEARCH_INCLUDE_DIRS}
-  )
-
-
 
 if (JOINTSEARCH_BUILD_AS_LIBRARY)
   message(STATUS "${PROJECT_NAME} will be built as a library.")
@@ -54,19 +25,15 @@ set_target_properties(${PROJECT_NAME}
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
   )
 
-if (WITH_MPI)
-  find_package(MPI REQUIRED)
-  include_directories(${MPI_INCLUDE_PATH})
-  target_link_libraries(${PROJECT_NAME} ${MPI_LIBRARIES})
-  if(MPI_COMPILE_FLAGS)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-      COMPILE_FLAGS "-g ${MPI_COMPILE_FLAGS}")
-  endif()
+target_link_libraries(${PROJECT_NAME} ${MPI_LIBRARIES})
+if(MPI_COMPILE_FLAGS)
+  set_target_properties(${PROJECT_NAME} PROPERTIES
+    COMPILE_FLAGS "-g ${MPI_COMPILE_FLAGS}")
+endif()
 
-  if(MPI_LINK_FLAGS)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-      LINK_FLAGS "${MPI_LINK_FLAGS}")
-  endif()
+if(MPI_LINK_FLAGS)
+  set_target_properties(${PROJECT_NAME} PROPERTIES
+    LINK_FLAGS "${MPI_LINK_FLAGS}")
 endif()
 
 
