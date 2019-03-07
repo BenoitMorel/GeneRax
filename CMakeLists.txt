@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0.1)
 
-project(JointSearch
+project(JointSearchProject
         VERSION 0.0)
 
 set(JOINTSEARCH_BUILD_AS_LIBRARY OFF CACHE BOOL "Build JointSearch as shared library (instead of stand-alone executable)")

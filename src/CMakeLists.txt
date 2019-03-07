@@ -4,46 +4,18 @@
 add_subdirectory(core)
 
 
-set(JOINTSEARCH_SOURCES JointSearch.cpp)
+# SOURCES
+set(JointSearchLight_SOURCES JointSearchLight.cpp)
 
+# MAIN LIBRARY OR EXECUTABLE
 if (JOINTSEARCH_BUILD_AS_LIBRARY)
-  message(STATUS "${PROJECT_NAME} will be built as a library.")
-  add_library(${PROJECT_NAME} MODULE ${JOINTSEARCH_SOURCES})
+  add_library(JointSearchLight MODULE ${JointSearchLight_SOURCES})
 else()
-  add_executable(${PROJECT_NAME} ${JOINTSEARCH_SOURCES})
-endif()
-
-target_link_libraries(JointSearch jointsearch-core)
-
-if (JOINTSEARCH_BUILD_AS_LIBRARY AND NOT APPLE)
-  target_link_libraries(JointSearch gcc_s gcc)
+  add_executable(JointSearchLight ${JointSearchLight_SOURCES})
 endif()
 
 
-set_target_properties(${PROJECT_NAME}
-  PROPERTIES
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
-  )
-
-target_link_libraries(${PROJECT_NAME} ${MPI_LIBRARIES})
-if(MPI_COMPILE_FLAGS)
-  set_target_properties(${PROJECT_NAME} PROPERTIES
-    COMPILE_FLAGS "-g ${MPI_COMPILE_FLAGS}")
-endif()
-
-if(MPI_LINK_FLAGS)
-  set_target_properties(${PROJECT_NAME} PROPERTIES
-    LINK_FLAGS "${MPI_LINK_FLAGS}")
-endif()
-
-
-target_include_directories(${PROJECT_NAME}
-  PUBLIC ${JOINTSEARCH_INCLUDE_DIRS}
-  )
-
-target_compile_definitions(${PROJECT_NAME}
-  PRIVATE "-DVERSION_NUMBER=${PROJECT_VERSION}")
-
+# LINK LIBRARIES
 set(PLL_LIBRARIES 
     pllmodalgorithm_static
     pllmodbinary_static
@@ -52,6 +24,30 @@ set(PLL_LIBRARIES
     pllmodtree_static
     pllmodutil_static
    )
+target_link_libraries(JointSearchLight 
+  jointsearch-core
+  ${MPI_LIBRARIES}
+  ${PLL_LIBRARIES}
+  )
+if (JOINTSEARCH_BUILD_AS_LIBRARY AND NOT APPLE)
+  target_link_libraries(JointSearchLight gcc_s gcc)
+endif()
 
-target_link_libraries(${PROJECT_NAME} ${PLL_LIBRARIES})
+# PROPERTIES
+set_target_properties(JointSearchLight
+  PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+  )
+set_target_properties(JointSearchLight 
+  PROPERTIES
+  COMPILE_FLAGS "-g ${MPI_COMPILE_FLAGS}"
+  )
+set_target_properties(JointSearchLight 
+  PROPERTIES
+  LINK_FLAGS "${MPI_LINK_FLAGS}"
+  )
 
+# INCLUDE
+target_include_directories(JointSearchLight
+  PUBLIC ${JOINTSEARCH_INCLUDE_DIRS}
+  )
