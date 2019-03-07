@@ -90,10 +90,8 @@ int internal_main(int argc, char** argv, void* comm)
     Logger::timed << "Starting search..." << endl;
     if (arguments.strategy == "SPR") {
       if (!geneTreeString.size() or geneTreeString == "__random__") {
-        Logger::info << "plip" << endl;
         jointTree->enableReconciliation(false);
         SPRSearch::applySPRSearch(*jointTree);
-        Logger::info << "plop" << endl;
         jointTree->enableReconciliation(true);
       }
       SPRSearch::applySPRSearch(*jointTree);
@@ -122,11 +120,13 @@ int internal_main(int argc, char** argv, void* comm)
         stats << " " << endl;
       }
       jointTree->save(allTreesFile, !firstRun);
-      Scenario scenario;
-      jointTree->inferMLScenario(scenario);
-      Logger::info << endl;
-      scenario.saveEventsCounts(eventCountsFile);
-      scenario.saveTreeWithEvents(treeWithEventsFile);
+      if (arguments.reconciliationModel != "DatedDL") {
+        Scenario scenario;
+        jointTree->inferMLScenario(scenario);
+        Logger::info << endl;
+        scenario.saveEventsCounts(eventCountsFile);
+        scenario.saveTreeWithEvents(treeWithEventsFile);
+      }
     }
     firstRun = false;
   }  

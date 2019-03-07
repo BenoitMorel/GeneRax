@@ -3,8 +3,11 @@
 #add_executable(${PROJECT_NAME} JointSearch.cpp
 
 
-set(JOINTSEARCH_SOURCES JointSearch.cpp
-  ParallelContext.cpp
+
+
+set(JOINTSEARCH_SOURCES JointSearch.cpp)
+
+set(jointsearch-core_SOURCES ParallelContext.cpp
   Scenario.cpp
   IO/Arguments.cpp
   IO/Logger.cpp
@@ -24,12 +27,22 @@ set(JOINTSEARCH_SOURCES JointSearch.cpp
   treeSearch/SPRSearch.cpp
   )
 
+add_library(jointsearch-core ${jointsearch-core_SOURCES})
+
+target_include_directories(jointsearch-core
+  PUBLIC ${JOINTSEARCH_INCLUDE_DIRS}
+  )
+
+
+
 if (JOINTSEARCH_BUILD_AS_LIBRARY)
   message(STATUS "${PROJECT_NAME} will be built as a library.")
   add_library(${PROJECT_NAME} MODULE ${JOINTSEARCH_SOURCES})
 else()
   add_executable(${PROJECT_NAME} ${JOINTSEARCH_SOURCES})
 endif()
+
+target_link_libraries(JointSearch jointsearch-core)
 
 if (JOINTSEARCH_BUILD_AS_LIBRARY AND NOT APPLE)
   target_link_libraries(JointSearch gcc_s gcc)
