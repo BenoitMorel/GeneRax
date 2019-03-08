@@ -1,7 +1,6 @@
 
 set(jointsearch-core_SOURCES ParallelContext.cpp
   Scenario.cpp
-  IO/Arguments.cpp
   IO/Logger.cpp
   IO/ParallelOfstream.cpp
   IO/GeneSpeciesMapping.cpp

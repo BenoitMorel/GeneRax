@@ -1,4 +1,4 @@
-#include <IO/Arguments.hpp>
+#include "Arguments.hpp"
 #include <ParallelContext.hpp>
 #include <treeSearch/JointTree.hpp>
 #include <treeSearch/SPRSearch.hpp>

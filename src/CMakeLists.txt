@@ -49,11 +49,9 @@ macro(add_program program_name program_sources)
     )
 endmacro()
 
-set(JointSearch_SOURCES JointSearch.cpp)
-add_program(JointSearch "${JointSearch_SOURCES}")
 
-set(JointSearchLight_SOURCES JointSearchLight.cpp)
-add_program(JointSearchLight "${JointSearchLight_SOURCES}")
 
+add_subdirectory(JointSearch)
+add_subdirectory(JointSearchLight)
 
 
