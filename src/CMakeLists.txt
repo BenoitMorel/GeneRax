@@ -52,6 +52,6 @@ endmacro()
 
 
 add_subdirectory(JointSearch)
-add_subdirectory(JointSearchLight)
+add_subdirectory(geco)
 
 
