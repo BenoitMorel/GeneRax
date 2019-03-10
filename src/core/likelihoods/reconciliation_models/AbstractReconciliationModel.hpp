@@ -39,7 +39,7 @@ public:
   /**
    * (incrementally) compute and return the likelihood of the input gene tree 
    */
-  double computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  double computeLogLikelihood(pll_utree_t *tree);
   
   
   /**
@@ -56,26 +56,23 @@ public:
 
   /**
    *  Fill scenario with the maximum likelihood set of 
-   *  events that would lead to treeinfo
+   *  events that would lead to the  current tree
    **/
-  void inferMLScenario(shared_ptr<pllmod_treeinfo_t> treeinfo, Scenario &scenario);
+  void inferMLScenario(Scenario &scenario);
 
 protected:
   // called by the constructor
   virtual void setSpeciesTree(pll_rtree_t *speciesTree);
 
   // Called when computeLogLikelihood is called for the first time
-  virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  virtual void setInitialGeneTree(pll_utree_t *tree);
   // Called by computeLogLikelihood
   virtual void updateCLV(pll_unode_t *geneNode) = 0;
   // Called by computeLogLikelihood
-  virtual void computeRootLikelihood(pllmod_treeinfo_t &treeinfo,
-    pll_unode_t *virtualRoot) = 0;
+  virtual void computeRootLikelihood(pll_unode_t *virtualRoot) = 0;
   // Called by computeLogLikelihood
-  virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
-    pll_unode_t *root) const = 0;
-  virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
-    pll_unode_t *root, pll_rnode_t *speciesRoot) = 0;
+  virtual ScaledValue getRootLikelihood(pll_unode_t *root) const = 0;
+  virtual ScaledValue getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) = 0;
   // Called by inferMLScenario
   // fills scenario with the best likelihood set of events that 
   // would lead to the subtree of geneNode under speciesNode
@@ -85,17 +82,13 @@ protected:
       bool isVirtualRoot = false) = 0;
  
   
-  void getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds);
-  void mapGenesToSpecies(pllmod_treeinfo_t &treeinfo);
-  void updateRoot(pllmod_treeinfo_t &treeinfo);
-  
+  void initFromUtree(pll_utree_t *tree);
   /**
    *  - In rooted gene tree mode, and if the gene tree already has a virtual root,
    *  return this root and its direct neighbors
    *  - Else, return all the possible virtual roots
    */
-  void getRoots(pllmod_treeinfo_t &treeinfo, 
-    vector<pll_unode_t *> &roots,
+  void getRoots(vector<pll_unode_t *> &roots,
     const vector<int> &geneIds);
 
   /**
@@ -105,7 +98,7 @@ protected:
   static pll_unode_t *getLeft(pll_unode_t *node, bool virtualRoot);  
   static pll_unode_t *getRight(pll_unode_t *node, bool virtualRoot) ;  
   
-  void updateCLVs(pllmod_treeinfo_t &treeinfo);
+  void updateCLVs();
 protected:
   bool rootedGeneTree_;
   pll_unode_t *geneRoot_;
@@ -119,13 +112,13 @@ protected:
   int _maxGeneId;
 
 private:
-  pll_unode_t *computeMLRoot(pllmod_treeinfo_t &treeinfo);
-  void computeMLRoot(pllmod_treeinfo_t &treeinfo, 
-    pll_unode_t *&bestGeneRoot, pll_rnode_t *&bestSpeciesRoot);
-  virtual void computeLikelihoods(pllmod_treeinfo_t &treeinfo);
-  double getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  void mapGenesToSpecies();
+  pll_unode_t *computeMLRoot();
+  void computeMLRoot(pll_unode_t *&bestGeneRoot, pll_rnode_t *&bestSpeciesRoot);
+  virtual void computeLikelihoods();
+  double getSumLikelihood();
   void updateCLVsRec(pll_unode_t *node);
-  void markInvalidatedNodes(pllmod_treeinfo_t &treeinfo);
+  void markInvalidatedNodes();
   void markInvalidatedNodesRec(pll_unode_t *node);
   void fillNodesPostOrder(pll_rnode_t *node, vector<pll_rnode_t *> &nodes) ;
   map<string, string> geneNameToSpeciesName_;
@@ -137,6 +130,7 @@ private:
 
   // is the CLV up to date?
   vector<bool> _isCLVUpdated;
+  vector<pll_unode_t *> _allNodes;
 
 };
 

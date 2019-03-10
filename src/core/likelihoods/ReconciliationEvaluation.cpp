@@ -23,7 +23,7 @@ void ReconciliationEvaluation::setRates(double dupRate, double lossRate,
 
 double ReconciliationEvaluation::evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
-  return reconciliationModel->computeLogLikelihood(treeinfo);
+  return reconciliationModel->computeLogLikelihood(treeinfo->tree);
 }
 
 void ReconciliationEvaluation::invalidateCLV(int nodeIndex)
@@ -41,5 +41,6 @@ shared_ptr<AbstractReconciliationModel> ReconciliationEvaluation::getRecModel(Re
   case DatedDL:
     return  make_shared<DatedDLModel>();
   }
+  assert(false);
 }
 

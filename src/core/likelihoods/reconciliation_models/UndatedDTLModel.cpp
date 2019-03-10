@@ -13,9 +13,9 @@ UndatedDTLModel::UndatedDTLModel()
 
 #define ASSERT_PROBA(x) assert(x.isProba());
 
-void UndatedDTLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
+void UndatedDTLModel::setInitialGeneTree(pll_utree_t *tree)
 {
-  AbstractReconciliationModel::setInitialGeneTree(treeinfo);
+  AbstractReconciliationModel::setInitialGeneTree(tree);
   vector<ScaledValue> zeros(speciesNodesCount_);
   _uq = vector<vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
   _survivingTransferSums = vector<ScaledValue>(2 * (_maxGeneId + 1));
@@ -314,8 +314,7 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
 }
 
 
-void UndatedDTLModel::computeRootLikelihood(pllmod_treeinfo_t &treeinfo,
-    pll_unode_t *virtualRoot)
+void UndatedDTLModel::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
   int u = virtualRoot->node_index;;
   for (auto speciesNode: speciesNodes_) {
@@ -333,8 +332,7 @@ void UndatedDTLModel::computeRootLikelihood(pllmod_treeinfo_t &treeinfo,
 }
 
 
-ScaledValue UndatedDTLModel::getRootLikelihood(pllmod_treeinfo_t &treeinfo,
-    pll_unode_t *root) const
+ScaledValue UndatedDTLModel::getRootLikelihood(pll_unode_t *root) const
 {
   ScaledValue sum;
   int u = root->node_index + _maxGeneId + 1;;

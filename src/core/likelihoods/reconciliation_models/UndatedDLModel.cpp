@@ -14,9 +14,9 @@ UndatedDLModel::UndatedDLModel()
 #define IS_PROBA(x) ((x) >= 0 && (x) <= 1 && !isnan(x))
 #define ASSERT_PROBA(x) assert(IS_PROBA(x));
 
-void UndatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
+void UndatedDLModel::setInitialGeneTree(pll_utree_t *tree)
 {
-  AbstractReconciliationModel::setInitialGeneTree(treeinfo);
+  AbstractReconciliationModel::setInitialGeneTree(tree);
   vector<ScaledValue> zeros(speciesNodesCount_);
   _uq = vector<vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
 }
@@ -212,8 +212,7 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
   assert(proba.isProba());
 }
   
-ScaledValue UndatedDLModel::getRootLikelihood(pllmod_treeinfo_t &treeinfo,
-    pll_unode_t *root) const
+ScaledValue UndatedDLModel::getRootLikelihood(pll_unode_t *root) const
 {
   ScaledValue sum;
   int u = root->node_index + _maxGeneId + 1;;
@@ -223,8 +222,7 @@ ScaledValue UndatedDLModel::getRootLikelihood(pllmod_treeinfo_t &treeinfo,
   }
   return sum;
 }
-void UndatedDLModel::computeRootLikelihood(pllmod_treeinfo_t &treeinfo,
-    pll_unode_t *virtualRoot)
+void UndatedDLModel::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
   int u = virtualRoot->node_index;
   for (auto speciesNode: speciesNodes_) {

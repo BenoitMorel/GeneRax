@@ -61,7 +61,7 @@ public:
     double getLossRate() const {return lossRate_;}
     double getTransferRate() const {return transRate_;}
     void inferMLScenario(Scenario &scenario) {
-      reconciliationEvaluation_->inferMLScenario(libpllEvaluation_->getTreeInfo(), scenario);
+      reconciliationEvaluation_->inferMLScenario(scenario);
     }
     bool isSafeMode() {return safeMode_;}
     void enableReconciliation(bool enable) {enableReconciliation_ = enable;}

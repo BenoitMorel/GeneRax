@@ -3,9 +3,9 @@
 
 static const double EPSILON = 0.0000000001;
 
-void DatedDLModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
+void DatedDLModel::setInitialGeneTree(pll_utree_t *tree)
 {
-  AbstractReconciliationModel::setInitialGeneTree(treeinfo);
+  AbstractReconciliationModel::setInitialGeneTree(tree);
   clvs_ = vector<DDL_CLV>((_maxGeneId + 1) * 2); 
 }
 
@@ -211,8 +211,7 @@ double DatedDLModel::getExtProba(int speciesId)
   return extinctionProba_[speciesId].back();
 }
 
-ScaledValue DatedDLModel::getRootLikelihood(pllmod_treeinfo_t &treeinfo,
-    pll_unode_t *root) const
+ScaledValue DatedDLModel::getRootLikelihood(pll_unode_t *root) const
 {
   ScaledValue sum;
   int u = root->node_index + _maxGeneId + 1;;
@@ -223,8 +222,7 @@ ScaledValue DatedDLModel::getRootLikelihood(pllmod_treeinfo_t &treeinfo,
   return sum;
 }
 
-void DatedDLModel::computeRootLikelihood(pllmod_treeinfo_t &treeinfo,
-    pll_unode_t *virtualRoot)
+void DatedDLModel::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
   int u = virtualRoot->node_index;
   clvs_[u].clv = vector<vector<ScaledValue> >(speciesNodesCount_);

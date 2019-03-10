@@ -15,36 +15,32 @@ void AbstractReconciliationModel::init(pll_rtree_t *speciesTree, const GeneSpeci
   geneNameToSpeciesName_ = map.getMap();
 }
 
-void getIdsPostOrderRec(pll_unode_t *node, 
-    vector<bool> &marked,
-    vector<int> &nodeIds)
-{
-  if (marked[node->node_index]) {
-    return;
-  }
-  if (node->next) {
-    getIdsPostOrderRec(node->next->back, marked, nodeIds);
-    getIdsPostOrderRec(node->next->next->back, marked, nodeIds);
-  }
-  nodeIds.push_back(node->node_index);
-  marked[node->node_index] = true;
-}
-
-void AbstractReconciliationModel::getIdsPostOrder(pllmod_treeinfo_t &tree, vector<int> &nodeIds) {
-  int nodesNumber = tree.subnode_count;
-  nodeIds.clear();
+void AbstractReconciliationModel::initFromUtree(pll_utree_t *tree) {
+  int treeSize = tree->tip_count + tree->inner_count;
+  int nodesNumber = tree->tip_count + 3 * tree->inner_count;
+  _geneIds.clear();
+  _allNodes.resize(nodesNumber);
   vector<bool> marked(nodesNumber, false);
-  for (int i = 0; i < nodesNumber; ++i) {
-    getIdsPostOrderRec(tree.subnodes[i], marked, nodeIds);
+  for (int i = 0; i < treeSize; ++i) {
+    auto node = tree->nodes[i];
+    _allNodes[node->node_index] = node;
+    _geneIds.push_back(node->node_index);
+    if  (node->next) {
+      node = node->next;
+      _allNodes[node->node_index] = node;
+      _geneIds.push_back(node->node_index);
+      node = node->next;
+      _allNodes[node->node_index] = node;
+      _geneIds.push_back(node->node_index);
+    }
   }
 }
 
 
-void AbstractReconciliationModel::mapGenesToSpecies(pllmod_treeinfo_t &treeinfo)
+void AbstractReconciliationModel::mapGenesToSpecies()
 {
-  geneToSpecies_.resize(treeinfo.subnode_count);
-  for (unsigned int i = 0; i < treeinfo.subnode_count; ++i) {
-    auto node = treeinfo.subnodes[i];
+  geneToSpecies_.resize(_allNodes.size());
+  for (auto node: _allNodes) {
     if (!node->next) {
       string speciesName = geneNameToSpeciesName_[string(node->label)]; 
       geneToSpecies_[node->node_index] = speciesNameToId_[speciesName];
@@ -52,13 +48,11 @@ void AbstractReconciliationModel::mapGenesToSpecies(pllmod_treeinfo_t &treeinfo)
   }
 }
 
-void AbstractReconciliationModel::setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo)
+void AbstractReconciliationModel::setInitialGeneTree(pll_utree_t *tree)
 {
-  mapGenesToSpecies(*treeinfo);
-  getIdsPostOrder(*treeinfo, _geneIds); 
-  _maxGeneId = 0;
-  for (auto gid: _geneIds)
-    _maxGeneId = max(_maxGeneId, gid);
+  initFromUtree(tree);
+  mapGenesToSpecies();
+  _maxGeneId = _allNodes.size() - 1;;
   invalidateAllCLVs();
 }
 
@@ -87,8 +81,7 @@ void AbstractReconciliationModel::setSpeciesTree(pll_rtree_t *speciesTree)
   }
 }
 
-void AbstractReconciliationModel::getRoots(pllmod_treeinfo_t &treeinfo, 
-    vector<pll_unode_t *> &roots,
+void AbstractReconciliationModel::getRoots(vector<pll_unode_t *> &roots,
     const vector<int> &geneIds)
 {
   roots.clear();
@@ -106,7 +99,7 @@ void AbstractReconciliationModel::getRoots(pllmod_treeinfo_t &treeinfo,
   }
   vector<bool> marked(geneIds.size(), false);
   for (auto id: geneIds) {
-    auto node = treeinfo.subnodes[id];
+    auto node = _allNodes[id];
     if (marked[node->node_index] || marked[node->back->node_index]) {
       continue;
     }
@@ -115,25 +108,25 @@ void AbstractReconciliationModel::getRoots(pllmod_treeinfo_t &treeinfo,
   }
 }
   
-double AbstractReconciliationModel::computeLogLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
+double AbstractReconciliationModel::computeLogLikelihood(pll_utree_t *tree)
 {
   if (firstCall_) {
-    setInitialGeneTree(treeinfo);
+    setInitialGeneTree(tree);
     firstCall_ = false;
   }
   auto root = getRoot();
-  updateCLVs(*treeinfo);
-  computeLikelihoods(*treeinfo);
+  updateCLVs();
+  computeLikelihoods();
   if (rootedGeneTree_) {
-    updateRoot(*treeinfo);
+    setRoot(computeMLRoot());
     while (root != getRoot()) {
-      updateCLVs(*treeinfo);
-      computeLikelihoods(*treeinfo);
+      updateCLVs();
+      computeLikelihoods();
       root = getRoot();
-      updateRoot(*treeinfo);
+      setRoot(computeMLRoot());
     }
   }
-  return getSumLikelihood(treeinfo);
+  return getSumLikelihood();
 }
 
 pll_unode_t *AbstractReconciliationModel::getLeft(pll_unode_t *node, bool virtualRoot)
@@ -155,10 +148,10 @@ void AbstractReconciliationModel::markInvalidatedNodesRec(pll_unode_t *node)
   }
 }
 
-void AbstractReconciliationModel::markInvalidatedNodes(pllmod_treeinfo_t &treeinfo)
+void AbstractReconciliationModel::markInvalidatedNodes()
 {
   for (int nodeIndex: _invalidatedNodes) {
-    auto node = treeinfo.subnodes[nodeIndex];
+    auto node = _allNodes[nodeIndex];
     markInvalidatedNodesRec(node);
   }
   _invalidatedNodes.clear();
@@ -177,11 +170,11 @@ void AbstractReconciliationModel::updateCLVsRec(pll_unode_t *node)
   _isCLVUpdated[node->node_index] = true;
 }
 
-void AbstractReconciliationModel::updateCLVs(pllmod_treeinfo_t &treeinfo)
+void AbstractReconciliationModel::updateCLVs()
 {
-  markInvalidatedNodes(treeinfo);
+  markInvalidatedNodes();
   vector<pll_unode_t *> roots;
-  getRoots(treeinfo, roots, _geneIds);
+  getRoots(roots, _geneIds);
   for (auto root: roots) {
     updateCLVsRec(root);
     updateCLVsRec(root->back);
@@ -198,15 +191,14 @@ void AbstractReconciliationModel::invalidateAllCLVs()
   _isCLVUpdated = vector<bool>(_maxGeneId + 1, false);
 }
 
-void AbstractReconciliationModel::computeMLRoot(pllmod_treeinfo_t &treeinfo, 
-    pll_unode_t *&bestGeneRoot, pll_rnode_t *&bestSpeciesRoot) 
+void AbstractReconciliationModel::computeMLRoot(pll_unode_t *&bestGeneRoot, pll_rnode_t *&bestSpeciesRoot) 
 {
   vector<pll_unode_t *> roots;
-  getRoots(treeinfo, roots, _geneIds);
+  getRoots(roots, _geneIds);
   ScaledValue max;
   for (auto root: roots) {
     for (auto speciesNode: speciesNodes_) {
-      ScaledValue ll = getRootLikelihood(treeinfo, root, speciesNode);
+      ScaledValue ll = getRootLikelihood(root, speciesNode);
       if (max < ll) {
         max = ll;
         bestGeneRoot = root;
@@ -216,14 +208,14 @@ void AbstractReconciliationModel::computeMLRoot(pllmod_treeinfo_t &treeinfo,
   }
 }
 
-pll_unode_t *AbstractReconciliationModel::computeMLRoot(pllmod_treeinfo_t &treeinfo)
+pll_unode_t *AbstractReconciliationModel::computeMLRoot()
 {
   pll_unode_t *bestRoot = 0;
   vector<pll_unode_t *> roots;
-  getRoots(treeinfo, roots, _geneIds);
+  getRoots(roots, _geneIds);
   ScaledValue max;
   for (auto root: roots) {
-    ScaledValue rootProba = getRootLikelihood(treeinfo, root);
+    ScaledValue rootProba = getRootLikelihood(root);
     if (max < rootProba) {
       bestRoot = root;
       max = rootProba;
@@ -232,50 +224,40 @@ pll_unode_t *AbstractReconciliationModel::computeMLRoot(pllmod_treeinfo_t &treei
   return bestRoot;
 }
 
-void AbstractReconciliationModel::updateRoot(pllmod_treeinfo_t &treeinfo) 
-{
-  setRoot(computeMLRoot(treeinfo));
-}
-
-double AbstractReconciliationModel::getSumLikelihood(shared_ptr<pllmod_treeinfo_t> treeinfo)
+double AbstractReconciliationModel::getSumLikelihood()
 {
   ScaledValue total;
   vector<pll_unode_t *> roots;
-  getRoots(*treeinfo, roots, _geneIds);
+  getRoots(roots, _geneIds);
   for (auto root: roots) {
-    total += getRootLikelihood(*treeinfo, root);
+    total += getRootLikelihood(root);
   }
   return total.getLogValue(); 
 }
 
 
-void AbstractReconciliationModel::computeLikelihoods(pllmod_treeinfo_t &treeinfo)
+void AbstractReconciliationModel::computeLikelihoods()
 {
   vector<ScaledValue> zeros(speciesNodesCount_); 
   vector<pll_unode_t *> roots;
-  getRoots(treeinfo, roots, _geneIds);
+  getRoots(roots, _geneIds);
   for (auto root: roots) {
     pll_unode_t virtualRoot;
     virtualRoot.next = root;
     virtualRoot.node_index = root->node_index + _maxGeneId + 1;
-    computeRootLikelihood(treeinfo, &virtualRoot);
+    computeRootLikelihood(&virtualRoot);
   }
 }
   
-void AbstractReconciliationModel::inferMLScenario(shared_ptr<pllmod_treeinfo_t> treeinfo, Scenario &scenario)
+void AbstractReconciliationModel::inferMLScenario(Scenario &scenario)
 {
   // make sure the CLVs are filled
-  updateCLVs(*treeinfo);
-  computeLikelihoods(*treeinfo); 
+  updateCLVs();
+  computeLikelihoods(); 
   
   pll_unode_t *geneRoot = 0;
   pll_rnode_t *speciesRoot = 0;
-  computeMLRoot(*treeinfo, geneRoot, speciesRoot);
- /*
-  pll_unode_t *geneRoot = computeMLRoot(*treeinfo);
-  pll_rnode_t *speciesRoot = speciesTree_->root;
-  */
-  
+  computeMLRoot(geneRoot, speciesRoot);
   scenario.setGeneRoot(geneRoot);
   scenario.setSpeciesTree(speciesTree_);
   pll_unode_t virtualRoot;

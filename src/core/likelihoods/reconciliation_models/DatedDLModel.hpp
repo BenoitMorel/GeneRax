@@ -18,19 +18,16 @@ public:
   virtual bool implementsTransfers() {return false;}
 protected:
   // overload from parent
-  virtual void setInitialGeneTree(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  virtual void setInitialGeneTree(pll_utree_t *tree);
   // overloaded from parent
   virtual void setSpeciesTree(pll_rtree_t *speciesTree);
   // overloaded from parent
   virtual void updateCLV(pll_unode_t *geneNode);
   // overloaded from parent
-  virtual void computeRootLikelihood(pllmod_treeinfo_t &treeinfo,
-    pll_unode_t *virtualRoot);
+  virtual void computeRootLikelihood(pll_unode_t *virtualRoot);
   // overloaded from parent
-  virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
-    pll_unode_t *root) const;
-  virtual ScaledValue getRootLikelihood(pllmod_treeinfo_t &treeinfo,
-    pll_unode_t *root, pll_rnode_t *speciesRoot) {return getRecProba(root->node_index + _maxGeneId + 1, speciesRoot->node_index);}
+  virtual ScaledValue getRootLikelihood(pll_unode_t *root) const;
+  virtual ScaledValue getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {return getRecProba(root->node_index + _maxGeneId + 1, speciesRoot->node_index);}
   virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       Scenario &scenario,
       bool isVirtualRoot = false) {};

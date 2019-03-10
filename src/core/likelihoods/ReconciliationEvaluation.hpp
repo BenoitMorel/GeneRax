@@ -53,8 +53,8 @@ public:
   void invalidateCLV(int nodeIndex);
   
   
-  void inferMLScenario(shared_ptr<pllmod_treeinfo_t> treeinfo, Scenario &scenario) {
-    reconciliationModel->inferMLScenario(treeinfo, scenario);
+  void inferMLScenario(Scenario &scenario) {
+    reconciliationModel->inferMLScenario(scenario);
   }
 private:
   shared_ptr<AbstractReconciliationModel> getRecModel(RecModel recModel);
