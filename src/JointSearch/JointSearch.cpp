@@ -1,4 +1,4 @@
-#include "Arguments.hpp"
+#include "JSArguments.hpp"
 #include <ParallelContext.hpp>
 #include <treeSearch/JointTree.hpp>
 #include <treeSearch/SPRSearch.hpp>
@@ -45,7 +45,7 @@ int internal_main(int argc, char** argv, void* comm)
   // the order is very important
   ParallelContext::init(comm); 
   Logger::init();
-  Arguments arguments(argc, argv);
+  JSArguments arguments(argc, argv);
   Logger::initFileOutput(arguments.output);
   
   arguments.printCommand();
@@ -88,14 +88,14 @@ int internal_main(int argc, char** argv, void* comm)
     double initialRecLL = jointTree->computeReconciliationLoglk();
     double initialLibpllLL = jointTree->computeLibpllLoglk();
     Logger::timed << "Starting search..." << endl;
-    if (arguments.strategy == "SPR") {
+    if (arguments.strategy == SPR) {
       if (!geneTreeString.size() or geneTreeString == "__random__") {
         jointTree->enableReconciliation(false);
         SPRSearch::applySPRSearch(*jointTree);
         jointTree->enableReconciliation(true);
       }
       SPRSearch::applySPRSearch(*jointTree);
-    } else if (arguments.strategy == "EVAL") {
+    } else if (arguments.strategy == EVAL) {
     }
     Logger::timed << "End of search" << endl;
     jointTree->printLoglk();
@@ -120,7 +120,7 @@ int internal_main(int argc, char** argv, void* comm)
         stats << " " << endl;
       }
       jointTree->save(allTreesFile, !firstRun);
-      if (arguments.reconciliationModel != "DatedDL") {
+      if (arguments.reconciliationModel != DatedDL) {
         Scenario scenario;
         jointTree->inferMLScenario(scenario);
         Logger::info << endl;

@@ -87,13 +87,14 @@ void DTLOptimizer::findBestRatesDTL(JointTree &jointTree,
 }
 
 
-void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, const string &method) {
-  if (method == "window") {
+void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, RecOpt method) {
+  switch(method) {
+  case Grid:
     optimizeDTLRatesWindow(jointTree);
-  } else if (method == "simplex") {
+    break;
+  case Simplex:
     optimizeRateSimplex(jointTree, true);
-  } else {
-    assert(false);
+    break;
   }
   Logger::info << "best rates " << endl;
   Logger::info << "D " << jointTree.getDupRate() << endl;
@@ -101,13 +102,14 @@ void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, const string &method) 
   Logger::info << "T " << jointTree.getTransferRate() << endl;
 }
 
-void DTLOptimizer::optimizeDLRates(JointTree &jointTree, const string &method) {
-  if (method == "window") {
+void DTLOptimizer::optimizeDLRates(JointTree &jointTree, RecOpt method) {
+  switch(method) {
+  case Grid:
     optimizeDLRatesWindow(jointTree);
-  } else if (method == "simplex") {
+    break;
+  case Simplex:
     optimizeRateSimplex(jointTree, false);
-  } else {
-    assert(false);
+    break;
   }
   Logger::info << "best rates " << endl;
   Logger::info << "D " << jointTree.getDupRate() << endl;

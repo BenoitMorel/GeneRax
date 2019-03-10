@@ -1,10 +1,10 @@
-#include "Arguments.hpp"
+#include "GecoArguments.hpp"
 #include <IO/Logger.hpp>
 #include <ParallelContext.hpp>
 #include <algorithm>
 #include <vector>
 
-Arguments::Arguments(int argc, char * argv[]):
+GecoArguments::GecoArguments(int argc, char * argv[]):
   argc(argc),
   argv(argv),
   reconciliationModel("UndatedDL"),
@@ -80,7 +80,7 @@ bool isIn(const string &elem, const vector<string> &v) {
   return find(v.begin(), v.end(), elem) != v.end();
 }
 
-void Arguments::checkInputs() {
+void GecoArguments::checkInputs() {
   bool ok = true;
   if (!alignment.size()) {
     Logger::error << "You need to provide an alignment." << endl;
@@ -126,7 +126,7 @@ void Arguments::checkInputs() {
   assertFileExists(alignment);
 }
 
-void Arguments::printHelp() {
+void GecoArguments::printHelp() {
   Logger::info << "-h, --help" << endl;
   Logger::info << "-g, --gene-tree <GENE TREE>" << endl;
   Logger::info << "-a, --alignment <ALIGNMENT>" << endl;
@@ -146,7 +146,7 @@ void Arguments::printHelp() {
 
 }
 
-void Arguments::printCommand() {
+void GecoArguments::printCommand() {
   Logger::info << "JointSearch was called as follow:" << endl;
   for (int i = 0; i < argc; ++i) {
     Logger::info << argv[i] << " ";
@@ -154,7 +154,7 @@ void Arguments::printCommand() {
   Logger::info << endl << endl;
 }
 
-void Arguments::printSummary() {
+void GecoArguments::printSummary() {
   string boolStr[2] = {string("OFF"), string("ON")};
   Logger::info << "Parameters summary: " << endl;
   Logger::info << "Gene tree: " << geneTree << endl;

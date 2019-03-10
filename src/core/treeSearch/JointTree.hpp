@@ -5,6 +5,7 @@
 #include <IO/Logger.hpp>
 #include <treeSearch/Moves.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
+#include <enums.hpp>
 
 #include <omp.h>
 #include <sstream>
@@ -22,8 +23,8 @@ public:
               const string &speciestree_file,
               const string &geneSpeciesMap_file,
               const string &substitutionModel,
-              const string &reconciliationModel,
-              const string &reconciliationOpt,
+              RecModel econciliationModel,
+              RecOpt reconciliationOpt,
               bool rootedGeneTree,
               bool safeMode = false,
               bool optimizeDTLRates = true,
@@ -78,7 +79,7 @@ private:
     bool optimizeDTLRates_;
     bool safeMode_;
     bool enableReconciliation_;
-    string recOpt_;
+    RecOpt recOpt_;
 };
 
 

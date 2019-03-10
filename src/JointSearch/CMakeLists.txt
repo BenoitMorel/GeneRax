@@ -1,5 +1,5 @@
 
-set(JointSearch_SOURCES JointSearch.cpp Arguments.cpp)
+set(JointSearch_SOURCES JointSearch.cpp JSArguments.cpp)
 add_program(JointSearch "${JointSearch_SOURCES}")
 
 

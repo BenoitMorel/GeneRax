@@ -8,19 +8,10 @@
 
 ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
   const GeneSpeciesMapping& map,
-  const string &reconciliationModelStr,
+  RecModel recModel,
   bool rootedGeneTree)
 {
-  if (reconciliationModelStr == "UndatedDL") {
-    reconciliationModel = make_shared<UndatedDLModel>();
-  } else if (reconciliationModelStr == "UndatedDTL") {
-    reconciliationModel = make_shared<UndatedDTLModel>();
-  } else if (reconciliationModelStr == "DatedDL") {
-    reconciliationModel = make_shared<DatedDLModel>();
-  } else {
-    Logger::error << "Invalid reconciliation model!" << endl;
-    exit(1);
-  }
+  reconciliationModel = getRecModel(recModel);
   reconciliationModel->init(speciesTree, map, rootedGeneTree);
 }
 
@@ -39,3 +30,16 @@ void ReconciliationEvaluation::invalidateCLV(int nodeIndex)
 {
   reconciliationModel->invalidateCLV(nodeIndex);
 }
+
+shared_ptr<AbstractReconciliationModel> ReconciliationEvaluation::getRecModel(RecModel recModel)
+{
+  switch(recModel) {
+  case UndatedDL:
+    return  make_shared<UndatedDLModel>();
+  case UndatedDTL:
+    return  make_shared<UndatedDTLModel>();
+  case DatedDL:
+    return  make_shared<DatedDLModel>();
+  }
+}
+

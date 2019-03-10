@@ -5,9 +5,9 @@ using namespace std;
 
   
 
-class Arguments {
+class GecoArguments {
 public:
-   Arguments(int argc, char * argv[]);
+   GecoArguments(int argc, char * argv[]);
    void checkInputs();
    void printHelp();
    void printCommand();

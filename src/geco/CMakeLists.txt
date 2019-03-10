@@ -1,5 +1,5 @@
 
-set(geco_SOURCES geco.cpp Arguments.cpp)
+set(geco_SOURCES geco.cpp GecoArguments.cpp)
 add_program(geco "${geco_SOURCES}")
 
 

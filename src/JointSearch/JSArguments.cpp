@@ -1,14 +1,15 @@
-#include "Arguments.hpp"
+#include "JSArguments.hpp"
 #include <IO/Logger.hpp>
 #include <ParallelContext.hpp>
 #include <algorithm>
 #include <vector>
+#include <Arguments.hpp>
 
-Arguments::Arguments(int argc, char * argv[]):
+JSArguments::JSArguments(int argc, char * argv[]):
   argc(argc),
   argv(argv),
-  reconciliationModel("UndatedDL"),
-  reconciliationOpt("simplex"),
+  reconciliationModel(UndatedDL),
+  reconciliationOpt(Simplex),
   libpllModel("GTR"),
   output("jointSearch"),
   check(false),
@@ -36,11 +37,11 @@ Arguments::Arguments(int argc, char * argv[]):
     } else if (arg == "-m" || arg == "--map") {
       geneSpeciesMap = string(argv[++i]);
     } else if (arg == "--strategy") {
-      strategy = string(argv[++i]);
+      strategy = Arguments::strToStrategy(string(argv[++i]));
     } else if (arg == "-r" || arg == "--rec-model") {
-      reconciliationModel = string(argv[++i]);
+      reconciliationModel = Arguments::strToRecModel(string(argv[++i]));
     } else if (arg == "--rec-opt") {
-      reconciliationOpt = string(argv[++i]);
+      reconciliationOpt = Arguments::strToRecOpt(string(argv[++i]));
     } else if (arg == "--libpll-model") {
       libpllModel = string(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
@@ -80,7 +81,7 @@ bool isIn(const string &elem, const vector<string> &v) {
   return find(v.begin(), v.end(), elem) != v.end();
 }
 
-void Arguments::checkInputs() {
+void JSArguments::checkInputs() {
   bool ok = true;
   if (!alignment.size()) {
     Logger::error << "You need to provide an alignment." << endl;
@@ -98,21 +99,6 @@ void Arguments::checkInputs() {
     Logger::error << "You specified at least one of the duplication and loss rates, but not both of them." << endl;
     ok = false;
   }
-  vector<string> possibleReconciliationModels;
-  possibleReconciliationModels.push_back("UndatedDL");
-  possibleReconciliationModels.push_back("UndatedDTL");
-  possibleReconciliationModels.push_back("DatedDL");
-  if (!isIn(reconciliationModel, possibleReconciliationModels)) {
-    Logger::error << "Invalid reconciliation model " << reconciliationModel << endl;
-    ok = false;
-  }
-  vector <string> possibleRecOpts;
-  possibleRecOpts.push_back("window");
-  possibleRecOpts.push_back("simplex");
-  if (!isIn(reconciliationOpt, possibleRecOpts)) {
-    Logger::error << "Invalid reconciliation opt " << reconciliationOpt << endl;
-    ok = false;
-  }
   if (!ok) {
     Logger::error << "Aborting." << endl;
     exit(1);
@@ -126,7 +112,7 @@ void Arguments::checkInputs() {
   assertFileExists(alignment);
 }
 
-void Arguments::printHelp() {
+void JSArguments::printHelp() {
   Logger::info << "-h, --help" << endl;
   Logger::info << "-g, --gene-tree <GENE TREE>" << endl;
   Logger::info << "-a, --alignment <ALIGNMENT>" << endl;
@@ -134,7 +120,7 @@ void Arguments::printHelp() {
   Logger::info << "-m, --map <GENE_SPECIES_MAPPING>" << endl;
   Logger::info << "--strategy <STRATEGY>  {EVAL, SPR}" << endl;
   Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << endl;
-  Logger::info << "--rec-opt <reconciliationOpt>  {window, simplex}" << endl;
+  Logger::info << "--rec-opt <reconciliationOpt>  {grid, simplex}" << endl;
   Logger::info << "--libpll-model <libpllModel>  {GTR, LG, DAYHOFF etc.}" << endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
   Logger::info << "--check" << endl;
@@ -146,7 +132,7 @@ void Arguments::printHelp() {
 
 }
 
-void Arguments::printCommand() {
+void JSArguments::printCommand() {
   Logger::info << "JointSearch was called as follow:" << endl;
   for (int i = 0; i < argc; ++i) {
     Logger::info << argv[i] << " ";
@@ -154,16 +140,16 @@ void Arguments::printCommand() {
   Logger::info << endl << endl;
 }
 
-void Arguments::printSummary() {
+void JSArguments::printSummary() {
   string boolStr[2] = {string("OFF"), string("ON")};
   Logger::info << "Parameters summary: " << endl;
   Logger::info << "Gene tree: " << geneTree << endl;
   Logger::info << "Alignment: " << alignment << endl; 
   Logger::info << "Species tree: " << speciesTree << endl;
   Logger::info << "Gene species map: " << geneSpeciesMap << endl;
-  Logger::info << "Strategy: " << strategy << endl;
-  Logger::info << "Reconciliation model: " << reconciliationModel << endl;
-  Logger::info << "Reconciliation opt: " << reconciliationOpt << endl;
+  Logger::info << "Strategy: " << Arguments::strategyToStr(strategy) << endl;
+  Logger::info << "Reconciliation model: " << Arguments::recModelToStr(reconciliationModel) << endl;
+  Logger::info << "Reconciliation opt: " << Arguments::recOptToStr(reconciliationOpt) << endl;
   Logger::info << "Libpll model: " << libpllModel << endl;
   Logger::info << "Prefix: " << output << endl;
   Logger::info << "Check mode: " << boolStr[check] << endl;

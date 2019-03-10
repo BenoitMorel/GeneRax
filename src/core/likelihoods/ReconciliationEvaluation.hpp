@@ -1,17 +1,12 @@
 #pragma once
 
+#include <enums.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
+
 #include <memory>
 
 using namespace std;
-  
-enum ReconciliationModel {
-    UndatedDL,
-    UndatedDTL,
-    DatedDL,
-    InvalidModel
-  };
   
 /**
  *  Wrapper around the reconciliation likelihood classes
@@ -28,7 +23,7 @@ public:
    */
   ReconciliationEvaluation(pll_rtree_t *speciesTree,
     const GeneSpeciesMapping& map,
-    const string &reconciliationModelStr,
+    RecModel recModel,
     bool rootedGeneTree);
 
   /**
@@ -62,6 +57,7 @@ public:
     reconciliationModel->inferMLScenario(treeinfo, scenario);
   }
 private:
+  shared_ptr<AbstractReconciliationModel> getRecModel(RecModel recModel);
   shared_ptr<AbstractReconciliationModel> reconciliationModel;
 };
 

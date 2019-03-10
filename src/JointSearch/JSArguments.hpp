@@ -1,13 +1,14 @@
 #pragma once
 
+#include "enums.hpp"
 #include <string>
 using namespace std;
 
   
 
-class Arguments {
+class JSArguments {
 public:
-   Arguments(int argc, char * argv[]);
+   JSArguments(int argc, char * argv[]);
    void checkInputs();
    void printHelp();
    void printCommand();
@@ -19,9 +20,9 @@ public:
    string alignment;
    string speciesTree;
    string geneSpeciesMap;
-   string strategy;
-   string reconciliationModel;
-   string reconciliationOpt;
+   Strategy strategy;
+   RecModel reconciliationModel;
+   RecOpt reconciliationOpt;
    string libpllModel;
    string output;
    bool check;

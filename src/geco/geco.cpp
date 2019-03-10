@@ -1,4 +1,4 @@
-#include "Arguments.hpp"
+#include "GecoArguments.hpp"
 #include <ParallelContext.hpp>
 #include <IO/Logger.hpp>
 #include <algorithm>
@@ -12,7 +12,7 @@ int internal_main(int argc, char** argv, void* comm)
   // the order is very important
   ParallelContext::init(comm); 
   Logger::init();
-  Arguments arguments(argc, argv);
+  GecoArguments arguments(argc, argv);
   Logger::initFileOutput(arguments.output);
   
   arguments.printCommand();
