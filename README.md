@@ -1,4 +1,4 @@
-# JointSearch 
+# GeneRax 
 
 A maximum likelihood gene tree inference tool, accounting for both MSAs and DTL reconciliation with a given species tree.
 
@@ -14,7 +14,7 @@ A maximum likelihood gene tree inference tool, accounting for both MSAs and DTL 
 Please use git,  and clone with --recursive!!!
 
 ```
-git clone --recursive git@github.com:BenoitMorel/JointSearch.git
+git clone --recursive git@github.com:BenoitMorel/GeneRax.git
 ```
 
 To build the sources:
@@ -23,5 +23,5 @@ To build the sources:
 ```
 ## Running
 
-See the wiki (https://github.com/BenoitMorel/JointSearch/wiki)
+See the wiki (https://github.com/BenoitMorel/GeneRax/wiki)
 
