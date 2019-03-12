@@ -1,5 +1,6 @@
 #include "GeneRaxArguments.hpp"
 #include <ParallelContext.hpp>
+#include <IO/FamiliesFileParser.hpp>
 #include <IO/Logger.hpp>
 #include <algorithm>
 #include <limits>
@@ -17,8 +18,13 @@ int internal_main(int argc, char** argv, void* comm)
   
   arguments.printCommand();
   arguments.printSummary();
-  
-  Logger::timed << "End of geco execution" << endl;
+
+  vector<FamiliesFileParser::FamilyInfo> families = FamiliesFileParser::parseFamiliesFile(arguments.families);
+  Logger::info << "Number of gene families: " << families.size() << endl;
+  for (auto &family: families) {
+  }
+
+  Logger::timed << "End of GeneRax execution" << endl;
   ParallelContext::finalize();
   return 0;
 }

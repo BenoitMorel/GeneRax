@@ -15,10 +15,8 @@ public:
 public:
    int argc;
    char ** argv;
-   string geneTree;
-   string alignment;
+   string families;
    string speciesTree;
-   string geneSpeciesMap;
    string strategy;
    string reconciliationModel;
    string reconciliationOpt;

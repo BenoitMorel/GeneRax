@@ -27,14 +27,10 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
     if (arg == "-h" || arg == "--help") {
       printHelp();
       exit(0);
-    } else if (arg == "-g" || arg == "--gene-tree") {
-      geneTree = string(argv[++i]);
-    } else if (arg == "-a" || arg == "--alignment") {
-      alignment = string(argv[++i]);
+    } else if (arg == "-f" || arg == "--families") {
+      families = string(argv[++i]);
     } else if (arg == "-s" || arg == "--species-tree") {
       speciesTree = string(argv[++i]);
-    } else if (arg == "-m" || arg == "--map") {
-      geneSpeciesMap = string(argv[++i]);
     } else if (arg == "--strategy") {
       strategy = string(argv[++i]);
     } else if (arg == "-r" || arg == "--rec-model") {
@@ -82,16 +78,8 @@ bool isIn(const string &elem, const vector<string> &v) {
 
 void GeneRaxArguments::checkInputs() {
   bool ok = true;
-  if (!alignment.size()) {
-    Logger::error << "You need to provide an alignment." << endl;
-    ok = false;
-  }
   if (!speciesTree.size()) {
     Logger::error << "You need to provide a species tree." << endl;
-    ok = false;
-  }
-  if (!geneSpeciesMap.size()) {
-    Logger::error << "You need to provide a gene species map file." << endl;
     ok = false;
   }
   if (userDTLRates && (dupRate < 0.0 || lossRate < 0.0)) {
@@ -118,20 +106,13 @@ void GeneRaxArguments::checkInputs() {
     exit(1);
   }
   
-  if (geneTree.size() && geneTree != "__random__") {
-    assertFileExists(geneTree);
-  }
   assertFileExists(speciesTree);
-  assertFileExists(geneSpeciesMap);
-  assertFileExists(alignment);
 }
 
 void GeneRaxArguments::printHelp() {
   Logger::info << "-h, --help" << endl;
-  Logger::info << "-g, --gene-tree <GENE TREE>" << endl;
-  Logger::info << "-a, --alignment <ALIGNMENT>" << endl;
+  Logger::info << "-f, --families <FAMILIES_INFORMATION>" << endl;
   Logger::info << "-s, --species-tree <SPECIES TREE>" << endl;
-  Logger::info << "-m, --map <GENE_SPECIES_MAPPING>" << endl;
   Logger::info << "--strategy <STRATEGY>  {EVAL, SPR}" << endl;
   Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << endl;
   Logger::info << "--rec-opt <reconciliationOpt>  {window, simplex}" << endl;
@@ -157,10 +138,8 @@ void GeneRaxArguments::printCommand() {
 void GeneRaxArguments::printSummary() {
   string boolStr[2] = {string("OFF"), string("ON")};
   Logger::info << "Parameters summary: " << endl;
-  Logger::info << "Gene tree: " << geneTree << endl;
-  Logger::info << "Alignment: " << alignment << endl; 
+  Logger::info << "Families information: " << families << endl;
   Logger::info << "Species tree: " << speciesTree << endl;
-  Logger::info << "Gene species map: " << geneSpeciesMap << endl;
   Logger::info << "Strategy: " << strategy << endl;
   Logger::info << "Reconciliation model: " << reconciliationModel << endl;
   Logger::info << "Reconciliation opt: " << reconciliationOpt << endl;

@@ -2,8 +2,9 @@
 set(jointsearch-core_SOURCES ParallelContext.cpp
   Scenario.cpp
   IO/Logger.cpp
-  IO/ParallelOfstream.cpp
   IO/GeneSpeciesMapping.cpp
+  IO/FamiliesFileParser.cpp
+  IO/ParallelOfstream.cpp
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ReconciliationEvaluation.cpp
   likelihoods/reconciliation_models/AbstractReconciliationModel.cpp
