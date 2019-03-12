@@ -52,6 +52,6 @@ endmacro()
 
 
 add_subdirectory(JointSearch)
-add_subdirectory(geco)
+add_subdirectory(generax)
 
 

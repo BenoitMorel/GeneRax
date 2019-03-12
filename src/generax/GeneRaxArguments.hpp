@@ -5,9 +5,9 @@ using namespace std;
 
   
 
-class GecoArguments {
+class GeneRaxArguments {
 public:
-   GecoArguments(int argc, char * argv[]);
+   GeneRaxArguments(int argc, char * argv[]);
    void checkInputs();
    void printHelp();
    void printCommand();
