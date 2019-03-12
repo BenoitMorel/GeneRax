@@ -121,6 +121,34 @@ pllmod_subst_model_t *getModel(const string &modelStr) {
   }
 }
 
+pll_utree_t *LibpllEvaluation::readNewickFromFile(const string &newickFilename)
+{
+  ifstream t(newickFilename);
+  if (!t)
+    throw LibpllException("Could not load open newick file ", newickFilename);
+  string str((istreambuf_iterator<char>(t)),
+                       istreambuf_iterator<char>());
+  return readNewickFromStr(str);
+}
+
+
+pll_utree_t *LibpllEvaluation::readNewickFromStr(const string &newickString)
+{
+  pll_utree_t *utree = 0;
+  pll_rtree_t * rtree = pll_rtree_parse_newick_string(newickString.c_str());
+  if (!rtree) {
+    utree = pll_utree_parse_newick_string(newickString.c_str());
+  } else {
+    utree = pll_rtree_unroot(rtree);
+    pll_rtree_destroy(rtree, free);
+  }
+  
+  if (!utree) 
+    throw LibpllException("Error while reading tree ", newickString);
+  return utree;
+}
+
+
 shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &newickString,
     const string& alignmentFilename,
     const string &modelStr)
@@ -156,16 +184,8 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
       int seed = 0;
       utree = pllmod_utree_create_random(labels.size(), &labels[0], seed);
     } else {
-      pll_rtree_t * rtree = pll_rtree_parse_newick_string(newickString.c_str());
-      if (!rtree) {
-        utree = pll_utree_parse_newick_string(newickString.c_str());
-      } else {
-        utree = pll_rtree_unroot(rtree);
-        pll_rtree_destroy(rtree, free);
-      }
+      utree = readNewickFromStr(newickString);
     }
-    if (!utree) 
-      throw LibpllException("Error while reading tree ", newickString);
   }
   // partition
   unsigned int attribute = getBestLibpllAttribute();

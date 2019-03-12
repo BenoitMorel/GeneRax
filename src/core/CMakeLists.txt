@@ -1,6 +1,7 @@
 
 set(jointsearch-core_SOURCES ParallelContext.cpp
   Scenario.cpp
+  PerCoreGeneTrees.cpp
   IO/Logger.cpp
   IO/GeneSpeciesMapping.cpp
   IO/FamiliesFileParser.cpp

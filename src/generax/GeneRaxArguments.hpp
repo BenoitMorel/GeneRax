@@ -1,5 +1,6 @@
 #pragma once
 
+#include "enums.hpp"
 #include <string>
 using namespace std;
 
@@ -17,9 +18,9 @@ public:
    char ** argv;
    string families;
    string speciesTree;
-   string strategy;
-   string reconciliationModel;
-   string reconciliationOpt;
+   Strategy strategy;
+   RecModel reconciliationModel;
+   RecOpt reconciliationOpt;
    string libpllModel;
    string output;
    bool check;

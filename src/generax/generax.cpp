@@ -4,6 +4,7 @@
 #include <IO/Logger.hpp>
 #include <algorithm>
 #include <limits>
+#include <PerCoreGeneTrees.hpp>
 
 using namespace std;
 
@@ -21,8 +22,8 @@ int internal_main(int argc, char** argv, void* comm)
 
   vector<FamiliesFileParser::FamilyInfo> families = FamiliesFileParser::parseFamiliesFile(arguments.families);
   Logger::info << "Number of gene families: " << families.size() << endl;
-  for (auto &family: families) {
-  }
+
+  PerCoreGeneTrees geneTrees(families);
 
   Logger::timed << "End of GeneRax execution" << endl;
   ParallelContext::finalize();

@@ -1,5 +1,7 @@
+
 #include "GeneRaxArguments.hpp"
 #include <IO/Logger.hpp>
+#include "Arguments.hpp"
 #include <ParallelContext.hpp>
 #include <algorithm>
 #include <vector>
@@ -7,8 +9,9 @@
 GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
   argc(argc),
   argv(argv),
-  reconciliationModel("UndatedDL"),
-  reconciliationOpt("simplex"),
+  strategy(EVAL),
+  reconciliationModel(UndatedDL),
+  reconciliationOpt(Simplex),
   libpllModel("GTR"),
   output("jointSearch"),
   check(false),
@@ -20,23 +23,23 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
 {
   if (argc == 1) {
     printHelp();
-    exit(0);
+    ParallelContext::abort(0);
   }
   for (int i = 1; i < argc; ++i) {
     string arg(argv[i]);
     if (arg == "-h" || arg == "--help") {
       printHelp();
-      exit(0);
+      ParallelContext::abort(0);
     } else if (arg == "-f" || arg == "--families") {
       families = string(argv[++i]);
     } else if (arg == "-s" || arg == "--species-tree") {
       speciesTree = string(argv[++i]);
     } else if (arg == "--strategy") {
-      strategy = string(argv[++i]);
+      strategy = Arguments::strToStrategy(string(argv[++i]));
     } else if (arg == "-r" || arg == "--rec-model") {
-      reconciliationModel = string(argv[++i]);
+      reconciliationModel = Arguments::strToRecModel(string(argv[++i]));
     } else if (arg == "--rec-opt") {
-      reconciliationOpt = string(argv[++i]);
+      reconciliationOpt = Arguments::strToRecOpt(string(argv[++i]));
     } else if (arg == "--libpll-model") {
       libpllModel = string(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
@@ -57,7 +60,7 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
     } else {
       Logger::error << "Unrecognized argument " << arg << endl;
       Logger::error << "Aborting" << endl;
-      exit(1);
+      ParallelContext::abort(1);
     }
   }
   checkInputs();
@@ -68,7 +71,7 @@ void assertFileExists(const string &file)
   ifstream f(file);
   if (!f) {
     Logger::error << "File " << file << " does not exist. Aborting." << endl;
-    exit(1);
+    ParallelContext::abort(1);
   }
 }
 
@@ -86,24 +89,9 @@ void GeneRaxArguments::checkInputs() {
     Logger::error << "You specified at least one of the duplication and loss rates, but not both of them." << endl;
     ok = false;
   }
-  vector<string> possibleReconciliationModels;
-  possibleReconciliationModels.push_back("UndatedDL");
-  possibleReconciliationModels.push_back("UndatedDTL");
-  possibleReconciliationModels.push_back("DatedDL");
-  if (!isIn(reconciliationModel, possibleReconciliationModels)) {
-    Logger::error << "Invalid reconciliation model " << reconciliationModel << endl;
-    ok = false;
-  }
-  vector <string> possibleRecOpts;
-  possibleRecOpts.push_back("window");
-  possibleRecOpts.push_back("simplex");
-  if (!isIn(reconciliationOpt, possibleRecOpts)) {
-    Logger::error << "Invalid reconciliation opt " << reconciliationOpt << endl;
-    ok = false;
-  }
   if (!ok) {
     Logger::error << "Aborting." << endl;
-    exit(1);
+    ParallelContext::abort(1);
   }
   
   assertFileExists(speciesTree);
@@ -140,9 +128,9 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "Parameters summary: " << endl;
   Logger::info << "Families information: " << families << endl;
   Logger::info << "Species tree: " << speciesTree << endl;
-  Logger::info << "Strategy: " << strategy << endl;
-  Logger::info << "Reconciliation model: " << reconciliationModel << endl;
-  Logger::info << "Reconciliation opt: " << reconciliationOpt << endl;
+  Logger::info << "Strategy: " << Arguments::strategyToStr(strategy) << endl;
+  Logger::info << "Reconciliation model: " << Arguments::recModelToStr(reconciliationModel) << endl;
+  Logger::info << "Reconciliation opt: " << Arguments::recOptToStr(reconciliationOpt) << endl;
   Logger::info << "Libpll model: " << libpllModel << endl;
   Logger::info << "Prefix: " << output << endl;
   Logger::info << "Check mode: " << boolStr[check] << endl;

@@ -10,6 +10,7 @@ class DTLOptimizer {
 public:
   static void optimizeDLRates(JointTree &jointTree, RecOpt method);
   static void optimizeDTLRates(JointTree &jointTree, RecOpt method);
+
 private:
   static void findBestRatesDTL(JointTree &jointTree,
       double minDup, double maxDup,

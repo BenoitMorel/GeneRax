@@ -16,6 +16,8 @@ using namespace std;
  */
 class GeneSpeciesMapping {
 public:
+  
+  GeneSpeciesMapping() {}
   /**
    *  Constructor
    *  @param mappingFile: file containing the mapping information

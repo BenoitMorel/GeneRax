@@ -45,6 +45,10 @@ public:
   static shared_ptr<LibpllEvaluation> buildFromFile(const string &newickTree,
       const LibpllAlignmentInfo &info);
 
+
+  static pll_utree_t *readNewickFromFile(const string &newickFile);
+  static pll_utree_t *readNewickFromStr(const string &newickSTring);
+
   /*
    *  Compute the likelihood of the tree given the alignment
    *  @param incremental: if true, only recompute invalid CLVs

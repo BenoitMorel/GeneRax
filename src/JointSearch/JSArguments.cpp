@@ -8,6 +8,7 @@
 JSArguments::JSArguments(int argc, char * argv[]):
   argc(argc),
   argv(argv),
+  strategy(EVAL),
   reconciliationModel(UndatedDL),
   reconciliationOpt(Simplex),
   libpllModel("GTR"),
@@ -21,13 +22,13 @@ JSArguments::JSArguments(int argc, char * argv[]):
 {
   if (argc == 1) {
     printHelp();
-    exit(0);
+    ParallelContext::abort(0);
   }
   for (int i = 1; i < argc; ++i) {
     string arg(argv[i]);
     if (arg == "-h" || arg == "--help") {
       printHelp();
-      exit(0);
+      ParallelContext::abort(0);
     } else if (arg == "-g" || arg == "--gene-tree") {
       geneTree = string(argv[++i]);
     } else if (arg == "-a" || arg == "--alignment") {
@@ -62,7 +63,7 @@ JSArguments::JSArguments(int argc, char * argv[]):
     } else {
       Logger::error << "Unrecognized argument " << arg << endl;
       Logger::error << "Aborting" << endl;
-      exit(1);
+      ParallelContext::abort(1);
     }
   }
   checkInputs();
@@ -73,7 +74,7 @@ void assertFileExists(const string &file)
   ifstream f(file);
   if (!f) {
     Logger::error << "File " << file << " does not exist. Aborting." << endl;
-    exit(1);
+    ParallelContext::abort(1);
   }
 }
 
@@ -101,7 +102,7 @@ void JSArguments::checkInputs() {
   }
   if (!ok) {
     Logger::error << "Aborting." << endl;
-    exit(1);
+    ParallelContext::abort(1);
   }
   
   if (geneTree.size() && geneTree != "__random__") {
