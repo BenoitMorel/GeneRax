@@ -29,4 +29,14 @@ pll_rtree_t *LibpllParsers::readRootedFromFile(const string &newickFile)
   }
   return tree;
 }
-
+  
+void LibpllParsers::saveUtree(pll_unode_t *utree, 
+  const string &fileName, 
+  bool append)
+{
+  ofstream os(fileName, (append ? ofstream::app : ofstream::out));
+  char *newick = pll_utree_export_newick(utree, 0);
+  os << newick;
+  os.close();
+  free(newick);
+}

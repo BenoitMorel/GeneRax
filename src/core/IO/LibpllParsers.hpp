@@ -23,5 +23,8 @@ public:
   static pll_utree_t *readNewickFromFile(const string &newickFile);
   static pll_utree_t *readNewickFromStr(const string &newickSTring);
   static pll_rtree_t *readRootedFromFile(const string &newickFile);
+  static void saveUtree(pll_unode_t *utree, 
+    const string &fileName, 
+    bool append = false);
 };
 

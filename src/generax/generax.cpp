@@ -59,15 +59,23 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     Logger::info << "Initial ll = " << bestLoglk << endl;
     while(SPRSearch::applySPRRound(*jointTree, 1, bestLoglk)) {} 
     Logger::info << "Final ll = " << bestLoglk << endl;
-
+    string geneTreePath = FileSystem::joinPaths(arguments.output, family.name);
+    geneTreePath = FileSystem::joinPaths(geneTreePath, "geneTree.newick");
+    jointTree->save(geneTreePath, false);
+    family.startingGeneTree = geneTreePath;
   }
   
 }
 
-void saveTrees(vector<FamiliesFileParser::FamilyInfo> &geneFamilies)
+void optimizeRates(const GeneRaxArguments &arguments,
+    vector<FamiliesFileParser::FamilyInfo> &families,
+    DTLRates &rates) 
 {
-  for (auto &family: geneFamilies) {
-    
+  if (!arguments.userDTLRates) {
+    PerCoreGeneTrees geneTrees(families);
+    pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(arguments.speciesTree); 
+    rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, arguments.reconciliationModel);
+    pll_rtree_destroy(speciesTree, 0);
   }
 }
 
@@ -94,17 +102,15 @@ int internal_main(int argc, char** argv, void* comm)
   Logger::info << "Number of gene families: " << initialFamilies.size() << endl;
   initFolders(arguments.output, initialFamilies);
   
-
-  // update DTL rates
+  
   DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
-  if (!arguments.userDTLRates) {
-    PerCoreGeneTrees geneTrees(initialFamilies);
-    pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(arguments.speciesTree); 
-    rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, arguments.reconciliationModel);
-    pll_rtree_destroy(speciesTree, 0);
-  }
-  // update gene trees
-  optimizeGeneTrees(initialFamilies, rates, arguments);
+  vector<FamiliesFileParser::FamilyInfo> currentFamilies = initialFamilies;
+  
+  optimizeRates(arguments, currentFamilies, rates);
+  optimizeGeneTrees(currentFamilies, rates, arguments);
+  optimizeRates(arguments, currentFamilies, rates);
+  optimizeGeneTrees(currentFamilies, rates, arguments);
+  optimizeRates(arguments, currentFamilies, rates);
 
 
   Logger::timed << "End of GeneRax execution" << endl;
