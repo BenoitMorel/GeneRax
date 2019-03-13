@@ -21,9 +21,14 @@ void ReconciliationEvaluation::setRates(double dupRate, double lossRate,
   reconciliationModel->setRates(dupRate, lossRate, transferRate);
 }
 
+double ReconciliationEvaluation::evaluate(pll_utree_t *utree)
+{
+  return reconciliationModel->computeLogLikelihood(utree);
+}
+
 double ReconciliationEvaluation::evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
-  return reconciliationModel->computeLogLikelihood(treeinfo->tree);
+  return evaluate(treeinfo->tree);
 }
 
 void ReconciliationEvaluation::invalidateCLV(int nodeIndex)

@@ -3,9 +3,11 @@
 #include <ParallelContext.hpp>
 #include <treeSearch/JointTree.hpp>
 #include <IO/Logger.hpp>
-
+#include <PerCoreGeneTrees.hpp>
 #include <limits>
 #include <algorithm>
+#include <likelihoods/ReconciliationEvaluation.hpp>
+#include <iostream>
 
 bool isValidLikelihood(double ll) {
   return isnormal(ll) && ll < -0.0000001;
@@ -200,6 +202,21 @@ struct DTLRates {
     }
   }
   
+  void computeLL(PerCoreGeneTrees &trees, pll_rtree_t *speciesTree, RecModel model) {
+    ensureValidity();
+    ll = 0;
+    for (auto tree: trees.getTrees()) {
+      ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
+      evaluation.setRates(rates[0], rates[1], rates[2]);
+      ll += evaluation.evaluate(tree.tree);
+    }
+    ParallelContext::sumDouble(ll);
+    if (!isValidLikelihood(ll)) {
+      ll = -100000000000;
+    }
+    Logger::info << ll << endl;
+  }
+  
   inline void ensureValidity() {
     rates[0] = max(0.0, rates[0]);
     rates[1] = max(0.0, rates[1]);
@@ -273,6 +290,7 @@ DTLRates findBestPoint(DTLRates r1, DTLRates r2, int iterations, JointTree &join
 }
 
 
+
 void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
 {
   Logger::timed << "Starting DTL rates optimization" << endl;
@@ -310,5 +328,57 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
   Logger::timed << "Simplex converged after " << currentIt << " iterations" << endl;
   sort(rates.begin(), rates.end());
   rates[0].computeLL(jointTree);
+}
+  
+void DTLOptimizer::optimizeDLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
+{
+  Logger::timed << "Todo: merge with other implementations" << endl;
+  vector<DTLRates> rates;
+  rates.push_back(DTLRates(0.01, 0.01, 0));
+  rates.push_back(DTLRates(1.0, 0.01, 0));
+  rates.push_back(DTLRates(0.01, 1.0, 0));
+  /*
+  if (transfers) {
+    rates.push_back(DTLRates(0.01, 0.01, 1.0));
+  }
+  */
+  for (auto &r: rates) {
+    r.computeLL(geneTrees, speciesTree, model);
+  }
+  DTLRates worstRate;
+  int currentIt = 0;
+  while (worstRate.distance(rates.back()) > 0.005) {
+    Logger::info << "begin of loop" << endl;
+    sort(rates.begin(), rates.end());
+    worstRate = rates.back();
+    // centroid
+    DTLRates x0;
+    for (unsigned int i = 0; i < rates.size() - 1; ++i) {
+      x0 = x0 + rates[i];
+    }
+    x0 = x0 / double(rates.size() - 1);
+    // reflexion, exansion and contraction at the same time
+    DTLRates x1 = x0 - (x0 - rates.back()) * 0.5;  
+    DTLRates x2 = x0 + (x0 - rates.back()) * 1.5;  
+    int iterations = 8;
+    DTLRates bestRates = x1;
+    bestRates.ll = -100000000000;
+    for (int i = 0; i < iterations; i++) {
+      DTLRates current = x1 + ((x2 - x1) * (double(i) / double(iterations - 1)));
+      current.computeLL(geneTrees, speciesTree, model);
+      if (current < bestRates) {
+        bestRates = current;
+      }
+    }
+    if (bestRates < rates[rates.size() - 1] ) {
+      rates.back() = bestRates;
+    }
+    currentIt++;
+    Logger::info << "end of loop" << endl;
+  }
+  Logger::timed << "Simplex converged after " << currentIt << " iterations: " << rates[0] << endl;
+  sort(rates.begin(), rates.end());
+  rates[0].computeLL(geneTrees, speciesTree, model);
+
 }
 

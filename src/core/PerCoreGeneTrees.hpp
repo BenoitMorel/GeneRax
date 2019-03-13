@@ -13,7 +13,7 @@ public:
   };
 
   PerCoreGeneTrees(const vector<FamiliesFileParser::FamilyInfo> &families);
-  
+  const vector<GeneTree> &getTrees() {return _geneTrees;}
 private:
   vector<GeneTree> _geneTrees;
 

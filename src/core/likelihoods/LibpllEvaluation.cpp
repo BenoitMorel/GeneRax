@@ -134,20 +134,20 @@ pll_utree_t *LibpllEvaluation::readNewickFromFile(const string &newickFilename)
 
 pll_utree_t *LibpllEvaluation::readNewickFromStr(const string &newickString)
 {
-  pll_utree_t *utree = 0;
-  pll_rtree_t * rtree = pll_rtree_parse_newick_string(newickString.c_str());
-  if (!rtree) {
-    utree = pll_utree_parse_newick_string(newickString.c_str());
-  } else {
-    utree = pll_rtree_unroot(rtree);
-    pll_rtree_destroy(rtree, free);
-  }
-  
+  auto utree =  pll_utree_parse_newick_string_unroot(newickString.c_str());
   if (!utree) 
     throw LibpllException("Error while reading tree ", newickString);
   return utree;
 }
 
+pll_rtree_t *LibpllEvaluation::readRootedFromFile(const string &newickFile)
+{
+  auto tree = pll_rtree_parse_newick(newickFile.c_str());
+  if (!tree) {
+    throw LibpllException("Error while reading tree ", newickFile);
+  }
+  return tree;
+}
 
 shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &newickString,
     const string& alignmentFilename,

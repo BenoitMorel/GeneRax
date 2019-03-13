@@ -40,6 +40,7 @@ public:
   
   bool implementsTransfers() {return reconciliationModel->implementsTransfers();}
 
+  double evaluate(pll_utree_t *utree);
   /**
    *  @param input treeinfo
    *  @return the reconciliation likelihood of this tree

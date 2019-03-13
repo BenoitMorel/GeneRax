@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <limits>
 #include <PerCoreGeneTrees.hpp>
-
+#include <optimizers/DTLOptimizer.hpp>
 using namespace std;
 
 
@@ -24,7 +24,8 @@ int internal_main(int argc, char** argv, void* comm)
   Logger::info << "Number of gene families: " << families.size() << endl;
 
   PerCoreGeneTrees geneTrees(families);
-
+  pll_rtree_t *speciesTree = LibpllEvaluation::readRootedFromFile(arguments.speciesTree); 
+  DTLOptimizer::optimizeDLRates(geneTrees, speciesTree, arguments.reconciliationModel);
   Logger::timed << "End of GeneRax execution" << endl;
   ParallelContext::finalize();
   return 0;

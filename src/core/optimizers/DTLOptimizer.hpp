@@ -1,8 +1,11 @@
 #pragma once
 
 class JointTree;
+class PerCoreGeneTrees;
+#include <likelihoods/ReconciliationEvaluation.hpp>
 #include <string>
 #include <enums.hpp>
+
 using namespace std;
 
 
@@ -10,7 +13,8 @@ class DTLOptimizer {
 public:
   static void optimizeDLRates(JointTree &jointTree, RecOpt method);
   static void optimizeDTLRates(JointTree &jointTree, RecOpt method);
-
+  
+  static void optimizeDLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model);
 private:
   static void findBestRatesDTL(JointTree &jointTree,
       double minDup, double maxDup,

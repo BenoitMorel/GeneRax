@@ -55,6 +55,16 @@ int ParallelContext::getEnd(int elems)
 {
   return min(elems, ((getRank() + 1) * elems) / getSize());
 }
+  
+void ParallelContext::sumDouble(double &value)
+{
+  double sum = 0;
+  barrier();
+  MPI_Allreduce(&value, &sum, 1, MPI_DOUBLE, MPI_SUM, comm);
+  barrier();
+  value = sum;
+}
+
 
 void ParallelContext::allGatherDouble(double localValue, vector<double> &allValues) {
   allValues.resize(getSize());

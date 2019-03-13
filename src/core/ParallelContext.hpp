@@ -52,6 +52,8 @@ public:
    */
   static void allGatherDouble(double localValue, vector<double> &allValues);
 
+  static void sumDouble(double &value);
+
   /**
    *  broadcast a value from a given rank
    *  @param fromRank: rank from which we want the value
