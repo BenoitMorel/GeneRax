@@ -8,10 +8,35 @@
 #include <algorithm>
 #include <likelihoods/ReconciliationEvaluation.hpp>
 #include <iostream>
-
+  
 bool isValidLikelihood(double ll) {
   return isnormal(ll) && ll < -0.0000001;
 }
+
+void updateLL(DTLRates &rates, JointTree &jointTree) {
+  rates.ensureValidity();
+  jointTree.setRates(rates.rates[0], rates.rates[1], rates.rates[2]);
+  rates.ll = jointTree.computeReconciliationLoglk();
+  if (!isValidLikelihood(rates.ll)) {
+    rates.ll = -100000000000;
+  }
+}
+
+void updateLL(DTLRates &rates, PerCoreGeneTrees &trees, pll_rtree_t *speciesTree, RecModel model) {
+  rates.ensureValidity();
+  rates.ll = 0;
+  for (auto tree: trees.getTrees()) {
+    ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
+    evaluation.setRates(rates.rates[0], rates.rates[1], rates.rates[2]);
+    rates.ll += evaluation.evaluate(tree.tree);
+  }
+  ParallelContext::sumDouble(rates.ll);
+  if (!isValidLikelihood(rates.ll)) {
+    rates.ll = -100000000000;
+  }
+  Logger::info << rates.ll << endl;
+}
+
 
 void DTLOptimizer::findBestRatesDL(JointTree &jointTree,
     double minDup, double maxDup,
@@ -183,83 +208,6 @@ void DTLOptimizer::optimizeDTLRatesWindow(JointTree &jointTree) {
   }
 }
 
-struct DTLRates {
-  double rates[3];
-  double ll;
-  
-  DTLRates(double d = 0.0, double l = 0.0, double t = 0.0): ll(0.0) {
-    rates[0] = d;
-    rates[1] = l;
-    rates[2] = t;
-  }
-
-  void computeLL(JointTree &jointTree) {
-    ensureValidity();
-    jointTree.setRates(rates[0], rates[1], rates[2]);
-    ll = jointTree.computeReconciliationLoglk();
-    if (!isValidLikelihood(ll)) {
-      ll = -100000000000;
-    }
-  }
-  
-  void computeLL(PerCoreGeneTrees &trees, pll_rtree_t *speciesTree, RecModel model) {
-    ensureValidity();
-    ll = 0;
-    for (auto tree: trees.getTrees()) {
-      ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
-      evaluation.setRates(rates[0], rates[1], rates[2]);
-      ll += evaluation.evaluate(tree.tree);
-    }
-    ParallelContext::sumDouble(ll);
-    if (!isValidLikelihood(ll)) {
-      ll = -100000000000;
-    }
-    Logger::info << ll << endl;
-  }
-  
-  inline void ensureValidity() {
-    rates[0] = max(0.0, rates[0]);
-    rates[1] = max(0.0, rates[1]);
-    rates[2] = max(0.0, rates[2]);
-  }
-
-  inline bool operator <(const DTLRates& v) const {
-    return ll > v.ll;
-  }
-  
-  inline bool operator <=(const DTLRates& v) const {
-    return ll >=  v.ll;
-  }
-  
-  inline DTLRates operator+(const DTLRates& v) const {
-    return DTLRates(rates[0] + v.rates[0], rates[1] + v.rates[1], rates[2] + v.rates[2]);
-  }
-  
-  inline DTLRates operator-(const DTLRates& v) const {
-    return DTLRates(rates[0] - v.rates[0], rates[1] - v.rates[1], rates[2] - v.rates[2]);
-  }
-  
-  inline DTLRates operator*(double v) const {
-    return DTLRates(v * rates[0], v * rates[1], v * rates[2]);
-  }
-  
-  inline DTLRates operator/(double v) const {
-    return DTLRates(rates[0] / v, rates[1] / v, rates[2] / v);
-  }
-  
-  friend ostream& operator<<(ostream& os, const DTLRates &v) {
-    os << "(" << v.rates[0] << ", " << v.rates[1] << ", " << v.rates[2] << ", " <<  v.ll  << ")";
-    return os;
-  }
-
-  inline double distance(const DTLRates v) const {
-    double d = 0.0;
-    d += pow(rates[0] - v.rates[0], 2.0);
-    d += pow(rates[1] - v.rates[1], 2.0);
-    d += pow(rates[2] - v.rates[2], 2.0);
-    return sqrt(d);
-  }
-};
 
 
 /*
@@ -272,7 +220,7 @@ DTLRates findBestPoint(DTLRates r1, DTLRates r2, int iterations, JointTree &join
   int bestI = 0;
   for (int i = ParallelContext::getRank(); i < iterations; i += ParallelContext::getSize()) {
     DTLRates current = r1 + ((r2 - r1) * (double(i) / double(iterations - 1)));
-    current.computeLL(jointTree);
+    updateLL(current, jointTree);
     if (current < best) {
       best = current;
       bestI = i;
@@ -302,7 +250,7 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
     rates.push_back(DTLRates(0.01, 0.01, 1.0));
   }
   for (auto &r: rates) {
-    r.computeLL(jointTree);
+    updateLL(r, jointTree);
   }
   DTLRates worstRate;
   int currentIt = 0;
@@ -327,7 +275,7 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
   }
   Logger::timed << "Simplex converged after " << currentIt << " iterations" << endl;
   sort(rates.begin(), rates.end());
-  rates[0].computeLL(jointTree);
+  updateLL(rates[0], jointTree);
 }
   
 void DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
@@ -343,7 +291,7 @@ void DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *sp
       rates.push_back(DTLRates(0.01, 1.0, 0.0));
   }
   for (auto &r: rates) {
-    r.computeLL(geneTrees, speciesTree, model);
+    updateLL(r, geneTrees, speciesTree, model);
   }
   DTLRates worstRate;
   int currentIt = 0;
@@ -370,7 +318,7 @@ void DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *sp
     do { //for (int i = 0; i < iterations; i++) {
       previous = current;
       current = x1 + ((x2 - x1) * (double(i) / double(iterations - 1)));
-      current.computeLL(geneTrees, speciesTree, model);
+      updateLL(current, geneTrees, speciesTree, model);
       if (current < bestRates) {
         bestRates = current;
       }
@@ -389,7 +337,7 @@ void DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *sp
   }
   Logger::timed << "Simplex converged after " << currentIt << " iterations: " << rates[0] << endl;
   sort(rates.begin(), rates.end());
-  rates[0].computeLL(geneTrees, speciesTree, model);
+  updateLL(rates[0], geneTrees, speciesTree, model);
 
 }
 

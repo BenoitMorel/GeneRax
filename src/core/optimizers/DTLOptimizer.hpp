@@ -5,6 +5,7 @@ class PerCoreGeneTrees;
 #include <likelihoods/ReconciliationEvaluation.hpp>
 #include <string>
 #include <enums.hpp>
+#include <maths/DTLRates.hpp>
 
 using namespace std;
 

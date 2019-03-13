@@ -9,6 +9,11 @@
 using namespace std;
 
 
+void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families) 
+{
+
+}
+
 int internal_main(int argc, char** argv, void* comm)
 {
   // the order is very important
