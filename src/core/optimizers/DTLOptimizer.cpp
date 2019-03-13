@@ -348,7 +348,6 @@ void DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *sp
   DTLRates worstRate;
   int currentIt = 0;
   while (worstRate.distance(rates.back()) > 0.005) {
-    Logger::info << "begin of loop" << endl;
     sort(rates.begin(), rates.end());
     worstRate = rates.back();
     // centroid
@@ -363,13 +362,25 @@ void DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *sp
     int iterations = 8;
     DTLRates bestRates = x1;
     bestRates.ll = -100000000000;
-    for (int i = 0; i < iterations; i++) {
-      DTLRates current = x1 + ((x2 - x1) * (double(i) / double(iterations - 1)));
+    DTLRates previous;
+    DTLRates current = x1;
+    current.ll = -10000000000;
+    int i = 0;
+    int downgrades = 0;
+    do { //for (int i = 0; i < iterations; i++) {
+      previous = current;
+      current = x1 + ((x2 - x1) * (double(i) / double(iterations - 1)));
       current.computeLL(geneTrees, speciesTree, model);
       if (current < bestRates) {
         bestRates = current;
       }
-    }
+      if (current < previous) {
+        downgrades = 0;
+      } else {
+        downgrades ++;
+      }
+      ++i;
+    } while (downgrades < 2);
     if (bestRates < rates[rates.size() - 1] ) {
       rates.back() = bestRates;
     }
