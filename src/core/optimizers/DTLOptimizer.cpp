@@ -278,7 +278,7 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
   updateLL(rates[0], jointTree);
 }
   
-void DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
+DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
 {
   Logger::timed << "Todo: merge with other implementations" << endl;
   vector<DTLRates> rates;
@@ -338,6 +338,6 @@ void DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *sp
   Logger::timed << "Simplex converged after " << currentIt << " iterations: " << rates[0] << endl;
   sort(rates.begin(), rates.end());
   updateLL(rates[0], geneTrees, speciesTree, model);
-
+  return rates[0];
 }
 

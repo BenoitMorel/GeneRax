@@ -136,7 +136,7 @@ pll_utree_t *LibpllEvaluation::readNewickFromStr(const string &newickString)
 {
   auto utree =  pll_utree_parse_newick_string_unroot(newickString.c_str());
   if (!utree) 
-    throw LibpllException("Error while reading tree ", newickString);
+    throw LibpllException("Error while reading tree from string: ", newickString);
   return utree;
 }
 
@@ -144,7 +144,7 @@ pll_rtree_t *LibpllEvaluation::readRootedFromFile(const string &newickFile)
 {
   auto tree = pll_rtree_parse_newick(newickFile.c_str());
   if (!tree) {
-    throw LibpllException("Error while reading tree ", newickFile);
+    throw LibpllException("Error while reading tree fropm file: ", newickFile);
   }
   return tree;
 }

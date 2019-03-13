@@ -6,12 +6,59 @@
 #include <limits>
 #include <PerCoreGeneTrees.hpp>
 #include <optimizers/DTLOptimizer.hpp>
+#include <maths/DTLRates.hpp>
+#include <treeSearch/JointTree.hpp>
+#include <treeSearch/SPRSearch.hpp>
+
 using namespace std;
 
-
-void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families) 
+void getTreeStrings(const string &filename, vector<string> &treeStrings) 
 {
+  string geneTreeString;
+  if (filename == "__random__" || filename.size() == 0) {
+    treeStrings.push_back("__random__");
+    return;
+  }
+  ifstream treeStream(filename);
+  while(getline(treeStream, geneTreeString)) {
+    geneTreeString.erase(remove(geneTreeString.begin(), geneTreeString.end(), '\n'), geneTreeString.end());
+    if (geneTreeString.empty()) {
+      continue;
+    }
+    treeStrings.push_back(geneTreeString);
+  }
+}
 
+void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
+    DTLRates &rates,
+    GeneRaxArguments &arguments) 
+{
+  for (auto &family: families) {
+    Logger::info << "Treating " << family.name << endl;
+    vector<string> geneTreeStrings;
+    getTreeStrings(family.startingGeneTree, geneTreeStrings);
+    assert(geneTreeStrings.size() == 1);
+    auto jointTree = make_shared<JointTree>(geneTreeStrings[0],
+        family.alignmentFile,
+        arguments.speciesTree,
+        family.mappingFile,
+        arguments.libpllModel,
+        arguments.reconciliationModel,
+        arguments.reconciliationOpt,
+        arguments.rootedGeneTree,
+        arguments.check,
+        false,
+        rates.rates[0],
+        rates.rates[1],
+        rates.rates[2]);
+    jointTree->optimizeParameters(true, false); // only optimize felsenstein likelihood
+    double bestLoglk = jointTree->computeJointLoglk();
+    jointTree->printLoglk();
+    Logger::info << "Initial ll = " << bestLoglk << endl;
+    SPRSearch::applySPRRound(*jointTree, 1, bestLoglk);
+
+  }
+  
 }
 
 int internal_main(int argc, char** argv, void* comm)
@@ -25,12 +72,21 @@ int internal_main(int argc, char** argv, void* comm)
   arguments.printCommand();
   arguments.printSummary();
 
-  vector<FamiliesFileParser::FamilyInfo> families = FamiliesFileParser::parseFamiliesFile(arguments.families);
-  Logger::info << "Number of gene families: " << families.size() << endl;
+  vector<FamiliesFileParser::FamilyInfo> initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
+  Logger::info << "Number of gene families: " << initialFamilies.size() << endl;
 
-  PerCoreGeneTrees geneTrees(families);
-  pll_rtree_t *speciesTree = LibpllEvaluation::readRootedFromFile(arguments.speciesTree); 
-  DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, arguments.reconciliationModel);
+  // update DTL rates
+  DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
+  if (!arguments.userDTLRates) {
+    PerCoreGeneTrees geneTrees(initialFamilies);
+    pll_rtree_t *speciesTree = LibpllEvaluation::readRootedFromFile(arguments.speciesTree); 
+    rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, arguments.reconciliationModel);
+    pll_rtree_destroy(speciesTree, 0);
+  }
+  // update gene trees
+  optimizeGeneTrees(initialFamilies, rates, arguments);
+
+
   Logger::timed << "End of GeneRax execution" << endl;
   ParallelContext::finalize();
   return 0;
