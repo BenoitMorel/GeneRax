@@ -32,11 +32,6 @@ public:
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0) = 0;
   
   /**
-   *  Does this model support transfer? Relevant to know which parameter to optimize
-   */
-  virtual bool implementsTransfers() = 0;
- 
-  /**
    * (incrementally) compute and return the likelihood of the input gene tree 
    */
   double computeLogLikelihood(pll_utree_t *tree);

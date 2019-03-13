@@ -25,7 +25,7 @@ int internal_main(int argc, char** argv, void* comm)
 
   PerCoreGeneTrees geneTrees(families);
   pll_rtree_t *speciesTree = LibpllEvaluation::readRootedFromFile(arguments.speciesTree); 
-  DTLOptimizer::optimizeDLRates(geneTrees, speciesTree, arguments.reconciliationModel);
+  DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, arguments.reconciliationModel);
   Logger::timed << "End of GeneRax execution" << endl;
   ParallelContext::finalize();
   return 0;

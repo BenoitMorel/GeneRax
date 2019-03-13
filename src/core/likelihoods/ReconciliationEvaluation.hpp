@@ -38,14 +38,14 @@ public:
   pll_unode_t *getRoot() {return reconciliationModel->getRoot();}
   void setRoot(pll_unode_t * root) {reconciliationModel->setRoot(root);}
   
-  bool implementsTransfers() {return reconciliationModel->implementsTransfers();}
-
   double evaluate(pll_utree_t *utree);
   /**
    *  @param input treeinfo
    *  @return the reconciliation likelihood of this tree
    */
   double evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo);
+
+  double implementsTransfers() {return Enums::accountsForTransfers(_model);} 
 
   /**
    *  Invalidate the CLV at a given node index
@@ -57,8 +57,10 @@ public:
   void inferMLScenario(Scenario &scenario) {
     reconciliationModel->inferMLScenario(scenario);
   }
+
 private:
-  shared_ptr<AbstractReconciliationModel> getRecModel(RecModel recModel);
+  shared_ptr<AbstractReconciliationModel> getRecModelObject(RecModel recModel);
   shared_ptr<AbstractReconciliationModel> reconciliationModel;
+  RecModel _model;
 };
 

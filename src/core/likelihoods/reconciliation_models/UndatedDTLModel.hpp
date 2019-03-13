@@ -19,7 +19,6 @@ public:
   
   // overloaded from parent
   virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0);  
-  virtual bool implementsTransfers() {return true;}
 protected:
   // overloaded from parent
   virtual void setInitialGeneTree(pll_utree_t *tree);

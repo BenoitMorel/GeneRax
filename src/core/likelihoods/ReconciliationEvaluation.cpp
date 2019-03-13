@@ -9,9 +9,10 @@
 ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
   const GeneSpeciesMapping& map,
   RecModel recModel,
-  bool rootedGeneTree)
+  bool rootedGeneTree):
+  _model(recModel)
 {
-  reconciliationModel = getRecModel(recModel);
+  reconciliationModel = getRecModelObject(recModel);
   reconciliationModel->init(speciesTree, map, rootedGeneTree);
 }
 
@@ -36,7 +37,7 @@ void ReconciliationEvaluation::invalidateCLV(int nodeIndex)
   reconciliationModel->invalidateCLV(nodeIndex);
 }
 
-shared_ptr<AbstractReconciliationModel> ReconciliationEvaluation::getRecModel(RecModel recModel)
+shared_ptr<AbstractReconciliationModel> ReconciliationEvaluation::getRecModelObject(RecModel recModel)
 {
   switch(recModel) {
   case UndatedDL:

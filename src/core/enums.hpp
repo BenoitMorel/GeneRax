@@ -1,9 +1,24 @@
 #pragma once
 
-using namespace std;
+#include <cassert>
 
 enum RecModel {
   UndatedDL, UndatedDTL, DatedDL
+};
+
+class Enums {
+public:
+  
+  static bool accountsForTransfers(RecModel m) 
+  {
+    switch (m) {
+    case UndatedDL: case DatedDL:
+      return false;
+    case UndatedDTL:
+      return true;
+    }
+    assert(false);
+  }
 };
 
 enum RecOpt {
