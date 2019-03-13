@@ -77,6 +77,19 @@ void ParallelContext::allGatherDouble(double localValue, vector<double> &allValu
     MPI_DOUBLE,
     comm);
 }
+
+void ParallelContext::concatenateIntVectors(const vector<int> &localVector, vector<int> &globalVector)
+{
+  globalVector.resize(getSize() * localVector.size(), 0);
+  MPI_Allgather(
+    &localVector[0],
+    localVector.size(),
+    MPI_INT,
+    &(globalVector[0]),
+    localVector.size(),
+    MPI_INT,
+    comm);
+}
   
 void ParallelContext::broadcastInt(int fromRank, int &value)
 {
@@ -126,4 +139,5 @@ void ParallelContext::abort(int errorCode)
     throw ParallelException(errorCode); 
   }
 }
+
 

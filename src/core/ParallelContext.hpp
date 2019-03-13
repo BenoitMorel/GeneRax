@@ -52,6 +52,8 @@ public:
    */
   static void allGatherDouble(double localValue, vector<double> &allValues);
 
+  static void concatenateIntVectors(const vector<int> &localVector, vector<int> &globalVector);
+
   static void sumDouble(double &value);
 
   /**
