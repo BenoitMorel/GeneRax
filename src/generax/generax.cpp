@@ -9,6 +9,7 @@
 #include <maths/DTLRates.hpp>
 #include <treeSearch/JointTree.hpp>
 #include <treeSearch/SPRSearch.hpp>
+#include <IO/FileSystem.hpp>
 
 using namespace std;
 
@@ -55,10 +56,19 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     double bestLoglk = jointTree->computeJointLoglk();
     jointTree->printLoglk();
     Logger::info << "Initial ll = " << bestLoglk << endl;
-    SPRSearch::applySPRRound(*jointTree, 1, bestLoglk);
+    while(SPRSearch::applySPRRound(*jointTree, 1, bestLoglk)) {} 
+    Logger::info << "Final ll = " << bestLoglk << endl;
 
   }
   
+}
+
+void initFolders(const string &output, vector<FamiliesFileParser::FamilyInfo> &families) 
+{
+  FileSystem::mkdir(output, true);
+  for (auto &family: families) {
+    FileSystem::mkdir(FileSystem::joinPaths(output, family.name), true);
+  }
 }
 
 int internal_main(int argc, char** argv, void* comm)
@@ -74,6 +84,8 @@ int internal_main(int argc, char** argv, void* comm)
 
   vector<FamiliesFileParser::FamilyInfo> initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
   Logger::info << "Number of gene families: " << initialFamilies.size() << endl;
+  initFolders(arguments.output, initialFamilies);
+  
 
   // update DTL rates
   DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
