@@ -2,6 +2,7 @@
 #include <ParallelContext.hpp>
 #include <IO/FamiliesFileParser.hpp>
 #include <IO/Logger.hpp>
+#include <IO/LibpllParsers.hpp>
 #include <algorithm>
 #include <limits>
 #include <PerCoreGeneTrees.hpp>
@@ -63,6 +64,13 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
   
 }
 
+void saveTrees(vector<FamiliesFileParser::FamilyInfo> &geneFamilies)
+{
+  for (auto &family: geneFamilies) {
+    
+  }
+}
+
 void initFolders(const string &output, vector<FamiliesFileParser::FamilyInfo> &families) 
 {
   FileSystem::mkdir(output, true);
@@ -91,7 +99,7 @@ int internal_main(int argc, char** argv, void* comm)
   DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
   if (!arguments.userDTLRates) {
     PerCoreGeneTrees geneTrees(initialFamilies);
-    pll_rtree_t *speciesTree = LibpllEvaluation::readRootedFromFile(arguments.speciesTree); 
+    pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(arguments.speciesTree); 
     rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, arguments.reconciliationModel);
     pll_rtree_destroy(speciesTree, 0);
   }

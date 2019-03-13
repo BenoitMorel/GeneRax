@@ -46,9 +46,6 @@ public:
       const LibpllAlignmentInfo &info);
 
 
-  static pll_utree_t *readNewickFromFile(const string &newickFile);
-  static pll_utree_t *readNewickFromStr(const string &newickSTring);
-  static pll_rtree_t *readRootedFromFile(const string &newickFile);
 
   /*
    *  Compute the likelihood of the tree given the alignment

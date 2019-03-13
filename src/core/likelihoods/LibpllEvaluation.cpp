@@ -7,10 +7,10 @@ extern "C" {
 }
 
 #include "LibpllEvaluation.hpp"
+#include <IO/LibpllParsers.hpp>
 #include <map>
 #include <fstream>
 #include <iostream>
-#include <streambuf>
 #include <IO/Logger.hpp>
 const double DEFAULT_BL = 0.000001;
 const double TOLERANCE = 0.5;
@@ -33,20 +33,6 @@ const double TOLERANCE = 0.5;
 
 using namespace std;
 
-/*
- *  @brief Exception thrown from LibpllEvaluation
- */
-class LibpllException: public exception {
-public:
-  LibpllException(const string &s): msg_(s) {}
-  LibpllException(const string &s1, 
-      const string s2): msg_(s1 + s2) {}
-  virtual const char* what() const throw() { return msg_.c_str(); }
-  void append(const string &str) {msg_ += str;}
-
-private:
-  string msg_;
-};
 
 struct pll_sequence {
   pll_sequence(char *label, char *seq, unsigned int len):
@@ -121,33 +107,6 @@ pllmod_subst_model_t *getModel(const string &modelStr) {
   }
 }
 
-pll_utree_t *LibpllEvaluation::readNewickFromFile(const string &newickFilename)
-{
-  ifstream t(newickFilename);
-  if (!t)
-    throw LibpllException("Could not load open newick file ", newickFilename);
-  string str((istreambuf_iterator<char>(t)),
-                       istreambuf_iterator<char>());
-  return readNewickFromStr(str);
-}
-
-
-pll_utree_t *LibpllEvaluation::readNewickFromStr(const string &newickString)
-{
-  auto utree =  pll_utree_parse_newick_string_unroot(newickString.c_str());
-  if (!utree) 
-    throw LibpllException("Error while reading tree from string: ", newickString);
-  return utree;
-}
-
-pll_rtree_t *LibpllEvaluation::readRootedFromFile(const string &newickFile)
-{
-  auto tree = pll_rtree_parse_newick(newickFile.c_str());
-  if (!tree) {
-    throw LibpllException("Error while reading tree fropm file: ", newickFile);
-  }
-  return tree;
-}
 
 shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &newickString,
     const string& alignmentFilename,
@@ -184,7 +143,7 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
       int seed = 0;
       utree = pllmod_utree_create_random(labels.size(), &labels[0], seed);
     } else {
-      utree = readNewickFromStr(newickString);
+      utree = LibpllParsers::readNewickFromStr(newickString);
     }
   }
   // partition

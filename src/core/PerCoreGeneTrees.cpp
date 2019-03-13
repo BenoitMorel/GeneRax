@@ -1,7 +1,7 @@
 #include "PerCoreGeneTrees.hpp"
 #include <ParallelContext.hpp>
-#include <likelihoods/LibpllEvaluation.hpp>
 #include <IO/Logger.hpp>
+#include <IO/LibpllParsers.hpp>
 #include <algorithm>
 #include <numeric>
 #include <iostream>
@@ -20,7 +20,7 @@ vector<int> getTreeSizes(const vector<FamiliesFileParser::FamilyInfo> &families)
   int treesNumber = families.size();
   vector<int> localTreeSizes((treesNumber - 1 ) / ParallelContext::getSize() + 1, 0);
   for (int i = ParallelContext::getBegin(treesNumber); i < ParallelContext::getEnd(treesNumber); i ++) {
-    pll_utree_t *tree = LibpllEvaluation::readNewickFromFile(families[i].startingGeneTree);
+    pll_utree_t *tree = LibpllParsers::readNewickFromFile(families[i].startingGeneTree);
     int taxa = tree->tip_count;
     localTreeSizes[i - ParallelContext::getBegin(treesNumber)] = taxa;
     pll_utree_destroy(tree, 0);
@@ -61,6 +61,6 @@ PerCoreGeneTrees::PerCoreGeneTrees(const vector<FamiliesFileParser::FamilyInfo> 
   for (auto i: myIndices) {
     _geneTrees.push_back(GeneTree());
     _geneTrees.back().mapping = GeneSpeciesMapping(families[i].mappingFile);
-    _geneTrees.back().tree = LibpllEvaluation::readNewickFromFile(families[i].startingGeneTree);
+    _geneTrees.back().tree = LibpllParsers::readNewickFromFile(families[i].startingGeneTree);
   }
 }
