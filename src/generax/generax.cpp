@@ -33,8 +33,12 @@ void getTreeStrings(const string &filename, vector<string> &treeStrings)
 
 void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     DTLRates &rates,
-    GeneRaxArguments &arguments) 
+    GeneRaxArguments &arguments,
+    int sprRadius) 
 {
+  Logger::info << "Optimize gene trees with rates " << rates << endl;
+  double totalInitialLL = 0.0;
+  double totalFinalLL = 0.0;
   for (auto &family: families) {
     Logger::info << "Treating " << family.name << endl;
     vector<string> geneTreeStrings;
@@ -55,16 +59,19 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
         rates.rates[2]);
     jointTree->optimizeParameters(true, false); // only optimize felsenstein likelihood
     double bestLoglk = jointTree->computeJointLoglk();
+    totalInitialLL += bestLoglk;
     jointTree->printLoglk();
     Logger::info << "Initial ll = " << bestLoglk << endl;
-    while(SPRSearch::applySPRRound(*jointTree, 1, bestLoglk)) {} 
+    while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk)) {} 
+    totalFinalLL += bestLoglk;
     Logger::info << "Final ll = " << bestLoglk << endl;
     string geneTreePath = FileSystem::joinPaths(arguments.output, family.name);
     geneTreePath = FileSystem::joinPaths(geneTreePath, "geneTree.newick");
     jointTree->save(geneTreePath, false);
     family.startingGeneTree = geneTreePath;
   }
-  
+  Logger::info << "Total initial and final ll: " << totalInitialLL << " " << totalFinalLL << endl;
+  ParallelContext::barrier(); 
 }
 
 void optimizeRates(const GeneRaxArguments &arguments,
@@ -76,6 +83,7 @@ void optimizeRates(const GeneRaxArguments &arguments,
     pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(arguments.speciesTree); 
     rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, arguments.reconciliationModel);
     pll_rtree_destroy(speciesTree, 0);
+    ParallelContext::barrier(); 
   }
 }
 
@@ -107,9 +115,13 @@ int internal_main(int argc, char** argv, void* comm)
   vector<FamiliesFileParser::FamilyInfo> currentFamilies = initialFamilies;
   
   optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments);
+  optimizeGeneTrees(currentFamilies, rates, arguments, 1);
   optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments);
+  optimizeGeneTrees(currentFamilies, rates, arguments, 1);
+  optimizeRates(arguments, currentFamilies, rates);
+  optimizeGeneTrees(currentFamilies, rates, arguments, 3);
+  optimizeRates(arguments, currentFamilies, rates);
+  optimizeGeneTrees(currentFamilies, rates, arguments, 5);
   optimizeRates(arguments, currentFamilies, rates);
 
 

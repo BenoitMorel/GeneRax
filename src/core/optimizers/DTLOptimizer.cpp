@@ -281,6 +281,9 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
 DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
 {
   Logger::timed << "Todo: merge with other implementations" << endl;
+  DTLRates realRates(0.0681739, 0.0377696,0);
+  updateLL(realRates, geneTrees, speciesTree, model);
+  Logger::info << "real rates " << realRates.ll << endl;
   vector<DTLRates> rates;
   rates.push_back(DTLRates(0.01, 0.01, 0.0));
   rates.push_back(DTLRates(1.0, 0.01, 0.0));

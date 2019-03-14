@@ -7,9 +7,17 @@ pll_utree_t *LibpllParsers::readNewickFromFile(const string &newickFilename)
   ifstream t(newickFilename);
   if (!t)
     throw LibpllException("Could not load open newick file ", newickFilename);
+  
   string str((istreambuf_iterator<char>(t)),
                        istreambuf_iterator<char>());
-  return readNewickFromStr(str);
+  
+  pll_utree_t *res = 0;
+  try {
+    res = readNewickFromStr(str);
+  } catch (...) {
+    throw LibpllException("Error while reading tree from file: ", newickFilename);
+  }
+  return res;
 }
 
 
