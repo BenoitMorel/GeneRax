@@ -15,8 +15,8 @@ set(PLL_LIBRARIES
 
 
 
-macro(add_program program_name program_sources)
-  if (JOINTSEARCH_BUILD_AS_LIBRARY)
+macro(add_program program_name program_sources force_lib)
+  if (JOINTSEARCH_BUILD_AS_LIBRARY OR ${force_lib})
     add_library(${program_name} MODULE ${program_sources})
   else()
     add_executable(${program_name} ${program_sources})

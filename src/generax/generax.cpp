@@ -37,6 +37,27 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     GeneRaxArguments &arguments,
     int sprRadius) 
 {
+
+/*
+  vector<char *> argv;
+  string exec = "mpi-scheduler";
+  string implem = "--split-scheduler" ;
+  string library = "/home/morelbt/github/GeneRax/build/src/generax/libgenerax_optimize_gene_trees.so";
+  string commandFile = "/home/morelbt/github/phd_experiments/command.txt";
+  string outputDir = FileSystem::joinPaths(arguments.output, "scheduler_run");
+  string jobFailureFatal = "1";
+  FileSystem::mkdir(outputDir, true);
+  argv.push_back((char *)exec.c_str());
+  argv.push_back((char *)implem.c_str());
+  argv.push_back((char *)library.c_str());
+  argv.push_back((char *)commandFile.c_str());
+  argv.push_back((char *)outputDir.c_str());
+  argv.push_back((char *)jobFailureFatal.c_str());
+  MPI_Comm comm = MPI_COMM_WORLD;
+  ParallelContext::barrier(); 
+  cerr << "Begin rank " << ParallelContext::getRank() << endl;
+  mpi_scheduler_main(argv.size(), &argv[0], (void*)&comm);
+  */
   Logger::info << "Optimize gene trees with rates " << rates << endl;
   double totalInitialLL = 0.0;
   double totalFinalLL = 0.0;
@@ -53,7 +74,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
         arguments.reconciliationModel,
         arguments.reconciliationOpt,
         arguments.rootedGeneTree,
-        arguments.check,
+        false,
         false,
         rates.rates[0],
         rates.rates[1],
@@ -72,6 +93,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     family.startingGeneTree = geneTreePath;
   }
   Logger::info << "Total initial and final ll: " << totalInitialLL << " " << totalFinalLL << endl;
+  cerr << "End rank " << ParallelContext::getRank() << endl;
   ParallelContext::barrier(); 
 }
 
@@ -124,26 +146,16 @@ int internal_main(int argc, char** argv, void* comm)
   optimizeRates(arguments, currentFamilies, rates);
   optimizeGeneTrees(currentFamilies, rates, arguments, 3);
   optimizeRates(arguments, currentFamilies, rates);
-
   Logger::timed << "End of GeneRax execution" << endl;
   ParallelContext::finalize();
   return 0;
 }
 
 
-#ifdef JOINTSEARCH_BUILD_AS_LIB
-
-extern "C" int dll_main(int argc, char** argv, void* comm)
-{
-  return internal_main(argc, argv, comm);
-}
-
-#else
 
 int main(int argc, char** argv)
 {
   return internal_main(argc, argv, 0);
 }
 
-#endif
 

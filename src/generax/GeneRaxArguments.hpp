@@ -23,7 +23,6 @@ public:
    RecOpt reconciliationOpt;
    string libpllModel;
    string output;
-   bool check;
    bool rootedGeneTree;
    bool userDTLRates;
    double dupRate;

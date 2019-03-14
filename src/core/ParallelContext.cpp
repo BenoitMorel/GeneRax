@@ -2,46 +2,60 @@
 #include <algorithm>
 
 ofstream ParallelContext::sink("/dev/null");
-MPI_Comm ParallelContext::comm(MPI_COMM_WORLD);
 bool ParallelContext::ownMPIContext(true);
+stack<MPI_Comm> ParallelContext::_commStack;
+stack<bool> ParallelContext::_ownsMPIContextStack;
+
 
 void ParallelContext::init(void *commPtr)
 {
+  cerr << "INIT" << endl;
   if (commPtr) {
-    comm = *((MPI_Comm*)commPtr);
-    ownMPIContext = false; 
-  }
-
-  if (ownMPIContext) {
+    setComm(*((MPI_Comm*)commPtr));
+    setOwnMPIContext(false);
+  } else {
     MPI_Init(0, 0);
+    setComm(MPI_COMM_WORLD);
+    setOwnMPIContext(true);
   }
+  cerr << "init rank " << getRank() << " stack size " << _commStack.size() << endl; 
+
 }
 
 
 void ParallelContext::finalize()
 {
-  if (ownMPIContext) {
+  if (_ownsMPIContextStack.top()) {
     MPI_Finalize();
   }
+  _commStack.pop();
+  _ownsMPIContextStack.pop();
 }
 
 int ParallelContext::getRank() 
 {
   int rank = 0;
-  MPI_Comm_rank(comm, &rank);
+  MPI_Comm_rank(getComm(), &rank);
   return rank;
 }
 
 int ParallelContext::getSize() 
 {
   int size = 0;
-  MPI_Comm_size(comm, &size);
+  MPI_Comm_size(getComm(), &size);
   return size;
+}
+  
+void ParallelContext::setOwnMPIContext(bool own)
+{
+  _ownsMPIContextStack.push(own);
+  ownMPIContext = own;
+  
 }
 
 void ParallelContext::setComm(MPI_Comm newComm)
 {
-  comm = newComm;
+  _commStack.push(newComm);
 }
 
 
@@ -60,7 +74,7 @@ void ParallelContext::sumDouble(double &value)
 {
   double sum = 0;
   barrier();
-  MPI_Allreduce(&value, &sum, 1, MPI_DOUBLE, MPI_SUM, comm);
+  MPI_Allreduce(&value, &sum, 1, MPI_DOUBLE, MPI_SUM, getComm());
   barrier();
   value = sum;
 }
@@ -75,7 +89,7 @@ void ParallelContext::allGatherDouble(double localValue, vector<double> &allValu
     &(allValues[0]),
     1,
     MPI_DOUBLE,
-    comm);
+    getComm());
 }
 
 void ParallelContext::concatenateIntVectors(const vector<int> &localVector, vector<int> &globalVector)
@@ -88,7 +102,7 @@ void ParallelContext::concatenateIntVectors(const vector<int> &localVector, vect
     &(globalVector[0]),
     localVector.size(),
     MPI_INT,
-    comm);
+    getComm());
 }
   
 void ParallelContext::broadcastInt(int fromRank, int &value)
@@ -98,7 +112,7 @@ void ParallelContext::broadcastInt(int fromRank, int &value)
     1,
     MPI_INT,
     fromRank,
-    comm);
+    getComm());
 }
 
 void ParallelContext::broadcastDouble(int fromRank, double &value)
@@ -108,7 +122,7 @@ void ParallelContext::broadcastDouble(int fromRank, double &value)
     1,
     MPI_DOUBLE,
     fromRank,
-    comm);
+    getComm());
 }
 
 int ParallelContext::getMax(double &value, int &bestRank)
@@ -127,12 +141,12 @@ int ParallelContext::getMax(double &value, int &bestRank)
 
 void ParallelContext::barrier()
 {
-  MPI_Barrier(comm);
+  MPI_Barrier(getComm());
 }
 
 void ParallelContext::abort(int errorCode)
 { 
-  if (ownMPIContext) {
+  if (_ownsMPIContextStack.top()) {
     MPI_Finalize();
     exit(errorCode);
   } else {

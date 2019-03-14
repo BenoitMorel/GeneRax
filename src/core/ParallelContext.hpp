@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <mpi.h>
+#include <stack>
 
 using namespace std;
 class ParallelException: public exception
@@ -84,11 +85,14 @@ public:
 
   static void barrier();
   static void abort(int errorCode);
+
+  static MPI_Comm getComm() {return _commStack.top();}
 private:
   static void setComm(MPI_Comm newComm);
+  static void setOwnMPIContext(bool own);
   static ofstream sink;
-  static MPI_Comm comm;
   static bool ownMPIContext;
-  
+  static stack<MPI_Comm> _commStack;
+  static stack<bool> _ownsMPIContextStack;
 };
 

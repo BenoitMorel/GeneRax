@@ -14,7 +14,6 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
   reconciliationOpt(Simplex),
   libpllModel("GTR"),
   output("jointSearch"),
-  check(false),
   rootedGeneTree(true),
   userDTLRates(false),
   dupRate(-1.0),
@@ -44,8 +43,6 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
       libpllModel = string(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
       output = string(argv[++i]);
-    } else if (arg == "--check") {
-      check = true;
     } else if (arg == "--unrooted-gene-tree") {
       rootedGeneTree = false;
     } else if (arg == "--dupRate") {
@@ -106,7 +103,6 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "--rec-opt <reconciliationOpt>  {window, simplex}" << endl;
   Logger::info << "--libpll-model <libpllModel>  {GTR, LG, DAYHOFF etc.}" << endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
-  Logger::info << "--check" << endl;
   Logger::info << "--unrooted-gene-tree" << endl;
   Logger::info << "--dupRate <duplication rate>" << endl;
   Logger::info << "--lossRate <loss rate>" << endl;
@@ -133,7 +129,6 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "Reconciliation opt: " << Arguments::recOptToStr(reconciliationOpt) << endl;
   Logger::info << "Libpll model: " << libpllModel << endl;
   Logger::info << "Prefix: " << output << endl;
-  Logger::info << "Check mode: " << boolStr[check] << endl;
   Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << endl;
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << endl;
   Logger::info << endl;
