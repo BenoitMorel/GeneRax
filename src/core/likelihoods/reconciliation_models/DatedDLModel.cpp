@@ -112,7 +112,7 @@ DatedDLModel::DatedDLModel():
 {
 }
 
-void DatedDLModel::setRates(double dupRate, double lossRate, double transferRate)
+void DatedDLModel::setRates(double dupRate, double lossRate, double transferRate, const vector<double> &speciesScalers)
 {
   if (dupRate == 0)
     dupRate = EPSILON;

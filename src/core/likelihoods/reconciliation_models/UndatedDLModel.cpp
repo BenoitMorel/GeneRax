@@ -28,13 +28,25 @@ static double solveSecondDegreePolynome(double a, double b, double c)
 
 void UndatedDLModel::setRates(double dupRate, 
   double lossRate,
-  double transferRates) {
+  double transferRates,
+  const vector<double> &speciesScalers) {
   geneRoot_ = 0;
   _PD = vector<double>(speciesNodesCount_, dupRate);
   _PL = vector<double>(speciesNodesCount_, lossRate);
   _PS = vector<double>(speciesNodesCount_, 1.0);
+  if (speciesScalers.size()) {
+    assert(speciesScalers.size() == (size_t)speciesNodesCount_);
+    for (int i = 0; i < speciesNodesCount_; ++i) {
+      _PD[i] *= speciesScalers[i];
+      _PL[i] *= speciesScalers[i];
+    }
+  }
   for (auto speciesNode: speciesNodes_) {
     int e = speciesNode->node_index;
+    /*
+    _PD[e] *= speciesNode->length;
+    _PL[e] *= speciesNode->length;
+    */
     double sum = _PD[e] + _PL[e] + _PS[e];
     _PD[e] /= sum;
     _PL[e] /= sum;

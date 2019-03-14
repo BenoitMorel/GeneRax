@@ -29,7 +29,7 @@ public:
   /**
    * Set the DTL rates, and update probabilities relative to the species tree only
    */
-  virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0) = 0;
+  virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0, const vector<double> &speciesScalers = vector<double>()) = 0;
   
   /**
    * (incrementally) compute and return the likelihood of the input gene tree 

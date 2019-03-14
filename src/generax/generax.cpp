@@ -119,9 +119,9 @@ int internal_main(int argc, char** argv, void* comm)
   optimizeRates(arguments, currentFamilies, rates);
   optimizeGeneTrees(currentFamilies, rates, arguments, 1);
   optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, 3);
+  optimizeGeneTrees(currentFamilies, rates, arguments, 2);
   optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, 5);
+  optimizeGeneTrees(currentFamilies, rates, arguments, 3);
   optimizeRates(arguments, currentFamilies, rates);
 
 

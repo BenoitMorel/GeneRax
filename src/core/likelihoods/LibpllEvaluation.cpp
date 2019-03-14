@@ -300,7 +300,7 @@ void LibpllEvaluation::parseFasta(const char *fastaFile,
   }
   weights = pll_compress_site_patterns(buffer, map, count, &length);
   if (!weights) 
-    throw LibpllException("Error while parsing fasta: cannot compress sites");
+    throw LibpllException("Error while parsing fasta: cannot compress sites from ", fastaFile);
   for (int i = 0; i < count; ++i) {
     sequences[i]->len = length;
   }
