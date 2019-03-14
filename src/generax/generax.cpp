@@ -11,6 +11,7 @@
 #include <treeSearch/JointTree.hpp>
 #include <treeSearch/SPRSearch.hpp>
 #include <IO/FileSystem.hpp>
+#include <../../ext/MPIScheduler/src/mpischeduler.hpp>
 
 using namespace std;
 
@@ -123,7 +124,6 @@ int internal_main(int argc, char** argv, void* comm)
   optimizeRates(arguments, currentFamilies, rates);
   optimizeGeneTrees(currentFamilies, rates, arguments, 3);
   optimizeRates(arguments, currentFamilies, rates);
-
 
   Logger::timed << "End of GeneRax execution" << endl;
   ParallelContext::finalize();
