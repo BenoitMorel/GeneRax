@@ -9,7 +9,6 @@ stack<bool> ParallelContext::_ownsMPIContextStack;
 
 void ParallelContext::init(void *commPtr)
 {
-  cerr << "INIT" << endl;
   if (commPtr) {
     setComm(*((MPI_Comm*)commPtr));
     setOwnMPIContext(false);
@@ -18,7 +17,6 @@ void ParallelContext::init(void *commPtr)
     setComm(MPI_COMM_WORLD);
     setOwnMPIContext(true);
   }
-  cerr << "init rank " << getRank() << " stack size " << _commStack.size() << endl; 
 
 }
 

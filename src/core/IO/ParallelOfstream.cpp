@@ -8,8 +8,15 @@ ParallelOfstream::ParallelOfstream(const string &fileName): _os(0)
     _os = new ostream(0);
   }
 }
+  
+void ParallelOfstream::close()
+{
+  delete _os;
+  _os = 0;
+  ParallelContext::barrier();
+}
 
 ParallelOfstream::~ParallelOfstream()
 {
-  delete _os;
+  close();
 }

@@ -8,7 +8,8 @@ using namespace std;
 
 class ParallelOfstream {
 public:
-  ParallelOfstream(const string &fileName); 
+  ParallelOfstream(const string &fileName);
+  void close();
   ~ParallelOfstream();
 private:
   template<typename T> friend ostream& operator<<(ParallelOfstream&, T);

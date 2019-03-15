@@ -21,7 +21,7 @@ set(jointsearch-core_SOURCES ParallelContext.cpp
   treeSearch/SPRSearch.cpp
   )
 
-add_library(jointsearch-core ${jointsearch-core_SOURCES})
+add_library(jointsearch-core SHARED ${jointsearch-core_SOURCES})
 
 target_include_directories(jointsearch-core
   PUBLIC ${JOINTSEARCH_INCLUDE_DIRS}

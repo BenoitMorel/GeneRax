@@ -32,7 +32,6 @@ public:
               double lossRate = 1.0,
               double transRate = 0.5);
 
-
     virtual ~JointTree() {}
     void printLibpllTree() const;
     void optimizeParameters(bool felsenstein = true, bool reconciliation = true);

@@ -67,23 +67,28 @@ void optimizeGeneTrees(const string &startingGeneTreeFile,
   totalInitialLL += bestLoglk;
   jointTree->printLoglk();
   Logger::info << "Initial ll = " << bestLoglk << endl;
+  
   while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk)) {} 
+  /*
   totalFinalLL += bestLoglk;
   Logger::info << "Final ll = " << bestLoglk << endl;
   jointTree->save(outputGeneTree, false);
   Logger::info << "Total initial and final ll: " << totalInitialLL << " " << totalFinalLL << endl;
+  */
   ParallelContext::barrier();
 }
 
 
 int local_internal_main(int argc, char** argv, void* comm)
 {
-  //ParallelContext::init(comm); 
-  
-  /*
+  ParallelContext::init(comm);
+  if (argc != 14) {
+    Logger::error << "Invalid number of parameters in generax_optimize_gene_trees: " << argc << endl;
+    return 1;
+  }
   int i = 1;
   string startingGeneTreeFile(argv[i++]);
-  string mapFile(argv[i++]);
+  string mappingFile(argv[i++]);
   string alignmentFile(argv[i++]);
   string speciesTreeFile(argv[i++]);
   string libpllModel(argv[i++]);
@@ -96,7 +101,7 @@ int local_internal_main(int argc, char** argv, void* comm)
   int sprRadius = atoi(argv[i++]);
   string outputGeneTree(argv[i++]);
   optimizeGeneTrees(startingGeneTreeFile,
-      mapFile,
+      mappingFile,
       alignmentFile,
       speciesTreeFile,
       libpllModel,
@@ -108,15 +113,13 @@ int local_internal_main(int argc, char** argv, void* comm)
       transferRate,
       sprRadius,
       outputGeneTree);
-      */ 
-  //ParallelContext::finalize();
+  ParallelContext::finalize();
   return 0;
 }
 
 
 extern "C" int dll_main(int argc, char** argv, void* comm)
 {
-  cerr << "generax submain !" << endl;
   return local_internal_main(argc, argv, comm);
 }
 

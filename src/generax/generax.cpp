@@ -11,6 +11,7 @@
 #include <treeSearch/JointTree.hpp>
 #include <treeSearch/SPRSearch.hpp>
 #include <IO/FileSystem.hpp>
+#include <IO/ParallelOfstream.hpp>
 #include <../../ext/MPIScheduler/src/mpischeduler.hpp>
 
 using namespace std;
@@ -37,14 +38,37 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     GeneRaxArguments &arguments,
     int sprRadius) 
 {
-
-/*
+#define PARGENES
+#ifdef PARGENES
+  string commandFile = "/home/morelbt/github/phd_experiments/command.txt";
+  string outputDir = FileSystem::joinPaths(arguments.output, "scheduler_run");
+  ParallelOfstream os(commandFile);
+  for (auto &family: families) {
+    string geneTreePath = FileSystem::joinPaths(arguments.output, family.name);
+    geneTreePath = FileSystem::joinPaths(geneTreePath, "geneTree.newick");
+    os << family.name << " ";
+    os << 4 << " "; // cores
+    os << 4 << " " ; // cost
+    os << family.startingGeneTree << " ";
+    os << family.mappingFile << " ";
+    os << family.alignmentFile << " ";
+    os << arguments.speciesTree << " ";
+    os << arguments.libpllModel  << " ";
+    os << (int)arguments.reconciliationModel  << " ";
+    os << (int)arguments.reconciliationOpt  << " ";
+    os << (int)arguments.rootedGeneTree  << " ";
+    os << rates.rates[0]  << " ";
+    os << rates.rates[1]  << " ";
+    os << rates.rates[2]  << " ";
+    os << sprRadius  << " ";
+    os << geneTreePath << endl;
+  } 
+  os.close();
+  
   vector<char *> argv;
   string exec = "mpi-scheduler";
   string implem = "--split-scheduler" ;
   string library = "/home/morelbt/github/GeneRax/build/src/generax/libgenerax_optimize_gene_trees.so";
-  string commandFile = "/home/morelbt/github/phd_experiments/command.txt";
-  string outputDir = FileSystem::joinPaths(arguments.output, "scheduler_run");
   string jobFailureFatal = "1";
   FileSystem::mkdir(outputDir, true);
   argv.push_back((char *)exec.c_str());
@@ -55,9 +79,8 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
   argv.push_back((char *)jobFailureFatal.c_str());
   MPI_Comm comm = MPI_COMM_WORLD;
   ParallelContext::barrier(); 
-  cerr << "Begin rank " << ParallelContext::getRank() << endl;
   mpi_scheduler_main(argv.size(), &argv[0], (void*)&comm);
-  */
+#else
   Logger::info << "Optimize gene trees with rates " << rates << endl;
   double totalInitialLL = 0.0;
   double totalFinalLL = 0.0;
@@ -95,6 +118,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
   Logger::info << "Total initial and final ll: " << totalInitialLL << " " << totalFinalLL << endl;
   cerr << "End rank " << ParallelContext::getRank() << endl;
   ParallelContext::barrier(); 
+#endif
 }
 
 void optimizeRates(const GeneRaxArguments &arguments,

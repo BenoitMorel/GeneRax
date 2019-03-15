@@ -17,16 +17,18 @@ set(PLL_LIBRARIES
 
 macro(add_program program_name program_sources force_lib)
   if (JOINTSEARCH_BUILD_AS_LIBRARY OR ${force_lib})
-    add_library(${program_name} MODULE ${program_sources})
+    add_library(${program_name} SHARED ${program_sources})
   else()
     add_executable(${program_name} ${program_sources})
   endif()
-
-  target_link_libraries(${program_name} 
-    jointsearch-core
-    ${MPI_LIBRARIES}
-    ${PLL_LIBRARIES}
-    )
+  if (NOT ${force_lib}) 
+    target_link_libraries(${program_name} 
+      jointsearch-core
+      ${MPI_LIBRARIES}
+      ${PLL_LIBRARIES}
+      )
+  endif()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
   if (JOINTSEARCH_BUILD_AS_LIBRARY AND NOT APPLE)
     target_link_libraries(${program_name} gcc_s gcc)
   endif()
