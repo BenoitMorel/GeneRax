@@ -21,13 +21,11 @@ macro(add_program program_name program_sources force_lib)
   else()
     add_executable(${program_name} ${program_sources})
   endif()
-  if (NOT ${force_lib}) 
-    target_link_libraries(${program_name} 
-      jointsearch-core
-      ${MPI_LIBRARIES}
-      ${PLL_LIBRARIES}
-      )
-  endif()
+  target_link_libraries(${program_name} 
+    jointsearch-core
+    ${MPI_LIBRARIES}
+    ${PLL_LIBRARIES}
+    )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
   if (JOINTSEARCH_BUILD_AS_LIBRARY AND NOT APPLE)
     target_link_libraries(${program_name} gcc_s gcc)

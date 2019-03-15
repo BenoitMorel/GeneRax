@@ -13,7 +13,6 @@ void ParallelOfstream::close()
 {
   delete _os;
   _os = 0;
-  ParallelContext::barrier();
 }
 
 ParallelOfstream::~ParallelOfstream()
