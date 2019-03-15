@@ -13,6 +13,7 @@
 #include <IO/FileSystem.hpp>
 #include <IO/ParallelOfstream.hpp>
 #include <../../ext/MPIScheduler/src/mpischeduler.hpp>
+#include <sstream>
 
 using namespace std;
 
@@ -36,18 +37,21 @@ void getTreeStrings(const string &filename, vector<string> &treeStrings)
 void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     DTLRates &rates,
     GeneRaxArguments &arguments,
-    int sprRadius) 
+    int sprRadius,
+    int iteration) 
 {
 #define PARGENES
 #ifdef PARGENES
+  stringstream outputDirName;
+  outputDirName << "gene_optimization_" << iteration;
   string commandFile = "/home/morelbt/github/phd_experiments/command.txt";
-  string outputDir = FileSystem::joinPaths(arguments.output, "scheduler_run");
+  string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
   ParallelOfstream os(commandFile);
   for (auto &family: families) {
     string geneTreePath = FileSystem::joinPaths(arguments.output, family.name);
     geneTreePath = FileSystem::joinPaths(geneTreePath, "geneTree.newick");
     os << family.name << " ";
-    os << 4 << " "; // cores
+    os << 16 << " "; // cores
     os << 4 << " " ; // cost
     os << family.startingGeneTree << " ";
     os << family.mappingFile << " ";
@@ -62,6 +66,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     os << rates.rates[2]  << " ";
     os << sprRadius  << " ";
     os << geneTreePath << endl;
+    family.startingGeneTree = geneTreePath;
   } 
   os.close();
   
@@ -80,6 +85,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
   MPI_Comm comm = MPI_COMM_WORLD;
   ParallelContext::barrier(); 
   mpi_scheduler_main(argv.size(), &argv[0], (void*)&comm);
+  
 #else
   Logger::info << "Optimize gene trees with rates " << rates << endl;
   double totalInitialLL = 0.0;
@@ -160,15 +166,15 @@ int internal_main(int argc, char** argv, void* comm)
   
   DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
   vector<FamiliesFileParser::FamilyInfo> currentFamilies = initialFamilies;
-  
+  int iteration = 0; 
   optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, 1);
+  optimizeGeneTrees(currentFamilies, rates, arguments, 1, iteration++);
   optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, 1);
+  optimizeGeneTrees(currentFamilies, rates, arguments, 1, iteration++);
   optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, 2);
+  optimizeGeneTrees(currentFamilies, rates, arguments, 2, iteration++);
   optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, 3);
+  optimizeGeneTrees(currentFamilies, rates, arguments, 3, iteration++);
   optimizeRates(arguments, currentFamilies, rates);
   Logger::timed << "End of GeneRax execution" << endl;
   ParallelContext::finalize();

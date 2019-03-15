@@ -69,12 +69,10 @@ void optimizeGeneTrees(const string &startingGeneTreeFile,
   Logger::info << "Initial ll = " << bestLoglk << endl;
   
   while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk)) {} 
-  /*
   totalFinalLL += bestLoglk;
   Logger::info << "Final ll = " << bestLoglk << endl;
   jointTree->save(outputGeneTree, false);
   Logger::info << "Total initial and final ll: " << totalInitialLL << " " << totalFinalLL << endl;
-  */
   ParallelContext::barrier();
 }
 

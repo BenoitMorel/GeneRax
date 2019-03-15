@@ -14,17 +14,13 @@ public:
     if (masterRankOnly && ParallelContext::getRank() != 0) {
       return;
     }
-    int nError = 1;
 #if defined(_WIN32)
-    nError = _mkdir(path.c_str()); // can be used on Windows
+    _mkdir(path.c_str()); // can be used on Windows
 #else 
     mode_t nMode = 0733; // UNIX style permissions
-    nError = ::mkdir(path.c_str(),nMode); // can be used on non-Windows
+    ::mkdir(path.c_str(),nMode); // can be used on non-Windows
 #endif
-    if (nError != 0) {
-      Logger::info << "Failed to create directory " << path << endl; 
-      ParallelContext::abort(1);
-    }
+
   }
 
   static string joinPaths(const string &p1, const string &p2) {
