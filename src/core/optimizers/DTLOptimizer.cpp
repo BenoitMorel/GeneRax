@@ -318,9 +318,13 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
     current.ll = -10000000000;
     int i = 0;
     int downgrades = 0;
+    double stepSize = 1 / double(iterations - 1);
     do { //for (int i = 0; i < iterations; i++) {
+      if (i > 8) {
+        stepSize *= 1.5;
+      }
       previous = current;
-      current = x1 + ((x2 - x1) * (double(i) / double(iterations - 1)));
+      current = x1 + ((x2 - x1) * i * stepSize);
       updateLL(current, geneTrees, speciesTree, model);
       if (current < bestRates) {
         bestRates = current;
