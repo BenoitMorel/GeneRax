@@ -281,9 +281,6 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
 DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
 {
   Logger::timed << "Todo: merge with other implementations" << endl;
-  DTLRates realRates(0.0681739, 0.0377696,0);
-  updateLL(realRates, geneTrees, speciesTree, model);
-  Logger::info << "real rates " << realRates.ll << endl;
   vector<DTLRates> rates;
   rates.push_back(DTLRates(0.01, 0.01, 0.0));
   rates.push_back(DTLRates(1.0, 0.01, 0.0));
@@ -293,8 +290,10 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
   } else {
       rates.push_back(DTLRates(0.01, 1.0, 0.0));
   }
+  int llCalls = 0;
   for (auto &r: rates) {
     updateLL(r, geneTrees, speciesTree, model);
+    llCalls++;
   }
   DTLRates worstRate;
   int currentIt = 0;
@@ -318,20 +317,24 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
     current.ll = -10000000000;
     int i = 0;
     int downgrades = 0;
+    int upgrades = 0;
     double stepSize = 1 / double(iterations - 1);
     do { //for (int i = 0; i < iterations; i++) {
-      if (i > 8) {
-        stepSize *= 1.5;
+      if (upgrades > 2) {
+        stepSize *= 2;
       }
       previous = current;
       current = x1 + ((x2 - x1) * i * stepSize);
       updateLL(current, geneTrees, speciesTree, model);
+      llCalls++;
       if (current < bestRates) {
         bestRates = current;
       }
       if (current < previous) {
         downgrades = 0;
+        upgrades++;
       } else {
+        upgrades = 0;
         downgrades ++;
       }
       ++i;
@@ -342,9 +345,10 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
     currentIt++;
     Logger::info << "end of loop" << endl;
   }
-  Logger::timed << "Simplex converged after " << currentIt << " iterations: " << rates[0] << endl;
   sort(rates.begin(), rates.end());
   updateLL(rates[0], geneTrees, speciesTree, model);
+  llCalls++;
+  Logger::timed << "Simplex converged after " << currentIt << " iterations and " << llCalls << " calls: " << rates[0] << endl;
   return rates[0];
 }
 

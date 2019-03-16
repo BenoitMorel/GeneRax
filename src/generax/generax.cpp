@@ -173,9 +173,9 @@ int internal_main(int argc, char** argv, void* comm)
   optimizeGeneTrees(currentFamilies, rates, arguments, 1, iteration++);
   optimizeRates(arguments, currentFamilies, rates);
   optimizeGeneTrees(currentFamilies, rates, arguments, 2, iteration++);
-  optimizeRates(arguments, currentFamilies, rates);
+  //optimizeRates(arguments, currentFamilies, rates);
   optimizeGeneTrees(currentFamilies, rates, arguments, 3, iteration++);
-  optimizeRates(arguments, currentFamilies, rates);
+  //optimizeRates(arguments, currentFamilies, rates);
   Logger::timed << "End of GeneRax execution" << endl;
   ParallelContext::finalize();
   return 0;
