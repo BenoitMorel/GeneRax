@@ -48,6 +48,7 @@ vector<size_t> getMyIndices(const vector<int> &treeSizes)
     if (currentRank == ParallelContext::getRank()) {
       myIndices.push_back(index);
     }
+    currentRank = (currentRank + 1) % ParallelContext::getSize();
     for (; perRankLoad[currentRank] > averageLoad;(currentRank = (currentRank + 1) % ParallelContext::getSize())) {}
   }
   return myIndices;
