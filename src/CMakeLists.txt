@@ -15,8 +15,8 @@ set(PLL_LIBRARIES
 
 
 
-macro(add_program program_name program_sources force_lib)
-  if (JOINTSEARCH_BUILD_AS_LIBRARY OR ${force_lib})
+macro(add_program program_name program_sources)
+  if (JOINTSEARCH_BUILD_AS_LIBRARY)
     add_library(${program_name} SHARED ${program_sources})
   else()
     add_executable(${program_name} ${program_sources})

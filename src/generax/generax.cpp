@@ -73,7 +73,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
   vector<char *> argv;
   string exec = "mpi-scheduler";
   string implem = "--split-scheduler" ;
-  string library = "/home/morelbt/github/GeneRax/build/src/generax/libgenerax_optimize_gene_trees.so";
+  string library = "--static_scheduled_main"; //"/home/morelbt/github/GeneRax/build/src/generax/libgenerax_optimize_gene_trees.so";
   string jobFailureFatal = "1";
   FileSystem::mkdir(outputDir, true);
   argv.push_back((char *)exec.c_str());
@@ -187,5 +187,99 @@ int main(int argc, char** argv)
 {
   return internal_main(argc, argv, 0);
 }
+
+void optimizeGeneTrees(const string &startingGeneTreeFile,
+    const string &mappingFile,
+    const string &alignmentFile,
+    const string &speciesTreeFile,
+    const string libpllModel, 
+    RecModel recModel,
+    RecOpt recOpt,
+    bool rootedGeneTree,
+    double dupRate,
+    double lossRate, 
+    double transferRate,
+    int sprRadius,
+    const string &outputGeneTree) 
+{
+  double totalInitialLL = 0.0;
+  double totalFinalLL = 0.0;
+  vector<string> geneTreeStrings;
+  getTreeStrings(startingGeneTreeFile, geneTreeStrings);
+  assert(geneTreeStrings.size() == 1);
+  auto jointTree = make_shared<JointTree>(geneTreeStrings[0],
+      alignmentFile,
+      speciesTreeFile,
+      mappingFile,
+      libpllModel,
+      recModel,
+      recOpt,
+      rootedGeneTree,
+      false, //check
+      false,
+      dupRate,
+      lossRate,
+      transferRate
+      );
+  jointTree->optimizeParameters(true, false); // only optimize felsenstein likelihood
+  double bestLoglk = jointTree->computeJointLoglk();
+  totalInitialLL += bestLoglk;
+  jointTree->printLoglk();
+  Logger::info << "Initial ll = " << bestLoglk << endl;
+  
+  while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk)) {} 
+  totalFinalLL += bestLoglk;
+  Logger::info << "Final ll = " << bestLoglk << endl;
+  jointTree->save(outputGeneTree, false);
+  Logger::info << "Total initial and final ll: " << totalInitialLL << " " << totalFinalLL << endl;
+  ParallelContext::barrier();
+}
+
+
+int local_internal_main(int argc, char** argv, void* comm)
+{
+  ParallelContext::init(comm);
+  if (argc != 14) {
+    Logger::error << "Invalid number of parameters in generax_optimize_gene_trees: " << argc << endl;
+    return 1;
+  }
+  int i = 1;
+  string startingGeneTreeFile(argv[i++]);
+  string mappingFile(argv[i++]);
+  string alignmentFile(argv[i++]);
+  string speciesTreeFile(argv[i++]);
+  string libpllModel(argv[i++]);
+  RecModel recModel = RecModel(atoi(argv[i++])); 
+  RecOpt recOpt = RecOpt(atoi(argv[i++])); 
+  bool rootedGeneTree = bool(atoi(argv[i++]));
+  double dupRate = double(atof(argv[i++]));
+  double lossRate = double(atof(argv[i++]));
+  double transferRate = double(atof(argv[i++]));
+  int sprRadius = atoi(argv[i++]);
+  string outputGeneTree(argv[i++]);
+  optimizeGeneTrees(startingGeneTreeFile,
+      mappingFile,
+      alignmentFile,
+      speciesTreeFile,
+      libpllModel,
+      recModel,
+      recOpt,
+      rootedGeneTree,
+      dupRate,
+      lossRate,
+      transferRate,
+      sprRadius,
+      outputGeneTree);
+  ParallelContext::finalize();
+  return 0;
+}
+
+
+extern "C" int static_scheduled_main(int argc, char** argv, void* comm)
+{
+  return local_internal_main(argc, argv, comm);
+}
+
+
 
 
