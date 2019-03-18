@@ -64,6 +64,7 @@ public:
     }
     bool isSafeMode() {return safeMode_;}
     void enableReconciliation(bool enable) {enableReconciliation_ = enable;}
+    int getGeneTaxaNumber() {return getTreeInfo()->tip_count;}
 private:
     shared_ptr<LibpllEvaluation> libpllEvaluation_;
     shared_ptr<ReconciliationEvaluation> reconciliationEvaluation_;

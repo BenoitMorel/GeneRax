@@ -3,7 +3,9 @@
 extern "C" {
 #include <pll.h>
 }
+#include <vector>
 #include <string>
+#include <IO/FamiliesFileParser.hpp>
 using namespace std;
 
 class LibpllException: public exception {
@@ -23,6 +25,7 @@ public:
   static pll_utree_t *readNewickFromFile(const string &newickFile);
   static pll_utree_t *readNewickFromStr(const string &newickSTring);
   static pll_rtree_t *readRootedFromFile(const string &newickFile);
+  static vector<int> parallelGetTreeSizes(const vector<FamiliesFileParser::FamilyInfo> &families);
   static void saveUtree(pll_unode_t *utree, 
     const string &fileName, 
     bool append = false);

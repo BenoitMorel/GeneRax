@@ -16,5 +16,6 @@ public:
   const vector<GeneTree> &getTrees() {return _geneTrees;}
 private:
   vector<GeneTree> _geneTrees;
+  vector<int> _treeSizes;
 
 };

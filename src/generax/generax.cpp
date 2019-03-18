@@ -46,13 +46,20 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
   outputDirName << "gene_optimization_" << iteration;
   string commandFile = "/home/morelbt/github/phd_experiments/command.txt";
   string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
+  vector<int> geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
   ParallelOfstream os(commandFile);
-  for (auto &family: families) {
+  for (size_t i = 0; i < families.size(); ++i) {
+    auto &family = families[i];
     string geneTreePath = FileSystem::joinPaths(arguments.output, family.name);
     geneTreePath = FileSystem::joinPaths(geneTreePath, "geneTree.newick");
+    int taxa = geneTreeSizes[i];
+    //int moves = taxa * (sprRadius > 1 ? 10 : 2); 
+    // int cores = max(1, moves / 20);
+    int cores = 8;// todobenoit use some smarter formula later
+    Logger::info << taxa << " " << cores << endl;
     os << family.name << " ";
-    os << 16 << " "; // cores
-    os << 4 << " " ; // cost
+    os << cores << " "; // cores
+    os << taxa << " " ; // cost
     os << family.startingGeneTree << " ";
     os << family.mappingFile << " ";
     os << family.alignmentFile << " ";
@@ -188,7 +195,7 @@ int main(int argc, char** argv)
   return internal_main(argc, argv, 0);
 }
 
-void optimizeGeneTrees(const string &startingGeneTreeFile,
+void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
     const string &mappingFile,
     const string &alignmentFile,
     const string &speciesTreeFile,
@@ -221,6 +228,7 @@ void optimizeGeneTrees(const string &startingGeneTreeFile,
       lossRate,
       transferRate
       );
+  Logger::info << "Taxa number: " << jointTree->getGeneTaxaNumber() << endl;
   jointTree->optimizeParameters(true, false); // only optimize felsenstein likelihood
   double bestLoglk = jointTree->computeJointLoglk();
   totalInitialLL += bestLoglk;
@@ -257,7 +265,7 @@ int local_internal_main(int argc, char** argv, void* comm)
   double transferRate = double(atof(argv[i++]));
   int sprRadius = atoi(argv[i++]);
   string outputGeneTree(argv[i++]);
-  optimizeGeneTrees(startingGeneTreeFile,
+  optimizeGeneTreesSlave(startingGeneTreeFile,
       mappingFile,
       alignmentFile,
       speciesTreeFile,

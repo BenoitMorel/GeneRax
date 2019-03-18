@@ -15,22 +15,6 @@ vector<size_t> sort_indexes_descending(const vector<T> &v) {
   return idx;
 }
 
-vector<int> getTreeSizes(const vector<FamiliesFileParser::FamilyInfo> &families) 
-{
-  int treesNumber = families.size();
-  vector<int> localTreeSizes((treesNumber - 1 ) / ParallelContext::getSize() + 1, 0);
-  for (int i = ParallelContext::getBegin(treesNumber); i < ParallelContext::getEnd(treesNumber); i ++) {
-    pll_utree_t *tree = LibpllParsers::readNewickFromFile(families[i].startingGeneTree);
-    int taxa = tree->tip_count;
-    localTreeSizes[i - ParallelContext::getBegin(treesNumber)] = taxa;
-    pll_utree_destroy(tree, 0);
-  }
-  vector<int> treeSizes;
-  ParallelContext::concatenateIntVectors(localTreeSizes, treeSizes);
-  treeSizes.erase(std::remove(treeSizes.begin(), treeSizes.end(), 0), treeSizes.end());
-  assert(treeSizes.size() == families.size());
-  return treeSizes;
-}
 
 vector<size_t> getMyIndices(const vector<int> &treeSizes) 
 {
@@ -56,7 +40,7 @@ vector<size_t> getMyIndices(const vector<int> &treeSizes)
 
 PerCoreGeneTrees::PerCoreGeneTrees(const vector<FamiliesFileParser::FamilyInfo> &families)
 {
-  vector<int> treeSizes = getTreeSizes(families);
+  vector<int> treeSizes = LibpllParsers::parallelGetTreeSizes(families);
   vector<size_t> myIndices = getMyIndices(treeSizes);
 
   for (auto i: myIndices) {

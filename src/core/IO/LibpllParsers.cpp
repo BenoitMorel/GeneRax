@@ -1,6 +1,8 @@
 #include "LibpllParsers.hpp"
 #include <fstream>
 #include <streambuf>
+#include <algorithm>
+#include <ParallelContext.hpp>
 
 pll_utree_t *LibpllParsers::readNewickFromFile(const string &newickFilename)
 {
@@ -48,3 +50,21 @@ void LibpllParsers::saveUtree(pll_unode_t *utree,
   os.close();
   free(newick);
 }
+
+vector<int> LibpllParsers::parallelGetTreeSizes(const vector<FamiliesFileParser::FamilyInfo> &families) 
+{
+  int treesNumber = families.size();
+  vector<int> localTreeSizes((treesNumber - 1 ) / ParallelContext::getSize() + 1, 0);
+  for (int i = ParallelContext::getBegin(treesNumber); i < ParallelContext::getEnd(treesNumber); i ++) {
+    pll_utree_t *tree = LibpllParsers::readNewickFromFile(families[i].startingGeneTree);
+    int taxa = tree->tip_count;
+    localTreeSizes[i - ParallelContext::getBegin(treesNumber)] = taxa;
+    pll_utree_destroy(tree, 0);
+  }
+  vector<int> treeSizes;
+  ParallelContext::concatenateIntVectors(localTreeSizes, treeSizes);
+  treeSizes.erase(remove(treeSizes.begin(), treeSizes.end(), 0), treeSizes.end());
+  assert(treeSizes.size() == families.size());
+  return treeSizes;
+}
+
