@@ -31,6 +31,9 @@ bool update_family(const string line,
     case'M':
       currentFamily.mappingFile = line.substr(2, line.size() - 1);
       break;
+    case'L':
+      currentFamily.libpllModel = line.substr(2, line.size() - 1);
+      break;
     default:
       return false;
   }

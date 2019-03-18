@@ -64,7 +64,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     os << family.mappingFile << " ";
     os << family.alignmentFile << " ";
     os << arguments.speciesTree << " ";
-    os << arguments.libpllModel  << " ";
+    os << family.libpllModel  << " ";
     os << (int)arguments.reconciliationModel  << " ";
     os << (int)arguments.reconciliationOpt  << " ";
     os << (int)arguments.rootedGeneTree  << " ";
@@ -106,7 +106,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
         family.alignmentFile,
         arguments.speciesTree,
         family.mappingFile,
-        arguments.libpllModel,
+        family.libpllModel,
         arguments.reconciliationModel,
         arguments.reconciliationOpt,
         arguments.rootedGeneTree,

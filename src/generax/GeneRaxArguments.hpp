@@ -21,7 +21,6 @@ public:
    Strategy strategy;
    RecModel reconciliationModel;
    RecOpt reconciliationOpt;
-   string libpllModel;
    string output;
    bool rootedGeneTree;
    bool userDTLRates;
