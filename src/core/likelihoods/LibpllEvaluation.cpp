@@ -164,10 +164,7 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
     labelIndex++;
   }
   sequences.clear();
-  pll_set_category_rates(partition, &model.ratecat_rates()[0]);
-  pll_set_frequencies(partition, 0, &model.base_freqs(0)[0]);
-  pll_set_subst_params(partition, 0, &model.subst_rates(0)[0]);
-  
+  assign(partition, model);
   pll_unode_t *root = utree->nodes[utree->tip_count + utree->inner_count - 1];
   pll_utree_reset_template_indices(root, utree->tip_count);
   setMissingBL(utree, DEFAULT_BL);
