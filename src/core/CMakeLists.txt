@@ -6,6 +6,7 @@ set(jointsearch-core_SOURCES ParallelContext.cpp
   IO/GeneSpeciesMapping.cpp
   IO/FamiliesFileParser.cpp
   IO/LibpllParsers.cpp
+  IO/Model.cpp
   IO/ParallelOfstream.cpp
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ReconciliationEvaluation.cpp

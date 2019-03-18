@@ -12,6 +12,8 @@ extern "C" {
 #include <fstream>
 #include <iostream>
 #include <IO/Logger.hpp>
+#include <IO/Model.hpp>
+
 const double DEFAULT_BL = 0.000001;
 const double TOLERANCE = 0.5;
 
@@ -95,17 +97,6 @@ bool getNextLine(ifstream &is, string &os)
 }
 
 
-pllmod_subst_model_t *getModel(const string &modelStr) {
-  size_t pos = modelStr.find_first_of("+{[");
-  const string modelName = pos == string::npos ? modelStr : modelStr.substr(0, pos);
-  if (pllmod_util_model_exists_dna(modelName.c_str())) {
-    return pllmod_util_model_info_dna(modelName.c_str());
-  } else if (pllmod_util_model_exists_protein(modelName.c_str())) {
-    return pllmod_util_model_info_protein(modelName.c_str());
-  } else {
-    throw LibpllException("Unknown model ", modelName);
-  }
-}
 
 
 shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &newickString,
@@ -115,24 +106,21 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
   // sequences 
   pll_sequences sequences;
   unsigned int *patternWeights = nullptr;
-  pllmod_subst_model_t *model = getModel(modelStr);
-  unsigned int statesNumber = model->states;
-  const pll_state_t *charmap = (statesNumber == 4) ? pll_map_nt : pll_map_aa; 
+  Model model(modelStr);
+  unsigned int statesNumber = model.num_states();
+  assert(model.num_submodels() == 1);
   pll_utree_t *utree = 0;
-  #if defined(_OPENMP)
-  # pragma omp critical
-  #endif
   {
     if (!ifstream(alignmentFilename.c_str()).good()) {
       throw LibpllException("Alignment file " + alignmentFilename + "does not exist");
     }
     try {
       parsePhylip(alignmentFilename.c_str(),
-          charmap, sequences,
+          model.charmap(), sequences,
           patternWeights);
     } catch (...) {
       parseFasta(alignmentFilename.c_str(),
-          charmap, sequences, patternWeights);
+          model.charmap(), sequences, patternWeights);
     }
     // tree
     if (newickString == "__random__") {
@@ -153,14 +141,13 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
   unsigned int edgesNumber = 2 * tipNumber - 1;
   unsigned int sitesNumber = sequences[0]->len;
   unsigned int ratesMatrices = 1;
-  unsigned int categories = 4;
   pll_partition_t *partition = pll_partition_create(tipNumber,
       innerNumber,
       statesNumber,
       sitesNumber, 
       ratesMatrices, 
       edgesNumber,// prob_matrices
-      categories,  
+      model.num_ratecats(),  
       edgesNumber,// scalers
       attribute);  
   if (!partition) 
@@ -173,22 +160,13 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
   unsigned int labelIndex = 0;
   for (auto seq: sequences) {
     tipsLabelling[seq->label] = labelIndex;
-    pll_set_tip_states(partition, labelIndex, charmap, seq->seq);
+    pll_set_tip_states(partition, labelIndex, model.charmap(), seq->seq);
     labelIndex++;
   }
   sequences.clear();
-  double gammaRates[4] = {0.136954, 0.476752, 1, 2.38629};
-  pll_set_category_rates(partition, gammaRates);
- 
-  const double dna_freqs_equal[] = {0.25, 0.25, 0.25, 0.25};
-  const double dna_rates_equal[] = {1, 1, 1, 1, 1, 1};
-  if (statesNumber == 4) {
-    pll_set_frequencies(partition, 0, dna_freqs_equal);
-    pll_set_subst_params(partition, 0, dna_rates_equal);
-  } else {
-    pll_set_frequencies(partition, 0, model->freqs);
-    pll_set_subst_params(partition, 0, model->rates);
-  }
+  pll_set_category_rates(partition, &model.ratecat_rates()[0]);
+  pll_set_frequencies(partition, 0, &model.base_freqs(0)[0]);
+  pll_set_subst_params(partition, 0, &model.subst_rates(0)[0]);
   
   pll_unode_t *root = utree->nodes[utree->tip_count + utree->inner_count - 1];
   pll_utree_reset_template_indices(root, utree->tip_count);
@@ -203,21 +181,17 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
   }
  
   // treeinfo
-  int params_to_optimize = PLLMOD_OPT_PARAM_ALL & ~PLLMOD_OPT_PARAM_FREE_RATES;
-  if (statesNumber != 4) {
-    params_to_optimize = params_to_optimize & ~PLLMOD_OPT_PARAM_FREQUENCIES; 
-    params_to_optimize = params_to_optimize & ~PLLMOD_OPT_PARAM_SUBST_RATES; 
-  } 
-  unsigned int params_indices[4] = {0,0,0,0}; 
+  int params_to_optimize = model.params_to_optimize();
+  vector<unsigned int> params_indices(model.num_ratecats(), 0); 
   auto treeinfo = pllmod_treeinfo_create(root, 
       tipNumber, 1, PLLMOD_COMMON_BRLEN_SCALED);
   if (!treeinfo)
     throw LibpllException("Cannot create treeinfo");
   pllmod_treeinfo_init_partition(treeinfo, 0, partition,
       params_to_optimize,
-      PLL_GAMMA_RATES_MEAN,
-      1.0, 
-      params_indices,
+      model.gamma_mode(),
+      model.alpha(), 
+      &params_indices[0],
       nullptr);
   
   shared_ptr<LibpllEvaluation> evaluation(new LibpllEvaluation());
