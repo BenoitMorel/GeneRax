@@ -14,6 +14,9 @@ public:
     string alignmentFile;
     string mappingFile;
     string libpllModel;
+    FamilyInfo() {
+      reset();
+    }
     void reset() {
       name = "";
       startingGeneTree = "";
