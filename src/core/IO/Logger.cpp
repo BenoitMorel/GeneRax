@@ -13,14 +13,6 @@ Logger::Logger(): _os(&cout) {
 
 
 void Logger::init() {
-  /*
-  if (ParallelContext::getRank()) {
-    info.setType(lt_silent);
-    error.setType(lt_silent);
-    timed.setType(lt_silent);
-    return;
-  }
-  */
   info.setType(lt_info);
   error.setStream(cout);
   error.setType(lt_error);

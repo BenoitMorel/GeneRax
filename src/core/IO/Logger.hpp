@@ -26,7 +26,7 @@ class Logger: public ofstream
 {
 private:
   enum LoggerType {
-    lt_info, lt_error, lt_timed, lt_silent
+    lt_info, lt_error, lt_timed
   };
   LoggerType _type;
   ostream *_os; 
@@ -52,9 +52,7 @@ public:
         return *this;
       }
 
-      if (_type == lt_silent) {
-        return *this;
-      } else if (_type == lt_timed) {
+      if (_type == lt_timed) {
         auto finish = chrono::high_resolution_clock::now();
         chrono::duration<double> elapsed = finish - start;
         int seconds = chrono::duration_cast<chrono::seconds>(elapsed).count();
@@ -86,11 +84,9 @@ public:
     if (isSilent()) {
       return *this;
     }
-    if (_type != lt_silent) {
-      manip(*_os);
-      if (logFile) 
-        manip(*logFile);
-    }
+    manip(*_os);
+    if (logFile) 
+      manip(*logFile);
     return *this;
   }
 

@@ -36,12 +36,12 @@ public:
    * Build a LibpllEvaluation instance
    * @param newickString the tree in newick format
    * @param alignmentFilename path to the msa file
-   * @param modelStr a string representing the model (GTR, DAYOFF...)
+   * @param modelStrOrFile a string representing the model (GTR, DAYOFF...), or a file containing it
    * @return a shared pointer wraping the LibpllEvaluation instance
    */
   static shared_ptr<LibpllEvaluation> buildFromString(const string &newickString,
       const string& alignmentFilename,
-      const string &modelStr);
+      const string &modelStrOrFile);
   static shared_ptr<LibpllEvaluation> buildFromFile(const string &newickTree,
       const LibpllAlignmentInfo &info);
 

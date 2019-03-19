@@ -13,6 +13,8 @@ extern "C" {
 #include <iostream>
 #include <IO/Logger.hpp>
 #include <IO/Model.hpp>
+#include <string>
+#include <sstream>
 
 const double DEFAULT_BL = 0.000001;
 const double TOLERANCE = 0.5;
@@ -101,11 +103,17 @@ bool getNextLine(ifstream &is, string &os)
 
 shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &newickString,
     const string& alignmentFilename,
-    const string &modelStr)
+    const string &modelStrOrFile)
 {
   // sequences 
   pll_sequences sequences;
   unsigned int *patternWeights = nullptr;
+  string modelStr = modelStrOrFile;
+  ifstream f(modelStr);
+  if (f.good()) {
+    getline(f, modelStr);
+    modelStr = modelStr.substr(0, modelStr.find(","));
+  }
   Model model(modelStr);
   unsigned int statesNumber = model.num_states();
   assert(model.num_submodels() == 1);
@@ -165,6 +173,11 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
   }
   sequences.clear();
   assign(partition, model);
+  Logger::info << "Freq: ";
+  for (int i = 0; i < 4; ++i) {
+    Logger::info << partition->frequencies[0][i] << " ";
+  }
+  Logger::info << endl;
   pll_unode_t *root = utree->nodes[utree->tip_count + utree->inner_count - 1];
   pll_utree_reset_template_indices(root, utree->tip_count);
   setMissingBL(utree, DEFAULT_BL);
