@@ -46,9 +46,11 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
     int sprRadius,
     const string &outputGeneTree) 
 {
+  Logger::error << startingGeneTreeFile << endl;
   double totalInitialLL = 0.0;
   double totalFinalLL = 0.0;
   vector<string> geneTreeStrings;
+  cerr << startingGeneTreeFile << " " << geneTreeStrings[0] << endl;
   getTreeStrings(startingGeneTreeFile, geneTreeStrings);
   assert(geneTreeStrings.size() == 1);
   auto jointTree = make_shared<JointTree>(geneTreeStrings[0],
@@ -83,6 +85,7 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
 
 int local_internal_main(int argc, char** argv, void* comm)
 {
+  cerr << "local_internal_main" << endl;
   ParallelContext::init(comm);
   if (argc != 14) {
     Logger::error << "Invalid number of parameters in generax_optimize_gene_trees: " << argc << endl;
@@ -91,6 +94,7 @@ int local_internal_main(int argc, char** argv, void* comm)
   Logger::timed << "Starting optimizeGeneTreesSlave" << endl;
   int i = 1;
   string startingGeneTreeFile(argv[i++]);
+  cerr << startingGeneTreeFile << endl;
   string mappingFile(argv[i++]);
   string alignmentFile(argv[i++]);
   string speciesTreeFile(argv[i++]);
