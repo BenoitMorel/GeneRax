@@ -3,6 +3,7 @@
 #include <chrono>
 #include <iostream>
 #include <fstream>
+#include "ParallelContext.hpp"
 
 using namespace std;
 
@@ -40,9 +41,17 @@ public:
   
   static void initFileOutput(const string &output);
 
+  bool isSilent() {
+    return (_type == lt_timed || _type == lt_info) && ParallelContext::getRank(); 
+  }
+
   template <typename T>
     Logger& operator<<(T&& t)
     {
+      if (isSilent()) {
+        return *this;
+      }
+
       if (_type == lt_silent) {
         return *this;
       } else if (_type == lt_timed) {
@@ -74,6 +83,9 @@ public:
     
   Logger& operator<<(std::ostream & (*manip)(std::ostream &)) 
   {
+    if (isSilent()) {
+      return *this;
+    }
     if (_type != lt_silent) {
       manip(*_os);
       if (logFile) 
