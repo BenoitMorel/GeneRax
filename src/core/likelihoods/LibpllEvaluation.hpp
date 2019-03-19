@@ -71,6 +71,10 @@ public:
    */
   void invalidateCLV(int nodeIndex);
 
+  static void createAndSaveRandomTree(const string &alignmentFiilename,
+    const string &modelStrOrFile,
+    const string &outputTreeFile);
+
 private:
   /**
    * Constructors

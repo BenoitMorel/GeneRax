@@ -44,6 +44,7 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
     double lossRate, 
     double transferRate,
     int sprRadius,
+    bool enableReconciliation,
     const string &outputGeneTree) 
 {
   double totalInitialLL = 0.0;
@@ -91,11 +92,11 @@ int local_internal_main(int argc, char** argv, void* comm)
   Logger::timed << "Starting optimizeGeneTreesSlave" << endl;
   int i = 1;
   string startingGeneTreeFile(argv[i++]);
+  cerr << startingGeneTreeFile << endl;
   string mappingFile(argv[i++]);
   string alignmentFile(argv[i++]);
   string speciesTreeFile(argv[i++]);
   string libpllModel(argv[i++]);
-  Logger::info << "LibpllModel " << libpllModel << endl;
   RecModel recModel = RecModel(atoi(argv[i++])); 
   RecOpt recOpt = RecOpt(atoi(argv[i++])); 
   bool rootedGeneTree = bool(atoi(argv[i++]));
@@ -103,6 +104,7 @@ int local_internal_main(int argc, char** argv, void* comm)
   double lossRate = double(atof(argv[i++]));
   double transferRate = double(atof(argv[i++]));
   int sprRadius = atoi(argv[i++]);
+  bool enableReconciliation = bool(atoi(argv[i++]));
   string outputGeneTree(argv[i++]);
   optimizeGeneTreesSlave(startingGeneTreeFile,
       mappingFile,
@@ -116,6 +118,7 @@ int local_internal_main(int argc, char** argv, void* comm)
       lossRate,
       transferRate,
       sprRadius,
+      enableReconciliation,
       outputGeneTree);
   ParallelContext::finalize();
   Logger::timed << "End of optimizeGeneTreesSlave" << endl;

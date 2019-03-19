@@ -99,7 +99,42 @@ bool getNextLine(ifstream &is, string &os)
 }
 
 
-
+void LibpllEvaluation::createAndSaveRandomTree(const string &alignmentFilename,
+    const string &modelStrOrFile,
+    const string &outputTreeFile)
+{
+  Logger::info << "todobenoit, fix code duplication" << endl;
+  // sequences 
+  pll_sequences sequences;
+  unsigned int *patternWeights = nullptr;
+  string modelStr = modelStrOrFile;
+  ifstream f(modelStr);
+  if (f.good()) {
+    getline(f, modelStr);
+    modelStr = modelStr.substr(0, modelStr.find(","));
+  }
+  Model model(modelStr);
+  assert(model.num_submodels() == 1);
+  pll_utree_t *utree = 0;
+  if (!ifstream(alignmentFilename.c_str()).good()) {
+    throw LibpllException("Alignment file " + alignmentFilename + "does not exist");
+  }
+  try {
+    parsePhylip(alignmentFilename.c_str(),
+        model.charmap(), sequences,
+        patternWeights);
+  } catch (...) {
+    parseFasta(alignmentFilename.c_str(),
+        model.charmap(), sequences, patternWeights);
+  }
+  vector<const char*> labels;
+  for (auto seq: sequences) {
+    labels.push_back(seq->label);
+  }
+  int seed = 0;
+  utree = pllmod_utree_create_random(labels.size(), &labels[0], seed);
+  LibpllParsers::saveUtree(utree->nodes[0], outputTreeFile, false);
+}
 
 shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &newickString,
     const string& alignmentFilename,

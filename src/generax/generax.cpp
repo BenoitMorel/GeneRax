@@ -21,11 +21,10 @@ using namespace std;
 void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     DTLRates &rates,
     GeneRaxArguments &arguments,
+    bool enableReconciliation, 
     int sprRadius,
     int iteration) 
 {
-#define PARGENES
-#ifdef PARGENES
   stringstream outputDirName;
   outputDirName << "gene_optimization_" << iteration;
   string commandFile = "/home/morelbt/github/phd_experiments/command.txt";
@@ -63,6 +62,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     os << rates.rates[1]  << " ";
     os << rates.rates[2]  << " ";
     os << sprRadius  << " ";
+    os << (int)enableReconciliation  << " ";
     os << geneTreePath << endl;
     family.startingGeneTree = geneTreePath;
   } 
@@ -83,46 +83,6 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
   MPI_Comm comm = MPI_COMM_WORLD;
   ParallelContext::barrier(); 
   mpi_scheduler_main(argv.size(), &argv[0], (void*)&comm);
-  
-#else
-  Logger::info << "Optimize gene trees with rates " << rates << endl;
-  double totalInitialLL = 0.0;
-  double totalFinalLL = 0.0;
-  for (auto &family: families) {
-    Logger::info << "Treating " << family.name << endl;
-    vector<string> geneTreeStrings;
-    getTreeStrings(family.startingGeneTree, geneTreeStrings);
-    assert(geneTreeStrings.size() == 1);
-    auto jointTree = make_shared<JointTree>(geneTreeStrings[0],
-        family.alignmentFile,
-        arguments.speciesTree,
-        family.mappingFile,
-        family.libpllModel,
-        arguments.reconciliationModel,
-        arguments.reconciliationOpt,
-        arguments.rootedGeneTree,
-        false,
-        false,
-        rates.rates[0],
-        rates.rates[1],
-        rates.rates[2]);
-    jointTree->optimizeParameters(true, false); // only optimize felsenstein likelihood
-    double bestLoglk = jointTree->computeJointLoglk();
-    totalInitialLL += bestLoglk;
-    jointTree->printLoglk();
-    Logger::info << "Initial ll = " << bestLoglk << endl;
-    while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk)) {} 
-    totalFinalLL += bestLoglk;
-    Logger::info << "Final ll = " << bestLoglk << endl;
-    string geneTreePath = FileSystem::joinPaths(arguments.output, family.name);
-    geneTreePath = FileSystem::joinPaths(geneTreePath, "geneTree.newick");
-    jointTree->save(geneTreePath, false);
-    family.startingGeneTree = geneTreePath;
-  }
-  Logger::info << "Total initial and final ll: " << totalInitialLL << " " << totalFinalLL << endl;
-  cerr << "End rank " << ParallelContext::getRank() << endl;
-  ParallelContext::barrier(); 
-#endif
 }
 
 void optimizeRates(const GeneRaxArguments &arguments,
@@ -146,6 +106,25 @@ void initFolders(const string &output, vector<FamiliesFileParser::FamilyInfo> &f
   }
 }
 
+void createRandomTrees(const string &geneRaxOutputDir, vector<FamiliesFileParser::FamilyInfo> &families)
+{
+  string startingTreesDir = FileSystem::joinPaths(geneRaxOutputDir, "startingTrees");
+  bool startingTreesDirCreated = false;
+  for (auto &family: families) {
+    if (family.startingGeneTree == "__random__") {
+        if (!startingTreesDirCreated) {
+          FileSystem::mkdir(startingTreesDir, true);
+          startingTreesDir = true;
+        } 
+        family.startingGeneTree = FileSystem::joinPaths(geneRaxOutputDir, family.name + ".newick");
+        if (ParallelContext::getRank() == 0) {
+          LibpllEvaluation::createAndSaveRandomTree(family.alignmentFile, family.libpllModel, family.startingGeneTree);
+        }
+    }
+  }
+  ParallelContext::barrier();
+}
+
 int internal_main(int argc, char** argv, void* comm)
 {
   // the order is very important
@@ -161,18 +140,19 @@ int internal_main(int argc, char** argv, void* comm)
   Logger::info << "Number of gene families: " << initialFamilies.size() << endl;
   initFolders(arguments.output, initialFamilies);
   
-  
   DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
   vector<FamiliesFileParser::FamilyInfo> currentFamilies = initialFamilies;
+  //createRandomTrees(arguments.output, currentFamilies); 
   int iteration = 0; 
+  optimizeGeneTrees(currentFamilies, rates, arguments, 1, false, iteration++);
   optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, 1, iteration++);
+  optimizeGeneTrees(currentFamilies, rates, arguments, 1, true, iteration++);
   optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, 1, iteration++);
+  optimizeGeneTrees(currentFamilies, rates, arguments, 1, true, iteration++);
   optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, 2, iteration++);
+  optimizeGeneTrees(currentFamilies, rates, arguments, 2, true, iteration++);
   //optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, 3, iteration++);
+  optimizeGeneTrees(currentFamilies, rates, arguments, 3, true, iteration++);
   //optimizeRates(arguments, currentFamilies, rates);
   Logger::timed << "End of GeneRax execution" << endl;
   ParallelContext::finalize();
