@@ -21,6 +21,7 @@ using namespace std;
 void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     DTLRates &rates,
     GeneRaxArguments &arguments,
+    bool enableRec,
     int sprRadius,
     int iteration) 
 {
@@ -60,6 +61,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     os << rates.rates[0]  << " ";
     os << rates.rates[1]  << " ";
     os << rates.rates[2]  << " ";
+    os << int(enableRec)  << " ";
     os << sprRadius  << " ";
     os << geneTreePath << endl;
     family.startingGeneTree = geneTreePath;
@@ -104,7 +106,7 @@ void initFolders(const string &output, vector<FamiliesFileParser::FamilyInfo> &f
   }
 }
 
-void createRandomTrees(const string &geneRaxOutputDir, vector<FamiliesFileParser::FamilyInfo> &families)
+bool createRandomTrees(const string &geneRaxOutputDir, vector<FamiliesFileParser::FamilyInfo> &families)
 {
   string startingTreesDir = FileSystem::joinPaths(geneRaxOutputDir, "startingTrees");
   bool startingTreesDirCreated = false;
@@ -112,15 +114,17 @@ void createRandomTrees(const string &geneRaxOutputDir, vector<FamiliesFileParser
     if (family.startingGeneTree == "__random__") {
         if (!startingTreesDirCreated) {
           FileSystem::mkdir(startingTreesDir, true);
-          startingTreesDir = true;
+          startingTreesDirCreated = true;
         } 
         family.startingGeneTree = FileSystem::joinPaths(geneRaxOutputDir, family.name + ".newick");
         if (ParallelContext::getRank() == 0) {
+          Logger::info << "creating tree " << family.startingGeneTree << endl;
           LibpllEvaluation::createAndSaveRandomTree(family.alignmentFile, family.libpllModel, family.startingGeneTree);
         }
     }
   }
   ParallelContext::barrier();
+  return startingTreesDirCreated;
 }
 
 int internal_main(int argc, char** argv, void* comm)
@@ -140,16 +144,19 @@ int internal_main(int argc, char** argv, void* comm)
   
   DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
   vector<FamiliesFileParser::FamilyInfo> currentFamilies = initialFamilies;
-  createRandomTrees(arguments.output, currentFamilies); 
-  int iteration = 0; 
+  bool randoms = createRandomTrees(arguments.output, currentFamilies); 
+  int iteration = 0;
+  if (randoms) {
+    optimizeGeneTrees(currentFamilies, rates, arguments, false, 1, iteration++);
+  }
   optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, 1, iteration++);
+  optimizeGeneTrees(currentFamilies, rates, arguments, true, 1, iteration++);
   optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, 1, iteration++);
+  optimizeGeneTrees(currentFamilies, rates, arguments, true, 1, iteration++);
   optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, 2, iteration++);
+  optimizeGeneTrees(currentFamilies, rates, arguments, true, 2, iteration++);
   //optimizeRates(arguments, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, 3, iteration++);
+  optimizeGeneTrees(currentFamilies, rates, arguments, true, 3, iteration++);
   //optimizeRates(arguments, currentFamilies, rates);
   Logger::timed << "End of GeneRax execution" << endl;
   ParallelContext::finalize();

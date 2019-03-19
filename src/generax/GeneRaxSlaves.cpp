@@ -43,14 +43,13 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
     double dupRate,
     double lossRate, 
     double transferRate,
+    bool enableRec,
     int sprRadius,
     const string &outputGeneTree) 
 {
-  Logger::error << startingGeneTreeFile << endl;
   double totalInitialLL = 0.0;
   double totalFinalLL = 0.0;
   vector<string> geneTreeStrings;
-  cerr << startingGeneTreeFile << " " << geneTreeStrings[0] << endl;
   getTreeStrings(startingGeneTreeFile, geneTreeStrings);
   assert(geneTreeStrings.size() == 1);
   auto jointTree = make_shared<JointTree>(geneTreeStrings[0],
@@ -67,6 +66,7 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
       lossRate,
       transferRate
       );
+  jointTree->enableReconciliation(enableRec);
   Logger::info << "Taxa number: " << jointTree->getGeneTaxaNumber() << endl;
   jointTree->optimizeParameters(true, false); // only optimize felsenstein likelihood
   double bestLoglk = jointTree->computeJointLoglk();
@@ -85,9 +85,8 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
 
 int local_internal_main(int argc, char** argv, void* comm)
 {
-  cerr << "local_internal_main" << endl;
   ParallelContext::init(comm);
-  if (argc != 14) {
+  if (argc != 15) {
     Logger::error << "Invalid number of parameters in generax_optimize_gene_trees: " << argc << endl;
     return 1;
   }
@@ -106,6 +105,7 @@ int local_internal_main(int argc, char** argv, void* comm)
   double dupRate = double(atof(argv[i++]));
   double lossRate = double(atof(argv[i++]));
   double transferRate = double(atof(argv[i++]));
+  bool enableRec = bool(atoi(argv[i++]));
   int sprRadius = atoi(argv[i++]);
   string outputGeneTree(argv[i++]);
   optimizeGeneTreesSlave(startingGeneTreeFile,
@@ -119,6 +119,7 @@ int local_internal_main(int argc, char** argv, void* comm)
       dupRate,
       lossRate,
       transferRate,
+      enableRec,
       sprRadius,
       outputGeneTree);
   ParallelContext::finalize();

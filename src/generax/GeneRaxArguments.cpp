@@ -15,9 +15,9 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
   output("jointSearch"),
   rootedGeneTree(true),
   userDTLRates(false),
-  dupRate(-1.0),
-  lossRate(-1.0),
-  transferRate(-1.0)
+  dupRate(1.0),
+  lossRate(1.0),
+  transferRate(0.0)
 {
   if (argc == 1) {
     printHelp();
