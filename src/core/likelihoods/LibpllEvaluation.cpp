@@ -114,6 +114,7 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
     getline(f, modelStr);
     modelStr = modelStr.substr(0, modelStr.find(","));
   }
+  Logger::info << "Libpll loaded model: " << modelStr << endl;
   Model model(modelStr);
   unsigned int statesNumber = model.num_states();
   assert(model.num_submodels() == 1);

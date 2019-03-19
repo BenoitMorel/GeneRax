@@ -37,10 +37,17 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     string geneTreePath = FileSystem::joinPaths(arguments.output, family.name);
     geneTreePath = FileSystem::joinPaths(geneTreePath, "geneTree.newick");
     int taxa = geneTreeSizes[i];
-    //int moves = taxa * (sprRadius > 1 ? 10 : 2); 
-    // int cores = max(1, moves / 20);
-    int cores = 8;// todobenoit use some smarter formula later
-    Logger::info << taxa << " " << cores << endl;
+    int cores = 1;
+    if (sprRadius == 1) {
+      cores = taxa / 2;;
+    } else if (sprRadius == 2) {
+      cores = taxa / 2;
+    } else if (sprRadius == 3) {
+      cores = taxa;
+    }
+    cores = max(1, cores);
+    //int cores = 8;// todobenoit use some smarter formula later
+    //Logger::info << taxa << " " << cores << endl;
     os << family.name << " ";
     os << cores << " "; // cores
     os << taxa << " " ; // cost
