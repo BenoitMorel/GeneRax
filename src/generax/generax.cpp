@@ -33,7 +33,8 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
   ParallelOfstream os(commandFile);
   for (size_t i = 0; i < families.size(); ++i) {
     auto &family = families[i];
-    string geneTreePath = FileSystem::joinPaths(arguments.output, family.name);
+    string geneTreePath = FileSystem::joinPaths(arguments.output, "results");
+    geneTreePath = FileSystem::joinPaths(geneTreePath, family.name);
     geneTreePath = FileSystem::joinPaths(geneTreePath, "geneTree.newick");
     int taxa = geneTreeSizes[i];
     int cores = 1;
@@ -101,8 +102,10 @@ void optimizeRates(const GeneRaxArguments &arguments,
 void initFolders(const string &output, vector<FamiliesFileParser::FamilyInfo> &families) 
 {
   FileSystem::mkdir(output, true);
+  string results = FileSystem::joinPaths(output, "results");
+  FileSystem::mkdir(results, true);
   for (auto &family: families) {
-    FileSystem::mkdir(FileSystem::joinPaths(output, family.name), true);
+    FileSystem::mkdir(FileSystem::joinPaths(results, family.name), true);
   }
 }
 
