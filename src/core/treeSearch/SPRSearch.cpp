@@ -88,7 +88,7 @@ void getRegrafts(JointTree &jointTree, int pruneIndex, int maxRadius, vector<SPR
   getRegraftsRec(pruneIndex, pruneNode->next->next->back, maxRadius, path, moves);
 }
 
-bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLoglk) {
+bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLoglk, bool blo) {
   shared_ptr<Move> bestMove(0);
   vector<int> allNodes;
   getAllPruneIndices(jointTree, allNodes);
@@ -128,10 +128,12 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
     << "(hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
     << endl;
   int bestMoveIndex = -1;
-  bool foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex, jointTree.isSafeMode()); 
+  bool foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex, blo, jointTree.isSafeMode()); 
   if (foundBetterMove) {
     jointTree.applyMove(allMoves[bestMoveIndex]);
-    jointTree.optimizeMove(allMoves[bestMoveIndex]);
+    if (blo) {
+      jointTree.optimizeMove(allMoves[bestMoveIndex]);
+    }
     double ll = jointTree.computeJointLoglk();
     if (fabs(ll - bestLoglk) > 0.00000001) {
       cerr << ll << " " << bestLoglk << " " 

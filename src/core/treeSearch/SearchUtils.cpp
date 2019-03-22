@@ -11,6 +11,7 @@ void SearchUtils::testMove(JointTree &jointTree,
     double initialLibpllLoglk,
     double &averageReconciliationDiff,
     double &newLoglk,
+    bool blo,
     bool check
     )
 {
@@ -33,7 +34,9 @@ void SearchUtils::testMove(JointTree &jointTree,
     }
     return;
   }
-  jointTree.optimizeMove(move);
+  if (blo) {
+    jointTree.optimizeMove(move);
+  }
   newLoglk = recLoglk +  jointTree.computeLibpllLoglk(true);
   jointTree.rollbackLastMove();
   if(check) {
@@ -54,7 +57,8 @@ void SearchUtils::testMove(JointTree &jointTree,
 bool SearchUtils::findBestMove(JointTree &jointTree,
     vector<shared_ptr<Move> > &allMoves,
     double &bestLoglk,
-    int &bestMoveIndex, 
+    int &bestMoveIndex,
+    bool blo,
     bool check)
 {
   bestMoveIndex = -1;
@@ -74,6 +78,7 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
         initialLibpllLoglk, 
         averageReconciliationDiff,
         loglk,
+        blo,
         check);
     if (loglk > bestLoglk + 0.000000001) {
       bestLoglk = loglk;

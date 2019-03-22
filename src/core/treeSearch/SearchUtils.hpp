@@ -16,6 +16,7 @@ public:
     double initialLibpllLoglk,
     double &averageReconciliationDiff,
     double &newLoglk,
+    bool blo,
     bool check
     );
  
@@ -23,6 +24,7 @@ public:
     vector<shared_ptr<Move> > &allMoves,
     double &bestLoglk,
     int &bestMoveIndex,
+    bool blo,
     bool check);
 };
 

@@ -6,6 +6,6 @@ class SPRSearch {
 public:
   virtual ~SPRSearch() {}
     static void applySPRSearch(JointTree &jointTree);
-    static bool applySPRRound(JointTree &jointTree, int radius, double &bestLoglk);
+    static bool applySPRRound(JointTree &jointTree, int radius, double &bestLoglk, bool blo = true);
 };
 

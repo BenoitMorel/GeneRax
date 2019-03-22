@@ -74,7 +74,7 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
   jointTree->printLoglk();
   Logger::info << "Initial ll = " << bestLoglk << endl;
   
-  while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk)) {} 
+  while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk, enableRec)) {} 
   totalFinalLL += bestLoglk;
   Logger::info << "Final ll = " << bestLoglk << endl;
   jointTree->save(outputGeneTree, false);
