@@ -17,7 +17,8 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
   userDTLRates(false),
   dupRate(1.0),
   lossRate(1.0),
-  transferRate(0.0)
+  transferRate(0.0),
+  autodetectDTLModel(false)
 {
   if (argc == 1) {
     printHelp();
@@ -51,6 +52,8 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
     } else if (arg == "--transferRate") {
       transferRate = atof(argv[++i]);
       userDTLRates = true;
+    } else if (arg == "--autodetectDTLRates") {
+      autodetectDTLModel = true;
     } else {
       Logger::error << "Unrecognized argument " << arg << endl;
       Logger::error << "Aborting" << endl;

@@ -94,22 +94,52 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
   mpi_scheduler_main(argv.size(), &argv[0], (void*)&comm);
 }
 
-void optimizeRates(const GeneRaxArguments &arguments,
+void optimizeRates(bool userDTLRates, 
+    const string &speciesTreeFile,
+    RecModel recModel,
     vector<FamiliesFileParser::FamilyInfo> &families,
     DTLRates &rates) 
 {
-  if (!arguments.userDTLRates) {
+  if (!userDTLRates) {
     PerCoreGeneTrees geneTrees(families);
-    pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(arguments.speciesTree); 
-    rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, arguments.reconciliationModel);
+    pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
+    rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, recModel);
     pll_rtree_destroy(speciesTree, 0);
     ParallelContext::barrier(); 
   }
 }
 
+RecModel testRecModel(const string &speciesTreeFile,
+    vector<FamiliesFileParser::FamilyInfo> &families,
+    DTLRates &rates)
+
+{
+  DTLRates transferRates;
+  DTLRates noTransferRates;
+  
+  optimizeRates(false, speciesTreeFile, UndatedDL, families, noTransferRates);
+  optimizeRates(false, speciesTreeFile, UndatedDTL, families, transferRates);
+  double myScoreTransfers = transferRates.ll / families.size();
+  double myScoreNoTransfers = noTransferRates.ll / families.size();
+  double ratio = fabs(myScoreNoTransfers / myScoreTransfers);
+  Logger::info << "No transfer: " << noTransferRates.ll << " " << myScoreNoTransfers << endl;
+  Logger::info << "With transfer: " << transferRates.ll << " " << myScoreTransfers << endl;
+  Logger::info << "Ratio: " << ratio << endl;
+  if (ratio > 1.1) {  
+    Logger::info << "I think there are transfers" << endl;
+    rates = transferRates;
+    return UndatedDTL;
+  } else {
+    Logger::info << "I think there are NO transfers" << endl;
+    rates = noTransferRates;
+    return UndatedDL;
+  }
+}
+
+
 void gatherLikelihoods(vector<FamiliesFileParser::FamilyInfo> &families,
-    double &totalRecLL,
-    double &totalLibpllLL)
+    double &totalLibpllLL,
+    double &totalRecLL)
 {
   totalRecLL = 0.0;
   totalLibpllLL = 0.0;
@@ -196,16 +226,24 @@ int internal_main(int argc, char** argv, void* comm)
   if (randoms) {
     optimizeGeneTrees(currentFamilies, rates, arguments, false, 1, iteration++);
   }
-  optimizeRates(arguments, currentFamilies, rates);
+  RecModel recModel = arguments.reconciliationModel;
+
+  if (arguments.autodetectDTLModel) {
+    recModel = testRecModel(arguments.speciesTree, currentFamilies, rates);
+    arguments.reconciliationModel = recModel;
+  } else {
+    optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, currentFamilies, rates);
+  }
+
   optimizeGeneTrees(currentFamilies, rates, arguments, true, 1, iteration++);
   gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
-  optimizeRates(arguments, currentFamilies, rates);
+  optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, currentFamilies, rates);
   optimizeGeneTrees(currentFamilies, rates, arguments, true, 1, iteration++);
   gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
-  optimizeRates(arguments, currentFamilies, rates);
+  optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, currentFamilies, rates);
   optimizeGeneTrees(currentFamilies, rates, arguments, true, 2, iteration++);
   gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
-  //optimizeRates(arguments, currentFamilies, rates);
+  //optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, currentFamilies, rates);
   optimizeGeneTrees(currentFamilies, rates, arguments, true, 3, iteration++);
   gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
   saveStats(arguments.output, totalLibpllLL, totalRecLL);

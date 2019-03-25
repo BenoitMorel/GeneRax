@@ -27,5 +27,6 @@ public:
    double dupRate;
    double lossRate;
    double transferRate;
+   bool autodetectDTLModel;
 };
 
