@@ -14,6 +14,7 @@ public:
     string alignmentFile;
     string mappingFile;
     string libpllModel;
+    string statsFile;
     FamilyInfo() {
       reset();
     }
@@ -23,6 +24,7 @@ public:
       alignmentFile = "";
       mappingFile = "";
       libpllModel = "GTR";
+      statsFile = "";
     }
   };
   static vector<FamilyInfo> parseFamiliesFile(const string &familiesFile);

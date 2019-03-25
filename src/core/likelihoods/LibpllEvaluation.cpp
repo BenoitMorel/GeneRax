@@ -103,7 +103,6 @@ void LibpllEvaluation::createAndSaveRandomTree(const string &alignmentFilename,
     const string &modelStrOrFile,
     const string &outputTreeFile)
 {
-  Logger::info << "todobenoit, fix code duplication" << endl;
   // sequences 
   pll_sequences sequences;
   unsigned int *patternWeights = nullptr;

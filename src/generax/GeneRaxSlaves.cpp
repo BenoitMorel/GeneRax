@@ -45,10 +45,9 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
     double transferRate,
     bool enableRec,
     int sprRadius,
-    const string &outputGeneTree) 
+    const string &outputGeneTree,
+    const string &outputStats) 
 {
-  double totalInitialLL = 0.0;
-  double totalFinalLL = 0.0;
   vector<string> geneTreeStrings;
   getTreeStrings(startingGeneTreeFile, geneTreeStrings);
   assert(geneTreeStrings.size() == 1);
@@ -70,20 +69,16 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
   Logger::info << "Taxa number: " << jointTree->getGeneTaxaNumber() << endl;
   jointTree->optimizeParameters(true, false); // only optimize felsenstein likelihood
   double bestLoglk = jointTree->computeJointLoglk();
-  totalInitialLL += bestLoglk;
   jointTree->printLoglk();
   Logger::info << "Initial ll = " << bestLoglk << endl;
- 
-  /*
-  if (!enableRec) {
-    while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk, false)) {} 
-  }
-  */
   while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk, true)) {} 
-  totalFinalLL += bestLoglk;
   Logger::info << "Final ll = " << bestLoglk << endl;
   jointTree->save(outputGeneTree, false);
-  Logger::info << "Total initial and final ll: " << totalInitialLL << " " << totalFinalLL << endl;
+  ParallelOfstream stats(outputStats);
+  double libpllLL = jointTree->computeLibpllLoglk ();
+  double recLL = jointTree->computeReconciliationLoglk();
+  stats << libpllLL << " " << recLL;
+  stats.close();
   ParallelContext::barrier();
 }
 
@@ -91,14 +86,13 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
 int local_internal_main(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm);
-  if (argc != 15) {
+  if (argc != 16) {
     Logger::error << "Invalid number of parameters in generax_optimize_gene_trees: " << argc << endl;
     return 1;
   }
   Logger::timed << "Starting optimizeGeneTreesSlave" << endl;
   int i = 1;
   string startingGeneTreeFile(argv[i++]);
-  cerr << startingGeneTreeFile << endl;
   string mappingFile(argv[i++]);
   string alignmentFile(argv[i++]);
   string speciesTreeFile(argv[i++]);
@@ -113,6 +107,7 @@ int local_internal_main(int argc, char** argv, void* comm)
   bool enableRec = bool(atoi(argv[i++]));
   int sprRadius = atoi(argv[i++]);
   string outputGeneTree(argv[i++]);
+  string outputStats(argv[i++]);
   optimizeGeneTreesSlave(startingGeneTreeFile,
       mappingFile,
       alignmentFile,
@@ -126,7 +121,8 @@ int local_internal_main(int argc, char** argv, void* comm)
       transferRate,
       enableRec,
       sprRadius,
-      outputGeneTree);
+      outputGeneTree,
+      outputStats);
   ParallelContext::finalize();
   Logger::timed << "End of optimizeGeneTreesSlave" << endl;
   return 0;
@@ -135,7 +131,10 @@ int local_internal_main(int argc, char** argv, void* comm)
 
 extern "C" int static_scheduled_main(int argc, char** argv, void* comm)
 {
-  return local_internal_main(argc, argv, comm);
+  Logger::enableLogFile(false);
+  int res =  local_internal_main(argc, argv, comm);
+  Logger::enableLogFile(true);
+  return res;
 }
 
 

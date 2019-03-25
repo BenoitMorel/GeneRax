@@ -6,6 +6,7 @@ Logger Logger::error;
 Logger Logger::timed;
 TimePoint Logger::start;
 ofstream *Logger::logFile = 0;
+ofstream *Logger::saveLogFile = 0;
 
 Logger::Logger(): _os(&cout) {
   setType(lt_info);  
@@ -27,6 +28,9 @@ void Logger::initFileOutput(const string &output)
   if (ParallelContext::getRank()) {
     return;
   } 
-  logFile = new ofstream(output + ".log");
+  string log = output + ".log";
+  Logger::info << "Logs will also be printed into " << log << endl;
+  logFile = new ofstream(log);
+  saveLogFile = logFile;
 }
 

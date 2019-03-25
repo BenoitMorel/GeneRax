@@ -45,6 +45,10 @@ public:
     return (_type == lt_timed || _type == lt_info) && ParallelContext::getRank(); 
   }
 
+  static void enableLogFile(bool enable) {
+    logFile = enable ? saveLogFile : 0;
+  }
+
   template <typename T>
     Logger& operator<<(T&& t)
     {
@@ -95,5 +99,6 @@ public:
   static Logger timed;
   static TimePoint start;
   static ofstream *logFile;
+  static ofstream *saveLogFile;
 };
 

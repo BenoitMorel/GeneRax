@@ -138,7 +138,6 @@ JointTree::JointTree(const string &newick_string,
       geneSpeciesMap_, 
       reconciliationModel,
       rootedGeneTree);
-  cerr << dupRate << " " << lossRate << " " << transRate << endl;
   setRates(dupRate, lossRate, transRate);
 
 }

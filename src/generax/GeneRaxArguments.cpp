@@ -108,7 +108,7 @@ void GeneRaxArguments::printHelp() {
 }
 
 void GeneRaxArguments::printCommand() {
-  Logger::info << "JointSearch was called as follow:" << endl;
+  Logger::info << "GeneRax was called as follow:" << endl;
   for (int i = 0; i < argc; ++i) {
     Logger::info << argv[i] << " ";
   }
