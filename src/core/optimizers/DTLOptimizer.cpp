@@ -34,7 +34,6 @@ void updateLL(DTLRates &rates, PerCoreGeneTrees &trees, pll_rtree_t *speciesTree
   if (!isValidLikelihood(rates.ll)) {
     rates.ll = -100000000000;
   }
-  Logger::info << rates.ll << endl;
 }
 
 
@@ -343,7 +342,6 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
       rates.back() = bestRates;
     }
     currentIt++;
-    Logger::info << "end of loop" << endl;
   }
   sort(rates.begin(), rates.end());
   updateLL(rates[0], geneTrees, speciesTree, model);

@@ -74,6 +74,8 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
   string implem = "--split-scheduler" ;
   string library = "--static_scheduled_main"; //"/home/morelbt/github/GeneRax/build/src/generax/libgenerax_optimize_gene_trees.so";
   string jobFailureFatal = "1";
+  string threadsArg;
+  string outputLogs = FileSystem::joinPaths(outputDir, "logs.txt");
   FileSystem::mkdir(outputDir, true);
   argv.push_back((char *)exec.c_str());
   argv.push_back((char *)implem.c_str());
@@ -81,7 +83,10 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
   argv.push_back((char *)commandFile.c_str());
   argv.push_back((char *)outputDir.c_str());
   argv.push_back((char *)jobFailureFatal.c_str());
+  argv.push_back((char *)threadsArg.c_str());
+  argv.push_back((char *)outputLogs.c_str());
   MPI_Comm comm = MPI_COMM_WORLD;
+  Logger::timed << "Starting SPR rounds with radius " << sprRadius << endl;
   ParallelContext::barrier(); 
   mpi_scheduler_main(argv.size(), &argv[0], (void*)&comm);
 }
