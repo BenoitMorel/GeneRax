@@ -19,7 +19,7 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
   lossRate(1.0),
   transferRate(0.0),
   autodetectDTLModel(false),
-  maxSPRRadius(3)
+  maxSPRRadius(5)
 {
   if (argc == 1) {
     printHelp();

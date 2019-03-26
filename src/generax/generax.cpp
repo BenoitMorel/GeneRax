@@ -122,7 +122,7 @@ void optimizeRates(bool userDTLRates,
     << "L=" << rates.rates[1] << ", "
     << "T=" << rates.rates[2] << ", "
     << "Loglk=" << rates.ll 
-    << "(after " << elapsed << "s)" << endl;
+    << " (after " << elapsed << "s)" << endl;
 }
 
 RecModel testRecModel(const string &speciesTreeFile,
@@ -276,14 +276,8 @@ int internal_main(int argc, char** argv, void* comm)
   optimizeStep(arguments, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   optimizeStep(arguments, currentFamilies, rates, 2, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   optimizeStep(arguments, currentFamilies, rates, 3, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
-  optimizeStep(arguments, currentFamilies, rates, 5, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
-
-  /*
-  if (arguments.maxSPRRadius > 3) {
   optimizeStep(arguments, currentFamilies, rates, arguments.maxSPRRadius, iteration++, totalLibpllLL, totalRecLL);
-    gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
-  }
-  */
+
 
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
   if (sumElapsedLibpll) {
