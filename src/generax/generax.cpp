@@ -226,24 +226,25 @@ int internal_main(int argc, char** argv, void* comm)
   if (randoms) {
     optimizeGeneTrees(currentFamilies, rates, arguments, false, 1, iteration++);
   }
-  RecModel recModel = arguments.reconciliationModel;
-
-  if (arguments.autodetectDTLModel) {
-    recModel = testRecModel(arguments.speciesTree, currentFamilies, rates);
-    arguments.reconciliationModel = recModel;
-  } else {
-    optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, currentFamilies, rates);
+  RecModel initialRecModel = arguments.reconciliationModel;
+  if (initialRecModel == UndatedDTL) {
+    arguments.reconciliationModel = UndatedDL;
   }
-
+  optimizeRates(arguments.userDTLRates, arguments.speciesTree, arguments.reconciliationModel, currentFamilies, rates);
   optimizeGeneTrees(currentFamilies, rates, arguments, true, 1, iteration++);
   gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
-  optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, currentFamilies, rates);
+  
+  if (initialRecModel == UndatedDTL) {
+    arguments.reconciliationModel = UndatedDTL;
+  }
+  
+  optimizeRates(arguments.userDTLRates, arguments.speciesTree, arguments.reconciliationModel, currentFamilies, rates);
   optimizeGeneTrees(currentFamilies, rates, arguments, true, 1, iteration++);
   gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
-  optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, currentFamilies, rates);
+  optimizeRates(arguments.userDTLRates, arguments.speciesTree, arguments.reconciliationModel, currentFamilies, rates);
   optimizeGeneTrees(currentFamilies, rates, arguments, true, 2, iteration++);
   gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
-  //optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, currentFamilies, rates);
+  optimizeRates(arguments.userDTLRates, arguments.speciesTree, arguments.reconciliationModel, currentFamilies, rates);
   optimizeGeneTrees(currentFamilies, rates, arguments, true, 3, iteration++);
   gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
   saveStats(arguments.output, totalLibpllLL, totalRecLL);

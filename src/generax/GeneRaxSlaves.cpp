@@ -71,6 +71,14 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
   double bestLoglk = jointTree->computeJointLoglk();
   jointTree->printLoglk();
   Logger::info << "Initial ll = " << bestLoglk << endl;
+  /*
+  if (!enableRec) {
+    while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk, false)) {} 
+    jointTree->optimizeParameters(true, false); // only optimize felsenstein likelihood
+    bestLoglk = jointTree->computeJointLoglk();
+  
+  }
+  */
   while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk, true)) {} 
   Logger::info << "Final ll = " << bestLoglk << endl;
   jointTree->save(outputGeneTree, false);
