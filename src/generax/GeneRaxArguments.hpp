@@ -28,5 +28,6 @@ public:
    double lossRate;
    double transferRate;
    bool autodetectDTLModel;
+   int maxSPRRadius;
 };
 

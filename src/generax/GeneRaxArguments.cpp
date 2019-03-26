@@ -18,7 +18,8 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
   dupRate(1.0),
   lossRate(1.0),
   transferRate(0.0),
-  autodetectDTLModel(false)
+  autodetectDTLModel(false),
+  maxSPRRadius(3)
 {
   if (argc == 1) {
     printHelp();
@@ -54,6 +55,8 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
       userDTLRates = true;
     } else if (arg == "--autodetectDTLRates") {
       autodetectDTLModel = true;
+    } else if (arg == "--max-spr-radius") {
+      maxSPRRadius = atoi(argv[++i]);
     } else {
       Logger::error << "Unrecognized argument " << arg << endl;
       Logger::error << "Aborting" << endl;
@@ -106,6 +109,7 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "--dupRate <duplication rate>" << endl;
   Logger::info << "--lossRate <loss rate>" << endl;
   Logger::info << "--transferRate <transfer rate>" << endl;
+  Logger::info << "--max-spr-radius <max SPR radius>" << endl;
   Logger::info << endl;
 
 }
@@ -129,5 +133,6 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "Prefix: " << output << endl;
   Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << endl;
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << endl;
+  Logger::info << "Max SPR radius: " << maxSPRRadius << endl;
   Logger::info << endl;
 }

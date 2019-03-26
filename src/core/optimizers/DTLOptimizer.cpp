@@ -345,7 +345,7 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
   sort(rates.begin(), rates.end());
   updateLL(rates[0], geneTrees, speciesTree, model);
   llCalls++;
-  Logger::timed << "Simplex converged after " << currentIt << " iterations and " << llCalls << " calls: " << rates[0] << endl;
+//  Logger::timed << "Simplex converged after " << currentIt << " iterations and " << llCalls << " calls: " << rates[0] << endl;
   return rates[0];
 }
 

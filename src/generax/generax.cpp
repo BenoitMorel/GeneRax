@@ -23,8 +23,11 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     GeneRaxArguments &arguments,
     bool enableRec,
     int sprRadius,
-    int iteration) 
+    int iteration,
+    long &sumElapsed) 
 {
+  auto start = Logger::getElapsedSec();
+  Logger::timed << "Starting SPR rounds with radius " << sprRadius << endl;
   stringstream outputDirName;
   outputDirName << "gene_optimization_" << iteration;
   string commandFile = "/home/morelbt/github/phd_experiments/command.txt";
@@ -43,7 +46,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
       cores = taxa / 2;;
     } else if (sprRadius == 2) {
       cores = taxa / 2;
-    } else if (sprRadius == 3) {
+    } else if (sprRadius >= 3) {
       cores = taxa;
     }
     cores = max(1, cores);
@@ -89,17 +92,22 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
   argv.push_back((char *)threadsArg.c_str());
   argv.push_back((char *)outputLogs.c_str());
   MPI_Comm comm = MPI_COMM_WORLD;
-  Logger::timed << "Starting SPR rounds with radius " << sprRadius << endl;
   ParallelContext::barrier(); 
   mpi_scheduler_main(argv.size(), &argv[0], (void*)&comm);
+  auto elapsed = (Logger::getElapsedSec() - start);
+  sumElapsed += elapsed;
+  Logger::timed << "End of SPR rounds (after " << elapsed << "s)"  << endl;
 }
 
 void optimizeRates(bool userDTLRates, 
     const string &speciesTreeFile,
     RecModel recModel,
     vector<FamiliesFileParser::FamilyInfo> &families,
-    DTLRates &rates) 
+    DTLRates &rates,
+    long &sumElapsed) 
 {
+  auto start = Logger::getElapsedSec();
+  Logger::timed << "Start optimizing rates..." << endl;
   if (!userDTLRates) {
     PerCoreGeneTrees geneTrees(families);
     pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
@@ -107,6 +115,14 @@ void optimizeRates(bool userDTLRates,
     pll_rtree_destroy(speciesTree, 0);
     ParallelContext::barrier(); 
   }
+  auto elapsed = (Logger::getElapsedSec() - start);
+  sumElapsed += elapsed;
+  Logger::timed << "Finished optimizing rates: "
+    << "D=" << rates.rates[0] << ", "
+    << "L=" << rates.rates[1] << ", "
+    << "T=" << rates.rates[2] << ", "
+    << "Loglk=" << rates.ll 
+    << "(after " << elapsed << "s)" << endl;
 }
 
 RecModel testRecModel(const string &speciesTreeFile,
@@ -116,9 +132,9 @@ RecModel testRecModel(const string &speciesTreeFile,
 {
   DTLRates transferRates;
   DTLRates noTransferRates;
-  
-  optimizeRates(false, speciesTreeFile, UndatedDL, families, noTransferRates);
-  optimizeRates(false, speciesTreeFile, UndatedDTL, families, transferRates);
+  long testTime = 0;
+  optimizeRates(false, speciesTreeFile, UndatedDL, families, noTransferRates, testTime);
+  optimizeRates(false, speciesTreeFile, UndatedDTL, families, transferRates, testTime);
   double myScoreTransfers = transferRates.ll / families.size();
   double myScoreNoTransfers = noTransferRates.ll / families.size();
   double ratio = fabs(myScoreNoTransfers / myScoreTransfers);
@@ -141,6 +157,7 @@ void gatherLikelihoods(vector<FamiliesFileParser::FamilyInfo> &families,
     double &totalLibpllLL,
     double &totalRecLL)
 {
+  Logger::info << "Start gathering likelihoods... " << endl;
   totalRecLL = 0.0;
   totalLibpllLL = 0.0;
   int familiesNumber = families.size();
@@ -200,6 +217,21 @@ void saveStats(const string &outputDir, double totalLibpllLL, double totalRecLL)
   os << "RecLL:" << totalRecLL;
 }
 
+void optimizeStep(GeneRaxArguments &arguments, 
+    vector<FamiliesFileParser::FamilyInfo> &families,
+    DTLRates &rates,
+    int sprRadius,
+    int currentIteration,
+    double &totalLibpllLL,
+    double &totalRecLL,
+    long &sumElapsedRates,
+    long &sumElapsedSPR)
+{
+  optimizeRates(arguments.userDTLRates, arguments.speciesTree, arguments.reconciliationModel, families, rates, sumElapsedRates);
+  optimizeGeneTrees(families, rates, arguments, true, sprRadius, currentIteration, sumElapsedSPR);
+  gatherLikelihoods(families, totalLibpllLL, totalRecLL);
+}
+
 int internal_main(int argc, char** argv, void* comm)
 {
   // the order is very important
@@ -218,36 +250,47 @@ int internal_main(int argc, char** argv, void* comm)
   
   double totalLibpllLL = 0.0;
   double totalRecLL = 0.0;
-  
+  long sumElapsedRates = 0;
+  long sumElapsedSPR = 0;
+  long sumElapsedLibpll = 0;
+
   DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
   vector<FamiliesFileParser::FamilyInfo> currentFamilies = initialFamilies;
   bool randoms = createRandomTrees(arguments.output, currentFamilies); 
   int iteration = 0;
   if (randoms) {
-    optimizeGeneTrees(currentFamilies, rates, arguments, false, 1, iteration++);
+    optimizeGeneTrees(currentFamilies, rates, arguments, false, 1, iteration++, sumElapsedLibpll);
   }
   RecModel initialRecModel = arguments.reconciliationModel;
   if (initialRecModel == UndatedDTL) {
     arguments.reconciliationModel = UndatedDL;
   }
-  optimizeRates(arguments.userDTLRates, arguments.speciesTree, arguments.reconciliationModel, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, true, 1, iteration++);
-  gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
+ 
+  optimizeStep(arguments, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+  optimizeStep(arguments, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   
+
   if (initialRecModel == UndatedDTL) {
     arguments.reconciliationModel = UndatedDTL;
   }
-  
-  optimizeRates(arguments.userDTLRates, arguments.speciesTree, arguments.reconciliationModel, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, true, 1, iteration++);
-  gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
-  optimizeRates(arguments.userDTLRates, arguments.speciesTree, arguments.reconciliationModel, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, true, 2, iteration++);
-  gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
-  optimizeRates(arguments.userDTLRates, arguments.speciesTree, arguments.reconciliationModel, currentFamilies, rates);
-  optimizeGeneTrees(currentFamilies, rates, arguments, true, 3, iteration++);
-  gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
+  optimizeStep(arguments, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+  optimizeStep(arguments, currentFamilies, rates, 2, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+  optimizeStep(arguments, currentFamilies, rates, 3, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+  optimizeStep(arguments, currentFamilies, rates, 5, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+
+  /*
+  if (arguments.maxSPRRadius > 3) {
+  optimizeStep(arguments, currentFamilies, rates, arguments.maxSPRRadius, iteration++, totalLibpllLL, totalRecLL);
+    gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
+  }
+  */
+
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
+  if (sumElapsedLibpll) {
+    Logger::info << "Initial time spent on optimizing random trees: " << sumElapsedLibpll << "s" << endl;
+  }
+  Logger::info << "Time spent on optimizing rates: " << sumElapsedRates << "s" << endl;
+  Logger::info << "Time spent on optimizing gene trees: " << sumElapsedSPR << "s" << endl;
   Logger::timed << "End of GeneRax execution" << endl;
   ParallelContext::finalize();
   return 0;

@@ -49,17 +49,20 @@ public:
     logFile = enable ? saveLogFile : 0;
   }
 
+  static long getElapsedSec() {
+      auto finish = chrono::high_resolution_clock::now();
+      chrono::duration<double> elapsed = finish - start;
+      return chrono::duration_cast<chrono::seconds>(elapsed).count();
+  }
+
   template <typename T>
     Logger& operator<<(T&& t)
     {
       if (isSilent()) {
         return *this;
       }
-
       if (_type == lt_timed) {
-        auto finish = chrono::high_resolution_clock::now();
-        chrono::duration<double> elapsed = finish - start;
-        int seconds = chrono::duration_cast<chrono::seconds>(elapsed).count();
+        int seconds = getElapsedSec();
         int hours  = seconds / 3600;
         int minutes = (seconds % 3600) / 60;
         seconds = seconds % 60;

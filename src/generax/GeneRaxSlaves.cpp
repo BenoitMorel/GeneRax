@@ -48,6 +48,7 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
     const string &outputGeneTree,
     const string &outputStats) 
 {
+  Logger::timed << "Starting optimizing gene tree" << endl;
   vector<string> geneTreeStrings;
   getTreeStrings(startingGeneTreeFile, geneTreeStrings);
   assert(geneTreeStrings.size() == 1);
@@ -87,6 +88,7 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
   double recLL = jointTree->computeReconciliationLoglk();
   stats << libpllLL << " " << recLL;
   stats.close();
+  Logger::timed << "End of optimizing gene tree" << endl;
   ParallelContext::barrier();
 }
 
