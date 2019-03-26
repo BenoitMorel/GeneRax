@@ -272,11 +272,12 @@ int internal_main(int argc, char** argv, void* comm)
 
   if (initialRecModel == UndatedDTL) {
     arguments.reconciliationModel = UndatedDTL;
+    optimizeStep(arguments, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
-  optimizeStep(arguments, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+  
   optimizeStep(arguments, currentFamilies, rates, 2, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   optimizeStep(arguments, currentFamilies, rates, 3, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
-  optimizeStep(arguments, currentFamilies, rates, arguments.maxSPRRadius, iteration++, totalLibpllLL, totalRecLL);
+  optimizeStep(arguments, currentFamilies, rates, arguments.maxSPRRadius, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
 
 
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
