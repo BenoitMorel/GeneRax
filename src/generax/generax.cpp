@@ -60,6 +60,7 @@ void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
     string familyOutput = FileSystem::joinPaths(arguments.output, "results");
     familyOutput = FileSystem::joinPaths(familyOutput, family.name);
     string geneTreePath = FileSystem::joinPaths(familyOutput, "geneTree.newick");
+    string libpllModelPath = FileSystem::joinPaths(familyOutput, "libpllModel.txt");
     string outputStats = FileSystem::joinPaths(familyOutput, "raxml_light_stats.txt");
     int taxa = geneTreeSizes[i];
     os << family.name << " ";
@@ -70,9 +71,11 @@ void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
     os << family.alignmentFile << " ";
     os << family.libpllModel  << " ";
     os << geneTreePath << " ";
+    os << libpllModelPath << " ";
     os << outputStats <<  endl;
     family.startingGeneTree = geneTreePath;
     family.statsFile = outputStats;
+    family.libpllModel = libpllModelPath;
   }    
   os.close();
   schedule(outputDir, commandFile); 
@@ -115,8 +118,6 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
       cores = taxa;
     }
     cores = max(1, cores);
-    //int cores = 8;// todobenoit use some smarter formula later
-    //Logger::info << taxa << " " << cores << endl;
     os << family.name << " ";
     os << cores << " "; // cores
     os << taxa << " " ; // cost

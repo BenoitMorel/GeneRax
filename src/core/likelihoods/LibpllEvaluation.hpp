@@ -79,6 +79,8 @@ public:
     const string &modelStrOrFile,
     const string &outputTreeFile);
 
+  string getModelStr();
+
 private:
   /**
    * Constructors

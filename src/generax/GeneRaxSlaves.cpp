@@ -139,6 +139,7 @@ int raxmlLightMain(int argc, char** argv, void* comm)
   string alignmentFile(argv[i++]);
   string libpllModel(argv[i++]);
   string outputGeneTree(argv[i++]);
+  string outputLibpllModel(argv[i++]);
   string outputStats(argv[i++]);
   LibpllAlignmentInfo info;
   info.alignmentFilename = alignmentFile;
@@ -171,13 +172,21 @@ int raxmlLightMain(int argc, char** argv, void* comm)
   
   
   Logger::info << evaluation->computeLikelihood(false) << endl;
+  /*
+  ll = evaluation->raxmlSPRRounds(1, 15, 1);
+  ll = evaluation->raxmlSPRRounds(1, 20, 1);
+  */
   ll = evaluation->raxmlSPRRounds(1, 25, 1);
   Logger::info << evaluation->computeLikelihood(false) << endl;
   
   ParallelOfstream stats(outputStats);
   stats << ll <<  " 0.0";
   stats.close();
-  Logger::info << "Wrote stats in " << outputStats << endl;
+  string modelStr = evaluation->getModelStr();
+  
+  ParallelOfstream modelWriter(outputLibpllModel);
+  modelWriter << modelStr << endl;
+  modelWriter.close();
   LibpllParsers::saveUtree(evaluation->getTreeInfo()->root, outputGeneTree);  
   ParallelContext::finalize();
   return 0;

@@ -97,6 +97,13 @@ bool getNextLine(ifstream &is, string &os)
   return false;
 }
 
+string LibpllEvaluation::getModelStr()
+{
+  Model model;
+  assign(model, treeinfo_->partitions[0]);
+  string modelStr = model.to_string(true);
+  return modelStr;
+}
 
 void LibpllEvaluation::createAndSaveRandomTree(const string &alignmentFilename,
     const string &modelStrOrFile,
