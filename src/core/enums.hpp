@@ -18,6 +18,7 @@ public:
       return true;
     }
     assert(false);
+    return false;
   }
 };
 

@@ -48,5 +48,6 @@ shared_ptr<AbstractReconciliationModel> ReconciliationEvaluation::getRecModelObj
     return  make_shared<DatedDLModel>();
   }
   assert(false);
+  return 0;
 }
 
