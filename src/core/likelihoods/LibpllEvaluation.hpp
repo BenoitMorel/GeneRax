@@ -15,6 +15,8 @@ extern "C" {
 #include <exception>
 #include <vector>
 
+const double TOLERANCE = 0.5;
+
 using namespace std;
 
 struct pll_sequence;
@@ -58,9 +60,9 @@ public:
    *  Optimize branch lengths and model parameters
    *  @return the log likeihood of the tree
    */
-  double optimizeAllParameters();
+  double optimizeAllParameters(double tolerance = TOLERANCE);
 
-  double raxmlSPRRounds();
+  double raxmlSPRRounds(int minRadius, int maxRadius, int thorough);
 
   /**
    *  Accessor to the wrapped treeinfo structure
@@ -114,7 +116,7 @@ private:
     pll_sequences &sequences,
     unsigned int *&weights);
 
-  static double optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo);
+  static double optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, double tolerance);
   
   pll_unode_t *getNode(int nodeIndex) {return treeinfo_->subnodes[nodeIndex];}
 private:

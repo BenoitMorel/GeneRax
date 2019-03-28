@@ -73,14 +73,6 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
   double bestLoglk = jointTree->computeJointLoglk();
   jointTree->printLoglk();
   Logger::info << "Initial ll = " << bestLoglk << endl;
-  if (!enableRec) {
-    Logger::info << "First search" << endl;
-    while(SPRSearch::applySPRRound(*jointTree, 5, bestLoglk, false)) {} 
-    jointTree->optimizeParameters(true, false); // only optimize felsenstein likelihood
-    bestLoglk = jointTree->computeJointLoglk();
-  
-  }
-    Logger::info << "Second search" << endl;
   while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk, true)) {} 
   Logger::info << "Final ll = " << bestLoglk << endl;
   jointTree->save(outputGeneTree, false);
@@ -141,24 +133,53 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
 
 int raxmlLightMain(int argc, char** argv, void* comm)
 {
+  ParallelContext::init(comm);
   int i = 2;
   string startingGeneTreeFile(argv[i++]);
   string alignmentFile(argv[i++]);
   string libpllModel(argv[i++]);
   string outputGeneTree(argv[i++]);
+  string outputStats(argv[i++]);
   LibpllAlignmentInfo info;
   info.alignmentFilename = alignmentFile;
   info.model = libpllModel;
-  Logger::info << "plop" << endl;
   Logger::info << startingGeneTreeFile << endl;
   auto evaluation = LibpllEvaluation::buildFromFile(startingGeneTreeFile,
       info);
- 
-  evaluation->optimizeAllParameters();
-  evaluation->raxmlSPRRounds();
+  double ll = 0.0;
+  evaluation->optimizeAllParameters(10.0);
+  evaluation->raxmlSPRRounds(1, 5, 0);
+  ll = evaluation->raxmlSPRRounds(1, 15, 0);
+  Logger::info << evaluation->computeLikelihood(false) << endl; 
+  ll = evaluation->raxmlSPRRounds(1, 15, 0);
+  Logger::info << evaluation->computeLikelihood(false) << endl;
+  ll = evaluation->raxmlSPRRounds(1, 20, 0);
+  Logger::info << evaluation->computeLikelihood(false) << endl;
+  ll = evaluation->raxmlSPRRounds(1, 25, 0);
+  Logger::info << evaluation->computeLikelihood(false) << endl;
+  Logger::info << "optimize all parameters" << endl;
+  evaluation->optimizeAllParameters(3.0);
+  
+  
+  ll = evaluation->raxmlSPRRounds(1, 5, 1);
+  Logger::info << evaluation->computeLikelihood(false) << endl;
+  ll = evaluation->raxmlSPRRounds(1, 10, 1);
+  Logger::info << evaluation->computeLikelihood(false) << endl;
+  ll = evaluation->raxmlSPRRounds(1, 15, 1);
+  
+  evaluation->optimizeAllParameters(1.0);
+  
+  
+  Logger::info << evaluation->computeLikelihood(false) << endl;
+  ll = evaluation->raxmlSPRRounds(1, 25, 1);
   Logger::info << evaluation->computeLikelihood(false) << endl;
   
+  ParallelOfstream stats(outputStats);
+  stats << ll <<  " 0.0";
+  stats.close();
+  Logger::info << "Wrote stats in " << outputStats << endl;
   LibpllParsers::saveUtree(evaluation->getTreeInfo()->root, outputGeneTree);  
+  ParallelContext::finalize();
   return 0;
 }
 

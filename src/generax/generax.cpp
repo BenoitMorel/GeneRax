@@ -51,7 +51,7 @@ void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
   
   stringstream outputDirName;
   outputDirName << "raxml_light_" << iteration;
-  string commandFile = "/home/morelbt/github/phd_experiments/command.txt";
+  string commandFile = FileSystem::joinPaths(arguments.output, "raxml_light_command.txt");
   string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
   vector<int> geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
   ParallelOfstream os(commandFile);
@@ -60,6 +60,7 @@ void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
     string familyOutput = FileSystem::joinPaths(arguments.output, "results");
     familyOutput = FileSystem::joinPaths(familyOutput, family.name);
     string geneTreePath = FileSystem::joinPaths(familyOutput, "geneTree.newick");
+    string outputStats = FileSystem::joinPaths(familyOutput, "raxml_light_stats.txt");
     int taxa = geneTreeSizes[i];
     os << family.name << " ";
     os << 1 << " "; // cores
@@ -69,6 +70,9 @@ void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
     os << family.alignmentFile << " ";
     os << family.libpllModel  << " ";
     os << geneTreePath << " ";
+    os << outputStats <<  endl;
+    family.startingGeneTree = geneTreePath;
+    family.statsFile = outputStats;
   }    
   os.close();
   schedule(outputDir, commandFile); 
@@ -302,6 +306,7 @@ int internal_main(int argc, char** argv, void* comm)
   int iteration = 0;
   if (randoms) {
     raxmlMain(currentFamilies, arguments, iteration++, sumElapsedLibpll);
+    gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
   }
   RecModel initialRecModel = arguments.reconciliationModel;
   if (initialRecModel == UndatedDTL) {

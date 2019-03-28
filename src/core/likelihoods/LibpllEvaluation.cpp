@@ -17,13 +17,12 @@ extern "C" {
 #include <sstream>
 
 const double DEFAULT_BL = 0.000001;
-const double TOLERANCE = 0.5;
 
 
 // constants taken from RAXML
 #define DEF_LH_EPSILON            0.1
 #define OPT_LH_EPSILON            0.1
-#define RAXML_PARAM_EPSILON       0.001  //0.01
+//#define RAXML_PARAM_EPSILON       0.001  //0.01
 #define RAXML_BFGS_FACTOR         1e7
 #define RAXML_BRLEN_SMOOTHINGS    32
 #define RAXML_BRLEN_DEFAULT       0.1
@@ -120,7 +119,6 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
     getline(f, modelStr);
     modelStr = modelStr.substr(0, modelStr.find(","));
   }
-  Logger::info << "Libpll loaded model: " << modelStr << endl;
   Model model(modelStr);
   unsigned int statesNumber = model.num_states();
   assert(model.num_submodels() == 1);
@@ -180,11 +178,6 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
   }
   sequences.clear();
   assign(partition, model);
-  Logger::info << "Freq: ";
-  for (int i = 0; i < 4; ++i) {
-    Logger::info << partition->frequencies[0][i] << " ";
-  }
-  Logger::info << endl;
   pll_unode_t *root = utree->nodes[utree->tip_count + utree->inner_count - 1];
   pll_utree_reset_template_indices(root, utree->tip_count);
   setMissingBL(utree, DEFAULT_BL);
@@ -230,13 +223,13 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromFile(const string &newic
       info.model);
 }
 
-double LibpllEvaluation::raxmlSPRRounds()
+double LibpllEvaluation::raxmlSPRRounds(int minRadius, int maxRadius, int thorough)
 {
   return pllmod_algo_spr_round(getTreeInfo().get(),
-      1,
-      5,
+      minRadius,
+      maxRadius,
       1, // params.ntopol_keep
-      1, // THOROUGH
+      thorough, // THOROUGH
       0, //int brlen_opt_method,
       RAXML_BRLEN_MIN,
       RAXML_BRLEN_MAX,
@@ -252,15 +245,15 @@ double LibpllEvaluation::computeLikelihood(bool incremental)
   return pllmod_treeinfo_compute_loglh(treeinfo_.get(), incremental);
 }
 
-double LibpllEvaluation::optimizeAllParameters()
+double LibpllEvaluation::optimizeAllParameters(double tolerance)
 {
   Logger::timed << "Starting libpll rates optimization" << endl;
   double previousLogl = computeLikelihood(); 
   double newLogl = previousLogl;
   do {
     previousLogl = newLogl;
-    newLogl = optimizeAllParametersOnce(treeinfo_.get());
-  } while (newLogl - previousLogl > TOLERANCE);
+    newLogl = optimizeAllParametersOnce(treeinfo_.get(), tolerance);
+  } while (newLogl - previousLogl > tolerance);
   return newLogl;
 }
 
@@ -351,7 +344,7 @@ void LibpllEvaluation::parsePhylip(const char *phylipFile,
 }
 
 
-double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo)
+double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, double tolerance)
 {
   // This code comes from RaxML
   double new_loglh;
@@ -364,7 +357,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo)
         PLLMOD_OPT_MIN_SUBST_RATE,
         PLLMOD_OPT_MAX_SUBST_RATE,
         RAXML_BFGS_FACTOR,
-        RAXML_PARAM_EPSILON);
+        tolerance);
   }
 
   /* optimize BASE FREQS */
@@ -375,7 +368,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo)
         PLLMOD_OPT_MIN_FREQ,
         PLLMOD_OPT_MAX_FREQ,
         RAXML_BFGS_FACTOR,
-        RAXML_PARAM_EPSILON);
+        tolerance);
   }
 
   /* optimize ALPHA */
@@ -385,7 +378,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo)
         PLLMOD_OPT_PARAM_ALPHA,
         PLLMOD_OPT_MIN_ALPHA,
         PLLMOD_OPT_MAX_ALPHA,
-        RAXML_PARAM_EPSILON);
+        tolerance);
   }
 
   if (params_to_optimize & PLLMOD_OPT_PARAM_PINV)
@@ -394,7 +387,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo)
         PLLMOD_OPT_PARAM_PINV,
         PLLMOD_OPT_MIN_PINV,
         PLLMOD_OPT_MAX_PINV,
-        RAXML_PARAM_EPSILON);
+        tolerance);
   }
 
   /* optimize FREE RATES and WEIGHTS */
@@ -404,7 +397,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo)
         RAXML_FREERATE_MIN,
         RAXML_FREERATE_MAX,
         RAXML_BFGS_FACTOR,
-        RAXML_PARAM_EPSILON);
+        tolerance);
 
     /* normalize scalers and scale the branches accordingly */
     if (treeinfo->brlen_linkage == PLLMOD_COMMON_BRLEN_SCALED &&
@@ -425,7 +418,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo)
         treeinfo->brlen_scalers,
         RAXML_BRLEN_MIN,
         RAXML_BRLEN_MAX,
-        TOLERANCE,
+        tolerance,
         brlen_smooth_factor * RAXML_BRLEN_SMOOTHINGS,
         -1,  /* radius */
         1,    /* keep_update */
@@ -444,7 +437,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo)
         PLLMOD_OPT_PARAM_BRANCH_LEN_SCALER,
         RAXML_BRLEN_SCALER_MIN,
         RAXML_BRLEN_SCALER_MAX,
-        RAXML_PARAM_EPSILON);
+        tolerance);
 
     /* normalize scalers and scale the branches accordingly */
     pllmod_treeinfo_normalize_brlen_scalers(treeinfo);
