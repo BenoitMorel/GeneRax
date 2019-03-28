@@ -26,7 +26,6 @@ void schedule(const string &outputDir, const string &commandFile)
   string jobFailureFatal = "1";
   string threadsArg;
   string outputLogs = FileSystem::joinPaths(outputDir, "logs.txt");
-  FileSystem::mkdir(outputDir, true);
   argv.push_back((char *)exec.c_str());
   argv.push_back((char *)implem.c_str());
   argv.push_back((char *)library.c_str());
@@ -51,8 +50,9 @@ void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
   
   stringstream outputDirName;
   outputDirName << "raxml_light_" << iteration;
-  string commandFile = FileSystem::joinPaths(arguments.output, "raxml_light_command.txt");
   string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
+  FileSystem::mkdir(outputDir, true);
+  string commandFile = FileSystem::joinPaths(outputDir, "raxml_light_command.txt");
   vector<int> geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
   ParallelOfstream os(commandFile);
   for (size_t i = 0; i < families.size(); ++i) {
@@ -94,8 +94,9 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
   Logger::timed << "Starting SPR rounds with radius " << sprRadius << endl;
   stringstream outputDirName;
   outputDirName << "gene_optimization_" << iteration;
-  string commandFile = "/home/morelbt/github/phd_experiments/command.txt";
   string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
+  FileSystem::mkdir(outputDir, true);
+  string commandFile = FileSystem::joinPaths(outputDir, "opt_genes_command.txt");
   vector<int> geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
   ParallelOfstream os(commandFile);
   for (size_t i = 0; i < families.size(); ++i) {
