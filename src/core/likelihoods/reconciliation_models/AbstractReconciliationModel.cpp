@@ -159,18 +159,28 @@ void AbstractReconciliationModel::markInvalidatedNodes()
 
 void AbstractReconciliationModel::updateCLVsRec(pll_unode_t *node)
 {
+  if (_isCLVUpdated[node->node_index]) {
+    return;
+  }
   stack<pll_unode_t *> nodes;
   nodes.push(node);
   while (!nodes.empty()) {
     auto currentNode = nodes.top();
-    if (_isCLVUpdated[currentNode->node_index]) {
-      nodes.pop();
-      continue;
-    }
-    if (node->next) {
-      nodes.push(currentNode->next->back);
-      nodes.push(currentNode->next->next->back);
-      continue;
+    if (currentNode->next) {
+      bool waitForChildren = false;
+      auto left = currentNode->next->back;
+      auto right = currentNode->next->next->back;
+      if (!_isCLVUpdated[left->node_index]) {
+        nodes.push(left);
+        waitForChildren = true;
+      }
+      if (!_isCLVUpdated[right->node_index]) {
+        nodes.push(right);
+        waitForChildren = true;
+      }
+      if (waitForChildren) {
+        continue;
+      }
     }
     updateCLV(currentNode);
     nodes.pop();
