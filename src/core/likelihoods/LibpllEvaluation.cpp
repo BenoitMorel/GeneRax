@@ -103,36 +103,8 @@ void LibpllEvaluation::createAndSaveRandomTree(const string &alignmentFilename,
     const string &modelStrOrFile,
     const string &outputTreeFile)
 {
-  // sequences 
-  pll_sequences sequences;
-  unsigned int *patternWeights = nullptr;
-  string modelStr = modelStrOrFile;
-  ifstream f(modelStr);
-  if (f.good()) {
-    getline(f, modelStr);
-    modelStr = modelStr.substr(0, modelStr.find(","));
-  }
-  Model model(modelStr);
-  assert(model.num_submodels() == 1);
-  pll_utree_t *utree = 0;
-  if (!ifstream(alignmentFilename.c_str()).good()) {
-    throw LibpllException("Alignment file " + alignmentFilename + "does not exist");
-  }
-  try {
-    parsePhylip(alignmentFilename.c_str(),
-        model.charmap(), sequences,
-        patternWeights);
-  } catch (...) {
-    parseFasta(alignmentFilename.c_str(),
-        model.charmap(), sequences, patternWeights);
-  }
-  vector<const char*> labels;
-  for (auto seq: sequences) {
-    labels.push_back(seq->label);
-  }
-  int seed = 0;
-  utree = pllmod_utree_create_random(labels.size(), &labels[0], seed);
-  LibpllParsers::saveUtree(utree->nodes[0], outputTreeFile, false);
+  auto evaluation = buildFromString("__random__", alignmentFilename, modelStrOrFile);
+  LibpllParsers::saveUtree(evaluation->utree_->nodes[0], outputTreeFile, false);
 }
 
 shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &newickString,
@@ -258,6 +230,21 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromFile(const string &newic
       info.model);
 }
 
+double LibpllEvaluation::raxmlSPRRounds()
+{
+  return pllmod_algo_spr_round(getTreeInfo().get(),
+      1,
+      5,
+      1, // params.ntopol_keep
+      1, // THOROUGH
+      0, //int brlen_opt_method,
+      RAXML_BRLEN_MIN,
+      RAXML_BRLEN_MAX,
+      RAXML_BRLEN_SMOOTHINGS,
+      0.1,
+      0, //cutoff_info_t * cutoff_info,
+      0.0); //double subtree_cutoff);
+}
 
 
 double LibpllEvaluation::computeLikelihood(bool incremental)

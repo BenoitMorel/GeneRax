@@ -60,6 +60,8 @@ public:
    */
   double optimizeAllParameters();
 
+  double raxmlSPRRounds();
+
   /**
    *  Accessor to the wrapped treeinfo structure
    */

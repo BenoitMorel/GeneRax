@@ -1,6 +1,7 @@
 #include "PerCoreGeneTrees.hpp"
 #include <ParallelContext.hpp>
 #include <IO/Logger.hpp>
+#include <IO/FileSystem.hpp>
 #include <IO/LibpllParsers.hpp>
 #include <algorithm>
 #include <numeric>
@@ -44,8 +45,10 @@ PerCoreGeneTrees::PerCoreGeneTrees(const vector<FamiliesFileParser::FamilyInfo> 
   vector<size_t> myIndices = getMyIndices(treeSizes);
 
   for (auto i: myIndices) {
+    string geneTreeStr;
+    FileSystem::getFileContent(families[i].startingGeneTree, geneTreeStr);
     _geneTrees.push_back(GeneTree());
-    _geneTrees.back().mapping = GeneSpeciesMapping(families[i].mappingFile);
+    _geneTrees.back().mapping.fill(families[i].mappingFile, geneTreeStr);
     _geneTrees.back().tree = LibpllParsers::readNewickFromFile(families[i].startingGeneTree);
   }
 }

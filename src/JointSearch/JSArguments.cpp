@@ -92,10 +92,6 @@ void JSArguments::checkInputs() {
     Logger::error << "You need to provide a species tree." << endl;
     ok = false;
   }
-  if (!geneSpeciesMap.size()) {
-    Logger::error << "You need to provide a gene species map file." << endl;
-    ok = false;
-  }
   if (userDTLRates && (dupRate < 0.0 || lossRate < 0.0)) {
     Logger::error << "You specified at least one of the duplication and loss rates, but not both of them." << endl;
     ok = false;
@@ -109,7 +105,9 @@ void JSArguments::checkInputs() {
     assertFileExists(geneTree);
   }
   assertFileExists(speciesTree);
-  assertFileExists(geneSpeciesMap);
+  if (geneSpeciesMap.size()) {
+    assertFileExists(geneSpeciesMap);
+  }
   assertFileExists(alignment);
 }
 

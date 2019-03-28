@@ -17,6 +17,66 @@
 
 using namespace std;
 
+void schedule(const string &outputDir, const string &commandFile)
+{
+  vector<char *> argv;
+  string exec = "mpi-scheduler";
+  string implem = "--split-scheduler" ;
+  string library = "--static_scheduled_main"; //"/home/morelbt/github/GeneRax/build/src/generax/libgenerax_optimize_gene_trees.so";
+  string jobFailureFatal = "1";
+  string threadsArg;
+  string outputLogs = FileSystem::joinPaths(outputDir, "logs.txt");
+  FileSystem::mkdir(outputDir, true);
+  argv.push_back((char *)exec.c_str());
+  argv.push_back((char *)implem.c_str());
+  argv.push_back((char *)library.c_str());
+  argv.push_back((char *)commandFile.c_str());
+  argv.push_back((char *)outputDir.c_str());
+  argv.push_back((char *)jobFailureFatal.c_str());
+  argv.push_back((char *)threadsArg.c_str());
+  argv.push_back((char *)outputLogs.c_str());
+  MPI_Comm comm = MPI_COMM_WORLD;
+  ParallelContext::barrier(); 
+  mpi_scheduler_main(argv.size(), &argv[0], (void*)&comm);
+}
+
+void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
+    GeneRaxArguments &arguments,
+    int iteration,
+    long &sumElapsed)
+
+{
+  auto start = Logger::getElapsedSec();
+  Logger::timed << "Starting raxml light step" << endl;
+  
+  stringstream outputDirName;
+  outputDirName << "raxml_light_" << iteration;
+  string commandFile = "/home/morelbt/github/phd_experiments/command.txt";
+  string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
+  vector<int> geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
+  ParallelOfstream os(commandFile);
+  for (size_t i = 0; i < families.size(); ++i) {
+    auto &family = families[i];
+    string familyOutput = FileSystem::joinPaths(arguments.output, "results");
+    familyOutput = FileSystem::joinPaths(familyOutput, family.name);
+    string geneTreePath = FileSystem::joinPaths(familyOutput, "geneTree.newick");
+    int taxa = geneTreeSizes[i];
+    os << family.name << " ";
+    os << 1 << " "; // cores
+    os << taxa << " " ; // cost
+    os << "raxmlLight" << " ";
+    os << family.startingGeneTree << " ";
+    os << family.alignmentFile << " ";
+    os << family.libpllModel  << " ";
+    os << geneTreePath << " ";
+  }    
+  os.close();
+  schedule(outputDir, commandFile); 
+  auto elapsed = (Logger::getElapsedSec() - start);
+  sumElapsed += elapsed;
+  Logger::timed << "End of raxml light step (after " << elapsed << "s)"  << endl;
+}
+
 
 void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     DTLRates &rates,
@@ -55,6 +115,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     os << family.name << " ";
     os << cores << " "; // cores
     os << taxa << " " ; // cost
+    os << "optimizeGeneTrees" << " ";
     os << family.startingGeneTree << " ";
     os << family.mappingFile << " ";
     os << family.alignmentFile << " ";
@@ -74,26 +135,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     family.statsFile = outputStats;
   } 
   os.close();
-  
-  vector<char *> argv;
-  string exec = "mpi-scheduler";
-  string implem = "--split-scheduler" ;
-  string library = "--static_scheduled_main"; //"/home/morelbt/github/GeneRax/build/src/generax/libgenerax_optimize_gene_trees.so";
-  string jobFailureFatal = "1";
-  string threadsArg;
-  string outputLogs = FileSystem::joinPaths(outputDir, "logs.txt");
-  FileSystem::mkdir(outputDir, true);
-  argv.push_back((char *)exec.c_str());
-  argv.push_back((char *)implem.c_str());
-  argv.push_back((char *)library.c_str());
-  argv.push_back((char *)commandFile.c_str());
-  argv.push_back((char *)outputDir.c_str());
-  argv.push_back((char *)jobFailureFatal.c_str());
-  argv.push_back((char *)threadsArg.c_str());
-  argv.push_back((char *)outputLogs.c_str());
-  MPI_Comm comm = MPI_COMM_WORLD;
-  ParallelContext::barrier(); 
-  mpi_scheduler_main(argv.size(), &argv[0], (void*)&comm);
+  schedule(outputDir, commandFile); 
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
   Logger::timed << "End of SPR rounds (after " << elapsed << "s)"  << endl;
@@ -259,7 +301,7 @@ int internal_main(int argc, char** argv, void* comm)
   bool randoms = createRandomTrees(arguments.output, currentFamilies); 
   int iteration = 0;
   if (randoms) {
-    optimizeGeneTrees(currentFamilies, rates, arguments, false, 1, iteration++, sumElapsedLibpll);
+    raxmlMain(currentFamilies, arguments, iteration++, sumElapsedLibpll);
   }
   RecModel initialRecModel = arguments.reconciliationModel;
   if (initialRecModel == UndatedDTL) {

@@ -37,7 +37,7 @@ void SearchUtils::testMove(JointTree &jointTree,
   if (blo) {
     jointTree.optimizeMove(move);
   }
-  newLoglk = recLoglk +  jointTree.computeLibpllLoglk(true);
+  newLoglk = recLoglk +  jointTree.computeLibpllLoglk(false);
   jointTree.rollbackLastMove();
   if(check) {
     auto newLoglk = jointTree.computeJointLoglk();

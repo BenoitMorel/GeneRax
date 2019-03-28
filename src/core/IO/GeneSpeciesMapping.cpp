@@ -3,9 +3,19 @@
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+#include <IO/LibpllParsers.hpp>
+#include <IO/Logger.hpp>
 
+void GeneSpeciesMapping::fill(const string &mappingFile, const string &geneTreeStr) 
+{
+  if (mappingFile.size()) {
+    buildFromMappingFile(mappingFile);
+  } else {
+    buildFromTrees(geneTreeStr);
+  }
+}
 
-GeneSpeciesMapping::GeneSpeciesMapping(const string &mappingFile)
+void GeneSpeciesMapping::buildFromMappingFile(const string &mappingFile)
 {
   ifstream f(mappingFile);
   string line;
@@ -17,7 +27,7 @@ GeneSpeciesMapping::GeneSpeciesMapping(const string &mappingFile)
     buildFromTreerecsMapping(f);
   }
 }
-
+  
 
 void GeneSpeciesMapping::buildFromPhyldogMapping(ifstream &f)
 {
@@ -53,5 +63,24 @@ void GeneSpeciesMapping::buildFromTreerecsMapping(ifstream &f)
     ss >> species;
     _map[gene] = species;
   }
+}
+
+void GeneSpeciesMapping::buildFromTrees(const string &geneTreeStr)
+{
+  pll_utree_t *tree = LibpllParsers::readNewickFromStr(geneTreeStr);
+  int nodes = tree->tip_count + tree->inner_count;
+  for (int i = 0; i < nodes; ++i) {
+    auto node = tree->nodes[i];
+    if (node->next) 
+      continue;
+    string label(node->label);
+    string species;
+    string gene;
+    auto pos = label.find_first_of('_');
+    species = label.substr(0, pos);
+    gene = label.substr(pos + 1);
+    Logger::info << gene << " " << species << endl;
+    _map[gene] = species;
+  }   
 }
 

@@ -23,7 +23,7 @@ public:
               const string &speciestree_file,
               const string &geneSpeciesMap_file,
               const string &substitutionModel,
-              RecModel econciliationModel,
+              RecModel reconciliationModel,
               RecOpt reconciliationOpt,
               bool rootedGeneTree,
               bool safeMode = false,

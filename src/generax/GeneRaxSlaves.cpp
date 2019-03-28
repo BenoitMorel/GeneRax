@@ -32,6 +32,7 @@ void getTreeStrings(const string &filename, vector<string> &treeStrings)
   }
 }
 
+
 void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
     const string &mappingFile,
     const string &alignmentFile,
@@ -72,14 +73,14 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
   double bestLoglk = jointTree->computeJointLoglk();
   jointTree->printLoglk();
   Logger::info << "Initial ll = " << bestLoglk << endl;
-  /*
   if (!enableRec) {
-    while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk, false)) {} 
+    Logger::info << "First search" << endl;
+    while(SPRSearch::applySPRRound(*jointTree, 5, bestLoglk, false)) {} 
     jointTree->optimizeParameters(true, false); // only optimize felsenstein likelihood
     bestLoglk = jointTree->computeJointLoglk();
   
   }
-  */
+    Logger::info << "Second search" << endl;
   while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk, true)) {} 
   Logger::info << "Final ll = " << bestLoglk << endl;
   jointTree->save(outputGeneTree, false);
@@ -93,15 +94,15 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
 }
 
 
-int local_internal_main(int argc, char** argv, void* comm)
+int optimizeGeneTreesMain(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm);
-  if (argc != 16) {
+  if (argc != 17) {
     Logger::error << "Invalid number of parameters in generax_optimize_gene_trees: " << argc << endl;
     return 1;
   }
   Logger::timed << "Starting optimizeGeneTreesSlave" << endl;
-  int i = 1;
+  int i = 2;
   string startingGeneTreeFile(argv[i++]);
   string mappingFile(argv[i++]);
   string alignmentFile(argv[i++]);
@@ -138,11 +139,42 @@ int local_internal_main(int argc, char** argv, void* comm)
   return 0;
 }
 
+int raxmlLightMain(int argc, char** argv, void* comm)
+{
+  int i = 2;
+  string startingGeneTreeFile(argv[i++]);
+  string alignmentFile(argv[i++]);
+  string libpllModel(argv[i++]);
+  string outputGeneTree(argv[i++]);
+  LibpllAlignmentInfo info;
+  info.alignmentFilename = alignmentFile;
+  info.model = libpllModel;
+  Logger::info << "plop" << endl;
+  Logger::info << startingGeneTreeFile << endl;
+  auto evaluation = LibpllEvaluation::buildFromFile(startingGeneTreeFile,
+      info);
+ 
+  evaluation->optimizeAllParameters();
+  evaluation->raxmlSPRRounds();
+  Logger::info << evaluation->computeLikelihood(false) << endl;
+  
+  LibpllParsers::saveUtree(evaluation->getTreeInfo()->root, outputGeneTree);  
+  return 0;
+}
+
 
 extern "C" int static_scheduled_main(int argc, char** argv, void* comm)
 {
   Logger::enableLogFile(false);
-  int res =  local_internal_main(argc, argv, comm);
+  string key(argv[1]);
+  int res = 1;
+  if (key == "optimizeGeneTrees") {
+    res = optimizeGeneTreesMain(argc, argv, comm);   
+  } else if (key == "raxmlLight") {
+    res = raxmlLightMain(argc, argv, comm);
+  } else {
+    assert(0);
+  }
   Logger::enableLogFile(true);
   return res;
 }

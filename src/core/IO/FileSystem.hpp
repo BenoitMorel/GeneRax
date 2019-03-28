@@ -30,5 +30,13 @@ public:
 #endif
     return p1 + sep + p2;
   }
+
+  static void getFileContent(const string &filePath, string &content) 
+  {
+    ifstream ifs;
+    content.assign((std::istreambuf_iterator<char>(ifs)),
+      (std::istreambuf_iterator<char>()) );
+  }
+
 };
 

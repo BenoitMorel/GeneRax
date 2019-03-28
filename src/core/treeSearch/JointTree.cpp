@@ -120,7 +120,6 @@ JointTree::JointTree(const string &newick_string,
     double dupRate,
     double lossRate,
     double transRate):
-  geneSpeciesMap_(geneSpeciesMap_file),
   dupRate_(dupRate),
   lossRate_(lossRate),
   transRate_(transRate),
@@ -134,6 +133,7 @@ JointTree::JointTree(const string &newick_string,
   libpllEvaluation_ = LibpllEvaluation::buildFromString(newick_string, info_.alignmentFilename, info_.model);
   pllSpeciesTree_ = pll_rtree_parse_newick(speciestree_file.c_str());
   assert(pllSpeciesTree_);
+  geneSpeciesMap_.fill(geneSpeciesMap_file, newick_string);
   reconciliationEvaluation_ = make_shared<ReconciliationEvaluation>(pllSpeciesTree_,  
       geneSpeciesMap_, 
       reconciliationModel,

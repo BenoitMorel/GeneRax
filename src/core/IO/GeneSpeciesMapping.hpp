@@ -18,11 +18,8 @@ class GeneSpeciesMapping {
 public:
   
   GeneSpeciesMapping() {}
-  /**
-   *  Constructor
-   *  @param mappingFile: file containing the mapping information
-   */
-  GeneSpeciesMapping(const string &mappingFile);
+  
+  void fill(const string &mappingFile, const string &geneTreeStr); 
 
   /**
    *  @return an object mapping each gene to one species
@@ -39,5 +36,7 @@ private:
   map<string, string> _map;
   void buildFromPhyldogMapping(ifstream &f);
   void buildFromTreerecsMapping(ifstream &f);
+  void buildFromMappingFile(const string &mappingFile); 
+  void buildFromTrees(const string &geneTreeStr); 
 };
 
