@@ -22,7 +22,7 @@ void SearchUtils::testMove(JointTree &jointTree,
   averageReconciliationDiff *= 50;
   averageReconciliationDiff += improvement;
   averageReconciliationDiff /= 51;
-  if (false && improvement < averageReconciliationDiff) {
+  if (improvement < averageReconciliationDiff) {
     jointTree.rollbackLastMove();
     if(check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
       cerr.precision(17);
