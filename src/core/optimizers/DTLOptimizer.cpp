@@ -280,13 +280,15 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
 DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
 {
   vector<DTLRates> rates;
-  rates.push_back(DTLRates(0.01, 0.01, 0.0));
-  rates.push_back(DTLRates(1.0, 0.01, 0.0));
   if (Enums::accountsForTransfers(model)) {
+    rates.push_back(DTLRates(0.01, 0.01, 0.0));
+    rates.push_back(DTLRates(1.0, 1.0, 0.0));
     rates.push_back(DTLRates(0.01, 1.0, 1.0));
-    rates.push_back(DTLRates(0.01, 0.01, 1.0));
+    rates.push_back(DTLRates(0.5, 1.0, 0.5));
   } else {
-      rates.push_back(DTLRates(0.01, 1.0, 0.0));
+    rates.push_back(DTLRates(0.01, 0.01, 0.0));
+    rates.push_back(DTLRates(1.0, 0.01, 0.0));
+    rates.push_back(DTLRates(0.01, 1.0, 0.0));
   }
   int llCalls = 0;
   for (auto &r: rates) {
