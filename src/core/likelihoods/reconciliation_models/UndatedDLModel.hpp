@@ -51,5 +51,6 @@ private:
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
       bool isVirtualRoot = false) const;
+  void accountForSpeciesRoot(pll_unode_t *virtualRoot);
 };
 

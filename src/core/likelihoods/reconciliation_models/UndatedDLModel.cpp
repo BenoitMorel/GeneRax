@@ -234,6 +234,32 @@ ScaledValue UndatedDLModel::getRootLikelihood(pll_unode_t *root) const
   }
   return sum;
 }
+
+void UndatedDLModel::accountForSpeciesRoot(pll_unode_t *virtualRoot)
+{
+  int u = virtualRoot->node_index;
+  vector<ScaledValue> save_uq(_uq[u]);
+  auto leftGeneNode = getLeft(virtualRoot, true);
+  auto rightGeneNode = getRight(virtualRoot, true);
+  for (auto speciesNode: speciesNodes_) {
+    int e = speciesNode->node_index;
+    ScaledValue proba;
+    // D
+      int gp_i = leftGeneNode->node_index;
+      int gpp_i = rightGeneNode->node_index;
+      ScaledValue temp = _uq[gp_i][e];
+      temp *= _uq[gpp_i][e];
+      temp *= _PD[e];
+      proba += temp;
+    // no event
+    proba += save_uq[e] * (1.0 - _PD[e]);
+    // DL
+    proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
+    
+    _uq[u][e] = proba;
+  }
+}
+
 void UndatedDLModel::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
   int u = virtualRoot->node_index;
@@ -241,5 +267,6 @@ void UndatedDLModel::computeRootLikelihood(pll_unode_t *virtualRoot)
     int e = speciesNode->node_index;
     computeProbability(virtualRoot, speciesNode, _uq[u][e], true);
   }
+//  accountForSpeciesRoot(virtualRoot);
 }
 
