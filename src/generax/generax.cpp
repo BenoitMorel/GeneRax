@@ -183,21 +183,30 @@ RecModel testRecModel(const string &speciesTreeFile,
   long testTime = 0;
   optimizeRates(false, speciesTreeFile, UndatedDL, families, noTransferRates, testTime);
   optimizeRates(false, speciesTreeFile, UndatedDTL, families, transferRates, testTime);
-  double myScoreTransfers = transferRates.ll / families.size();
-  double myScoreNoTransfers = noTransferRates.ll / families.size();
-  double ratio = fabs(myScoreNoTransfers / myScoreTransfers);
-  Logger::info << "No transfer: " << noTransferRates.ll << " " << myScoreNoTransfers << endl;
-  Logger::info << "With transfer: " << transferRates.ll << " " << myScoreTransfers << endl;
-  Logger::info << "Ratio: " << ratio << endl;
-  if (ratio > 1.1) {  
-    Logger::info << "I think there are transfers" << endl;
-    rates = transferRates;
-    return UndatedDTL;
+  double ll_dtl = transferRates.ll;
+  double ll_dl = noTransferRates.ll;
+
+  double aic_dtl = 2.0 - 2.0 * ll_dtl;
+  double aic_dl = -2.0 * ll_dl;
+  double bic_dtl = log(double(families.size())) - 2.0 * ll_dtl;
+  double bic_dl = -2.0 * ll_dl;
+  Logger::info << "AIC dl: " << aic_dl << endl;
+  Logger::info << "AIC dtl: " << aic_dtl << endl;
+  Logger::info << "BIC dl: " << bic_dl << endl;
+  Logger::info << "BIC dtl: " << bic_dtl << endl;
+  if (aic_dtl < aic_dl) {
+    Logger::info << "AIC thinks there are some transfers" << endl;
   } else {
-    Logger::info << "I think there are NO transfers" << endl;
-    rates = noTransferRates;
-    return UndatedDL;
+    Logger::info << "AIC thinks there are NO transfers" << endl;
   }
+  if (bic_dtl < bic_dl) {
+    Logger::info << "BIC thinks there are some transfers" << endl;
+  } else {
+    Logger::info << "BIC thinks there are NO transfers" << endl;
+  }
+  
+  // todobenoit
+  return UndatedDTL;
 }
 
 
