@@ -280,22 +280,11 @@ void optimizeStep(GeneRaxArguments &arguments,
   gatherLikelihoods(families, totalLibpllLL, totalRecLL);
 }
 
-int internal_main(int argc, char** argv, void* comm)
-{
-  // the order is very important
-  ParallelContext::init(comm); 
-  Logger::init();
-  GeneRaxArguments arguments(argc, argv);
-  FileSystem::mkdir(arguments.output, true);
-  Logger::initFileOutput(FileSystem::joinPaths(arguments.output, "generax"));
-  
-  arguments.printCommand();
-  arguments.printSummary();
 
-  vector<FamiliesFileParser::FamilyInfo> initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
-  Logger::info << "Number of gene families: " << initialFamilies.size() << endl;
-  initFolders(arguments.output, initialFamilies);
-  
+void search(const vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
+    GeneRaxArguments &arguments)
+
+{
   double totalLibpllLL = 0.0;
   double totalRecLL = 0.0;
   long sumElapsedRates = 0;
@@ -304,6 +293,7 @@ int internal_main(int argc, char** argv, void* comm)
 
   DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
   vector<FamiliesFileParser::FamilyInfo> currentFamilies = initialFamilies;
+
   bool randoms = createRandomTrees(arguments.output, currentFamilies); 
   int iteration = 0;
   if (randoms) {
@@ -338,6 +328,52 @@ int internal_main(int argc, char** argv, void* comm)
   Logger::info << "Time spent on optimizing rates: " << sumElapsedRates << "s" << endl;
   Logger::info << "Time spent on optimizing gene trees: " << sumElapsedSPR << "s" << endl;
   Logger::timed << "End of GeneRax execution" << endl;
+
+}
+
+void eval(const vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
+    GeneRaxArguments &arguments)
+{
+  long dummy = 0;
+  DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
+  vector<FamiliesFileParser::FamilyInfo> families = initialFamilies;
+  optimizeRates(arguments.userDTLRates, arguments.speciesTree, arguments.reconciliationModel, families, rates, dummy);
+  int sprRadius = 0;
+  int currentIteration = 0;
+  optimizeGeneTrees(families, rates, arguments, true, sprRadius, currentIteration, dummy);
+  
+  double totalLibpllLL = 0.0;
+  double totalRecLL = 0.0;
+  gatherLikelihoods(families, totalLibpllLL, totalRecLL);
+
+}
+
+
+int internal_main(int argc, char** argv, void* comm)
+{
+  // the order is very important
+  ParallelContext::init(comm); 
+  Logger::init();
+  GeneRaxArguments arguments(argc, argv);
+  FileSystem::mkdir(arguments.output, true);
+  Logger::initFileOutput(FileSystem::joinPaths(arguments.output, "generax"));
+  
+  arguments.printCommand();
+  arguments.printSummary();
+
+  vector<FamiliesFileParser::FamilyInfo> initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
+  Logger::info << "Number of gene families: " << initialFamilies.size() << endl;
+  initFolders(arguments.output, initialFamilies);
+
+  switch (arguments.strategy) {
+  case SPR:
+    search(initialFamilies, arguments);
+    break;
+  case EVAL:
+    eval(initialFamilies, arguments);
+    break;
+  }
+
   ParallelContext::finalize();
   return 0;
 }

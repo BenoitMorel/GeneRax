@@ -73,14 +73,20 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
   double bestLoglk = jointTree->computeJointLoglk();
   jointTree->printLoglk();
   Logger::info << "Initial ll = " << bestLoglk << endl;
-  while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk, true)) {} 
+  if (sprRadius > 0) {
+    while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk, true)) {} 
+  }
   Logger::info << "Final ll = " << bestLoglk << endl;
-  jointTree->save(outputGeneTree, false);
-  ParallelOfstream stats(outputStats);
-  double libpllLL = jointTree->computeLibpllLoglk ();
-  double recLL = jointTree->computeReconciliationLoglk();
-  stats << libpllLL << " " << recLL;
-  stats.close();
+  if (outputGeneTree.size()) {
+    jointTree->save(outputGeneTree, false);
+  }
+  if (outputStats.size()) {
+    ParallelOfstream stats(outputStats);
+    double libpllLL = jointTree->computeLibpllLoglk ();
+    double recLL = jointTree->computeReconciliationLoglk();
+    stats << libpllLL << " " << recLL;
+    stats.close();
+  }
   Logger::timed << "End of optimizing gene tree" << endl;
   ParallelContext::barrier();
 }
