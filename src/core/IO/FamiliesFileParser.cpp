@@ -10,32 +10,32 @@ enum FFPStep {
 };
 
 
-bool update_family(const string line, 
+bool update_family(const string &line, 
     FamiliesFileParser::FamilyInfo &currentFamily,
     vector<FamiliesFileParser::FamilyInfo> &families)
 {
-  switch(line[0]) {
-    case '-':
+  if (line[0] == '-') {
       if (currentFamily.name.size()) {
         families.push_back(currentFamily);
         currentFamily.reset();
       }
       currentFamily.name = line.substr(1, line.size() - 1);
-      break;
-    case 'A': 
-      currentFamily.alignmentFile = line.substr(2, line.size() - 1);
-      break;
-    case 'G': 
-      currentFamily.startingGeneTree = line.substr(2, line.size() - 1);
-      break;
-    case'M':
-      currentFamily.mappingFile = line.substr(2, line.size() - 1);
-      break;
-    case'S':
-      currentFamily.libpllModel = line.substr(2, line.size() - 1);
-      break;
-    default:
-      return false;
+    return true ;
+  }
+  size_t delim_pos = line.find_first_of("=");
+  string key = line.substr(0, delim_pos);
+  string value = line.substr(delim_pos + 1, line.size() - delim_pos);
+  if (key == "alignment") {
+    currentFamily.alignmentFile = value;
+  } else if (key == "starting_gene_tree") {
+    currentFamily.startingGeneTree = value;
+  } else if (key == "mapping") {
+    currentFamily.mappingFile = value;
+  } else if (key == "subst_model") {
+    currentFamily.libpllModel = value;
+  } else {
+    Logger::error << "Unknown prefix " << key << endl;
+    return false;
   }
   return true;
 }
@@ -64,7 +64,6 @@ vector<FamiliesFileParser::FamilyInfo> FamiliesFileParser::parseFamiliesFile(con
     case reading_family:
       if (!update_family(line, currentFamily, families)) {
         Logger::error << "Error when parsing " << familiesFile << ":" << lineNumber << endl;
-        Logger::error << "The line should start with one of: - A G M" << endl;
         ParallelContext::abort(1);
       }
       break;
