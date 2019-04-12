@@ -1,5 +1,5 @@
 #include <treeSearch/Rollbacks.hpp>
-#include <treeSearch/JointTree.hpp>
+#include <trees/JointTree.hpp>
 
 
 void SavedBranch::restore() {

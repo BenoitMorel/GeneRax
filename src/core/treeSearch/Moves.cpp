@@ -1,5 +1,5 @@
 #include <treeSearch/Moves.hpp>
-#include <treeSearch/JointTree.hpp>
+#include <trees/JointTree.hpp>
 #include <IO/Logger.hpp>
 
 // constants taken from RAXML

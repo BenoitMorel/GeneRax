@@ -1,5 +1,5 @@
 #include "SearchUtils.hpp"
-#include <treeSearch/JointTree.hpp>
+#include <trees/JointTree.hpp>
 #include <ParallelContext.hpp>
 #include <IO/Logger.hpp>
 

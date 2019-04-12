@@ -1,5 +1,5 @@
 #include <treeSearch/SPRSearch.hpp>
-#include <treeSearch/JointTree.hpp>
+#include <trees/JointTree.hpp>
 #include <treeSearch/Moves.hpp>
 #include <treeSearch/SearchUtils.hpp>
 #include <IO/Logger.hpp>

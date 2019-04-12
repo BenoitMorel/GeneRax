@@ -1,6 +1,6 @@
 #include "JSArguments.hpp"
 #include <ParallelContext.hpp>
-#include <treeSearch/JointTree.hpp>
+#include <trees/JointTree.hpp>
 #include <treeSearch/SPRSearch.hpp>
 #include <IO/Logger.hpp>
 #include <Scenario.hpp>

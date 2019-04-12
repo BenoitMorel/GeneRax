@@ -1,9 +1,9 @@
 #include <optimizers/DTLOptimizer.hpp>
 
 #include <ParallelContext.hpp>
-#include <treeSearch/JointTree.hpp>
+#include <trees/JointTree.hpp>
 #include <IO/Logger.hpp>
-#include <PerCoreGeneTrees.hpp>
+#include <trees/PerCoreGeneTrees.hpp>
 #include <limits>
 #include <algorithm>
 #include <likelihoods/ReconciliationEvaluation.hpp>

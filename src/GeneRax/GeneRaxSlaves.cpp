@@ -5,10 +5,10 @@
 #include <IO/LibpllParsers.hpp>
 #include <algorithm>
 #include <limits>
-#include <PerCoreGeneTrees.hpp>
+#include <trees/PerCoreGeneTrees.hpp>
 #include <optimizers/DTLOptimizer.hpp>
 #include <maths/DTLRates.hpp>
-#include <treeSearch/JointTree.hpp>
+#include <trees/JointTree.hpp>
 #include <treeSearch/SPRSearch.hpp>
 #include <IO/FileSystem.hpp>
 #include <IO/ParallelOfstream.hpp>
