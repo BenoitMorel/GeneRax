@@ -14,6 +14,7 @@ extern "C" {
 #include <memory>
 #include <exception>
 #include <vector>
+#include <iostream>
 
 const double TOLERANCE = 0.5;
 
@@ -81,13 +82,15 @@ public:
 
   string getModelStr();
 
+  ~LibpllEvaluation() {cerr << "DESTROY" << endl; free(treeinfo_->tree->nodes); free(treeinfo_->init_partitions);}
 private:
   /**
    * Constructors
    */
   LibpllEvaluation():treeinfo_(nullptr) {}
   LibpllEvaluation(const LibpllEvaluation &) = delete;
-  
+ 
+
   /**
    * set all the null branch lenghts to length
    */

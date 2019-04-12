@@ -142,6 +142,13 @@ JointTree::JointTree(const string &newick_string,
 
 }
 
+JointTree::~JointTree()
+{
+  pll_rtree_destroy(pllSpeciesTree_, 0);
+  pllSpeciesTree_ = 0;
+}
+
+
 void JointTree::printLibpllTree() const {
   printLibpllTreeRooted(libpllEvaluation_->getTreeInfo()->root, Logger::info);
 }
