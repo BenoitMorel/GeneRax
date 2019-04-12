@@ -52,7 +52,7 @@ endmacro()
 
 
 add_subdirectory(JointSearch)
-add_subdirectory(generax)
+add_subdirectory(GeneRax)
 add_subdirectory(SpeciesRax)
 
 

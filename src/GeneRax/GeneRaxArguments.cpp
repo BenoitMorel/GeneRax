@@ -12,7 +12,7 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
   strategy(EVAL),
   reconciliationModel(UndatedDL),
   reconciliationOpt(Simplex),
-  output("jointSearch"),
+  output("GeneRax"),
   rootedGeneTree(true),
   userDTLRates(false),
   dupRate(1.0),
