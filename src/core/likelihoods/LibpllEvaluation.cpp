@@ -254,6 +254,9 @@ double LibpllEvaluation::computeLikelihood(bool incremental)
 
 double LibpllEvaluation::optimizeAllParameters(double tolerance)
 {
+  if (treeinfo_->params_to_optimize[0] == 0) {
+    return computeLikelihood();
+  }
   Logger::timed << "Starting libpll rates optimization" << endl;
   double previousLogl = computeLikelihood(); 
   double newLogl = previousLogl;
