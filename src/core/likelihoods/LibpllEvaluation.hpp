@@ -82,7 +82,7 @@ public:
 
   string getModelStr();
 
-  ~LibpllEvaluation() {cerr << "DESTROY" << endl; free(treeinfo_->tree->nodes); free(treeinfo_->init_partitions);}
+  ~LibpllEvaluation() { free(treeinfo_->tree->nodes); free(treeinfo_->init_partitions);}
 private:
   /**
    * Constructors
