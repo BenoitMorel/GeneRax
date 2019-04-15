@@ -215,7 +215,7 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
       model.gamma_mode(),
       model.alpha(), 
       &params_indices[0],
-      nullptr);
+      model.submodel(0).rate_sym().data());
   
   shared_ptr<LibpllEvaluation> evaluation(new LibpllEvaluation());
   evaluation->treeinfo_ = shared_ptr<pllmod_treeinfo_t>(treeinfo, treeinfoDestroy); 
