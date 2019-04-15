@@ -49,7 +49,6 @@ public:
       const LibpllAlignmentInfo &info);
 
 
-
   /*
    *  Compute the likelihood of the tree given the alignment
    *  @param incremental: if true, only recompute invalid CLVs
@@ -82,7 +81,6 @@ public:
 
   string getModelStr();
 
-  ~LibpllEvaluation() { free(treeinfo_->tree->nodes); free(treeinfo_->init_partitions);}
 private:
   /**
    * Constructors

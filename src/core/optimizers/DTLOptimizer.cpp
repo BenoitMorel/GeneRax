@@ -25,7 +25,7 @@ void updateLL(DTLRates &rates, JointTree &jointTree) {
 void updateLL(DTLRates &rates, PerCoreGeneTrees &trees, pll_rtree_t *speciesTree, RecModel model) {
   rates.ensureValidity();
   rates.ll = 0;
-  for (auto tree: trees.getTrees()) {
+  for (auto &tree: trees.getTrees()) {
     ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
     evaluation.setRates(rates.rates[0], rates.rates[1], rates.rates[2]);
     rates.ll += evaluation.evaluate(tree.tree);

@@ -44,11 +44,13 @@ PerCoreGeneTrees::PerCoreGeneTrees(const vector<FamiliesFileParser::FamilyInfo> 
   vector<int> treeSizes = LibpllParsers::parallelGetTreeSizes(families);
   vector<size_t> myIndices = getMyIndices(treeSizes);
 
+  _geneTrees.resize(myIndices.size());
+  int index = 0;
   for (auto i: myIndices) {
     string geneTreeStr;
     FileSystem::getFileContent(families[i].startingGeneTree, geneTreeStr);
-    _geneTrees.push_back(GeneTree());
-    _geneTrees.back().mapping.fill(families[i].mappingFile, geneTreeStr);
-    _geneTrees.back().tree = LibpllParsers::readNewickFromFile(families[i].startingGeneTree);
+    _geneTrees[index].mapping.fill(families[i].mappingFile, geneTreeStr);
+    _geneTrees[index].tree = LibpllParsers::readNewickFromFile(families[i].startingGeneTree);
+    index++;
   }
 }

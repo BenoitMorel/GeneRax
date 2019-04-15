@@ -10,6 +10,7 @@ public:
   struct GeneTree {
     GeneSpeciesMapping mapping;
     pll_utree_t *tree;
+    ~GeneTree() {pll_utree_destroy(tree, 0);}
   };
 
   PerCoreGeneTrees(const vector<FamiliesFileParser::FamilyInfo> &families);

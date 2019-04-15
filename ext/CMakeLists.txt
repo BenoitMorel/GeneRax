@@ -1,5 +1,5 @@
-# Treerecs – Copyright © by INRIA – All rights reserved – 2017
-# Comte Nicolas, 2017
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
+
 
 # Add _USE_MATH_DEFINES for cmath.
 add_definitions(-D_USE_MATH_DEFINES)
