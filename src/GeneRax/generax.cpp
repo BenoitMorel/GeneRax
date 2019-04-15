@@ -383,6 +383,7 @@ int internal_main(int argc, char** argv, void* comm)
     break;
   }
 
+  Logger::close();
   ParallelContext::finalize();
   return 0;
 }

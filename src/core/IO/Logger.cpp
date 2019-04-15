@@ -12,7 +12,6 @@ Logger::Logger(): _os(&cout) {
   setType(lt_info);  
 }
 
-
 void Logger::init() {
   info.setType(lt_info);
   error.setStream(cout);
@@ -32,5 +31,10 @@ void Logger::initFileOutput(const string &output)
   Logger::info << "Logs will also be printed into " << log << endl;
   logFile = new ofstream(log);
   saveLogFile = logFile;
+}
+
+void Logger::close() {
+  delete(logFile);
+  logFile = saveLogFile = 0;
 }
 

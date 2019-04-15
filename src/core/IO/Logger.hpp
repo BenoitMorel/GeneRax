@@ -31,14 +31,14 @@ private:
   LoggerType _type;
   ostream *_os; 
   Logger();
-
   void setStream(ostream &os) {_os = &os;}
   void setType(LoggerType type) {_type = type;}
 
 
 public:
   static void init();
-  
+  static void close();
+
   static void initFileOutput(const string &output);
 
   bool isSilent() {
