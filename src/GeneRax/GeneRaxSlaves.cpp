@@ -216,6 +216,9 @@ extern "C" int static_scheduled_main(int argc, char** argv, void* comm)
 }
 
 
-
-
-
+#ifdef SLAVE_EXEC
+int main(int argc, char** argv) {
+  int comm = -1;
+  return static_scheduled_main(argc, argv, &comm);
+}
+#endif

@@ -94,5 +94,6 @@ private:
   static bool ownMPIContext;
   static stack<MPI_Comm> _commStack;
   static stack<bool> _ownsMPIContextStack;
+  static bool _mpiEnabled;
 };
 

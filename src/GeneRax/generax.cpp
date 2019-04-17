@@ -17,18 +17,23 @@
 
 using namespace std;
 
-void schedule(const string &outputDir, const string &commandFile)
+bool useSplitImplem() {
+  return ParallelContext::getSize() > 4;
+}
+
+void schedule(const string &outputDir, const string &commandFile, bool splitImplem)
 {
   vector<char *> argv;
   string exec = "mpi-scheduler";
-  string implem = "--split-scheduler" ;
-  string library = "--static_scheduled_main"; //"/home/morelbt/github/GeneRax/build/src/generax/libgenerax_optimize_gene_trees.so";
+  string implem = splitImplem ? "--split-scheduler" : "--fork-scheduler";
+  
+  string called_library = splitImplem ? "--static_scheduled_main" :  "/home/morelbt/github/GeneRax/build/bin/generaxslaves";
   string jobFailureFatal = "1";
   string threadsArg;
   string outputLogs = FileSystem::joinPaths(outputDir, "logs.txt");
   argv.push_back((char *)exec.c_str());
   argv.push_back((char *)implem.c_str());
-  argv.push_back((char *)library.c_str());
+  argv.push_back((char *)called_library.c_str());
   argv.push_back((char *)commandFile.c_str());
   argv.push_back((char *)outputDir.c_str());
   argv.push_back((char *)jobFailureFatal.c_str());
@@ -36,7 +41,10 @@ void schedule(const string &outputDir, const string &commandFile)
   argv.push_back((char *)outputLogs.c_str());
   MPI_Comm comm = MPI_COMM_WORLD;
   ParallelContext::barrier(); 
-  mpi_scheduler_main(argv.size(), &argv[0], (void*)&comm);
+  if (splitImplem || ParallelContext::getRank() == 0) {
+    mpi_scheduler_main(argv.size(), &argv[0], (void*)&comm);
+  }
+  ParallelContext::barrier(); 
 }
 
 void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
@@ -45,6 +53,7 @@ void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
     long &sumElapsed)
 
 {
+  bool splitImplem = useSplitImplem();
   auto start = Logger::getElapsedSec();
   Logger::timed << "Starting raxml light step" << endl;
   
@@ -78,7 +87,7 @@ void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
     family.libpllModel = libpllModelPath;
   }    
   os.close();
-  schedule(outputDir, commandFile); 
+  schedule(outputDir, commandFile, splitImplem); 
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
   Logger::timed << "End of raxml light step (after " << elapsed << "s)"  << endl;
@@ -93,6 +102,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     int iteration,
     long &sumElapsed) 
 {
+  bool splitImplem = useSplitImplem();
   auto start = Logger::getElapsedSec();
   Logger::timed << "Starting SPR rounds with radius " << sprRadius << endl;
   stringstream outputDirName;
@@ -118,6 +128,9 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
       cores = taxa;
     }
     cores = max(1, cores);
+    if (!splitImplem) {
+      cores = 1;
+    }
     os << family.name << " ";
     os << cores << " "; // cores
     os << taxa << " " ; // cost
@@ -141,7 +154,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     family.statsFile = outputStats;
   } 
   os.close();
-  schedule(outputDir, commandFile); 
+  schedule(outputDir, commandFile, splitImplem); 
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
   Logger::timed << "End of SPR rounds (after " << elapsed << "s)"  << endl;
