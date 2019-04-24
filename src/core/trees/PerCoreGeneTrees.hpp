@@ -8,6 +8,7 @@
 class PerCoreGeneTrees {
 public:
   struct GeneTree {
+    string name;
     GeneSpeciesMapping mapping;
     pll_utree_t *tree;
     ~GeneTree() {pll_utree_destroy(tree, 0);}

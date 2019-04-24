@@ -8,7 +8,7 @@ using namespace std;
 
 class ParallelOfstream {
 public:
-  ParallelOfstream(const string &fileName);
+  ParallelOfstream(const string &fileName, bool masterRankOnly = true);
   void close();
   ~ParallelOfstream();
 private:
@@ -18,9 +18,7 @@ private:
 
 template<typename T> 
 ostream& operator<<(ParallelOfstream& log, T op) {
-  if (!ParallelContext::getRank()) {
-    *log._os << op;
-  }
+  *log._os << op;
   return *log._os;
 }
 

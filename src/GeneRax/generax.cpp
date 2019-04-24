@@ -168,15 +168,16 @@ void optimizeRates(bool userDTLRates,
     DTLRates &rates,
     long &sumElapsed) 
 {
+  if (userDTLRates) {
+    return;
+  }
   auto start = Logger::getElapsedSec();
   Logger::timed << "Start optimizing rates..." << endl;
-  if (!userDTLRates) {
-    PerCoreGeneTrees geneTrees(families);
-    pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
-    rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, recModel);
-    pll_rtree_destroy(speciesTree, 0);
-    ParallelContext::barrier(); 
-  }
+  PerCoreGeneTrees geneTrees(families);
+  pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
+  rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, recModel);
+  pll_rtree_destroy(speciesTree, 0);
+  ParallelContext::barrier(); 
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
   Logger::timed << "Finished optimizing rates: "
@@ -186,6 +187,34 @@ void optimizeRates(bool userDTLRates,
     << "Loglk=" << rates.ll 
     << " (after " << elapsed << "s)" << endl;
 }
+
+void inferReconciliation(
+    const string &speciesTreeFile,
+    vector<FamiliesFileParser::FamilyInfo> &families,
+    RecModel model,
+    DTLRates &rates,
+    const string &outputDir
+    )
+{
+  pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
+  PerCoreGeneTrees geneTrees(families);
+  string reconciliationsDir = FileSystem::joinPaths(outputDir, "reconciliations");
+  FileSystem::mkdir(reconciliationsDir, true);
+  ParallelContext::barrier();
+  for (auto &tree: geneTrees.getTrees()) {
+    string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
+    string treeWithEventsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
+    Scenario scenario;
+    ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
+    evaluation.setRates(rates.rates[0], rates.rates[1], rates.rates[2]);
+    evaluation.evaluate(tree.tree);
+    evaluation.inferMLScenario(scenario);
+    scenario.saveEventsCounts(eventCountsFile, false);
+    scenario.saveTreeWithEvents(treeWithEventsFile, false);
+  }
+  pll_rtree_destroy(speciesTree, 0);
+}
+
 
 RecModel testRecModel(const string &speciesTreeFile,
     vector<FamiliesFileParser::FamilyInfo> &families,
@@ -347,6 +376,7 @@ void search(const vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   optimizeStep(arguments, recModel, currentFamilies, rates, arguments.maxSPRRadius, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
 
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
+  inferReconciliation(arguments.speciesTree, currentFamilies, recModel, rates, arguments.output);
   if (sumElapsedLibpll) {
     Logger::info << "Initial time spent on optimizing random trees: " << sumElapsedLibpll << "s" << endl;
   }
@@ -383,7 +413,6 @@ void eval(const vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   double totalLibpllLL = 0.0;
   double totalRecLL = 0.0;
   gatherLikelihoods(families, totalLibpllLL, totalRecLL);
-
 }
 
 

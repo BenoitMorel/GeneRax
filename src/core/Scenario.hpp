@@ -34,9 +34,9 @@ public:
   void addEvent(EventType type, int geneNode, int speciesNode);
   void addTransfer(EventType type, int geneNode, int speciesNode, int from, int to);
 
-  void saveEventsCounts(const string &filename); 
+  void saveEventsCounts(const string &filename, bool masterRankOnly = true); 
 
-  void saveTreeWithEvents(const string &filename);
+  void saveTreeWithEvents(const string &filename, bool masterRankOnly = true);
 
 private:
   static const char *eventNames[];

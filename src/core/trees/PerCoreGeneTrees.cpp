@@ -49,6 +49,7 @@ PerCoreGeneTrees::PerCoreGeneTrees(const vector<FamiliesFileParser::FamilyInfo> 
   for (auto i: myIndices) {
     string geneTreeStr;
     FileSystem::getFileContent(families[i].startingGeneTree, geneTreeStr);
+    _geneTrees[index].name = families[i].name;
     _geneTrees[index].mapping.fill(families[i].mappingFile, geneTreeStr);
     _geneTrees[index].tree = LibpllParsers::readNewickFromFile(families[i].startingGeneTree);
     index++;
