@@ -2,6 +2,7 @@
 
 #include "enums.hpp"
 #include <string>
+#include "Arguments.hpp"
 using namespace std;
 
   
@@ -19,7 +20,7 @@ public:
    string families;
    string speciesTree;
    Strategy strategy;
-   RecModel reconciliationModel;
+   string reconciliationModelStr;
    RecOpt reconciliationOpt;
    string output;
    bool rootedGeneTree;
@@ -27,7 +28,6 @@ public:
    double dupRate;
    double lossRate;
    double transferRate;
-   bool autodetectDTLModel;
    int maxSPRRadius;
 };
 

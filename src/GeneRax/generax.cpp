@@ -97,6 +97,7 @@ void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
 void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     DTLRates &rates,
     GeneRaxArguments &arguments,
+    RecModel recModel,
     bool enableRec,
     int sprRadius,
     int iteration,
@@ -140,7 +141,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     os << family.alignmentFile << " ";
     os << arguments.speciesTree << " ";
     os << family.libpllModel  << " ";
-    os << (int)arguments.reconciliationModel  << " ";
+    os << (int)recModel  << " ";
     os << (int)arguments.reconciliationOpt  << " ";
     os << (int)arguments.rootedGeneTree  << " ";
     os << rates.rates[0]  << " ";
@@ -191,6 +192,7 @@ RecModel testRecModel(const string &speciesTreeFile,
     DTLRates &rates)
 
 {
+  Logger::info << "Testing for transfers..." << endl;
   DTLRates transferRates;
   DTLRates noTransferRates;
   long testTime = 0;
@@ -207,19 +209,15 @@ RecModel testRecModel(const string &speciesTreeFile,
   Logger::info << "AIC dtl: " << aic_dtl << endl;
   Logger::info << "BIC dl: " << bic_dl << endl;
   Logger::info << "BIC dtl: " << bic_dtl << endl;
-  if (aic_dtl < aic_dl) {
-    Logger::info << "AIC thinks there are some transfers" << endl;
-  } else {
-    Logger::info << "AIC thinks there are NO transfers" << endl;
-  }
   if (bic_dtl < bic_dl) {
-    Logger::info << "BIC thinks there are some transfers" << endl;
+    Logger::info << "According to BIC score, there were transfers between analyzed species." << endl;
+    rates = transferRates;
+    return UndatedDTL;
   } else {
-    Logger::info << "BIC thinks there are NO transfers" << endl;
+    Logger::info << "According to BIC score, there were NO transfers between analyzed species." << endl;
+    rates = noTransferRates;
+    return UndatedDL;
   }
-  
-  // todobenoit
-  return UndatedDTL;
 }
 
 
@@ -288,6 +286,7 @@ void saveStats(const string &outputDir, double totalLibpllLL, double totalRecLL)
 }
 
 void optimizeStep(GeneRaxArguments &arguments, 
+    RecModel recModel,
     vector<FamiliesFileParser::FamilyInfo> &families,
     DTLRates &rates,
     int sprRadius,
@@ -297,8 +296,8 @@ void optimizeStep(GeneRaxArguments &arguments,
     long &sumElapsedRates,
     long &sumElapsedSPR)
 {
-  optimizeRates(arguments.userDTLRates, arguments.speciesTree, arguments.reconciliationModel, families, rates, sumElapsedRates);
-  optimizeGeneTrees(families, rates, arguments, true, sprRadius, currentIteration, sumElapsedSPR);
+  optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, rates, sumElapsedRates);
+  optimizeGeneTrees(families, rates, arguments, recModel, true, sprRadius, currentIteration, sumElapsedSPR);
   gatherLikelihoods(families, totalLibpllLL, totalRecLL);
 }
 
@@ -322,26 +321,30 @@ void search(const vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
     raxmlMain(currentFamilies, arguments, iteration++, sumElapsedLibpll);
     gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
   }
-  RecModel initialRecModel = arguments.reconciliationModel;
-  if (initialRecModel == UndatedDTL) {
-    arguments.reconciliationModel = UndatedDL;
+  bool autoDetectRecModel;
+  RecModel recModel;
+  if (arguments.reconciliationModelStr == "AutoDetect") {
+    autoDetectRecModel = true;
+    recModel = UndatedDL;
+  } else {
+    autoDetectRecModel = false;
+    recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
   }
- 
-  optimizeStep(arguments, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
-  optimizeStep(arguments, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+  
+  optimizeStep(arguments, recModel, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+  optimizeStep(arguments, recModel, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   
 
-  optimizeStep(arguments, currentFamilies, rates, 2, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
-  optimizeStep(arguments, currentFamilies, rates, 3, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+  optimizeStep(arguments, recModel, currentFamilies, rates, 2, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+  optimizeStep(arguments, recModel, currentFamilies, rates, 3, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
 
-  if (initialRecModel == UndatedDTL) {
+  if (autoDetectRecModel) {
     DTLRates rates;
-    testRecModel(arguments.speciesTree, currentFamilies, rates);
-    arguments.reconciliationModel = UndatedDTL;
-    optimizeStep(arguments, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+    recModel = testRecModel(arguments.speciesTree, currentFamilies, rates);
+    optimizeStep(arguments, recModel, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
   
-  optimizeStep(arguments, currentFamilies, rates, arguments.maxSPRRadius, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+  optimizeStep(arguments, recModel, currentFamilies, rates, arguments.maxSPRRadius, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
 
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
   if (sumElapsedLibpll) {
@@ -359,10 +362,23 @@ void eval(const vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   long dummy = 0;
   DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
   vector<FamiliesFileParser::FamilyInfo> families = initialFamilies;
-  optimizeRates(arguments.userDTLRates, arguments.speciesTree, arguments.reconciliationModel, families, rates, dummy);
+  bool autoDetectRecModel;
+  RecModel recModel;
+  if (arguments.reconciliationModelStr == "AutoDetect") {
+    autoDetectRecModel = true;
+    recModel = UndatedDL;
+  } else {
+    autoDetectRecModel = false;
+    recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
+  }
+  if (!autoDetectRecModel) {
+    optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, rates, dummy);
+  } else {
+    recModel = testRecModel(arguments.speciesTree, families, rates);
+  }
   int sprRadius = 0;
   int currentIteration = 0;
-  optimizeGeneTrees(families, rates, arguments, true, sprRadius, currentIteration, dummy);
+  optimizeGeneTrees(families, rates, arguments, recModel, true, sprRadius, currentIteration, dummy);
   
   double totalLibpllLL = 0.0;
   double totalRecLL = 0.0;

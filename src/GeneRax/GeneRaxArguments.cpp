@@ -1,7 +1,6 @@
 
 #include "GeneRaxArguments.hpp"
 #include <IO/Logger.hpp>
-#include "Arguments.hpp"
 #include <ParallelContext.hpp>
 #include <algorithm>
 #include <vector>
@@ -10,7 +9,7 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
   argc(argc),
   argv(argv),
   strategy(EVAL),
-  reconciliationModel(UndatedDL),
+  reconciliationModelStr("AutoDetect"),
   reconciliationOpt(Simplex),
   output("GeneRax"),
   rootedGeneTree(true),
@@ -18,7 +17,6 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
   dupRate(1.0),
   lossRate(1.0),
   transferRate(0.0),
-  autodetectDTLModel(false),
   maxSPRRadius(5)
 {
   if (argc == 1) {
@@ -37,7 +35,8 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
     } else if (arg == "--strategy") {
       strategy = Arguments::strToStrategy(string(argv[++i]));
     } else if (arg == "-r" || arg == "--rec-model") {
-      reconciliationModel = Arguments::strToRecModel(string(argv[++i]));
+      reconciliationModelStr = string(argv[++i]);
+      //reconciliationModel = Arguments::strToRecModel(string(argv[++i]));
     } else if (arg == "--rec-opt") {
       reconciliationOpt = Arguments::strToRecOpt(string(argv[++i]));
     } else if (arg == "-p" || arg == "--prefix") {
@@ -53,8 +52,6 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
     } else if (arg == "--transferRate") {
       transferRate = atof(argv[++i]);
       userDTLRates = true;
-    } else if (arg == "--autodetectDTLRates") {
-      autodetectDTLModel = true;
     } else if (arg == "--max-spr-radius") {
       maxSPRRadius = atoi(argv[++i]);
     } else {
@@ -89,6 +86,10 @@ void GeneRaxArguments::checkInputs() {
     Logger::error << "You specified at least one of the duplication and loss rates, but not both of them." << endl;
     ok = false;
   }
+  if (userDTLRates && reconciliationModelStr == "AutoDetect") {
+    Logger::error << "You cannot set the DTL rates in AutoDetect mode" << endl;
+    ok = false;
+  }
   if (!ok) {
     Logger::error << "Aborting." << endl;
     ParallelContext::abort(1);
@@ -102,7 +103,7 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "-f, --families <FAMILIES_INFORMATION>" << endl;
   Logger::info << "-s, --species-tree <SPECIES TREE>" << endl;
   Logger::info << "--strategy <STRATEGY>  {EVAL, SPR}" << endl;
-  Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << endl;
+  Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, Auto}" << endl;
   Logger::info << "--rec-opt <reconciliationOpt>  {window, simplex}" << endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
   Logger::info << "--unrooted-gene-tree" << endl;
@@ -128,7 +129,7 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "Families information: " << families << endl;
   Logger::info << "Species tree: " << speciesTree << endl;
   Logger::info << "Strategy: " << Arguments::strategyToStr(strategy) << endl;
-  Logger::info << "Reconciliation model: " << Arguments::recModelToStr(reconciliationModel) << endl;
+  Logger::info << "Reconciliation model: " << reconciliationModelStr << endl;
   Logger::info << "Reconciliation opt: " << Arguments::recOptToStr(reconciliationOpt) << endl;
   Logger::info << "Prefix: " << output << endl;
   Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << endl;
