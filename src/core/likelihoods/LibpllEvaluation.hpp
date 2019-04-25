@@ -68,7 +68,7 @@ public:
   /**
    *  Accessor to the wrapped treeinfo structure
    */
-  shared_ptr<pllmod_treeinfo_t> getTreeInfo() {return treeinfo_;}
+  shared_ptr<pllmod_treeinfo_t> getTreeInfo() {return _treeinfo;}
 
   /**
    *  Invalidate a CLV at a given node index
@@ -86,7 +86,7 @@ private:
   /**
    * Constructors
    */
-  LibpllEvaluation():treeinfo_(nullptr) {}
+  LibpllEvaluation():_treeinfo(nullptr) {}
   LibpllEvaluation(const LibpllEvaluation &) = delete;
  
 
@@ -122,10 +122,10 @@ private:
 
   static double optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, double tolerance);
   
-  pll_unode_t *getNode(int nodeIndex) {return treeinfo_->subnodes[nodeIndex];}
+  pll_unode_t *getNode(int nodeIndex) {return _treeinfo->subnodes[nodeIndex];}
 private:
-  shared_ptr<pllmod_treeinfo_t> treeinfo_;
-  shared_ptr<pll_utree_t> utree_;
+  shared_ptr<pllmod_treeinfo_t> _treeinfo;
+  shared_ptr<pll_utree_t> _utree;
   Model _model;
 };
 

@@ -98,7 +98,7 @@ bool getNextLine(ifstream &is, string &os)
 
 string LibpllEvaluation::getModelStr()
 {
-  assign(_model, treeinfo_->partitions[0]);
+  assign(_model, _treeinfo->partitions[0]);
   string modelStr = _model.to_string(true);
   return modelStr;
 }
@@ -108,7 +108,7 @@ void LibpllEvaluation::createAndSaveRandomTree(const string &alignmentFilename,
     const string &outputTreeFile)
 {
   auto evaluation = buildFromString("__random__", alignmentFilename, modelStrOrFile);
-  LibpllParsers::saveUtree(evaluation->utree_->nodes[0], outputTreeFile, false);
+  LibpllParsers::saveUtree(evaluation->_utree->nodes[0], outputTreeFile, false);
 }
 
 shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &newickString,
@@ -217,8 +217,8 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
   
   shared_ptr<LibpllEvaluation> evaluation(new LibpllEvaluation());
   evaluation->_model = model;
-  evaluation->treeinfo_ = shared_ptr<pllmod_treeinfo_t>(treeinfo, treeinfoDestroy); 
-  evaluation->utree_ = shared_ptr<pll_utree_t>(utree, utreeDestroy); 
+  evaluation->_treeinfo = shared_ptr<pllmod_treeinfo_t>(treeinfo, treeinfoDestroy); 
+  evaluation->_utree = shared_ptr<pll_utree_t>(utree, utreeDestroy); 
   return evaluation;
 }
   
@@ -254,12 +254,12 @@ double LibpllEvaluation::raxmlSPRRounds(int minRadius, int maxRadius, int thorou
 
 double LibpllEvaluation::computeLikelihood(bool incremental)
 {
-  return pllmod_treeinfo_compute_loglh(treeinfo_.get(), incremental);
+  return pllmod_treeinfo_compute_loglh(_treeinfo.get(), incremental);
 }
 
 double LibpllEvaluation::optimizeAllParameters(double tolerance)
 {
-  if (treeinfo_->params_to_optimize[0] == 0) {
+  if (_treeinfo->params_to_optimize[0] == 0) {
     return computeLikelihood();
   }
   Logger::timed << "Starting libpll rates optimization" << endl;
@@ -267,7 +267,7 @@ double LibpllEvaluation::optimizeAllParameters(double tolerance)
   double newLogl = previousLogl;
   do {
     previousLogl = newLogl;
-    newLogl = optimizeAllParametersOnce(treeinfo_.get(), tolerance);
+    newLogl = optimizeAllParametersOnce(_treeinfo.get(), tolerance);
   } while (newLogl - previousLogl > tolerance);
   return newLogl;
 }
@@ -462,7 +462,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, 
 
 void LibpllEvaluation::invalidateCLV(int nodeIndex)
 {
-  pllmod_treeinfo_invalidate_clv(treeinfo_.get(), getNode(nodeIndex));
-  pllmod_treeinfo_invalidate_pmatrix(treeinfo_.get(), getNode(nodeIndex));
+  pllmod_treeinfo_invalidate_clv(_treeinfo.get(), getNode(nodeIndex));
+  pllmod_treeinfo_invalidate_pmatrix(_treeinfo.get(), getNode(nodeIndex));
 }
 
