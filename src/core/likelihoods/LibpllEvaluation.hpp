@@ -15,6 +15,7 @@ extern "C" {
 #include <exception>
 #include <vector>
 #include <iostream>
+#include <IO/Model.hpp>
 
 const double TOLERANCE = 0.5;
 
@@ -125,5 +126,6 @@ private:
 private:
   shared_ptr<pllmod_treeinfo_t> treeinfo_;
   shared_ptr<pll_utree_t> utree_;
+  Model _model;
 };
 

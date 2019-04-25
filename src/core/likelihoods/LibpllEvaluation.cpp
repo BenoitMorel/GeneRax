@@ -12,7 +12,6 @@ extern "C" {
 #include <fstream>
 #include <iostream>
 #include <IO/Logger.hpp>
-#include <IO/Model.hpp>
 #include <string>
 #include <sstream>
 
@@ -99,9 +98,8 @@ bool getNextLine(ifstream &is, string &os)
 
 string LibpllEvaluation::getModelStr()
 {
-  Model model;
-  assign(model, treeinfo_->partitions[0]);
-  string modelStr = model.to_string(true);
+  assign(_model, treeinfo_->partitions[0]);
+  string modelStr = _model.to_string(true);
   return modelStr;
 }
 
@@ -218,6 +216,7 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
       model.submodel(0).rate_sym().data());
   
   shared_ptr<LibpllEvaluation> evaluation(new LibpllEvaluation());
+  evaluation->_model = model;
   evaluation->treeinfo_ = shared_ptr<pllmod_treeinfo_t>(treeinfo, treeinfoDestroy); 
   evaluation->utree_ = shared_ptr<pll_utree_t>(utree, utreeDestroy); 
   return evaluation;
