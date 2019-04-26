@@ -216,7 +216,7 @@ void JointTree::rollbackLastMove() {
 }
 
 void JointTree::save(const string &fileName, bool append) {
-  LibpllParsers::saveUtree(getTreeInfo()->root, fileName, append);
+  LibpllParsers::saveUtree(reconciliationEvaluation_->getRoot(), fileName, append);
 }
 
 shared_ptr<pllmod_treeinfo_t> JointTree::getTreeInfo() {
