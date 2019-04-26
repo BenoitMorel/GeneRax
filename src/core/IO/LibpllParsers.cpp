@@ -45,7 +45,7 @@ void LibpllParsers::saveUtree(pll_unode_t *utree,
   bool append)
 {
   ofstream os(fileName, (append ? ofstream::app : ofstream::out));
-  char *newick = pll_utree_export_newick(utree, 0);
+  char *newick = pll_utree_export_newick_rooted(utree, 0);
   os << newick;
   os.close();
   free(newick);
