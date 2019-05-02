@@ -28,7 +28,6 @@ void Scenario::saveEventsCounts(const string &filename, bool masterRankOnly) {
   ParallelOfstream os(filename, masterRankOnly);
   for (int i = 0; i < int(Invalid); ++i) {
     os << eventNames[i] << ":" << _eventsCount[i] << endl;
-    cerr << eventNames[i] << ":" << _eventsCount[i] << endl;
   }
 }
 

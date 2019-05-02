@@ -29,5 +29,6 @@ public:
    double lossRate;
    double transferRate;
    int maxSPRRadius;
+   double recWeight;
 };
 

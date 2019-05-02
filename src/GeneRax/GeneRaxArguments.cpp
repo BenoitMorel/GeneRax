@@ -17,7 +17,8 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
   dupRate(1.0),
   lossRate(1.0),
   transferRate(0.0),
-  maxSPRRadius(5)
+  maxSPRRadius(5),
+  recWeight(1.0)
 {
   if (argc == 1) {
     printHelp();
@@ -54,6 +55,8 @@ GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
       userDTLRates = true;
     } else if (arg == "--max-spr-radius") {
       maxSPRRadius = atoi(argv[++i]);
+    } else if (arg == "--rec-weight") {
+      recWeight = atof(argv[++i]);
     } else {
       Logger::error << "Unrecognized argument " << arg << endl;
       Logger::error << "Aborting" << endl;
@@ -111,6 +114,7 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "--lossRate <loss rate>" << endl;
   Logger::info << "--transferRate <transfer rate>" << endl;
   Logger::info << "--max-spr-radius <max SPR radius>" << endl;
+  Logger::info << "--rec-weight <reconciliation likelihood weight>" << endl;
   Logger::info << endl;
 
 }
@@ -135,5 +139,6 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << endl;
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << endl;
   Logger::info << "Max SPR radius: " << maxSPRRadius << endl;
+  Logger::info << "Reconciliation likelihood weight: " << recWeight << endl;
   Logger::info << endl;
 }

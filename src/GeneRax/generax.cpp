@@ -144,6 +144,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     os << (int)recModel  << " ";
     os << (int)arguments.reconciliationOpt  << " ";
     os << (int)arguments.rootedGeneTree  << " ";
+    os << arguments.recWeight  << " ";
     os << rates.rates[0]  << " ";
     os << rates.rates[1]  << " ";
     os << rates.rates[2]  << " ";

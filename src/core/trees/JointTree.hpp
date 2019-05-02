@@ -26,11 +26,12 @@ public:
               RecModel reconciliationModel,
               RecOpt reconciliationOpt,
               bool rootedGeneTree,
-              bool safeMode = false,
-              bool optimizeDTLRates = true,
-              double dupRate = 2.0,
-              double lossRate = 1.0,
-              double transRate = 0.5);
+              double recWeight,
+              bool safeMode,
+              bool optimizeDTLRates,
+              double dupRate,
+              double lossRate,
+              double transRate);
 
     virtual ~JointTree();
     void printLibpllTree() const;
@@ -80,6 +81,7 @@ private:
     bool safeMode_;
     bool enableReconciliation_;
     RecOpt recOpt_;
+    double _recWeight;
 };
 
 

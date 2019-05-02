@@ -41,6 +41,7 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
     RecModel recModel,
     RecOpt recOpt,
     bool rootedGeneTree,
+    double recWeight,
     double dupRate,
     double lossRate, 
     double transferRate,
@@ -61,8 +62,9 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
       recModel,
       recOpt,
       rootedGeneTree,
+      recWeight,
       false, //check
-      false,
+      false, // optimize DTL
       dupRate,
       lossRate,
       transferRate
@@ -95,7 +97,7 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
 int optimizeGeneTreesMain(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm);
-  if (argc != 17) {
+  if (argc != 18) {
     Logger::error << "Invalid number of parameters in generax_optimize_gene_trees: " << argc << endl;
     return 1;
   }
@@ -110,6 +112,7 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
   RecModel recModel = RecModel(atoi(argv[i++])); 
   RecOpt recOpt = RecOpt(atoi(argv[i++])); 
   bool rootedGeneTree = bool(atoi(argv[i++]));
+  double recWeight = double(atof(argv[i++]));
   double dupRate = double(atof(argv[i++]));
   double lossRate = double(atof(argv[i++]));
   double transferRate = double(atof(argv[i++]));
@@ -125,6 +128,7 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
       recModel,
       recOpt,
       rootedGeneTree,
+      recWeight,
       dupRate,
       lossRate,
       transferRate,

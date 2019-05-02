@@ -79,7 +79,9 @@ int internal_main(int argc, char** argv, void* comm)
         arguments.reconciliationModel,
         arguments.reconciliationOpt,
         arguments.rootedGeneTree,
+        1.0,
         arguments.check,
+        true, // optimize DTL rates?
         dupRate,
         lossRate,
         transferRate);

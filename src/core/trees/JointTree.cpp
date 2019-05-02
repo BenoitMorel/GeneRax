@@ -115,6 +115,7 @@ JointTree::JointTree(const string &newick_string,
     RecModel reconciliationModel,
     RecOpt reconciliationOpt,
     bool rootedGeneTree,
+    double recWeight,
     bool safeMode,
     bool optimizeDTLRates,
     double dupRate,
@@ -126,7 +127,8 @@ JointTree::JointTree(const string &newick_string,
   optimizeDTLRates_(optimizeDTLRates),
   safeMode_(safeMode),
   enableReconciliation_(true),
-  recOpt_(reconciliationOpt)
+  recOpt_(reconciliationOpt),
+  _recWeight(recWeight)
 {
    info_.alignmentFilename = alignment_file;
   info_.model = substitutionModel;
@@ -176,7 +178,7 @@ double JointTree::computeReconciliationLoglk () {
   if (!enableReconciliation_) {
     return 1.0;
   }
-  return reconciliationEvaluation_->evaluate(libpllEvaluation_->getTreeInfo());
+  return reconciliationEvaluation_->evaluate(libpllEvaluation_->getTreeInfo()) * _recWeight;
 }
 
 double JointTree::computeJointLoglk() {
