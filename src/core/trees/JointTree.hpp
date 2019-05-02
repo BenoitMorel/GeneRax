@@ -7,7 +7,6 @@
 #include <IO/GeneSpeciesMapping.hpp>
 #include <enums.hpp>
 
-#include <omp.h>
 #include <sstream>
 #include <stack>
 
