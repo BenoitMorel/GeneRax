@@ -312,7 +312,7 @@ void saveStats(const string &outputDir, double totalLibpllLL, double totalRecLL)
   ParallelOfstream os(FileSystem::joinPaths(outputDir, "stats.txt"));
   os << "JointLL: " << totalLibpllLL + totalRecLL << endl;
   os << "LibpllLL: " << totalLibpllLL << endl;
-  os << "RecLL:" << totalRecLL;
+  os << "RecLL: " << totalRecLL;
 }
 
 void optimizeStep(GeneRaxArguments &arguments, 
@@ -414,6 +414,7 @@ void eval(const vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   double totalLibpllLL = 0.0;
   double totalRecLL = 0.0;
   gatherLikelihoods(families, totalLibpllLL, totalRecLL);
+  saveStats(arguments.output, totalLibpllLL, totalRecLL);
 }
 
 
