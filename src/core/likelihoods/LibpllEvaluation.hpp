@@ -19,16 +19,16 @@ extern "C" {
 
 const double TOLERANCE = 0.5;
 
-using namespace std;
+
 
 struct pll_sequence;
-using pll_sequence_ptr = shared_ptr<pll_sequence>;
-using pll_sequences = vector<pll_sequence_ptr>;
+using pll_sequence_ptr = std::shared_ptr<pll_sequence>;
+using pll_sequences = std::vector<pll_sequence_ptr>;
 
 
 struct LibpllAlignmentInfo {
-  string alignmentFilename;
-  string model;
+  std::string alignmentFilename;
+  std::string model;
 };
 
 /*
@@ -40,13 +40,13 @@ public:
    * Build a LibpllEvaluation instance
    * @param newickString the tree in newick format
    * @param alignmentFilename path to the msa file
-   * @param modelStrOrFile a string representing the model (GTR, DAYOFF...), or a file containing it
+   * @param modelStrOrFile a std::string representing the model (GTR, DAYOFF...), or a file containing it
    * @return a shared pointer wraping the LibpllEvaluation instance
    */
-  static shared_ptr<LibpllEvaluation> buildFromString(const string &newickString,
-      const string& alignmentFilename,
-      const string &modelStrOrFile);
-  static shared_ptr<LibpllEvaluation> buildFromFile(const string &newickTree,
+  static std::shared_ptr<LibpllEvaluation> buildFromString(const std::string &newickString,
+      const std::string& alignmentFilename,
+      const std::string &modelStrOrFile);
+  static std::shared_ptr<LibpllEvaluation> buildFromFile(const std::string &newickTree,
       const LibpllAlignmentInfo &info);
 
 
@@ -68,7 +68,7 @@ public:
   /**
    *  Accessor to the wrapped treeinfo structure
    */
-  shared_ptr<pllmod_treeinfo_t> getTreeInfo() {return _treeinfo;}
+  std::shared_ptr<pllmod_treeinfo_t> getTreeInfo() {return _treeinfo;}
 
   /**
    *  Invalidate a CLV at a given node index
@@ -76,11 +76,11 @@ public:
    */
   void invalidateCLV(int nodeIndex);
 
-  static void createAndSaveRandomTree(const string &alignmentFiilename,
-    const string &modelStrOrFile,
-    const string &outputTreeFile);
+  static void createAndSaveRandomTree(const std::string &alignmentFiilename,
+    const std::string &modelStrOrFile,
+    const std::string &outputTreeFile);
 
-  string getModelStr();
+  std::string getModelStr();
 
 private:
   /**
@@ -99,7 +99,7 @@ private:
   /**
    *  parse sequences and pattern weights from fasta file
    *  @param fasta_file Input file
-   *  @param map state map
+   *  @param std::map state map
    *  @param sequences Compressed (each site appears only once) sequences
    *  @param weights Pattern weights
    */
@@ -111,7 +111,7 @@ private:
   /**
    *  parse sequences and pattern weights from phylip file
    *  @param phylip_file Input file
-   *  @param map state map
+   *  @param std::map state map
    *  @param sequences Compressed (each site appears only once) sequences
    *  @param weights Pattern weights
    */
@@ -124,8 +124,8 @@ private:
   
   pll_unode_t *getNode(int nodeIndex) {return _treeinfo->subnodes[nodeIndex];}
 private:
-  shared_ptr<pllmod_treeinfo_t> _treeinfo;
-  shared_ptr<pll_utree_t> _utree;
+  std::shared_ptr<pllmod_treeinfo_t> _treeinfo;
+  std::shared_ptr<pll_utree_t> _utree;
   Model _model;
 };
 

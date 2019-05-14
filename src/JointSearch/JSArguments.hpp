@@ -2,7 +2,7 @@
 
 #include "enums.hpp"
 #include <string>
-using namespace std;
+
 
   
 
@@ -16,15 +16,15 @@ public:
 public:
    int argc;
    char ** argv;
-   string geneTree;
-   string alignment;
-   string speciesTree;
-   string geneSpeciesMap;
+   std::string geneTree;
+   std::string alignment;
+   std::string speciesTree;
+   std::string geneSpeciesMap;
    Strategy strategy;
    RecModel reconciliationModel;
    RecOpt reconciliationOpt;
-   string libpllModel;
-   string output;
+   std::string libpllModel;
+   std::string output;
    bool check;
    bool rootedGeneTree;
    bool userDTLRates;

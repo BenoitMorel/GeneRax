@@ -5,7 +5,7 @@
 #include <IO/GeneSpeciesMapping.hpp>
 #include <maths/ScaledValue.hpp>
 
-using namespace std;
+
 
 
 
@@ -22,7 +22,7 @@ public:
   virtual ~UndatedDLModel();
   
   // overloaded from parent
-  virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0, const vector<double> &speciesScalers = vector<double>());  
+  virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0, const std::vector<double> &speciesScalers = std::vector<double>());  
 protected:
   // overload from parent
   virtual void setInitialGeneTree(pll_utree_t *tree);
@@ -38,14 +38,14 @@ protected:
       Scenario &scenario,
       bool isVirtualRoot = false); //todobenoit make it pure virtual
 private:
-  vector<double> _PD; // Duplication probability, per species branch
-  vector<double> _PL; // Loss probability, per species branch
-  vector<double> _PS; // Speciation probability, per species branch
-  vector<double> _uE; // Extinction probability, per species branch
+  std::vector<double> _PD; // Duplication probability, per species branch
+  std::vector<double> _PL; // Loss probability, per species branch
+  std::vector<double> _PS; // Speciation probability, per species branch
+  std::vector<double> _uE; // Extinction probability, per species branch
   
   // uq[geneId][speciesId] = probability of a gene node rooted at a species node
   // to produce the subtree of this gene node
-  vector<vector<ScaledValue> > _uq;
+  std::vector<std::vector<ScaledValue> > _uq;
 
 private:
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 

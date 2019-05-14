@@ -7,11 +7,11 @@
 #include <IO/FileSystem.hpp>
 #include <sstream>
 
-using namespace std;
 
-void initFolders(const string &output, vector<FamiliesFileParser::FamilyInfo> &families) 
+
+void initFolders(const std::string &output, std::vector<FamiliesFileParser::FamilyInfo> &families) 
 {
-  string results = FileSystem::joinPaths(output, "results");
+  std::string results = FileSystem::joinPaths(output, "results");
   FileSystem::mkdir(results, true);
   for (auto &family: families) {
     FileSystem::mkdir(FileSystem::joinPaths(results, family.name), true);
@@ -31,8 +31,8 @@ int internal_main(int argc, char** argv, void* comm)
   arguments.printCommand();
   arguments.printSummary();
 
-  vector<FamiliesFileParser::FamilyInfo> initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
-  Logger::info << "Number of gene families: " << initialFamilies.size() << endl;
+  std::vector<FamiliesFileParser::FamilyInfo> initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
+  Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
   initFolders(arguments.output, initialFamilies);
   ParallelContext::finalize();
   return 0;

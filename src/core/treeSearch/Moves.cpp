@@ -19,13 +19,13 @@
   
 
 
-shared_ptr<Move> Move::createSPRMove(int pruneIndex, int regraftIndex, const vector<int> &path) {
+std::shared_ptr<Move> Move::createSPRMove(int pruneIndex, int regraftIndex, const std::vector<int> &path) {
   return make_shared<SPRMove>(pruneIndex, regraftIndex, path);
 }
 
 
 void optimizeBranchesSlow(JointTree &tree,
-    const vector<pll_unode_t *> &nodesToOptimize)
+    const std::vector<pll_unode_t *> &nodesToOptimize)
 {
     auto root = tree.getTreeInfo()->root;
     // could be incremental and thus faster
@@ -57,7 +57,7 @@ bool equals(pll_unode_t *node1, pll_unode_t *node2) {
   return node1 == node2 || (node1->next && (node1->next == node2 || node1->next->next == node2));
 }
 
-SPRMove::SPRMove(int pruneIndex, int regraftIndex, const vector<int> &path):
+SPRMove::SPRMove(int pruneIndex, int regraftIndex, const std::vector<int> &path):
   pruneIndex_(pruneIndex),
   regraftIndex_(regraftIndex),
   path_(path)
@@ -70,12 +70,12 @@ void printNode(pll_unode_s *node)
   if (node->next) {
     Logger::info << " " << node->next << " " << node->next->next;
   }
-  Logger::info << endl;
+  Logger::info << std::endl;
 }
 
 
 
-shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
+std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
 {
   auto root = tree.getRoot();
   auto prune = tree.getNode(pruneIndex_);
@@ -91,7 +91,7 @@ shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
     tree.invalidateCLV(tree.getNode(branchIndex)->back);
   }
   pll_tree_rollback_t pll_rollback;
-  vector<SavedBranch> savedBranches;;
+  std::vector<SavedBranch> savedBranches;;
     
   branchesToOptimize_.push_back(prune);
   branchesToOptimize_.push_back(regraft->back);
@@ -121,7 +121,7 @@ void SPRMove::optimizeMove(JointTree &tree)
   branchesToOptimize_.clear();
 }
 
-ostream& SPRMove::print(ostream & os) const {
+std::ostream& SPRMove::print(std::ostream & os) const {
   os << "SPR(";
   os << "prune:" <<pruneIndex_ << ", regraft:" << regraftIndex_;
   os << ",path_size:" << path_.size();

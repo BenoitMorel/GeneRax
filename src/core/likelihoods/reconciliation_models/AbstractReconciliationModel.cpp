@@ -20,7 +20,7 @@ void AbstractReconciliationModel::initFromUtree(pll_utree_t *tree) {
   int nodesNumber = tree->tip_count + 3 * tree->inner_count;
   _geneIds.clear();
   _allNodes.resize(nodesNumber);
-  vector<bool> marked(nodesNumber, false);
+  std::vector<bool> marked(nodesNumber, false);
   for (int i = 0; i < treeSize; ++i) {
     auto node = tree->nodes[i];
     _allNodes[node->node_index] = node;
@@ -42,7 +42,7 @@ void AbstractReconciliationModel::mapGenesToSpecies()
   geneToSpecies_.resize(_allNodes.size());
   for (auto node: _allNodes) {
     if (!node->next) {
-      string speciesName = geneNameToSpeciesName_[string(node->label)]; 
+      std::string speciesName = geneNameToSpeciesName_[std::string(node->label)]; 
       geneToSpecies_[node->node_index] = speciesNameToId_[speciesName];
     }
   }
@@ -56,7 +56,7 @@ void AbstractReconciliationModel::setInitialGeneTree(pll_utree_t *tree)
   invalidateAllCLVs();
 }
 
-void AbstractReconciliationModel::fillNodesPostOrder(pll_rnode_t *node, vector<pll_rnode_t *> &nodes) 
+void AbstractReconciliationModel::fillNodesPostOrder(pll_rnode_t *node, std::vector<pll_rnode_t *> &nodes) 
 {
   if (node->left) {
     assert(node->right);
@@ -81,8 +81,8 @@ void AbstractReconciliationModel::setSpeciesTree(pll_rtree_t *speciesTree)
   }
 }
 
-void AbstractReconciliationModel::getRoots(vector<pll_unode_t *> &roots,
-    const vector<int> &geneIds)
+void AbstractReconciliationModel::getRoots(std::vector<pll_unode_t *> &roots,
+    const std::vector<int> &geneIds)
 {
   roots.clear();
   if (rootedGeneTree_ && geneRoot_) {
@@ -97,7 +97,7 @@ void AbstractReconciliationModel::getRoots(vector<pll_unode_t *> &roots,
     }
     return;
   }
-  vector<bool> marked(geneIds.size(), false);
+  std::vector<bool> marked(geneIds.size(), false);
   for (auto id: geneIds) {
     auto node = _allNodes[id];
     if (marked[node->node_index] || marked[node->back->node_index]) {
@@ -191,7 +191,7 @@ void AbstractReconciliationModel::updateCLVsRec(pll_unode_t *node)
 void AbstractReconciliationModel::updateCLVs()
 {
   markInvalidatedNodes();
-  vector<pll_unode_t *> roots;
+  std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
   for (auto root: roots) {
     updateCLVsRec(root);
@@ -206,12 +206,12 @@ void AbstractReconciliationModel::invalidateCLV(int nodeIndex)
   
 void AbstractReconciliationModel::invalidateAllCLVs()
 {
-  _isCLVUpdated = vector<bool>(_maxGeneId + 1, false);
+  _isCLVUpdated = std::vector<bool>(_maxGeneId + 1, false);
 }
 
 void AbstractReconciliationModel::computeMLRoot(pll_unode_t *&bestGeneRoot, pll_rnode_t *&bestSpeciesRoot) 
 {
-  vector<pll_unode_t *> roots;
+  std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
   ScaledValue max;
   for (auto root: roots) {
@@ -229,7 +229,7 @@ void AbstractReconciliationModel::computeMLRoot(pll_unode_t *&bestGeneRoot, pll_
 pll_unode_t *AbstractReconciliationModel::computeMLRoot()
 {
   pll_unode_t *bestRoot = 0;
-  vector<pll_unode_t *> roots;
+  std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
   ScaledValue max;
   for (auto root: roots) {
@@ -245,7 +245,7 @@ pll_unode_t *AbstractReconciliationModel::computeMLRoot()
 double AbstractReconciliationModel::getSumLikelihood()
 {
   ScaledValue total;
-  vector<pll_unode_t *> roots;
+  std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
   for (auto root: roots) {
     total += getRootLikelihood(root);
@@ -256,8 +256,8 @@ double AbstractReconciliationModel::getSumLikelihood()
 
 void AbstractReconciliationModel::computeLikelihoods()
 {
-  vector<ScaledValue> zeros(speciesNodesCount_); 
-  vector<pll_unode_t *> roots;
+  std::vector<ScaledValue> zeros(speciesNodesCount_); 
+  std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
   for (auto root: roots) {
     pll_unode_t virtualRoot;

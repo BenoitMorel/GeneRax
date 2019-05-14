@@ -15,22 +15,22 @@
 #include <../../ext/MPIScheduler/src/mpischeduler.hpp>
 #include <sstream>
 
-using namespace std;
+
 
 bool useSplitImplem() {
   return ParallelContext::getSize() > 4;
 }
 
-void schedule(const string &outputDir, const string &commandFile, bool splitImplem)
+void schedule(const std::string &outputDir, const std::string &commandFile, bool splitImplem)
 {
-  vector<char *> argv;
-  string exec = "mpi-scheduler";
-  string implem = splitImplem ? "--split-scheduler" : "--fork-scheduler";
+  std::vector<char *> argv;
+  std::string exec = "mpi-scheduler";
+  std::string implem = splitImplem ? "--split-scheduler" : "--fork-scheduler";
   
-  string called_library = splitImplem ? "--static_scheduled_main" :  "/home/morelbt/github/GeneRax/build/bin/generaxslaves";
-  string jobFailureFatal = "1";
-  string threadsArg;
-  string outputLogs = FileSystem::joinPaths(outputDir, "logs.txt");
+  std::string called_library = splitImplem ? "--static_scheduled_main" :  "/home/morelbt/github/GeneRax/build/bin/generaxslaves";
+  std::string jobFailureFatal = "1";
+  std::string threadsArg;
+  std::string outputLogs = FileSystem::joinPaths(outputDir, "logs.txt");
   argv.push_back((char *)exec.c_str());
   argv.push_back((char *)implem.c_str());
   argv.push_back((char *)called_library.c_str());
@@ -47,7 +47,7 @@ void schedule(const string &outputDir, const string &commandFile, bool splitImpl
   ParallelContext::barrier(); 
 }
 
-void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
+void raxmlMain(std::vector<FamiliesFileParser::FamilyInfo> &families,
     GeneRaxArguments &arguments,
     int iteration,
     long &sumElapsed)
@@ -55,22 +55,22 @@ void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
 {
   bool splitImplem = useSplitImplem();
   auto start = Logger::getElapsedSec();
-  Logger::timed << "Starting raxml light step" << endl;
+  Logger::timed << "Starting raxml light step" << std::endl;
   
   stringstream outputDirName;
   outputDirName << "raxml_light_" << iteration;
-  string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
+  std::string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
   FileSystem::mkdir(outputDir, true);
-  string commandFile = FileSystem::joinPaths(outputDir, "raxml_light_command.txt");
-  vector<int> geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
+  std::string commandFile = FileSystem::joinPaths(outputDir, "raxml_light_command.txt");
+  std::vector<int> geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
   ParallelOfstream os(commandFile);
   for (size_t i = 0; i < families.size(); ++i) {
     auto &family = families[i];
-    string familyOutput = FileSystem::joinPaths(arguments.output, "results");
+    std::string familyOutput = FileSystem::joinPaths(arguments.output, "results");
     familyOutput = FileSystem::joinPaths(familyOutput, family.name);
-    string geneTreePath = FileSystem::joinPaths(familyOutput, "geneTree.newick");
-    string libpllModelPath = FileSystem::joinPaths(familyOutput, "libpllModel.txt");
-    string outputStats = FileSystem::joinPaths(familyOutput, "raxml_light_stats.txt");
+    std::string geneTreePath = FileSystem::joinPaths(familyOutput, "geneTree.newick");
+    std::string libpllModelPath = FileSystem::joinPaths(familyOutput, "libpllModel.txt");
+    std::string outputStats = FileSystem::joinPaths(familyOutput, "raxml_light_stats.txt");
     int taxa = geneTreeSizes[i];
     os << family.name << " ";
     os << 1 << " "; // cores
@@ -81,7 +81,7 @@ void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
     os << family.libpllModel  << " ";
     os << geneTreePath << " ";
     os << libpllModelPath << " ";
-    os << outputStats <<  endl;
+    os << outputStats <<  std::endl;
     family.startingGeneTree = geneTreePath;
     family.statsFile = outputStats;
     family.libpllModel = libpllModelPath;
@@ -90,11 +90,11 @@ void raxmlMain(vector<FamiliesFileParser::FamilyInfo> &families,
   schedule(outputDir, commandFile, splitImplem); 
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
-  Logger::timed << "End of raxml light step (after " << elapsed << "s)"  << endl;
+  Logger::timed << "End of raxml light step (after " << elapsed << "s)"  << std::endl;
 }
 
 
-void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
+void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
     DTLRates &rates,
     GeneRaxArguments &arguments,
     RecModel recModel,
@@ -105,20 +105,20 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
 {
   bool splitImplem = useSplitImplem();
   auto start = Logger::getElapsedSec();
-  Logger::timed << "Starting SPR rounds with radius " << sprRadius << endl;
+  Logger::timed << "Starting SPR rounds with radius " << sprRadius << std::endl;
   stringstream outputDirName;
   outputDirName << "gene_optimization_" << iteration;
-  string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
+  std::string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
   FileSystem::mkdir(outputDir, true);
-  string commandFile = FileSystem::joinPaths(outputDir, "opt_genes_command.txt");
-  vector<int> geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
+  std::string commandFile = FileSystem::joinPaths(outputDir, "opt_genes_command.txt");
+  std::vector<int> geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
   ParallelOfstream os(commandFile);
   for (size_t i = 0; i < families.size(); ++i) {
     auto &family = families[i];
-    string familyOutput = FileSystem::joinPaths(arguments.output, "results");
+    std::string familyOutput = FileSystem::joinPaths(arguments.output, "results");
     familyOutput = FileSystem::joinPaths(familyOutput, family.name);
-    string geneTreePath = FileSystem::joinPaths(familyOutput, "geneTree.newick");
-    string outputStats = FileSystem::joinPaths(familyOutput, "stats.txt");
+    std::string geneTreePath = FileSystem::joinPaths(familyOutput, "geneTree.newick");
+    std::string outputStats = FileSystem::joinPaths(familyOutput, "stats.txt");
     int taxa = geneTreeSizes[i];
     int cores = 1;
     if (sprRadius == 1) {
@@ -151,7 +151,7 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
     os << int(enableRec)  << " ";
     os << sprRadius  << " ";
     os << geneTreePath << " ";
-    os << outputStats <<  endl;
+    os << outputStats <<  std::endl;
     family.startingGeneTree = geneTreePath;
     family.statsFile = outputStats;
   } 
@@ -159,13 +159,13 @@ void optimizeGeneTrees(vector<FamiliesFileParser::FamilyInfo> &families,
   schedule(outputDir, commandFile, splitImplem); 
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
-  Logger::timed << "End of SPR rounds (after " << elapsed << "s)"  << endl;
+  Logger::timed << "End of SPR rounds (after " << elapsed << "s)"  << std::endl;
 }
 
 void optimizeRates(bool userDTLRates, 
-    const string &speciesTreeFile,
+    const std::string &speciesTreeFile,
     RecModel recModel,
-    vector<FamiliesFileParser::FamilyInfo> &families,
+    std::vector<FamiliesFileParser::FamilyInfo> &families,
     DTLRates &rates,
     long &sumElapsed) 
 {
@@ -173,7 +173,7 @@ void optimizeRates(bool userDTLRates,
     return;
   }
   auto start = Logger::getElapsedSec();
-  Logger::timed << "Start optimizing rates..." << endl;
+  Logger::timed << "Start optimizing rates..." << std::endl;
   PerCoreGeneTrees geneTrees(families);
   pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
   rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, recModel);
@@ -186,25 +186,25 @@ void optimizeRates(bool userDTLRates,
     << "L=" << rates.rates[1] << ", "
     << "T=" << rates.rates[2] << ", "
     << "Loglk=" << rates.ll 
-    << " (after " << elapsed << "s)" << endl;
+    << " (after " << elapsed << "s)" << std::endl;
 }
 
 void inferReconciliation(
-    const string &speciesTreeFile,
-    vector<FamiliesFileParser::FamilyInfo> &families,
+    const std::string &speciesTreeFile,
+    std::vector<FamiliesFileParser::FamilyInfo> &families,
     RecModel model,
     DTLRates &rates,
-    const string &outputDir
+    const std::string &outputDir
     )
 {
   pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
   PerCoreGeneTrees geneTrees(families);
-  string reconciliationsDir = FileSystem::joinPaths(outputDir, "reconciliations");
+  std::string reconciliationsDir = FileSystem::joinPaths(outputDir, "reconciliations");
   FileSystem::mkdir(reconciliationsDir, true);
   ParallelContext::barrier();
   for (auto &tree: geneTrees.getTrees()) {
-    string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
-    string treeWithEventsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
+    std::string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
+    std::string treeWithEventsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
     Scenario scenario;
     ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
     evaluation.setRates(rates.rates[0], rates.rates[1], rates.rates[2]);
@@ -217,12 +217,12 @@ void inferReconciliation(
 }
 
 
-RecModel testRecModel(const string &speciesTreeFile,
-    vector<FamiliesFileParser::FamilyInfo> &families,
+RecModel testRecModel(const std::string &speciesTreeFile,
+    std::vector<FamiliesFileParser::FamilyInfo> &families,
     DTLRates &rates)
 
 {
-  Logger::info << "Testing for transfers..." << endl;
+  Logger::info << "Testing for transfers..." << std::endl;
   DTLRates transferRates;
   DTLRates noTransferRates;
   long testTime = 0;
@@ -235,33 +235,33 @@ RecModel testRecModel(const string &speciesTreeFile,
   double aic_dl = -2.0 * ll_dl;
   double bic_dtl = log(double(families.size())) - 2.0 * ll_dtl;
   double bic_dl = -2.0 * ll_dl;
-  Logger::info << "AIC dl: " << aic_dl << endl;
-  Logger::info << "AIC dtl: " << aic_dtl << endl;
-  Logger::info << "BIC dl: " << bic_dl << endl;
-  Logger::info << "BIC dtl: " << bic_dtl << endl;
+  Logger::info << "AIC dl: " << aic_dl << std::endl;
+  Logger::info << "AIC dtl: " << aic_dtl << std::endl;
+  Logger::info << "BIC dl: " << bic_dl << std::endl;
+  Logger::info << "BIC dtl: " << bic_dtl << std::endl;
   if (bic_dtl < bic_dl) {
-    Logger::info << "According to BIC score, there were transfers between analyzed species." << endl;
+    Logger::info << "According to BIC score, there were transfers between analyzed species." << std::endl;
     rates = transferRates;
     return UndatedDTL;
   } else {
-    Logger::info << "According to BIC score, there were NO transfers between analyzed species." << endl;
+    Logger::info << "According to BIC score, there were NO transfers between analyzed species." << std::endl;
     rates = noTransferRates;
     return UndatedDL;
   }
 }
 
 
-void gatherLikelihoods(vector<FamiliesFileParser::FamilyInfo> &families,
+void gatherLikelihoods(std::vector<FamiliesFileParser::FamilyInfo> &families,
     double &totalLibpllLL,
     double &totalRecLL)
 {
-  Logger::info << "Start gathering likelihoods... " << endl;
+  Logger::info << "Start gathering likelihoods... " << std::endl;
   totalRecLL = 0.0;
   totalLibpllLL = 0.0;
   int familiesNumber = families.size();
   for (int i = ParallelContext::getBegin(familiesNumber); i < ParallelContext::getEnd(familiesNumber); ++i) {
     auto &family = families[i];
-    ifstream is(family.statsFile);
+    std::ifstream is(family.statsFile);
     double libpllLL = 0.0;
     double recLL = 0.0;
     is >> libpllLL;
@@ -274,21 +274,21 @@ void gatherLikelihoods(vector<FamiliesFileParser::FamilyInfo> &families,
   Logger::info << "Likelihoods: ";
   Logger::info << "joint = " << totalLibpllLL + totalRecLL << ", ";
   Logger::info << "libpll = " << totalLibpllLL << ", ";
-  Logger::info << "rec = " << totalRecLL << endl;
+  Logger::info << "rec = " << totalRecLL << std::endl;
 }
 
-void initFolders(const string &output, vector<FamiliesFileParser::FamilyInfo> &families) 
+void initFolders(const std::string &output, std::vector<FamiliesFileParser::FamilyInfo> &families) 
 {
-  string results = FileSystem::joinPaths(output, "results");
+  std::string results = FileSystem::joinPaths(output, "results");
   FileSystem::mkdir(results, true);
   for (auto &family: families) {
     FileSystem::mkdir(FileSystem::joinPaths(results, family.name), true);
   }
 }
 
-bool createRandomTrees(const string &geneRaxOutputDir, vector<FamiliesFileParser::FamilyInfo> &families)
+bool createRandomTrees(const std::string &geneRaxOutputDir, std::vector<FamiliesFileParser::FamilyInfo> &families)
 {
-  string startingTreesDir = FileSystem::joinPaths(geneRaxOutputDir, "startingTrees");
+  std::string startingTreesDir = FileSystem::joinPaths(geneRaxOutputDir, "startingTrees");
   bool startingTreesDirCreated = false;
   for (auto &family: families) {
     if (family.startingGeneTree == "__random__") {
@@ -307,17 +307,17 @@ bool createRandomTrees(const string &geneRaxOutputDir, vector<FamiliesFileParser
   return startingTreesDirCreated;
 }
 
-void saveStats(const string &outputDir, double totalLibpllLL, double totalRecLL) 
+void saveStats(const std::string &outputDir, double totalLibpllLL, double totalRecLL) 
 {
   ParallelOfstream os(FileSystem::joinPaths(outputDir, "stats.txt"));
-  os << "JointLL: " << totalLibpllLL + totalRecLL << endl;
-  os << "LibpllLL: " << totalLibpllLL << endl;
+  os << "JointLL: " << totalLibpllLL + totalRecLL << std::endl;
+  os << "LibpllLL: " << totalLibpllLL << std::endl;
   os << "RecLL: " << totalRecLL;
 }
 
 void optimizeStep(GeneRaxArguments &arguments, 
     RecModel recModel,
-    vector<FamiliesFileParser::FamilyInfo> &families,
+    std::vector<FamiliesFileParser::FamilyInfo> &families,
     DTLRates &rates,
     int sprRadius,
     int currentIteration,
@@ -332,7 +332,7 @@ void optimizeStep(GeneRaxArguments &arguments,
 }
 
 
-void search(const vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
+void search(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
     GeneRaxArguments &arguments)
 
 {
@@ -343,7 +343,7 @@ void search(const vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   long sumElapsedLibpll = 0;
 
   DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
-  vector<FamiliesFileParser::FamilyInfo> currentFamilies = initialFamilies;
+  std::vector<FamiliesFileParser::FamilyInfo> currentFamilies = initialFamilies;
 
   bool randoms = createRandomTrees(arguments.output, currentFamilies); 
   int iteration = 0;
@@ -379,20 +379,20 @@ void search(const vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
   inferReconciliation(arguments.speciesTree, currentFamilies, recModel, rates, arguments.output);
   if (sumElapsedLibpll) {
-    Logger::info << "Initial time spent on optimizing random trees: " << sumElapsedLibpll << "s" << endl;
+    Logger::info << "Initial time spent on optimizing random trees: " << sumElapsedLibpll << "s" << std::endl;
   }
-  Logger::info << "Time spent on optimizing rates: " << sumElapsedRates << "s" << endl;
-  Logger::info << "Time spent on optimizing gene trees: " << sumElapsedSPR << "s" << endl;
-  Logger::timed << "End of GeneRax execution" << endl;
+  Logger::info << "Time spent on optimizing rates: " << sumElapsedRates << "s" << std::endl;
+  Logger::info << "Time spent on optimizing gene trees: " << sumElapsedSPR << "s" << std::endl;
+  Logger::timed << "End of GeneRax execution" << std::endl;
 
 }
 
-void eval(const vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
+void eval(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
     GeneRaxArguments &arguments)
 {
   long dummy = 0;
   DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
-  vector<FamiliesFileParser::FamilyInfo> families = initialFamilies;
+  std::vector<FamiliesFileParser::FamilyInfo> families = initialFamilies;
   bool autoDetectRecModel;
   RecModel recModel;
   if (arguments.reconciliationModelStr == "AutoDetect") {
@@ -430,8 +430,8 @@ int internal_main(int argc, char** argv, void* comm)
   arguments.printCommand();
   arguments.printSummary();
 
-  vector<FamiliesFileParser::FamilyInfo> initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
-  Logger::info << "Number of gene families: " << initialFamilies.size() << endl;
+  std::vector<FamiliesFileParser::FamilyInfo> initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
+  Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
   initFolders(arguments.output, initialFamilies);
 
   switch (arguments.strategy) {

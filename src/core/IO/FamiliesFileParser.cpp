@@ -10,9 +10,9 @@ enum FFPStep {
 };
 
 
-bool update_family(const string &line, 
+bool update_family(const std::string &line, 
     FamiliesFileParser::FamilyInfo &currentFamily,
-    vector<FamiliesFileParser::FamilyInfo> &families)
+    std::vector<FamiliesFileParser::FamilyInfo> &families)
 {
   if (line[0] == '-') {
       if (currentFamily.name.size()) {
@@ -23,8 +23,8 @@ bool update_family(const string &line,
     return true ;
   }
   size_t delim_pos = line.find_first_of("=");
-  string key = line.substr(0, delim_pos);
-  string value = line.substr(delim_pos + 1, line.size() - delim_pos);
+  std::string key = line.substr(0, delim_pos);
+  std::string value = line.substr(delim_pos + 1, line.size() - delim_pos);
   if (key == "alignment") {
     currentFamily.alignmentFile = value;
   } else if (key == "starting_gene_tree") {
@@ -34,17 +34,17 @@ bool update_family(const string &line,
   } else if (key == "subst_model") {
     currentFamily.libpllModel = value;
   } else {
-    Logger::error << "Unknown prefix " << key << endl;
+    Logger::error << "Unknown prefix " << key << std::endl;
     return false;
   }
   return true;
 }
 
-vector<FamiliesFileParser::FamilyInfo> FamiliesFileParser::parseFamiliesFile(const string &familiesFile)
+std::vector<FamiliesFileParser::FamilyInfo> FamiliesFileParser::parseFamiliesFile(const std::string &familiesFile)
 {
-  vector<FamilyInfo> families;
-  ifstream reader(familiesFile);
-  string line;
+  std::vector<FamilyInfo> families;
+  std::ifstream reader(familiesFile);
+  std::string line;
   FFPStep step = header;
   FamilyInfo currentFamily;
   int lineNumber = -1;
@@ -63,7 +63,7 @@ vector<FamiliesFileParser::FamilyInfo> FamiliesFileParser::parseFamiliesFile(con
       break;
     case reading_family:
       if (!update_family(line, currentFamily, families)) {
-        Logger::error << "Error when parsing " << familiesFile << ":" << lineNumber << endl;
+        Logger::error << "Error when parsing " << familiesFile << ":" << lineNumber << std::endl;
         ParallelContext::abort(1);
       }
       break;

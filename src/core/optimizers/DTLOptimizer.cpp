@@ -122,10 +122,10 @@ void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, RecOpt method) {
     optimizeRateSimplex(jointTree, true);
     break;
   }
-  Logger::info << "best rates " << endl;
-  Logger::info << "D " << jointTree.getDupRate() << endl;
-  Logger::info << "L " << jointTree.getLossRate() << endl;
-  Logger::info << "T " << jointTree.getTransferRate() << endl;
+  Logger::info << "best rates " << std::endl;
+  Logger::info << "D " << jointTree.getDupRate() << std::endl;
+  Logger::info << "L " << jointTree.getLossRate() << std::endl;
+  Logger::info << "T " << jointTree.getTransferRate() << std::endl;
 }
 
 void DTLOptimizer::optimizeDLRates(JointTree &jointTree, RecOpt method) {
@@ -137,14 +137,14 @@ void DTLOptimizer::optimizeDLRates(JointTree &jointTree, RecOpt method) {
     optimizeRateSimplex(jointTree, false);
     break;
   }
-  Logger::info << "best rates " << endl;
-  Logger::info << "D " << jointTree.getDupRate() << endl;
-  Logger::info << "L " << jointTree.getLossRate() << endl;
+  Logger::info << "best rates " << std::endl;
+  Logger::info << "D " << jointTree.getDupRate() << std::endl;
+  Logger::info << "L " << jointTree.getLossRate() << std::endl;
 }
 
 
 void DTLOptimizer::optimizeDLRatesWindow(JointTree &jointTree) {
-  Logger::timed << "Start optimizing DL rates" << endl;
+  Logger::timed << "Start optimizing DL rates" << std::endl;
   
   double bestLL = numeric_limits<double>::lowest();
   double newLL = 0;
@@ -166,15 +166,15 @@ void DTLOptimizer::optimizeDLRatesWindow(JointTree &jointTree) {
     minLoss = max(0.0, bestLoss - offsetLoss);
     maxLoss = bestLoss + offsetLoss;
   } while (fabs(newLL - bestLL) > epsilon);
-  Logger::info << " best rates: " << bestDup << " " << bestLoss <<  " " << newLL << endl;
+  Logger::info << " best rates: " << bestDup << " " << bestLoss <<  " " << newLL << std::endl;
   if  (!isValidLikelihood(newLL)) {
-    Logger::error << "Invalid likelihood " << newLL << endl;
+    Logger::error << "Invalid likelihood " << newLL << std::endl;
     ParallelContext::abort(10);
   }
 }
     
 void DTLOptimizer::optimizeDTLRatesWindow(JointTree &jointTree) {
-  Logger::timed << "Start optimizing DTL rates" << endl;
+  Logger::timed << "Start optimizing DTL rates" << std::endl;
   double bestLL = numeric_limits<double>::lowest();
   double newLL = 0;
   double bestDup = 0.0;
@@ -202,7 +202,7 @@ void DTLOptimizer::optimizeDTLRatesWindow(JointTree &jointTree) {
     maxTrans = bestTrans + offsetTrans;
   } while (fabs(newLL - bestLL) > epsilon);
   if  (!isValidLikelihood(newLL)) {
-    Logger::error << "Invalid likelihood " << newLL << endl;
+    Logger::error << "Invalid likelihood " << newLL << std::endl;
     ParallelContext::abort(10);
   }
 }
@@ -240,8 +240,8 @@ DTLRates findBestPoint(DTLRates r1, DTLRates r2, int iterations, JointTree &join
 
 void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
 {
-  Logger::timed << "Starting DTL rates optimization" << endl;
-  vector<DTLRates> rates;
+  Logger::timed << "Starting DTL rates optimization" << std::endl;
+  std::vector<DTLRates> rates;
   rates.push_back(DTLRates(0.01, 0.01, 0.01));
   rates.push_back(DTLRates(1.0, 0.01, 0.01));
   rates.push_back(DTLRates(0.01, 1.0, 1.0));
@@ -272,14 +272,14 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
     }
     currentIt++;
   }
-  Logger::timed << "Simplex converged after " << currentIt << " iterations" << endl;
+  Logger::timed << "Simplex converged after " << currentIt << " iterations" << std::endl;
   sort(rates.begin(), rates.end());
   updateLL(rates[0], jointTree);
 }
   
 DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
 {
-  vector<DTLRates> rates;
+  std::vector<DTLRates> rates;
   if (Enums::accountsForTransfers(model)) {
     rates.push_back(DTLRates(0.01, 0.01, 0.0));
     rates.push_back(DTLRates(1.0, 1.0, 0.0));
@@ -347,7 +347,7 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
   sort(rates.begin(), rates.end());
   updateLL(rates[0], geneTrees, speciesTree, model);
   llCalls++;
-//  Logger::timed << "Simplex converged after " << currentIt << " iterations and " << llCalls << " calls: " << rates[0] << endl;
+//  Logger::timed << "Simplex converged after " << currentIt << " iterations and " << llCalls << " calls: " << rates[0] << std::endl;
   return rates[0];
 }
 

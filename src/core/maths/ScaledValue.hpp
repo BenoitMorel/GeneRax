@@ -25,7 +25,7 @@ public:
 
   void scale() {
     if (! (value >= 0)) {
-      cerr << value << " " << scaler << endl;
+      std::cerr << value << " " << scaler << std::endl;
     }
     assert(value >= 0);
     if (value == 0) {
@@ -86,8 +86,8 @@ public:
         if (fabs(value - v.value) < 0.0000000001) {
           return ScaledValue();
         }
-        cerr.precision(17);
-        cerr << *this << " - " << v << endl;
+        std::cerr.precision(17);
+        std::cerr << *this << " - " << v << std::endl;
       }
       assert(value - v.value >= 0);
       return ScaledValue(value - v.value, scaler);
@@ -249,9 +249,9 @@ public:
   }
 
   /**
-   *  ofstream operator
+   *  std::ofstream operator
    */
-  friend ostream& operator<<(ostream& os, const ScaledValue &v) {
+  friend std::ostream& operator<<(std::ostream& os, const ScaledValue &v) {
     os << "(" << v.value << "," << v.scaler << ")";
     return os;
   }

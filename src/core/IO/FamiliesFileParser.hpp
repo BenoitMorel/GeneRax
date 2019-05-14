@@ -2,19 +2,19 @@
 
 #include <string>
 #include <vector>
-using namespace std;
+
 
 
 
 class FamiliesFileParser {
 public:
   struct FamilyInfo {
-    string name;
-    string startingGeneTree;
-    string alignmentFile;
-    string mappingFile;
-    string libpllModel;
-    string statsFile;
+    std::string name;
+    std::string startingGeneTree;
+    std::string alignmentFile;
+    std::string mappingFile;
+    std::string libpllModel;
+    std::string statsFile;
     FamilyInfo() {
       reset();
     }
@@ -27,5 +27,5 @@ public:
       statsFile = "";
     }
   };
-  static vector<FamilyInfo> parseFamiliesFile(const string &familiesFile);
+  static std::vector<FamilyInfo> parseFamiliesFile(const std::string &familiesFile);
 };

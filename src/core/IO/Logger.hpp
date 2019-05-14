@@ -5,12 +5,12 @@
 #include <fstream>
 #include "ParallelContext.hpp"
 
-using namespace std;
 
-using TimePoint = chrono::high_resolution_clock::time_point;
+
+using TimePoint = std::chrono::high_resolution_clock::time_point;
 
 /**
- *  All logs are printed to cout.
+ *  All logs are printed to std::cout.
  *  In parallel runs, only the master can log. 
  *  init() must be called before using the Logger
  *  if initFileOutput is called, logs are also printed
@@ -29,9 +29,9 @@ private:
     lt_info, lt_error, lt_timed
   };
   LoggerType _type;
-  ostream *_os; 
+  std::ostream *_os; 
   Logger();
-  void setStream(ostream &os) {_os = &os;}
+  void setStream(std::ostream &os) {_os = &os;}
   void setType(LoggerType type) {_type = type;}
 
 
@@ -39,7 +39,7 @@ public:
   static void init();
   static void close();
 
-  static void initFileOutput(const string &output);
+  static void initFileOutput(const std::string &output);
 
   bool isSilent() {
     return (_type == lt_timed || _type == lt_info) && ParallelContext::getRank(); 
@@ -50,9 +50,9 @@ public:
   }
 
   static long getElapsedSec() {
-      auto finish = chrono::high_resolution_clock::now();
-      chrono::duration<double> elapsed = finish - start;
-      return chrono::duration_cast<chrono::seconds>(elapsed).count();
+      auto finish = std::chrono::high_resolution_clock::now();
+      std::chrono::duration<double> elapsed = finish - start;
+      return std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
   }
 
   template <typename T>
@@ -101,7 +101,7 @@ public:
   static Logger error;
   static Logger timed;
   static TimePoint start;
-  static ofstream *logFile;
-  static ofstream *saveLogFile;
+  static std::ofstream *logFile;
+  static std::ofstream *saveLogFile;
 };
 

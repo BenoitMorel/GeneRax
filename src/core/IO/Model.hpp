@@ -18,7 +18,7 @@ extern "C" {
 #include <IO/RaxmlTypes.hpp>
 #include <memory>
 
-using namespace std;
+
 
 class SubstitutionModel
 {
@@ -72,7 +72,7 @@ public:
   {
 //    std::cout << "expected: " << _states << ", got: " << v.size() << std::endl;
     if (v.size() != _states)
-      throw std::invalid_argument("Invalid size of base_freqs vector!");
+      throw std::invalid_argument("Invalid size of base_freqs std::vector!");
 
     _base_freqs = v;
   };
@@ -80,7 +80,7 @@ public:
   void subst_rates(const doubleVector& v)
   {
     if (v.size() != num_rates())
-      throw std::invalid_argument("Invalid size of subst_rates vector!");
+      throw std::invalid_argument("Invalid size of subst_rates std::vector!");
 
     _subst_rates = v;
   };
@@ -90,7 +90,7 @@ public:
     if (!_rate_sym.empty())
     {
       if (v.size() != num_uniq_rates())
-        throw std::invalid_argument("Invalid size of subst_rates vector!");
+        throw std::invalid_argument("Invalid size of subst_rates std::vector!");
 
       _subst_rates.resize(num_rates());
       for (size_t i = 0; i < _subst_rates.size(); ++i)

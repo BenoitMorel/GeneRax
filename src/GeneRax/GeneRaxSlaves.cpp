@@ -15,14 +15,14 @@
 #include <../../ext/MPIScheduler/src/mpischeduler.hpp>
 #include <sstream>
 
-void getTreeStrings(const string &filename, vector<string> &treeStrings) 
+void getTreeStrings(const std::string &filename, std::vector<std::string> &treeStrings) 
 {
-  string geneTreeString;
+  std::string geneTreeString;
   if (filename == "__random__" || filename.size() == 0) {
     treeStrings.push_back("__random__");
     return;
   }
-  ifstream treeStream(filename);
+  std::ifstream treeStream(filename);
   while(getline(treeStream, geneTreeString)) {
     geneTreeString.erase(remove(geneTreeString.begin(), geneTreeString.end(), '\n'), geneTreeString.end());
     if (geneTreeString.empty()) {
@@ -33,11 +33,11 @@ void getTreeStrings(const string &filename, vector<string> &treeStrings)
 }
 
 
-void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
-    const string &mappingFile,
-    const string &alignmentFile,
-    const string &speciesTreeFile,
-    const string libpllModel, 
+void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
+    const std::string &mappingFile,
+    const std::string &alignmentFile,
+    const std::string &speciesTreeFile,
+    const std::string libpllModel, 
     RecModel recModel,
     RecOpt recOpt,
     bool rootedGeneTree,
@@ -47,11 +47,11 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
     double transferRate,
     bool enableRec,
     int sprRadius,
-    const string &outputGeneTree,
-    const string &outputStats) 
+    const std::string &outputGeneTree,
+    const std::string &outputStats) 
 {
-  Logger::timed << "Starting optimizing gene tree" << endl;
-  vector<string> geneTreeStrings;
+  Logger::timed << "Starting optimizing gene tree" << std::endl;
+  std::vector<std::string> geneTreeStrings;
   getTreeStrings(startingGeneTreeFile, geneTreeStrings);
   assert(geneTreeStrings.size() == 1);
   auto jointTree = make_shared<JointTree>(geneTreeStrings[0],
@@ -70,15 +70,15 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
       transferRate
       );
   jointTree->enableReconciliation(enableRec);
-  Logger::info << "Taxa number: " << jointTree->getGeneTaxaNumber() << endl;
+  Logger::info << "Taxa number: " << jointTree->getGeneTaxaNumber() << std::endl;
   jointTree->optimizeParameters(true, false); // only optimize felsenstein likelihood
   double bestLoglk = jointTree->computeJointLoglk();
   jointTree->printLoglk();
-  Logger::info << "Initial ll = " << bestLoglk << endl;
+  Logger::info << "Initial ll = " << bestLoglk << std::endl;
   if (sprRadius > 0) {
     while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk, true)) {} 
   }
-  Logger::info << "Final ll = " << bestLoglk << endl;
+  Logger::info << "Final ll = " << bestLoglk << std::endl;
   if (outputGeneTree.size()) {
     jointTree->save(outputGeneTree, false);
   }
@@ -89,7 +89,7 @@ void optimizeGeneTreesSlave(const string &startingGeneTreeFile,
     stats << libpllLL << " " << recLL;
     stats.close();
   }
-  Logger::timed << "End of optimizing gene tree" << endl;
+  Logger::timed << "End of optimizing gene tree" << std::endl;
   ParallelContext::barrier();
 }
 
@@ -98,17 +98,17 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm);
   if (argc != 18) {
-    Logger::error << "Invalid number of parameters in generax_optimize_gene_trees: " << argc << endl;
+    Logger::error << "Invalid number of parameters in generax_optimize_gene_trees: " << argc << std::endl;
     return 1;
   }
-  Logger::timed << "Starting optimizeGeneTreesSlave" << endl;
+  Logger::timed << "Starting optimizeGeneTreesSlave" << std::endl;
   int i = 2;
-  string startingGeneTreeFile(argv[i++]);
-  string mappingFile(argv[i++]);
-  string alignmentFile(argv[i++]);
-  string speciesTreeFile(argv[i++]);
-  string libpllModel(argv[i++]);
-  Logger::info << "LibpllModel " << libpllModel << endl;
+  std::string startingGeneTreeFile(argv[i++]);
+  std::string mappingFile(argv[i++]);
+  std::string alignmentFile(argv[i++]);
+  std::string speciesTreeFile(argv[i++]);
+  std::string libpllModel(argv[i++]);
+  Logger::info << "LibpllModel " << libpllModel << std::endl;
   RecModel recModel = RecModel(atoi(argv[i++])); 
   RecOpt recOpt = RecOpt(atoi(argv[i++])); 
   bool rootedGeneTree = bool(atoi(argv[i++]));
@@ -118,8 +118,8 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
   double transferRate = double(atof(argv[i++]));
   bool enableRec = bool(atoi(argv[i++]));
   int sprRadius = atoi(argv[i++]);
-  string outputGeneTree(argv[i++]);
-  string outputStats(argv[i++]);
+  std::string outputGeneTree(argv[i++]);
+  std::string outputStats(argv[i++]);
   optimizeGeneTreesSlave(startingGeneTreeFile,
       mappingFile,
       alignmentFile,
@@ -137,7 +137,7 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
       outputGeneTree,
       outputStats);
   ParallelContext::finalize();
-  Logger::timed << "End of optimizeGeneTreesSlave" << endl;
+  Logger::timed << "End of optimizeGeneTreesSlave" << std::endl;
   return 0;
 }
 
@@ -145,57 +145,57 @@ int raxmlLightMain(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm);
   int i = 2;
-  string startingGeneTreeFile(argv[i++]);
-  string alignmentFile(argv[i++]);
-  string libpllModel(argv[i++]);
-  string outputGeneTree(argv[i++]);
-  string outputLibpllModel(argv[i++]);
-  string outputStats(argv[i++]);
+  std::string startingGeneTreeFile(argv[i++]);
+  std::string alignmentFile(argv[i++]);
+  std::string libpllModel(argv[i++]);
+  std::string outputGeneTree(argv[i++]);
+  std::string outputLibpllModel(argv[i++]);
+  std::string outputStats(argv[i++]);
   LibpllAlignmentInfo info;
   info.alignmentFilename = alignmentFile;
   info.model = libpllModel;
-  Logger::info << startingGeneTreeFile << endl;
+  Logger::info << startingGeneTreeFile << std::endl;
   auto evaluation = LibpllEvaluation::buildFromFile(startingGeneTreeFile,
       info);
   double ll = 0.0;
   evaluation->optimizeAllParameters(10.0);
   evaluation->raxmlSPRRounds(1, 5, 0);
   ll = evaluation->raxmlSPRRounds(1, 15, 0);
-  Logger::info << evaluation->computeLikelihood(false) << endl; 
+  Logger::info << evaluation->computeLikelihood(false) << std::endl; 
   ll = evaluation->raxmlSPRRounds(1, 15, 0);
-  Logger::info << evaluation->computeLikelihood(false) << endl;
+  Logger::info << evaluation->computeLikelihood(false) << std::endl;
   ll = evaluation->raxmlSPRRounds(1, 20, 0);
-  Logger::info << evaluation->computeLikelihood(false) << endl;
+  Logger::info << evaluation->computeLikelihood(false) << std::endl;
   ll = evaluation->raxmlSPRRounds(1, 25, 0);
-  Logger::info << evaluation->computeLikelihood(false) << endl;
-  Logger::info << "optimize all parameters" << endl;
+  Logger::info << evaluation->computeLikelihood(false) << std::endl;
+  Logger::info << "optimize all parameters" << std::endl;
   evaluation->optimizeAllParameters(3.0);
   
   
   ll = evaluation->raxmlSPRRounds(1, 5, 1);
-  Logger::info << evaluation->computeLikelihood(false) << endl;
+  Logger::info << evaluation->computeLikelihood(false) << std::endl;
   ll = evaluation->raxmlSPRRounds(1, 10, 1);
-  Logger::info << evaluation->computeLikelihood(false) << endl;
+  Logger::info << evaluation->computeLikelihood(false) << std::endl;
   ll = evaluation->raxmlSPRRounds(1, 15, 1);
   
   evaluation->optimizeAllParameters(1.0);
   
   
-  Logger::info << evaluation->computeLikelihood(false) << endl;
+  Logger::info << evaluation->computeLikelihood(false) << std::endl;
   /*
   ll = evaluation->raxmlSPRRounds(1, 15, 1);
   ll = evaluation->raxmlSPRRounds(1, 20, 1);
   */
   ll = evaluation->raxmlSPRRounds(1, 25, 1);
-  Logger::info << evaluation->computeLikelihood(false) << endl;
+  Logger::info << evaluation->computeLikelihood(false) << std::endl;
   
   ParallelOfstream stats(outputStats);
   stats << ll <<  " 0.0";
   stats.close();
-  string modelStr = evaluation->getModelStr();
+  std::string modelStr = evaluation->getModelStr();
   
   ParallelOfstream modelWriter(outputLibpllModel);
-  modelWriter << modelStr << endl;
+  modelWriter << modelStr << std::endl;
   modelWriter.close();
   LibpllParsers::saveUtree(evaluation->getTreeInfo()->root, outputGeneTree);  
   ParallelContext::finalize();
@@ -206,7 +206,7 @@ int raxmlLightMain(int argc, char** argv, void* comm)
 extern "C" int static_scheduled_main(int argc, char** argv, void* comm)
 {
   Logger::enableLogFile(false);
-  string key(argv[1]);
+  std::string key(argv[1]);
   int res = 1;
   if (key == "optimizeGeneTrees") {
     res = optimizeGeneTreesMain(argc, argv, comm);   

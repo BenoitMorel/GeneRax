@@ -27,7 +27,7 @@ double ReconciliationEvaluation::evaluate(pll_utree_t *utree)
   return reconciliationModel->computeLogLikelihood(utree);
 }
 
-double ReconciliationEvaluation::evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo)
+double ReconciliationEvaluation::evaluate(std::shared_ptr<pllmod_treeinfo_t> treeinfo)
 {
   return evaluate(treeinfo->tree);
 }
@@ -37,7 +37,7 @@ void ReconciliationEvaluation::invalidateCLV(int nodeIndex)
   reconciliationModel->invalidateCLV(nodeIndex);
 }
 
-shared_ptr<AbstractReconciliationModel> ReconciliationEvaluation::getRecModelObject(RecModel recModel)
+std::shared_ptr<AbstractReconciliationModel> ReconciliationEvaluation::getRecModelObject(RecModel recModel)
 {
   switch(recModel) {
   case UndatedDL:

@@ -6,7 +6,7 @@
 
 #include <memory>
 
-using namespace std;
+
   
 /**
  *  Wrapper around the reconciliation likelihood classes
@@ -16,7 +16,7 @@ public:
   
   /**
    *  Constructor 
-   *  @param speciesTree: rooted species tree (fixed)
+   *  @param speciesTree: rooted species tree (std::fixed)
    *  @param geneSpeciesMapping: gene-to-species geneSpeciesMappingping
    *  @param reconciliationModelStr: the reconciliation model to use
    *  @param rootedGeneTree: should we compute the likelihood of a rooted or unrooted gene tree?
@@ -43,7 +43,7 @@ public:
    *  @param input treeinfo
    *  @return the reconciliation likelihood of this tree
    */
-  double evaluate(shared_ptr<pllmod_treeinfo_t> treeinfo);
+  double evaluate(std::shared_ptr<pllmod_treeinfo_t> treeinfo);
 
   double implementsTransfers() {return Enums::accountsForTransfers(_model);} 
 
@@ -59,8 +59,8 @@ public:
   }
 
 private:
-  shared_ptr<AbstractReconciliationModel> getRecModelObject(RecModel recModel);
-  shared_ptr<AbstractReconciliationModel> reconciliationModel;
+  std::shared_ptr<AbstractReconciliationModel> getRecModelObject(RecModel recModel);
+  std::shared_ptr<AbstractReconciliationModel> reconciliationModel;
   RecModel _model;
 };
 

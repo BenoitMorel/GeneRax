@@ -8,22 +8,22 @@
 #include <algorithm>
 #include <limits>
 
-using namespace std;
+
 
 
 /**
- *  @param: filename: a file with one newick string per line
- *  @param treeStrings: vector of the newick strings, formated such that 
+ *  @param: filename: a file with one newick std::string per line
+ *  @param treeStrings: std::vector of the newick strings, formated such that 
  *    JointSearch can read them
  */
-void getTreeStrings(const string &filename, vector<string> &treeStrings) 
+void getTreeStrings(const std::string &filename, std::vector<std::string> &treeStrings) 
 {
-  string geneTreeString;
+  std::string geneTreeString;
   if (filename == "__random__" || filename.size() == 0) {
     treeStrings.push_back("__random__");
     return;
   }
-  ifstream treeStream(filename);
+  std::ifstream treeStream(filename);
   while(getline(treeStream, geneTreeString)) {
     geneTreeString.erase(remove(geneTreeString.begin(), geneTreeString.end(), '\n'), geneTreeString.end());
     if (geneTreeString.empty()) {
@@ -51,17 +51,17 @@ int internal_main(int argc, char** argv, void* comm)
   arguments.printCommand();
   arguments.printSummary();
   
-  vector<string> geneTreeStrings;
+  std::vector<std::string> geneTreeStrings;
   getTreeStrings(arguments.geneTree, geneTreeStrings);
   
   bool firstRun  = true; 
   double bestLL = numeric_limits<double>::lowest();
   
-  string bestTreeFile = arguments.output + ".newick";
-  string allTreesFile = arguments.output + "_all" + ".newick";
-  string eventCountsFile = arguments.output + ".events";
-  string treeWithEventsFile = arguments.output + "_withevents.nhx";
-  string statsFile = arguments.output + ".stats";
+  std::string bestTreeFile = arguments.output + ".newick";
+  std::string allTreesFile = arguments.output + "_all" + ".newick";
+  std::string eventCountsFile = arguments.output + ".events";
+  std::string treeWithEventsFile = arguments.output + "_withevents.nhx";
+  std::string statsFile = arguments.output + ".stats";
   for (auto &geneTreeString: geneTreeStrings) {
     double dupRate = 1;
     double lossRate = 1;
@@ -89,7 +89,7 @@ int internal_main(int argc, char** argv, void* comm)
     jointTree->optimizeParameters();
     double initialRecLL = jointTree->computeReconciliationLoglk();
     double initialLibpllLL = jointTree->computeLibpllLoglk();
-    Logger::timed << "Starting search..." << endl;
+    Logger::timed << "Starting search..." << std::endl;
     if (arguments.strategy == SPR) {
       if (!geneTreeString.size() or geneTreeString == "__random__") {
         jointTree->enableReconciliation(false);
@@ -99,9 +99,9 @@ int internal_main(int argc, char** argv, void* comm)
       SPRSearch::applySPRSearch(*jointTree);
     } else if (arguments.strategy == EVAL) {
     }
-    Logger::timed << "End of search" << endl;
+    Logger::timed << "End of search" << std::endl;
     jointTree->printLoglk();
-    Logger::info << "Final tree hash: " << jointTree->getUnrootedTreeHash() << endl;
+    Logger::info << "Final tree hash: " << jointTree->getUnrootedTreeHash() << std::endl;
     if (!ParallelContext::getRank()) {
       double ll = jointTree->computeJointLoglk();
       assert(!isnan(ll));
@@ -109,32 +109,32 @@ int internal_main(int argc, char** argv, void* comm)
         bestLL = ll;
         jointTree->save(bestTreeFile, false);
         ParallelOfstream stats(statsFile);
-        stats << "initial_ll " << initialRecLL + initialLibpllLL << endl;
-        stats << "initial_llrec " << initialRecLL << endl;
-        stats << "initial_lllibpll " << initialLibpllLL << endl;
-        stats << "ll " << bestLL << endl;
-        stats << "llrec " << jointTree->computeReconciliationLoglk() << endl;
-        stats << "lllibpll " << jointTree->computeLibpllLoglk() << endl;
-        stats << "D " << jointTree->getDupRate() << endl;
-        stats << "L " << jointTree->getLossRate() << endl;
-        stats << "T " << jointTree->getTransferRate() << endl;
-        stats << "hash " << jointTree->getUnrootedTreeHash() << endl;
-        stats << " " << endl;
+        stats << "initial_ll " << initialRecLL + initialLibpllLL << std::endl;
+        stats << "initial_llrec " << initialRecLL << std::endl;
+        stats << "initial_lllibpll " << initialLibpllLL << std::endl;
+        stats << "ll " << bestLL << std::endl;
+        stats << "llrec " << jointTree->computeReconciliationLoglk() << std::endl;
+        stats << "lllibpll " << jointTree->computeLibpllLoglk() << std::endl;
+        stats << "D " << jointTree->getDupRate() << std::endl;
+        stats << "L " << jointTree->getLossRate() << std::endl;
+        stats << "T " << jointTree->getTransferRate() << std::endl;
+        stats << "hash " << jointTree->getUnrootedTreeHash() << std::endl;
+        stats << " " << std::endl;
       }
       jointTree->save(allTreesFile, !firstRun);
       if (arguments.reconciliationModel != DatedDL) {
         Scenario scenario;
         jointTree->inferMLScenario(scenario);
-        Logger::info << endl;
+        Logger::info << std::endl;
         scenario.saveEventsCounts(eventCountsFile);
         scenario.saveTreeWithEvents(treeWithEventsFile);
       }
     }
     firstRun = false;
   }  
-  Logger::info << "Best tree: " + bestTreeFile << endl;
-  Logger::info << "Best tree with events: " + treeWithEventsFile << endl;
-  Logger::timed << "End of JointSearch execution" << endl;
+  Logger::info << "Best tree: " + bestTreeFile << std::endl;
+  Logger::info << "Best tree with events: " + treeWithEventsFile << std::endl;
+  Logger::timed << "End of JointSearch execution" << std::endl;
   ParallelContext::finalize();
   return 0;
 }

@@ -6,28 +6,28 @@ extern "C" {
 #include <vector>
 #include <string>
 #include <IO/FamiliesFileParser.hpp>
-using namespace std;
 
-class LibpllException: public exception {
+
+class LibpllException: public std::exception {
 public:
-  LibpllException(const string &s): msg_(s) {}
-  LibpllException(const string &s1, 
-      const string s2): msg_(s1 + s2) {}
+  LibpllException(const std::string &s): msg_(s) {}
+  LibpllException(const std::string &s1, 
+      const std::string s2): msg_(s1 + s2) {}
   virtual const char* what() const throw() { return msg_.c_str(); }
-  void append(const string &str) {msg_ += str;}
+  void append(const std::string &str) {msg_ += str;}
 
 private:
-  string msg_;
+  std::string msg_;
 };
 
 class LibpllParsers {
 public:
-  static pll_utree_t *readNewickFromFile(const string &newickFile);
-  static pll_utree_t *readNewickFromStr(const string &newickSTring);
-  static pll_rtree_t *readRootedFromFile(const string &newickFile);
-  static vector<int> parallelGetTreeSizes(const vector<FamiliesFileParser::FamilyInfo> &families);
+  static pll_utree_t *readNewickFromFile(const std::string &newickFile);
+  static pll_utree_t *readNewickFromStr(const std::string &newickSTring);
+  static pll_rtree_t *readRootedFromFile(const std::string &newickFile);
+  static std::vector<int> parallelGetTreeSizes(const std::vector<FamiliesFileParser::FamilyInfo> &families);
   static void saveUtree(pll_unode_t *utree, 
-    const string &fileName, 
+    const std::string &fileName, 
     bool append = false);
 };
 

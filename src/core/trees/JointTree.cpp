@@ -9,8 +9,8 @@
 
 
 size_t leafHash(pll_unode_t *leaf) {
-  hash<string> hash_fn;
-  return hash_fn(string(leaf->label));
+  hash<std::string> hash_fn;
+  return hash_fn(std::string(leaf->label));
 }
 
 size_t getTreeHashRec(pll_unode_t *node, size_t i) {
@@ -63,16 +63,16 @@ pll_unode_t *findMinimumHashLeaf(pll_unode_t * root)
   }
 }
 
-void JointTree::printAllNodes(ostream &os)
+void JointTree::printAllNodes(std::ostream &os)
 {
   auto treeinfo = getTreeInfo();
   for (unsigned int i = 0; i < treeinfo->subnode_count; ++i) {
     auto node = treeinfo->subnodes[i];
     os << "node:" << node->node_index << " back:" << node->back->node_index;
     if (node->next) {
-      os << " left:" << node->next->node_index << " right:" << node->next->next->node_index  << endl;
+      os << " left:" << node->next->node_index << " right:" << node->next->next->node_index  << std::endl;
     } else {
-      os << " label:" << node->label << endl;
+      os << " label:" << node->label << std::endl;
     }
   }
 }
@@ -103,15 +103,15 @@ void printLibpllTreeRooted(pll_unode_t *root, Logger &os){
   printLibpllNode(root, os, true);
   os << ",";
   printLibpllNode(root->back, os, true);
-  os << ");" << endl;
+  os << ");" << std::endl;
 }
 
 
-JointTree::JointTree(const string &newick_string,
-    const string &alignment_file,
-    const string &speciestree_file,
-    const string &geneSpeciesMap_file,
-    const string &substitutionModel,
+JointTree::JointTree(const std::string &newick_string,
+    const std::string &alignment_file,
+    const std::string &speciestree_file,
+    const std::string &geneSpeciesMap_file,
+    const std::string &substitutionModel,
     RecModel reconciliationModel,
     RecOpt reconciliationOpt,
     bool rootedGeneTree,
@@ -192,7 +192,7 @@ void JointTree::printLoglk(bool libpll, bool rec, bool joint, Logger &os) {
     os << "libpll: " << computeLibpllLoglk() << "  ";
   if (rec)
     os << "reconciliation: " << computeReconciliationLoglk() << "  ";
-  os << endl;
+  os << std::endl;
 }
 
 
@@ -201,12 +201,12 @@ pll_unode_t *JointTree::getNode(int index) {
 }
 
 
-void JointTree::applyMove(shared_ptr<Move> move) {
+void JointTree::applyMove(std::shared_ptr<Move> move) {
   auto rollback = move->applyMove(*this);
   rollbacks_.push(rollback);
 }
 
-void JointTree::optimizeMove(shared_ptr<Move> move) {
+void JointTree::optimizeMove(std::shared_ptr<Move> move) {
   move->optimizeMove(*this);
 }
 
@@ -217,11 +217,11 @@ void JointTree::rollbackLastMove() {
   rollbacks_.pop();
 }
 
-void JointTree::save(const string &fileName, bool append) {
+void JointTree::save(const std::string &fileName, bool append) {
   LibpllParsers::saveUtree(reconciliationEvaluation_->getRoot(), fileName, append);
 }
 
-shared_ptr<pllmod_treeinfo_t> JointTree::getTreeInfo() {
+std::shared_ptr<pllmod_treeinfo_t> JointTree::getTreeInfo() {
   return libpllEvaluation_->getTreeInfo();
 }
 
@@ -249,9 +249,9 @@ void JointTree::printInfo()
   int speciesLeaves = getSpeciesTree()->tip_count;
   int geneLeaves = treeInfo->tip_count;;
   int sites = treeInfo->partitions[0]->sites;
-  Logger::info << "Species leaves: " << speciesLeaves << endl;
-  Logger::info << "Gene leaves: " << geneLeaves << endl;
-  Logger::info << "Sites: " << sites << endl;
-  Logger::info << endl;
+  Logger::info << "Species leaves: " << speciesLeaves << std::endl;
+  Logger::info << "Gene leaves: " << geneLeaves << std::endl;
+  Logger::info << "Sites: " << sites << std::endl;
+  Logger::info << std::endl;
 }
 

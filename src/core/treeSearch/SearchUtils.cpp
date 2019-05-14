@@ -6,7 +6,7 @@
 
 
 void SearchUtils::testMove(JointTree &jointTree,
-    shared_ptr<Move> move,
+    std::shared_ptr<Move> move,
     double initialReconciliationLoglk,
     double initialLibpllLoglk,
     double &averageReconciliationDiff,
@@ -25,11 +25,11 @@ void SearchUtils::testMove(JointTree &jointTree,
   if (improvement < averageReconciliationDiff) {
     jointTree.rollbackLastMove();
     if(check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
-      cerr.precision(17);
-      cerr << "small rollback lead to different likelihoods: " << initialLoglk
-        << " " << jointTree.computeJointLoglk() << endl;
-      cerr << " rank " << ParallelContext::getRank() << endl;
-      cerr << "Move: " << *move << endl;
+      std::cerr.precision(17);
+      std::cerr << "small rollback lead to different likelihoods: " << initialLoglk
+        << " " << jointTree.computeJointLoglk() << std::endl;
+      std::cerr << " rank " << ParallelContext::getRank() << std::endl;
+      std::cerr << "Move: " << *move << std::endl;
       exit(1);
     }
     return;
@@ -43,12 +43,12 @@ void SearchUtils::testMove(JointTree &jointTree,
     auto newLoglk = jointTree.computeJointLoglk();
     if (fabs(initialLoglk - newLoglk) > 0.000001) {
       jointTree.printLoglk();
-      cerr.precision(17);
-      cerr << "rollback lead to different likelihoods: " << initialLoglk
-        << " " << newLoglk << endl;
-      cerr << "recomputing the ll again: " << jointTree.computeJointLoglk() << endl;
-      cerr << " rank " << ParallelContext::getRank() << endl;
-      cerr << "Move: " << *move << endl;
+      std::cerr.precision(17);
+      std::cerr << "rollback lead to different likelihoods: " << initialLoglk
+        << " " << newLoglk << std::endl;
+      std::cerr << "recomputing the ll again: " << jointTree.computeJointLoglk() << std::endl;
+      std::cerr << " rank " << ParallelContext::getRank() << std::endl;
+      std::cerr << "Move: " << *move << std::endl;
       exit(1);
     }
   }
@@ -57,7 +57,7 @@ void SearchUtils::testMove(JointTree &jointTree,
 //#define STOP
 
 bool SearchUtils::findBestMove(JointTree &jointTree,
-    vector<shared_ptr<Move> > &allMoves,
+    std::vector<std::shared_ptr<Move> > &allMoves,
     double &bestLoglk,
     int &bestMoveIndex,
     bool blo,

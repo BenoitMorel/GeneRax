@@ -29,7 +29,7 @@ public:
   /**
    * Set the DTL rates, and update probabilities relative to the species tree only
    */
-  virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0, const vector<double> &speciesScalers = vector<double>()) = 0;
+  virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0, const std::vector<double> &speciesScalers = std::vector<double>()) = 0;
   
   /**
    * (incrementally) compute and return the likelihood of the input gene tree 
@@ -83,8 +83,8 @@ protected:
    *  return this root and its direct neighbors
    *  - Else, return all the possible virtual roots
    */
-  void getRoots(vector<pll_unode_t *> &roots,
-    const vector<int> &geneIds);
+  void getRoots(std::vector<pll_unode_t *> &roots,
+    const std::vector<int> &geneIds);
 
   /**
    *  Get the left or right child of node. If node is a virtual 
@@ -98,12 +98,12 @@ protected:
   bool rootedGeneTree_;
   pll_unode_t *geneRoot_;
   int speciesNodesCount_;
-  vector <pll_rnode_t *> speciesNodes_;
+  std::vector <pll_rnode_t *> speciesNodes_;
   pll_rtree_t *speciesTree_;
-  vector<int> geneToSpecies_;
+  std::vector<int> geneToSpecies_;
   bool firstCall_;
   // gene ids in postorder 
-  vector<int> _geneIds;
+  std::vector<int> _geneIds;
   int _maxGeneId;
 
 private:
@@ -115,17 +115,17 @@ private:
   void updateCLVsRec(pll_unode_t *node);
   void markInvalidatedNodes();
   void markInvalidatedNodesRec(pll_unode_t *node);
-  void fillNodesPostOrder(pll_rnode_t *node, vector<pll_rnode_t *> &nodes) ;
-  map<string, string> geneNameToSpeciesName_;
-  map<string, int> speciesNameToId_;
+  void fillNodesPostOrder(pll_rnode_t *node, std::vector<pll_rnode_t *> &nodes) ;
+  std::map<std::string, std::string> geneNameToSpeciesName_;
+  std::map<std::string, int> speciesNameToId_;
   
   // set of invalid CLVs. All the CLVs from these CLVs to
   // the root(s) need to be recomputed
   unordered_set<int> _invalidatedNodes;
 
   // is the CLV up to date?
-  vector<bool> _isCLVUpdated;
-  vector<pll_unode_t *> _allNodes;
+  std::vector<bool> _isCLVUpdated;
+  std::vector<pll_unode_t *> _allNodes;
 
 };
 

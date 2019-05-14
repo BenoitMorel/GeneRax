@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <Scenario.hpp>
 
-using namespace std;
+
 const int CACHE_SIZE = 100000;
 
 UndatedDLModel::UndatedDLModel()
@@ -17,8 +17,8 @@ UndatedDLModel::UndatedDLModel()
 void UndatedDLModel::setInitialGeneTree(pll_utree_t *tree)
 {
   AbstractReconciliationModel::setInitialGeneTree(tree);
-  vector<ScaledValue> zeros(speciesNodesCount_);
-  _uq = vector<vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
+  std::vector<ScaledValue> zeros(speciesNodesCount_);
+  _uq = std::vector<std::vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
 }
 
 static double solveSecondDegreePolynome(double a, double b, double c) 
@@ -29,11 +29,11 @@ static double solveSecondDegreePolynome(double a, double b, double c)
 void UndatedDLModel::setRates(double dupRate, 
   double lossRate,
   double transferRates,
-  const vector<double> &speciesScalers) {
+  const std::vector<double> &speciesScalers) {
   geneRoot_ = 0;
-  _PD = vector<double>(speciesNodesCount_, dupRate);
-  _PL = vector<double>(speciesNodesCount_, lossRate);
-  _PS = vector<double>(speciesNodesCount_, 1.0);
+  _PD = std::vector<double>(speciesNodesCount_, dupRate);
+  _PL = std::vector<double>(speciesNodesCount_, lossRate);
+  _PS = std::vector<double>(speciesNodesCount_, 1.0);
   if (speciesScalers.size()) {
     assert(speciesScalers.size() == (size_t)speciesNodesCount_);
     for (int i = 0; i < speciesNodesCount_; ++i) {
@@ -52,7 +52,7 @@ void UndatedDLModel::setRates(double dupRate,
     _PL[e] /= sum;
     _PS[e] /= sum;
   }
-  _uE = vector<double>(speciesNodesCount_, 0.0);
+  _uE = std::vector<double>(speciesNodesCount_, 0.0);
   for (auto speciesNode: speciesNodes_) {
     int e = speciesNode->node_index;
     double a = _PD[e];
@@ -89,7 +89,7 @@ void UndatedDLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
   int gid = geneNode->node_index;
   pll_unode_t *leftGeneNode = 0;     
   pll_unode_t *rightGeneNode = 0;   
-  vector<ScaledValue> values(5);
+  std::vector<ScaledValue> values(5);
   bool isGeneLeaf = !geneNode->next;
   if (!isGeneLeaf) {
     leftGeneNode = getLeft(geneNode, isVirtualRoot);
@@ -132,7 +132,7 @@ void UndatedDLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
   if (values[maxValueIndex].isNull()) {
     ScaledValue proba;
     computeProbability(geneNode, speciesNode, proba, isVirtualRoot);
-    cerr << "warning: null ll scenario " << _uq[gid][e] << " " << proba  << endl;
+    std::cerr << "warning: null ll scenario " << _uq[gid][e] << " " << proba  << std::endl;
     assert(false);
   }
   switch(maxValueIndex) {
@@ -160,8 +160,8 @@ void UndatedDLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
       backtrace(geneNode, speciesNode->right, scenario); 
       break;
     default:
-      cerr << "event " << maxValueIndex << endl;
-      Logger::error << "Invalid event in UndatedDLModel::backtrace" << endl;
+      std::cerr << "event " << maxValueIndex << std::endl;
+      Logger::error << "Invalid event in UndatedDLModel::backtrace" << std::endl;
       assert(false);
       break;
   }
@@ -238,7 +238,7 @@ ScaledValue UndatedDLModel::getRootLikelihood(pll_unode_t *root) const
 void UndatedDLModel::accountForSpeciesRoot(pll_unode_t *virtualRoot)
 {
   int u = virtualRoot->node_index;
-  vector<ScaledValue> save_uq(_uq[u]);
+  std::vector<ScaledValue> save_uq(_uq[u]);
   auto leftGeneNode = getLeft(virtualRoot, true);
   auto rightGeneNode = getRight(virtualRoot, true);
   for (auto speciesNode: speciesNodes_) {

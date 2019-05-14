@@ -2,7 +2,7 @@
 #include <IO/Logger.hpp>
 #include <algorithm>
 
-using namespace std;
+
 const int CACHE_SIZE = 100000;
 const int IT = 5;
 
@@ -16,15 +16,15 @@ UndatedDTLModel::UndatedDTLModel()
 void UndatedDTLModel::setInitialGeneTree(pll_utree_t *tree)
 {
   AbstractReconciliationModel::setInitialGeneTree(tree);
-  vector<ScaledValue> zeros(speciesNodesCount_);
-  _uq = vector<vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
-  _survivingTransferSums = vector<ScaledValue>(2 * (_maxGeneId + 1));
-  _ancestralCorrection = vector<vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
+  std::vector<ScaledValue> zeros(speciesNodesCount_);
+  _uq = std::vector<std::vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
+  _survivingTransferSums = std::vector<ScaledValue>(2 * (_maxGeneId + 1));
+  _ancestralCorrection = std::vector<std::vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
 }
 
 void UndatedDTLModel::updateTransferSums(ScaledValue &transferSum,
-    vector<ScaledValue> &ancestralCorrection,
-    const vector<ScaledValue> &probabilities)
+    std::vector<ScaledValue> &ancestralCorrection,
+    const std::vector<ScaledValue> &probabilities)
 {
   transferSum = ScaledValue();
   for (int i = speciesNodes_.size() - 1; i >= 0; --i) {
@@ -57,12 +57,12 @@ ScaledValue UndatedDTLModel::getCorrectedTransferSum(int geneId, int speciesId) 
 void UndatedDTLModel::setRates(double dupRate, 
   double lossRate,
   double transferRate,
-  const vector<double> &speciesScalers) {
+  const std::vector<double> &speciesScalers) {
   geneRoot_ = 0;
-  _PD = vector<double>(speciesNodesCount_, dupRate);
-  _PL = vector<double>(speciesNodesCount_, lossRate);
-  _PT = vector<double>(speciesNodesCount_, transferRate);
-  _PS = vector<double>(speciesNodesCount_, 1.0);
+  _PD = std::vector<double>(speciesNodesCount_, dupRate);
+  _PL = std::vector<double>(speciesNodesCount_, lossRate);
+  _PT = std::vector<double>(speciesNodesCount_, transferRate);
+  _PS = std::vector<double>(speciesNodesCount_, 1.0);
   for (auto speciesNode: speciesNodes_) {
     int e = speciesNode->node_index;
     double sum = _PD[e] + _PL[e] + _PT[e] + _PS[e];
@@ -71,7 +71,7 @@ void UndatedDTLModel::setRates(double dupRate,
     _PT[e] /= sum;
     _PS[e] /= sum;
   } 
-  _uE = vector<ScaledValue>(speciesNodesCount_);
+  _uE = std::vector<ScaledValue>(speciesNodesCount_);
   resetTransferSums(_transferExtinctionSum, _ancestralExctinctionCorrection);
   for (int it = 0; it < IT; ++it) {
     for (auto speciesNode: speciesNodes_) {
@@ -93,10 +93,10 @@ UndatedDTLModel::~UndatedDTLModel() { }
 
 
 void UndatedDTLModel::resetTransferSums(ScaledValue &transferSum,
-    vector<ScaledValue> &ancestralCorrection)
+    std::vector<ScaledValue> &ancestralCorrection)
 {
   transferSum = ScaledValue();
-  ancestralCorrection = vector<ScaledValue>(speciesNodesCount_);
+  ancestralCorrection = std::vector<ScaledValue>(speciesNodesCount_);
 }
 
 
@@ -166,7 +166,7 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
     g = speciesNode->right->node_index;
   }
   
-  vector<ScaledValue> values(8);
+  std::vector<ScaledValue> values(8);
   if (not isGeneLeaf) {
     // S event
     u_left = leftGeneNode->node_index;
@@ -196,7 +196,7 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
   if (values[maxValueIndex].isNull()) {
     ScaledValue proba;
     computeProbability(geneNode, speciesNode, proba, isVirtualRoot);
-    cerr << "warning: null ll scenario " << _uq[gid][e] << " " << proba  << endl;
+    std::cerr << "warning: null ll scenario " << _uq[gid][e] << " " << proba  << std::endl;
     assert(false);
   }
   pll_rnode_t *dest = 0;
@@ -242,8 +242,8 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
       backtrace(geneNode, dest, scenario); 
       break;
     default:
-      cerr << "event " << maxValueIndex << endl;
-      Logger::error << "Invalid event in UndatedDLModel::backtrace" << endl;
+      std::cerr << "event " << maxValueIndex << std::endl;
+      Logger::error << "Invalid event in UndatedDLModel::backtrace" << std::endl;
       assert(false);
       break;
   }

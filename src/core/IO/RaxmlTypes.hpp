@@ -127,7 +127,7 @@ struct EnumClassHash
   }
 };
 
-/* generic exception class */
+/* generic std::exception class */
 class RaxmlException : public std::exception
 {
 public:

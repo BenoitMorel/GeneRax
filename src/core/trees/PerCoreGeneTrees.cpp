@@ -8,8 +8,8 @@
 #include <iostream>
 
 template <typename T>
-vector<size_t> sort_indexes_descending(const vector<T> &v) {
-  vector<size_t> idx(v.size());
+std::vector<size_t> sort_indexes_descending(const std::vector<T> &v) {
+  std::vector<size_t> idx(v.size());
   iota(idx.begin(), idx.end(), 0);
   sort(idx.begin(), idx.end(),
        [&v](size_t i1, size_t i2) {return v[i1] > v[i2];});
@@ -17,11 +17,11 @@ vector<size_t> sort_indexes_descending(const vector<T> &v) {
 }
 
 
-vector<size_t> getMyIndices(const vector<int> &treeSizes) 
+std::vector<size_t> getMyIndices(const std::vector<int> &treeSizes) 
 {
-  vector<size_t> sortedIndices = sort_indexes_descending<int>(treeSizes);
-  vector<size_t> myIndices;
-  vector<int> perRankLoad(ParallelContext::getSize(), 0);
+  std::vector<size_t> sortedIndices = sort_indexes_descending<int>(treeSizes);
+  std::vector<size_t> myIndices;
+  std::vector<int> perRankLoad(ParallelContext::getSize(), 0);
   int averageLoad = 0;
   for (int load: treeSizes) {
     averageLoad += load;
@@ -39,15 +39,15 @@ vector<size_t> getMyIndices(const vector<int> &treeSizes)
   return myIndices;
 }
 
-PerCoreGeneTrees::PerCoreGeneTrees(const vector<FamiliesFileParser::FamilyInfo> &families)
+PerCoreGeneTrees::PerCoreGeneTrees(const std::vector<FamiliesFileParser::FamilyInfo> &families)
 {
-  vector<int> treeSizes = LibpllParsers::parallelGetTreeSizes(families);
-  vector<size_t> myIndices = getMyIndices(treeSizes);
+  std::vector<int> treeSizes = LibpllParsers::parallelGetTreeSizes(families);
+  std::vector<size_t> myIndices = getMyIndices(treeSizes);
 
   _geneTrees.resize(myIndices.size());
   int index = 0;
   for (auto i: myIndices) {
-    string geneTreeStr;
+    std::string geneTreeStr;
     FileSystem::getFileContent(families[i].startingGeneTree, geneTreeStr);
     _geneTrees[index].name = families[i].name;
     _geneTrees[index].mapping.fill(families[i].mappingFile, geneTreeStr);

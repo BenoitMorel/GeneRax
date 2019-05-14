@@ -4,14 +4,14 @@
 
 #include <memory>
 
-using namespace std;
+
 
 class JointTree;
 
 class SearchUtils {
 public:
   static void testMove(JointTree &jointTree,
-    shared_ptr<Move> move,
+    std::shared_ptr<Move> move,
     double initialReconciliationLoglk,
     double initialLibpllLoglk,
     double &averageReconciliationDiff,
@@ -21,7 +21,7 @@ public:
     );
  
   static bool findBestMove(JointTree &jointTree,
-    vector<shared_ptr<Move> > &allMoves,
+    std::vector<std::shared_ptr<Move> > &allMoves,
     double &bestLoglk,
     int &bestMoveIndex,
     bool blo,

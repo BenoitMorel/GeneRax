@@ -41,7 +41,7 @@ struct DTLRates {
     return DTLRates(rates[0] / v, rates[1] / v, rates[2] / v);
   }
   
-  friend ostream& operator<<(ostream& os, const DTLRates &v) {
+  friend std::ostream& operator<<(std::ostream& os, const DTLRates &v) {
     os << "(" << v.rates[0] << ", " << v.rates[1] << ", " << v.rates[2] << ", " <<  v.ll  << ")";
     return os;
   }

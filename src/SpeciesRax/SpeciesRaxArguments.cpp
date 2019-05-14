@@ -23,20 +23,20 @@ SpeciesRaxArguments::SpeciesRaxArguments(int argc, char * argv[]):
     ParallelContext::abort(0);
   }
   for (int i = 1; i < argc; ++i) {
-    string arg(argv[i]);
+    std::string arg(argv[i]);
     if (arg == "-h" || arg == "--help") {
       printHelp();
       ParallelContext::abort(0);
     } else if (arg == "-f" || arg == "--families") {
-      families = string(argv[++i]);
+      families = std::string(argv[++i]);
     } else if (arg == "-s" || arg == "--species-tree") {
-      speciesTree = string(argv[++i]);
+      speciesTree = std::string(argv[++i]);
     } else if (arg == "-r" || arg == "--rec-model") {
-      reconciliationModel = Arguments::strToRecModel(string(argv[++i]));
+      reconciliationModel = Arguments::strToRecModel(std::string(argv[++i]));
     } else if (arg == "--rec-opt") {
-      reconciliationOpt = Arguments::strToRecOpt(string(argv[++i]));
+      reconciliationOpt = Arguments::strToRecOpt(std::string(argv[++i]));
     } else if (arg == "-p" || arg == "--prefix") {
-      output = string(argv[++i]);
+      output = std::string(argv[++i]);
     } else if (arg == "--unrooted-gene-tree") {
       rootedGeneTree = false;
     } else if (arg == "--dupRate") {
@@ -49,39 +49,39 @@ SpeciesRaxArguments::SpeciesRaxArguments(int argc, char * argv[]):
       transferRate = atof(argv[++i]);
       userDTLRates = true;
     } else {
-      Logger::error << "Unrecognized argument " << arg << endl;
-      Logger::error << "Aborting" << endl;
+      Logger::error << "Unrecognized argument " << arg << std::endl;
+      Logger::error << "Aborting" << std::endl;
       ParallelContext::abort(1);
     }
   }
   checkInputs();
 }
 
-void assertFileExists(const string &file) 
+void assertFileExists(const std::string &file) 
 {
-  ifstream f(file);
+  std::ifstream f(file);
   if (!f) {
-    Logger::error << "File " << file << " does not exist. Aborting." << endl;
+    Logger::error << "File " << file << " does not exist. Aborting." << std::endl;
     ParallelContext::abort(1);
   }
 }
 
-bool isIn(const string &elem, const vector<string> &v) {
+bool isIn(const std::string &elem, const std::vector<std::string> &v) {
   return find(v.begin(), v.end(), elem) != v.end();
 }
 
 void SpeciesRaxArguments::checkInputs() {
   bool ok = true;
   if (!speciesTree.size()) {
-    Logger::error << "You need to provide a species tree." << endl;
+    Logger::error << "You need to provide a species tree." << std::endl;
     ok = false;
   }
   if (userDTLRates && (dupRate < 0.0 || lossRate < 0.0)) {
-    Logger::error << "You specified at least one of the duplication and loss rates, but not both of them." << endl;
+    Logger::error << "You specified at least one of the duplication and loss rates, but not both of them." << std::endl;
     ok = false;
   }
   if (!ok) {
-    Logger::error << "Aborting." << endl;
+    Logger::error << "Aborting." << std::endl;
     ParallelContext::abort(1);
   }
   
@@ -89,37 +89,37 @@ void SpeciesRaxArguments::checkInputs() {
 }
 
 void SpeciesRaxArguments::printHelp() {
-  Logger::info << "-h, --help" << endl;
-  Logger::info << "-f, --families <FAMILIES_INFORMATION>" << endl;
-  Logger::info << "-s, --species-tree <SPECIES TREE>" << endl;
-  Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << endl;
-  Logger::info << "--rec-opt <reconciliationOpt>  {window, simplex}" << endl;
-  Logger::info << "-p, --prefix <OUTPUT PREFIX>" << endl;
-  Logger::info << "--unrooted-gene-tree" << endl;
-  Logger::info << "--dupRate <duplication rate>" << endl;
-  Logger::info << "--lossRate <loss rate>" << endl;
-  Logger::info << "--transferRate <transfer rate>" << endl;
-  Logger::info << endl;
+  Logger::info << "-h, --help" << std::endl;
+  Logger::info << "-f, --families <FAMILIES_INFORMATION>" << std::endl;
+  Logger::info << "-s, --species-tree <SPECIES TREE>" << std::endl;
+  Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << std::endl;
+  Logger::info << "--rec-opt <reconciliationOpt>  {window, simplex}" << std::endl;
+  Logger::info << "-p, --prefix <OUTPUT PREFIX>" << std::endl;
+  Logger::info << "--unrooted-gene-tree" << std::endl;
+  Logger::info << "--dupRate <duplication rate>" << std::endl;
+  Logger::info << "--lossRate <loss rate>" << std::endl;
+  Logger::info << "--transferRate <transfer rate>" << std::endl;
+  Logger::info << std::endl;
 
 }
 
 void SpeciesRaxArguments::printCommand() {
-  Logger::info << "SpeciesRax was called as follow:" << endl;
+  Logger::info << "SpeciesRax was called as follow:" << std::endl;
   for (int i = 0; i < argc; ++i) {
     Logger::info << argv[i] << " ";
   }
-  Logger::info << endl << endl;
+  Logger::info << std::endl << std::endl;
 }
 
 void SpeciesRaxArguments::printSummary() {
-  string boolStr[2] = {string("OFF"), string("ON")};
-  Logger::info << "Parameters summary: " << endl;
-  Logger::info << "Families information: " << families << endl;
-  Logger::info << "Species tree: " << speciesTree << endl;
-  Logger::info << "Reconciliation model: " << Arguments::recModelToStr(reconciliationModel) << endl;
-  Logger::info << "Reconciliation opt: " << Arguments::recOptToStr(reconciliationOpt) << endl;
-  Logger::info << "Prefix: " << output << endl;
-  Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << endl;
-  Logger::info << "MPI Ranks: " << ParallelContext::getSize() << endl;
-  Logger::info << endl;
+  std::string boolStr[2] = {std::string("OFF"), std::string("ON")};
+  Logger::info << "Parameters summary: " << std::endl;
+  Logger::info << "Families information: " << families << std::endl;
+  Logger::info << "Species tree: " << speciesTree << std::endl;
+  Logger::info << "Reconciliation model: " << Arguments::recModelToStr(reconciliationModel) << std::endl;
+  Logger::info << "Reconciliation opt: " << Arguments::recOptToStr(reconciliationOpt) << std::endl;
+  Logger::info << "Prefix: " << output << std::endl;
+  Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << std::endl;
+  Logger::info << "MPI Ranks: " << ParallelContext::getSize() << std::endl;
+  Logger::info << std::endl;
 }

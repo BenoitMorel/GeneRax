@@ -4,7 +4,7 @@
 #include <map>
 #include <fstream>
 
-using namespace std;
+
 
 /**
  *  Parse and give access to gene-to-species mapping
@@ -19,24 +19,24 @@ public:
   
   GeneSpeciesMapping() {}
   
-  void fill(const string &mappingFile, const string &geneTreeStr); 
+  void fill(const std::string &mappingFile, const std::string &geneTreeStr); 
 
   /**
    *  @return an object mapping each gene to one species
    */
-  const map<string, string> &getMap() const {return _map;}
+  const std::map<std::string, std::string> &getMap() const {return _map;}
 
   /**
    *  @param gene: gene string
    *  @return the species mapped to this gene
    */
-  const string &getSpecies(const string &gene) {return _map[gene];}
+  const std::string &getSpecies(const std::string &gene) {return _map[gene];}
 
 private:
-  map<string, string> _map;
-  void buildFromPhyldogMapping(ifstream &f);
-  void buildFromTreerecsMapping(ifstream &f);
-  void buildFromMappingFile(const string &mappingFile); 
-  void buildFromTrees(const string &geneTreeStr); 
+  std::map<std::string, std::string> _map;
+  void buildFromPhyldogMapping(std::ifstream &f);
+  void buildFromTreerecsMapping(std::ifstream &f);
+  void buildFromMappingFile(const std::string &mappingFile); 
+  void buildFromTrees(const std::string &geneTreeStr); 
 };
 

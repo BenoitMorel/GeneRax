@@ -10,7 +10,7 @@
 class FileSystem {
 public:
 
-  static void mkdir(const string &path, bool masterRankOnly) {
+  static void mkdir(const std::string &path, bool masterRankOnly) {
     if (masterRankOnly && ParallelContext::getRank() != 0) {
       return;
     }
@@ -23,17 +23,17 @@ public:
 
   }
 
-  static string joinPaths(const string &p1, const string &p2) {
-    string sep = "/";
+  static std::string joinPaths(const std::string &p1, const std::string &p2) {
+    std::string sep = "/";
 #ifdef _WIN32
-    string sep = "\\";
+    std::string sep = "\\";
 #endif
     return p1 + sep + p2;
   }
 
-  static void getFileContent(const string &filePath, string &content) 
+  static void getFileContent(const std::string &filePath, std::string &content) 
   {
-    ifstream ifs;
+    std::ifstream ifs;
     content.assign((std::istreambuf_iterator<char>(ifs)),
       (std::istreambuf_iterator<char>()) );
   }

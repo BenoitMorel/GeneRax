@@ -7,15 +7,15 @@
 #include <iomanip>
 #include <fstream>
 
-using namespace std;
 
-const vector<int> ALL_MODEL_PARAMS = {PLLMOD_OPT_PARAM_FREQUENCIES, PLLMOD_OPT_PARAM_SUBST_RATES,
+
+const std::vector<int> ALL_MODEL_PARAMS = {PLLMOD_OPT_PARAM_FREQUENCIES, PLLMOD_OPT_PARAM_SUBST_RATES,
                                       PLLMOD_OPT_PARAM_PINV, PLLMOD_OPT_PARAM_ALPHA,
                                       PLLMOD_OPT_PARAM_FREE_RATES, PLLMOD_OPT_PARAM_RATE_WEIGHTS,
                                       PLLMOD_OPT_PARAM_BRANCH_LEN_SCALER,
                                       PLLMOD_OPT_PARAM_BRANCHES_ITERATIVE};
 
-const unordered_map<DataType,unsigned int,EnumClassHash>  DATATYPE_STATES { {DataType::dna, 4},
+const std::unordered_map<DataType,unsigned int,EnumClassHash>  DATATYPE_STATES { {DataType::dna, 4},
                                                                             {DataType::protein, 20},
                                                                             {DataType::binary, 2}
                                                                             /*
@@ -26,7 +26,7 @@ const unordered_map<DataType,unsigned int,EnumClassHash>  DATATYPE_STATES { {Dat
 
                                                                           };
 
-const unordered_map<DataType,const pll_state_t*,EnumClassHash>  DATATYPE_MAPS {
+const std::unordered_map<DataType,const pll_state_t*,EnumClassHash>  DATATYPE_MAPS {
   {DataType::dna, pll_map_nt},
   {DataType::protein, pll_map_aa},
   {DataType::binary, pll_map_bin}
@@ -39,9 +39,9 @@ const unordered_map<DataType,const pll_state_t*,EnumClassHash>  DATATYPE_MAPS {
 
 // TODO move it out of here
 class parse_error {};
-static string read_option(istringstream& s)
+static std::string read_option(std::istringstream& s)
 {
-  ostringstream os;
+  std::ostringstream os;
   while (s.peek() != '{' && s.peek() != '+' && s.peek() != EOF)
   {
     os.put(toupper(s.get()));
@@ -49,7 +49,7 @@ static string read_option(istringstream& s)
   return os.str();
 }
 
-static bool read_param(istringstream& s, string& val)
+static bool read_param(std::istringstream& s, std::string& val)
 {
   if (s.peek() == '{' || s.peek() == '[')
   {
@@ -70,7 +70,7 @@ static bool read_param(istringstream& s, string& val)
 }
 
 template<typename T>
-static bool read_param(istringstream& s, T& val)
+static bool read_param(std::istringstream& s, T& val)
 {
   if (s.peek() == '{' || s.peek() == '[')
   {
@@ -87,7 +87,7 @@ static bool read_param(istringstream& s, T& val)
 }
 
 template<typename T>
-static bool read_param(istringstream& s, std::vector<T>& vec)
+static bool read_param(std::istringstream& s, std::vector<T>& vec)
 {
   if (s.peek() == '{' || s.peek() == '[')
   {
@@ -109,7 +109,7 @@ static bool read_param(istringstream& s, std::vector<T>& vec)
 }
 
 template<typename T>
-static bool read_param_file(istringstream& s, std::vector<T>& vec)
+static bool read_param_file(std::istringstream& s, std::vector<T>& vec)
 {
   if (s.peek() == '{' || s.peek() == '[')
   {
@@ -145,13 +145,13 @@ static bool read_param_file(istringstream& s, std::vector<T>& vec)
 }
 
 template<typename T>
-static void print_param(ostringstream& s, T val)
+static void print_param(std::ostringstream& s, T val)
 {
   s << "{" << val << "}";
 }
 
 template<typename T>
-static void print_param(ostringstream& s, const std::vector<T>& vec)
+static void print_param(std::ostringstream& s, const std::vector<T>& vec)
 {
   s << "{";
   size_t i = 0;
@@ -167,7 +167,7 @@ Model::Model (DataType data_type, const std::string &model_string) :
     _data_type(data_type), _custom_charmap(nullptr)
 {
   // RAxML compatibility hack, TODO: generic model name aliases
-  const string model_string_tmp = model_string == "DNA" ? "GTR+G+F" : model_string;
+  const std::string model_string_tmp = model_string == "DNA" ? "GTR+G+F" : model_string;
 
   init_from_string(model_string_tmp);
 }
@@ -180,8 +180,8 @@ const pll_state_t * Model::charmap() const
 void Model::init_from_string(const std::string &model_string)
 {
   size_t pos = model_string.find_first_of("+{[");
-  const string model_name = pos == string::npos ? model_string : model_string.substr(0, pos);
-  const string model_opts = pos == string::npos ? "" : model_string.substr(pos);
+  const std::string model_name = pos == std::string::npos ? model_string : model_string.substr(0, pos);
+  const std::string model_opts = pos == std::string::npos ? "" : model_string.substr(pos);
 
   /* guess data type */
   autodetect_data_type(model_name);
@@ -192,7 +192,7 @@ void Model::init_from_string(const std::string &model_string)
   if (_data_type == DataType::multistate)
   {
     _num_states = pllmod_util_model_numstates_mult(model_name.c_str());
-    _custom_charmap = shared_ptr<pll_state_t>(pllmod_util_model_charmap_mult(_num_states), free);
+    _custom_charmap = std::shared_ptr<pll_state_t>(pllmod_util_model_charmap_mult(_num_states), free);
 
     //libpll_check_error("ERROR in model specification |" + model_name + "|");
     assert(_custom_charmap);
@@ -292,7 +292,7 @@ pllmod_mixture_model_t * Model::init_mix_model(const std::string &model_name)
     }
 
     // TODO: user models must be defined explicitly
-//    /* pre-defined model not found; assume model string encodes rate symmetries */
+//    /* pre-defined model not found; assume model std::string encodes rate symmetries */
 //    if (!modinfo)
 //      modinfo =  pllmod_util_model_create_custom("USER", _num_states, NULL, NULL, model_cstr, NULL);
 
@@ -302,7 +302,7 @@ pllmod_mixture_model_t * Model::init_mix_model(const std::string &model_name)
       if (pll_errno)
         libpll_check_error("ERROR model initialization |" + model_name + "|");
       else*/
-        throw runtime_error("Invalid model name: " + model_name);
+        throw std::runtime_error("Invalid model name: " + model_name);
     }
 
     /* create pseudo-mixture with 1 component */
@@ -321,7 +321,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
   _alpha = 1.0;
   _pinv = 0.0;
   _brlen_scaler = 1.0;
-  _name = string(mix_model.name);
+  _name = std::string(mix_model.name);
 
   _ascbias_type = AscBiasCorrection::none;
   _ascbias_weights.clear();
@@ -350,7 +350,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
 
   const char *s = model_opts.c_str();
 
-  istringstream ss(model_opts);
+  std::istringstream ss(model_opts);
 
   try
   {
@@ -359,13 +359,13 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
     {
       // TODO support multi-matrix models
       if (_submodels.size() > 0)
-        runtime_error("User-defined rates for multi-matrix models are not supported yet!");
+        std::runtime_error("User-defined rates for multi-matrix models are not supported yet!");
 
       auto smodel = _submodels[0];
       auto num_uniq_rates = smodel.num_uniq_rates();
       if (user_srates.size() != num_uniq_rates)
       {
-        throw runtime_error("Invalid number of substitution rates specified: " +
+        throw std::runtime_error("Invalid number of substitution rates specified: " +
                             std::to_string(user_srates.size()) + " (expected: " +
                             std::to_string(num_uniq_rates) + ")\n");
       }
@@ -384,7 +384,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
   }
   catch(parse_error& e)
   {
-    throw runtime_error(string("Invalid substitution rate specification: ") + s);
+    throw std::runtime_error(std::string("Invalid substitution rate specification: ") + s);
   }
 
   // skip "+"
@@ -394,7 +394,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
   ParamValue param_mode;
   while(ss.peek() != EOF)
   {
-    // set current string position, for error reporting
+    // set current std::string position, for error reporting
     s = model_opts.c_str() + ss.tellg();
 
     switch(toupper(ss.get()))
@@ -410,7 +410,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
       {
         try
         {
-          const string asc_str = "A" + read_option(ss);
+          const std::string asc_str = "A" + read_option(ss);
           if (asc_str == "ASC_LEWIS")
           {
             _ascbias_type = AscBiasCorrection::lewis;
@@ -446,7 +446,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
         }
         catch (parse_error& e)
         {
-          throw runtime_error(string("Invalid ascertainment bias correction specification: ") + s);
+          throw std::runtime_error(std::string("Invalid ascertainment bias correction specification: ") + s);
         }
         break;
       }
@@ -475,7 +475,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
         }
         catch(parse_error& e)
         {
-          throw runtime_error(string("Invalid branch length scaler specification: ") + s);
+          throw std::runtime_error(std::string("Invalid branch length scaler specification: ") + s);
         }
         break;
       case 'F':
@@ -506,7 +506,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
               {
                 if (user_freqs.size() != _num_states)
                 {
-                  throw runtime_error("Invalid number of user frequencies specified: " +
+                  throw std::runtime_error("Invalid number of user frequencies specified: " +
                            std::to_string(user_freqs.size()) + "\n" +
                            "Number of frequencies must be equal to the number of states: " +
                            std::to_string(_num_states) + "\n");
@@ -522,7 +522,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
 
                 if (invalid)
                 {
-                  throw runtime_error("Invalid base frequencies specified! "
+                  throw std::runtime_error("Invalid base frequencies specified! "
                       "Frequencies must be positive numbers between 0. and 1.");
                 }
 
@@ -544,7 +544,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
         }
         catch(parse_error& e)
         {
-          throw runtime_error(string("Invalid frequencies specification: ") + s);
+          throw std::runtime_error(std::string("Invalid frequencies specification: ") + s);
         }
         break;
       case 'I':
@@ -575,7 +575,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
         }
         catch(parse_error& e)
         {
-          throw runtime_error(string("Invalid p-inv specification: ") + s);
+          throw std::runtime_error(std::string("Invalid p-inv specification: ") + s);
         }
         break;
       case 'G':
@@ -608,7 +608,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
         }
         catch(parse_error& e)
         {
-          throw runtime_error(string("Invalid GAMMA specification: ") + s);
+          throw std::runtime_error(std::string("Invalid GAMMA specification: ") + s);
         }
         break;
       case 'M':
@@ -628,7 +628,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
 
            read_param(ss, gap_chars);
 
-           _custom_charmap = shared_ptr<pll_state_t>(
+           _custom_charmap = std::shared_ptr<pll_state_t>(
                pllmod_util_charmap_create(_num_states,
                                           state_chars.c_str(),
                                           gap_chars.c_str(),
@@ -642,7 +642,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
         }
         catch(parse_error& e)
         {
-          throw runtime_error(string("Invalid character map specification: ") + s);
+          throw std::runtime_error(std::string("Invalid character std::map specification: ") + s);
         }
         break;
       case 'R':
@@ -661,7 +661,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
           {
             if (v.size() != _num_ratecats)
             {
-              throw runtime_error("Invalid number of free rates specified: " +
+              throw std::runtime_error("Invalid number of free rates specified: " +
                                   std::to_string(v.size()) + " (expected: " +
                                   std::to_string(_num_ratecats) + ")\n");
             }
@@ -677,7 +677,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
             {
               if (v.size() != _num_ratecats)
               {
-                throw runtime_error("Invalid number of rate weights specified: " +
+                throw std::runtime_error("Invalid number of rate weights specified: " +
                                     std::to_string(v.size()) + " (expected: " +
                                     std::to_string(_num_ratecats) + ")\n");
               }
@@ -707,11 +707,11 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
         }
         catch(parse_error& e)
         {
-          throw runtime_error(string("Invalid FreeRate specification: ") + s);
+          throw std::runtime_error(std::string("Invalid FreeRate specification: ") + s);
         }
         break;
       default:
-        throw runtime_error("Wrong model specification: " + model_opts);
+        throw std::runtime_error("Wrong model specification: " + model_opts);
     }
   }
 
@@ -789,7 +789,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
         break;
 
       default:
-        throw runtime_error("Unknown rate heterogeneity model");
+        throw std::runtime_error("Unknown rate heterogeneity model");
     }
 
     /* link rate categories to corresponding mixture components (R-matrix + freqs)*/
@@ -803,7 +803,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
 
 std::string Model::to_string(bool print_params, unsigned int precision) const
 {
-  ostringstream model_string;
+  std::ostringstream model_string;
   model_string << name();
 
   auto out_param_mode = _param_mode;
@@ -814,7 +814,7 @@ std::string Model::to_string(bool print_params, unsigned int precision) const
   }
 
   if (precision)
-    model_string << fixed << setprecision(precision);
+    model_string << std::fixed << std::setprecision(precision);
 
   if (out_param_mode.at(PLLMOD_OPT_PARAM_SUBST_RATES) == ParamValue::user)
     print_param(model_string, submodel(0).uniq_subst_rates());
@@ -945,7 +945,7 @@ void assign(Model& model, const pll_partition_t * partition)
     }
   }
   else
-    throw runtime_error("incompatible partition!");
+    throw std::runtime_error("incompatible partition!");
 }
 
 void assign(pll_partition_t * partition, const Model& model)
@@ -973,5 +973,5 @@ void assign(pll_partition_t * partition, const Model& model)
     }
   }
   else
-    throw runtime_error("incompatible partition!");
+    throw std::runtime_error("incompatible partition!");
 }

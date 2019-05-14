@@ -8,16 +8,16 @@
 class PerCoreGeneTrees {
 public:
   struct GeneTree {
-    string name;
+    std::string name;
     GeneSpeciesMapping mapping;
     pll_utree_t *tree;
     ~GeneTree() {pll_utree_destroy(tree, 0);}
   };
 
-  PerCoreGeneTrees(const vector<FamiliesFileParser::FamilyInfo> &families);
-  const vector<GeneTree> &getTrees() {return _geneTrees;}
+  PerCoreGeneTrees(const std::vector<FamiliesFileParser::FamilyInfo> &families);
+  const std::vector<GeneTree> &getTrees() {return _geneTrees;}
 private:
-  vector<GeneTree> _geneTrees;
-  vector<int> _treeSizes;
+  std::vector<GeneTree> _geneTrees;
+  std::vector<int> _treeSizes;
 
 };

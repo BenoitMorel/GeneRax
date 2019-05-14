@@ -3,7 +3,7 @@
 #include "enums.hpp"
 #include <string>
 #include "Arguments.hpp"
-using namespace std;
+
 
   
 
@@ -17,12 +17,12 @@ public:
 public:
    int argc;
    char ** argv;
-   string families;
-   string speciesTree;
+   std::string families;
+   std::string speciesTree;
    Strategy strategy;
-   string reconciliationModelStr;
+   std::string reconciliationModelStr;
    RecOpt reconciliationOpt;
-   string output;
+   std::string output;
    bool rootedGeneTree;
    bool userDTLRates;
    double dupRate;

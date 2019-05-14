@@ -33,7 +33,7 @@ const double DEFAULT_BL = 0.000001;
 #define RAXML_BRLEN_SCALER_MIN    0.01
 #define RAXML_BRLEN_SCALER_MAX    100.
 
-using namespace std;
+
 
 
 struct pll_sequence {
@@ -78,17 +78,17 @@ void treeinfoDestroy(pllmod_treeinfo_t *treeinfo)
   pllmod_treeinfo_destroy(treeinfo);
 }
 
-bool getNextLine(ifstream &is, string &os)
+bool getNextLine(std::ifstream &is, std::string &os)
 {
   while (getline(is, os)) {
     #if defined _WIN32 || defined __CYGWIN__
     os.erase(remove(os.begin(), os.end(), '\r'), os.end());
     #endif
     auto end = os.find("#");
-    if (string::npos != end)
+    if (std::string::npos != end)
       os = os.substr(0, end);
     end = os.find(" ");
-    if (string::npos != end)
+    if (std::string::npos != end)
       os = os.substr(0, end);
     if (os.size()) 
       return true;
@@ -96,30 +96,30 @@ bool getNextLine(ifstream &is, string &os)
   return false;
 }
 
-string LibpllEvaluation::getModelStr()
+std::string LibpllEvaluation::getModelStr()
 {
   assign(_model, _treeinfo->partitions[0]);
-  string modelStr = _model.to_string(true);
+  std::string modelStr = _model.to_string(true);
   return modelStr;
 }
 
-void LibpllEvaluation::createAndSaveRandomTree(const string &alignmentFilename,
-    const string &modelStrOrFile,
-    const string &outputTreeFile)
+void LibpllEvaluation::createAndSaveRandomTree(const std::string &alignmentFilename,
+    const std::string &modelStrOrFile,
+    const std::string &outputTreeFile)
 {
   auto evaluation = buildFromString("__random__", alignmentFilename, modelStrOrFile);
   LibpllParsers::saveUtree(evaluation->_utree->nodes[0], outputTreeFile, false);
 }
 
-shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &newickString,
-    const string& alignmentFilename,
-    const string &modelStrOrFile)
+std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::string &newickString,
+    const std::string& alignmentFilename,
+    const std::string &modelStrOrFile)
 {
   // sequences 
   pll_sequences sequences;
   unsigned int *patternWeights = nullptr;
-  string modelStr = modelStrOrFile;
-  ifstream f(modelStr);
+  std::string modelStr = modelStrOrFile;
+  std::ifstream f(modelStr);
   if (f.good()) {
     getline(f, modelStr);
     modelStr = modelStr.substr(0, modelStr.find(","));
@@ -129,7 +129,7 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
   assert(model.num_submodels() == 1);
   pll_utree_t *utree = 0;
   {
-    if (!ifstream(alignmentFilename.c_str()).good()) {
+    if (!std::ifstream(alignmentFilename.c_str()).good()) {
       throw LibpllException("Alignment file " + alignmentFilename + "does not exist");
     }
     try {
@@ -142,7 +142,7 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
     }
     // tree
     if (newickString == "__random__") {
-      vector<const char*> labels;
+      std::vector<const char*> labels;
       for (auto seq: sequences) {
         labels.push_back(seq->label);
       }
@@ -174,7 +174,7 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
   free(patternWeights);
 
   // fill partition
-  map<string, int> tipsLabelling;
+  std::map<std::string, int> tipsLabelling;
   unsigned int labelIndex = 0;
   for (auto seq: sequences) {
     tipsLabelling[seq->label] = labelIndex;
@@ -187,7 +187,7 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
   pll_utree_reset_template_indices(root, utree->tip_count);
   setMissingBL(utree, DEFAULT_BL);
   
-  // map tree to partition
+  // std::map tree to partition
   for (unsigned int i = 0; i < utree->inner_count + utree->tip_count; ++i) {
     auto node = utree->nodes[i];
     if (!node->next) { // tip!
@@ -203,7 +203,7 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
     params_to_optimize |= PLLMOD_OPT_PARAM_SUBST_RATES;
     params_to_optimize |= PLLMOD_OPT_PARAM_FREQUENCIES;
   }
-  vector<unsigned int> params_indices(model.num_ratecats(), 0); 
+  std::vector<unsigned int> params_indices(model.num_ratecats(), 0); 
   auto treeinfo = pllmod_treeinfo_create(root, 
       tipNumber, 1, PLLMOD_COMMON_BRLEN_SCALED);
   if (!treeinfo)
@@ -215,20 +215,20 @@ shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const string &new
       &params_indices[0],
       model.submodel(0).rate_sym().data());
   
-  shared_ptr<LibpllEvaluation> evaluation(new LibpllEvaluation());
+  std::shared_ptr<LibpllEvaluation> evaluation(new LibpllEvaluation());
   evaluation->_model = model;
-  evaluation->_treeinfo = shared_ptr<pllmod_treeinfo_t>(treeinfo, treeinfoDestroy); 
-  evaluation->_utree = shared_ptr<pll_utree_t>(utree, utreeDestroy); 
+  evaluation->_treeinfo = std::shared_ptr<pllmod_treeinfo_t>(treeinfo, treeinfoDestroy); 
+  evaluation->_utree = std::shared_ptr<pll_utree_t>(utree, utreeDestroy); 
   return evaluation;
 }
   
-shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromFile(const string &newickFilename,
+std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromFile(const std::string &newickFilename,
     const LibpllAlignmentInfo &info)
 {
-  ifstream t(newickFilename);
+  std::ifstream t(newickFilename);
   if (!t)
     throw LibpllException("Could not load open newick file ", newickFilename);
-  string str((istreambuf_iterator<char>(t)),
+  std::string str((istreambuf_iterator<char>(t)),
                        istreambuf_iterator<char>());
   return buildFromString(str,
       info.alignmentFilename,
@@ -262,7 +262,7 @@ double LibpllEvaluation::optimizeAllParameters(double tolerance)
   if (_treeinfo->params_to_optimize[0] == 0) {
     return computeLikelihood();
   }
-  Logger::timed << "Starting libpll rates optimization" << endl;
+  Logger::timed << "Starting libpll rates optimization" << std::endl;
   double previousLogl = computeLikelihood(); 
   double newLogl = previousLogl;
   do {
@@ -327,13 +327,13 @@ void LibpllEvaluation::parsePhylip(const char *phylipFile,
     pll_sequences &sequences,
     unsigned int *&weights)
 {
-  shared_ptr<pll_phylip_t> reader(pll_phylip_open(phylipFile, pll_map_phylip),
+  std::shared_ptr<pll_phylip_t> reader(pll_phylip_open(phylipFile, pll_map_phylip),
       pll_phylip_close);
   if (!reader) {
     throw LibpllException("Error while opening phylip file ", phylipFile);
   }
   pll_msa_t *msa = nullptr;
-  // todobenoit check memory leaks when using the exception trick
+  // todobenoit check memory leaks when using the std::exception trick
   try {
     msa = pll_phylip_parse_interleaved(reader.get());
     if (!msa) {

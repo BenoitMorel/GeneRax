@@ -6,14 +6,14 @@ static const double EPSILON = 0.0000000001;
 void DatedDLModel::setInitialGeneTree(pll_utree_t *tree)
 {
   AbstractReconciliationModel::setInitialGeneTree(tree);
-  clvs_ = vector<DDL_CLV>((_maxGeneId + 1) * 2); 
+  clvs_ = std::vector<DDL_CLV>((_maxGeneId + 1) * 2); 
 }
 
 void buildSubdivisions(pll_rtree_t *speciesTree,
-  vector<vector<double> > &branchSubdivisions) 
+  std::vector<std::vector<double> > &branchSubdivisions) 
 {
   int maxSpeciesNodeIndex = speciesTree->tip_count + speciesTree->inner_count;
-  branchSubdivisions = vector<vector<double> >(maxSpeciesNodeIndex);
+  branchSubdivisions = std::vector<std::vector<double> >(maxSpeciesNodeIndex);
   for (int i = 0; i < maxSpeciesNodeIndex; ++i) {
     int speciesId = speciesTree->nodes[i]->node_index;
     double branchLength = max(speciesTree->nodes[i]->length, 0.0001);
@@ -112,7 +112,7 @@ DatedDLModel::DatedDLModel():
 {
 }
 
-void DatedDLModel::setRates(double dupRate, double lossRate, double transferRate, const vector<double> &speciesScalers)
+void DatedDLModel::setRates(double dupRate, double lossRate, double transferRate, const std::vector<double> &speciesScalers)
 {
   if (dupRate == 0)
     dupRate = EPSILON;
@@ -137,16 +137,16 @@ void DatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
   int geneId = geneNode->node_index;
   auto &clv = clvs_[geneId].clv;
-  clv = vector<vector<ScaledValue> >(speciesNodesCount_);
+  clv = std::vector<std::vector<ScaledValue> >(speciesNodesCount_);
   for (auto speciesNode: speciesNodes_) {
     computeCLVCell(geneNode, speciesNode, clv[speciesNode->node_index], false);
   }
 }
 
-void DatedDLModel::computeCLVCell(pll_unode_t *geneNode, pll_rnode_t *speciesNode, vector<ScaledValue> &speciesCell, bool isVirtualRoot)
+void DatedDLModel::computeCLVCell(pll_unode_t *geneNode, pll_rnode_t *speciesNode, std::vector<ScaledValue> &speciesCell, bool isVirtualRoot)
 {
   int subdivisions = branchSubdivisions_[speciesNode->node_index].size();
-  speciesCell = vector<ScaledValue>(subdivisions);
+  speciesCell = std::vector<ScaledValue>(subdivisions);
   speciesCell[0] = computeRecProbaInterBranch(geneNode, speciesNode, isVirtualRoot);
   for (int subdivision = 1; subdivision < subdivisions; ++subdivision) {
     speciesCell[subdivision] = computeRecProbaIntraBranch(geneNode, speciesNode, subdivision, isVirtualRoot);
@@ -225,7 +225,7 @@ ScaledValue DatedDLModel::getRootLikelihood(pll_unode_t *root) const
 void DatedDLModel::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
   int u = virtualRoot->node_index;
-  clvs_[u].clv = vector<vector<ScaledValue> >(speciesNodesCount_);
+  clvs_[u].clv = std::vector<std::vector<ScaledValue> >(speciesNodesCount_);
   for (auto speciesNode: speciesNodes_) {
     int e = speciesNode->node_index;
     computeCLVCell(virtualRoot, speciesNode, clvs_[u].clv[e], true);

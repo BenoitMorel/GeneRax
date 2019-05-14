@@ -7,7 +7,7 @@ class PerCoreGeneTrees;
 #include <enums.hpp>
 #include <maths/DTLRates.hpp>
 
-using namespace std;
+
 
 
 class DTLOptimizer {

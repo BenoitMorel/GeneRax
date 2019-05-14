@@ -4,20 +4,20 @@
 #include <fstream>
 #include <string>
 
-using namespace std;
+
 
 class ParallelOfstream {
 public:
-  ParallelOfstream(const string &fileName, bool masterRankOnly = true);
+  ParallelOfstream(const std::string &fileName, bool masterRankOnly = true);
   void close();
   ~ParallelOfstream();
 private:
-  template<typename T> friend ostream& operator<<(ParallelOfstream&, T);
-  ostream *_os;
+  template<typename T> friend std::ostream& operator<<(ParallelOfstream&, T);
+  std::ostream *_os;
 };
 
 template<typename T> 
-ostream& operator<<(ParallelOfstream& log, T op) {
+std::ostream& operator<<(ParallelOfstream& log, T op) {
   *log._os << op;
   return *log._os;
 }
