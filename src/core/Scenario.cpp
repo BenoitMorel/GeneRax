@@ -18,7 +18,7 @@ void Scenario::addTransfer(EventType type, int geneNode, int speciesNode, int fr
   event.toNode = to;
   _events.push_back(event);
   _eventsCount[int(type)] ++;
-  if (_geneIdToEvent.size() <= (size_t)geneNode) {
+  if (_geneIdToEvent.size() <= static_cast<size_t>(geneNode)) {
     _geneIdToEvent.resize(geneNode + 1);
   }
   _geneIdToEvent[geneNode] = event;

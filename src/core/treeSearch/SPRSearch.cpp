@@ -63,7 +63,7 @@ void getRegraftsRec(int pruneIndex, pll_unode_t *regraft, int maxRadius, std::ve
   if (path.size()) {
     moves.push_back(SPRMoveDesc(pruneIndex, regraft->node_index, path));
   }
-  if ((int)path.size() < maxRadius && regraft->next) {
+  if (static_cast<int>(path.size()) < maxRadius && regraft->next) {
     path.push_back(regraft->node_index);
     getRegraftsRec(pruneIndex, regraft->next->back, maxRadius, path, moves);
     getRegraftsRec(pruneIndex, regraft->next->next->back, maxRadius, path, moves);

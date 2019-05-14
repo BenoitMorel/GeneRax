@@ -10,12 +10,12 @@ bool ParallelContext::_mpiEnabled = true;
 void ParallelContext::init(void *commPtr)
 {
   if (commPtr) {
-    if (*(int *)commPtr == -1) {
+    if (*static_cast<int *>(commPtr) == -1) {
       _mpiEnabled = false;
       return;
     }
     _mpiEnabled = true;
-    setComm(*((MPI_Comm*)commPtr));
+    setComm(*(static_cast<MPI_Comm*>(commPtr)));
     setOwnMPIContext(false);
   } else {
     _mpiEnabled = true;

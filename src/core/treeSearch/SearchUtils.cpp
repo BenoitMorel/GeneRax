@@ -40,12 +40,12 @@ void SearchUtils::testMove(JointTree &jointTree,
   newLoglk = recLoglk +  jointTree.computeLibpllLoglk(false);
   jointTree.rollbackLastMove();
   if(check) {
-    auto newLoglk = jointTree.computeJointLoglk();
-    if (fabs(initialLoglk - newLoglk) > 0.000001) {
+    auto rbLoglk = jointTree.computeJointLoglk();
+    if (fabs(initialLoglk - rbLoglk) > 0.000001) {
       jointTree.printLoglk();
       std::cerr.precision(17);
       std::cerr << "rollback lead to different likelihoods: " << initialLoglk
-        << " " << newLoglk << std::endl;
+        << " " << rbLoglk << std::endl;
       std::cerr << "recomputing the ll again: " << jointTree.computeJointLoglk() << std::endl;
       std::cerr << " rank " << ParallelContext::getRank() << std::endl;
       std::cerr << "Move: " << *move << std::endl;

@@ -5,9 +5,9 @@
 #include <vector>
 #include <Arguments.hpp>
 
-JSArguments::JSArguments(int argc, char * argv[]):
-  argc(argc),
-  argv(argv),
+JSArguments::JSArguments(int iargc, char * iargv[]):
+  argc(iargc),
+  argv(iargv),
   strategy(EVAL),
   reconciliationModel(UndatedDL),
   reconciliationOpt(Simplex),

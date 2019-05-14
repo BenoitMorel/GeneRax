@@ -13,8 +13,8 @@ void SPRRollback::applyRollback() {
     tree_.invalidateCLV(b.getNode());
     tree_.invalidateCLV(b.getNode()->back);
   }
-  auto prune = (pll_unode_s*)(rollback_.SPR.prune_edge);
-  auto regraft = (pll_unode_s*)(rollback_.SPR.regraft_edge);
+  auto prune = static_cast<pll_unode_s *>(rollback_.SPR.prune_edge);
+  auto regraft = static_cast<pll_unode_s*>(rollback_.SPR.regraft_edge);
   tree_.invalidateCLV(prune->next->back);
   tree_.invalidateCLV(prune->next->next);
   tree_.invalidateCLV(prune->next);

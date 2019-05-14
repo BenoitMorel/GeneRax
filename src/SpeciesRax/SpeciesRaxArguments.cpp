@@ -6,9 +6,9 @@
 #include <algorithm>
 #include <vector>
 
-SpeciesRaxArguments::SpeciesRaxArguments(int argc, char * argv[]):
-  argc(argc),
-  argv(argv),
+SpeciesRaxArguments::SpeciesRaxArguments(int iargc, char * iargv[]):
+  argc(iargc),
+  argv(iargv),
   reconciliationModel(UndatedDL),
   reconciliationOpt(Simplex),
   output("SpeciesRax"),

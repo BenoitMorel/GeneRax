@@ -57,7 +57,9 @@ ScaledValue UndatedDTLModel::getCorrectedTransferSum(int geneId, int speciesId) 
 void UndatedDTLModel::setRates(double dupRate, 
   double lossRate,
   double transferRate,
-  const std::vector<double> &speciesScalers) {
+  const std::vector<double> &speciesScalers) 
+{
+  (void)speciesScalers;
   geneRoot_ = 0;
   _PD = std::vector<double>(speciesNodesCount_, dupRate);
   _PL = std::vector<double>(speciesNodesCount_, lossRate);

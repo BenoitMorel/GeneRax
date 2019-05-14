@@ -38,10 +38,10 @@ const double DEFAULT_BL = 0.000001;
 
 
 struct pll_sequence {
-  pll_sequence(char *label, char *seq, unsigned int len):
-    label(label),
-    seq(seq),
-    len(len) {}
+  pll_sequence(char *label_, char *seq_, unsigned int len_):
+    label(label_),
+    seq(seq_),
+    len(len_) {}
   char *label;
   char *seq;
   unsigned int len;
@@ -309,7 +309,8 @@ void LibpllEvaluation::parseFasta(const char *fastaFile,
     length = seq_len;
   }
   int count = sequences.size();;
-  char** buffer = (char**)malloc(count * sizeof(char *));
+  char** buffer = static_cast<char**>(malloc(count * sizeof(char *)));
+  assert(buffer);
   for (int i = 0; i < count; ++i) {
     buffer[i] = sequences[i]->seq;
   }
@@ -328,6 +329,8 @@ void LibpllEvaluation::parsePhylip(const char *phylipFile,
     pll_sequences &sequences,
     unsigned int *&weights)
 {
+  assert(phylipFile);
+  assert(stateMap);
   std::shared_ptr<pll_phylip_t> reader(pll_phylip_open(phylipFile, pll_map_phylip),
       pll_phylip_close);
   if (!reader) {

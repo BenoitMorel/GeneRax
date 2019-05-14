@@ -5,9 +5,9 @@
 #include <algorithm>
 #include <vector>
 
-GeneRaxArguments::GeneRaxArguments(int argc, char * argv[]):
-  argc(argc),
-  argv(argv),
+GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
+  argc(iargc),
+  argv(iargv),
   strategy(EVAL),
   reconciliationModelStr("AutoDetect"),
   reconciliationOpt(Simplex),

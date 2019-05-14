@@ -31,18 +31,18 @@ void schedule(const std::string &outputDir, const std::string &commandFile, bool
   std::string jobFailureFatal = "1";
   std::string threadsArg;
   std::string outputLogs = FileSystem::joinPaths(outputDir, "logs.txt");
-  argv.push_back((char *)exec.c_str());
-  argv.push_back((char *)implem.c_str());
-  argv.push_back((char *)called_library.c_str());
-  argv.push_back((char *)commandFile.c_str());
-  argv.push_back((char *)outputDir.c_str());
-  argv.push_back((char *)jobFailureFatal.c_str());
-  argv.push_back((char *)threadsArg.c_str());
-  argv.push_back((char *)outputLogs.c_str());
+  argv.push_back(const_cast<char *>(exec.c_str()));
+  argv.push_back(const_cast<char *>(implem.c_str()));
+  argv.push_back(const_cast<char *>(called_library.c_str()));
+  argv.push_back(const_cast<char *>(commandFile.c_str()));
+  argv.push_back(const_cast<char *>(outputDir.c_str()));
+  argv.push_back(const_cast<char *>(jobFailureFatal.c_str()));
+  argv.push_back(const_cast<char *>(threadsArg.c_str()));
+  argv.push_back(const_cast<char *>(outputLogs.c_str()));
   MPI_Comm comm = MPI_COMM_WORLD;
   ParallelContext::barrier(); 
   if (splitImplem || ParallelContext::getRank() == 0) {
-    mpi_scheduler_main(argv.size(), &argv[0], (void*)&comm);
+    mpi_scheduler_main(static_cast<int>(argv.size()), &argv[0], static_cast<void*>(&comm));
   }
   ParallelContext::barrier(); 
 }
@@ -141,14 +141,14 @@ void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
     os << family.alignmentFile << " ";
     os << arguments.speciesTree << " ";
     os << family.libpllModel  << " ";
-    os << (int)recModel  << " ";
-    os << (int)arguments.reconciliationOpt  << " ";
-    os << (int)arguments.rootedGeneTree  << " ";
+    os << static_cast<int>(recModel)  << " ";
+    os << static_cast<int>(arguments.reconciliationOpt)  << " ";
+    os << static_cast<int>(arguments.rootedGeneTree)  << " ";
     os << arguments.recWeight  << " ";
     os << rates.rates[0]  << " ";
     os << rates.rates[1]  << " ";
     os << rates.rates[2]  << " ";
-    os << int(enableRec)  << " ";
+    os << static_cast<int>(enableRec)  << " ";
     os << sprRadius  << " ";
     os << geneTreePath << " ";
     os << outputStats <<  std::endl;
@@ -258,7 +258,7 @@ void gatherLikelihoods(std::vector<FamiliesFileParser::FamilyInfo> &families,
   Logger::info << "Start gathering likelihoods... " << std::endl;
   totalRecLL = 0.0;
   totalLibpllLL = 0.0;
-  auto familiesNumber = families.size();
+  unsigned int familiesNumber = static_cast<unsigned int>(families.size());
   for (auto i = ParallelContext::getBegin(familiesNumber); i < ParallelContext::getEnd(familiesNumber); ++i) {
     auto &family = families[i];
     std::ifstream is(family.statsFile);
@@ -369,7 +369,6 @@ void search(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   optimizeStep(arguments, recModel, currentFamilies, rates, 3, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
 
   if (autoDetectRecModel) {
-    DTLRates rates;
     recModel = testRecModel(arguments.speciesTree, currentFamilies, rates);
     optimizeStep(arguments, recModel, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }

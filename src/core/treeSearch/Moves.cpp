@@ -71,7 +71,7 @@ SPRMove::SPRMove(int pruneIndex, int regraftIndex, const std::vector<int> &path)
 
 void printNode(pll_unode_s *node)
 {
-  assert(node)
+  assert(node);
   Logger::info << node;
   if (node->next) {
     Logger::info << " " << node->next << " " << node->next->next;
@@ -88,7 +88,7 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
   auto regraft = tree.getNode(regraftIndex_);
   assert(root);
   assert (prune && prune->next);
-  assert (regraft && regraft->next);
+  assert (regraft && regraft);
   tree.invalidateCLV(prune->next->back);
   tree.invalidateCLV(prune->next->next);
   tree.invalidateCLV(prune->next);
