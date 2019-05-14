@@ -7,13 +7,13 @@
 #include <cmath>
 
 ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
-  const GeneSpeciesMapping& map,
+  const GeneSpeciesMapping& geneSpeciesMapping,
   RecModel recModel,
   bool rootedGeneTree):
   _model(recModel)
 {
   reconciliationModel = getRecModelObject(recModel);
-  reconciliationModel->init(speciesTree, map, rootedGeneTree);
+  reconciliationModel->init(speciesTree, geneSpeciesMapping, rootedGeneTree);
 }
 
 void ReconciliationEvaluation::setRates(double dupRate, double lossRate,
