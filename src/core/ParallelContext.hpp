@@ -11,7 +11,7 @@ class ParallelException: public exception
 public:
   ParallelException(int errorCode):errorCode_(errorCode) 
   {
-    msg_ = "Program failed with error " + to_string(errorCode);
+    msg_ = "Program failed with error " + std::to_string(errorCode);
   }
 
   virtual const char* what() const throw()
