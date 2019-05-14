@@ -104,7 +104,7 @@ private:
    *  @param weights Pattern weights
    */
   static void parseFasta(const char *fasta_file, 
-    const pll_state_t *map,
+    const pll_state_t *stateMap,
     pll_sequences &sequences,
     unsigned int *&weights);
 
@@ -116,7 +116,7 @@ private:
    *  @param weights Pattern weights
    */
   static void parsePhylip(const char *phylip_file, 
-    const pll_state_t *map,
+    const pll_state_t *stateMap,
     pll_sequences &sequences,
     unsigned int *&weights);
 

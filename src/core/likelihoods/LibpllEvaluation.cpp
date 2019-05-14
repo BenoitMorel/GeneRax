@@ -289,7 +289,7 @@ void LibpllEvaluation::setMissingBL(pll_utree_t * tree,
 }
 
 void LibpllEvaluation::parseFasta(const char *fastaFile, 
-    const pll_state_t *map,
+    const pll_state_t *stateMap,
     pll_sequences &sequences,
     unsigned int *&weights)
 {
@@ -312,7 +312,7 @@ void LibpllEvaluation::parseFasta(const char *fastaFile,
   for (int i = 0; i < count; ++i) {
     buffer[i] = sequences[i]->seq;
   }
-  weights = pll_compress_site_patterns(buffer, map, count, &length);
+  weights = pll_compress_site_patterns(buffer, stateMap, count, &length);
   if (!weights) 
     throw LibpllException("Error while parsing fasta: cannot compress sites from ", fastaFile);
   for (int i = 0; i < count; ++i) {
@@ -323,7 +323,7 @@ void LibpllEvaluation::parseFasta(const char *fastaFile,
 }
   
 void LibpllEvaluation::parsePhylip(const char *phylipFile, 
-    const pll_state_t *map,
+    const pll_state_t *stateMap,
     pll_sequences &sequences,
     unsigned int *&weights)
 {
@@ -345,7 +345,7 @@ void LibpllEvaluation::parsePhylip(const char *phylipFile,
       throw LibpllException("");
     }
   }
-  weights = pll_compress_site_patterns(msa->sequence, map, msa->count, &msa->length);
+  weights = pll_compress_site_patterns(msa->sequence, stateMap, msa->count, &msa->length);
   if (!weights) 
     throw LibpllException("Error while parsing fasta: cannot compress sites");
   for (auto i = 0; i < msa->count; ++i) {
