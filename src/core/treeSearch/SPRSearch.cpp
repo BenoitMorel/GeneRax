@@ -19,6 +19,7 @@ struct SPRMoveDesc {
 void queryPruneIndicesRec(pll_unode_t * node,
                                std::vector<int> &buffer)
 {
+  assert(node);
   if (node->next) {
     queryPruneIndicesRec(node->next->back, buffer);
     queryPruneIndicesRec(node->next->next->back, buffer);
@@ -41,11 +42,15 @@ void getAllPruneIndices(JointTree &tree, std::vector<int> &allNodeIndices) {
 
 bool sprYeldsSameTree(pll_unode_t *p, pll_unode_t *r)
 {
+  assert(p);
+  assert(r);
   return (r == p) || (r == p->next) || (r == p->next->next)
     || (r == p->back) || (r == p->next->back) || (r == p->next->next->back);
 }
 
-bool isValidSPRMove(std::shared_ptr<pllmod_treeinfo_t> treeinfo, pll_unode_s *prune, pll_unode_s *regraft) {
+bool isValidSPRMove(pll_unode_s *prune, pll_unode_s *regraft) {
+  assert(prune);
+  assert(regraft);
   return !sprYeldsSameTree(prune, regraft);
 }
 
@@ -53,6 +58,8 @@ bool isValidSPRMove(std::shared_ptr<pllmod_treeinfo_t> treeinfo, pll_unode_s *pr
 
 void getRegraftsRec(int pruneIndex, pll_unode_t *regraft, int maxRadius, std::vector<int> &path, std::vector<SPRMoveDesc> &moves)
 {
+  assert(pruneIndex >= 0);
+  assert(regraft);
   if (path.size()) {
     moves.push_back(SPRMoveDesc(pruneIndex, regraft->node_index, path));
   }
@@ -67,8 +74,6 @@ void getRegraftsRec(int pruneIndex, pll_unode_t *regraft, int maxRadius, std::ve
 
 void printPossibleMoves(JointTree &jointTree, std::vector<std::shared_ptr<Move> > &allMoves)
 {
-  //Logger::info << "Nodes: " << std::endl;
-  //jointTree.printAllNodes(std::cout);
   Logger::info << "Possible moves from " << jointTree.getUnrootedTreeHash() << std::endl;
   std::unordered_set<int> hashs;
   for (auto move: allMoves) {
@@ -82,6 +87,7 @@ void printPossibleMoves(JointTree &jointTree, std::vector<std::shared_ptr<Move> 
 
 void getRegrafts(JointTree &jointTree, int pruneIndex, int maxRadius, std::vector<SPRMoveDesc> &moves) 
 {
+  assert(pruneIndex >= 0);
   pll_unode_t *pruneNode = jointTree.getNode(pruneIndex);
   std::vector<int> path;
   getRegraftsRec(pruneIndex, pruneNode->next->back, maxRadius, path, moves);
@@ -102,7 +108,7 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
   for (auto &move: potentialMoves) {
     unsigned int pruneIndex = move.pruneIndex;
     unsigned int regraftIndex = move.regraftIndex;
-    if (!isValidSPRMove(jointTree.getTreeInfo(), jointTree.getNode(pruneIndex), jointTree.getNode(regraftIndex))) {
+    if (!isValidSPRMove(jointTree.getNode(pruneIndex), jointTree.getNode(regraftIndex))) {
       continue;
     }
     // in case of a radius 1, SPR moves are actually NNI moves

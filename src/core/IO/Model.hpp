@@ -50,7 +50,7 @@ public:
     if (_rate_sym.empty())
       return num_rates();
     else
-      return *std::max_element(_rate_sym.cbegin(), _rate_sym.cend()) + 1;
+      return static_cast<unsigned int>(*std::max_element(_rate_sym.cbegin(), _rate_sym.cend()) + 1);
   }
 
   doubleVector uniq_subst_rates() const
@@ -59,7 +59,7 @@ public:
     {
       doubleVector uniq_rates(num_uniq_rates());
       for (size_t i = 0; i < _subst_rates.size(); ++i)
-        uniq_rates[_rate_sym[i]] = _subst_rates[i];
+        uniq_rates[static_cast<unsigned int>(_rate_sym[i])] = _subst_rates[i];
       return uniq_rates;
     }
     else
@@ -94,7 +94,7 @@ public:
 
       _subst_rates.resize(num_rates());
       for (size_t i = 0; i < _subst_rates.size(); ++i)
-        _subst_rates[i] = v[_rate_sym[i]];
+        _subst_rates[i] = v[static_cast<unsigned int>(_rate_sym[i])];
     }
     else
       subst_rates(v);

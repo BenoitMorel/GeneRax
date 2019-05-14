@@ -49,14 +49,14 @@ int ParallelContext::getRank()
   return rank;
 }
 
-int ParallelContext::getSize() 
+unsigned int ParallelContext::getSize() 
 {
   if (!_mpiEnabled) {
     return 1;
   }
   int size = 0;
   MPI_Comm_size(getComm(), &size);
-  return size;
+  return static_cast<unsigned int>(size);
 }
   
 void ParallelContext::setOwnMPIContext(bool own)
@@ -79,12 +79,12 @@ void ParallelContext::setComm(MPI_Comm newComm)
 
 
 
-int ParallelContext::getBegin(int elems)
+unsigned int ParallelContext::getBegin(unsigned int elems)
 {
   return (getRank() * elems) / getSize();
 }
  
-int ParallelContext::getEnd(int elems)
+unsigned int ParallelContext::getEnd(unsigned int elems)
 {
   return std::min(elems, ((getRank() + 1) * elems) / getSize());
 }

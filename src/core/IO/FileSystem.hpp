@@ -33,7 +33,7 @@ public:
 
   static void getFileContent(const std::string &filePath, std::string &content) 
   {
-    std::ifstream ifs;
+    std::ifstream ifs(filePath);
     content.assign((std::istreambuf_iterator<char>(ifs)),
       (std::istreambuf_iterator<char>()) );
   }

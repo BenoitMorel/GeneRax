@@ -20,6 +20,8 @@
 
 
 std::shared_ptr<Move> Move::createSPRMove(int pruneIndex, int regraftIndex, const std::vector<int> &path) {
+  assert(pruneIndex >= 0);
+  assert(regraftIndex >= 0);
   return std::make_shared<SPRMove>(pruneIndex, regraftIndex, path);
 }
 
@@ -28,10 +30,10 @@ void optimizeBranchesSlow(JointTree &tree,
     const std::vector<pll_unode_t *> &nodesToOptimize)
 {
     auto root = tree.getTreeInfo()->root;
+    assert(root);
     // could be incremental and thus faster
     unsigned int params_indices[4] = {0,0,0,0};
     auto treeinfo = tree.getTreeInfo();
-    
     tree.computeLibpllLoglk(); // update CLVs
     for (int j = 0; j < 2; ++j) 
     for (unsigned int i = 0; i < nodesToOptimize.size(); ++i) {
@@ -50,10 +52,11 @@ void optimizeBranchesSlow(JointTree &tree,
        assert(oldLoglk <= newLoglk);
     }
     pllmod_treeinfo_set_root(treeinfo.get(), root);
-
 }
 
 bool equals(pll_unode_t *node1, pll_unode_t *node2) {
+  assert(node1);
+  assert(node2);
   return node1 == node2 || (node1->next && (node1->next == node2 || node1->next->next == node2));
 }
 
@@ -62,10 +65,13 @@ SPRMove::SPRMove(int pruneIndex, int regraftIndex, const std::vector<int> &path)
   regraftIndex_(regraftIndex),
   path_(path)
 {
+  assert(pruneIndex >= 0);
+  assert(regraftIndex >= 0);
 }
 
 void printNode(pll_unode_s *node)
 {
+  assert(node)
   Logger::info << node;
   if (node->next) {
     Logger::info << " " << node->next << " " << node->next->next;
@@ -80,6 +86,9 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
   auto root = tree.getRoot();
   auto prune = tree.getNode(pruneIndex_);
   auto regraft = tree.getNode(regraftIndex_);
+  assert(root);
+  assert (prune && prune->next);
+  assert (regraft && regraft->next);
   tree.invalidateCLV(prune->next->back);
   tree.invalidateCLV(prune->next->next);
   tree.invalidateCLV(prune->next);

@@ -62,12 +62,12 @@ public:
         return *this;
       }
       if (_type == lt_timed) {
-        int seconds = getElapsedSec();
-        int hours  = seconds / 3600;
-        int minutes = (seconds % 3600) / 60;
+        auto seconds = getElapsedSec();
+        auto hours  = seconds / 3600;
+        auto minutes = (seconds % 3600) / 60;
         seconds = seconds % 60;
         char s[25];
-        sprintf(s, "%02d:%02d:%02d", hours, minutes, seconds);
+        sprintf(s, "%02ld:%02ld:%02ld", hours, minutes, seconds);
         *_os << "[" << s << "] " << t;
         if (logFile) 
           *logFile << "[" << s << "] " << t;

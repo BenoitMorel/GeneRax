@@ -15,12 +15,11 @@ extern "C" {
 #include <exception>
 #include <vector>
 #include <iostream>
-#include <IO/Model.hpp>
 
 const double TOLERANCE = 0.5;
 
 
-
+class Model;
 struct pll_sequence;
 using pll_sequence_ptr = std::shared_ptr<pll_sequence>;
 using pll_sequences = std::vector<pll_sequence_ptr>;
@@ -126,6 +125,6 @@ private:
 private:
   std::shared_ptr<pllmod_treeinfo_t> _treeinfo;
   std::shared_ptr<pll_utree_t> _utree;
-  Model _model;
+  std::shared_ptr<Model> _model;
 };
 

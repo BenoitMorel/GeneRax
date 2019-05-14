@@ -20,17 +20,17 @@ public:
   /**
    * Constructor for a null value
    */
-  ScaledValue():value(0), scaler(NULL_SCALER) {
+  ScaledValue():value(0.0), scaler(NULL_SCALER) {
   }
 
   void scale() {
-    if (! (value >= 0)) {
+    if (! (value >= 0.0)) {
       std::cerr << value << " " << scaler << std::endl;
     }
-    assert(value >= 0);
-    if (value == 0) {
+    assert(value >= 0.0);
+    if (value == 0.0) {
       scaler = NULL_SCALER;
-      value = 0;
+      value = 0.0;
     }
     else {
       while (value < JS_SCALE_THRESHOLD) {
@@ -48,20 +48,6 @@ public:
   explicit ScaledValue(double v, int s = 0):value(v), scaler(s) {
     scale();
   } 
-
-  /*
-  ScaledValue(const ScaledValue &v):value(v.value), scaler(v.scaler) {
-    if (value == 0) {
-      scaler = NULL_SCALER;
-      value = 0;
-    }
-    else {
-      while (value < JS_SCALE_THRESHOLD) {
-        scaler += 1;
-        value *= JS_SCALE_FACTOR;
-      }
-    }
-  } */
 
   /**
    * ScaledValue sum operator
@@ -82,7 +68,7 @@ public:
    */
   inline ScaledValue operator-(const ScaledValue& v) const {
     if (v.scaler == scaler) {
-      if (value - v.value < 0) {
+      if (value - v.value < 0.0) {
         if (fabs(value - v.value) < 0.0000000001) {
           return ScaledValue();
         }

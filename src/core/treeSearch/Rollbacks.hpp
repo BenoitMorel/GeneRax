@@ -11,6 +11,7 @@ class JointTree;
 
 class Rollback {
 public:
+  virtual ~Rollback() {}
   virtual void applyRollback() = 0;
 };
 
@@ -30,6 +31,7 @@ private:
 
 class SPRRollback: public Rollback {
 public:
+  virtual ~SPRRollback() {}
   SPRRollback(JointTree &tree, 
       pll_tree_rollback_t &rollback,
       const std::vector<SavedBranch> &branches,

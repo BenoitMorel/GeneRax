@@ -1,5 +1,6 @@
 #include "DatedDLModel.hpp"
 #include <IO/Logger.hpp>
+#include <cmath>
 
 static const double EPSILON = 0.0000000001;
 
@@ -32,7 +33,7 @@ void buildSubdivisions(pll_rtree_t *speciesTree,
   }
 }
 
-void DatedDLModel::computeExtinctionProbas(pll_rtree_t *speciesTree)
+void DatedDLModel::computeExtinctionProbas()
 {
   extinctionProba_.resize(speciesNodesCount_);
   for (auto speciesNode: speciesNodes_) {
@@ -71,7 +72,7 @@ double DatedDLModel::propagateExtinctionProba(double initialProba, double branch
   return res;
 }
 
-void DatedDLModel::computePropagationProbas(pll_rtree_t *speciesTree)
+void DatedDLModel::computePropagationProbas()
 {
   propagationProba_.resize(speciesNodesCount_);
   for (auto speciesNode: speciesNodes_) {
@@ -114,6 +115,8 @@ DatedDLModel::DatedDLModel():
 
 void DatedDLModel::setRates(double dupRate, double lossRate, double transferRate, const std::vector<double> &speciesScalers)
 {
+  (void)transferRate;
+  (void)speciesScalers;
   if (dupRate == 0)
     dupRate = EPSILON;
   if (lossRate == 0)
@@ -121,8 +124,8 @@ void DatedDLModel::setRates(double dupRate, double lossRate, double transferRate
   dupRate_ = dupRate;
   lossRate_ = lossRate;
   diffRates_ = dupRate - lossRate;
-  computeExtinctionProbas(speciesTree_);
-  computePropagationProbas(speciesTree_);
+  computeExtinctionProbas();
+  computePropagationProbas();
   invalidateAllCLVs();
 }
 

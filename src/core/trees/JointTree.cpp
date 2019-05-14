@@ -9,11 +9,13 @@
 
 
 size_t leafHash(pll_unode_t *leaf) {
+  assert(leaf);
   std::hash<std::string> hash_fn;
   return hash_fn(std::string(leaf->label));
 }
 
 size_t getTreeHashRec(pll_unode_t *node, size_t i) {
+  assert(node);
   if (i == 0) 
     i = 1;
   if (!node->next) {
@@ -31,6 +33,7 @@ size_t getTreeHashRec(pll_unode_t *node, size_t i) {
 
 pll_unode_t *findMinimumHashLeafRec(pll_unode_t * root, size_t &hashValue)
 {
+  assert(root);
   if (!root->next) {
     hashValue = leafHash(root);
     return root;
@@ -51,9 +54,11 @@ pll_unode_t *findMinimumHashLeafRec(pll_unode_t * root, size_t &hashValue)
 
 pll_unode_t *findMinimumHashLeaf(pll_unode_t * root) 
 {
+  assert(root);
   auto n1 = root;
   auto n2 = root->back;
-  size_t hash1, hash2;
+  size_t hash1 = 0;
+  size_t hash2 = 0;
   auto min1 = findMinimumHashLeafRec(n1, hash1);
   auto min2 = findMinimumHashLeafRec(n2, hash2);
   if (hash1 < hash2) {

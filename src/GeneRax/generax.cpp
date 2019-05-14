@@ -258,8 +258,8 @@ void gatherLikelihoods(std::vector<FamiliesFileParser::FamilyInfo> &families,
   Logger::info << "Start gathering likelihoods... " << std::endl;
   totalRecLL = 0.0;
   totalLibpllLL = 0.0;
-  int familiesNumber = families.size();
-  for (int i = ParallelContext::getBegin(familiesNumber); i < ParallelContext::getEnd(familiesNumber); ++i) {
+  auto familiesNumber = families.size();
+  for (auto i = ParallelContext::getBegin(familiesNumber); i < ParallelContext::getEnd(familiesNumber); ++i) {
     auto &family = families[i];
     std::ifstream is(family.statsFile);
     double libpllLL = 0.0;

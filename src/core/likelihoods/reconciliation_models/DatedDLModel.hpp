@@ -29,7 +29,13 @@ protected:
   virtual ScaledValue getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {return getRecProba(root->node_index + _maxGeneId + 1, speciesRoot->node_index);}
   virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       Scenario &scenario,
-      bool isVirtualRoot = false) {};
+      bool isVirtualRoot = false)
+  {
+    (void)geneNode;
+    (void)speciesNode;
+    (void)scenario;
+    (void)isVirtualRoot;
+  };
 
 private:
   double dupRate_;
@@ -76,9 +82,9 @@ private:
   std::vector<int> geneToSpecies;
 private:
   
-  void computeExtinctionProbas(pll_rtree_t *speciesTree);
+  void computeExtinctionProbas();
   double propagateExtinctionProba(double initialProba, double branchLength); 
-  void computePropagationProbas(pll_rtree_t *speciesTree);
+  void computePropagationProbas();
   double propagatePropagationProba(double initialProba, double branchLength); 
   void computeCLVCell(pll_unode_t *geneNode, pll_rnode_t *speciesNode, std::vector<ScaledValue> &speciesCell, bool isVirtualRoot);
   void computeCLV(pll_unode_t *geneNode, pll_rnode_t *speciesNode, DDL_CLV *clv, bool isVirtualRoot = false);

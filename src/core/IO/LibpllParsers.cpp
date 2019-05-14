@@ -55,7 +55,7 @@ std::vector<int> LibpllParsers::parallelGetTreeSizes(const std::vector<FamiliesF
 {
   int treesNumber = families.size();
   std::vector<int> localTreeSizes((treesNumber - 1 ) / ParallelContext::getSize() + 1, 0);
-  for (int i = ParallelContext::getBegin(treesNumber); i < ParallelContext::getEnd(treesNumber); i ++) {
+  for (auto i = ParallelContext::getBegin(treesNumber); i < ParallelContext::getEnd(treesNumber); i ++) {
     pll_utree_t *tree = LibpllParsers::readNewickFromFile(families[i].startingGeneTree);
     int taxa = tree->tip_count;
     localTreeSizes[i - ParallelContext::getBegin(treesNumber)] = taxa;

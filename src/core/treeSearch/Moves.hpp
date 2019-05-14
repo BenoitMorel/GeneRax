@@ -11,6 +11,8 @@ class JointTree;
 
 class Move {
 public:
+  virtual ~Move() {}
+  
   static std::shared_ptr<Move> createSPRMove(int pruneIndex, int regraftIndex, const std::vector<int> &path);
   
   virtual std::shared_ptr<Rollback> applyMove(JointTree &tree) = 0;
@@ -27,6 +29,7 @@ public:
 class SPRMove: public Move {
 public:
   SPRMove(int pruneIndex, int regraftIndex, const std::vector<int> &path);
+  virtual ~SPRMove() {}
   virtual std::shared_ptr<Rollback> applyMove(JointTree &tree);
   virtual void optimizeMove(JointTree &tree);
   virtual std::ostream& print(std::ostream & os) const;

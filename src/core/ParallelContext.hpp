@@ -44,7 +44,7 @@ public:
   /**
    *  @return the number of MPI ranks
    */
-  static int getSize();
+  static unsigned int getSize();
 
   /**
    * Gather the values of each rank into a global std::vector
@@ -80,8 +80,8 @@ public:
    *  @param elems: the number of elements
    *  @return the begin/end of the interval of the chunk for this rank
    */
-  static int getBegin(int elems);
-  static int getEnd(int elems);
+  static unsigned int getBegin(unsigned int elems);
+  static unsigned int getEnd(unsigned int elems);
 
   static void barrier();
   static void abort(int errorCode);

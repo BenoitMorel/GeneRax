@@ -64,7 +64,7 @@ public:
     }
     bool isSafeMode() {return safeMode_;}
     void enableReconciliation(bool enable) {enableReconciliation_ = enable;}
-    int getGeneTaxaNumber() {return getTreeInfo()->tip_count;}
+    unsigned int getGeneTaxaNumber() {return getTreeInfo()->tip_count;}
 private:
     std::shared_ptr<LibpllEvaluation> libpllEvaluation_;
     std::shared_ptr<ReconciliationEvaluation> reconciliationEvaluation_;
