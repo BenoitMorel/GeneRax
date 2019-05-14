@@ -73,8 +73,8 @@ void printPossibleMoves(JointTree &jointTree, std::vector<std::shared_ptr<Move> 
   unordered_set<int> hashs;
   for (auto move: allMoves) {
     jointTree.applyMove(move);
-    auto hash = jointTree.getUnrootedTreeHash();
-    hashs.insert(hash);
+    auto hashValue = jointTree.getUnrootedTreeHash();
+    hashs.insert(hashValue);
     jointTree.rollbackLastMove();
   }
   Logger::info << "Unique moves" << hashs.size() << std::endl;
