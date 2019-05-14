@@ -143,6 +143,7 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
 
 int raxmlLightMain(int argc, char** argv, void* comm)
 {
+  std::cerr << argc << " oyoo" << std::endl;
   ParallelContext::init(comm);
   int i = 2;
   std::string startingGeneTreeFile(argv[i++]);

@@ -35,7 +35,7 @@ JSArguments::JSArguments(int iargc, char * iargv[]):
       alignment = std::string(argv[++i]);
     } else if (arg == "-s" || arg == "--species-tree") {
       speciesTree = std::string(argv[++i]);
-    } else if (arg == "-m" || arg == "--std::map") {
+    } else if (arg == "-m" || arg == "--map") {
       geneSpeciesMap = std::string(argv[++i]);
     } else if (arg == "--strategy") {
       strategy = Arguments::strToStrategy(std::string(argv[++i]));
@@ -116,7 +116,7 @@ void JSArguments::printHelp() {
   Logger::info << "-g, --gene-tree <GENE TREE>" << std::endl;
   Logger::info << "-a, --alignment <ALIGNMENT>" << std::endl;
   Logger::info << "-s, --species-tree <SPECIES TREE>" << std::endl;
-  Logger::info << "-m, --std::map <GENE_SPECIES_MAPPING>" << std::endl;
+  Logger::info << "-m, --map <GENE_SPECIES_MAPPING>" << std::endl;
   Logger::info << "--strategy <STRATEGY>  {EVAL, SPR}" << std::endl;
   Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << std::endl;
   Logger::info << "--rec-opt <reconciliationOpt>  {grid, simplex}" << std::endl;
@@ -145,7 +145,7 @@ void JSArguments::printSummary() {
   Logger::info << "Gene tree: " << geneTree << std::endl;
   Logger::info << "Alignment: " << alignment << std::endl; 
   Logger::info << "Species tree: " << speciesTree << std::endl;
-  Logger::info << "Gene species std::map: " << geneSpeciesMap << std::endl;
+  Logger::info << "Gene species map: " << geneSpeciesMap << std::endl;
   Logger::info << "Strategy: " << Arguments::strategyToStr(strategy) << std::endl;
   Logger::info << "Reconciliation model: " << Arguments::recModelToStr(reconciliationModel) << std::endl;
   Logger::info << "Reconciliation opt: " << Arguments::recOptToStr(reconciliationOpt) << std::endl;

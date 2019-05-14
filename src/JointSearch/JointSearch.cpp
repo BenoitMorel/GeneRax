@@ -101,7 +101,7 @@ int internal_main(int argc, char** argv, void* comm)
     }
     Logger::timed << "End of search" << std::endl;
     jointTree->printLoglk();
-    Logger::info << "Final tree std::hash: " << jointTree->getUnrootedTreeHash() << std::endl;
+    Logger::info << "Final tree hash: " << jointTree->getUnrootedTreeHash() << std::endl;
     if (!ParallelContext::getRank()) {
       double ll = jointTree->computeJointLoglk();
       assert(!std::isnan(ll));
@@ -118,7 +118,7 @@ int internal_main(int argc, char** argv, void* comm)
         stats << "D " << jointTree->getDupRate() << std::endl;
         stats << "L " << jointTree->getLossRate() << std::endl;
         stats << "T " << jointTree->getTransferRate() << std::endl;
-        stats << "std::hash " << jointTree->getUnrootedTreeHash() << std::endl;
+        stats << "hash " << jointTree->getUnrootedTreeHash() << std::endl;
         stats << " " << std::endl;
       }
       jointTree->save(allTreesFile, !firstRun);

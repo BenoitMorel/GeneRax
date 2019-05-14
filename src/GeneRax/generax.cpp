@@ -56,7 +56,6 @@ void raxmlMain(std::vector<FamiliesFileParser::FamilyInfo> &families,
   bool splitImplem = useSplitImplem();
   auto start = Logger::getElapsedSec();
   Logger::timed << "Starting raxml light step" << std::endl;
-  
   std::stringstream outputDirName;
   outputDirName << "raxml_light_" << iteration;
   std::string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
