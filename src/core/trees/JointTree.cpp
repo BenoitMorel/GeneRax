@@ -32,7 +32,7 @@ size_t getTreeHashRec(pll_unode_t *node, size_t i) {
 pll_unode_t *findMinimumHashLeafRec(pll_unode_t * root, size_t &hash)
 {
   if (!root->next) {
-    hash = leafHash(root);
+    hashValue = leafHash(root);
     return root;
   }
   auto n1 = root->next->back;
@@ -41,10 +41,10 @@ pll_unode_t *findMinimumHashLeafRec(pll_unode_t * root, size_t &hash)
   auto min1 = findMinimumHashLeafRec(n1, hash1);
   auto min2 = findMinimumHashLeafRec(n2, hash2);
   if (hash1 < hash2) {
-    hash = hash1;
+    hashValue = hash1;
     return min1;
   } else {
-    hash = hash2;
+    hashValue = hash2;
     return min2;
   }
 }
