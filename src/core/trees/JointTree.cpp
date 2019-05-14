@@ -29,7 +29,7 @@ size_t getTreeHashRec(pll_unode_t *node, size_t i) {
 
 }
 
-pll_unode_t *findMinimumHashLeafRec(pll_unode_t * root, size_t &hash)
+pll_unode_t *findMinimumHashLeafRec(pll_unode_t * root, size_t &hashValue)
 {
   if (!root->next) {
     hashValue = leafHash(root);
