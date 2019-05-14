@@ -16,10 +16,10 @@ public:
   
   /**
    *  Constructor 
-   *  @param speciesTree: rooted species tree (std::fixed)
-   *  @param geneSpeciesMapping: gene-to-species geneSpeciesMappingping
-   *  @param reconciliationModelStr: the reconciliation model to use
-   *  @param rootedGeneTree: should we compute the likelihood of a rooted or unrooted gene tree?
+   *  @param speciesTree rooted species tree (std::fixed)
+   *  @param geneSpeciesMapping gene-to-species geneSpeciesMappingping
+   *  @param reconciliationModelStr the reconciliation model to use
+   *  @param rootedGeneTree should we compute the likelihood of a rooted or unrooted gene tree?
    */
   ReconciliationEvaluation(pll_rtree_t *speciesTree,
     const GeneSpeciesMapping& geneSpeciesMapping,

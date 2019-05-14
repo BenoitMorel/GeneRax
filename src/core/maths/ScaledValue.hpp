@@ -42,8 +42,8 @@ public:
 
   /**
    * General constructor
-   * @param v: value
-   * @param s: scaler
+   * @param v value
+   * @param s scaler
    */
   explicit ScaledValue(double v, int s = 0):value(v), scaler(s) {
     scale();

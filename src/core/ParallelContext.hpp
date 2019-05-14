@@ -48,8 +48,8 @@ public:
 
   /**
    * Gather the values of each rank into a global std::vector
-   *  @param localValue: input value for this rank
-   *  @param allValues: output values for all rank (indexed with the rank index)
+   *  @param localValue input value for this rank
+   *  @param allValues output values for all rank (indexed with the rank index)
    */
   static void allGatherDouble(double localValue, std::vector<double> &allValues);
 
@@ -59,17 +59,17 @@ public:
 
   /**
    *  broadcast a value from a given rank
-   *  @param fromRank: rank from which we want the value
-   *  @param value: input value for this rank, output value for the other ranks
+   *  @param fromRank rank from which we want the value
+   *  @param value input value for this rank, output value for the other ranks
    */
   static void broadcastInt(int fromRank, int &value);
   static void broadcastDouble(int fromRank, double &value);
 
   /**
    *  Get the highest value from all ranks
-   *  @param value: as input, the value for the current rank. As output, 
+   *  @param value as input, the value for the current rank. As output, 
    *    the highest value among the ranks
-   *  @param bestRank: the rank that has the highest value
+   *  @param bestRank the rank that has the highest value
    */
   static int getMax(double &value, int &bestRank);
   
@@ -77,7 +77,7 @@ public:
   /**
    *  When having a given number of independant tasks, subdivide
    *  them into chunks, and assign each chunk to one rank
-   *  @param elems: the number of elements
+   *  @param elems the number of elements
    *  @return the begin/end of the interval of the chunk for this rank
    */
   static unsigned int getBegin(unsigned int elems);

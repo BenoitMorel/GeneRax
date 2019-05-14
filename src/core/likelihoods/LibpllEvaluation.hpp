@@ -51,7 +51,7 @@ public:
 
   /*
    *  Compute the likelihood of the tree given the alignment
-   *  @param incremental: if true, only recompute invalid CLVs
+   *  @param incremental if true, only recompute invalid CLVs
    *  @return the log likelihood of the tree
    */
   double computeLikelihood(bool incremental = false);
@@ -98,7 +98,7 @@ private:
   /**
    *  parse sequences and pattern weights from fasta file
    *  @param fasta_file Input file
-   *  @param std::map state std::map
+   *  @param stdmap state std::map
    *  @param sequences Compressed (each site appears only once) sequences
    *  @param weights Pattern weights
    */
@@ -110,7 +110,7 @@ private:
   /**
    *  parse sequences and pattern weights from phylip file
    *  @param phylip_file Input file
-   *  @param std::map state std::map
+   *  @param stdmap state std::map
    *  @param sequences Compressed (each site appears only once) sequences
    *  @param weights Pattern weights
    */
