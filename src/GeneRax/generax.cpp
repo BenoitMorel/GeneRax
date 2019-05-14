@@ -57,7 +57,7 @@ void raxmlMain(std::vector<FamiliesFileParser::FamilyInfo> &families,
   auto start = Logger::getElapsedSec();
   Logger::timed << "Starting raxml light step" << std::endl;
   
-  stringstream outputDirName;
+  std::stringstream outputDirName;
   outputDirName << "raxml_light_" << iteration;
   std::string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
   FileSystem::mkdir(outputDir, true);
@@ -106,7 +106,7 @@ void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
   bool splitImplem = useSplitImplem();
   auto start = Logger::getElapsedSec();
   Logger::timed << "Starting SPR rounds with radius " << sprRadius << std::endl;
-  stringstream outputDirName;
+  std::stringstream outputDirName;
   outputDirName << "gene_optimization_" << iteration;
   std::string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
   FileSystem::mkdir(outputDir, true);
@@ -128,7 +128,7 @@ void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
     } else if (sprRadius >= 3) {
       cores = taxa;
     }
-    cores = max(1, cores);
+    cores = std::max(1, cores);
     if (!splitImplem) {
       cores = 1;
     }

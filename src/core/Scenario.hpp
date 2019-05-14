@@ -7,7 +7,7 @@ extern "C" {
 }
 #include <IO/ParallelOfstream.hpp>
 
-using namespace std;
+
 
 class Scenario {
 public:  
@@ -34,15 +34,15 @@ public:
   void addEvent(EventType type, int geneNode, int speciesNode);
   void addTransfer(EventType type, int geneNode, int speciesNode, int from, int to);
 
-  void saveEventsCounts(const string &filename, bool masterRankOnly = true); 
+  void saveEventsCounts(const std::string &filename, bool masterRankOnly = true); 
 
-  void saveTreeWithEvents(const string &filename, bool masterRankOnly = true);
+  void saveTreeWithEvents(const std::string &filename, bool masterRankOnly = true);
 
 private:
   static const char *eventNames[];
-  vector<Event> _events;
-  vector<int> _eventsCount;
-  vector<Event> _geneIdToEvent;
+  std::vector<Event> _events;
+  std::vector<int> _eventsCount;
+  std::vector<Event> _geneIdToEvent;
   pll_unode_t *_geneRoot;
   pll_rtree_t *_speciesTree;
   void recursivelySaveTreeWithEvents(pll_unode_t *node, ParallelOfstream &os);

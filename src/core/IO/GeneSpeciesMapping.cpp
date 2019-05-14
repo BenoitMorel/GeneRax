@@ -20,7 +20,7 @@ void GeneSpeciesMapping::buildFromMappingFile(const std::string &mappingFile)
   std::ifstream f(mappingFile);
   std::string line;
   getline(f, line);
-  f.seekg(0, ios::beg);
+  f.seekg(0, std::ios::beg);
   if (line.find(":") != std::string::npos) {
     buildFromPhyldogMapping(f);
   } else {
@@ -37,7 +37,7 @@ void GeneSpeciesMapping::buildFromPhyldogMapping(std::ifstream &f)
   */
   std::string line;
   while (getline(f, line)) {
-    stringstream ss(line);
+    std::stringstream ss(line);
     std::string species;
     std::string gene;
     getline(ss, species, ':');
@@ -56,7 +56,7 @@ void GeneSpeciesMapping::buildFromTreerecsMapping(std::ifstream &f)
   */
   std::string line;
   while (getline(f, line)) {
-    stringstream ss(line);
+    std::stringstream ss(line);
     std::string species;
     std::string gene;
     ss >> gene;

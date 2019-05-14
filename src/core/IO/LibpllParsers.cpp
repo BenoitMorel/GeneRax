@@ -10,8 +10,8 @@ pll_utree_t *LibpllParsers::readNewickFromFile(const std::string &newickFilename
   if (!t)
     throw LibpllException("Could not load open newick file ", newickFilename);
   
-  std::string str((istreambuf_iterator<char>(t)),
-                       istreambuf_iterator<char>());
+  std::string str((std::istreambuf_iterator<char>(t)),
+                       std::istreambuf_iterator<char>());
   
   pll_utree_t *res = 0;
   try {

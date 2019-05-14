@@ -121,7 +121,7 @@ private:
   
   // set of invalid CLVs. All the CLVs from these CLVs to
   // the root(s) need to be recomputed
-  unordered_set<int> _invalidatedNodes;
+  std::unordered_set<int> _invalidatedNodes;
 
   // is the CLV up to date?
   std::vector<bool> _isCLVUpdated;

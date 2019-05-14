@@ -162,7 +162,7 @@ void AbstractReconciliationModel::updateCLVsRec(pll_unode_t *node)
   if (_isCLVUpdated[node->node_index]) {
     return;
   }
-  stack<pll_unode_t *> nodes;
+  std::stack<pll_unode_t *> nodes;
   nodes.push(node);
   while (!nodes.empty()) {
     auto currentNode = nodes.top();

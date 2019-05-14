@@ -27,7 +27,7 @@ public:
   const std::map<std::string, std::string> &getMap() const {return _map;}
 
   /**
-   *  @param gene: gene string
+   *  @param gene: gene std::string
    *  @return the species mapped to this gene
    */
   const std::string &getSpecies(const std::string &gene) {return _map[gene];}

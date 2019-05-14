@@ -55,7 +55,7 @@ int internal_main(int argc, char** argv, void* comm)
   getTreeStrings(arguments.geneTree, geneTreeStrings);
   
   bool firstRun  = true; 
-  double bestLL = numeric_limits<double>::lowest();
+  double bestLL = std::numeric_limits<double>::lowest();
   
   std::string bestTreeFile = arguments.output + ".newick";
   std::string allTreesFile = arguments.output + "_all" + ".newick";
@@ -71,7 +71,7 @@ int internal_main(int argc, char** argv, void* comm)
       lossRate = arguments.lossRate;
       transferRate = arguments.transferRate;
     }
-    auto jointTree = make_shared<JointTree>(geneTreeString,
+    auto jointTree = std::make_shared<JointTree>(geneTreeString,
         arguments.alignment,
         arguments.speciesTree,
         arguments.geneSpeciesMap,
@@ -101,10 +101,10 @@ int internal_main(int argc, char** argv, void* comm)
     }
     Logger::timed << "End of search" << std::endl;
     jointTree->printLoglk();
-    Logger::info << "Final tree hash: " << jointTree->getUnrootedTreeHash() << std::endl;
+    Logger::info << "Final tree std::hash: " << jointTree->getUnrootedTreeHash() << std::endl;
     if (!ParallelContext::getRank()) {
       double ll = jointTree->computeJointLoglk();
-      assert(!isnan(ll));
+      assert(!std::isnan(ll));
       if (ll >= bestLL) {
         bestLL = ll;
         jointTree->save(bestTreeFile, false);
@@ -118,7 +118,7 @@ int internal_main(int argc, char** argv, void* comm)
         stats << "D " << jointTree->getDupRate() << std::endl;
         stats << "L " << jointTree->getLossRate() << std::endl;
         stats << "T " << jointTree->getTransferRate() << std::endl;
-        stats << "hash " << jointTree->getUnrootedTreeHash() << std::endl;
+        stats << "std::hash " << jointTree->getUnrootedTreeHash() << std::endl;
         stats << " " << std::endl;
       }
       jointTree->save(allTreesFile, !firstRun);

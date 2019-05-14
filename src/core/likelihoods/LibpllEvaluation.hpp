@@ -99,7 +99,7 @@ private:
   /**
    *  parse sequences and pattern weights from fasta file
    *  @param fasta_file Input file
-   *  @param std::map state map
+   *  @param std::map state std::map
    *  @param sequences Compressed (each site appears only once) sequences
    *  @param weights Pattern weights
    */
@@ -111,7 +111,7 @@ private:
   /**
    *  parse sequences and pattern weights from phylip file
    *  @param phylip_file Input file
-   *  @param std::map state map
+   *  @param std::map state std::map
    *  @param sequences Compressed (each site appears only once) sequences
    *  @param weights Pattern weights
    */

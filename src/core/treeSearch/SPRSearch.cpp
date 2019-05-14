@@ -70,7 +70,7 @@ void printPossibleMoves(JointTree &jointTree, std::vector<std::shared_ptr<Move> 
   //Logger::info << "Nodes: " << std::endl;
   //jointTree.printAllNodes(std::cout);
   Logger::info << "Possible moves from " << jointTree.getUnrootedTreeHash() << std::endl;
-  unordered_set<int> hashs;
+  std::unordered_set<int> hashs;
   for (auto move: allMoves) {
     jointTree.applyMove(move);
     auto hashValue = jointTree.getUnrootedTreeHash();
@@ -98,7 +98,7 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
       int pruneIndex = allNodes[i];
       getRegrafts(jointTree, pruneIndex, radius, potentialMoves);
   }
-  std::vector<array<bool, 2> > redundantNNIMoves(jointTree.getTreeInfo()->subnode_count, array<bool, 2>{{false,false}});
+  std::vector<std::array<bool, 2> > redundantNNIMoves(jointTree.getTreeInfo()->subnode_count, std::array<bool, 2>{{false,false}});
   for (auto &move: potentialMoves) {
     unsigned int pruneIndex = move.pruneIndex;
     unsigned int regraftIndex = move.regraftIndex;
@@ -113,7 +113,7 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
       bool isPruneNext = nniEdge->back->next->node_index == pruneIndex;
       bool isRegraftNext = nniEdge->next->back->node_index == regraftIndex;
       int nniType = (isPruneNext == isRegraftNext);
-      int nniBranchIndex = min(nniEdge->node_index, nniEdge->back->node_index);
+      int nniBranchIndex = std::min(nniEdge->node_index, nniEdge->back->node_index);
       if (redundantNNIMoves[nniBranchIndex][nniType]) {
         continue;
       }
@@ -125,7 +125,7 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
   //printPossibleMoves(jointTree, allMoves);
   
   Logger::info << "Start SPR round " 
-    << "(hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
+    << "(std::hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
     << std::endl;
   int bestMoveIndex = -1;
   bool foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex, blo, jointTree.isSafeMode()); 

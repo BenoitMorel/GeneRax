@@ -24,10 +24,10 @@ void Scenario::addTransfer(EventType type, int geneNode, int speciesNode, int fr
   _geneIdToEvent[geneNode] = event;
 }
 
-void Scenario::saveEventsCounts(const string &filename, bool masterRankOnly) {
+void Scenario::saveEventsCounts(const std::string &filename, bool masterRankOnly) {
   ParallelOfstream os(filename, masterRankOnly);
   for (int i = 0; i < int(Invalid); ++i) {
-    os << eventNames[i] << ":" << _eventsCount[i] << endl;
+    os << eventNames[i] << ":" << _eventsCount[i] << std::endl;
   }
 }
 
@@ -63,7 +63,7 @@ void Scenario::recursivelySaveTreeWithEvents(pll_unode_t *node, ParallelOfstream
   }
 }
 
-void Scenario::saveTreeWithEvents(const string &filename, bool masterRankOnly)
+void Scenario::saveTreeWithEvents(const std::string &filename, bool masterRankOnly)
 {
   ParallelOfstream os(filename, masterRankOnly);
   os << "(";

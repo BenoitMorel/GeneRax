@@ -1,10 +1,10 @@
 #include "ParallelContext.hpp"
 #include <algorithm>
 
-ofstream ParallelContext::sink("/dev/null");
+std::ofstream ParallelContext::sink("/dev/null");
 bool ParallelContext::ownMPIContext(true);
-stack<MPI_Comm> ParallelContext::_commStack;
-stack<bool> ParallelContext::_ownsMPIContextStack;
+std::stack<MPI_Comm> ParallelContext::_commStack;
+std::stack<bool> ParallelContext::_ownsMPIContextStack;
 bool ParallelContext::_mpiEnabled = true;
 
 void ParallelContext::init(void *commPtr)
@@ -86,7 +86,7 @@ int ParallelContext::getBegin(int elems)
  
 int ParallelContext::getEnd(int elems)
 {
-  return min(elems, ((getRank() + 1) * elems) / getSize());
+  return std::min(elems, ((getRank() + 1) * elems) / getSize());
 }
   
 void ParallelContext::sumDouble(double &value)
@@ -102,7 +102,7 @@ void ParallelContext::sumDouble(double &value)
 }
 
 
-void ParallelContext::allGatherDouble(double localValue, vector<double> &allValues) {
+void ParallelContext::allGatherDouble(double localValue, std::vector<double> &allValues) {
   if (!_mpiEnabled) {
     allValues.clear();
     allValues.push_back(localValue);
@@ -119,7 +119,7 @@ void ParallelContext::allGatherDouble(double localValue, vector<double> &allValu
     getComm());
 }
 
-void ParallelContext::concatenateIntVectors(const vector<int> &localVector, vector<int> &globalVector)
+void ParallelContext::concatenateIntVectors(const std::vector<int> &localVector, std::vector<int> &globalVector)
 {
   if (!_mpiEnabled) {
     globalVector = localVector;
@@ -169,7 +169,7 @@ int ParallelContext::getMax(double &value, int &bestRank)
     bestRank = 0;
     return bestRank;
   }
-  vector<double> allValues;
+  std::vector<double> allValues;
   allGatherDouble(value, allValues);
   bestRank = 0;
   for (unsigned int i = 0; i < allValues.size(); ++i) {

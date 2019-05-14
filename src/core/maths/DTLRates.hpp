@@ -12,9 +12,9 @@ struct DTLRates {
 
 
   inline void ensureValidity() {
-    rates[0] = max(0.0, rates[0]);
-    rates[1] = max(0.0, rates[1]);
-    rates[2] = max(0.0, rates[2]);
+    rates[0] = std::max(0.0, rates[0]);
+    rates[1] = std::max(0.0, rates[1]);
+    rates[2] = std::max(0.0, rates[2]);
   }
 
   inline bool operator <(const DTLRates& v) const {

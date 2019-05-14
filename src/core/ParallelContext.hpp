@@ -5,8 +5,8 @@
 #include <mpi.h>
 #include <stack>
 
-using namespace std;
-class ParallelException: public exception
+
+class ParallelException: public std::exception
 {
 public:
   ParallelException(int errorCode):errorCode_(errorCode) 
@@ -20,7 +20,7 @@ public:
   }
 private:
   int errorCode_;
-  string msg_;
+  std::string msg_;
 };
 
 class ParallelContext {
@@ -47,13 +47,13 @@ public:
   static int getSize();
 
   /**
-   * Gather the values of each rank into a global vector
+   * Gather the values of each rank into a global std::vector
    *  @param localValue: input value for this rank
    *  @param allValues: output values for all rank (indexed with the rank index)
    */
-  static void allGatherDouble(double localValue, vector<double> &allValues);
+  static void allGatherDouble(double localValue, std::vector<double> &allValues);
 
-  static void concatenateIntVectors(const vector<int> &localVector, vector<int> &globalVector);
+  static void concatenateIntVectors(const std::vector<int> &localVector, std::vector<int> &globalVector);
 
   static void sumDouble(double &value);
 
@@ -90,10 +90,10 @@ public:
 private:
   static void setComm(MPI_Comm newComm);
   static void setOwnMPIContext(bool own);
-  static ofstream sink;
+  static std::ofstream sink;
   static bool ownMPIContext;
-  static stack<MPI_Comm> _commStack;
-  static stack<bool> _ownsMPIContextStack;
+  static std::stack<MPI_Comm> _commStack;
+  static std::stack<bool> _ownsMPIContextStack;
   static bool _mpiEnabled;
 };
 

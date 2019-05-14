@@ -16,7 +16,7 @@ void buildSubdivisions(pll_rtree_t *speciesTree,
   branchSubdivisions = std::vector<std::vector<double> >(maxSpeciesNodeIndex);
   for (int i = 0; i < maxSpeciesNodeIndex; ++i) {
     int speciesId = speciesTree->nodes[i]->node_index;
-    double branchLength = max(speciesTree->nodes[i]->length, 0.0001);
+    double branchLength = std::max(speciesTree->nodes[i]->length, 0.0001);
     double subdivisionSize = 0.05;
     int minSubdivisions = 5;
     if (minSubdivisions * subdivisionSize > branchLength) {
@@ -67,7 +67,7 @@ double DatedDLModel::propagateExtinctionProba(double initialProba, double branch
   double b = dupRate_ * (initialProba - 1.0);
   double c = lossRate_ - dupRate_ * initialProba;
   double res = (lossRate_ + diffRates_ / (1.0 + a*b/c)) / dupRate_;
-  assert(isnormal(res));
+  assert(std::isnormal(res));
   return res;
 }
 
@@ -84,7 +84,7 @@ void DatedDLModel::computePropagationProbas(pll_rtree_t *speciesTree)
     for (int s = 1; s < subdivisions; ++s) {
       propagationProba_[speciesId][s] = propagatePropagationProba(extinctionProba_[speciesId][s-1],
           branchSubdivisions_[speciesId][s]);
-      assert(isnormal(propagationProba_[speciesId][s]));
+      assert(std::isnormal(propagationProba_[speciesId][s]));
     }
   }
 }

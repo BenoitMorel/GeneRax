@@ -22,7 +22,7 @@ using TimePoint = std::chrono::high_resolution_clock::time_point;
  *
  */
 
-class Logger: public ofstream
+class Logger: public std::ofstream
 {
 private:
   enum LoggerType {

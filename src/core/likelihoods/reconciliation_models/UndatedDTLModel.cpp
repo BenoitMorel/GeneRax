@@ -119,7 +119,7 @@ void UndatedDTLModel::updateCLV(pll_unode_t *geneNode)
 
 pll_rnode_t *UndatedDTLModel::getBestTransfer(int gid, pll_rnode_t *speciesNode) 
 {
-  unordered_set<int> parents;
+  std::unordered_set<int> parents;
   for (auto parent = speciesNode; parent->parent != 0; parent = parent->parent) {
     parents.insert(parent->node_index);
   }

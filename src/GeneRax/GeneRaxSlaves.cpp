@@ -54,7 +54,7 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
   std::vector<std::string> geneTreeStrings;
   getTreeStrings(startingGeneTreeFile, geneTreeStrings);
   assert(geneTreeStrings.size() == 1);
-  auto jointTree = make_shared<JointTree>(geneTreeStrings[0],
+  auto jointTree = std::make_shared<JointTree>(geneTreeStrings[0],
       alignmentFile,
       speciesTreeFile,
       mappingFile,

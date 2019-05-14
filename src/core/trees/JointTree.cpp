@@ -9,7 +9,7 @@
 
 
 size_t leafHash(pll_unode_t *leaf) {
-  hash<std::string> hash_fn;
+  std::hash<std::string> hash_fn;
   return hash_fn(std::string(leaf->label));
 }
 
@@ -22,9 +22,9 @@ size_t getTreeHashRec(pll_unode_t *node, size_t i) {
   int hash1 = getTreeHashRec(node->next->back, i + 1);
   int hash2 = getTreeHashRec(node->next->next->back, i + 1);
   //Logger::info << "(" << hash1 << "," << hash2 << ") ";
-  hash<int> hash_fn;
-  int m = min(hash1, hash2);
-  int M = max(hash1, hash2);
+  std::hash<int> hash_fn;
+  int m = std::min(hash1, hash2);
+  int M = std::max(hash1, hash2);
   return hash_fn(m * i + M);
 
 }
@@ -136,7 +136,7 @@ JointTree::JointTree(const std::string &newick_string,
   pllSpeciesTree_ = pll_rtree_parse_newick(speciestree_file.c_str());
   assert(pllSpeciesTree_);
   geneSpeciesMap_.fill(geneSpeciesMap_file, newick_string);
-  reconciliationEvaluation_ = make_shared<ReconciliationEvaluation>(pllSpeciesTree_,  
+  reconciliationEvaluation_ = std::make_shared<ReconciliationEvaluation>(pllSpeciesTree_,  
       geneSpeciesMap_, 
       reconciliationModel,
       rootedGeneTree);

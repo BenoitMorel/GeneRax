@@ -11,7 +11,7 @@ UndatedDLModel::UndatedDLModel()
   _maxGeneId = 1;
 }
 
-#define IS_PROBA(x) ((x) >= 0 && (x) <= 1 && !isnan(x))
+#define IS_PROBA(x) ((x) >= 0 && (x) <= 1 && !std::isnan(x))
 #define ASSERT_PROBA(x) assert(IS_PROBA(x));
 
 void UndatedDLModel::setInitialGeneTree(pll_utree_t *tree)

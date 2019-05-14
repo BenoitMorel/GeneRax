@@ -41,11 +41,11 @@ std::shared_ptr<AbstractReconciliationModel> ReconciliationEvaluation::getRecMod
 {
   switch(recModel) {
   case UndatedDL:
-    return  make_shared<UndatedDLModel>();
+    return  std::make_shared<UndatedDLModel>();
   case UndatedDTL:
-    return  make_shared<UndatedDTLModel>();
+    return  std::make_shared<UndatedDTLModel>();
   case DatedDL:
-    return  make_shared<DatedDLModel>();
+    return  std::make_shared<DatedDLModel>();
   }
   assert(false);
   return 0;

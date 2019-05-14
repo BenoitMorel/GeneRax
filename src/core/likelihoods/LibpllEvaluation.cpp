@@ -228,8 +228,8 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromFile(const std::str
   std::ifstream t(newickFilename);
   if (!t)
     throw LibpllException("Could not load open newick file ", newickFilename);
-  std::string str((istreambuf_iterator<char>(t)),
-                       istreambuf_iterator<char>());
+  std::string str((std::istreambuf_iterator<char>(t)),
+                       std::istreambuf_iterator<char>());
   return buildFromString(str,
       info.alignmentFilename,
       info.model);

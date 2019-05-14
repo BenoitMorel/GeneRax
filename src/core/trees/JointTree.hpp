@@ -74,7 +74,7 @@ private:
     double dupRate_;
     double lossRate_;
     double transRate_;
-    stack<std::shared_ptr<Rollback> > rollbacks_;
+    std::stack<std::shared_ptr<Rollback> > rollbacks_;
     double reconciliationLL_;
     bool optimizeDTLRates_;
     bool safeMode_;

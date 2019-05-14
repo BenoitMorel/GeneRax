@@ -10,7 +10,7 @@
 #include <iostream>
   
 bool isValidLikelihood(double ll) {
-  return isnormal(ll) && ll < -0.0000001;
+  return std::isnormal(ll) && ll < -0.0000001;
 }
 
 void updateLL(DTLRates &rates, JointTree &jointTree) {
@@ -44,7 +44,7 @@ void DTLOptimizer::findBestRatesDL(JointTree &jointTree,
     double &bestLoss,
     double &bestLL) 
 {
-  bestLL = numeric_limits<double>::lowest();
+  bestLL = std::numeric_limits<double>::lowest();
   int totalSteps = pow(steps, 2);
   int begin = ParallelContext::getBegin(totalSteps);
   int end = ParallelContext::getEnd(totalSteps);
@@ -81,7 +81,7 @@ void DTLOptimizer::findBestRatesDTL(JointTree &jointTree,
     double &bestTrans,
     double &bestLL) 
 {
-  bestLL = numeric_limits<double>::lowest();
+  bestLL = std::numeric_limits<double>::lowest();
   int totalSteps = pow(steps, 3);
   int begin = ParallelContext::getBegin(totalSteps);
   int end = ParallelContext::getEnd(totalSteps);
@@ -146,7 +146,7 @@ void DTLOptimizer::optimizeDLRates(JointTree &jointTree, RecOpt method) {
 void DTLOptimizer::optimizeDLRatesWindow(JointTree &jointTree) {
   Logger::timed << "Start optimizing DL rates" << std::endl;
   
-  double bestLL = numeric_limits<double>::lowest();
+  double bestLL = std::numeric_limits<double>::lowest();
   double newLL = 0;
   double bestDup = 0.0;
   double bestLoss = 0.0;
@@ -161,9 +161,9 @@ void DTLOptimizer::optimizeDLRatesWindow(JointTree &jointTree) {
     findBestRatesDL(jointTree, minDup, maxDup, minLoss, maxLoss, steps, bestDup, bestLoss, newLL);
     double offsetDup = (maxDup - minDup) / steps;
     double offsetLoss =(maxLoss - minLoss) / steps;
-    minDup = max(0.0, bestDup - offsetDup);
+    minDup = std::max(0.0, bestDup - offsetDup);
     maxDup = bestDup + offsetDup;
-    minLoss = max(0.0, bestLoss - offsetLoss);
+    minLoss = std::max(0.0, bestLoss - offsetLoss);
     maxLoss = bestLoss + offsetLoss;
   } while (fabs(newLL - bestLL) > epsilon);
   Logger::info << " best rates: " << bestDup << " " << bestLoss <<  " " << newLL << std::endl;
@@ -175,7 +175,7 @@ void DTLOptimizer::optimizeDLRatesWindow(JointTree &jointTree) {
     
 void DTLOptimizer::optimizeDTLRatesWindow(JointTree &jointTree) {
   Logger::timed << "Start optimizing DTL rates" << std::endl;
-  double bestLL = numeric_limits<double>::lowest();
+  double bestLL = std::numeric_limits<double>::lowest();
   double newLL = 0;
   double bestDup = 0.0;
   double bestLoss = 0.0;
@@ -194,11 +194,11 @@ void DTLOptimizer::optimizeDTLRatesWindow(JointTree &jointTree) {
     double offsetDup = (maxDup - minDup) / steps;
     double offsetLoss = (maxLoss - minLoss) / steps;
     double offsetTrans = (maxTrans - minTrans) / steps;
-    minDup = max(0.0, bestDup - offsetDup);
+    minDup = std::max(0.0, bestDup - offsetDup);
     maxDup = bestDup + offsetDup;
-    minLoss = max(0.0, bestLoss - offsetLoss);
+    minLoss = std::max(0.0, bestLoss - offsetLoss);
     maxLoss = bestLoss + offsetLoss;
-    minTrans = max(0.0, bestTrans - offsetTrans);
+    minTrans = std::max(0.0, bestTrans - offsetTrans);
     maxTrans = bestTrans + offsetTrans;
   } while (fabs(newLL - bestLL) > epsilon);
   if  (!isValidLikelihood(newLL)) {

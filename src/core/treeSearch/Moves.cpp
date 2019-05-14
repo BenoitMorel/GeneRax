@@ -20,7 +20,7 @@
 
 
 std::shared_ptr<Move> Move::createSPRMove(int pruneIndex, int regraftIndex, const std::vector<int> &path) {
-  return make_shared<SPRMove>(pruneIndex, regraftIndex, path);
+  return std::make_shared<SPRMove>(pruneIndex, regraftIndex, path);
 }
 
 
@@ -111,7 +111,7 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
     savedBranches.push_back(branch);
   }
   assert(PLL_SUCCESS == pllmod_utree_spr(prune, regraft, &pll_rollback));
-  rollback_ = make_shared<SPRRollback>(tree, pll_rollback, savedBranches, root);
+  rollback_ = std::make_shared<SPRRollback>(tree, pll_rollback, savedBranches, root);
   return rollback_;
 }
   

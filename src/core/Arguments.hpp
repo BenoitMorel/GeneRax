@@ -4,11 +4,11 @@
 #include <enums.hpp>
 #include <IO/Logger.hpp>
 
-using namespace std;
+
 
 class Arguments {
 public:
-  static string strategyToStr(Strategy s)
+  static std::string strategyToStr(Strategy s)
   {
     switch(s) {
     case SPR:
@@ -19,19 +19,19 @@ public:
     exit(41);
   }
 
-  static Strategy strToStrategy(const string &str) 
+  static Strategy strToStrategy(const std::string &str) 
   {
     if (str == "SPR") {
       return SPR;
     }  else if (str == "EVAL") {
       return EVAL;
     } else {
-      Logger::info << "Invalid strategy " << str << endl;
+      Logger::info << "Invalid strategy " << str << std::endl;
       exit(41);
     }
   }
 
-  static string recModelToStr(RecModel recModel)
+  static std::string recModelToStr(RecModel recModel)
   {
     switch(recModel) {
     case UndatedDL:
@@ -44,7 +44,7 @@ public:
     exit(41);
   }
 
-  static RecModel strToRecModel(const string &str)
+  static RecModel strToRecModel(const std::string &str)
   {
     if (str == "UndatedDL") {
       return UndatedDL;
@@ -53,12 +53,12 @@ public:
     } else if (str == "DatedDL") {
       return DatedDL;
     } else {
-      Logger::info << "Invalid reconciliation model " << str << endl;
+      Logger::info << "Invalid reconciliation model " << str << std::endl;
       exit(41);
     }
   }
 
-  static string recOptToStr(RecOpt recOpt) {
+  static std::string recOptToStr(RecOpt recOpt) {
     switch(recOpt) {
     case Grid:
       return "grid";
@@ -68,13 +68,13 @@ public:
     exit(41);
   }
 
-  static RecOpt strToRecOpt(const string &str) {
+  static RecOpt strToRecOpt(const std::string &str) {
     if (str == "grid") {
       return Grid;
     } else if (str == "simplex") {
       return Simplex;
     } else {
-      Logger::info << "Invalid reconciliation optimization method " << str << endl;
+      Logger::info << "Invalid reconciliation optimization method " << str << std::endl;
       exit(41);
     }
   }
