@@ -8,11 +8,11 @@ AbstractReconciliationModel::AbstractReconciliationModel():
   _maxGeneId(1)
 {
 }
-void AbstractReconciliationModel::init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map, bool rootedGeneTree)
+void AbstractReconciliationModel::init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &geneSpeciesMapping, bool rootedGeneTree)
 {
   rootedGeneTree_ = rootedGeneTree;
   setSpeciesTree(speciesTree);
-  geneNameToSpeciesName_ = map.getMap();
+  geneNameToSpeciesName_ = geneSpeciesMapping.getMap();
 }
 
 void AbstractReconciliationModel::initFromUtree(pll_utree_t *tree) {

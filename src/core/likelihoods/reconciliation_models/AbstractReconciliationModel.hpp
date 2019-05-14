@@ -22,7 +22,7 @@ public:
    *  We do not call it in the constructor because it is virtual and
    *  calls virtual functions
    */
-  virtual void init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &map, bool rootedGeneTree);
+  virtual void init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree);
   
   virtual ~AbstractReconciliationModel() {};
  
