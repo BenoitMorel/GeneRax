@@ -1,5 +1,5 @@
 #include "JointTree.hpp"
-#include <treeSearch/Moves.hpp>
+#include <search/Moves.hpp>
 #include <ParallelContext.hpp>
 #include <optimizers/DTLOptimizer.hpp>
 #include <IO/LibpllParsers.hpp>

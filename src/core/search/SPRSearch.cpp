@@ -1,7 +1,7 @@
-#include <treeSearch/SPRSearch.hpp>
+#include <search/SPRSearch.hpp>
 #include <trees/JointTree.hpp>
-#include <treeSearch/Moves.hpp>
-#include <treeSearch/SearchUtils.hpp>
+#include <search/Moves.hpp>
+#include <search/SearchUtils.hpp>
 #include <IO/Logger.hpp>
 #include <ParallelContext.hpp>
 

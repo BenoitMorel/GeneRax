@@ -16,10 +16,10 @@ set(jointsearch-core_SOURCES ParallelContext.cpp
   optimizers/DTLOptimizer.cpp
   trees/JointTree.cpp
   trees/PerCoreGeneTrees.cpp
-  treeSearch/Moves.cpp
-  treeSearch/Rollbacks.cpp
-  treeSearch/SearchUtils.cpp
-  treeSearch/SPRSearch.cpp
+  search/Moves.cpp
+  search/Rollbacks.cpp
+  search/SearchUtils.cpp
+  search/SPRSearch.cpp
   )
 
 add_library(jointsearch-core STATIC ${jointsearch-core_SOURCES})

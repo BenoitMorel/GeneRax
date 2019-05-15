@@ -1,6 +1,6 @@
 #pragma once
 
-#include <treeSearch/Moves.hpp>
+#include <search/Moves.hpp>
 
 #include <memory>
 

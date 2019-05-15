@@ -3,7 +3,7 @@
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <likelihoods/ReconciliationEvaluation.hpp>
 #include <IO/Logger.hpp>
-#include <treeSearch/Moves.hpp>
+#include <search/Moves.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <enums.hpp>
 

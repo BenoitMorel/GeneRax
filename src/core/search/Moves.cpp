@@ -1,4 +1,4 @@
-#include <treeSearch/Moves.hpp>
+#include <search/Moves.hpp>
 #include <trees/JointTree.hpp>
 #include <IO/Logger.hpp>
 

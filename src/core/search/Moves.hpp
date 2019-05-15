@@ -1,7 +1,7 @@
 #pragma once
 
 #include <likelihoods/LibpllEvaluation.hpp>
-#include <treeSearch/Rollbacks.hpp>
+#include <search/Rollbacks.hpp>
 
 #include <memory>
 

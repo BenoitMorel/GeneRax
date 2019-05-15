@@ -9,7 +9,7 @@
 #include <optimizers/DTLOptimizer.hpp>
 #include <maths/DTLRates.hpp>
 #include <trees/JointTree.hpp>
-#include <treeSearch/SPRSearch.hpp>
+#include <search/SPRSearch.hpp>
 #include <IO/FileSystem.hpp>
 #include <IO/ParallelOfstream.hpp>
 #include <../../ext/MPIScheduler/src/mpischeduler.hpp>
