@@ -160,8 +160,8 @@ ScaledValue DatedDLModel::computeRecProbaInterBranch(pll_unode_t *geneNode, pll_
 {
   bool isGeneLeaf = !geneNode->next;
   bool isSpeciesLeaf = !speciesNode->left;
-  int geneId = geneNode->node_index;
-  int speciesId = speciesNode->node_index;
+  auto geneId = geneNode->node_index;
+  auto speciesId = speciesNode->node_index;
   
   if (isGeneLeaf && isSpeciesLeaf) {
     // trivial case

@@ -70,7 +70,7 @@ void raxmlMain(std::vector<FamiliesFileParser::FamilyInfo> &families,
     std::string geneTreePath = FileSystem::joinPaths(familyOutput, "geneTree.newick");
     std::string libpllModelPath = FileSystem::joinPaths(familyOutput, "libpllModel.txt");
     std::string outputStats = FileSystem::joinPaths(familyOutput, "raxml_light_stats.txt");
-    int taxa = geneTreeSizes[i];
+    auto taxa = geneTreeSizes[i];
     os << family.name << " ";
     os << 1 << " "; // cores
     os << taxa << " " ; // cost
@@ -118,8 +118,8 @@ void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
     familyOutput = FileSystem::joinPaths(familyOutput, family.name);
     std::string geneTreePath = FileSystem::joinPaths(familyOutput, "geneTree.newick");
     std::string outputStats = FileSystem::joinPaths(familyOutput, "stats.txt");
-    int taxa = geneTreeSizes[i];
-    int cores = 1;
+    auto taxa = geneTreeSizes[i];
+    unsigned int cores = 1;
     if (sprRadius == 1) {
       cores = taxa / 2;;
     } else if (sprRadius == 2) {
@@ -127,7 +127,9 @@ void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
     } else if (sprRadius >= 3) {
       cores = taxa;
     }
-    cores = std::max(1, cores);
+    if (cores == 0) {
+      cores = 1;
+    }
     if (!splitImplem) {
       cores = 1;
     }

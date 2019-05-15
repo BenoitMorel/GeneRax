@@ -56,9 +56,8 @@ bool isValidSPRMove(pll_unode_s *prune, pll_unode_s *regraft) {
 
 
 
-void getRegraftsRec(int pruneIndex, pll_unode_t *regraft, int maxRadius, std::vector<unsigned int> &path, std::vector<SPRMoveDesc> &moves)
+void getRegraftsRec(unsigned int pruneIndex, pll_unode_t *regraft, int maxRadius, std::vector<unsigned int> &path, std::vector<SPRMoveDesc> &moves)
 {
-  assert(pruneIndex >= 0);
   assert(regraft);
   if (path.size()) {
     moves.push_back(SPRMoveDesc(pruneIndex, regraft->node_index, path));
@@ -85,9 +84,8 @@ void printPossibleMoves(JointTree &jointTree, std::vector<std::shared_ptr<Move> 
   Logger::info << "Unique moves" << hashs.size() << std::endl;
 }
 
-void getRegrafts(JointTree &jointTree, int pruneIndex, int maxRadius, std::vector<SPRMoveDesc> &moves) 
+void getRegrafts(JointTree &jointTree, unsigned int pruneIndex, int maxRadius, std::vector<SPRMoveDesc> &moves) 
 {
-  assert(pruneIndex >= 0);
   pll_unode_t *pruneNode = jointTree.getNode(pruneIndex);
   std::vector<unsigned int> path;
   getRegraftsRec(pruneIndex, pruneNode->next->back, maxRadius, path, moves);

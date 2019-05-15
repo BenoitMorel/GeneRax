@@ -63,15 +63,15 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
     bool blo,
     bool check)
 {
-  bestMoveIndex = -1;
+  bestMoveIndex = static_cast<unsigned int>(-1);
   double initialLoglk = bestLoglk; //jointTree.computeJointLoglk();
   double initialReconciliationLoglk = jointTree.computeReconciliationLoglk();
   double initialLibpllLoglk = jointTree.computeLibpllLoglk();
   double averageReconciliationDiff = 0;
   assert(fabs(initialLoglk 
         - (initialReconciliationLoglk + initialLibpllLoglk)) < 0.000000001);
-  auto begin = ParallelContext::getBegin(allMoves.size());
-  auto end = ParallelContext::getEnd(allMoves.size());
+  auto begin = ParallelContext::getBegin(static_cast<unsigned int>(allMoves.size()));
+  auto end = ParallelContext::getEnd(static_cast<unsigned int>(allMoves.size()));
   unsigned int bestRank = 0;
 #ifdef STOP
   // ensure that all cores recieve the same number of tasks, 
@@ -103,7 +103,7 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
     if ((begin - i) % 1 == 0) {
       ParallelContext::getMax(bestLoglk, bestRank);
       ParallelContext::broadcastUInt(bestRank, bestMoveIndex);
-      if (bestMoveIndex != -1) {
+      if (bestMoveIndex != static_cast<unsigned int>(-1)) {
         return true;
       }
     }
@@ -111,6 +111,6 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
   }
   ParallelContext::getMax(bestLoglk, bestRank);
   ParallelContext::broadcastUInt(bestRank, bestMoveIndex);
-  return bestMoveIndex != -1;
+  return bestMoveIndex != static_cast<unsigned int>(-1);
 }
 

@@ -147,7 +147,7 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::s
       for (auto seq: sequences) {
         labels.push_back(seq->label);
       }
-      int seed = 0;
+      unsigned int seed = 0;
       utree = pllmod_utree_create_random(labels.size(), &labels[0], seed);
     } else {
       utree = LibpllParsers::readNewickFromStr(newickString);
@@ -175,7 +175,7 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::s
   free(patternWeights);
 
   // fill partition
-  std::map<std::string, int> tipsLabelling;
+  std::map<std::string, unsigned int> tipsLabelling;
   unsigned int labelIndex = 0;
   for (auto seq: sequences) {
     tipsLabelling[seq->label] = labelIndex;

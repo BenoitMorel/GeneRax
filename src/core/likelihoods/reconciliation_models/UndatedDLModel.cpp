@@ -88,7 +88,7 @@ void UndatedDLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
       Scenario &scenario,
       bool isVirtualRoot) 
 {
-  int gid = geneNode->node_index;
+  auto gid = geneNode->node_index;
   pll_unode_t *leftGeneNode = 0;     
   pll_unode_t *rightGeneNode = 0;   
   std::vector<ScaledValue> values(5);
@@ -98,9 +98,9 @@ void UndatedDLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
     rightGeneNode = getRight(geneNode, isVirtualRoot);
   }
   bool isSpeciesLeaf = !speciesNode->left;
-  int e = speciesNode->node_index;
-  int f = 0;
-  int g = 0;
+  auto e = speciesNode->node_index;
+  unsigned int f = 0;
+  unsigned int g = 0;
   if (!isSpeciesLeaf) {
     f = speciesNode->left->node_index;
     g = speciesNode->right->node_index;
@@ -111,8 +111,8 @@ void UndatedDLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
     return;
   }
   if (not isGeneLeaf) {
-    int gp_i = leftGeneNode->node_index;
-    int gpp_i = rightGeneNode->node_index;
+    auto gp_i = leftGeneNode->node_index;
+    auto gpp_i = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
       // S event
       values[0] = _uq[gp_i][f] * _uq[gpp_i][g] * _PS[e];
@@ -173,7 +173,7 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
       ScaledValue &proba,
       bool isVirtualRoot) const
 {
-  int gid = geneNode->node_index;
+  auto gid = geneNode->node_index;
   pll_unode_t *leftGeneNode = 0;     
   pll_unode_t *rightGeneNode = 0;     
   bool isGeneLeaf = !geneNode->next;
@@ -182,9 +182,9 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
     rightGeneNode = getRight(geneNode, isVirtualRoot);
   }
   bool isSpeciesLeaf = !speciesNode->left;
-  int e = speciesNode->node_index;
-  int f = 0;
-  int g = 0;
+  auto e = speciesNode->node_index;
+  unsigned int f = 0;
+  unsigned int g = 0;
   if (!isSpeciesLeaf) {
     f = speciesNode->left->node_index;
     g = speciesNode->right->node_index;
@@ -200,8 +200,8 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
     return;
   }
   if (not isGeneLeaf) {
-    int gp_i = leftGeneNode->node_index;
-    int gpp_i = rightGeneNode->node_index;
+    auto gp_i = leftGeneNode->node_index;
+    auto gpp_i = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
       // S event
       proba += ScaledValue::superMult1(_uq[gp_i][f], _uq[gpp_i][g],

@@ -100,11 +100,11 @@ protected:
   int speciesNodesCount_;
   std::vector <pll_rnode_t *> speciesNodes_;
   pll_rtree_t *speciesTree_;
-  std::vector<int> geneToSpecies_;
+  std::vector<unsigned int> geneToSpecies_;
   bool firstCall_;
   // gene ids in postorder 
   std::vector<int> _geneIds;
-  int _maxGeneId;
+  unsigned int _maxGeneId;
 
 private:
   void mapGenesToSpecies();
