@@ -51,18 +51,18 @@ void LibpllParsers::saveUtree(pll_unode_t *utree,
   free(newick);
 }
 
-std::vector<int> LibpllParsers::parallelGetTreeSizes(const std::vector<FamiliesFileParser::FamilyInfo> &families) 
+std::vector<unsigned int> LibpllParsers::parallelGetTreeSizes(const std::vector<FamiliesFileParser::FamilyInfo> &families) 
 {
-  int treesNumber = families.size();
-  std::vector<int> localTreeSizes((treesNumber - 1 ) / ParallelContext::getSize() + 1, 0);
+  auto treesNumber = families.size();
+  std::vector<unsigned int> localTreeSizes((treesNumber - 1 ) / ParallelContext::getSize() + 1, 0);
   for (auto i = ParallelContext::getBegin(treesNumber); i < ParallelContext::getEnd(treesNumber); i ++) {
     pll_utree_t *tree = LibpllParsers::readNewickFromFile(families[i].startingGeneTree);
-    int taxa = tree->tip_count;
+    unsigned int taxa = tree->tip_count;
     localTreeSizes[i - ParallelContext::getBegin(treesNumber)] = taxa;
     pll_utree_destroy(tree, 0);
   }
-  std::vector<int> treeSizes;
-  ParallelContext::concatenateIntVectors(localTreeSizes, treeSizes);
+  std::vector<unsigned int> treeSizes;
+  ParallelContext::concatenateUIntVectors(localTreeSizes, treeSizes);
   treeSizes.erase(remove(treeSizes.begin(), treeSizes.end(), 0), treeSizes.end());
   assert(treeSizes.size() == families.size());
   return treeSizes;

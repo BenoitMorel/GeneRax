@@ -23,7 +23,7 @@ public:
   static bool findBestMove(JointTree &jointTree,
     std::vector<std::shared_ptr<Move> > &allMoves,
     double &bestLoglk,
-    int &bestMoveIndex,
+    unsigned int &bestMoveIndex,
     bool blo,
     bool check);
 };

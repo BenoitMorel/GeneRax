@@ -62,8 +62,8 @@ private:
     const std::vector<ScaledValue> &probabilities);
   void resetTransferSums(ScaledValue &transferSum,
     std::vector<ScaledValue> &ancestralCorrection);
-  ScaledValue getCorrectedTransferExtinctionSum(int speciesNode) const;
-  ScaledValue getCorrectedTransferSum(int geneId, int speciesId) const;
-  pll_rnode_t *getBestTransfer(int gid, pll_rnode_t *speciesNode); 
+  ScaledValue getCorrectedTransferExtinctionSum(unsigned int speciesNode) const;
+  ScaledValue getCorrectedTransferSum(unsigned int geneId, unsigned int speciesId) const;
+  pll_rnode_t *getBestTransfer(unsigned int gid, pll_rnode_t *speciesNode); 
 };
 

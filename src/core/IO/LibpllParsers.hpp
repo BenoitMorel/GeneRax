@@ -25,7 +25,7 @@ public:
   static pll_utree_t *readNewickFromFile(const std::string &newickFile);
   static pll_utree_t *readNewickFromStr(const std::string &newickSTring);
   static pll_rtree_t *readRootedFromFile(const std::string &newickFile);
-  static std::vector<int> parallelGetTreeSizes(const std::vector<FamiliesFileParser::FamilyInfo> &families);
+  static std::vector<unsigned int> parallelGetTreeSizes(const std::vector<FamiliesFileParser::FamilyInfo> &families);
   static void saveUtree(pll_unode_t *utree, 
     const std::string &fileName, 
     bool append = false);

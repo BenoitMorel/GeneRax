@@ -61,7 +61,7 @@ void raxmlMain(std::vector<FamiliesFileParser::FamilyInfo> &families,
   std::string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
   FileSystem::mkdir(outputDir, true);
   std::string commandFile = FileSystem::joinPaths(outputDir, "raxml_light_command.txt");
-  std::vector<int> geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
+  auto geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
   ParallelOfstream os(commandFile);
   for (size_t i = 0; i < families.size(); ++i) {
     auto &family = families[i];
@@ -110,7 +110,7 @@ void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
   std::string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
   FileSystem::mkdir(outputDir, true);
   std::string commandFile = FileSystem::joinPaths(outputDir, "opt_genes_command.txt");
-  std::vector<int> geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
+  auto geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
   ParallelOfstream os(commandFile);
   for (size_t i = 0; i < families.size(); ++i) {
     auto &family = families[i];

@@ -17,17 +17,17 @@ std::vector<size_t> sort_indexes_descending(const std::vector<T> &v) {
 }
 
 
-std::vector<size_t> getMyIndices(const std::vector<int> &treeSizes) 
+std::vector<size_t> getMyIndices(const std::vector<unsigned int> &treeSizes) 
 {
-  std::vector<size_t> sortedIndices = sort_indexes_descending<int>(treeSizes);
+  std::vector<size_t> sortedIndices = sort_indexes_descending<unsigned int>(treeSizes);
   std::vector<size_t> myIndices;
-  std::vector<int> perRankLoad(ParallelContext::getSize(), 0);
-  int averageLoad = 0;
-  for (int load: treeSizes) {
+  std::vector<unsigned int> perRankLoad(ParallelContext::getSize(), 0);
+  unsigned int averageLoad = 0;
+  for (auto load: treeSizes) {
     averageLoad += load;
   }
   averageLoad /= ParallelContext::getSize();
-  int currentRank = 0;
+  unsigned int currentRank = 0;
   for (auto index: sortedIndices) {
     perRankLoad[currentRank] += treeSizes[index];
     if (currentRank == ParallelContext::getRank()) {
@@ -41,11 +41,11 @@ std::vector<size_t> getMyIndices(const std::vector<int> &treeSizes)
 
 PerCoreGeneTrees::PerCoreGeneTrees(const std::vector<FamiliesFileParser::FamilyInfo> &families)
 {
-  std::vector<int> treeSizes = LibpllParsers::parallelGetTreeSizes(families);
-  std::vector<size_t> myIndices = getMyIndices(treeSizes);
+  auto treeSizes = LibpllParsers::parallelGetTreeSizes(families);
+  auto myIndices = getMyIndices(treeSizes);
 
   _geneTrees.resize(myIndices.size());
-  int index = 0;
+  unsigned int index = 0;
   for (auto i: myIndices) {
     std::string geneTreeStr;
     FileSystem::getFileContent(families[i].startingGeneTree, geneTreeStr);

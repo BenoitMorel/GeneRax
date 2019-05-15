@@ -19,9 +19,7 @@
   
 
 
-std::shared_ptr<Move> Move::createSPRMove(int pruneIndex, int regraftIndex, const std::vector<int> &path) {
-  assert(pruneIndex >= 0);
-  assert(regraftIndex >= 0);
+std::shared_ptr<Move> Move::createSPRMove(unsigned int pruneIndex, unsigned int regraftIndex, const std::vector<unsigned int> &path) {
   return std::make_shared<SPRMove>(pruneIndex, regraftIndex, path);
 }
 
@@ -35,21 +33,22 @@ void optimizeBranchesSlow(JointTree &tree,
     unsigned int params_indices[4] = {0,0,0,0};
     auto treeinfo = tree.getTreeInfo();
     tree.computeLibpllLoglk(); // update CLVs
-    for (int j = 0; j < 2; ++j) 
-    for (unsigned int i = 0; i < nodesToOptimize.size(); ++i) {
-        pllmod_treeinfo_set_root(treeinfo.get(), nodesToOptimize[i]);
-        double oldLoglk = tree.computeLibpllLoglk(true);
-        double newLoglk = pllmod_opt_optimize_branch_lengths_local(
-            treeinfo->partitions[0],
-            treeinfo->root,
-            params_indices,
-            RAXML_BRLEN_MIN,
-            RAXML_BRLEN_MAX,
-            RAXML_BRLEN_TOLERANCE,
-            RAXML_BRLEN_SMOOTHINGS,
-            0,
-            true);
-       assert(oldLoglk <= newLoglk);
+    for (unsigned int j = 0; j < 2; ++j) {
+      for (unsigned int i = 0; i < nodesToOptimize.size(); ++i) {
+          pllmod_treeinfo_set_root(treeinfo.get(), nodesToOptimize[i]);
+          double oldLoglk = tree.computeLibpllLoglk(true);
+          double newLoglk = pllmod_opt_optimize_branch_lengths_local(
+              treeinfo->partitions[0],
+              treeinfo->root,
+              params_indices,
+              RAXML_BRLEN_MIN,
+              RAXML_BRLEN_MAX,
+              RAXML_BRLEN_TOLERANCE,
+              RAXML_BRLEN_SMOOTHINGS,
+              0,
+              true);
+         assert(oldLoglk <= newLoglk);
+      }
     }
     pllmod_treeinfo_set_root(treeinfo.get(), root);
 }
@@ -60,13 +59,11 @@ bool equals(pll_unode_t *node1, pll_unode_t *node2) {
   return node1 == node2 || (node1->next && (node1->next == node2 || node1->next->next == node2));
 }
 
-SPRMove::SPRMove(int pruneIndex, int regraftIndex, const std::vector<int> &path):
+SPRMove::SPRMove(unsigned int pruneIndex, unsigned int regraftIndex, const std::vector<unsigned int> &path):
   pruneIndex_(pruneIndex),
   regraftIndex_(regraftIndex),
   path_(path)
 {
-  assert(pruneIndex >= 0);
-  assert(regraftIndex >= 0);
 }
 
 void printNode(pll_unode_s *node)
@@ -95,7 +92,7 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
   tree.invalidateCLV(prune->next->next->back);
   tree.invalidateCLV(regraft);
   tree.invalidateCLV(regraft->back);
-  for (int branchIndex: path_) {
+  for (auto branchIndex: path_) {
     tree.invalidateCLV(tree.getNode(branchIndex));
     tree.invalidateCLV(tree.getNode(branchIndex)->back);
   }
@@ -105,7 +102,7 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
   branchesToOptimize_.push_back(prune);
   branchesToOptimize_.push_back(regraft->back);
   branchesToOptimize_.push_back(regraft);
-  for (int branchIndex: path_) {
+  for (auto branchIndex: path_) {
     auto node = tree.getNode(branchIndex);
     branchesToOptimize_.push_back(node);
     if (path_.size() == 1) {

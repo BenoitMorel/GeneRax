@@ -39,14 +39,14 @@ void ParallelContext::finalize()
   _ownsMPIContextStack.pop();
 }
 
-int ParallelContext::getRank() 
+unsigned int ParallelContext::getRank() 
 {
   if (!_mpiEnabled) {
     return 0;
   }
   int rank = 0;
   MPI_Comm_rank(getComm(), &rank);
-  return rank;
+  return static_cast<unsigned int>(rank);
 }
 
 unsigned int ParallelContext::getSize() 
@@ -137,7 +137,26 @@ void ParallelContext::concatenateIntVectors(const std::vector<int> &localVector,
     getComm());
 }
   
-void ParallelContext::broadcastInt(int fromRank, int &value)
+void ParallelContext::concatenateUIntVectors(const std::vector<unsigned int> &localVector, 
+  std::vector<unsigned int> &globalVector)
+{
+  if (!_mpiEnabled) {
+    globalVector = localVector;
+    return;
+  }
+
+  globalVector.resize(getSize() * localVector.size(), 0);
+  MPI_Allgather(
+    &localVector[0],
+    localVector.size(),
+    MPI_UNSIGNED,
+    &(globalVector[0]),
+    localVector.size(),
+    MPI_UNSIGNED,
+    getComm());
+}
+  
+void ParallelContext::broadcastInt(unsigned int fromRank, int &value)
 {
   if (!_mpiEnabled) {
     return;
@@ -150,7 +169,20 @@ void ParallelContext::broadcastInt(int fromRank, int &value)
     getComm());
 }
 
-void ParallelContext::broadcastDouble(int fromRank, double &value)
+void ParallelContext::broadcastUInt(unsigned int fromRank, unsigned int &value)
+{
+  if (!_mpiEnabled) {
+    return;
+  }
+  MPI_Bcast(
+    &value,
+    1,
+    MPI_UNSIGNED,
+    fromRank,
+    getComm());
+}
+
+void ParallelContext::broadcastDouble(unsigned int fromRank, double &value)
 {
   if (!_mpiEnabled) {
     return;
@@ -163,7 +195,7 @@ void ParallelContext::broadcastDouble(int fromRank, double &value)
     getComm());
 }
 
-int ParallelContext::getMax(double &value, int &bestRank)
+int ParallelContext::getMax(double &value, unsigned int &bestRank)
 {
   if (!_mpiEnabled) {
     bestRank = 0;

@@ -18,6 +18,6 @@ public:
   const std::vector<GeneTree> &getTrees() {return _geneTrees;}
 private:
   std::vector<GeneTree> _geneTrees;
-  std::vector<int> _treeSizes;
+  std::vector<unsigned int> _treeSizes;
 
 };

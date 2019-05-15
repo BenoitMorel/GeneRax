@@ -59,7 +59,7 @@ void SearchUtils::testMove(JointTree &jointTree,
 bool SearchUtils::findBestMove(JointTree &jointTree,
     std::vector<std::shared_ptr<Move> > &allMoves,
     double &bestLoglk,
-    int &bestMoveIndex,
+    unsigned int &bestMoveIndex,
     bool blo,
     bool check)
 {
@@ -70,9 +70,9 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
   double averageReconciliationDiff = 0;
   assert(fabs(initialLoglk 
         - (initialReconciliationLoglk + initialLibpllLoglk)) < 0.000000001);
-  int begin = ParallelContext::getBegin(allMoves.size());
-  int end = ParallelContext::getEnd(allMoves.size());
-  int bestRank = 0;
+  auto begin = ParallelContext::getBegin(allMoves.size());
+  auto end = ParallelContext::getEnd(allMoves.size());
+  unsigned int bestRank = 0;
 #ifdef STOP
   // ensure that all cores recieve the same number of tasks, 
   // to avoid deadlock when synchronizing
@@ -85,9 +85,9 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
     }
   }
 #endif
-  for (int i = begin; i < end; ++i) {
+  for (auto i = begin; i < end; ++i) {
     auto move = allMoves[i];
-    double loglk = bestLoglk;
+    auto loglk = bestLoglk;
     SearchUtils::testMove(jointTree, move, 
         initialReconciliationLoglk,
         initialLibpllLoglk, 
@@ -102,7 +102,7 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
 #ifdef STOP
     if ((begin - i) % 1 == 0) {
       ParallelContext::getMax(bestLoglk, bestRank);
-      ParallelContext::broadcastInt(bestRank, bestMoveIndex);
+      ParallelContext::broadcastUInt(bestRank, bestMoveIndex);
       if (bestMoveIndex != -1) {
         return true;
       }
@@ -110,7 +110,7 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
 #endif
   }
   ParallelContext::getMax(bestLoglk, bestRank);
-  ParallelContext::broadcastInt(bestRank, bestMoveIndex);
+  ParallelContext::broadcastUInt(bestRank, bestMoveIndex);
   return bestMoveIndex != -1;
 }
 

@@ -45,12 +45,12 @@ void DTLOptimizer::findBestRatesDL(JointTree &jointTree,
     double &bestLL) 
 {
   bestLL = std::numeric_limits<double>::lowest();
-  int totalSteps = pow(steps, 2);
-  int begin = ParallelContext::getBegin(totalSteps);
-  int end = ParallelContext::getEnd(totalSteps);
-  for (int s = begin; s < end; ++s) {
-    int i = s / steps;
-    int j = s % steps;
+  unsigned int totalSteps = pow(steps, 2);
+  auto begin = ParallelContext::getBegin(totalSteps);
+  auto end = ParallelContext::getEnd(totalSteps);
+  for (auto s = begin; s < end; ++s) {
+    auto i = s / steps;
+    auto j = s % steps;
     double dup = minDup + (maxDup - minDup) * double(i) / double(steps);
     double loss = minLoss + (maxLoss - minLoss) * double(j) / double(steps);
     jointTree.setRates(dup, loss);
@@ -64,7 +64,7 @@ void DTLOptimizer::findBestRatesDL(JointTree &jointTree,
       bestLL = newLL;
     }
   }
-  int bestRank = 0;
+  unsigned int bestRank = 0;
   ParallelContext::getMax(bestLL, bestRank);
   ParallelContext::broadcastDouble(bestRank, bestDup);
   ParallelContext::broadcastDouble(bestRank, bestLoss);
@@ -82,13 +82,13 @@ void DTLOptimizer::findBestRatesDTL(JointTree &jointTree,
     double &bestLL) 
 {
   bestLL = std::numeric_limits<double>::lowest();
-  int totalSteps = pow(steps, 3);
-  int begin = ParallelContext::getBegin(totalSteps);
-  int end = ParallelContext::getEnd(totalSteps);
-  for (int s = begin; s < end; ++s) {
-    int i = s / (steps * steps);
-    int j = (s / steps) % steps;
-    int k = s % steps;
+  unsigned int totalSteps = pow(steps, 3);
+  auto begin = ParallelContext::getBegin(totalSteps);
+  auto end = ParallelContext::getEnd(totalSteps);
+  for (auto s = begin; s < end; ++s) {
+    auto i = s / (steps * steps);
+    auto j = (s / steps) % steps;
+    auto k = s % steps;
     double dup = minDup + (maxDup - minDup) * double(i) / double(steps);
     double loss = minLoss + (maxLoss - minLoss) * double(j) / double(steps);
     double trans = minTrans + (maxTrans - minTrans) * double(k) / double(steps);
@@ -104,7 +104,7 @@ void DTLOptimizer::findBestRatesDTL(JointTree &jointTree,
       bestLL = newLL;
     }
   }
-  int bestRank = 0;
+  unsigned int bestRank = 0;
   ParallelContext::getMax(bestLL, bestRank);
   ParallelContext::broadcastDouble(bestRank, bestDup);
   ParallelContext::broadcastDouble(bestRank, bestLoss);
@@ -212,12 +212,12 @@ void DTLOptimizer::optimizeDTLRatesWindow(JointTree &jointTree) {
 /*
  *  Find the point between  r1 and r2. Parallelized over the iterations
  */
-DTLRates findBestPoint(DTLRates r1, DTLRates r2, int iterations, JointTree &jointTree) 
+DTLRates findBestPoint(DTLRates r1, DTLRates r2, unsigned int iterations, JointTree &jointTree) 
 {
   DTLRates best = r1;
   best.ll = -100000000000;
-  int bestI = 0;
-  for (int i = ParallelContext::getRank(); i < iterations; i += ParallelContext::getSize()) {
+  unsigned int bestI = 0;
+  for (auto i = ParallelContext::getRank(); i < iterations; i += ParallelContext::getSize()) {
     DTLRates current = r1 + ((r2 - r1) * (double(i) / double(iterations - 1)));
     updateLL(current, jointTree);
     if (current < best) {
@@ -225,9 +225,9 @@ DTLRates findBestPoint(DTLRates r1, DTLRates r2, int iterations, JointTree &join
       bestI = i;
     }
   }
-  int bestRank = 0;
+  unsigned int bestRank = 0;
   ParallelContext::getMax(best.ll, bestRank);
-  ParallelContext::broadcastInt(bestRank, bestI);
+  ParallelContext::broadcastUInt(bestRank, bestI);
   if (ParallelContext::getRank() != bestRank) {
     best = r1 + ((r2 - r1) * (double(bestI) / double(iterations - 1)));
     best.ensureValidity();
@@ -252,7 +252,7 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
     updateLL(r, jointTree);
   }
   DTLRates worstRate;
-  int currentIt = 0;
+  unsigned int currentIt = 0;
   while (worstRate.distance(rates.back()) > 0.005) {
     sort(rates.begin(), rates.end());
     worstRate = rates.back();
@@ -265,7 +265,7 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
     // reflexion, exansion and contraction at the same time
     DTLRates x1 = x0 - (x0 - rates.back()) * 0.5;  
     DTLRates x2 = x0 + (x0 - rates.back()) * 1.5;  
-    int iterations = 8;
+    unsigned int iterations = 8;
     DTLRates xr = findBestPoint(x1, x2, iterations, jointTree);
     if (xr < rates[rates.size() - 1] ) {
       rates.back() = xr;

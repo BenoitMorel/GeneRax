@@ -39,7 +39,7 @@ public:
   /**
    *  @return the MPI rank
    */
-  static int getRank();
+  static unsigned int getRank();
 
   /**
    *  @return the number of MPI ranks
@@ -54,6 +54,8 @@ public:
   static void allGatherDouble(double localValue, std::vector<double> &allValues);
 
   static void concatenateIntVectors(const std::vector<int> &localVector, std::vector<int> &globalVector);
+  static void concatenateUIntVectors(const std::vector<unsigned int> &localVector, 
+    std::vector<unsigned int> &globalVector);
 
   static void sumDouble(double &value);
 
@@ -62,8 +64,9 @@ public:
    *  @param fromRank rank from which we want the value
    *  @param value input value for this rank, output value for the other ranks
    */
-  static void broadcastInt(int fromRank, int &value);
-  static void broadcastDouble(int fromRank, double &value);
+  static void broadcastInt(unsigned int fromRank, int &value);
+  static void broadcastUInt(unsigned int fromRank, unsigned int &value);
+  static void broadcastDouble(unsigned int fromRank, double &value);
 
   /**
    *  Get the highest value from all ranks
@@ -71,7 +74,7 @@ public:
    *    the highest value among the ranks
    *  @param bestRank the rank that has the highest value
    */
-  static int getMax(double &value, int &bestRank);
+  static int getMax(double &value, unsigned int &bestRank);
   
 
   /**
