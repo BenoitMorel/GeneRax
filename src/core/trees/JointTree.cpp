@@ -21,12 +21,12 @@ size_t getTreeHashRec(pll_unode_t *node, size_t i) {
   if (!node->next) {
     return leafHash(node);
   }
-  int hash1 = getTreeHashRec(node->next->back, i + 1);
-  int hash2 = getTreeHashRec(node->next->next->back, i + 1);
+  auto hash1 = getTreeHashRec(node->next->back, i + 1);
+  auto hash2 = getTreeHashRec(node->next->next->back, i + 1);
   //Logger::info << "(" << hash1 << "," << hash2 << ") ";
-  std::hash<int> hash_fn;
-  int m = std::min(hash1, hash2);
-  int M = std::max(hash1, hash2);
+  std::hash<size_t> hash_fn;
+  auto m = std::min(hash1, hash2);
+  auto M = std::max(hash1, hash2);
   return hash_fn(m * i + M);
 
 }
@@ -135,6 +135,9 @@ JointTree::JointTree(const std::string &newick_string,
   recOpt_(reconciliationOpt),
   _recWeight(recWeight)
 {
+  assert(dupRate >= 0.0);
+  assert(lossRate >= 0.0);
+  assert(transRate >= 0.0);
    info_.alignmentFilename = alignment_file;
   info_.model = substitutionModel;
   libpllEvaluation_ = LibpllEvaluation::buildFromString(newick_string, info_.alignmentFilename, info_.model);
@@ -201,7 +204,7 @@ void JointTree::printLoglk(bool libpll, bool rec, bool joint, Logger &os) {
 }
 
 
-pll_unode_t *JointTree::getNode(int index) {
+pll_unode_t *JointTree::getNode(unsigned int index) {
   return getTreeInfo()->subnodes[index];
 }
 
@@ -251,9 +254,9 @@ void JointTree::setRates(double dup, double loss, double trans) {
 void JointTree::printInfo() 
 {
   auto treeInfo = getTreeInfo();
-  int speciesLeaves = getSpeciesTree()->tip_count;
-  int geneLeaves = treeInfo->tip_count;;
-  int sites = treeInfo->partitions[0]->sites;
+  auto speciesLeaves = getSpeciesTree()->tip_count;
+  auto geneLeaves = treeInfo->tip_count;;
+  auto sites = treeInfo->partitions[0]->sites;
   Logger::info << "Species leaves: " << speciesLeaves << std::endl;
   Logger::info << "Gene leaves: " << geneLeaves << std::endl;
   Logger::info << "Sites: " << sites << std::endl;

@@ -74,7 +74,7 @@ void getRegraftsRec(unsigned int pruneIndex, pll_unode_t *regraft, int maxRadius
 void printPossibleMoves(JointTree &jointTree, std::vector<std::shared_ptr<Move> > &allMoves)
 {
   Logger::info << "Possible moves from " << jointTree.getUnrootedTreeHash() << std::endl;
-  std::unordered_set<int> hashs;
+  std::unordered_set<size_t> hashs;
   for (auto move: allMoves) {
     jointTree.applyMove(move);
     auto hashValue = jointTree.getUnrootedTreeHash();

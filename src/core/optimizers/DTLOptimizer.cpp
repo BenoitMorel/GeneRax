@@ -39,13 +39,13 @@ void updateLL(DTLRates &rates, PerCoreGeneTrees &trees, pll_rtree_t *speciesTree
 
 void DTLOptimizer::findBestRatesDL(JointTree &jointTree,
     double minDup, double maxDup,
-    double minLoss, double maxLoss, int steps,
+    double minLoss, double maxLoss, unsigned int steps,
     double &bestDup,
     double &bestLoss,
     double &bestLL) 
 {
   bestLL = std::numeric_limits<double>::lowest();
-  unsigned int totalSteps = pow(steps, 2);
+  auto totalSteps = steps * steps;
   auto begin = ParallelContext::getBegin(totalSteps);
   auto end = ParallelContext::getEnd(totalSteps);
   for (auto s = begin; s < end; ++s) {
@@ -75,14 +75,14 @@ void DTLOptimizer::findBestRatesDTL(JointTree &jointTree,
     double minDup, double maxDup,
     double minLoss, double maxLoss, 
     double minTrans, double maxTrans, 
-    int steps,
+    unsigned int steps,
     double &bestDup,
     double &bestLoss,
     double &bestTrans,
     double &bestLL) 
 {
   bestLL = std::numeric_limits<double>::lowest();
-  unsigned int totalSteps = pow(steps, 3);
+  unsigned int totalSteps = steps * steps * steps;
   auto begin = ParallelContext::getBegin(totalSteps);
   auto end = ParallelContext::getEnd(totalSteps);
   for (auto s = begin; s < end; ++s) {
@@ -154,7 +154,7 @@ void DTLOptimizer::optimizeDLRatesWindow(JointTree &jointTree) {
   double maxDup = 10.0;
   double minLoss = 0.0;
   double maxLoss = 10.0;
-  int steps = 10;
+  unsigned int steps = 10;
   double epsilon = 0.001;
   do {
     bestLL = newLL;
@@ -186,7 +186,7 @@ void DTLOptimizer::optimizeDTLRatesWindow(JointTree &jointTree) {
   double maxLoss = 1.0;
   double minTrans = 0.0;
   double maxTrans = 1.0;
-  int steps = 5;
+  unsigned int steps = 5;
   double epsilon = 0.01;
   do {
     bestLL = newLL;

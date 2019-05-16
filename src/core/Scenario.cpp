@@ -4,11 +4,15 @@
 const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "None", "Invalid"};
 
 
-void Scenario::addEvent(EventType type, int geneNode, int speciesNode) {
-  addTransfer(type, geneNode, speciesNode, -1, -1);
+void Scenario::addEvent(EventType type, unsigned int geneNode, unsigned int speciesNode) {
+  addTransfer(type, geneNode, speciesNode, INVALID, INVALID);
 }
   
-void Scenario::addTransfer(EventType type, int geneNode, int speciesNode, int from, int to)
+void Scenario::addTransfer(EventType type, 
+  unsigned int geneNode, 
+  unsigned int speciesNode, 
+  unsigned int from, 
+  unsigned int to)
 {
   Event event;
   event.type = type;
@@ -17,7 +21,8 @@ void Scenario::addTransfer(EventType type, int geneNode, int speciesNode, int fr
   event.fromNode = from;
   event.toNode = to;
   _events.push_back(event);
-  _eventsCount[int(type)] ++;
+  assert(static_cast<int>(type) >= 0);
+  _eventsCount[static_cast<unsigned int>(type)] ++;
   if (_geneIdToEvent.size() <= static_cast<size_t>(geneNode)) {
     _geneIdToEvent.resize(geneNode + 1);
   }
@@ -26,7 +31,7 @@ void Scenario::addTransfer(EventType type, int geneNode, int speciesNode, int fr
 
 void Scenario::saveEventsCounts(const std::string &filename, bool masterRankOnly) {
   ParallelOfstream os(filename, masterRankOnly);
-  for (int i = 0; i < int(Invalid); ++i) {
+  for (unsigned int i = 0; i < static_cast<unsigned int>(Invalid); ++i) {
     os << eventNames[i] << ":" << _eventsCount[i] << std::endl;
   }
 }
@@ -47,7 +52,7 @@ void Scenario::recursivelySaveTreeWithEvents(pll_unode_t *node, ParallelOfstream
     os << "n" << node->node_index; 
   }
   Event event = _geneIdToEvent[node->node_index];
-  if (event.speciesNode >= 0) {
+  if (event.speciesNode != INVALID) {
     os << "[&&NHX";
     if (_speciesTree->nodes[event.speciesNode]->label) {
       os << ":S=" << _speciesTree->nodes[event.speciesNode]->label;

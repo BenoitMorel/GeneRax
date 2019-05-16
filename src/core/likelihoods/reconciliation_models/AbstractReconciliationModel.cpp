@@ -16,12 +16,12 @@ void AbstractReconciliationModel::init(pll_rtree_t *speciesTree, const GeneSpeci
 }
 
 void AbstractReconciliationModel::initFromUtree(pll_utree_t *tree) {
-  int treeSize = tree->tip_count + tree->inner_count;
-  int nodesNumber = tree->tip_count + 3 * tree->inner_count;
+  auto treeSize = tree->tip_count + tree->inner_count;
+  auto nodesNumber = tree->tip_count + 3 * tree->inner_count;
   _geneIds.clear();
   _allNodes.resize(nodesNumber);
   std::vector<bool> marked(nodesNumber, false);
-  for (int i = 0; i < treeSize; ++i) {
+  for (unsigned int i = 0; i < treeSize; ++i) {
     auto node = tree->nodes[i];
     _allNodes[node->node_index] = node;
     _geneIds.push_back(node->node_index);
@@ -52,7 +52,7 @@ void AbstractReconciliationModel::setInitialGeneTree(pll_utree_t *tree)
 {
   initFromUtree(tree);
   mapGenesToSpecies();
-  _maxGeneId = _allNodes.size() - 1;;
+  _maxGeneId = static_cast<unsigned int>(_allNodes.size() - 1);
   invalidateAllCLVs();
 }
 
@@ -82,7 +82,7 @@ void AbstractReconciliationModel::setSpeciesTree(pll_rtree_t *speciesTree)
 }
 
 void AbstractReconciliationModel::getRoots(std::vector<pll_unode_t *> &roots,
-    const std::vector<int> &geneIds)
+    const std::vector<unsigned int> &geneIds)
 {
   roots.clear();
   if (rootedGeneTree_ && geneRoot_) {
@@ -150,7 +150,7 @@ void AbstractReconciliationModel::markInvalidatedNodesRec(pll_unode_t *node)
 
 void AbstractReconciliationModel::markInvalidatedNodes()
 {
-  for (int nodeIndex: _invalidatedNodes) {
+  for (auto nodeIndex: _invalidatedNodes) {
     auto node = _allNodes[nodeIndex];
     markInvalidatedNodesRec(node);
   }
@@ -199,7 +199,7 @@ void AbstractReconciliationModel::updateCLVs()
   }
 }
 
-void AbstractReconciliationModel::invalidateCLV(int nodeIndex)
+void AbstractReconciliationModel::invalidateCLV(unsigned int nodeIndex)
 {
   _invalidatedNodes.insert(nodeIndex);
 }

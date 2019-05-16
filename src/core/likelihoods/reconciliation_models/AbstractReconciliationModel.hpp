@@ -47,7 +47,7 @@ public:
    * invalidate one or all the gene CLVs
    */
   void invalidateAllCLVs();
-  void invalidateCLV(int geneNodeIndex);
+  void invalidateCLV(unsigned int geneNodeIndex);
 
   /**
    *  Fill scenario with the maximum likelihood set of 
@@ -84,7 +84,7 @@ protected:
    *  - Else, return all the possible virtual roots
    */
   void getRoots(std::vector<pll_unode_t *> &roots,
-    const std::vector<int> &geneIds);
+    const std::vector<unsigned int> &geneIds);
 
   /**
    *  Get the left or right child of node. If node is a virtual 
@@ -97,13 +97,13 @@ protected:
 protected:
   bool rootedGeneTree_;
   pll_unode_t *geneRoot_;
-  int speciesNodesCount_;
+  unsigned int speciesNodesCount_;
   std::vector <pll_rnode_t *> speciesNodes_;
   pll_rtree_t *speciesTree_;
   std::vector<unsigned int> geneToSpecies_;
   bool firstCall_;
   // gene ids in postorder 
-  std::vector<int> _geneIds;
+  std::vector<unsigned int> _geneIds;
   unsigned int _maxGeneId;
 
 private:
@@ -117,11 +117,11 @@ private:
   void markInvalidatedNodesRec(pll_unode_t *node);
   void fillNodesPostOrder(pll_rnode_t *node, std::vector<pll_rnode_t *> &nodes) ;
   std::map<std::string, std::string> geneNameToSpeciesName_;
-  std::map<std::string, int> speciesNameToId_;
+  std::map<std::string, unsigned int> speciesNameToId_;
   
   // set of invalid CLVs. All the CLVs from these CLVs to
   // the root(s) need to be recomputed
-  std::unordered_set<int> _invalidatedNodes;
+  std::unordered_set<unsigned int> _invalidatedNodes;
 
   // is the CLV up to date?
   std::vector<bool> _isCLVUpdated;

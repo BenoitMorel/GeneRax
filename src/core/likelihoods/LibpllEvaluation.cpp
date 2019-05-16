@@ -148,14 +148,14 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::s
         labels.push_back(seq->label);
       }
       unsigned int seed = 0;
-      utree = pllmod_utree_create_random(labels.size(), &labels[0], seed);
+      utree = pllmod_utree_create_random(static_cast<unsigned int>(labels.size()), &labels[0], seed);
     } else {
       utree = LibpllParsers::readNewickFromStr(newickString);
     }
   }
   // partition
   unsigned int attribute = getBestLibpllAttribute();
-  unsigned int tipNumber = sequences.size();
+  unsigned int tipNumber = static_cast<unsigned int>(sequences.size());
   unsigned int innerNumber = tipNumber -1;
   unsigned int edgesNumber = 2 * tipNumber - 1;
   unsigned int sitesNumber = sequences[0]->len;
@@ -277,14 +277,14 @@ void LibpllEvaluation::setMissingBL(pll_utree_t * tree,
     double length)
 {
   for (unsigned int i = 0; i < tree->tip_count; ++i)
-    if (!tree->nodes[i]->length)
+    if (0.0 == tree->nodes[i]->length)
       tree->nodes[i]->length = length;
   for (unsigned int i = tree->tip_count; i < tree->tip_count + tree->inner_count; ++i) {
-    if (!tree->nodes[i]->length)
+    if (0.0 == tree->nodes[i]->length)
       tree->nodes[i]->length = length;
-    if (!tree->nodes[i]->next->length)
+    if (0.0 == tree->nodes[i]->next->length)
       tree->nodes[i]->next->length = length;
-    if (!tree->nodes[i]->next->next->length)
+    if (0.0 == tree->nodes[i]->next->next->length)
       tree->nodes[i]->next->next->length = length;
   }  
 }
@@ -305,20 +305,20 @@ void LibpllEvaluation::parseFasta(const char *fastaFile,
   long seqno;
   int length;
   while (pll_fasta_getnext(reader, &head, &head_len, &seq, &seq_len, &seqno)) {
-    sequences.push_back(pll_sequence_ptr(new pll_sequence(head, seq, seq_len)));
-    length = seq_len;
+    sequences.push_back(pll_sequence_ptr(new pll_sequence(head, seq, static_cast<unsigned int>(seq_len))));
+    length = static_cast<int>(seq_len);
   }
-  int count = sequences.size();;
-  char** buffer = static_cast<char**>(malloc(count * sizeof(char *)));
+  unsigned int count = static_cast<unsigned int>(sequences.size());
+  char** buffer = static_cast<char**>(malloc(static_cast<size_t>(count) * sizeof(char *)));
   assert(buffer);
-  for (int i = 0; i < count; ++i) {
+  for (unsigned int i = 0; i < count; ++i) {
     buffer[i] = sequences[i]->seq;
   }
-  weights = pll_compress_site_patterns(buffer, stateMap, count, &length);
+  weights = pll_compress_site_patterns(buffer, stateMap, static_cast<int>(count), &length);
   if (!weights) 
     throw LibpllException("Error while parsing fasta: cannot compress sites from ", fastaFile);
-  for (int i = 0; i < count; ++i) {
-    sequences[i]->len = length;
+  for (unsigned int i = 0; i < count; ++i) {
+    sequences[i]->len = static_cast<unsigned int>(length);
   }
   free(buffer);
   pll_fasta_close(reader);
@@ -353,7 +353,7 @@ void LibpllEvaluation::parsePhylip(const char *phylipFile,
   if (!weights) 
     throw LibpllException("Error while parsing fasta: cannot compress sites");
   for (auto i = 0; i < msa->count; ++i) {
-    pll_sequence_ptr seq(new pll_sequence(msa->label[i], msa->sequence[i], msa->count));
+    pll_sequence_ptr seq(new pll_sequence(msa->label[i], msa->sequence[i], static_cast<unsigned int>(msa->count)));
     sequences.push_back(seq);
     // avoid freeing these buffers with pll_msa_destroy
     msa->label[i] = nullptr;
@@ -366,8 +366,8 @@ void LibpllEvaluation::parsePhylip(const char *phylipFile,
 double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, double tolerance)
 {
   // This code comes from RaxML
-  double new_loglh;
-  unsigned int params_to_optimize = treeinfo->params_to_optimize[0]; 
+  double new_loglh = 0.0;
+  auto params_to_optimize = treeinfo->params_to_optimize[0];
   /* optimize SUBSTITUTION RATES */
   if (params_to_optimize & PLLMOD_OPT_PARAM_SUBST_RATES)
   {
@@ -438,7 +438,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, 
         RAXML_BRLEN_MIN,
         RAXML_BRLEN_MAX,
         tolerance,
-        brlen_smooth_factor * RAXML_BRLEN_SMOOTHINGS,
+        static_cast<int>(brlen_smooth_factor * static_cast<double>(RAXML_BRLEN_SMOOTHINGS)),
         -1,  /* radius */
         1,    /* keep_update */
         PLLMOD_OPT_BLO_NEWTON_FAST,
@@ -461,10 +461,11 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, 
     /* normalize scalers and scale the branches accordingly */
     pllmod_treeinfo_normalize_brlen_scalers(treeinfo);
   }
+  assert(0.0 != new_loglh);
   return new_loglh;
 }
 
-void LibpllEvaluation::invalidateCLV(int nodeIndex)
+void LibpllEvaluation::invalidateCLV(unsigned int nodeIndex)
 {
   pllmod_treeinfo_invalidate_clv(_treeinfo.get(), getNode(nodeIndex));
   pllmod_treeinfo_invalidate_pmatrix(_treeinfo.get(), getNode(nodeIndex));

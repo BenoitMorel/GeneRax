@@ -13,13 +13,13 @@ void DatedDLModel::setInitialGeneTree(pll_utree_t *tree)
 void buildSubdivisions(pll_rtree_t *speciesTree,
   std::vector<std::vector<double> > &branchSubdivisions) 
 {
-  int maxSpeciesNodeIndex = speciesTree->tip_count + speciesTree->inner_count;
+  auto maxSpeciesNodeIndex = speciesTree->tip_count + speciesTree->inner_count;
   branchSubdivisions = std::vector<std::vector<double> >(maxSpeciesNodeIndex);
-  for (int i = 0; i < maxSpeciesNodeIndex; ++i) {
-    int speciesId = speciesTree->nodes[i]->node_index;
+  for (unsigned int i = 0; i < maxSpeciesNodeIndex; ++i) {
+    auto speciesId = speciesTree->nodes[i]->node_index;
     double branchLength = std::max(speciesTree->nodes[i]->length, 0.0001);
     double subdivisionSize = 0.05;
-    int minSubdivisions = 5;
+    unsigned int minSubdivisions = 5;
     if (minSubdivisions * subdivisionSize > branchLength) {
       subdivisionSize = branchLength / minSubdivisions;
     }
@@ -37,8 +37,8 @@ void DatedDLModel::computeExtinctionProbas()
 {
   extinctionProba_.resize(speciesNodesCount_);
   for (auto speciesNode: speciesNodes_) {
-    int speciesId = speciesNode->node_index;
-    int subdivisions = branchSubdivisions_[speciesId].size();
+    auto speciesId = speciesNode->node_index;
+    unsigned int subdivisions = static_cast<unsigned int>(branchSubdivisions_[speciesId].size());
     extinctionProba_[speciesId].resize(subdivisions);
     // first branch subdivision
     if (!speciesNode->left) {
@@ -50,7 +50,7 @@ void DatedDLModel::computeExtinctionProbas()
         getExtProba(speciesNode->right->node_index);
     }
     // go up in the branch
-    for (int s = 1; s < subdivisions; ++s) {
+    for (unsigned int s = 1; s < subdivisions; ++s) {
       extinctionProba_[speciesId][s] = propagateExtinctionProba(extinctionProba_[speciesId][s-1],
           branchSubdivisions_[speciesId][s]);
     }
@@ -76,13 +76,13 @@ void DatedDLModel::computePropagationProbas()
 {
   propagationProba_.resize(speciesNodesCount_);
   for (auto speciesNode: speciesNodes_) {
-    int speciesId = speciesNode->node_index;
-    int subdivisions = branchSubdivisions_[speciesId].size();
+    auto speciesId = speciesNode->node_index;
+    auto subdivisions = branchSubdivisions_[speciesId].size();
     propagationProba_[speciesId].resize(subdivisions);
     // first branch subdivision
     propagationProba_[speciesId][0] = 1.0; 
     // go up in the branch
-    for (int s = 1; s < subdivisions; ++s) {
+    for (unsigned int s = 1; s < subdivisions; ++s) {
       propagationProba_[speciesId][s] = propagatePropagationProba(extinctionProba_[speciesId][s-1],
           branchSubdivisions_[speciesId][s]);
       assert(std::isnormal(propagationProba_[speciesId][s]));
@@ -117,9 +117,9 @@ void DatedDLModel::setRates(double dupRate, double lossRate, double transferRate
 {
   (void)transferRate;
   (void)speciesScalers;
-  if (dupRate == 0)
+  if (0.0 == dupRate)
     dupRate = EPSILON;
-  if (lossRate == 0)
+  if (0.0 == lossRate)
     lossRate = EPSILON;
   dupRate_ = dupRate;
   lossRate_ = lossRate;
@@ -138,7 +138,7 @@ void DatedDLModel::setSpeciesTree(pll_rtree_t *speciesTree)
 
 void DatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
-  int geneId = geneNode->node_index;
+  unsigned int geneId = geneNode->node_index;
   auto &clv = clvs_[geneId].clv;
   clv = std::vector<std::vector<ScaledValue> >(speciesNodesCount_);
   for (auto speciesNode: speciesNodes_) {
@@ -148,10 +148,10 @@ void DatedDLModel::updateCLV(pll_unode_t *geneNode)
 
 void DatedDLModel::computeCLVCell(pll_unode_t *geneNode, pll_rnode_t *speciesNode, std::vector<ScaledValue> &speciesCell, bool isVirtualRoot)
 {
-  int subdivisions = branchSubdivisions_[speciesNode->node_index].size();
+  unsigned int subdivisions = static_cast<unsigned int>(branchSubdivisions_[speciesNode->node_index].size());
   speciesCell = std::vector<ScaledValue>(subdivisions);
   speciesCell[0] = computeRecProbaInterBranch(geneNode, speciesNode, isVirtualRoot);
-  for (int subdivision = 1; subdivision < subdivisions; ++subdivision) {
+  for (unsigned int subdivision = 1; subdivision < subdivisions; ++subdivision) {
     speciesCell[subdivision] = computeRecProbaIntraBranch(geneNode, speciesNode, subdivision, isVirtualRoot);
   }
 }
@@ -171,15 +171,15 @@ ScaledValue DatedDLModel::computeRecProbaInterBranch(pll_unode_t *geneNode, pll_
   if (isSpeciesLeaf) {
     return res; // todobenoit I am not sure about this
   }
-  int leftSpeciesId = speciesNode->left->node_index;
-  int rightSpeciesId = speciesNode->right->node_index;
+  auto leftSpeciesId = speciesNode->left->node_index;
+  auto rightSpeciesId = speciesNode->right->node_index;
 
 
   res += getRecProba(geneId, leftSpeciesId) * getExtProba(rightSpeciesId);  
   res += getRecProba(geneId, rightSpeciesId) * getExtProba(leftSpeciesId);  
   if (!isGeneLeaf) {
-    int leftGeneId = getLeft(geneNode, isVirtualRoot)->node_index;
-    int rightGeneId = getRight(geneNode, isVirtualRoot)->node_index;
+    auto leftGeneId = getLeft(geneNode, isVirtualRoot)->node_index;
+    auto rightGeneId = getRight(geneNode, isVirtualRoot)->node_index;
     // Speciation case
     res += getRecProba(leftGeneId, leftSpeciesId) * getRecProba(rightGeneId, rightSpeciesId);
     res += getRecProba(rightGeneId, leftSpeciesId) * getRecProba(leftGeneId, rightSpeciesId);
@@ -187,20 +187,20 @@ ScaledValue DatedDLModel::computeRecProbaInterBranch(pll_unode_t *geneNode, pll_
   return res;
 }
   
-ScaledValue DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, int subdivision, bool isVirtualRoot)
+ScaledValue DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, unsigned int subdivision, bool isVirtualRoot)
 {
   bool isGeneLeaf = !geneNode->next;
-  int geneId = geneNode->node_index;
-  int speciesId = speciesNode->node_index;
+  auto geneId = geneNode->node_index;
+  auto speciesId = speciesNode->node_index;
   ScaledValue res;
   // No event case
   res += getRecProba(geneId, speciesId, subdivision - 1) * propagationProba_[speciesId][subdivision];
   // duplication case
   if (!isGeneLeaf) {
-    int leftGeneId = getLeft(geneNode, isVirtualRoot)->node_index;
-    int rightGeneId = getRight(geneNode, isVirtualRoot)->node_index;
+    auto leftGeneId = getLeft(geneNode, isVirtualRoot)->node_index;
+    auto rightGeneId = getRight(geneNode, isVirtualRoot)->node_index;
     double l = branchSubdivisions_[speciesId][subdivision];
-   auto leftProba = getRecProba(leftGeneId, speciesId, subdivision - 1); 
+    auto leftProba = getRecProba(leftGeneId, speciesId, subdivision - 1); 
     auto rightProba = getRecProba(rightGeneId, speciesId, subdivision - 1);
     res += leftProba * rightProba * dupRate_ * l;
   }
@@ -209,7 +209,7 @@ ScaledValue DatedDLModel::computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_
 }
 
 
-double DatedDLModel::getExtProba(int speciesId)
+double DatedDLModel::getExtProba(unsigned int speciesId)
 {
   return extinctionProba_[speciesId].back();
 }
@@ -217,9 +217,9 @@ double DatedDLModel::getExtProba(int speciesId)
 ScaledValue DatedDLModel::getRootLikelihood(pll_unode_t *root) const
 {
   ScaledValue sum;
-  int u = root->node_index + _maxGeneId + 1;;
+  auto u = root->node_index + _maxGeneId + 1;;
   for (auto speciesNode: speciesNodes_) {
-    int e = speciesNode->node_index;
+    auto e = speciesNode->node_index;
     sum += clvs_[u].clv[e].back();
   }
   return sum;
@@ -227,10 +227,10 @@ ScaledValue DatedDLModel::getRootLikelihood(pll_unode_t *root) const
 
 void DatedDLModel::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
-  int u = virtualRoot->node_index;
+  auto u = virtualRoot->node_index;
   clvs_[u].clv = std::vector<std::vector<ScaledValue> >(speciesNodesCount_);
   for (auto speciesNode: speciesNodes_) {
-    int e = speciesNode->node_index;
+    auto e = speciesNode->node_index;
     computeCLVCell(virtualRoot, speciesNode, clvs_[u].clv[e], true);
   }
 }

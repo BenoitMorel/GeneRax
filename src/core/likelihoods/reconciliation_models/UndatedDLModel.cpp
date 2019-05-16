@@ -38,13 +38,13 @@ void UndatedDLModel::setRates(double dupRate,
   _PS = std::vector<double>(speciesNodesCount_, 1.0);
   if (speciesScalers.size()) {
     assert(speciesScalers.size() == static_cast<size_t>(speciesNodesCount_));
-    for (int i = 0; i < speciesNodesCount_; ++i) {
+    for (unsigned int i = 0; i < speciesNodesCount_; ++i) {
       _PD[i] *= speciesScalers[i];
       _PL[i] *= speciesScalers[i];
     }
   }
   for (auto speciesNode: speciesNodes_) {
-    int e = speciesNode->node_index;
+    auto e = speciesNode->node_index;
     /*
     _PD[e] *= speciesNode->length;
     _PL[e] *= speciesNode->length;
@@ -56,7 +56,7 @@ void UndatedDLModel::setRates(double dupRate,
   }
   _uE = std::vector<double>(speciesNodesCount_, 0.0);
   for (auto speciesNode: speciesNodes_) {
-    int e = speciesNode->node_index;
+    auto e = speciesNode->node_index;
     double a = _PD[e];
     double b = -1.0;
     double c = _PL[e];
@@ -76,6 +76,7 @@ UndatedDLModel::~UndatedDLModel() { }
 
 void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
 {
+  assert(geneNode);
   for (auto speciesNode: speciesNodes_) {
     computeProbability(geneNode, 
         speciesNode, 
@@ -88,6 +89,8 @@ void UndatedDLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
       Scenario &scenario,
       bool isVirtualRoot) 
 {
+  assert(geneNode);
+  assert(speciesNode);
   auto gid = geneNode->node_index;
   pll_unode_t *leftGeneNode = 0;     
   pll_unode_t *rightGeneNode = 0;   
@@ -129,7 +132,7 @@ void UndatedDLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
     values[4] = _uq[gid][g] * (_uE[f] * _PS[e]);
   }
 
-  int maxValueIndex = distance(values.begin(), max_element(values.begin(), values.end()));
+  unsigned maxValueIndex = static_cast<unsigned int>(distance(values.begin(), max_element(values.begin(), values.end())));
   // safety check
   if (values[maxValueIndex].isNull()) {
     ScaledValue proba;
@@ -229,9 +232,9 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
 ScaledValue UndatedDLModel::getRootLikelihood(pll_unode_t *root) const
 {
   ScaledValue sum;
-  int u = root->node_index + _maxGeneId + 1;;
+  auto u = root->node_index + _maxGeneId + 1;;
   for (auto speciesNode: speciesNodes_) {
-    int e = speciesNode->node_index;
+    auto e = speciesNode->node_index;
     sum += _uq[u][e];
   }
   return sum;
@@ -239,16 +242,16 @@ ScaledValue UndatedDLModel::getRootLikelihood(pll_unode_t *root) const
 
 void UndatedDLModel::accountForSpeciesRoot(pll_unode_t *virtualRoot)
 {
-  int u = virtualRoot->node_index;
+  auto u = virtualRoot->node_index;
   std::vector<ScaledValue> save_uq(_uq[u]);
   auto leftGeneNode = getLeft(virtualRoot, true);
   auto rightGeneNode = getRight(virtualRoot, true);
   for (auto speciesNode: speciesNodes_) {
-    int e = speciesNode->node_index;
+    auto e = speciesNode->node_index;
     ScaledValue proba;
     // D
-      int gp_i = leftGeneNode->node_index;
-      int gpp_i = rightGeneNode->node_index;
+      auto gp_i = leftGeneNode->node_index;
+      auto gpp_i = rightGeneNode->node_index;
       ScaledValue temp = _uq[gp_i][e];
       temp *= _uq[gpp_i][e];
       temp *= _PD[e];
@@ -264,9 +267,9 @@ void UndatedDLModel::accountForSpeciesRoot(pll_unode_t *virtualRoot)
 
 void UndatedDLModel::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
-  int u = virtualRoot->node_index;
+  auto u = virtualRoot->node_index;
   for (auto speciesNode: speciesNodes_) {
-    int e = speciesNode->node_index;
+    auto e = speciesNode->node_index;
     computeProbability(virtualRoot, speciesNode, _uq[u][e], true);
   }
 //  accountForSpeciesRoot(virtualRoot);

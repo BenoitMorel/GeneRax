@@ -78,8 +78,6 @@ private:
   // set to 1.0 fpr now
   double probaGeneSampled_;
   
-  // std::map between extant genes and extant species
-  std::vector<int> geneToSpecies;
 private:
   
   void computeExtinctionProbas();
@@ -89,13 +87,13 @@ private:
   void computeCLVCell(pll_unode_t *geneNode, pll_rnode_t *speciesNode, std::vector<ScaledValue> &speciesCell, bool isVirtualRoot);
   void computeCLV(pll_unode_t *geneNode, pll_rnode_t *speciesNode, DDL_CLV *clv, bool isVirtualRoot = false);
   ScaledValue computeRecProbaInterBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, bool isVirtualRoot);
-  ScaledValue computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, int subdivision, bool isVirtualRoot);
-  const ScaledValue &getRecProba(int geneId, int speciesId) {
+  ScaledValue computeRecProbaIntraBranch(pll_unode_t *geneNode, pll_rnode_t *speciesNode, unsigned int subdivision, bool isVirtualRoot);
+  const ScaledValue &getRecProba(unsigned int geneId, unsigned int speciesId) {
     return clvs_[geneId].clv[speciesId].back();
   }
-  const ScaledValue &getRecProba(int geneId, int speciesId, int subdivision) {
+  const ScaledValue &getRecProba(unsigned int geneId, unsigned int speciesId, unsigned int subdivision) {
     return clvs_[geneId].clv[speciesId][subdivision];
   }
-  double getExtProba(int speciesId);
+  double getExtProba(unsigned int speciesId);
 };
 

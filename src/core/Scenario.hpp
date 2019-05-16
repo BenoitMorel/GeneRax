@@ -8,31 +8,36 @@ extern "C" {
 #include <IO/ParallelOfstream.hpp>
 
 
-
 class Scenario {
-public:  
+public:
+  static const unsigned int INVALID = static_cast<unsigned int>(-1);
+
   enum EventType {
     S = 0 , SL, D, T, TL, None, Invalid
   };
 
   struct Event {
-    Event(): type(S), geneNode(-1), speciesNode(-1), fromNode(-1), toNode(-1) {}
+    Event(): type(S), geneNode(INVALID), speciesNode(INVALID), fromNode(INVALID), toNode(INVALID) {}
     EventType type;
-    int geneNode;
-    int speciesNode;
-    int fromNode;
-    int toNode; // for transfers
+    unsigned int geneNode;
+    unsigned int speciesNode;
+    unsigned int fromNode;
+    unsigned int toNode; // for transfers
   };
 
 
-  Scenario(): _eventsCount(int(Invalid), 0), _geneRoot(0) {}
+  Scenario(): _eventsCount(static_cast<unsigned int>(Invalid), 0), _geneRoot(0) {}
  
   void setGeneRoot(pll_unode_t *geneRoot) {_geneRoot = geneRoot;}
   
   void setSpeciesTree(pll_rtree_t *speciesTree) {_speciesTree = speciesTree;}
 
-  void addEvent(EventType type, int geneNode, int speciesNode);
-  void addTransfer(EventType type, int geneNode, int speciesNode, int from, int to);
+  void addEvent(EventType type, unsigned int geneNode, unsigned int speciesNode);
+  void addTransfer(EventType type, 
+    unsigned int geneNode, 
+    unsigned int speciesNode, 
+    unsigned int from, 
+    unsigned int to);
 
   void saveEventsCounts(const std::string &filename, bool masterRankOnly = true); 
 
@@ -41,7 +46,7 @@ public:
 private:
   static const char *eventNames[];
   std::vector<Event> _events;
-  std::vector<int> _eventsCount;
+  std::vector<unsigned int> _eventsCount;
   std::vector<Event> _geneIdToEvent;
   pll_unode_t *_geneRoot;
   pll_rtree_t *_speciesTree;

@@ -45,13 +45,13 @@ public:
    */
   double evaluate(std::shared_ptr<pllmod_treeinfo_t> treeinfo);
 
-  double implementsTransfers() {return Enums::accountsForTransfers(_model);} 
+  bool implementsTransfers() {return Enums::accountsForTransfers(_model);} 
 
   /**
    *  Invalidate the CLV at a given node index
    *  Must be called on the nodes affected by a move 
    */
-  void invalidateCLV(int nodeIndex);
+  void invalidateCLV(unsigned int nodeIndex);
   
   
   void inferMLScenario(Scenario &scenario) {

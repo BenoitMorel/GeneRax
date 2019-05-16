@@ -74,7 +74,7 @@ public:
    *    the highest value among the ranks
    *  @param bestRank the rank that has the highest value
    */
-  static int getMax(double &value, unsigned int &bestRank);
+  static unsigned int getMax(double &value, unsigned int &bestRank);
   
 
   /**

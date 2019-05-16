@@ -68,8 +68,8 @@ void GeneSpeciesMapping::buildFromTreerecsMapping(std::ifstream &f)
 void GeneSpeciesMapping::buildFromTrees(const std::string &geneTreeStr)
 {
   pll_utree_t *tree = LibpllParsers::readNewickFromStr(geneTreeStr);
-  int nodes = tree->tip_count + tree->inner_count;
-  for (int i = 0; i < nodes; ++i) {
+  auto nodes = tree->tip_count + tree->inner_count;
+  for (unsigned int i = 0; i < nodes; ++i) {
     auto node = tree->nodes[i];
     if (node->next) 
       continue;

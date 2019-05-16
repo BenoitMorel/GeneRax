@@ -129,10 +129,10 @@ void ParallelContext::concatenateIntVectors(const std::vector<int> &localVector,
   globalVector.resize(getSize() * localVector.size(), 0);
   MPI_Allgather(
     &localVector[0],
-    localVector.size(),
+    static_cast<int>(localVector.size()),
     MPI_INT,
     &(globalVector[0]),
-    localVector.size(),
+    static_cast<int>(localVector.size()),
     MPI_INT,
     getComm());
 }
@@ -148,10 +148,10 @@ void ParallelContext::concatenateUIntVectors(const std::vector<unsigned int> &lo
   globalVector.resize(getSize() * localVector.size(), 0);
   MPI_Allgather(
     &localVector[0],
-    localVector.size(),
+    static_cast<int>(localVector.size()),
     MPI_UNSIGNED,
     &(globalVector[0]),
-    localVector.size(),
+    static_cast<int>(localVector.size()),
     MPI_UNSIGNED,
     getComm());
 }
@@ -165,7 +165,7 @@ void ParallelContext::broadcastInt(unsigned int fromRank, int &value)
     &value,
     1,
     MPI_INT,
-    fromRank,
+    static_cast<int>(fromRank),
     getComm());
 }
 
@@ -178,7 +178,7 @@ void ParallelContext::broadcastUInt(unsigned int fromRank, unsigned int &value)
     &value,
     1,
     MPI_UNSIGNED,
-    fromRank,
+    static_cast<int>(fromRank),
     getComm());
 }
 
@@ -191,11 +191,11 @@ void ParallelContext::broadcastDouble(unsigned int fromRank, double &value)
     &value,
     1,
     MPI_DOUBLE,
-    fromRank,
+    static_cast<int>(fromRank),
     getComm());
 }
 
-int ParallelContext::getMax(double &value, unsigned int &bestRank)
+unsigned int ParallelContext::getMax(double &value, unsigned int &bestRank)
 {
   if (!_mpiEnabled) {
     bestRank = 0;

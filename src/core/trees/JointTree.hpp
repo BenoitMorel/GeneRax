@@ -39,7 +39,7 @@ public:
     double computeReconciliationLoglk ();
     double computeJointLoglk();
     void printLoglk(bool libpll = true, bool rec = true, bool joint = true, Logger &os = Logger::info);
-    pll_unode_t *getNode(int index);
+    pll_unode_t *getNode(unsigned int index);
     void applyMove(std::shared_ptr<Move> move);
     void optimizeMove(std::shared_ptr<Move> move);
   

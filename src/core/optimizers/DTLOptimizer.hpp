@@ -22,7 +22,7 @@ private:
       double minDup, double maxDup,
       double minLoss, double maxLoss, 
       double minTrans, double maxTrans, 
-      int steps,
+      unsigned int steps,
       double &bestDup,
       double &bestLoss,
       double &bestTrans,
@@ -30,7 +30,7 @@ private:
 
   static void findBestRatesDL(JointTree &jointTree, 
       double minDup, double maxDup,
-      double minLoss, double maxLoss, int steps,
+      double minLoss, double maxLoss, unsigned int steps,
       double &bestDup,
       double &bestLoss,
       double &bestLL) ;

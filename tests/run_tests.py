@@ -51,6 +51,9 @@ def test_family_with_parameters(family_dir, with_gene_tree):
   FNULL = open(os.devnull, 'w')
   subprocess.check_call(command, stdout = FNULL)
   infered_hash = get_infered_hash(output_prefix)
+  print(infered_hash)
+  print(get_infered_hash(output_prefix))
+  print(true_hash)
   assert(infered_hash == true_hash)
   print("ok!")
 

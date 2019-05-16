@@ -44,7 +44,7 @@ static std::string read_option(std::istringstream& s)
   std::ostringstream os;
   while (s.peek() != '{' && s.peek() != '+' && s.peek() != EOF)
   {
-    os.put(toupper(s.get()));
+    os.put(static_cast<char>(toupper(s.get())));
   }
   return os.str();
 }
@@ -332,7 +332,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
   /* set rate heterogeneity defaults from model */
   _num_ratecats = mix_model.ncomp;
   _num_submodels = mix_model.ncomp;
-  _rate_het = mix_model.mix_type;
+  _rate_het = static_cast<unsigned int>(mix_model.mix_type);
 
   /* allocate space for all subst matrices */
   for (size_t i = 0; i < mix_model.ncomp; ++i)
@@ -372,7 +372,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
 
       // normalize the rates
       auto last_rate = smodel.rate_sym().empty() ?
-                                  user_srates.back() : user_srates[smodel.rate_sym().back()];
+        user_srates.back() : user_srates[static_cast<unsigned int>(smodel.rate_sym().back())];
       for (auto& r: user_srates)
         r /= last_rate;
 
@@ -795,7 +795,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
     /* link rate categories to corresponding mixture components (R-matrix + freqs)*/
     if (_num_submodels == _num_ratecats)
     {
-      for (size_t i = 0; i < _num_ratecats; ++i)
+      for (unsigned int i = 0; i < _num_ratecats; ++i)
         _ratecat_submodels[i] = i;
     }
   }
@@ -814,7 +814,7 @@ std::string Model::to_string(bool print_params, unsigned int precision) const
   }
 
   if (precision)
-    model_string << std::fixed << std::setprecision(precision);
+    model_string << std::fixed << std::setprecision(static_cast<int>(precision));
 
   if (out_param_mode.at(PLLMOD_OPT_PARAM_SUBST_RATES) == ParamValue::user)
     print_param(model_string, submodel(0).uniq_subst_rates());
@@ -958,7 +958,7 @@ void assign(pll_partition_t * partition, const Model& model)
     pll_set_category_weights(partition, model.ratecat_weights().data());
 
     /* now iterate over rate matrices and set all params */
-    for (size_t i = 0; i < partition->rate_matrices; ++i)
+    for (unsigned int i = 0; i < partition->rate_matrices; ++i)
     {
       /* set base frequencies */
       assert(!model.base_freqs(i).empty());

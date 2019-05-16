@@ -73,7 +73,7 @@ public:
    *  Invalidate a CLV at a given node index
    *  Relevant for computeLikelihood(true) calls
    */
-  void invalidateCLV(int nodeIndex);
+  void invalidateCLV(unsigned int nodeIndex);
 
   static void createAndSaveRandomTree(const std::string &alignmentFiilename,
     const std::string &modelStrOrFile,
@@ -121,7 +121,7 @@ private:
 
   static double optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, double tolerance);
   
-  pll_unode_t *getNode(int nodeIndex) {return _treeinfo->subnodes[nodeIndex];}
+  pll_unode_t *getNode(unsigned int nodeIndex) {return _treeinfo->subnodes[nodeIndex];}
 private:
   std::shared_ptr<pllmod_treeinfo_t> _treeinfo;
   std::shared_ptr<pll_utree_t> _utree;

@@ -32,7 +32,7 @@ double ReconciliationEvaluation::evaluate(std::shared_ptr<pllmod_treeinfo_t> tre
   return evaluate(treeinfo->tree);
 }
 
-void ReconciliationEvaluation::invalidateCLV(int nodeIndex)
+void ReconciliationEvaluation::invalidateCLV(unsigned int nodeIndex)
 {
   reconciliationModel->invalidateCLV(nodeIndex);
 }

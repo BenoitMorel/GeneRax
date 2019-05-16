@@ -53,7 +53,7 @@ void LibpllParsers::saveUtree(pll_unode_t *utree,
 
 std::vector<unsigned int> LibpllParsers::parallelGetTreeSizes(const std::vector<FamiliesFileParser::FamilyInfo> &families) 
 {
-  auto treesNumber = families.size();
+  unsigned int treesNumber = static_cast<unsigned int>(families.size());
   std::vector<unsigned int> localTreeSizes((treesNumber - 1 ) / ParallelContext::getSize() + 1, 0);
   for (auto i = ParallelContext::getBegin(treesNumber); i < ParallelContext::getEnd(treesNumber); i ++) {
     pll_utree_t *tree = LibpllParsers::readNewickFromFile(families[i].startingGeneTree);

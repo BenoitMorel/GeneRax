@@ -27,17 +27,17 @@ void UndatedDTLModel::updateTransferSums(ScaledValue &transferSum,
     const std::vector<ScaledValue> &probabilities)
 {
   transferSum = ScaledValue();
-  for (int i = speciesNodes_.size() - 1; i >= 0; --i) {
-    auto speciesNode = speciesNodes_[i];
-    int e = speciesNode->node_index;
+  for (int i = static_cast<int>(speciesNodes_.size()) - 1; i >= 0; --i) {
+    auto speciesNode = speciesNodes_[static_cast<unsigned int>(i)];
+    auto e = speciesNode->node_index;
     ancestralCorrection[e] = probabilities[e] * _PT[e];
     if (speciesNode->parent) {
-      int p = speciesNode->parent->node_index;
+      auto p = speciesNode->parent->node_index;
       ancestralCorrection[e] += ancestralCorrection[p];
     }
   }
   for (auto speciesNode: speciesNodes_) {
-    int e = speciesNode->node_index;
+    auto e = speciesNode->node_index;
     ancestralCorrection[e] /= double(speciesNodes_.size());
     transferSum += probabilities[e] * _PT[e];
   }
@@ -193,7 +193,7 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
   }
   values[7] = getCorrectedTransferSum(gid, e) * _uE[e];
 
-  unsigned int maxValueIndex = distance(values.begin(), max_element(values.begin(), values.end()));
+  unsigned int maxValueIndex = static_cast<unsigned int>(distance(values.begin(), max_element(values.begin(), values.end())));
   // safety check
   if (values[maxValueIndex].isNull()) {
     ScaledValue proba;
@@ -327,7 +327,7 @@ void UndatedDTLModel::computeRootLikelihood(pll_unode_t *virtualRoot)
   resetTransferSums(_survivingTransferSums[u], _ancestralCorrection[u]);
   for (unsigned int it = 0; it < IT; ++it) {
     for (auto speciesNode: speciesNodes_) {
-      int e = speciesNode->node_index;
+      unsigned int e = speciesNode->node_index;
       computeProbability(virtualRoot, speciesNode, _uq[u][e], true);
     }
     updateTransferSums(_survivingTransferSums[u], _ancestralCorrection[u], _uq[u]);
