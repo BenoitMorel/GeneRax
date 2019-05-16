@@ -2,11 +2,15 @@
 
 #include <vector>
 #include <string>
+#include <IO/ParallelOfstream.hpp>
 extern "C" {
 #include <pll.h>
 }
-#include <IO/ParallelOfstream.hpp>
 
+typedef struct pll_utree_s pll_utree_t;
+typedef struct pll_unode_s pll_unode_t;
+typedef struct pll_rtree_s pll_rtree_t;
+typedef struct pll_rnode_s pll_rnode_t;
 
 class Scenario {
 public:

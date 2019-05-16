@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <IO/LibpllParsers.hpp>
 #include <IO/Logger.hpp>
+extern "C" {
+#include <pll.h>
+}
 
 void GeneSpeciesMapping::fill(const std::string &mappingFile, const std::string &geneTreeStr) 
 {

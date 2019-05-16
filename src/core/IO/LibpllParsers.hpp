@@ -1,11 +1,12 @@
 #pragma once
 
-extern "C" {
-#include <pll.h>
-}
 #include <vector>
 #include <string>
 #include <IO/FamiliesFileParser.hpp>
+
+typedef struct pll_utree_s pll_utree_t;
+typedef struct pll_unode_s pll_unode_t;
+typedef struct pll_rtree_s pll_rtree_t;
 
 
 class LibpllException: public std::exception {
