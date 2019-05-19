@@ -202,6 +202,8 @@ void inferReconciliation(
   PerCoreGeneTrees geneTrees(families);
   std::string reconciliationsDir = FileSystem::joinPaths(outputDir, "reconciliations");
   FileSystem::mkdir(reconciliationsDir, true);
+  auto speciesNodesCount = speciesTree->tip_count + speciesTree->inner_count;
+  std::vector<double> dup_count(speciesNodesCount, 0.0);
   ParallelContext::barrier();
   for (auto &tree: geneTrees.getTrees()) {
     std::string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
@@ -213,7 +215,21 @@ void inferReconciliation(
     evaluation.inferMLScenario(scenario);
     scenario.saveEventsCounts(eventCountsFile, false);
     scenario.saveTreeWithEvents(treeWithEventsFile, false);
+    for (auto &event: scenario.getEvents()) {
+      if (event.type == Scenario::D) {
+        dup_count[event.speciesNode]++;
+      } 
+    }
   }
+  ParallelContext::sumVectorDouble(dup_count);
+  for (unsigned int i = 0; i < speciesNodesCount; ++i) {
+    Logger::info << dup_count[i] << std::endl;
+    speciesTree->nodes[i]->length = dup_count[i] / static_cast<double>(families.size());
+  }
+  auto speciesTreeStr = pll_rtree_export_newick(speciesTree->root, 0);
+  Logger::info << "Species tree with average number of duplications (per familiy)" << std::endl;
+  Logger::info << speciesTreeStr << std::endl;
+  free(speciesTreeStr);
   pll_rtree_destroy(speciesTree, 0);
 }
 

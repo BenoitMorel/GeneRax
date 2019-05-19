@@ -58,6 +58,7 @@ public:
     std::vector<unsigned int> &globalVector);
 
   static void sumDouble(double &value);
+  static void sumVectorDouble(std::vector<double> &value);
 
   /**
    *  broadcast a value from a given rank

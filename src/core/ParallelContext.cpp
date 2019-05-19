@@ -96,8 +96,18 @@ void ParallelContext::sumDouble(double &value)
   }
   double sum = 0;
   barrier();
-  barrier();
   MPI_Allreduce(&value, &sum, 1, MPI_DOUBLE, MPI_SUM, getComm());
+  value = sum;
+}
+
+void ParallelContext::sumVectorDouble(std::vector<double> &value)
+{
+  if (!_mpiEnabled) {
+    return;
+  }
+  std::vector<double> sum(value.size());;
+  barrier();
+  MPI_Allreduce(&(value[0]), &(sum[0]), value.size(), MPI_DOUBLE, MPI_SUM, getComm());
   value = sum;
 }
 

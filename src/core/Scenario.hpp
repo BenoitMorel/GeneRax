@@ -47,6 +47,7 @@ public:
 
   void saveTreeWithEvents(const std::string &filename, bool masterRankOnly = true);
 
+  const std::vector<Event> &getEvents() {return _events;}
 private:
   static const char *eventNames[];
   std::vector<Event> _events;
