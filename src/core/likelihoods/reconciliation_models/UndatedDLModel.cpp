@@ -45,10 +45,6 @@ void UndatedDLModel::setRates(double dupRate,
   }
   for (auto speciesNode: speciesNodes_) {
     auto e = speciesNode->node_index;
-    /*
-    _PD[e] *= speciesNode->length;
-    _PL[e] *= speciesNode->length;
-    */
     double sum = _PD[e] + _PL[e] + _PS[e];
     _PD[e] /= sum;
     _PL[e] /= sum;

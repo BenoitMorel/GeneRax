@@ -59,12 +59,19 @@ void UndatedDTLModel::setRates(double dupRate,
   double transferRate,
   const std::vector<double> &speciesScalers) 
 {
-  (void)speciesScalers;
   geneRoot_ = 0;
   _PD = std::vector<double>(speciesNodesCount_, dupRate);
   _PL = std::vector<double>(speciesNodesCount_, lossRate);
   _PT = std::vector<double>(speciesNodesCount_, transferRate);
   _PS = std::vector<double>(speciesNodesCount_, 1.0);
+  if (speciesScalers.size()) {
+    assert(speciesScalers.size() == static_cast<size_t>(speciesNodesCount_));
+    for (unsigned int i = 0; i < speciesNodesCount_; ++i) {
+      _PD[i] *= speciesScalers[i];
+      _PT[i] *= speciesScalers[i];
+      _PL[i] *= speciesScalers[i];
+    }
+  }
   for (auto speciesNode: speciesNodes_) {
     auto e = speciesNode->node_index;
     auto sum = _PD[e] + _PL[e] + _PT[e] + _PS[e];
