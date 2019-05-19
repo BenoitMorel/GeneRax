@@ -8,7 +8,8 @@
 #include <algorithm>
 #include <likelihoods/ReconciliationEvaluation.hpp>
 #include <iostream>
-  
+#include <cmath>
+
 bool isValidLikelihood(double ll) {
   return std::isnormal(ll) && ll < -0.0000001;
 }

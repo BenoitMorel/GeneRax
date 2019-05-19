@@ -3,6 +3,9 @@
 #include <streambuf>
 #include <algorithm>
 #include <ParallelContext.hpp>
+extern "C" {
+#include <pll.h>
+}
 
 pll_utree_t *LibpllParsers::readNewickFromFile(const std::string &newickFilename)
 {

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <Scenario.hpp>
 
+#include <cmath>
 
 const int CACHE_SIZE = 100000;
 
