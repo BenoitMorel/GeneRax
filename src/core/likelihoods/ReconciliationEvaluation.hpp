@@ -5,7 +5,7 @@
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 #include <vector>
 #include <memory>
-
+#include <maths/DTLRates.hpp>
 
   
 /**
@@ -37,13 +37,9 @@ public:
 
   /*
    * Set the per-species lineage rates
-   *  @param dupRate
-   *  @param lossRate
-   *  @param transferRate
+   *  @param ratesVector DTL rates indexed with species node index
    */
-  void setRates(const std::vector<double> &dupRates,
-      const std::vector<double> &lossRates,
-      const std::vector<double>transferRates);
+  void setRates(const DTLRatesVector &ratesVector);
 
   pll_unode_t *getRoot() {return reconciliationModel->getRoot();}
   void setRoot(pll_unode_t * root) {reconciliationModel->setRoot(root);}

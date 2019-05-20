@@ -178,6 +178,9 @@ void optimizeRates(bool userDTLRates,
   PerCoreGeneTrees geneTrees(families);
   pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
   rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, recModel);
+  //auto ratesVector = DTLOptimizer::optimizeDTLRatesVector(geneTrees, speciesTree, recModel);
+  //Logger::info << "Optimized rates vector: " << ratesVector << std::endl;
+  //Logger::info << "Optimized rates vector: " << ratesVector << std::endl;
   pll_rtree_destroy(speciesTree, 0);
   ParallelContext::barrier(); 
   auto elapsed = (Logger::getElapsedSec() - start);
@@ -222,10 +225,12 @@ void inferReconciliation(
     }
   }
   ParallelContext::sumVectorDouble(dup_count);
+  /*
   for (unsigned int i = 0; i < speciesNodesCount; ++i) {
     Logger::info << dup_count[i] << std::endl;
     speciesTree->nodes[i]->length = dup_count[i] / static_cast<double>(families.size());
   }
+  */
   auto speciesTreeStr = pll_rtree_export_newick(speciesTree->root, 0);
   Logger::info << "Species tree with average number of duplications (per familiy)" << std::endl;
   Logger::info << speciesTreeStr << std::endl;

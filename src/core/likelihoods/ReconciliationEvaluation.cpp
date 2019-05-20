@@ -21,10 +21,16 @@ void ReconciliationEvaluation::setRates(double dupRate, double lossRate,
   reconciliationModel->setRates(dupRate, lossRate, transferRate);
 }
   
-void ReconciliationEvaluation::setRates(const std::vector<double> &dupRates,
-      const std::vector<double> &lossRates,
-      const std::vector<double>transferRates)
+void ReconciliationEvaluation::setRates(const DTLRatesVector &ratesVector)
 {
+  std::vector<double> dupRates;
+  std::vector<double> lossRates;
+  std::vector<double> transferRates;
+  for (auto &r: ratesVector.getRatesVector()) {
+    dupRates.push_back(r.rates[0]); 
+    lossRates.push_back(r.rates[1]); 
+    transferRates.push_back(r.rates[2]); 
+  }
   reconciliationModel->setRates(dupRates, lossRates, transferRates);
 }
 

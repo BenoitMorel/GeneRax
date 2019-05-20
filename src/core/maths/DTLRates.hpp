@@ -1,5 +1,7 @@
 #pragma once
 
+#include <random>
+
 struct DTLRates {
   double rates[3];
   double ll;
@@ -55,3 +57,98 @@ struct DTLRates {
   }
 };
 
+class DTLRatesVector {
+public:
+  DTLRatesVector(unsigned int size): _rates(size), _ll(0.0) {}
+  DTLRatesVector(unsigned int size, const DTLRates &rate): _rates(size, rate), _ll(0.0) {}  
+  
+  void initRandom(double min = 0.00001, double max = 1.0) {
+    std::random_device rd;  
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(min, max);
+    for (auto &rate: _rates) {
+      rate = DTLRates(dis(gen), dis(gen), dis(gen));
+    }
+  }
+  
+  inline bool operator <(const DTLRatesVector& v) const {
+    return _ll > v._ll;
+  }
+  
+  inline bool operator <=(const DTLRatesVector& v) const {
+    return _ll >=  v._ll;
+  }
+ 
+  inline double getLL() const {return _ll;}
+  
+  inline void setLL(double ll) { _ll = ll;}
+
+  inline unsigned int size() const {return _rates.size();}
+
+  inline const DTLRates &getRates(unsigned int index) const {return _rates[index];}
+  
+  inline DTLRates &getRates(unsigned int index) {return _rates[index];}
+
+  inline const std::vector<DTLRates> &getRatesVector() const {return _rates;}
+
+  inline void ensureValidity() {
+    for (auto &r: _rates) {
+      r.ensureValidity();
+    }
+  }
+
+  inline DTLRatesVector operator+(const DTLRatesVector& v) const {
+    assert(size() == v.size());
+    DTLRatesVector res(size());
+    for (unsigned int i = 0; i < size(); ++i) {
+      res.getRates(i) = getRates(i) + v.getRates(i); 
+    }
+    return res;
+  }
+  
+  inline DTLRatesVector operator-(const DTLRatesVector& v) const {
+    assert(size() == v.size());
+    DTLRatesVector res(size());
+    for (unsigned int i = 0; i < size(); ++i) {
+      res.getRates(i) = getRates(i) - v.getRates(i); 
+    }
+    return res;
+  }
+  
+  inline DTLRatesVector operator*(double v) const {
+    DTLRatesVector res(size());
+    for (unsigned int i = 0; i < size(); ++i) {
+      res.getRates(i) = getRates(i) * v; 
+    }
+    return res;
+  }
+  
+  inline DTLRatesVector operator/(double v) const {
+    DTLRatesVector res(size());
+    for (unsigned int i = 0; i < size(); ++i) {
+      res.getRates(i) = getRates(i) / v; 
+    }
+    return res;
+  }
+ 
+  friend std::ostream& operator<<(std::ostream& os, const DTLRatesVector &v) {
+    os << "[";
+    for (auto &rates: v._rates) {
+      os << rates << " ";
+    }
+    return os;
+  }
+  
+  inline double distance(const DTLRatesVector &v) const {
+    assert(v.size() == size());
+    double res = 0.0;
+    for (unsigned int i = 0; i < size(); ++i) {
+      res += getRates(i).distance(v.getRates(i));
+    }
+    return res;
+  }
+
+private:
+  std::vector<DTLRates> _rates;
+  double _ll;
+};
