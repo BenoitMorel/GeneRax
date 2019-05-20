@@ -10,7 +10,6 @@ set(jointsearch-core_SOURCES ParallelContext.cpp
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ReconciliationEvaluation.cpp
   likelihoods/reconciliation_models/AbstractReconciliationModel.cpp
-  likelihoods/reconciliation_models/DatedDLModel.cpp
   likelihoods/reconciliation_models/UndatedDLModel.cpp
   likelihoods/reconciliation_models/UndatedDTLModel.cpp
   optimizers/DTLOptimizer.cpp

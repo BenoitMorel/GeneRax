@@ -118,7 +118,7 @@ void JSArguments::printHelp() {
   Logger::info << "-s, --species-tree <SPECIES TREE>" << std::endl;
   Logger::info << "-m, --map <GENE_SPECIES_MAPPING>" << std::endl;
   Logger::info << "--strategy <STRATEGY>  {EVAL, SPR}" << std::endl;
-  Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << std::endl;
+  Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL}" << std::endl;
   Logger::info << "--rec-opt <reconciliationOpt>  {grid, simplex}" << std::endl;
   Logger::info << "--libpll-model <libpllModel>  {GTR, LG, DAYHOFF etc.}" << std::endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << std::endl;

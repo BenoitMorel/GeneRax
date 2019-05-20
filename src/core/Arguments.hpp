@@ -38,8 +38,6 @@ public:
       return "UndatedDL";
     case UndatedDTL:
       return "UndatedDTL";
-    case DatedDL:
-      return "DatedDL";
     };
     exit(41);
   }
@@ -50,8 +48,6 @@ public:
       return UndatedDL;
     } else if (str == "UndatedDTL") {
       return UndatedDTL;
-    } else if (str == "DatedDL") {
-      return DatedDL;
     } else {
       Logger::info << "Invalid reconciliation model " << str << std::endl;
       exit(41);

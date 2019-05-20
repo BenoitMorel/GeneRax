@@ -29,7 +29,18 @@ public:
   /**
    * Set the DTL rates, and update probabilities relative to the species tree only
    */
-  virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0, const std::vector<double> &speciesScalers = std::vector<double>()) = 0;
+  void setRates(double dupRate, double lossRate, double transferRate = 0.0);
+  
+  /*
+   * Set the per-species lineage rates
+   *  @param dupRate
+   *  @param lossRate
+   *  @param transferRate
+   */
+  virtual void setRates(const std::vector<double> &dupRates,
+      const std::vector<double> &lossRates,
+      const std::vector<double> &transferRates) = 0;
+
   
   /**
    * (incrementally) compute and return the likelihood of the input gene tree 

@@ -92,7 +92,7 @@ void SpeciesRaxArguments::printHelp() {
   Logger::info << "-h, --help" << std::endl;
   Logger::info << "-f, --families <FAMILIES_INFORMATION>" << std::endl;
   Logger::info << "-s, --species-tree <SPECIES TREE>" << std::endl;
-  Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, DatedDL}" << std::endl;
+  Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL}" << std::endl;
   Logger::info << "--rec-opt <reconciliationOpt>  {window, simplex}" << std::endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << std::endl;
   Logger::info << "--unrooted-gene-tree" << std::endl;

@@ -1,7 +1,6 @@
 
 #include "ReconciliationEvaluation.hpp"
 #include <IO/Logger.hpp>
-#include <likelihoods/reconciliation_models/DatedDLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <cmath>
@@ -20,6 +19,13 @@ void ReconciliationEvaluation::setRates(double dupRate, double lossRate,
   double transferRate)
 {
   reconciliationModel->setRates(dupRate, lossRate, transferRate);
+}
+  
+void ReconciliationEvaluation::setRates(const std::vector<double> &dupRates,
+      const std::vector<double> &lossRates,
+      const std::vector<double>transferRates)
+{
+  reconciliationModel->setRates(dupRates, lossRates, transferRates);
 }
 
 double ReconciliationEvaluation::evaluate(pll_utree_t *utree)
@@ -44,8 +50,6 @@ std::shared_ptr<AbstractReconciliationModel> ReconciliationEvaluation::getRecMod
     return  std::make_shared<UndatedDLModel>();
   case UndatedDTL:
     return  std::make_shared<UndatedDTLModel>();
-  case DatedDL:
-    return  std::make_shared<DatedDLModel>();
   }
   assert(false);
   return 0;

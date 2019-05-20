@@ -22,7 +22,9 @@ public:
   virtual ~UndatedDLModel();
   
   // overloaded from parent
-  virtual void setRates(double dupRate, double lossRate, double transferRate = 0.0, const std::vector<double> &speciesScalers = std::vector<double>());  
+  virtual void setRates(const std::vector<double> &dupRates,
+      const std::vector<double> &lossRates,
+      const std::vector<double> &transferRates);
 protected:
   // overload from parent
   virtual void setInitialGeneTree(pll_utree_t *tree);

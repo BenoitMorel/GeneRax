@@ -27,23 +27,17 @@ static double solveSecondDegreePolynome(double a, double b, double c)
   return 2 * c / (-b + sqrt(b * b - 4 * a * c));
 }
 
-void UndatedDLModel::setRates(double dupRate, 
-  double lossRate,
-  double transferRates,
-  const std::vector<double> &speciesScalers) 
+void UndatedDLModel::setRates(const std::vector<double> &dupRates,
+      const std::vector<double> &lossRates,
+      const std::vector<double> &transferRates)
 {
+  assert(speciesNodesCount_ == dupRates.size());
+  assert(speciesNodesCount_ == lossRates.size());
   (void)transferRates;  
-  geneRoot_ = 0;
-  _PD = std::vector<double>(speciesNodesCount_, dupRate);
-  _PL = std::vector<double>(speciesNodesCount_, lossRate);
+  _PD = dupRates;
+  _PL = lossRates;
   _PS = std::vector<double>(speciesNodesCount_, 1.0);
-  if (speciesScalers.size()) {
-    assert(speciesScalers.size() == static_cast<size_t>(speciesNodesCount_));
-    for (unsigned int i = 0; i < speciesNodesCount_; ++i) {
-      _PD[i] *= speciesScalers[i];
-      _PL[i] *= speciesScalers[i];
-    }
-  }
+  geneRoot_ = 0;
   for (auto speciesNode: speciesNodes_) {
     auto e = speciesNode->node_index;
     double sum = _PD[e] + _PL[e] + _PS[e];
@@ -68,8 +62,6 @@ void UndatedDLModel::setRates(double dupRate,
 }
 
 UndatedDLModel::~UndatedDLModel() { }
-
-
 
 void UndatedDLModel::updateCLV(pll_unode_t *geneNode)
 {

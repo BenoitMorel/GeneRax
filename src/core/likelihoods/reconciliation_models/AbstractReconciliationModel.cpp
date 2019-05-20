@@ -66,6 +66,15 @@ void AbstractReconciliationModel::fillNodesPostOrder(pll_rnode_t *node, std::vec
   nodes.push_back(node);
 }
 
+void AbstractReconciliationModel::setRates(double dupRate, 
+  double lossRate,
+  double transferRate)
+{
+  std::vector<double> dupRates(speciesNodesCount_, dupRate);
+  std::vector<double> lossRates(speciesNodesCount_, lossRate);
+  std::vector<double> transferRates(speciesNodesCount_, transferRate);
+  setRates(dupRates, lossRates, transferRates);
+}
 
 void AbstractReconciliationModel::setSpeciesTree(pll_rtree_t *speciesTree)
 {

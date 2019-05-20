@@ -3,7 +3,7 @@
 #include <cassert>
 
 enum RecModel {
-  UndatedDL, UndatedDTL, DatedDL
+  UndatedDL, UndatedDTL
 };
 
 class Enums {
@@ -12,7 +12,7 @@ public:
   static bool accountsForTransfers(RecModel m) 
   {
     switch (m) {
-    case UndatedDL: case DatedDL:
+    case UndatedDL:
       return false;
     case UndatedDTL:
       return true;

@@ -122,13 +122,11 @@ int internal_main(int argc, char** argv, void* comm)
         stats << " " << std::endl;
       }
       jointTree->save(allTreesFile, !firstRun);
-      if (arguments.reconciliationModel != DatedDL) {
-        Scenario scenario;
-        jointTree->inferMLScenario(scenario);
-        Logger::info << std::endl;
-        scenario.saveEventsCounts(eventCountsFile);
-        scenario.saveTreeWithEvents(treeWithEventsFile);
-      }
+      Scenario scenario;
+      jointTree->inferMLScenario(scenario);
+      Logger::info << std::endl;
+      scenario.saveEventsCounts(eventCountsFile);
+      scenario.saveTreeWithEvents(treeWithEventsFile);
     }
     firstRun = false;
   }  
