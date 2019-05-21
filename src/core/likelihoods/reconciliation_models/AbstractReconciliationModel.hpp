@@ -1,12 +1,12 @@
 #pragma once
 
 #include <likelihoods/LibpllEvaluation.hpp>
+#include <likelihoods/SubtreeRepeatsCache.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <Scenario.hpp>
 
 #include <unordered_set>
 #include <maths/ScaledValue.hpp>
-
 
 /**
  *  Interface and common implementations for 
@@ -137,7 +137,7 @@ private:
   // is the CLV up to date?
   std::vector<bool> _isCLVUpdated;
   std::vector<pll_unode_t *> _allNodes;
-
+  SubtreeRepeatsCache _cache;
 };
 
 

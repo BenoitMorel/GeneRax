@@ -1,5 +1,8 @@
 #include "AbstractReconciliationModel.hpp"
 #include <IO/Logger.hpp>
+
+
+
   
 AbstractReconciliationModel::AbstractReconciliationModel():
   rootedGeneTree_(false),
@@ -46,6 +49,7 @@ void AbstractReconciliationModel::mapGenesToSpecies()
       geneToSpecies_[node->node_index] = speciesNameToId_[speciesName];
     }
   }
+  _cache.setGenesToSpecies(geneToSpecies_);
 }
 
 void AbstractReconciliationModel::setInitialGeneTree(pll_utree_t *tree)
@@ -54,6 +58,7 @@ void AbstractReconciliationModel::setInitialGeneTree(pll_utree_t *tree)
   mapGenesToSpecies();
   _maxGeneId = static_cast<unsigned int>(_allNodes.size() - 1);
   invalidateAllCLVs();
+  _cache.resetCache();
 }
 
 void AbstractReconciliationModel::fillNodesPostOrder(pll_rnode_t *node, std::vector<pll_rnode_t *> &nodes) 
@@ -74,6 +79,7 @@ void AbstractReconciliationModel::setRates(double dupRate,
   std::vector<double> lossRates(speciesNodesCount_, lossRate);
   std::vector<double> transferRates(speciesNodesCount_, transferRate);
   setRates(dupRates, lossRates, transferRates);
+  _cache.resetCache();
 }
 
 void AbstractReconciliationModel::setSpeciesTree(pll_rtree_t *speciesTree)
@@ -88,6 +94,7 @@ void AbstractReconciliationModel::setSpeciesTree(pll_rtree_t *speciesTree)
       speciesNameToId_[node->label] = node->node_index;
     }
   }
+  _cache.resetCache(); 
 }
 
 void AbstractReconciliationModel::getRoots(std::vector<pll_unode_t *> &roots,
