@@ -123,21 +123,13 @@ JointTree::JointTree(const std::string &newick_string,
     double recWeight,
     bool safeMode,
     bool optimizeDTLRates,
-    double dupRate,
-    double lossRate,
-    double transRate):
-  dupRate_(dupRate),
-  lossRate_(lossRate),
-  transRate_(transRate),
+    const DTLRatesVector &ratesVector):
   optimizeDTLRates_(optimizeDTLRates),
   safeMode_(safeMode),
   enableReconciliation_(true),
   recOpt_(reconciliationOpt),
   _recWeight(recWeight)
 {
-  assert(dupRate >= 0.0);
-  assert(lossRate >= 0.0);
-  assert(transRate >= 0.0);
    info_.alignmentFilename = alignment_file;
   info_.model = substitutionModel;
   libpllEvaluation_ = LibpllEvaluation::buildFromString(newick_string, info_.alignmentFilename, info_.model);
@@ -148,7 +140,7 @@ JointTree::JointTree(const std::string &newick_string,
       geneSpeciesMap_, 
       reconciliationModel,
       rootedGeneTree);
-  setRates(dupRate, lossRate, transRate);
+  setRates(ratesVector);
 
 }
 
@@ -241,15 +233,14 @@ void JointTree::invalidateCLV(pll_unode_s *node)
 }
 
 
-
-void JointTree::setRates(double dup, double loss, double trans) { 
-  dupRate_ = dup; 
-  lossRate_ = loss;
-  transRate_ = trans;
+void JointTree::setRates(const DTLRatesVector &ratesVector)
+{
+  _ratesVector = ratesVector;
   if (enableReconciliation_) {
-    reconciliationEvaluation_->setRates(dup, loss, trans);
+    reconciliationEvaluation_->setRates(ratesVector);
   }
 }
+
 
 void JointTree::printInfo() 
 {

@@ -5,8 +5,8 @@
 #include <IO/Logger.hpp>
 #include <search/Moves.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
+#include <maths/DTLRates.hpp>
 #include <enums.hpp>
-
 #include <sstream>
 #include <stack>
 
@@ -28,9 +28,7 @@ public:
               double recWeight,
               bool safeMode,
               bool optimizeDTLRates,
-              double dupRate,
-              double lossRate,
-              double transRate);
+              const DTLRatesVector &ratesVector);
 
     virtual ~JointTree();
     void printLibpllTree() const;
@@ -49,16 +47,14 @@ public:
     void rollbackLastMove();
     void save(const std::string &fileName, bool append);
     std::shared_ptr<pllmod_treeinfo_t> getTreeInfo();
-    void setRates(double dup, double loss, double trans = 0);
+    void setRates(const DTLRatesVector &ratesVector);
     pll_rtree_t *getSpeciesTree() {return pllSpeciesTree_;}
     size_t getUnrootedTreeHash();
     std::shared_ptr<ReconciliationEvaluation> getReconciliationEvaluation() {return reconciliationEvaluation_;}
     
     pll_unode_t *getRoot() {return reconciliationEvaluation_->getRoot();}
     void setRoot(pll_unode_t * root) {reconciliationEvaluation_->setRoot(root);}
-    double getDupRate() const {return dupRate_;}
-    double getLossRate() const {return lossRate_;}
-    double getTransferRate() const {return transRate_;}
+    const DTLRatesVector &getRatesVector() const {return _ratesVector;}
     void inferMLScenario(Scenario &scenario) {
       reconciliationEvaluation_->inferMLScenario(scenario);
     }
@@ -71,9 +67,7 @@ private:
     pll_rtree_t *pllSpeciesTree_;
     GeneSpeciesMapping geneSpeciesMap_;
     LibpllAlignmentInfo info_;
-    double dupRate_;
-    double lossRate_;
-    double transRate_;
+    DTLRatesVector _ratesVector;
     std::stack<std::shared_ptr<Rollback> > rollbacks_;
     double reconciliationLL_;
     bool optimizeDTLRates_;

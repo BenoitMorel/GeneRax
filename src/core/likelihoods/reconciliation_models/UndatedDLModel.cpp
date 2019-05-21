@@ -5,8 +5,6 @@
 
 #include <cmath>
 
-const int CACHE_SIZE = 100000;
-
 UndatedDLModel::UndatedDLModel()
 {
   _maxGeneId = 1;

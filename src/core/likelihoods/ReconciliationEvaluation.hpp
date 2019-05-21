@@ -68,5 +68,6 @@ private:
   std::shared_ptr<AbstractReconciliationModel> getRecModelObject(RecModel recModel);
   std::shared_ptr<AbstractReconciliationModel> reconciliationModel;
   RecModel _model;
+  unsigned int _speciesCount;
 };
 

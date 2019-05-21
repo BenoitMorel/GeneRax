@@ -37,14 +37,12 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
     const std::string &mappingFile,
     const std::string &alignmentFile,
     const std::string &speciesTreeFile,
-    const std::string libpllModel, 
+    const std::string &libpllModel, 
+    const std::string &ratesFile,
     RecModel recModel,
     RecOpt recOpt,
     bool rootedGeneTree,
     double recWeight,
-    double dupRate,
-    double lossRate, 
-    double transferRate,
     bool enableRec,
     int sprRadius,
     const std::string &outputGeneTree,
@@ -54,6 +52,7 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
   std::vector<std::string> geneTreeStrings;
   getTreeStrings(startingGeneTreeFile, geneTreeStrings);
   assert(geneTreeStrings.size() == 1);
+  DTLRatesVector ratesVector(ratesFile);
   auto jointTree = std::make_shared<JointTree>(geneTreeStrings[0],
       alignmentFile,
       speciesTreeFile,
@@ -65,9 +64,7 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
       recWeight,
       false, //check
       false, // optimize DTL
-      dupRate,
-      lossRate,
-      transferRate
+      ratesVector
       );
   jointTree->enableReconciliation(enableRec);
   Logger::info << "Taxa number: " << jointTree->getGeneTaxaNumber() << std::endl;
@@ -96,7 +93,7 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
 
 int optimizeGeneTreesMain(int argc, char** argv, void* comm)
 {
-  assert(argc == 18);
+  assert(argc == 16);
   ParallelContext::init(comm);
   Logger::timed << "Starting optimizeGeneTreesSlave" << std::endl;
   int i = 2;
@@ -105,14 +102,12 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
   std::string alignmentFile(argv[i++]);
   std::string speciesTreeFile(argv[i++]);
   std::string libpllModel(argv[i++]);
+  std::string ratesFile(argv[i++]);
   Logger::info << "LibpllModel " << libpllModel << std::endl;
   RecModel recModel = RecModel(atoi(argv[i++])); 
   RecOpt recOpt = RecOpt(atoi(argv[i++])); 
   bool rootedGeneTree = bool(atoi(argv[i++]));
   double recWeight = double(atof(argv[i++]));
-  double dupRate = double(atof(argv[i++]));
-  double lossRate = double(atof(argv[i++]));
-  double transferRate = double(atof(argv[i++]));
   bool enableRec = bool(atoi(argv[i++]));
   int sprRadius = atoi(argv[i++]);
   std::string outputGeneTree(argv[i++]);
@@ -122,13 +117,11 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
       alignmentFile,
       speciesTreeFile,
       libpllModel,
+      ratesFile,
       recModel,
       recOpt,
       rootedGeneTree,
       recWeight,
-      dupRate,
-      lossRate,
-      transferRate,
       enableRec,
       sprRadius,
       outputGeneTree,

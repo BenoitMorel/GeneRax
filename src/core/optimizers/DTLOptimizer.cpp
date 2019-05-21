@@ -16,7 +16,7 @@ bool isValidLikelihood(double ll) {
 
 void updateLL(DTLRates &rates, JointTree &jointTree) {
   rates.ensureValidity();
-  jointTree.setRates(rates.rates[0], rates.rates[1], rates.rates[2]);
+  jointTree.setRates(DTLRatesVector(rates));
   rates.ll = jointTree.computeReconciliationLoglk();
   if (!isValidLikelihood(rates.ll)) {
     rates.ll = -100000000000.0;
@@ -70,7 +70,7 @@ void DTLOptimizer::findBestRatesDL(JointTree &jointTree,
     auto j = s % steps;
     double dup = minDup + (maxDup - minDup) * double(i) / double(steps);
     double loss = minLoss + (maxLoss - minLoss) * double(j) / double(steps);
-    jointTree.setRates(dup, loss);
+    jointTree.setRates(DTLRatesVector(DTLRates(dup, loss)));
     double newLL = jointTree.computeReconciliationLoglk();
     if (!isValidLikelihood(newLL)) {
       continue;
@@ -85,7 +85,7 @@ void DTLOptimizer::findBestRatesDL(JointTree &jointTree,
   ParallelContext::getMax(bestLL, bestRank);
   ParallelContext::broadcastDouble(bestRank, bestDup);
   ParallelContext::broadcastDouble(bestRank, bestLoss);
-  jointTree.setRates(bestDup, bestLoss);
+  jointTree.setRates(DTLRatesVector(DTLRates(bestDup, bestLoss)));
 }
 
 void DTLOptimizer::findBestRatesDTL(JointTree &jointTree,
@@ -109,7 +109,7 @@ void DTLOptimizer::findBestRatesDTL(JointTree &jointTree,
     double dup = minDup + (maxDup - minDup) * double(i) / double(steps);
     double loss = minLoss + (maxLoss - minLoss) * double(j) / double(steps);
     double trans = minTrans + (maxTrans - minTrans) * double(k) / double(steps);
-    jointTree.setRates(dup, loss, trans);
+    jointTree.setRates(DTLRatesVector(DTLRates(dup, loss, trans)));
     double newLL = jointTree.computeReconciliationLoglk();
     if (!isValidLikelihood(newLL)) {
       continue;
@@ -126,7 +126,7 @@ void DTLOptimizer::findBestRatesDTL(JointTree &jointTree,
   ParallelContext::broadcastDouble(bestRank, bestDup);
   ParallelContext::broadcastDouble(bestRank, bestLoss);
   ParallelContext::broadcastDouble(bestRank, bestTrans);
-  jointTree.setRates(bestDup, bestLoss, bestTrans);
+  jointTree.setRates(DTLRatesVector(DTLRates(bestDup, bestLoss, bestTrans)));
 }
 
 
@@ -139,10 +139,12 @@ void DTLOptimizer::optimizeDTLRates(JointTree &jointTree, RecOpt method) {
     optimizeRateSimplex(jointTree, true);
     break;
   }
+  /*
   Logger::info << "best rates " << std::endl;
   Logger::info << "D " << jointTree.getDupRate() << std::endl;
   Logger::info << "L " << jointTree.getLossRate() << std::endl;
   Logger::info << "T " << jointTree.getTransferRate() << std::endl;
+  */
 }
 
 void DTLOptimizer::optimizeDLRates(JointTree &jointTree, RecOpt method) {
@@ -154,9 +156,11 @@ void DTLOptimizer::optimizeDLRates(JointTree &jointTree, RecOpt method) {
     optimizeRateSimplex(jointTree, false);
     break;
   }
+  /*
   Logger::info << "best rates " << std::endl;
   Logger::info << "D " << jointTree.getDupRate() << std::endl;
   Logger::info << "L " << jointTree.getLossRate() << std::endl;
+  */
 }
 
 
@@ -294,8 +298,9 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
   updateLL(rates[0], jointTree);
 }
 
-DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
+DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, DTLRatesVector *previousVector)
 {
+  std::default_random_engine generator;
   unsigned int speciesNumber = speciesTree->inner_count + speciesTree->tip_count;
   unsigned int freeRates = speciesNumber;
   if (Enums::accountsForTransfers(model)) {
@@ -304,14 +309,17 @@ DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees,
     freeRates *= 2;
   }
   const double minRates = 0.00001;
-  const double maxRates = 10.0;
+  const double maxRates = 1.0;
   DTLRatesVector nullRates(speciesNumber);
   std::vector<DTLRatesVector> rates(freeRates + 1, nullRates);
   assert(rates.size() > 2);
+  for (auto &rate: rates) {
+    rate.initRandom(minRates, maxRates, generator);
+  }
   rates[0] = nullRates;
   rates[1] = DTLRatesVector(speciesNumber, DTLRates(maxRates, maxRates, maxRates));
-  for (auto &rate: rates) {
-    rate.initRandom(minRates, maxRates);
+  if (previousVector && previousVector->size() == speciesNumber) {
+    rates[2] = *previousVector;
   }
   int llCalls = 0;
   for (auto &r: rates) {
@@ -320,8 +328,9 @@ DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees,
   }
   DTLRatesVector worstRate(nullRates);
   int currentIt = 0;
-  while (worstRate.distance(rates.back()) > 0.005) {
+  while (worstRate.distance(rates.back()) > 0.001) {
     sort(rates.begin(), rates.end());
+    Logger::info << "ll " << rates[0].getLL() << std::endl;
     worstRate = rates.back();
     // centroid
     DTLRatesVector x0(nullRates);
@@ -338,14 +347,8 @@ DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees,
     DTLRatesVector previous(nullRates);
     DTLRatesVector current = x1;
     current.setLL(-10000000000.0);
-    int i = 0;
-    int downgrades = 0;
-    int upgrades = 0;
     double stepSize = 1 / double(iterations - 1);
-    do { //for (int i = 0; i < iterations; i++) {
-      if (upgrades > 2) {
-        stepSize *= 2;
-      }
+    for (int i = 0; i < iterations; i++) {
       previous = current;
       current = x1 + ((x2 - x1) * i * stepSize);
       updateLL(current, geneTrees, speciesTree, model);
@@ -353,20 +356,15 @@ DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees,
       if (current < bestRates) {
         bestRates = current;
       }
-      if (current < previous) {
-        downgrades = 0;
-        upgrades++;
-      } else {
-        upgrades = 0;
-        downgrades ++;
-      }
-      ++i;
-    } while (downgrades < 2);
+    }
     if (bestRates < rates[rates.size() - 1] ) {
       rates.back() = bestRates;
     }
     currentIt++;
   }
+  Logger::info << "Best rates " << rates[0] << std::endl;
+  ParallelContext::barrier();
+  Logger::info << "end yoyo" << std::endl;
   sort(rates.begin(), rates.end());
   updateLL(rates[0], geneTrees, speciesTree, model);
   llCalls++;
@@ -443,7 +441,7 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
   sort(rates.begin(), rates.end());
   updateLL(rates[0], geneTrees, speciesTree, model);
   llCalls++;
-//  Logger::timed << "Simplex converged after " << currentIt << " iterations and " << llCalls << " calls: " << rates[0] << std::endl;
+  //  Logger::timed << "Simplex converged after " << currentIt << " iterations and " << llCalls << " calls: " << rates[0] << std::endl;
   return rates[0];
 }
 

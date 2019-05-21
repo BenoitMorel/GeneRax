@@ -9,7 +9,8 @@ ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
   const GeneSpeciesMapping& geneSpeciesMapping,
   RecModel recModel,
   bool rootedGeneTree):
-  _model(recModel)
+  _model(recModel),
+  _speciesCount(speciesTree->inner_count + speciesTree->tip_count)
 {
   reconciliationModel = getRecModelObject(recModel);
   reconciliationModel->init(speciesTree, geneSpeciesMapping, rootedGeneTree);
@@ -26,10 +27,17 @@ void ReconciliationEvaluation::setRates(const DTLRatesVector &ratesVector)
   std::vector<double> dupRates;
   std::vector<double> lossRates;
   std::vector<double> transferRates;
-  for (auto &r: ratesVector.getRatesVector()) {
-    dupRates.push_back(r.rates[0]); 
-    lossRates.push_back(r.rates[1]); 
-    transferRates.push_back(r.rates[2]); 
+  if (ratesVector.size() == 1) {
+    dupRates = std::vector<double>(_speciesCount, ratesVector.getRates(0).rates[0]);
+    lossRates = std::vector<double>(_speciesCount, ratesVector.getRates(0).rates[1]);
+    transferRates = std::vector<double>(_speciesCount, ratesVector.getRates(0).rates[2]);
+  } else {
+    assert(ratesVector.size() == _speciesCount);
+    for (auto &r: ratesVector.getRatesVector()) {
+      dupRates.push_back(r.rates[0]); 
+      lossRates.push_back(r.rates[1]); 
+      transferRates.push_back(r.rates[2]); 
+    }
   }
   reconciliationModel->setRates(dupRates, lossRates, transferRates);
 }

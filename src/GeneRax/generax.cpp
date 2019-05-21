@@ -94,7 +94,7 @@ void raxmlMain(std::vector<FamiliesFileParser::FamilyInfo> &families,
 
 
 void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
-    DTLRates &rates,
+    DTLRatesVector &rates,
     GeneRaxArguments &arguments,
     RecModel recModel,
     bool enableRec,
@@ -112,6 +112,8 @@ void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
   std::string commandFile = FileSystem::joinPaths(outputDir, "opt_genes_command.txt");
   auto geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
   ParallelOfstream os(commandFile);
+  std::string ratesFile = FileSystem::joinPaths(outputDir, "dtl_rates.txt");
+  rates.save(ratesFile);
   for (size_t i = 0; i < families.size(); ++i) {
     auto &family = families[i];
     std::string familyOutput = FileSystem::joinPaths(arguments.output, "results");
@@ -142,13 +144,11 @@ void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
     os << family.alignmentFile << " ";
     os << arguments.speciesTree << " ";
     os << family.libpllModel  << " ";
+    os << ratesFile << " ";
     os << static_cast<int>(recModel)  << " ";
     os << static_cast<int>(arguments.reconciliationOpt)  << " ";
     os << static_cast<int>(arguments.rootedGeneTree)  << " ";
     os << arguments.recWeight  << " ";
-    os << rates.rates[0]  << " ";
-    os << rates.rates[1]  << " ";
-    os << rates.rates[2]  << " ";
     os << static_cast<int>(enableRec)  << " ";
     os << sprRadius  << " ";
     os << geneTreePath << " ";
@@ -167,7 +167,8 @@ void optimizeRates(bool userDTLRates,
     const std::string &speciesTreeFile,
     RecModel recModel,
     std::vector<FamiliesFileParser::FamilyInfo> &families,
-    DTLRates &rates,
+    bool perSpeciesRates, 
+    DTLRatesVector &rates,
     long &sumElapsed) 
 {
   if (userDTLRates) {
@@ -177,8 +178,11 @@ void optimizeRates(bool userDTLRates,
   Logger::timed << "Start optimizing rates..." << std::endl;
   PerCoreGeneTrees geneTrees(families);
   pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
-  rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, recModel);
-  //auto ratesVector = DTLOptimizer::optimizeDTLRatesVector(geneTrees, speciesTree, recModel);
+  if (!perSpeciesRates) {
+    rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, recModel);
+  } else {
+    rates = DTLOptimizer::optimizeDTLRatesVector(geneTrees, speciesTree, recModel, &rates);
+  }
   //Logger::info << "Optimized rates vector: " << ratesVector << std::endl;
   //Logger::info << "Optimized rates vector: " << ratesVector << std::endl;
   pll_rtree_destroy(speciesTree, 0);
@@ -186,10 +190,10 @@ void optimizeRates(bool userDTLRates,
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
   Logger::timed << "Finished optimizing rates: "
-    << "D=" << rates.rates[0] << ", "
-    << "L=" << rates.rates[1] << ", "
-    << "T=" << rates.rates[2] << ", "
-    << "Loglk=" << rates.ll 
+    //<< "D=" << rates.rates[0] << ", "
+    //<< "L=" << rates.rates[1] << ", "
+    //<< "T=" << rates.rates[2] << ", "
+    << "Loglk=" << rates.getLL() 
     << " (after " << elapsed << "s)" << std::endl;
 }
 
@@ -197,7 +201,7 @@ void inferReconciliation(
     const std::string &speciesTreeFile,
     std::vector<FamiliesFileParser::FamilyInfo> &families,
     RecModel model,
-    DTLRates &rates,
+    DTLRatesVector &rates,
     const std::string &outputDir
     )
 {
@@ -213,7 +217,7 @@ void inferReconciliation(
     std::string treeWithEventsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
     Scenario scenario;
     ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
-    evaluation.setRates(rates.rates[0], rates.rates[1], rates.rates[2]);
+    evaluation.setRates(rates);
     evaluation.evaluate(tree.tree);
     evaluation.inferMLScenario(scenario);
     scenario.saveEventsCounts(eventCountsFile, false);
@@ -225,12 +229,13 @@ void inferReconciliation(
     }
   }
   ParallelContext::sumVectorDouble(dup_count);
-  /*
+  auto initialSpeciesTreeStr = pll_rtree_export_newick(speciesTree->root, 0);
+  Logger::info << initialSpeciesTreeStr << std::endl;
+  free(initialSpeciesTreeStr);
   for (unsigned int i = 0; i < speciesNodesCount; ++i) {
-    Logger::info << dup_count[i] << std::endl;
+    //Logger::info << dup_count[i] << std::endl;
     speciesTree->nodes[i]->length = dup_count[i] / static_cast<double>(families.size());
   }
-  */
   auto speciesTreeStr = pll_rtree_export_newick(speciesTree->root, 0);
   Logger::info << "Species tree with average number of duplications (per familiy)" << std::endl;
   Logger::info << speciesTreeStr << std::endl;
@@ -241,17 +246,18 @@ void inferReconciliation(
 
 RecModel testRecModel(const std::string &speciesTreeFile,
     std::vector<FamiliesFileParser::FamilyInfo> &families,
-    DTLRates &rates)
+    bool perSpeciesRates, 
+    DTLRatesVector &rates)
 
 {
   Logger::info << "Testing for transfers..." << std::endl;
-  DTLRates transferRates;
-  DTLRates noTransferRates;
+  DTLRatesVector transferRates;
+  DTLRatesVector noTransferRates;
   long testTime = 0;
-  optimizeRates(false, speciesTreeFile, UndatedDL, families, noTransferRates, testTime);
-  optimizeRates(false, speciesTreeFile, UndatedDTL, families, transferRates, testTime);
-  double ll_dtl = transferRates.ll;
-  double ll_dl = noTransferRates.ll;
+  optimizeRates(false, speciesTreeFile, UndatedDL, families, perSpeciesRates, noTransferRates, testTime);
+  optimizeRates(false, speciesTreeFile, UndatedDTL, families, perSpeciesRates, transferRates, testTime);
+  double ll_dtl = transferRates.getLL();
+  double ll_dl = noTransferRates.getLL();
 
   double aic_dtl = 2.0 - 2.0 * ll_dtl;
   double aic_dl = -2.0 * ll_dl;
@@ -340,7 +346,7 @@ void saveStats(const std::string &outputDir, double totalLibpllLL, double totalR
 void optimizeStep(GeneRaxArguments &arguments, 
     RecModel recModel,
     std::vector<FamiliesFileParser::FamilyInfo> &families,
-    DTLRates &rates,
+    DTLRatesVector &rates,
     int sprRadius,
     int currentIteration,
     double &totalLibpllLL,
@@ -348,7 +354,7 @@ void optimizeStep(GeneRaxArguments &arguments,
     long &sumElapsedRates,
     long &sumElapsedSPR)
 {
-  optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, rates, sumElapsedRates);
+  optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, rates, sumElapsedRates);
   optimizeGeneTrees(families, rates, arguments, recModel, true, sprRadius, currentIteration, sumElapsedSPR);
   gatherLikelihoods(families, totalLibpllLL, totalRecLL);
 }
@@ -364,7 +370,7 @@ void search(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   long sumElapsedSPR = 0;
   long sumElapsedLibpll = 0;
 
-  DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
+  DTLRatesVector rates(DTLRates(arguments.dupRate, arguments.lossRate, arguments.transferRate));
   std::vector<FamiliesFileParser::FamilyInfo> currentFamilies = initialFamilies;
 
   bool randoms = createRandomTrees(arguments.output, currentFamilies); 
@@ -391,7 +397,7 @@ void search(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   optimizeStep(arguments, recModel, currentFamilies, rates, 3, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
 
   if (autoDetectRecModel) {
-    recModel = testRecModel(arguments.speciesTree, currentFamilies, rates);
+    recModel = testRecModel(arguments.speciesTree, currentFamilies, arguments.perSpeciesDTLRates, rates);
     optimizeStep(arguments, recModel, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
   
@@ -412,7 +418,7 @@ void eval(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
     GeneRaxArguments &arguments)
 {
   long dummy = 0;
-  DTLRates rates(arguments.dupRate, arguments.lossRate, arguments.transferRate);
+  DTLRatesVector rates(DTLRates(arguments.dupRate, arguments.lossRate, arguments.transferRate));
   std::vector<FamiliesFileParser::FamilyInfo> families = initialFamilies;
   bool autoDetectRecModel;
   RecModel recModel;
@@ -424,9 +430,9 @@ void eval(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
     recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
   }
   if (!autoDetectRecModel) {
-    optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, rates, dummy);
+    optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, rates, dummy);
   } else {
-    recModel = testRecModel(arguments.speciesTree, families, rates);
+    recModel = testRecModel(arguments.speciesTree, families, arguments.perSpeciesDTLRates, rates);
   }
   int sprRadius = 0;
   int currentIteration = 0;
@@ -443,6 +449,7 @@ int internal_main(int argc, char** argv, void* comm)
 {
   // the order is very important
   ParallelContext::init(comm); 
+  srand(42);
   Logger::init();
   GeneRaxArguments arguments(argc, argv);
   FileSystem::mkdir(arguments.output, true);

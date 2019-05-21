@@ -314,7 +314,7 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
 
   // DL event
   proba += oldProba * _uE[e] * (2.0 * _PD[e]); 
-  assert(proba.isProba());
+  //assert(proba.isProba());
 }
 
 

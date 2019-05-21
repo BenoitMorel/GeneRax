@@ -13,6 +13,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   reconciliationOpt(Simplex),
   output("GeneRax"),
   rootedGeneTree(true),
+  perSpeciesDTLRates(false),
   userDTLRates(false),
   dupRate(1.0),
   lossRate(1.0),
@@ -44,6 +45,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       output = std::string(argv[++i]);
     } else if (arg == "--unrooted-gene-tree") {
       rootedGeneTree = false;
+    } else if (arg == "--per-species-rates") {
+      perSpeciesDTLRates = true;
     } else if (arg == "--dupRate") {
       dupRate = atof(argv[++i]);
       userDTLRates = true;
@@ -85,6 +88,10 @@ void GeneRaxArguments::checkInputs() {
     Logger::error << "You need to provide a species tree." << std::endl;
     ok = false;
   }
+  if (userDTLRates && perSpeciesDTLRates) {
+    Logger::error << "You cannot specify the rates when using per-species DTL rates" << std::endl;
+    ok = false;
+  }
   if (userDTLRates && (dupRate < 0.0 || lossRate < 0.0)) {
     Logger::error << "You specified at least one of the duplication and loss rates, but not both of them." << std::endl;
     ok = false;
@@ -110,6 +117,7 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "--rec-opt <reconciliationOpt>  {window, simplex}" << std::endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << std::endl;
   Logger::info << "--unrooted-gene-tree" << std::endl;
+  Logger::info << "--per-species-rates" << std::endl;
   Logger::info << "--dupRate <duplication rate>" << std::endl;
   Logger::info << "--lossRate <loss rate>" << std::endl;
   Logger::info << "--transferRate <transfer rate>" << std::endl;
@@ -135,6 +143,7 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "Strategy: " << Arguments::strategyToStr(strategy) << std::endl;
   Logger::info << "Reconciliation model: " << reconciliationModelStr << std::endl;
   Logger::info << "Reconciliation opt: " << Arguments::recOptToStr(reconciliationOpt) << std::endl;
+  Logger::info << "DTL rates: " << (perSpeciesDTLRates ? "per-species" : "global") << std::endl;
   Logger::info << "Prefix: " << output << std::endl;
   Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << std::endl;
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << std::endl;

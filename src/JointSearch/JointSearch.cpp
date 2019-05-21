@@ -4,7 +4,7 @@
 #include <search/SPRSearch.hpp>
 #include <IO/Logger.hpp>
 #include <Scenario.hpp>
-
+#include <maths/DTLRates.hpp>
 #include <algorithm>
 #include <limits>
 #include <cmath>
@@ -82,9 +82,8 @@ int internal_main(int argc, char** argv, void* comm)
         1.0,
         arguments.check,
         true, // optimize DTL rates?
-        dupRate,
-        lossRate,
-        transferRate);
+        DTLRatesVector(DTLRates(dupRate, lossRate, transferRate))
+        );
     jointTree->printInfo();;
     jointTree->optimizeParameters();
     double initialRecLL = jointTree->computeReconciliationLoglk();
@@ -115,9 +114,9 @@ int internal_main(int argc, char** argv, void* comm)
         stats << "ll " << bestLL << std::endl;
         stats << "llrec " << jointTree->computeReconciliationLoglk() << std::endl;
         stats << "lllibpll " << jointTree->computeLibpllLoglk() << std::endl;
-        stats << "D " << jointTree->getDupRate() << std::endl;
-        stats << "L " << jointTree->getLossRate() << std::endl;
-        stats << "T " << jointTree->getTransferRate() << std::endl;
+        stats << "D " << jointTree->getRatesVector().getRates(0).rates[0] << std::endl;
+        stats << "L " << jointTree->getRatesVector().getRates(0).rates[1] << std::endl;
+        stats << "T " << jointTree->getRatesVector().getRates(0).rates[2] << std::endl;
         stats << "hash " << jointTree->getUnrootedTreeHash() << std::endl;
         stats << " " << std::endl;
       }

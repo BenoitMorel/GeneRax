@@ -24,6 +24,7 @@ public:
    RecOpt reconciliationOpt;
    std::string output;
    bool rootedGeneTree;
+   bool perSpeciesDTLRates;
    bool userDTLRates;
    double dupRate;
    double lossRate;
