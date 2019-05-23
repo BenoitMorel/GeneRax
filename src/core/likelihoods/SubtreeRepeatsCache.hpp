@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <vector>
+#include <IO/Logger.hpp>
 
 
 class SubtreeRepeatsCache;
@@ -27,13 +28,26 @@ public:
 
   void setGenesToSpecies(const std::vector<unsigned int> &geneToSpecies) {
     _geneToSpecies = geneToSpecies;
+    resetCache();
   }
 
   void resetCache() {
     _subtreeToRID.clear();
     _RIDToSubtree.clear();
+    _NIDToRID = std::vector<unsigned int>(_geneToSpecies.size() + 1, static_cast<unsigned int>(-1));;
   }
 
+  pll_unode_t *getRepeat(pll_unode_t *subtree) {
+    /*
+    Logger::info << "getRepeat " << subtree->node_index << " ";
+    if (subtree->next) {
+      Logger::info << subtree->next->back->node_index << " " << subtree->next->next->back->node_index;
+    }
+    Logger::info << std::endl;
+    */
+    auto repeatIndex = getRepeatIndex(subtree);
+    return _RIDToSubtree[repeatIndex];
+  }
   
 
   /*
@@ -43,17 +57,26 @@ public:
   unsigned int getRepeatIndex(pll_unode_t *subtree) {
     assert(_geneToSpecies.size());
     auto queried = _subtreeToRID.find(subtree);
+    unsigned int res = -1;
     if (queried != _subtreeToRID.end()) {
-      return queried->second;
+      res = queried->second;
+    } else {
+      res = addNewSubtree(subtree);
     }
-    return addNewSubtree(subtree);
+    _NIDToRID[subtree->node_index] = res;
+    return res;
   }
   
   unsigned int getRepeatIndexNoCheck(pll_unode_t *subtree) {
-    assert(_geneToSpecies.size());
-    auto queried = _subtreeToRID.find(subtree);
-    assert(queried != _subtreeToRID.end());
-    return queried->second;
+    //std::cerr << (subtree->next ? "inner" : "leaf") << std::endl;
+    assert(_NIDToRID.size() > subtree->node_index);
+    auto res = _NIDToRID[subtree->node_index];
+    if (res == static_cast<unsigned int>(-1)) {
+      assert(!subtree->next);
+      res = addNewSubtree(subtree);
+      _NIDToRID[subtree->node_index] = res;
+    }
+    return res;
   }
 
   unsigned int geneToSpecies(unsigned int gene) {return _geneToSpecies[gene];}
@@ -64,8 +87,10 @@ private:
     _subtreeToRID[subtree] = newIndex;
     return newIndex;
   }
+
   std::unordered_map<pll_unode_t *, unsigned int, hashing_func_subtree, key_equal_fn_subtree> _subtreeToRID;
-  std::vector<pll_unode_t *> _RIDToSubtree;
+  std::vector<pll_unode_t *> _RIDToSubtree;  // Repeat Id to subtree
+  std::vector<unsigned int> _NIDToRID;  // Node Id to subtree
   std::vector<unsigned int> _geneToSpecies;
 };
 

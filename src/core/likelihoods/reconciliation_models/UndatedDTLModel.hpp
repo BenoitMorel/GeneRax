@@ -57,7 +57,7 @@ private:
 private:
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
-      bool isVirtualRoot = false) const;
+      bool isVirtualRoot = false);
   void updateTransferSums(ScaledValue &transferExtinctionSum,
     std::vector<ScaledValue> &ancestralExtinctionCorrection,
     const std::vector<ScaledValue> &probabilities);

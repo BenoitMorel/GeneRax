@@ -101,8 +101,12 @@ protected:
    *  Get the left or right child of node. If node is a virtual 
    *  root, the implementation is different
    */
-  static pll_unode_t *getLeft(pll_unode_t *node, bool virtualRoot);  
-  static pll_unode_t *getRight(pll_unode_t *node, bool virtualRoot) ;  
+  pll_unode_t *getLeft(pll_unode_t *node, bool virtualRoot) const;  
+  pll_unode_t *getRight(pll_unode_t *node, bool virtualRoot) const; 
+  pll_unode_t *getLeftRepeats(pll_unode_t *node, bool virtualRoot);  
+  pll_unode_t *getRightRepeats(pll_unode_t *node, bool virtualRoot) ; 
+
+
   
   void updateCLVs();
 protected:

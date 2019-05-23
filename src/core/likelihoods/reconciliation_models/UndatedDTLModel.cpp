@@ -256,7 +256,7 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
 
 void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       ScaledValue &proba,
-      bool isVirtualRoot) const
+      bool isVirtualRoot)
 {
   auto gid = geneNode->node_index;
   auto e = speciesNode->node_index;

@@ -145,14 +145,38 @@ double AbstractReconciliationModel::computeLogLikelihood(pll_utree_t *tree)
   return getSumLikelihood();
 }
 
-pll_unode_t *AbstractReconciliationModel::getLeft(pll_unode_t *node, bool virtualRoot)
+pll_unode_t *AbstractReconciliationModel::getLeft(pll_unode_t *node, bool virtualRoot) const
 {
   return virtualRoot ? node->next : node->next->back;
 }
 
-pll_unode_t *AbstractReconciliationModel::getRight(pll_unode_t *node, bool virtualRoot)
+pll_unode_t *AbstractReconciliationModel::getRight(pll_unode_t *node, bool virtualRoot) const
 {
   return virtualRoot ? node->next->back : node->next->next->back;
+}
+
+pll_unode_t *AbstractReconciliationModel::getLeftRepeats(pll_unode_t *node, bool virtualRoot)
+{
+  /*
+  Logger::info << "getLeft " << node->node_index << " ";
+  if (node->next) {
+    Logger::info << node->next->back->node_index << " " << node->next->next->back->node_index;
+  }
+  Logger::info << std::endl;
+  */
+  return _cache.getRepeat(getLeft(node, virtualRoot));
+}
+
+pll_unode_t *AbstractReconciliationModel::getRightRepeats(pll_unode_t *node, bool virtualRoot)
+{
+  /*
+  Logger::info << "getRight " << node->node_index << " ";
+  if (node->next) {
+    Logger::info << node->next->back->node_index << " " << node->next->next->back->node_index;
+  }
+  Logger::info << std::endl;
+  */
+  return _cache.getRepeat(getRight(node, virtualRoot));
 }
 
 void AbstractReconciliationModel::markInvalidatedNodesRec(pll_unode_t *node)
@@ -184,8 +208,8 @@ void AbstractReconciliationModel::updateCLVsRec(pll_unode_t *node)
     auto currentNode = nodes.top();
     if (currentNode->next) {
       bool waitForChildren = false;
-      auto left = currentNode->next->back;
-      auto right = currentNode->next->next->back;
+      auto left = getLeft(currentNode, false);
+      auto right = getRight(currentNode, false);
       if (!_isCLVUpdated[left->node_index]) {
         nodes.push(left);
         waitForChildren = true;
@@ -222,6 +246,7 @@ void AbstractReconciliationModel::invalidateCLV(unsigned int nodeIndex)
   
 void AbstractReconciliationModel::invalidateAllCLVs()
 {
+  _cache.resetCache();
   _isCLVUpdated = std::vector<bool>(_maxGeneId + 1, false);
 }
 
