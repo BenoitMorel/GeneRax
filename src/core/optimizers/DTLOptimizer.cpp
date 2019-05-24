@@ -37,14 +37,15 @@ void updateLL(DTLRates &rates, PerCoreGeneTrees &trees, pll_rtree_t *speciesTree
   }
 }
 
-void updateLL(DTLRatesVector &rates, PerCoreGeneTrees &trees, pll_rtree_t *speciesTree, RecModel model) {
+void updateLL(DTLRatesVector &rates, PerCoreGeneTrees &trees, std::vector<std::shared_ptr<ReconciliationEvaluation> > &evaluations) {
   rates.ensureValidity();
   rates.setLL(0.0);
   double ll = 0.0;
-  for (auto &tree: trees.getTrees()) {
-    ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
-    evaluation.setRates(rates);
-    ll += evaluation.evaluate(tree.tree);
+  for (unsigned int i = 0; i < trees.getTrees().size(); ++i) {
+    auto &tree = trees.getTrees()[i];
+    auto &evaluation = evaluations[i];
+    evaluation->setRates(rates);
+    ll += evaluation->evaluate(tree.tree);
   }
   ParallelContext::sumDouble(ll);
   if (!isValidLikelihood(ll)) {
@@ -300,6 +301,13 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
 
 DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, DTLRatesVector *previousVector)
 {
+  std::vector<std::shared_ptr<ReconciliationEvaluation> > evaluations;
+  for (auto &tree: geneTrees.getTrees()) {
+    auto evaluation = std::make_shared<ReconciliationEvaluation> (speciesTree, tree.mapping, model, true);
+    evaluation->activateCache();
+    evaluations.push_back(evaluation);
+    
+  }
   std::default_random_engine generator;
   unsigned int speciesNumber = speciesTree->inner_count + speciesTree->tip_count;
   unsigned int freeRates = speciesNumber;
@@ -323,7 +331,7 @@ DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees,
   }
   int llCalls = 0;
   for (auto &r: rates) {
-    updateLL(r, geneTrees, speciesTree, model);
+    updateLL(r, geneTrees, evaluations);
     llCalls++;
   }
   DTLRatesVector worstRate(nullRates);
@@ -351,7 +359,7 @@ DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees,
     for (int i = 0; i < iterations; i++) {
       previous = current;
       current = x1 + ((x2 - x1) * i * stepSize);
-      updateLL(current, geneTrees, speciesTree, model);
+      updateLL(current, geneTrees, evaluations);
       llCalls++;
       if (current < bestRates) {
         bestRates = current;
@@ -366,7 +374,7 @@ DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees,
   ParallelContext::barrier();
   Logger::info << "end yoyo" << std::endl;
   sort(rates.begin(), rates.end());
-  updateLL(rates[0], geneTrees, speciesTree, model);
+  updateLL(rates[0], geneTrees, evaluations);
   llCalls++;
   return rates[0];
 }

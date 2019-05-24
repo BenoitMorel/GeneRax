@@ -65,6 +65,9 @@ public:
    *  events that would lead to the  current tree
    **/
   void inferMLScenario(Scenario &scenario);
+  
+  
+  SubtreeRepeatsCache &getCache() {return _cache;}
 
 protected:
   // called by the constructor
@@ -105,7 +108,6 @@ protected:
   pll_unode_t *getRight(pll_unode_t *node, bool virtualRoot) const; 
   pll_unode_t *getLeftRepeats(pll_unode_t *node, bool virtualRoot);  
   pll_unode_t *getRightRepeats(pll_unode_t *node, bool virtualRoot) ; 
-
 
   
   void updateCLVs();

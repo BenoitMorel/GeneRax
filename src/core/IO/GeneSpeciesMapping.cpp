@@ -17,6 +17,14 @@ void GeneSpeciesMapping::fill(const std::string &mappingFile, const std::string 
     buildFromTrees(geneTreeStr);
   }
 }
+  
+void GeneSpeciesMapping::fill(const GeneSpeciesMapping &mapping)
+{
+  auto &m = mapping.getMap();
+  for (auto &pair: m) {
+    _map[pair.first] = pair.first;
+  }
+}
 
 void GeneSpeciesMapping::buildFromMappingFile(const std::string &mappingFile)
 {

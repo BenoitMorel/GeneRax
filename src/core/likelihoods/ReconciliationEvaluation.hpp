@@ -43,7 +43,15 @@ public:
 
   pll_unode_t *getRoot() {return reconciliationModel->getRoot();}
   void setRoot(pll_unode_t * root) {reconciliationModel->setRoot(root);}
-  
+
+  void activateCache() {
+    reconciliationModel->getCache().enable();  
+  }
+
+  void disableCache() {
+    reconciliationModel->getCache().disable();
+  }
+
   double evaluate(pll_utree_t *utree);
   /**
    *  @param input treeinfo

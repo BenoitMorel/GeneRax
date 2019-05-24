@@ -15,7 +15,7 @@ public:
   };
 
   PerCoreGeneTrees(const std::vector<FamiliesFileParser::FamilyInfo> &families);
-  const std::vector<GeneTree> &getTrees() {return _geneTrees;}
+  std::vector<GeneTree> &getTrees() {return _geneTrees;}
 private:
   std::vector<GeneTree> _geneTrees;
   std::vector<unsigned int> _treeSizes;

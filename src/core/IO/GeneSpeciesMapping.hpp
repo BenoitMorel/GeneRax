@@ -21,6 +21,8 @@ public:
   
   void fill(const std::string &mappingFile, const std::string &geneTreeStr); 
 
+  void fill(const GeneSpeciesMapping &mapping);
+
   /**
    *  @return an object mapping each gene to one species
    */
@@ -33,7 +35,7 @@ public:
   const std::string &getSpecies(const std::string &gene) {return _map[gene];}
 
 private:
-  std::map<std::string, std::string> _map;
+  std::map<std::string, std::string> _map; // <gene,species>
   void buildFromPhyldogMapping(std::ifstream &f);
   void buildFromTreerecsMapping(std::ifstream &f);
   void buildFromMappingFile(const std::string &mappingFile); 

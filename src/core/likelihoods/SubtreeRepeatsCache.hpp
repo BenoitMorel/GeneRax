@@ -1,6 +1,7 @@
 #pragma once
 
 #include <unordered_map>
+#include <unordered_set>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <vector>
 #include <IO/Logger.hpp>
@@ -20,35 +21,91 @@ struct key_equal_fn_subtree {
   SubtreeRepeatsCache &_cache;
 };
 
+
+static void fillPreOrderRec(pll_unode_t *node, std::vector<pll_unode_t *> &nodes, std::unordered_set<pll_unode_t *> &marked)
+{
+  if (marked.find(node) != marked.end()) {
+    return;
+  }
+  marked.insert(node);
+  if (node->next) {
+    fillPreOrderRec(node->next->back, nodes, marked);  
+    fillPreOrderRec(node->next->next->back, nodes, marked);  
+  }
+
+  nodes.push_back(node);
+}
+
+static void fillPreOrder(pll_utree_t *tree, std::vector<pll_unode_t *> &nodes)
+{
+  std::unordered_set<pll_unode_t *> marked;
+  nodes.clear();
+  auto nodesNumber = tree->tip_count + tree->inner_count;
+  for (unsigned int i = 0; i < nodesNumber; ++i) {
+    auto node = tree->nodes[i];
+    fillPreOrderRec(node, nodes, marked);
+    if (node->next) {
+      fillPreOrderRec(node->next, nodes, marked);
+      fillPreOrderRec(node->next->next, nodes, marked);
+    }
+  }
+}
+
 class SubtreeRepeatsCache {
 public:
   SubtreeRepeatsCache(): 
-    _subtreeToRID(10, hashing_func_subtree(*this), key_equal_fn_subtree(*this))
+    _subtreeToRID(10, hashing_func_subtree(*this), key_equal_fn_subtree(*this)), 
+    _enabled(false)
   {}
 
   void setGenesToSpecies(const std::vector<unsigned int> &geneToSpecies) {
     _geneToSpecies = geneToSpecies;
-    resetCache();
   }
 
   void resetCache() {
     _subtreeToRID.clear();
     _RIDToSubtree.clear();
-    _NIDToRID = std::vector<unsigned int>(_geneToSpecies.size() + 1, static_cast<unsigned int>(-1));;
+    _NIDToRID = std::vector<unsigned int>(_geneToSpecies.size() + 1, static_cast<unsigned int>(-1));
   }
 
   pll_unode_t *getRepeat(pll_unode_t *subtree) {
-    /*
-    Logger::info << "getRepeat " << subtree->node_index << " ";
-    if (subtree->next) {
-      Logger::info << subtree->next->back->node_index << " " << subtree->next->next->back->node_index;
+    if (!_enabled) {
+      return subtree;
     }
-    Logger::info << std::endl;
-    */
-    auto repeatIndex = getRepeatIndex(subtree);
+    auto repeatIndex = getRepeatIndexNoCheck(subtree);
     return _RIDToSubtree[repeatIndex];
   }
   
+  void setTree(pll_utree_t *tree) {
+    if (_subtreeToRID.size() > 0 || !_enabled) {
+      return;
+    }
+    resetCache();
+    std::vector<pll_unode_t *> preOrderNodes;
+    fillPreOrder(tree, preOrderNodes);
+    assert((tree->tip_count + tree->inner_count * 3) == preOrderNodes.size());
+    unsigned int unique = 0;
+    unsigned int duplicate = 0;
+    for (auto node: preOrderNodes) {
+      auto newNode = _RIDToSubtree[getRepeatIndex(node)];
+      if (newNode == node) {
+        unique++;
+      } else {
+        duplicate++;
+      }
+    }
+    //Logger::info << "unique: " << unique << std::endl;
+    //Logger::info << "dup: " << duplicate << std::endl;
+  }
+
+  void enable() {
+    _enabled = true;
+  }
+
+  void disable() {
+    resetCache();
+    _enabled = false;
+  }
 
   /*
    *  Get the repeat index of subtree. If this subtree is found for
@@ -92,5 +149,6 @@ private:
   std::vector<pll_unode_t *> _RIDToSubtree;  // Repeat Id to subtree
   std::vector<unsigned int> _NIDToRID;  // Node Id to subtree
   std::vector<unsigned int> _geneToSpecies;
+  bool _enabled;
 };
 
