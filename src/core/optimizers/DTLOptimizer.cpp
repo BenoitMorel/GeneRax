@@ -1,5 +1,6 @@
 #include <optimizers/DTLOptimizer.hpp>
 
+#include <likelihoods/SubtreeRepeatsCache.hpp>
 #include <ParallelContext.hpp>
 #include <trees/JointTree.hpp>
 #include <IO/Logger.hpp>
@@ -302,11 +303,12 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
 DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, DTLRatesVector *previousVector)
 {
   std::vector<std::shared_ptr<ReconciliationEvaluation> > evaluations;
+  SubtreeRepeatsCache cache;
   for (auto &tree: geneTrees.getTrees()) {
     auto evaluation = std::make_shared<ReconciliationEvaluation> (speciesTree, tree.mapping, model, true);
-    evaluation->activateCache();
     evaluations.push_back(evaluation);
-    
+    cache.addTree(tree.tree, tree.mapping);
+    evaluation->getReconciliationModel()->setCache(&cache); 
   }
   std::default_random_engine generator;
   unsigned int speciesNumber = speciesTree->inner_count + speciesTree->tip_count;

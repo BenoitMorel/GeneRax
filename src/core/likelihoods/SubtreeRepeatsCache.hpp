@@ -5,6 +5,7 @@
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <vector>
 #include <IO/Logger.hpp>
+#include <IO/GeneSpeciesMapping.hpp>
 
 
 class SubtreeRepeatsCache;
@@ -54,8 +55,7 @@ static void fillPreOrder(pll_utree_t *tree, std::vector<pll_unode_t *> &nodes)
 class SubtreeRepeatsCache {
 public:
   SubtreeRepeatsCache(): 
-    _subtreeToRID(10, hashing_func_subtree(*this), key_equal_fn_subtree(*this)), 
-    _enabled(false)
+    _subtreeToRID(10, hashing_func_subtree(*this), key_equal_fn_subtree(*this)) 
   {}
 
   void setGenesToSpecies(const std::vector<unsigned int> &geneToSpecies) {
@@ -69,17 +69,11 @@ public:
   }
 
   pll_unode_t *getRepeat(pll_unode_t *subtree) {
-    if (!_enabled) {
-      return subtree;
-    }
     auto repeatIndex = getRepeatIndexNoCheck(subtree);
     return _RIDToSubtree[repeatIndex];
   }
   
-  void setTree(pll_utree_t *tree) {
-    if (_subtreeToRID.size() > 0 || !_enabled) {
-      return;
-    }
+  void addTree(pll_utree_t *tree, const GeneSpeciesMapping &mapping) {
     resetCache();
     std::vector<pll_unode_t *> preOrderNodes;
     fillPreOrder(tree, preOrderNodes);
@@ -96,15 +90,6 @@ public:
     }
     //Logger::info << "unique: " << unique << std::endl;
     //Logger::info << "dup: " << duplicate << std::endl;
-  }
-
-  void enable() {
-    _enabled = true;
-  }
-
-  void disable() {
-    resetCache();
-    _enabled = false;
   }
 
   /*
@@ -149,6 +134,5 @@ private:
   std::vector<pll_unode_t *> _RIDToSubtree;  // Repeat Id to subtree
   std::vector<unsigned int> _NIDToRID;  // Node Id to subtree
   std::vector<unsigned int> _geneToSpecies;
-  bool _enabled;
 };
 

@@ -1,5 +1,6 @@
 #include "AbstractReconciliationModel.hpp"
 #include <IO/Logger.hpp>
+#include <likelihoods/SubtreeRepeatsCache.hpp>
 
 
 
@@ -49,7 +50,6 @@ void AbstractReconciliationModel::mapGenesToSpecies()
       geneToSpecies_[node->node_index] = speciesNameToId_[speciesName];
     }
   }
-  _cache.setGenesToSpecies(geneToSpecies_);
 }
 
 void AbstractReconciliationModel::setInitialGeneTree(pll_utree_t *tree)
@@ -127,7 +127,6 @@ double AbstractReconciliationModel::computeLogLikelihood(pll_utree_t *tree)
     setInitialGeneTree(tree);
     firstCall_ = false;
   }
-  _cache.setTree(tree);
   auto root = getRoot();
   updateCLVs();
   computeLikelihoods();
@@ -155,26 +154,14 @@ pll_unode_t *AbstractReconciliationModel::getRight(pll_unode_t *node, bool virtu
 
 pll_unode_t *AbstractReconciliationModel::getLeftRepeats(pll_unode_t *node, bool virtualRoot)
 {
-  /*
-  Logger::info << "getLeft " << node->node_index << " ";
-  if (node->next) {
-    Logger::info << node->next->back->node_index << " " << node->next->next->back->node_index;
-  }
-  Logger::info << std::endl;
-  */
-  return _cache.getRepeat(getLeft(node, virtualRoot));
+  auto res = getLeft(node, virtualRoot);
+  return _cache ? _cache->getRepeat(res) : res;
 }
 
 pll_unode_t *AbstractReconciliationModel::getRightRepeats(pll_unode_t *node, bool virtualRoot)
 {
-  /*
-  Logger::info << "getRight " << node->node_index << " ";
-  if (node->next) {
-    Logger::info << node->next->back->node_index << " " << node->next->next->back->node_index;
-  }
-  Logger::info << std::endl;
-  */
-  return _cache.getRepeat(getRight(node, virtualRoot));
+  auto res = getRight(node, virtualRoot);
+  return _cache ? _cache->getRepeat(res) : res;
 }
 
 void AbstractReconciliationModel::markInvalidatedNodesRec(pll_unode_t *node)

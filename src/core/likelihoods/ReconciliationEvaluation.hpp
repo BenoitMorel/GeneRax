@@ -41,16 +41,10 @@ public:
    */
   void setRates(const DTLRatesVector &ratesVector);
 
+  AbstractReconciliationModel *getReconciliationModel() {return reconciliationModel.get();}
+
   pll_unode_t *getRoot() {return reconciliationModel->getRoot();}
   void setRoot(pll_unode_t * root) {reconciliationModel->setRoot(root);}
-
-  void activateCache() {
-    reconciliationModel->getCache().enable();  
-  }
-
-  void disableCache() {
-    reconciliationModel->getCache().disable();
-  }
 
   double evaluate(pll_utree_t *utree);
   /**
