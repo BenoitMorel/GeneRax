@@ -32,7 +32,7 @@ public:
    *  @param gene gene std::string
    *  @return the species mapped to this gene
    */
-  const std::string &getSpecies(const std::string &gene) {return _map[gene];}
+  const std::string &getSpecies(const std::string &gene) const {return _map.find(gene)->second;}
 
 private:
   std::map<std::string, std::string> _map; // <gene,species>

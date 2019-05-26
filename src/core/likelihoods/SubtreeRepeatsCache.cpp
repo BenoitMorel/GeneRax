@@ -10,7 +10,7 @@ static unsigned int integerHash(unsigned int x) {
 
 unsigned long hashing_func_subtree::operator()(const pll_unode_t *subtree) const {
   if (!subtree->next) {
-    return static_cast<unsigned long>(integerHash(_cache.geneToSpecies(subtree->node_index))); 
+    return static_cast<unsigned long>(_cache.geneToSpecies(subtree)); 
   }
   auto left = subtree->next->back;
   auto right = subtree->next->next->back;
@@ -21,7 +21,7 @@ unsigned long hashing_func_subtree::operator()(const pll_unode_t *subtree) const
 
 bool key_equal_fn_subtree::operator()(const pll_unode_t *subtree1, const pll_unode_t *subtree2) const {
   if (!subtree1->next && !subtree2->next) {
-    return _cache.geneToSpecies(subtree1->node_index) == _cache.geneToSpecies(subtree2->node_index);
+    return _cache.geneToSpecies(subtree1) == _cache.geneToSpecies(subtree2);
   } else if (!subtree1->next || !subtree2->next) {
     return false;
   }

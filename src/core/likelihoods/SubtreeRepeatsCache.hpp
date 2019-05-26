@@ -58,10 +58,6 @@ public:
     _subtreeToRID(10, hashing_func_subtree(*this), key_equal_fn_subtree(*this)) 
   {}
 
-  void setGenesToSpecies(const std::vector<unsigned int> &geneToSpecies) {
-    _geneToSpecies = geneToSpecies;
-  }
-
   void resetCache() {
     _subtreeToRID.clear();
     _RIDToSubtree.clear();
@@ -78,15 +74,21 @@ public:
     std::vector<pll_unode_t *> preOrderNodes;
     fillPreOrder(tree, preOrderNodes);
     assert((tree->tip_count + tree->inner_count * 3) == preOrderNodes.size());
-    unsigned int unique = 0;
-    unsigned int duplicate = 0;
+    //unsigned int unique = 0;
+    //unsigned int duplicate = 0;
     for (auto node: preOrderNodes) {
-      auto newNode = _RIDToSubtree[getRepeatIndex(node)];
+      if (!node->next) {
+        std::string species = mapping.getSpecies(std::string(node->label));
+        std::hash<std::string> strHash;
+        _geneToSpecies[node] = strHash(species);
+      }
+      _RIDToSubtree[getRepeatIndex(node)];
+      /*
       if (newNode == node) {
         unique++;
       } else {
         duplicate++;
-      }
+      }*/
     }
     //Logger::info << "unique: " << unique << std::endl;
     //Logger::info << "dup: " << duplicate << std::endl;
@@ -121,7 +123,7 @@ public:
     return res;
   }
 
-  unsigned int geneToSpecies(unsigned int gene) {return _geneToSpecies[gene];}
+  unsigned int geneToSpecies(const pll_unode_t *gene) {return _geneToSpecies[gene];}
 private:
   unsigned int addNewSubtree(pll_unode_t *subtree) {
     auto newIndex = _RIDToSubtree.size();
@@ -132,7 +134,9 @@ private:
 
   std::unordered_map<pll_unode_t *, unsigned int, hashing_func_subtree, key_equal_fn_subtree> _subtreeToRID;
   std::vector<pll_unode_t *> _RIDToSubtree;  // Repeat Id to subtree
-  std::vector<unsigned int> _NIDToRID;  // Node Id to subtree
-  std::vector<unsigned int> _geneToSpecies;
-};
+  std::vector<unsigned int> _NIDToRID;  // Node Id to subtreestd::vector<unsigned int> _geneToSpecies;
+  std::unordered_map<const pll_unode_t *, unsigned int> _geneToSpecies;
 
+
+};
+  
