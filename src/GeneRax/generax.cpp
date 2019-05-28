@@ -14,20 +14,21 @@
 #include <IO/ParallelOfstream.hpp>
 #include <../../ext/MPIScheduler/src/mpischeduler.hpp>
 #include <sstream>
-
+#include "GeneRaxSlaves.hpp"
 
 
 bool useSplitImplem() {
   return ParallelContext::getSize() > 4;
 }
 
-void schedule(const std::string &outputDir, const std::string &commandFile, bool splitImplem)
+
+void schedule(const std::string &outputDir, const std::string &commandFile, bool splitImplem, const std::string &execPath)
 {
   std::vector<char *> argv;
   std::string exec = "mpi-scheduler";
   std::string implem = splitImplem ? "--split-scheduler" : "--fork-scheduler";
   
-  std::string called_library = splitImplem ? "--static_scheduled_main" :  "/home/morelbt/github/GeneRax/build/bin/generaxslaves";
+  std::string called_library = splitImplem ? "--static_scheduled_main" :  execPath;
   std::string jobFailureFatal = "1";
   std::string threadsArg;
   std::string outputLogs = FileSystem::joinPaths(outputDir, "logs.txt");
@@ -86,7 +87,7 @@ void raxmlMain(std::vector<FamiliesFileParser::FamilyInfo> &families,
     family.libpllModel = libpllModelPath;
   }    
   os.close();
-  schedule(outputDir, commandFile, splitImplem); 
+  schedule(outputDir, commandFile, splitImplem, arguments.execPath); 
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
   Logger::timed << "End of raxml light step (after " << elapsed << "s)"  << std::endl;
@@ -157,7 +158,7 @@ void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
     family.statsFile = outputStats;
   } 
   os.close();
-  schedule(outputDir, commandFile, splitImplem); 
+  schedule(outputDir, commandFile, splitImplem, arguments.execPath); 
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
   Logger::timed << "End of SPR rounds (after " << elapsed << "s)"  << std::endl;
@@ -445,7 +446,7 @@ void eval(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
 }
 
 
-int internal_main(int argc, char** argv, void* comm)
+int generax_main(int argc, char** argv, void* comm)
 {
   // the order is very important
   ParallelContext::init(comm); 
@@ -476,7 +477,15 @@ int internal_main(int argc, char** argv, void* comm)
   return 0;
 }
 
-
+int internal_main(int argc, char** argv, void* comm)
+{
+  if (GeneRaxSlaves::is_slave(argc, argv)) {
+    int slaveComm = -1; 
+    return static_scheduled_main(argc, argv, &slaveComm);
+  } else {
+    return generax_main(argc, argv, comm);
+  }
+}
 
 int main(int argc, char** argv)
 {

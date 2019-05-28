@@ -17,6 +17,7 @@ public:
 public:
    int argc;
    char ** argv;
+   std::string execPath;
    std::string families;
    std::string speciesTree;
    Strategy strategy;

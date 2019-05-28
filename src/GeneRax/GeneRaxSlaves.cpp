@@ -1,3 +1,4 @@
+#include "GeneRaxSlaves.hpp"
 #include "GeneRaxArguments.hpp"
 #include <ParallelContext.hpp>
 #include <IO/FamiliesFileParser.hpp>
@@ -193,6 +194,14 @@ int raxmlLightMain(int argc, char** argv, void* comm)
   return 0;
 }
 
+bool GeneRaxSlaves::is_slave(int argc, char** argv)
+{
+  if (argc < 2) {
+    return false;
+  }
+  std::string key(argv[1]);
+  return key == "optimizeGeneTrees" || key == "raxmlLight";
+}
 
 extern "C" int static_scheduled_main(int argc, char** argv, void* comm)
 {
@@ -210,10 +219,3 @@ extern "C" int static_scheduled_main(int argc, char** argv, void* comm)
   return res;
 }
 
-
-#ifdef SLAVE_EXEC
-int main(int argc, char** argv) {
-  int comm = -1;
-  return static_scheduled_main(argc, argv, &comm);
-}
-#endif

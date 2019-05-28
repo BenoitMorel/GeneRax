@@ -66,6 +66,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       ParallelContext::abort(1);
     }
   }
+  execPath = std::string(argv[0]);
   checkInputs();
 }
 
