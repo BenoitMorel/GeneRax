@@ -9,7 +9,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
   strategy(EVAL),
-  reconciliationModelStr("AutoDetect"),
+  reconciliationModelStr("UndatedDL"),
   reconciliationOpt(Simplex),
   output("GeneRax"),
   rootedGeneTree(true),
@@ -47,13 +47,13 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       rootedGeneTree = false;
     } else if (arg == "--per-species-rates") {
       perSpeciesDTLRates = true;
-    } else if (arg == "--dupRate") {
+    } else if (arg == "--dup-rate") {
       dupRate = atof(argv[++i]);
       userDTLRates = true;
-    } else if (arg == "--lossRate") {
+    } else if (arg == "--loss-rate") {
       lossRate = atof(argv[++i]);
       userDTLRates = true;
-    } else if (arg == "--transferRate") {
+    } else if (arg == "--transfer-rate") {
       transferRate = atof(argv[++i]);
       userDTLRates = true;
     } else if (arg == "--max-spr-radius") {
@@ -119,11 +119,12 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << std::endl;
   Logger::info << "--unrooted-gene-tree" << std::endl;
   Logger::info << "--per-species-rates" << std::endl;
-  Logger::info << "--dupRate <duplication rate>" << std::endl;
-  Logger::info << "--lossRate <loss rate>" << std::endl;
-  Logger::info << "--transferRate <transfer rate>" << std::endl;
+  Logger::info << "--dup-rate <duplication rate>" << std::endl;
+  Logger::info << "--loss-rate <loss rate>" << std::endl;
+  Logger::info << "--transfer-rate <transfer rate>" << std::endl;
   Logger::info << "--max-spr-radius <max SPR radius>" << std::endl;
   Logger::info << "--rec-weight <reconciliation likelihood weight>" << std::endl;
+  Logger::info << "Please find more information on the GeneRax github wiki" << std::endl;
   Logger::info << std::endl;
 
 }
