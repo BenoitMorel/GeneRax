@@ -376,6 +376,7 @@ void search(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
 
   bool randoms = createRandomTrees(arguments.output, currentFamilies); 
   int iteration = 0;
+  
   if (randoms) {
     raxmlMain(currentFamilies, arguments, iteration++, sumElapsedLibpll);
     gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
@@ -393,10 +394,12 @@ void search(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   optimizeStep(arguments, recModel, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   optimizeStep(arguments, recModel, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   
-
-  optimizeStep(arguments, recModel, currentFamilies, rates, 2, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
-  optimizeStep(arguments, recModel, currentFamilies, rates, 3, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
-
+  if (arguments.maxSPRRadius >= 2) {
+    optimizeStep(arguments, recModel, currentFamilies, rates, 2, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+  }
+  if (arguments.maxSPRRadius >= 3) {
+    optimizeStep(arguments, recModel, currentFamilies, rates, 3, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+  }
   if (autoDetectRecModel) {
     recModel = testRecModel(arguments.speciesTree, currentFamilies, arguments.perSpeciesDTLRates, rates);
     optimizeStep(arguments, recModel, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
