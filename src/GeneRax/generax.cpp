@@ -231,15 +231,15 @@ void inferReconciliation(
   }
   ParallelContext::sumVectorDouble(dup_count);
   auto initialSpeciesTreeStr = pll_rtree_export_newick(speciesTree->root, 0);
-  Logger::info << initialSpeciesTreeStr << std::endl;
+  //Logger::info << initialSpeciesTreeStr << std::endl;
   free(initialSpeciesTreeStr);
   for (unsigned int i = 0; i < speciesNodesCount; ++i) {
     //Logger::info << dup_count[i] << std::endl;
     speciesTree->nodes[i]->length = dup_count[i] / static_cast<double>(families.size());
   }
   auto speciesTreeStr = pll_rtree_export_newick(speciesTree->root, 0);
-  Logger::info << "Species tree with average number of duplications (per familiy)" << std::endl;
-  Logger::info << speciesTreeStr << std::endl;
+  //Logger::info << "Species tree with average number of duplications (per familiy)" << std::endl;
+  //Logger::info << speciesTreeStr << std::endl;
   free(speciesTreeStr);
   pll_rtree_destroy(speciesTree, 0);
 }
