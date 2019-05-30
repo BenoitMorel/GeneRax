@@ -24,14 +24,14 @@ def build_families(alignments_dir, trees_dir, mappings_dir, model, output_file):
   for alignment in os.listdir(alignments_dir):
     family = get_family(alignment) 
     cell = {}
-    cell["A"] = join_abs(alignments_dir, alignment)
+    cell["alignment"] = join_abs(alignments_dir, alignment)
     if (family in trees):
-      cell["G"] = trees[family]
+      cell["starting_gene_tree"] = trees[family]
     else:
-      cell["G"] = "__random__"
+      cell["starting_gene_tree"] = "__random__"
     if (family in mappings):
-      cell["M"] = mappings[family]
-    cell["L"] = model
+      cell["mapping"] = mappings[family]
+    cell["subst_model"] = model
     if (family in families):
       print("[Error]: family " + family + " was found twice in the alignments directory.")
       exit(1)
@@ -43,7 +43,7 @@ def build_families(alignments_dir, trees_dir, mappings_dir, model, output_file):
       cell = families[family]
       writer.write("- " + family + "\n")
       for param in cell:
-        writer.write(param + ": " + cell[param] + "\n")
+        writer.write(param + " = " + cell[param] + "\n")
   print("Output families file" + output_file)
 
 if (__name__ == "__main__"): 
