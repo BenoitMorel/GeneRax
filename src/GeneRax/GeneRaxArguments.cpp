@@ -8,7 +8,7 @@
 GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
-  strategy(EVAL),
+  strategy(SPR),
   reconciliationModelStr("UndatedDL"),
   reconciliationOpt(Simplex),
   output("GeneRax"),
