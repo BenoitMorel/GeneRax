@@ -90,7 +90,7 @@ public:
   static void barrier();
   static void abort(int errorCode);
 
-  static MPI_Comm getComm() {return _commStack.top();}
+  static MPI_Comm &getComm() {return _commStack.top();}
 private:
   static void setComm(MPI_Comm newComm);
   static void setOwnMPIContext(bool own);

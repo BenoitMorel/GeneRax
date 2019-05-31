@@ -40,10 +40,10 @@ void schedule(const std::string &outputDir, const std::string &commandFile, bool
   argv.push_back(const_cast<char *>(jobFailureFatal.c_str()));
   argv.push_back(const_cast<char *>(threadsArg.c_str()));
   argv.push_back(const_cast<char *>(outputLogs.c_str()));
-  MPI_Comm comm = MPI_COMM_WORLD;
   ParallelContext::barrier(); 
   if (splitImplem || ParallelContext::getRank() == 0) {
-    mpi_scheduler_main(static_cast<int>(argv.size()), &argv[0], static_cast<void*>(&comm));
+    void *comm = splitImplem ? static_cast<void *>(&ParallelContext::getComm()) : 0;
+    mpi_scheduler_main(static_cast<int>(argv.size()), &argv[0], comm);
   }
   ParallelContext::barrier(); 
 }

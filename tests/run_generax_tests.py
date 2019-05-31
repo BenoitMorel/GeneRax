@@ -62,7 +62,7 @@ def run_generax(test_data, test_output, families_file, strategy, model, cores):
   command.append("--rec-model")
   command.append(model)
   command.append("-p")
-  command.append(test_output)
+  command.append(os.path.join(test_output, "generax"))
   logs_file_path = os.path.join(test_data, "tests_logs.txt")
   with open(logs_file_path, "w") as writer:
     subprocess.check_call(command, stdout = writer, stderr = writer)
@@ -86,9 +86,9 @@ dataset_set = ["simulated_2"]
 with_starting_tree_set = [True, False]
 strategy_set = ["EVAL", "SPR"]
 model_set = ["UndatedDL", "UndatedDTL"]
-cores_set = [1]
+cores_set = [3, 1]
 ok = True
-run_test("simulated_2", False, "EVAL", "UndatedDL", 1)
+run_test("simulated_2", False, "SPR", "UndatedDL", 2)
 for dataset in dataset_set:
   for with_starting_tree in with_starting_tree_set:
     for strategy in strategy_set:
