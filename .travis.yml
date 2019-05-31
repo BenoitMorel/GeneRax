@@ -23,5 +23,5 @@ before_script:
 
 script: 
   - ./install.sh
-  - python tests/run_tests.py
+  - python tests/run_generax_tests.py
 
