@@ -426,6 +426,10 @@ void eval(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   std::vector<FamiliesFileParser::FamilyInfo> families = initialFamilies;
   bool autoDetectRecModel;
   RecModel recModel;
+  bool randoms = createRandomTrees(arguments.output, families);
+  if (randoms) {
+    Logger::info << "[Warning] You are running GeneRax in EVAL mode, but at least one starting gene tree was not provided (a random tree was generated instead)" << std::endl;
+  }
   if (arguments.reconciliationModelStr == "AutoDetect") {
     autoDetectRecModel = true;
     recModel = UndatedDL;

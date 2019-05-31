@@ -20,7 +20,7 @@ public:
     }
     void reset() {
       name = "";
-      startingGeneTree = "";
+      startingGeneTree = "__random__";
       alignmentFile = "";
       mappingFile = "";
       libpllModel = "GTR";

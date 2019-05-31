@@ -27,8 +27,6 @@ def build_families(alignments_dir, trees_dir, mappings_dir, model, output_file):
     cell["alignment"] = join_abs(alignments_dir, alignment)
     if (family in trees):
       cell["starting_gene_tree"] = trees[family]
-    else:
-      cell["starting_gene_tree"] = "__random__"
     if (family in mappings):
       cell["mapping"] = mappings[family]
     cell["subst_model"] = model
