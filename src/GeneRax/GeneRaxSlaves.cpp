@@ -91,6 +91,10 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
   ParallelContext::barrier();
 }
 
+std::string getArg(const std::string &str)
+{
+  return (str == "NONE" ? std::string() : str);
+}
 
 int optimizeGeneTreesMain(int argc, char** argv, void* comm)
 {
@@ -99,7 +103,7 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
   Logger::timed << "Starting optimizeGeneTreesSlave" << std::endl;
   int i = 2;
   std::string startingGeneTreeFile(argv[i++]);
-  std::string mappingFile(argv[i++]);
+  std::string mappingFile(getArg(argv[i++]));
   std::string alignmentFile(argv[i++]);
   std::string speciesTreeFile(argv[i++]);
   std::string libpllModel(argv[i++]);

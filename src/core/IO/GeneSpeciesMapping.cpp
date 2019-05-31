@@ -89,8 +89,7 @@ void GeneSpeciesMapping::buildFromTrees(const std::string &geneTreeStr)
     std::string gene;
     auto pos = label.find_first_of('_');
     species = label.substr(0, pos);
-    gene = label.substr(pos + 1);
-    Logger::info << gene << " " << species << std::endl;
+    gene = label; //label.substr(pos + 1);
     _map[gene] = species;
   }   
 }

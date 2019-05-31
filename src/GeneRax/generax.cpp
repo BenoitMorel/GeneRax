@@ -93,6 +93,9 @@ void raxmlMain(std::vector<FamiliesFileParser::FamilyInfo> &families,
   Logger::timed << "End of raxml light step (after " << elapsed << "s)"  << std::endl;
 }
 
+std::string toArg(const std::string &str) {
+  return str.size() ? str : "NONE";
+}
 
 void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
     DTLRatesVector &rates,
@@ -141,7 +144,7 @@ void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
     os << taxa << " " ; // cost
     os << "optimizeGeneTrees" << " ";
     os << family.startingGeneTree << " ";
-    os << family.mappingFile << " ";
+    os << toArg(family.mappingFile) << " ";
     os << family.alignmentFile << " ";
     os << arguments.speciesTree << " ";
     os << family.libpllModel  << " ";
