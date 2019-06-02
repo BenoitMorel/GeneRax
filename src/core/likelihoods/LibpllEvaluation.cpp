@@ -134,12 +134,12 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::s
       throw LibpllException("Alignment file " + alignmentFilename + "does not exist");
     }
     try {
+      parseFasta(alignmentFilename.c_str(),
+          model.charmap(), sequences, patternWeights);
+    } catch (...) {
       parsePhylip(alignmentFilename.c_str(),
           model.charmap(), sequences,
           patternWeights);
-    } catch (...) {
-      parseFasta(alignmentFilename.c_str(),
-          model.charmap(), sequences, patternWeights);
     }
     // tree
     if (newickString == "__random__") {
@@ -341,12 +341,13 @@ void LibpllEvaluation::parsePhylip(const char *phylipFile,
   try {
     msa = pll_phylip_parse_interleaved(reader.get());
     if (!msa) {
-      throw LibpllException("");
+      throw LibpllException("failed to parse ", phylipFile);
     }
   } catch (...) {
-    msa = pll_phylip_parse_sequential(reader.get());
+    std::shared_ptr<pll_phylip_t> reader2(pll_phylip_open(phylipFile, pll_map_phylip), pll_phylip_close);
+    msa = pll_phylip_parse_sequential(reader2.get());
     if (!msa) {
-      throw LibpllException("");
+      throw LibpllException("failed to parse ", phylipFile);
     }
   }
   weights = pll_compress_site_patterns(msa->sequence, stateMap, msa->count, &msa->length);
