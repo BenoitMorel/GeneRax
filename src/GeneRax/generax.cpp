@@ -40,10 +40,10 @@ void schedule(const std::string &outputDir, const std::string &commandFile, bool
   argv.push_back(const_cast<char *>(jobFailureFatal.c_str()));
   argv.push_back(const_cast<char *>(threadsArg.c_str()));
   argv.push_back(const_cast<char *>(outputLogs.c_str()));
-  MPI_Comm comm = MPI_COMM_WORLD;
   ParallelContext::barrier(); 
   if (splitImplem || ParallelContext::getRank() == 0) {
-    mpi_scheduler_main(static_cast<int>(argv.size()), &argv[0], static_cast<void*>(&comm));
+    void *comm = splitImplem ? static_cast<void *>(&ParallelContext::getComm()) : 0;
+    mpi_scheduler_main(static_cast<int>(argv.size()), &argv[0], comm);
   }
   ParallelContext::barrier(); 
 }
@@ -93,6 +93,9 @@ void raxmlMain(std::vector<FamiliesFileParser::FamilyInfo> &families,
   Logger::timed << "End of raxml light step (after " << elapsed << "s)"  << std::endl;
 }
 
+std::string toArg(const std::string &str) {
+  return str.size() ? str : "NONE";
+}
 
 void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
     DTLRatesVector &rates,
@@ -141,7 +144,7 @@ void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
     os << taxa << " " ; // cost
     os << "optimizeGeneTrees" << " ";
     os << family.startingGeneTree << " ";
-    os << family.mappingFile << " ";
+    os << toArg(family.mappingFile) << " ";
     os << family.alignmentFile << " ";
     os << arguments.speciesTree << " ";
     os << family.libpllModel  << " ";
@@ -426,6 +429,10 @@ void eval(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   std::vector<FamiliesFileParser::FamilyInfo> families = initialFamilies;
   bool autoDetectRecModel;
   RecModel recModel;
+  bool randoms = createRandomTrees(arguments.output, families);
+  if (randoms) {
+    Logger::info << "[Warning] You are running GeneRax in EVAL mode, but at least one starting gene tree was not provided (a random tree was generated instead)" << std::endl;
+  }
   if (arguments.reconciliationModelStr == "AutoDetect") {
     autoDetectRecModel = true;
     recModel = UndatedDL;
