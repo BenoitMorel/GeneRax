@@ -32,5 +32,6 @@ public:
    double transferRate;
    int maxSPRRadius;
    double recWeight;
+   unsigned int seed;
 };
 

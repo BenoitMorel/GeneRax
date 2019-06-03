@@ -461,11 +461,11 @@ int generax_main(int argc, char** argv, void* comm)
 {
   // the order is very important
   ParallelContext::init(comm); 
-  srand(42);
   Logger::init();
   ParallelContext::barrier();
   Logger::timed << "All cores started" << std::endl;
   GeneRaxArguments arguments(argc, argv);
+  srand(arguments.seed);
   FileSystem::mkdir(arguments.output, true);
   Logger::initFileOutput(FileSystem::joinPaths(arguments.output, "generax"));
   

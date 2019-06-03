@@ -19,7 +19,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   lossRate(1.0),
   transferRate(0.0),
   maxSPRRadius(5),
-  recWeight(1.0)
+  recWeight(1.0), 
+  seed(42)
 {
   if (argc == 1) {
     printHelp();
@@ -60,6 +61,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       maxSPRRadius = atoi(argv[++i]);
     } else if (arg == "--rec-weight") {
       recWeight = atof(argv[++i]);
+    } else if (arg == "--seed") {
+      recWeight = atoi(argv[++i]);
     } else {
       Logger::error << "Unrecognized argument " << arg << std::endl;
       Logger::error << "Aborting" << std::endl;
@@ -124,6 +127,7 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "--transfer-rate <transfer rate>" << std::endl;
   Logger::info << "--max-spr-radius <max SPR radius>" << std::endl;
   Logger::info << "--rec-weight <reconciliation likelihood weight>" << std::endl;
+  Logger::info << "--seed <seed>" << std::endl;
   Logger::info << "Please find more information on the GeneRax github wiki" << std::endl;
   Logger::info << std::endl;
 
@@ -151,5 +155,6 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << std::endl;
   Logger::info << "Max SPR radius: " << maxSPRRadius << std::endl;
   Logger::info << "Reconciliation likelihood weight: " << recWeight << std::endl;
+  Logger::info << "Random seed: " << seed << std::endl;
   Logger::info << std::endl;
 }
