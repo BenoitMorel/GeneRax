@@ -59,6 +59,8 @@ public:
 
   static void sumDouble(double &value);
   static void sumVectorDouble(std::vector<double> &value);
+  
+  static void parallelAnd(bool &value);
 
   /**
    *  broadcast a value from a given rank

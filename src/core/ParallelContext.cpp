@@ -25,6 +25,7 @@ void ParallelContext::init(void *commPtr)
   }
 
 }
+  
 
 
 void ParallelContext::finalize()
@@ -109,6 +110,17 @@ void ParallelContext::sumVectorDouble(std::vector<double> &value)
   barrier();
   MPI_Allreduce(&(value[0]), &(sum[0]), value.size(), MPI_DOUBLE, MPI_SUM, getComm());
   value = sum;
+}
+
+void ParallelContext::parallelAnd(bool &value)
+{
+  if (!_mpiEnabled) {
+    return;
+  }
+  int v = value ? 1 : 0;
+  int res = 0;
+  MPI_Allreduce(&v, &res, 1, MPI_DOUBLE, MPI_MIN, getComm());
+  value = (res == 1);
 }
 
 

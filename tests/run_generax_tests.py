@@ -84,11 +84,10 @@ def run_test(dataset, with_starting_tree, strategy, model, cores):
 
 dataset_set = ["simulated_2"]
 with_starting_tree_set = [True, False]
-strategy_set = ["EVAL", "SPR"]
+strategy_set = ["SPR", "EVAL"]
 model_set = ["UndatedDL", "UndatedDTL"]
-cores_set = [3, 1]
+cores_set = [8, 1]
 ok = True
-run_test("simulated_2", False, "SPR", "UndatedDL", 2)
 for dataset in dataset_set:
   for with_starting_tree in with_starting_tree_set:
     for strategy in strategy_set:

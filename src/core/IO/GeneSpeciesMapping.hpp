@@ -5,6 +5,11 @@
 #include <fstream>
 
 
+typedef struct pll_utree_s pll_utree_t;
+typedef struct pll_unode_s pll_unode_t;
+typedef struct pll_rtree_s pll_rtree_t;
+
+
 
 /**
  *  Parse and give access to gene-to-species mapping
@@ -21,6 +26,7 @@ public:
   
   void fill(const std::string &mappingFile, const std::string &geneTreeStr); 
 
+  bool check(pll_utree_t *geneTree, pll_rtree_t *speciesTree);
   void fill(const GeneSpeciesMapping &mapping);
 
   /**

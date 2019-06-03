@@ -70,4 +70,24 @@ std::vector<unsigned int> LibpllParsers::parallelGetTreeSizes(const std::vector<
   assert(treeSizes.size() == families.size());
   return treeSizes;
 }
+void LibpllParsers::fillLeavesFromUtree(pll_utree_t *utree, std::unordered_set<std::string> &leaves)
+{
+  for (unsigned int i = 0; i < utree->tip_count + utree->inner_count; ++i) {
+    auto node = utree->nodes[i];
+    if (!node->next) {
+      leaves.insert(std::string(node->label));
+    }
+  }
+}
 
+void LibpllParsers::fillLeavesFromRtree(pll_rtree_t *rtree, std::unordered_set<std::string> &leaves)
+{
+  for (unsigned int i = 0; i < rtree->tip_count + rtree->inner_count; ++i) {
+    auto node = rtree->nodes[i];
+    if (!node->left) {
+      leaves.insert(std::string(node->label));
+    }
+  }
+}
+
+  

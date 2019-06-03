@@ -34,11 +34,12 @@ void schedule(const std::string &outputDir, const std::string &commandFile, bool
   std::string outputLogs = FileSystem::joinPaths(outputDir, "logs.txt");
   argv.push_back(const_cast<char *>(exec.c_str()));
   argv.push_back(const_cast<char *>(implem.c_str()));
+  argv.push_back(const_cast<char *>(std::to_string(ParallelContext::getSize()).c_str()));
   argv.push_back(const_cast<char *>(called_library.c_str()));
   argv.push_back(const_cast<char *>(commandFile.c_str()));
   argv.push_back(const_cast<char *>(outputDir.c_str()));
-  argv.push_back(const_cast<char *>(jobFailureFatal.c_str()));
-  argv.push_back(const_cast<char *>(threadsArg.c_str()));
+  argv.push_back(const_cast<char *>("--jobs-failure-fatal"));
+  argv.push_back(const_cast<char *>("--logs"));
   argv.push_back(const_cast<char *>(outputLogs.c_str()));
   ParallelContext::barrier(); 
   if (splitImplem || ParallelContext::getRank() == 0) {
@@ -181,6 +182,11 @@ void optimizeRates(bool userDTLRates,
   auto start = Logger::getElapsedSec();
   Logger::timed << "Start optimizing rates..." << std::endl;
   PerCoreGeneTrees geneTrees(families);
+  bool ok = geneTrees.checkMappings(speciesTreeFile); 
+  if (!ok) {
+    Logger::info << "INVALID MAPPINGS" << std::endl;
+    exit(1);
+  }
   pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
   if (!perSpeciesRates) {
     rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, recModel);
