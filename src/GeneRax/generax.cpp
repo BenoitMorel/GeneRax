@@ -368,7 +368,6 @@ void search(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
     GeneRaxArguments &arguments)
 
 {
-  Logger::timed << "Start SPR search" << std::endl;
   double totalLibpllLL = 0.0;
   double totalRecLL = 0.0;
   long sumElapsedRates = 0;
@@ -462,8 +461,6 @@ int generax_main(int argc, char** argv, void* comm)
   // the order is very important
   ParallelContext::init(comm); 
   Logger::init();
-  ParallelContext::barrier();
-  Logger::timed << "All cores started" << std::endl;
   GeneRaxArguments arguments(argc, argv);
   srand(arguments.seed);
   FileSystem::mkdir(arguments.output, true);
@@ -473,7 +470,7 @@ int generax_main(int argc, char** argv, void* comm)
   arguments.printSummary();
 
   std::vector<FamiliesFileParser::FamilyInfo> initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
-  Logger::timed << "Number of gene families: " << initialFamilies.size() << std::endl;
+  Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
   initFolders(arguments.output, initialFamilies);
 
   switch (arguments.strategy) {
