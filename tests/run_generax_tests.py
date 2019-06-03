@@ -63,7 +63,7 @@ def run_generax(test_data, test_output, families_file, strategy, model, cores):
   command.append(model)
   command.append("-p")
   command.append(os.path.join(test_output, "generax"))
-  logs_file_path = os.path.join(test_data, "tests_logs.txt")
+  logs_file_path = os.path.join(test_output, "tests_logs.txt")
   with open(logs_file_path, "w") as writer:
     subprocess.check_call(command, stdout = writer, stderr = writer)
 
