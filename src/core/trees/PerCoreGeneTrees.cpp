@@ -67,8 +67,6 @@ bool PerCoreGeneTrees::checkMappings(const std::string &speciesTreeFile)
   pll_rtree_destroy(speciesTree, 0);
   ParallelContext::parallelAnd(ok);
   return ok;
-
-
 }
 
 

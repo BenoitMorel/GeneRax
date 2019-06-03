@@ -119,7 +119,7 @@ void ParallelContext::parallelAnd(bool &value)
   }
   int v = value ? 1 : 0;
   int res = 0;
-  MPI_Allreduce(&v, &res, 1, MPI_DOUBLE, MPI_MIN, getComm());
+  MPI_Allreduce(&v, &res, 1, MPI_INT, MPI_MIN, getComm());
   value = (res == 1);
 }
 

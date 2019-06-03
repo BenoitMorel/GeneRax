@@ -37,18 +37,18 @@ bool GeneSpeciesMapping::check(pll_utree_t *geneTree, pll_rtree_t *speciesTree)
     auto &gene = pair.first;
     auto &species = pair.second;
     if (geneLeaves.find(gene) == geneLeaves.end()) {
-      Logger::error << "[Error] Invalid mapping " << gene << "<->" << species << ": can't find the gene " << gene << " in the gene tree" << std::endl;
+      std::cerr << "[Error] Invalid mapping " << gene << "<->" << species << ": can't find the gene " << gene << " in the gene tree" << std::endl;
       ok = false;
     }
     if (speciesLeaves.find(species) == speciesLeaves.end()) {
-      Logger::error << "[Error] Invalid mapping " << gene << "<->" << species << ": can't find the species " << species << " in the species tree" << std::endl;
+      std::cerr << "[Error] Invalid mapping " << gene << "<->" << species << ": can't find the species " << species << " in the species tree" << std::endl;
       ok = false;
     }
   }
   for (auto &gene: geneLeaves) {
     auto speciesIt = getMap().find(gene);
     if (speciesIt == getMap().end()) {
-      Logger::error << "[Error] Gene tree leaf " << gene << " is not mapped to any species" << std::endl;
+      std::cerr << "[Error] Gene tree leaf " << gene << " is not mapped to any species" << std::endl;
       ok = false;
     }
   }

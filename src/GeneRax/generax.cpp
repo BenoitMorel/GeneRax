@@ -186,7 +186,7 @@ void optimizeRates(bool userDTLRates,
   bool ok = geneTrees.checkMappings(speciesTreeFile); 
   if (!ok) {
     Logger::info << "INVALID MAPPINGS" << std::endl;
-    exit(1);
+    ParallelContext::abort(1);
   }
   pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
   if (!perSpeciesRates) {
