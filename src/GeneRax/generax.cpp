@@ -18,7 +18,7 @@
 
 
 bool useSplitImplem() {
-  return ParallelContext::getSize() > 4;
+  return ParallelContext::getSize() > 1;
 }
 
 
