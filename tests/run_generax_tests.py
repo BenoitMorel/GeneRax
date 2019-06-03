@@ -86,7 +86,7 @@ dataset_set = ["simulated_2"]
 with_starting_tree_set = [True, False]
 strategy_set = ["SPR", "EVAL"]
 model_set = ["UndatedDL", "UndatedDTL"]
-cores_set = [8, 1]
+cores_set = [3, 1]
 ok = True
 for dataset in dataset_set:
   for with_starting_tree in with_starting_tree_set:

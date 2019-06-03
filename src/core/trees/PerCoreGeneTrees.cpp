@@ -59,15 +59,12 @@ PerCoreGeneTrees::PerCoreGeneTrees(const std::vector<FamiliesFileParser::FamilyI
 
 bool PerCoreGeneTrees::checkMappings(const std::string &speciesTreeFile)
 {
-  return true;
   bool ok = true;
   auto *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile);
   for (auto &tree: _geneTrees) {
     ok &= tree.mapping.check(tree.tree, speciesTree);
   }
   pll_rtree_destroy(speciesTree, 0);
-
-
   ParallelContext::parallelAnd(ok);
   return ok;
 

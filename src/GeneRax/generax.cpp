@@ -32,9 +32,10 @@ void schedule(const std::string &outputDir, const std::string &commandFile, bool
   std::string jobFailureFatal = "1";
   std::string threadsArg;
   std::string outputLogs = FileSystem::joinPaths(outputDir, "logs.txt");
+  std::string ranks = std::to_string(ParallelContext::getSize());
   argv.push_back(const_cast<char *>(exec.c_str()));
   argv.push_back(const_cast<char *>(implem.c_str()));
-  argv.push_back(const_cast<char *>(std::to_string(ParallelContext::getSize()).c_str()));
+  argv.push_back(const_cast<char *>(ranks.c_str()));
   argv.push_back(const_cast<char *>(called_library.c_str()));
   argv.push_back(const_cast<char *>(commandFile.c_str()));
   argv.push_back(const_cast<char *>(outputDir.c_str()));
