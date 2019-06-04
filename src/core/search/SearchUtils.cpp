@@ -9,7 +9,11 @@ void SearchUtils::testMove(JointTree &jointTree,
     std::shared_ptr<Move> move,
     double initialReconciliationLoglk,
     double initialLibpllLoglk,
+#ifdef SUPER_OPTIM
     double &averageReconciliationDiff,
+#else
+    double &,
+#endif
     double &newLoglk,
     bool blo,
     bool check
@@ -18,6 +22,7 @@ void SearchUtils::testMove(JointTree &jointTree,
   double initialLoglk = initialReconciliationLoglk + initialLibpllLoglk;
   jointTree.applyMove(move); 
   double recLoglk = jointTree.computeReconciliationLoglk();
+#ifdef SUPER_OPTIM
   double improvement = recLoglk - initialReconciliationLoglk;
   averageReconciliationDiff *= 50;
   averageReconciliationDiff += improvement;
@@ -34,6 +39,7 @@ void SearchUtils::testMove(JointTree &jointTree,
     }
     return;
   }
+#endif
   if (blo) {
     jointTree.optimizeMove(move);
   }
@@ -95,7 +101,7 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
         loglk,
         blo,
         check);
-    if (loglk > bestLoglk + 0.000000001) {
+    if (loglk > bestLoglk) {
       bestLoglk = loglk;
       bestMoveIndex = i;
     }
@@ -111,6 +117,7 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
   }
   ParallelContext::getMax(bestLoglk, bestRank);
   ParallelContext::broadcastUInt(bestRank, bestMoveIndex);
+  Logger::info << "best;; " << bestLoglk << " " << bestRank << std::endl;
   return bestMoveIndex != static_cast<unsigned int>(-1);
 }
 
