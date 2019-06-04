@@ -23,7 +23,6 @@ void ParallelContext::init(void *commPtr)
     setComm(MPI_COMM_WORLD);
     setOwnMPIContext(true);
     if (getSize() == 1) {
-      std::cerr << "only one rank, stopping MPI" << std::endl;
       finalize();
       _mpiEnabled = false;
       setOwnMPIContext(false);
