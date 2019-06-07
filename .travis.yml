@@ -1,11 +1,12 @@
 language: c++
 
-os:
-  - linux
-  - osx
-
-compiler:
-  - gcc
+matrix:
+  include:
+    - os: linux
+      compiler: gcc
+      before_script: CC=gcc-5 && CXX=g++-5
+    - os: osx
+      compiler: clang
 
 addons:
   apt:
@@ -16,14 +17,12 @@ addons:
       - cmake-data
       - cmake
       - g++-5
+      - clang
       - mpich2 
       - mpich2-doc
       - libmpich-dev
       - python
 
-before_script:
-  - CC=gcc-5
-  - CXX=g++-5
 
 script: 
   - ./install.sh
