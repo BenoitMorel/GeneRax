@@ -60,6 +60,8 @@ void Scenario::recursivelySaveTreeWithEvents(pll_unode_t *node, ParallelOfstream
     os << ":D=" << (event.type == D ? "Y" : "N" );
     os << ":H=" << (event.type == T || event.type == TL ? "Y" : "N" );
     if (event.type == T || event.type == TL) {
+      assert(_speciesTree->nodes[event.fromNode]->label);
+      assert(_speciesTree->nodes[event.toNode]->label);
       os << "@" << _speciesTree->nodes[event.fromNode]->label;
       os << "@" << _speciesTree->nodes[event.toNode]->label;
     }

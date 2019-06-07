@@ -3,8 +3,27 @@
 #include <streambuf>
 #include <algorithm>
 #include <ParallelContext.hpp>
+#include <cstring>
+
 extern "C" {
 #include <pll.h>
+}
+  
+void LibpllParsers::labelRootedTree(const std::string &unlabelledNewickFile, const std::string &labelledNewickFile)
+{
+  pll_rtree_t *tree = readRootedFromFile(unlabelledNewickFile);
+  assert(tree);
+  unsigned int index = 0;
+  for (unsigned int i = 0; i < tree->tip_count + tree->inner_count; ++i) {
+    auto node = tree->nodes[i];
+    if (!node->label) {
+      auto label = std::string("species_" + std::to_string(index++));
+      node->label = static_cast<char*>(malloc(sizeof(char) * (label.size() + 1)));
+      std::strcpy(node->label, label.c_str());
+    }
+  }
+  saveRtree(tree->root, labelledNewickFile);
+  pll_rtree_destroy(tree, free);
 }
 
 pll_utree_t *LibpllParsers::readNewickFromFile(const std::string &newickFilename)
@@ -43,12 +62,21 @@ pll_rtree_t *LibpllParsers::readRootedFromFile(const std::string &newickFile)
   return tree;
 }
   
-void LibpllParsers::saveUtree(pll_unode_t *utree, 
+void LibpllParsers::saveUtree(const pll_unode_t *utree, 
   const std::string &fileName, 
   bool append)
 {
   std::ofstream os(fileName, (append ? std::ofstream::app : std::ofstream::out));
   char *newick = pll_utree_export_newick_rooted(utree, 0);
+  os << newick;
+  os.close();
+  free(newick);
+}
+void LibpllParsers::saveRtree(const pll_rnode_t *rtree, 
+    const std::string &fileName)
+{
+  std::ofstream os(fileName, std::ofstream::out);
+  char *newick = pll_rtree_export_newick(rtree, 0);
   os << newick;
   os.close();
   free(newick);
