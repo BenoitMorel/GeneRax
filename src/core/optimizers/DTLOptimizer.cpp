@@ -295,9 +295,10 @@ void DTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
     }
     currentIt++;
   }
-  Logger::timed << "Simplex converged after " << currentIt << " iterations" << std::endl;
   sort(rates.begin(), rates.end());
   updateLL(rates[0], jointTree);
+  Logger::timed << "Simplex converged after " << currentIt << " iterations" << std::endl;
+  Logger::timed << rates[0] << std::endl;
 }
 
 DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, DTLRatesVector *previousVector)
