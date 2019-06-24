@@ -199,11 +199,6 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::s
   // treeinfo
   int params_to_optimize = model.params_to_optimize();
   params_to_optimize |= PLLMOD_OPT_PARAM_BRANCHES_ITERATIVE;
-  params_to_optimize |= PLLMOD_OPT_PARAM_ALPHA;
-  if (statesNumber == 4) {
-    params_to_optimize |= PLLMOD_OPT_PARAM_SUBST_RATES;
-    params_to_optimize |= PLLMOD_OPT_PARAM_FREQUENCIES;
-  }
   std::vector<unsigned int> params_indices(model.num_ratecats(), 0); 
   auto treeinfo = pllmod_treeinfo_create(root, 
       tipNumber, 1, PLLMOD_COMMON_BRLEN_SCALED);
