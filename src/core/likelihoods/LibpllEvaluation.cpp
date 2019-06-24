@@ -442,7 +442,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, 
         static_cast<int>(brlen_smooth_factor * static_cast<double>(RAXML_BRLEN_SMOOTHINGS)),
         -1,  /* radius */
         1,    /* keep_update */
-        PLLMOD_OPT_BLO_NEWTON_FAST,
+        PLLMOD_OPT_BLO_NEWTON_SAFE,
         treeinfo->brlen_linkage,
         treeinfo->parallel_context,
         treeinfo->parallel_reduce_cb
