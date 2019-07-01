@@ -402,6 +402,7 @@ void search(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
     recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
   }
   
+  optimizeStep(arguments, recModel, currentFamilies, rates, 0, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   optimizeStep(arguments, recModel, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   optimizeStep(arguments, recModel, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   
