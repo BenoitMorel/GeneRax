@@ -1,6 +1,11 @@
 # GeneRax 
 
-A maximum likelihood gene tree inference tool, accounting for both MSAs and DTL reconciliation with a given species tree.
+GeneRax is a parallel tool for sequence- and species-aware maximum-likelihood gene tree inference.
+
+GeneRax infers gene trees from their aligned sequences and a rooted undated species tree.
+
+GeneRax accounts for sequence substitutions, gene duplication, gene loss and horizontal gene transfer.
+
 
 ## Requirement
 
