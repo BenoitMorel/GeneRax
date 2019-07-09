@@ -1,6 +1,6 @@
 #pragma once
 
-#include <enums.hpp>
+#include <util/enums.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 #include <vector>

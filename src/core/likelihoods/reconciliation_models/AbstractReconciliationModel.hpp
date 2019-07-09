@@ -2,7 +2,7 @@
 
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
-#include <Scenario.hpp>
+#include <util/Scenario.hpp>
 
 #include <unordered_set>
 #include <maths/ScaledValue.hpp>

@@ -1,7 +1,7 @@
 #include "UndatedDLModel.hpp"
 #include <IO/Logger.hpp>
 #include <algorithm>
-#include <Scenario.hpp>
+#include <util/Scenario.hpp>
 
 #include <cmath>
 

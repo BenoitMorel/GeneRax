@@ -4,7 +4,7 @@ class JointTree;
 class PerCoreGeneTrees;
 #include <likelihoods/ReconciliationEvaluation.hpp>
 #include <string>
-#include <enums.hpp>
+#include <util/enums.hpp>
 #include <maths/DTLRates.hpp>
 
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <string>
-#include <enums.hpp>
+#include <util/enums.hpp>
 #include <IO/Logger.hpp>
 
 

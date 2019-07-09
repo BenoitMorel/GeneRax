@@ -6,7 +6,7 @@
 #include <search/Moves.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <maths/DTLRates.hpp>
-#include <enums.hpp>
+#include <util/enums.hpp>
 #include <sstream>
 #include <stack>
 

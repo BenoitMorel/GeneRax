@@ -3,7 +3,7 @@
 #include <trees/JointTree.hpp>
 #include <search/SPRSearch.hpp>
 #include <IO/Logger.hpp>
-#include <Scenario.hpp>
+#include <util/Scenario.hpp>
 #include <maths/DTLRates.hpp>
 #include <algorithm>
 #include <limits>

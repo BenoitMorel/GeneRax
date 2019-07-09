@@ -3,7 +3,7 @@
 #include <parallelization/ParallelContext.hpp>
 #include <algorithm>
 #include <vector>
-#include <Arguments.hpp>
+#include <IO/Arguments.hpp>
 
 JSArguments::JSArguments(int iargc, char * iargv[]):
   argc(iargc),

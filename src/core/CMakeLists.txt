@@ -1,6 +1,5 @@
 
 set(jointsearch-core_SOURCES 
-  Scenario.cpp
   IO/Logger.cpp
   IO/GeneSpeciesMapping.cpp
   IO/FamiliesFileParser.cpp
@@ -15,12 +14,14 @@ set(jointsearch-core_SOURCES
   likelihoods/reconciliation_models/UndatedDTLModel.cpp
   optimizers/DTLOptimizer.cpp
   parallelization/ParallelContext.cpp
+  parallelization/Scheduler.cpp
   trees/JointTree.cpp
   trees/PerCoreGeneTrees.cpp
   search/Moves.cpp
   search/Rollbacks.cpp
   search/SearchUtils.cpp
   search/SPRSearch.cpp
+  util/Scenario.cpp
   )
 
 add_library(jointsearch-core STATIC ${jointsearch-core_SOURCES})

@@ -1,4 +1,4 @@
-#include "Scenario.hpp"
+#include "util/Scenario.hpp"
 #include <IO/Logger.hpp>
 
 const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "None", "Invalid"};
