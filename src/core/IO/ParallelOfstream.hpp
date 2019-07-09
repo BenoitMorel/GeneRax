@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ParallelContext.hpp>
+#include <parallelization/ParallelContext.hpp>
 #include <fstream>
 #include <string>
 

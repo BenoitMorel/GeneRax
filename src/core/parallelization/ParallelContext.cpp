@@ -1,4 +1,4 @@
-#include "ParallelContext.hpp"
+#include "parallelization/ParallelContext.hpp"
 #include <algorithm>
 
 std::ofstream ParallelContext::sink("/dev/null");

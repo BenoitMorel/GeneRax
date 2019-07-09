@@ -1,5 +1,5 @@
 #include "GeneRaxArguments.hpp"
-#include <ParallelContext.hpp>
+#include <parallelization/ParallelContext.hpp>
 #include <IO/FamiliesFileParser.hpp>
 #include <IO/Logger.hpp>
 #include <IO/LibpllParsers.hpp>

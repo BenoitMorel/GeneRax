@@ -2,7 +2,7 @@
 #include "SpeciesRaxArguments.hpp"
 #include <IO/Logger.hpp>
 #include "Arguments.hpp"
-#include <ParallelContext.hpp>
+#include <parallelization/ParallelContext.hpp>
 #include <algorithm>
 #include <vector>
 

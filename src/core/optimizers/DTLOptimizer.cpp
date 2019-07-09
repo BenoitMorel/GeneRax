@@ -1,7 +1,7 @@
 #include <optimizers/DTLOptimizer.hpp>
 
 #include <likelihoods/SubtreeRepeatsCache.hpp>
-#include <ParallelContext.hpp>
+#include <parallelization/ParallelContext.hpp>
 #include <trees/JointTree.hpp>
 #include <IO/Logger.hpp>
 #include <trees/PerCoreGeneTrees.hpp>

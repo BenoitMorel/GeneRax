@@ -2,7 +2,7 @@
 #include <fstream>
 #include <streambuf>
 #include <algorithm>
-#include <ParallelContext.hpp>
+#include <parallelization/ParallelContext.hpp>
 #include <cstring>
 
 extern "C" {

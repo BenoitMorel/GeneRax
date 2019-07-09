@@ -1,5 +1,5 @@
 #include "PerCoreGeneTrees.hpp"
-#include <ParallelContext.hpp>
+#include <parallelization/ParallelContext.hpp>
 #include <IO/Logger.hpp>
 #include <IO/FileSystem.hpp>
 #include <IO/LibpllParsers.hpp>

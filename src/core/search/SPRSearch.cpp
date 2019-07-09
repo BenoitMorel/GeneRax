@@ -3,7 +3,7 @@
 #include <search/Moves.hpp>
 #include <search/SearchUtils.hpp>
 #include <IO/Logger.hpp>
-#include <ParallelContext.hpp>
+#include <parallelization/ParallelContext.hpp>
 
 #include <unordered_set>
 #include <array>

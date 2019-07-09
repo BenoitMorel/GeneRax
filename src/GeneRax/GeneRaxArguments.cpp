@@ -1,7 +1,7 @@
 
 #include "GeneRaxArguments.hpp"
 #include <IO/Logger.hpp>
-#include <ParallelContext.hpp>
+#include <parallelization/ParallelContext.hpp>
 #include <algorithm>
 #include <vector>
 

@@ -4,7 +4,7 @@
 #include <sys/types.h> 
 #include <sys/stat.h> 
 
-#include <ParallelContext.hpp>
+#include <parallelization/ParallelContext.hpp>
 #include <IO/Logger.hpp>
 
 class FileSystem {

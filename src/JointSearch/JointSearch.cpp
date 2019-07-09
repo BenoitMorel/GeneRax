@@ -1,5 +1,5 @@
 #include "JSArguments.hpp"
-#include <ParallelContext.hpp>
+#include <parallelization/ParallelContext.hpp>
 #include <trees/JointTree.hpp>
 #include <search/SPRSearch.hpp>
 #include <IO/Logger.hpp>

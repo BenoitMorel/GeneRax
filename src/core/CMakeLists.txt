@@ -1,5 +1,5 @@
 
-set(jointsearch-core_SOURCES ParallelContext.cpp
+set(jointsearch-core_SOURCES 
   Scenario.cpp
   IO/Logger.cpp
   IO/GeneSpeciesMapping.cpp
@@ -14,6 +14,7 @@ set(jointsearch-core_SOURCES ParallelContext.cpp
   likelihoods/reconciliation_models/UndatedDLModel.cpp
   likelihoods/reconciliation_models/UndatedDTLModel.cpp
   optimizers/DTLOptimizer.cpp
+  parallelization/ParallelContext.cpp
   trees/JointTree.cpp
   trees/PerCoreGeneTrees.cpp
   search/Moves.cpp
