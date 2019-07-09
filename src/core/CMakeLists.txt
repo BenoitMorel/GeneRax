@@ -17,6 +17,7 @@ set(jointsearch-core_SOURCES
   parallelization/Scheduler.cpp
   routines/RaxmlMaster.cpp
   routines/RaxmlSlave.cpp
+  routines/Routines.cpp
   routines/GeneTreeSearchMaster.cpp
   routines/GeneTreeSearchSlave.cpp
   search/Moves.cpp
