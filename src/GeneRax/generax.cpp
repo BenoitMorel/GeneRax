@@ -97,40 +97,6 @@ void inferReconciliation(
 }
 
 
-RecModel testRecModel(const std::string &speciesTreeFile,
-    std::vector<FamiliesFileParser::FamilyInfo> &families,
-    bool perSpeciesRates, 
-    DTLRatesVector &rates)
-
-{
-  Logger::info << "Testing for transfers..." << std::endl;
-  DTLRatesVector transferRates;
-  DTLRatesVector noTransferRates;
-  long testTime = 0;
-  optimizeRates(false, speciesTreeFile, UndatedDL, families, perSpeciesRates, noTransferRates, testTime);
-  optimizeRates(false, speciesTreeFile, UndatedDTL, families, perSpeciesRates, transferRates, testTime);
-  double ll_dtl = transferRates.getLL();
-  double ll_dl = noTransferRates.getLL();
-
-  double aic_dtl = 2.0 - 2.0 * ll_dtl;
-  double aic_dl = -2.0 * ll_dl;
-  double bic_dtl = log(double(families.size())) - 2.0 * ll_dtl;
-  double bic_dl = -2.0 * ll_dl;
-  Logger::info << "AIC dl: " << aic_dl << std::endl;
-  Logger::info << "AIC dtl: " << aic_dtl << std::endl;
-  Logger::info << "BIC dl: " << bic_dl << std::endl;
-  Logger::info << "BIC dtl: " << bic_dtl << std::endl;
-  if (bic_dtl < bic_dl) {
-    Logger::info << "According to BIC score, there were transfers between analyzed species." << std::endl;
-    rates = transferRates;
-    return UndatedDTL;
-  } else {
-    Logger::info << "According to BIC score, there were NO transfers between analyzed species." << std::endl;
-    rates = noTransferRates;
-    return UndatedDL;
-  }
-}
-
 
 void gatherLikelihoods(std::vector<FamiliesFileParser::FamilyInfo> &families,
     double &totalLibpllLL,
@@ -247,15 +213,7 @@ void search(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
     RaxmlMaster::runRaxmlOptimization(currentFamilies, arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
     gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
   }
-  bool autoDetectRecModel;
-  RecModel recModel;
-  if (arguments.reconciliationModelStr == "AutoDetect") {
-    autoDetectRecModel = true;
-    recModel = UndatedDL;
-  } else {
-    autoDetectRecModel = false;
-    recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
-  }
+  RecModel recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
   
   optimizeStep(arguments, recModel, currentFamilies, rates, 0, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   optimizeStep(arguments, recModel, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
@@ -267,11 +225,6 @@ void search(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   if (arguments.maxSPRRadius >= 3) {
     optimizeStep(arguments, recModel, currentFamilies, rates, 3, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
-  if (autoDetectRecModel) {
-    recModel = testRecModel(arguments.speciesTree, currentFamilies, arguments.perSpeciesDTLRates, rates);
-    optimizeStep(arguments, recModel, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
-  }
-  
   optimizeStep(arguments, recModel, currentFamilies, rates, arguments.maxSPRRadius, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
 
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
@@ -291,24 +244,13 @@ void eval(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   long dummy = 0;
   DTLRatesVector rates(DTLRates(arguments.dupRate, arguments.lossRate, arguments.transferRate));
   std::vector<FamiliesFileParser::FamilyInfo> families = initialFamilies;
-  bool autoDetectRecModel;
   RecModel recModel;
   bool randoms = createRandomTrees(arguments.output, families);
   if (randoms) {
     Logger::info << "[Warning] You are running GeneRax in EVAL mode, but at least one starting gene tree was not provided (a random tree was generated instead)" << std::endl;
   }
-  if (arguments.reconciliationModelStr == "AutoDetect") {
-    autoDetectRecModel = true;
-    recModel = UndatedDL;
-  } else {
-    autoDetectRecModel = false;
-    recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
-  }
-  if (!autoDetectRecModel) {
-    optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, rates, dummy);
-  } else {
-    recModel = testRecModel(arguments.speciesTree, families, arguments.perSpeciesDTLRates, rates);
-  }
+  recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
+  optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, rates, dummy);
   int sprRadius = 0;
   int currentIteration = 0;
   GeneTreeSearchMaster::optimizeGeneTrees(families, 

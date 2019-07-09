@@ -100,10 +100,6 @@ void GeneRaxArguments::checkInputs() {
     Logger::error << "You specified at least one of the duplication and loss rates, but not both of them." << std::endl;
     ok = false;
   }
-  if (userDTLRates && reconciliationModelStr == "AutoDetect") {
-    Logger::error << "You cannot set the DTL rates in AutoDetect mode" << std::endl;
-    ok = false;
-  }
   if (!ok) {
     Logger::error << "Aborting." << std::endl;
     ParallelContext::abort(1);
