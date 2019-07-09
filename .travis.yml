@@ -5,8 +5,6 @@ matrix:
     - os: linux
       compiler: gcc
       before_script: CC=gcc-5 && CXX=g++-5
-    - os: osx
-      compiler: clang
 
 addons:
   apt:
