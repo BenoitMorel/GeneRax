@@ -15,129 +15,13 @@
 #include <sstream>
 #include "GeneRaxSlaves.hpp"
 #include <parallelization/Scheduler.hpp>
+#include <routines/RaxmlMaster.hpp>
+#include <routines/GeneTreeSearchMaster.hpp>
 
 bool useSplitImplem() {
   return ParallelContext::getSize() > 2;
 }
 
-void raxmlMain(std::vector<FamiliesFileParser::FamilyInfo> &families,
-    GeneRaxArguments &arguments,
-    int iteration,
-    long &sumElapsed)
-
-{
-  bool splitImplem = useSplitImplem();
-  auto start = Logger::getElapsedSec();
-  Logger::timed << "Starting raxml light step" << std::endl;
-  std::stringstream outputDirName;
-  outputDirName << "raxml_light_" << iteration;
-  std::string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
-  FileSystem::mkdir(outputDir, true);
-  std::string commandFile = FileSystem::joinPaths(outputDir, "raxml_light_command.txt");
-  auto geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
-  ParallelOfstream os(commandFile);
-  for (size_t i = 0; i < families.size(); ++i) {
-    auto &family = families[i];
-    std::string familyOutput = FileSystem::joinPaths(arguments.output, "results");
-    familyOutput = FileSystem::joinPaths(familyOutput, family.name);
-    std::string geneTreePath = FileSystem::joinPaths(familyOutput, "geneTree.newick");
-    std::string libpllModelPath = FileSystem::joinPaths(familyOutput, "libpllModel.txt");
-    std::string outputStats = FileSystem::joinPaths(familyOutput, "raxml_light_stats.txt");
-    auto taxa = geneTreeSizes[i];
-    os << family.name << " ";
-    os << 1 << " "; // cores
-    os << taxa << " " ; // cost
-    os << "raxmlLight" << " ";
-    os << family.startingGeneTree << " ";
-    os << family.alignmentFile << " ";
-    os << family.libpllModel  << " ";
-    os << geneTreePath << " ";
-    os << libpllModelPath << " ";
-    os << outputStats <<  std::endl;
-    family.startingGeneTree = geneTreePath;
-    family.statsFile = outputStats;
-    family.libpllModel = libpllModelPath;
-  }    
-  os.close();
-  Scheduler::schedule(outputDir, commandFile, splitImplem, arguments.execPath); 
-  auto elapsed = (Logger::getElapsedSec() - start);
-  sumElapsed += elapsed;
-  Logger::timed << "End of raxml light step (after " << elapsed << "s)"  << std::endl;
-}
-
-std::string toArg(const std::string &str) {
-  return str.size() ? str : "NONE";
-}
-
-void optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
-    DTLRatesVector &rates,
-    GeneRaxArguments &arguments,
-    RecModel recModel,
-    bool enableRec,
-    int sprRadius,
-    int iteration,
-    long &sumElapsed) 
-{
-  bool splitImplem = useSplitImplem();
-  auto start = Logger::getElapsedSec();
-  Logger::timed << "Starting SPR rounds with radius " << sprRadius << std::endl;
-  std::stringstream outputDirName;
-  outputDirName << "gene_optimization_" << iteration;
-  std::string outputDir = FileSystem::joinPaths(arguments.output, outputDirName.str());
-  FileSystem::mkdir(outputDir, true);
-  std::string commandFile = FileSystem::joinPaths(outputDir, "opt_genes_command.txt");
-  auto geneTreeSizes = LibpllParsers::parallelGetTreeSizes(families);
-  ParallelOfstream os(commandFile);
-  std::string ratesFile = FileSystem::joinPaths(outputDir, "dtl_rates.txt");
-  rates.save(ratesFile);
-  for (size_t i = 0; i < families.size(); ++i) {
-    auto &family = families[i];
-    std::string familyOutput = FileSystem::joinPaths(arguments.output, "results");
-    familyOutput = FileSystem::joinPaths(familyOutput, family.name);
-    std::string geneTreePath = FileSystem::joinPaths(familyOutput, "geneTree.newick");
-    std::string outputStats = FileSystem::joinPaths(familyOutput, "stats.txt");
-    auto taxa = geneTreeSizes[i];
-    unsigned int cores = 1;
-    if (sprRadius == 1) {
-      cores = taxa / 2;;
-    } else if (sprRadius == 2) {
-      cores = taxa / 2;
-    } else if (sprRadius >= 3) {
-      cores = taxa;
-    }
-    if (cores == 0) {
-      cores = 1;
-    }
-    if (!splitImplem) {
-      cores = 1;
-    }
-    os << family.name << " ";
-    os << cores << " "; // cores
-    os << taxa << " " ; // cost
-    os << "optimizeGeneTrees" << " ";
-    os << family.startingGeneTree << " ";
-    os << toArg(family.mappingFile) << " ";
-    os << family.alignmentFile << " ";
-    os << arguments.speciesTree << " ";
-    os << family.libpllModel  << " ";
-    os << ratesFile << " ";
-    os << static_cast<int>(recModel)  << " ";
-    os << static_cast<int>(arguments.reconciliationOpt)  << " ";
-    os << static_cast<int>(arguments.rootedGeneTree)  << " ";
-    os << arguments.recWeight  << " ";
-    os << static_cast<int>(enableRec)  << " ";
-    os << sprRadius  << " ";
-    os << geneTreePath << " ";
-    os << outputStats <<  std::endl;
-    family.startingGeneTree = geneTreePath;
-    family.statsFile = outputStats;
-  } 
-  os.close();
-  Scheduler::schedule(outputDir, commandFile, splitImplem, arguments.execPath); 
-  auto elapsed = (Logger::getElapsedSec() - start);
-  sumElapsed += elapsed;
-  Logger::timed << "End of SPR rounds (after " << elapsed << "s)"  << std::endl;
-}
 
 void optimizeRates(bool userDTLRates, 
     const std::string &speciesTreeFile,
@@ -164,16 +48,11 @@ void optimizeRates(bool userDTLRates,
   } else {
     rates = DTLOptimizer::optimizeDTLRatesVector(geneTrees, speciesTree, recModel, &rates);
   }
-  //Logger::info << "Optimized rates vector: " << ratesVector << std::endl;
-  //Logger::info << "Optimized rates vector: " << ratesVector << std::endl;
   pll_rtree_destroy(speciesTree, 0);
   ParallelContext::barrier(); 
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
   Logger::timed << "Finished optimizing rates: "
-    //<< "D=" << rates.rates[0] << ", "
-    //<< "L=" << rates.rates[1] << ", "
-    //<< "T=" << rates.rates[2] << ", "
     << "Loglk=" << rates.getLL() 
     << " (after " << elapsed << "s)" << std::endl;
 }
@@ -211,15 +90,8 @@ void inferReconciliation(
   }
   ParallelContext::sumVectorDouble(dup_count);
   auto initialSpeciesTreeStr = pll_rtree_export_newick(speciesTree->root, 0);
-  //Logger::info << initialSpeciesTreeStr << std::endl;
   free(initialSpeciesTreeStr);
-  for (unsigned int i = 0; i < speciesNodesCount; ++i) {
-    //Logger::info << dup_count[i] << std::endl;
-    speciesTree->nodes[i]->length = dup_count[i] / static_cast<double>(families.size());
-  }
   auto speciesTreeStr = pll_rtree_export_newick(speciesTree->root, 0);
-  //Logger::info << "Species tree with average number of duplications (per familiy)" << std::endl;
-  //Logger::info << speciesTreeStr << std::endl;
   free(speciesTreeStr);
   pll_rtree_destroy(speciesTree, 0);
 }
@@ -336,7 +208,20 @@ void optimizeStep(GeneRaxArguments &arguments,
     long &sumElapsedSPR)
 {
   optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, rates, sumElapsedRates);
-  optimizeGeneTrees(families, rates, arguments, recModel, true, sprRadius, currentIteration, sumElapsedSPR);
+  GeneTreeSearchMaster::optimizeGeneTrees(families, 
+      recModel,
+      rates, 
+      arguments.output,
+      arguments.execPath,
+      arguments.speciesTree,
+      arguments.reconciliationOpt,
+      arguments.rootedGeneTree,
+      arguments.recWeight,
+      true,
+      sprRadius,
+      currentIteration,
+      useSplitImplem(),
+      sumElapsedSPR);
   gatherLikelihoods(families, totalLibpllLL, totalRecLL);
 }
 
@@ -359,7 +244,7 @@ void search(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   int iteration = 0;
   
   if (randoms) {
-    raxmlMain(currentFamilies, arguments, iteration++, sumElapsedLibpll);
+    RaxmlMaster::runRaxmlOptimization(currentFamilies, arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
     gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
   }
   bool autoDetectRecModel;
@@ -426,7 +311,20 @@ void eval(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   }
   int sprRadius = 0;
   int currentIteration = 0;
-  optimizeGeneTrees(families, rates, arguments, recModel, true, sprRadius, currentIteration, dummy);
+  GeneTreeSearchMaster::optimizeGeneTrees(families, 
+      recModel,
+      rates, 
+      arguments.output,
+      arguments.execPath,
+      arguments.speciesTree,
+      arguments.reconciliationOpt,
+      arguments.rootedGeneTree,
+      arguments.recWeight,
+      true,
+      sprRadius,
+      currentIteration,
+      useSplitImplem(),
+      dummy);
   
   double totalLibpllLL = 0.0;
   double totalRecLL = 0.0;

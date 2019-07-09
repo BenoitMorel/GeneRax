@@ -15,12 +15,16 @@ set(jointsearch-core_SOURCES
   optimizers/DTLOptimizer.cpp
   parallelization/ParallelContext.cpp
   parallelization/Scheduler.cpp
-  trees/JointTree.cpp
-  trees/PerCoreGeneTrees.cpp
+  routines/RaxmlMaster.cpp
+  routines/RaxmlSlave.cpp
+  routines/GeneTreeSearchMaster.cpp
+  routines/GeneTreeSearchSlave.cpp
   search/Moves.cpp
   search/Rollbacks.cpp
   search/SearchUtils.cpp
   search/SPRSearch.cpp
+  trees/JointTree.cpp
+  trees/PerCoreGeneTrees.cpp
   util/Scenario.cpp
   )
 
