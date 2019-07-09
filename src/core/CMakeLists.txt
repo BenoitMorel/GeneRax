@@ -26,6 +26,7 @@ set(jointsearch-core_SOURCES
   search/SPRSearch.cpp
   trees/JointTree.cpp
   trees/PerCoreGeneTrees.cpp
+  trees/SpeciesTree.cpp
   util/Scenario.cpp
   )
 
