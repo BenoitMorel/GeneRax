@@ -5,21 +5,19 @@ const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "None", "Inval
 
 
 void Scenario::addEvent(EventType type, unsigned int geneNode, unsigned int speciesNode) {
-  addTransfer(type, geneNode, speciesNode, INVALID, INVALID);
+  addTransfer(type, geneNode, speciesNode, INVALID);
 }
   
 void Scenario::addTransfer(EventType type, 
   unsigned int geneNode, 
   unsigned int speciesNode, 
-  unsigned int from, 
-  unsigned int to)
+  unsigned int destSpeciesNode)
 {
   Event event;
   event.type = type;
   event.geneNode = geneNode;
   event.speciesNode = speciesNode;
-  event.fromNode = from;
-  event.toNode = to;
+  event.destSpeciesNode = destSpeciesNode;
   _events.push_back(event);
   assert(static_cast<int>(type) >= 0);
   _eventsCount[static_cast<unsigned int>(type)] ++;
@@ -60,10 +58,10 @@ void Scenario::recursivelySaveTreeWithEvents(pll_unode_t *node, ParallelOfstream
     os << ":D=" << (event.type == D ? "Y" : "N" );
     os << ":H=" << (event.type == T || event.type == TL ? "Y" : "N" );
     if (event.type == T || event.type == TL) {
-      assert(_speciesTree->nodes[event.fromNode]->label);
-      assert(_speciesTree->nodes[event.toNode]->label);
-      os << "@" << _speciesTree->nodes[event.fromNode]->label;
-      os << "@" << _speciesTree->nodes[event.toNode]->label;
+      assert(_speciesTree->nodes[event.speciesNode]->label);
+      assert(_speciesTree->nodes[event.destSpeciesNode]->label);
+      os << "@" << _speciesTree->nodes[event.speciesNode]->label;
+      os << "@" << _speciesTree->nodes[event.destSpeciesNode]->label;
     }
     os << ":B=" << node->length;
     os << "]";

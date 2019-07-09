@@ -158,11 +158,6 @@ void DTLOptimizer::optimizeDLRates(JointTree &jointTree, RecOpt method) {
     optimizeRateSimplex(jointTree, false);
     break;
   }
-  /*
-  Logger::info << "best rates " << std::endl;
-  Logger::info << "D " << jointTree.getDupRate() << std::endl;
-  Logger::info << "L " << jointTree.getLossRate() << std::endl;
-  */
 }
 
 

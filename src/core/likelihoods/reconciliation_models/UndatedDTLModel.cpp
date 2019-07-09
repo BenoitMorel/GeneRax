@@ -221,13 +221,13 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
       break;
     case 3:
       dest =  getBestTransfer(u_left, speciesNode);
-      scenario.addTransfer(Scenario::T, gid, e, e, dest->node_index);
+      scenario.addTransfer(Scenario::T, gid, e, dest->node_index);
       backtrace(leftGeneNode, dest, scenario);
       backtrace(rightGeneNode, speciesNode, scenario);
       break;
     case 4:
       dest =  getBestTransfer(u_right, speciesNode);
-      scenario.addTransfer(Scenario::T, gid, e, e, dest->node_index);
+      scenario.addTransfer(Scenario::T, gid, e, dest->node_index);
       backtrace(rightGeneNode, dest, scenario);
       backtrace(leftGeneNode, speciesNode, scenario);
       break;
@@ -241,7 +241,7 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
       break;
     case 7:
       dest = getBestTransfer(gid, speciesNode);
-      scenario.addTransfer(Scenario::TL, gid, e, e, dest->node_index); 
+      scenario.addTransfer(Scenario::TL, gid, e, dest->node_index); 
       backtrace(geneNode, dest, scenario); 
       break;
     default:

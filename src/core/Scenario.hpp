@@ -12,6 +12,9 @@ typedef struct pll_unode_s pll_unode_t;
 typedef struct pll_rtree_s pll_rtree_t;
 typedef struct pll_rnode_s pll_rnode_t;
 
+/*
+ * Store the set of events that reconciles a gene tree with a species tree
+ */
 class Scenario {
 public:
   static const unsigned int INVALID = static_cast<unsigned int>(-1);
@@ -21,12 +24,11 @@ public:
   };
 
   struct Event {
-    Event(): type(S), geneNode(INVALID), speciesNode(INVALID), fromNode(INVALID), toNode(INVALID) {}
+    Event(): type(S), geneNode(INVALID), speciesNode(INVALID), destSpeciesNode(INVALID) {}
     EventType type;
     unsigned int geneNode;
     unsigned int speciesNode;
-    unsigned int fromNode;
-    unsigned int toNode; // for transfers
+    unsigned int destSpeciesNode; // for transfers
   };
 
 
@@ -40,8 +42,7 @@ public:
   void addTransfer(EventType type, 
     unsigned int geneNode, 
     unsigned int speciesNode, 
-    unsigned int from, 
-    unsigned int to);
+    unsigned int destSpeciesNode);
 
   void saveEventsCounts(const std::string &filename, bool masterRankOnly = true); 
 
@@ -56,8 +57,6 @@ private:
   pll_unode_t *_geneRoot;
   pll_rtree_t *_speciesTree;
   void recursivelySaveTreeWithEvents(pll_unode_t *node, ParallelOfstream &os);
-
-
 };
 
 

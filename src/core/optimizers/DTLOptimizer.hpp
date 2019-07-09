@@ -12,10 +12,21 @@ class PerCoreGeneTrees;
 
 class DTLOptimizer {
 public:
+  
+  /**
+   * Per-family rates optimization
+   */
   static void optimizeDLRates(JointTree &jointTree, RecOpt method);
   static void optimizeDTLRates(JointTree &jointTree, RecOpt method);
  
+  /**
+   * Per-species rates optimization
+   */
   static DTLRatesVector optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, DTLRatesVector *previousVector = 0);
+  
+  /**
+   * Global rates optimization
+   */
   static DTLRates optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model);
 private:
   static void findBestRatesDTL(JointTree &jointTree,
