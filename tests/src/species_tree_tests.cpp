@@ -13,7 +13,8 @@ void checkMove(SpeciesTree &speciesTree, unsigned int direction)
   assert(initialStr == speciesTree.toString());
 }
 
-int main(int argc, char** argv)
+
+void testRootMoves() 
 {
   std::string initialTreeStr = "((A,B),(C,D));";
   SpeciesTree speciesTree(initialTreeStr, false);
@@ -21,6 +22,23 @@ int main(int argc, char** argv)
     checkMove(speciesTree, i);
   }
   std::cout << "Test species tree ok!" << std::endl;
+}
+
+void testBuildRandomTree()
+{
+  std::unordered_set<std::string> labels;
+  for (unsigned int i = 0; i < 20; ++i) {
+    labels.insert(std::string("S" + std::to_string(i)));
+  }
+  SpeciesTree speciesTree(labels);
+  std::cout << speciesTree << std::endl;
+}
+
+int main(int argc, char** argv)
+{
+  testRootMoves();
+  testBuildRandomTree();
+
   return 0;
 }
 

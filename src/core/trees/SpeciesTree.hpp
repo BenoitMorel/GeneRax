@@ -13,7 +13,8 @@ class PerCoreGeneTrees;
 
 class SpeciesTree {
 public:
-  SpeciesTree(const std::string &newick, bool isFile = true); 
+  SpeciesTree(const std::string &newick, bool isFile = true);
+  SpeciesTree(const std::unordered_set<std::string> &leafLabels);
   ~SpeciesTree();
 
   void setRates(const DTLRates &rates);

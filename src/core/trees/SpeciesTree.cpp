@@ -20,6 +20,70 @@ SpeciesTree::SpeciesTree(const std::string &newick, bool fromFile):
   assert(_speciesTree);
 }
 
+void setSon(pll_rnode_t *parent, pll_rnode_t *newSon, bool left)
+{
+  newSon->parent = parent;
+  if (left) {
+    parent->left = newSon;
+  } else {
+    parent->right = newSon;
+  }
+}
+
+pll_rnode_t *createNode(const std::string &label, std::vector<pll_rnode_t *> &allNodes) {
+  pll_rnode_t *node = static_cast<pll_rnode_t *>(malloc(sizeof(pll_rnode_t)));
+  node->label = 0;
+  if (label.size()) {
+    node->label = static_cast<char *>(calloc(label.size(), sizeof(char)));
+    assert(node->label);
+    strcpy(node->label, label.c_str());
+  }
+  node->node_index = allNodes.size();
+  node->length = 0.1;
+  node->parent = 0;
+  node->left = 0;
+  node->right = 0;
+  allNodes.push_back(node);
+  return node;
+}
+
+SpeciesTree::SpeciesTree(const std::unordered_set<std::string> &leafLabels)
+{
+  std::vector<pll_rnode_t *> allNodes;
+  pll_rnode_t *root = 0;
+  unsigned int index = 0;
+  for (auto &label: leafLabels) {
+    if (allNodes.size() == 0) {
+      root = createNode(label, allNodes);
+      continue;
+    }
+    auto brother = allNodes[rand() % allNodes.size()];
+    auto parent = createNode("", allNodes);
+    auto node = createNode(label, allNodes);
+    auto grandpa = brother->parent;
+    if (grandpa) {
+      setSon(grandpa, parent, grandpa->left == brother); 
+    } else {
+      root = parent;
+    }
+    bool randBool = static_cast<bool>(rand() % 2);
+    setSon(parent, brother, randBool);
+    setSon(parent, node, !randBool);
+  }
+  _speciesTree = static_cast<pll_rtree_t *>(malloc(sizeof(pll_rtree_t)));
+  _speciesTree->root = root;
+  _speciesTree->nodes = static_cast<pll_rnode_t**>(malloc(sizeof(pll_rnode_t*) * allNodes.size()));
+  for (unsigned int i = 0; i < allNodes.size(); ++i) {
+    _speciesTree->nodes[i] = allNodes[i];
+  }
+  _speciesTree->tip_count = allNodes.size() / 2 + 1;
+  _speciesTree->inner_count = allNodes.size() / 2 - 1;
+  _speciesTree->edge_count = allNodes.size() - 1;
+  
+  assert(_speciesTree->tip_count == getTaxaNumber());
+  LibpllParsers::labelRootedTree(_speciesTree);
+}
+
 SpeciesTree::~SpeciesTree()
 {
   if (_speciesTree) {
@@ -67,7 +131,7 @@ unsigned int getTaxaNumberAux(const pll_rnode_t *node)
 
 unsigned int SpeciesTree::getTaxaNumber() const
 {
-  return getTaxaNumberAux(getRoot()) / 2;
+  return getTaxaNumberAux(getRoot()) / 2 + 1;
 }
 
 
@@ -95,15 +159,6 @@ std::string sideString(bool left) {
   }
 }
 
-void setSon(pll_rnode_t *parent, pll_rnode_t *newSon, bool left)
-{
-  newSon->parent = parent;
-  if (left) {
-    parent->left = newSon;
-  } else {
-    parent->right = newSon;
-  }
-}
 
 void SpeciesTreeOperator::changeRoot(SpeciesTree &speciesTree, int direction)
 {
@@ -202,7 +257,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearch(SpeciesTree &speciesTree, PerCor
   rootExhaustiveSearchAux(speciesTree, geneTrees, model, movesHistory, bestMovesHistory, bestLL, visits); 
   movesHistory[0] = 1;
   rootExhaustiveSearchAux(speciesTree, geneTrees, model, movesHistory, bestMovesHistory, bestLL, visits); 
-  assert (visits == 2 * speciesTree.getTaxaNumber() - 1);
+  assert (visits == 2 * speciesTree.getTaxaNumber() - 3);
   for (unsigned int i = 1; i < bestMovesHistory.size(); ++i) {
     SpeciesTreeOperator::changeRoot(speciesTree, bestMovesHistory[i]);
   }
