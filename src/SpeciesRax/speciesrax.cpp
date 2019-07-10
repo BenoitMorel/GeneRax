@@ -32,6 +32,8 @@ int internal_main(int argc, char** argv, void* comm)
   arguments.printCommand();
   arguments.printSummary();
   
+  RecModel recModel = arguments.reconciliationModel;
+
   std::vector<FamiliesFileParser::FamilyInfo> initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
   Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
   initFolders(arguments.output, initialFamilies);
@@ -42,30 +44,15 @@ int internal_main(int argc, char** argv, void* comm)
   DTLRates rates(0.1, 0.2, 0.1);
   speciesTree.setRates(rates);
   SpeciesTreeOperator::changeRoot(speciesTree, true, false);
+  SpeciesTreeOperator::changeRoot(speciesTree, true, false);
   Logger::info << "Tree: " << std::endl << speciesTree << std::endl;
-  Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, UndatedDTL) << std::endl;
+  Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, recModel) << std::endl;
   
   
+  SpeciesTreeOptimizer::rootSlidingSearch(speciesTree, geneTrees, recModel);
   
-  
-  bool left1 = false;
-  bool left2 = true;
-  if (SpeciesTreeOperator::canChangeRoot(speciesTree, left1)) {
-    SpeciesTreeOperator::changeRoot(speciesTree, left1, left2);
-    //Logger::info << "Tree: " << std::endl << speciesTree << std::endl;
-    Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, UndatedDTL) << std::endl;
-  } else {
-    Logger::info << "Cannot change root" << std::endl;
-  }
-  left1 = !left1;
-  left2 = !left2;
-  if (SpeciesTreeOperator::canChangeRoot(speciesTree, left1)) {
-    SpeciesTreeOperator::changeRoot(speciesTree, left1, left2);
-    Logger::info << "Tree: " << std::endl << speciesTree << std::endl;
-    Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, UndatedDTL) << std::endl;
-  } else {
-    Logger::info << "Cannot change root" << std::endl;
-  }
+
+  speciesTree.saveToFile(FileSystem::joinPaths(arguments.output, "inferred_species_tree.newick"));
   ParallelContext::finalize();
   return 0;
 }

@@ -71,6 +71,13 @@ unsigned int SpeciesTree::getTaxaNumber() const
 }
 
 
+void SpeciesTree::saveToFile(const std::string &newick)
+{
+  LibpllParsers::saveRtree(_speciesTree->root, newick);  
+}
+
+
+
 bool SpeciesTreeOperator::canChangeRoot(const SpeciesTree &speciesTree, bool left1)
 {
   auto root = speciesTree.getRoot();
@@ -128,4 +135,39 @@ void SpeciesTreeOperator::changeRoot(SpeciesTree &speciesTree, bool left1, bool 
     setSon(root, rootLeft, false);
   }
 }
+
+void SpeciesTreeOperator::revertChangeRoot(SpeciesTree &speciesTree, bool left1, bool left2)
+{
+  changeRoot(speciesTree, !left1, !left2);
+}
+  
+void SpeciesTreeOptimizer::rootSlidingSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model)
+{
+  double bestLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
+  int bestMove = -1;
+  do {
+    bestMove = -1;
+    Logger::info << "Current ll: " << bestLL << std::endl;
+    for (unsigned int i = 0; i < 4; ++i) { 
+      bool left1 = i / 2;
+      bool left2 = i % 2;
+      if (SpeciesTreeOperator::canChangeRoot(speciesTree, left1)) {
+        SpeciesTreeOperator::changeRoot(speciesTree, left1, left2); 
+        double newLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
+        Logger::info << "  New ll: " << newLL << std::endl;
+        if (newLL > bestLL) {
+          bestLL = newLL;
+          bestMove = i;
+        }
+        SpeciesTreeOperator::revertChangeRoot(speciesTree, left1, left2); 
+      }
+    }
+    if (bestMove != -1) {
+      SpeciesTreeOperator::changeRoot(speciesTree, bestMove / 2, bestMove % 2);  
+    }
+  } while (bestMove != -1); 
+  Logger::info << "End of root sliding search: ll = " << bestLL << std::endl;
+}
+  
+
 

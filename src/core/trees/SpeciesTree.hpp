@@ -20,19 +20,18 @@ public:
   const DTLRates &getRates() const;
   double computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees, RecModel model);
 
-
   std::string toString() const;
-
+  void setRoot(pll_rnode_t *root) {_speciesTree->root = root; root->parent = 0;}
+  const pll_rnode_t *getRoot() const {return _speciesTree->root;}
+  pll_rnode_t *getRoot() {return _speciesTree->root;}
+  unsigned int getTaxaNumber() const;
+  
   friend std::ostream& operator<<(std::ostream& os, const SpeciesTree &speciesTree) {
     os << speciesTree.toString() << "(" << speciesTree.getTaxaNumber() << " taxa)" << std::endl;
     return os;
   }
 
-  void setRoot(pll_rnode_t *root) {_speciesTree->root = root; root->parent = 0;}
-  const pll_rnode_t *getRoot() const {return _speciesTree->root;}
-  pll_rnode_t *getRoot() {return _speciesTree->root;}
-  unsigned int getTaxaNumber() const;
-
+  void saveToFile(const std::string &newick);
 private:
   pll_rtree_t *_speciesTree;
   DTLRates _rates;
@@ -49,9 +48,15 @@ public:
    * Can be reverted with !left1 and !left2
    */
   static void changeRoot(SpeciesTree &speciesTree, bool left1, bool left2);
-  
+  static void revertChangeRoot(SpeciesTree &speciesTree, bool left1, bool left2);
 };
 
+
+
+
 class SpeciesTreeOptimizer {
+public:
+  static void rootSlidingSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model);
+
 };
 
