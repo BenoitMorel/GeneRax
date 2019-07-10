@@ -8,9 +8,12 @@
 
 class PerCoreGeneTrees;
 
+
+
+
 class SpeciesTree {
 public:
-  SpeciesTree(const std::string &newick); 
+  SpeciesTree(const std::string &newick, bool isFile = true); 
   ~SpeciesTree();
 
   void setRates(const DTLRates &rates);
@@ -18,23 +21,14 @@ public:
   double computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees, RecModel model);
 
 
-  bool canChangeRoot(bool left1, bool left2);
+  std::string toString() const;
 
-  /**
-   * Change the root to the branch between root->side1 and root->side1->side2
-   * where side can be left or right
-   * Can be reverted with !left1 and !left2
-   */
-  void changeRoot(bool left1, bool left2);
- 
-  
   friend std::ostream& operator<<(std::ostream& os, const SpeciesTree &speciesTree) {
-    std::string newick;
-    LibpllParsers::getRtreeHierarchicalString(speciesTree._speciesTree, newick);
-    os << newick << "(" << speciesTree.getTaxaNumber() << " taxa)" << std::endl;
+    os << speciesTree.toString() << "(" << speciesTree.getTaxaNumber() << " taxa)" << std::endl;
     return os;
   }
 
+  void setRoot(pll_rnode_t *root) {_speciesTree->root = root; root->parent = 0;}
   const pll_rnode_t *getRoot() const {return _speciesTree->root;}
   pll_rnode_t *getRoot() {return _speciesTree->root;}
   unsigned int getTaxaNumber() const;
@@ -45,4 +39,19 @@ private:
 };
 
 
+class SpeciesTreeOperator {
+public:
+  static bool canChangeRoot(const SpeciesTree &speciesTree, bool left1);
+
+  /**
+   * Change the root to the branch between root->side1 and root->side1->side2
+   * where side can be left or right
+   * Can be reverted with !left1 and !left2
+   */
+  static void changeRoot(SpeciesTree &speciesTree, bool left1, bool left2);
+  
+};
+
+class SpeciesTreeOptimizer {
+};
 

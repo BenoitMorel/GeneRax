@@ -41,7 +41,7 @@ int internal_main(int argc, char** argv, void* comm)
   SpeciesTree speciesTree(arguments.speciesTree);
   DTLRates rates(0.1, 0.2, 0.1);
   speciesTree.setRates(rates);
-  speciesTree.changeRoot(true, false);
+  SpeciesTreeOperator::changeRoot(speciesTree, true, false);
   Logger::info << "Tree: " << std::endl << speciesTree << std::endl;
   Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, UndatedDTL) << std::endl;
   
@@ -50,8 +50,8 @@ int internal_main(int argc, char** argv, void* comm)
   
   bool left1 = false;
   bool left2 = true;
-  if (speciesTree.canChangeRoot(left1, left2)) {
-    speciesTree.changeRoot(left1, left2);
+  if (SpeciesTreeOperator::canChangeRoot(speciesTree, left1)) {
+    SpeciesTreeOperator::changeRoot(speciesTree, left1, left2);
     //Logger::info << "Tree: " << std::endl << speciesTree << std::endl;
     Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, UndatedDTL) << std::endl;
   } else {
@@ -59,8 +59,8 @@ int internal_main(int argc, char** argv, void* comm)
   }
   left1 = !left1;
   left2 = !left2;
-  if (speciesTree.canChangeRoot(left1, left2)) {
-    speciesTree.changeRoot(left1, left2);
+  if (SpeciesTreeOperator::canChangeRoot(speciesTree, left1)) {
+    SpeciesTreeOperator::changeRoot(speciesTree, left1, left2);
     Logger::info << "Tree: " << std::endl << speciesTree << std::endl;
     Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, UndatedDTL) << std::endl;
   } else {

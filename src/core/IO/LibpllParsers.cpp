@@ -11,9 +11,8 @@ extern "C" {
 #include <pll.h>
 }
   
-void LibpllParsers::labelRootedTree(const std::string &unlabelledNewickFile, const std::string &labelledNewickFile)
+void LibpllParsers::labelRootedTree(pll_rtree_t *tree)
 {
-  pll_rtree_t *tree = readRootedFromFile(unlabelledNewickFile);
   assert(tree);
   unsigned int index = 0;
   for (unsigned int i = 0; i < tree->tip_count + tree->inner_count; ++i) {
@@ -24,6 +23,12 @@ void LibpllParsers::labelRootedTree(const std::string &unlabelledNewickFile, con
       std::strcpy(node->label, label.c_str());
     }
   }
+}
+
+void LibpllParsers::labelRootedTree(const std::string &unlabelledNewickFile, const std::string &labelledNewickFile)
+{
+  pll_rtree_t *tree = readRootedFromFile(unlabelledNewickFile);
+  labelRootedTree(tree);
   saveRtree(tree->root, labelledNewickFile);
   pll_rtree_destroy(tree, free);
 }
@@ -59,9 +64,17 @@ pll_rtree_t *LibpllParsers::readRootedFromFile(const std::string &newickFile)
 {
   auto tree = pll_rtree_parse_newick(newickFile.c_str());
   if (!tree) {
-    throw LibpllException("Error while reading tree fropm file: ", newickFile);
+    throw LibpllException("Error while reading tree from file: ", newickFile);
   }
   return tree;
+}
+
+pll_rtree_t *LibpllParsers::readRootedFromStr(const std::string &newickString)
+{
+  auto rtree =  pll_rtree_parse_newick_string(newickString.c_str());
+  if (!rtree) 
+    throw LibpllException("Error while reading tree from std::string: ", newickString);
+  return rtree;
 }
   
 void LibpllParsers::saveUtree(const pll_unode_t *utree, 
@@ -96,7 +109,7 @@ void rtreeHierarchicalStringAux(const pll_rnode_t *node, std::vector<bool> &left
   if (!node) {
     return;
   }
-  for (int i = 0; i < lefts.size(); ++i) {
+  for (unsigned int i = 0; i < lefts.size(); ++i) {
     auto left = lefts[i];
     if (i == lefts.size() - 1) {
       os << "---";

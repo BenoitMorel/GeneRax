@@ -7,6 +7,7 @@ repo_dir = os.path.realpath(os.path.join(script_dir, os.pardir))
 executable = os.path.join(repo_dir, "build", "bin", "JointSearch")
 data_dir = os.path.join(repo_dir, "data")
 output_root = os.path.join(repo_dir, "tests", "outputs")
+executable = os.path.join(repo_dir, "build", "bin", "JointSearch")
 try:
   os.makedirs(output_root)
 except:

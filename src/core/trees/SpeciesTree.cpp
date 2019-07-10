@@ -7,9 +7,16 @@
 #include <parallelization/ParallelContext.hpp>
 
 
-SpeciesTree::SpeciesTree(const std::string &newick):
-  _speciesTree(LibpllParsers::readRootedFromFile(newick))
+SpeciesTree::SpeciesTree(const std::string &newick, bool fromFile):
+  _speciesTree(0)
 {
+  if (fromFile) {
+    _speciesTree = LibpllParsers::readRootedFromFile(newick);
+  } else {
+    _speciesTree = LibpllParsers::readRootedFromStr(newick);
+  }
+  // make sure all nodes have labels
+  LibpllParsers::labelRootedTree(_speciesTree);
   assert(_speciesTree);
 }
 
@@ -43,10 +50,30 @@ double SpeciesTree::computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees,
   return ll;
 }
 
-bool SpeciesTree::canChangeRoot(bool left1, bool left2)
+std::string SpeciesTree::toString() const
 {
-  assert(_speciesTree);
-  auto root = _speciesTree->root;
+  std::string newick;
+  LibpllParsers::getRtreeHierarchicalString(_speciesTree, newick);
+  return newick;
+}
+
+unsigned int getTaxaNumberAux(const pll_rnode_t *node) 
+{
+  if (!node) {
+    return 0;
+  }
+  return getTaxaNumberAux(node->left) + getTaxaNumberAux(node->right) + 1;
+}
+
+unsigned int SpeciesTree::getTaxaNumber() const
+{
+  return getTaxaNumberAux(getRoot()) / 2;
+}
+
+
+bool SpeciesTreeOperator::canChangeRoot(const SpeciesTree &speciesTree, bool left1)
+{
+  auto root = speciesTree.getRoot();
   assert(root);
   auto newRoot = left1 ? root->left : root->right;
   return newRoot->left && newRoot->right;
@@ -70,61 +97,35 @@ void setSon(pll_rnode_t *parent, pll_rnode_t *newSon, bool left)
   }
 }
 
-void SpeciesTree::changeRoot(bool left1, bool left2)
+void SpeciesTreeOperator::changeRoot(SpeciesTree &speciesTree, bool left1, bool left2)
 {
-  Logger::info << "Change root " << sideString(left1) << " " << sideString(left2) << std::endl;
-  assert(canChangeRoot(left1, left2));
-  auto root = _speciesTree->root;
+  assert(canChangeRoot(speciesTree, left1));
+  auto root = speciesTree.getRoot();
   auto rootLeft = root->left;
   auto rootRight = root->right;
   auto A = rootLeft->left;
   auto B = rootLeft->right;
   auto C = rootRight->left;
   auto D = rootRight->right;
-
+  speciesTree.setRoot(left1 ? rootLeft : rootRight);
   if (left1 && left2) {
-    _speciesTree->root = rootLeft;
-    rootLeft->parent = 0;
     setSon(rootLeft, root, false);
     setSon(root, B, true);
     setSon(root, rootRight, false);
   } else if (!left1 && !left2) {
-    _speciesTree->root = rootRight;
-    rootRight->parent = 0;
     setSon(rootRight, root, true);
     setSon(root, C, false);
     setSon(root, rootLeft, true);
   } else if (left1 && !left2) {
-    _speciesTree->root = rootLeft;
-    rootLeft->parent = 0;
     setSon(rootLeft, rootLeft->right, true);
     setSon(rootLeft, root, false);
     setSon(root, A, false);
     setSon(root, rootRight, true);
   } else { // !left1 && left2
-    _speciesTree->root = rootRight;
-    rootRight->parent = 0;
     setSon(rootRight, root, true);
     setSon(rootRight, C, false);
     setSon(root, D, true);
     setSon(root, rootLeft, false);
   }
-
-
 }
-
-unsigned int getTaxaNumberAux(const pll_rnode_t *node) 
-{
-  if (!node) {
-    return 0;
-  }
-  return getTaxaNumberAux(node->left) + getTaxaNumberAux(node->right) + 1;
-}
-
-unsigned int SpeciesTree::getTaxaNumber() const
-{
-  return getTaxaNumberAux(getRoot());
-}
-
-
 

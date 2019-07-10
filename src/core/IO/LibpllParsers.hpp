@@ -25,10 +25,12 @@ private:
 
 class LibpllParsers {
 public:
+  static void labelRootedTree(pll_rtree_t *tree);
   static void labelRootedTree(const std::string &unlabelledNewickFile, const std::string &labelledNewickFile);
   static pll_utree_t *readNewickFromFile(const std::string &newickFile);
   static pll_utree_t *readNewickFromStr(const std::string &newickSTring);
   static pll_rtree_t *readRootedFromFile(const std::string &newickFile);
+  static pll_rtree_t *readRootedFromStr(const std::string &newickFile);
   static void fillLeavesFromUtree(pll_utree_t *utree, std::unordered_set<std::string> &leaves);
   static void fillLeavesFromRtree(pll_rtree_t *rtree, std::unordered_set<std::string> &leaves);
   static std::vector<unsigned int> parallelGetTreeSizes(const std::vector<FamiliesFileParser::FamilyInfo> &families);
