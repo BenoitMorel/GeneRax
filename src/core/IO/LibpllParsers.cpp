@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <parallelization/ParallelContext.hpp>
 #include <cstring>
+#include <sstream>
+#include <stack>
 
 extern "C" {
 #include <pll.h>
@@ -80,6 +82,46 @@ void LibpllParsers::saveRtree(const pll_rnode_t *rtree,
   os << newick;
   os.close();
   free(newick);
+}
+  
+void LibpllParsers::getRtreeNewickString(const pll_rtree_t *rtree, std::string &newick)
+{
+  char *newickStr = pll_rtree_export_newick(rtree->root, 0);
+  newick = std::string(newickStr);
+  free(newickStr);
+}
+
+void rtreeHierarchicalStringAux(const pll_rnode_t *node, std::vector<bool> &lefts, std::ostringstream &os)
+{
+  if (!node) {
+    return;
+  }
+  for (int i = 0; i < lefts.size(); ++i) {
+    auto left = lefts[i];
+    if (i == lefts.size() - 1) {
+      os << "---";
+    } else {
+      if (left) {
+        os << "|  ";
+      } else {
+        os << "   ";
+      }
+    }
+  }
+  os << (node->label ? node->label : "null") << std::endl;
+  lefts.push_back(true);
+  rtreeHierarchicalStringAux(node->left, lefts, os);
+  lefts[lefts.size() - 1] = false;
+  rtreeHierarchicalStringAux(node->right, lefts, os);
+  lefts.pop_back();
+}
+
+void LibpllParsers::getRtreeHierarchicalString(const pll_rtree_t *rtree, std::string &newick)
+{
+  std::ostringstream os;
+  std::vector<bool> lefts;
+  rtreeHierarchicalStringAux(rtree->root, lefts, os);
+  newick = os.str();
 }
 
 std::vector<unsigned int> LibpllParsers::parallelGetTreeSizes(const std::vector<FamiliesFileParser::FamilyInfo> &families) 

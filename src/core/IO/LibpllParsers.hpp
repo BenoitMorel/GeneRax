@@ -37,5 +37,7 @@ public:
     bool append = false);
   static void saveRtree(const pll_rnode_t *rtree, 
     const std::string &fileName);
+  static void getRtreeNewickString(const pll_rtree_t *rtree, std::string &newick);
+  static void getRtreeHierarchicalString(const pll_rtree_t *rtree, std::string &newick);
 };
 

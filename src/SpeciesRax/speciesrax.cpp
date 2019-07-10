@@ -39,10 +39,33 @@ int internal_main(int argc, char** argv, void* comm)
   
   PerCoreGeneTrees geneTrees(initialFamilies); 
   SpeciesTree speciesTree(arguments.speciesTree);
-  DTLRates rates(0.1, 0.1, 0.1);
+  DTLRates rates(0.1, 0.2, 0.1);
   speciesTree.setRates(rates);
+  speciesTree.changeRoot(true, false);
+  Logger::info << "Tree: " << std::endl << speciesTree << std::endl;
   Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, UndatedDTL) << std::endl;
-
+  
+  
+  
+  
+  bool left1 = false;
+  bool left2 = true;
+  if (speciesTree.canChangeRoot(left1, left2)) {
+    speciesTree.changeRoot(left1, left2);
+    //Logger::info << "Tree: " << std::endl << speciesTree << std::endl;
+    Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, UndatedDTL) << std::endl;
+  } else {
+    Logger::info << "Cannot change root" << std::endl;
+  }
+  left1 = !left1;
+  left2 = !left2;
+  if (speciesTree.canChangeRoot(left1, left2)) {
+    speciesTree.changeRoot(left1, left2);
+    Logger::info << "Tree: " << std::endl << speciesTree << std::endl;
+    Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, UndatedDTL) << std::endl;
+  } else {
+    Logger::info << "Cannot change root" << std::endl;
+  }
   ParallelContext::finalize();
   return 0;
 }
