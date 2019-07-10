@@ -78,8 +78,9 @@ void SpeciesTree::saveToFile(const std::string &newick)
 
 
 
-bool SpeciesTreeOperator::canChangeRoot(const SpeciesTree &speciesTree, bool left1)
+bool SpeciesTreeOperator::canChangeRoot(const SpeciesTree &speciesTree, int direction)
 {
+  bool left1 = direction % 2;
   auto root = speciesTree.getRoot();
   assert(root);
   auto newRoot = left1 ? root->left : root->right;
@@ -104,8 +105,10 @@ void setSon(pll_rnode_t *parent, pll_rnode_t *newSon, bool left)
   }
 }
 
-void SpeciesTreeOperator::changeRoot(SpeciesTree &speciesTree, bool left1, bool left2)
+void SpeciesTreeOperator::changeRoot(SpeciesTree &speciesTree, int direction)
 {
+  bool left1 = direction % 2;
+  bool left2 = direction / 2;
   assert(canChangeRoot(speciesTree, left1));
   auto root = speciesTree.getRoot();
   auto rootLeft = root->left;
@@ -136,9 +139,9 @@ void SpeciesTreeOperator::changeRoot(SpeciesTree &speciesTree, bool left1, bool 
   }
 }
 
-void SpeciesTreeOperator::revertChangeRoot(SpeciesTree &speciesTree, bool left1, bool left2)
+void SpeciesTreeOperator::revertChangeRoot(SpeciesTree &speciesTree, int direction)
 {
-  changeRoot(speciesTree, !left1, !left2);
+  changeRoot(speciesTree, 3 - direction);
 }
   
 void SpeciesTreeOptimizer::rootSlidingSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model)
@@ -149,21 +152,19 @@ void SpeciesTreeOptimizer::rootSlidingSearch(SpeciesTree &speciesTree, PerCoreGe
     bestMove = -1;
     Logger::info << "Current ll: " << bestLL << std::endl;
     for (unsigned int i = 0; i < 4; ++i) { 
-      bool left1 = i / 2;
-      bool left2 = i % 2;
-      if (SpeciesTreeOperator::canChangeRoot(speciesTree, left1)) {
-        SpeciesTreeOperator::changeRoot(speciesTree, left1, left2); 
+      if (SpeciesTreeOperator::canChangeRoot(speciesTree, i)) {
+        SpeciesTreeOperator::changeRoot(speciesTree, i); 
         double newLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
         Logger::info << "  New ll: " << newLL << std::endl;
         if (newLL > bestLL) {
           bestLL = newLL;
           bestMove = i;
         }
-        SpeciesTreeOperator::revertChangeRoot(speciesTree, left1, left2); 
+        SpeciesTreeOperator::revertChangeRoot(speciesTree, i); 
       }
     }
     if (bestMove != -1) {
-      SpeciesTreeOperator::changeRoot(speciesTree, bestMove / 2, bestMove % 2);  
+      SpeciesTreeOperator::changeRoot(speciesTree, bestMove);  
     }
   } while (bestMove != -1); 
   Logger::info << "End of root sliding search: ll = " << bestLL << std::endl;

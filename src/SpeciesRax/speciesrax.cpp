@@ -43,8 +43,8 @@ int internal_main(int argc, char** argv, void* comm)
   SpeciesTree speciesTree(arguments.speciesTree);
   DTLRates rates(0.1, 0.2, 0.1);
   speciesTree.setRates(rates);
-  SpeciesTreeOperator::changeRoot(speciesTree, true, false);
-  SpeciesTreeOperator::changeRoot(speciesTree, true, false);
+  SpeciesTreeOperator::changeRoot(speciesTree, 3);
+  SpeciesTreeOperator::changeRoot(speciesTree, 3);
   Logger::info << "Tree: " << std::endl << speciesTree << std::endl;
   Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, recModel) << std::endl;
   

@@ -1,14 +1,14 @@
 #include <trees/SpeciesTree.hpp>
 #include <cassert>
 
-void checkMove(SpeciesTree &speciesTree, bool left1, bool left2) 
+void checkMove(SpeciesTree &speciesTree, unsigned int direction) 
 {
   std::string initialStr = speciesTree.toString();
   auto initialTaxa = speciesTree.getTaxaNumber();
   
-  SpeciesTreeOperator::changeRoot(speciesTree, left1, left2);
+  SpeciesTreeOperator::changeRoot(speciesTree, direction);
   assert(initialTaxa == speciesTree.getTaxaNumber());
-  SpeciesTreeOperator::changeRoot(speciesTree, !left1, !left2);
+  SpeciesTreeOperator::revertChangeRoot(speciesTree, direction);
   assert(initialTaxa == speciesTree.getTaxaNumber());
   assert(initialStr == speciesTree.toString());
 }
@@ -17,11 +17,9 @@ int main(int argc, char** argv)
 {
   std::string initialTreeStr = "((A,B),(C,D));";
   SpeciesTree speciesTree(initialTreeStr, false);
-
-  checkMove(speciesTree, true, true);
-  checkMove(speciesTree, true, false);
-  checkMove(speciesTree, false, true);
-  checkMove(speciesTree, false, false);
+  for (unsigned int i = 0; i < 4; ++i) {
+    checkMove(speciesTree, i);
+  }
   std::cout << "Test species tree ok!" << std::endl;
   return 0;
 }

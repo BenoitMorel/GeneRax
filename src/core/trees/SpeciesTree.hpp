@@ -40,15 +40,13 @@ private:
 
 class SpeciesTreeOperator {
 public:
-  static bool canChangeRoot(const SpeciesTree &speciesTree, bool left1);
+  static bool canChangeRoot(const SpeciesTree &speciesTree, int direction);
 
   /**
-   * Change the root to the branch between root->side1 and root->side1->side2
-   * where side can be left or right
-   * Can be reverted with !left1 and !left2
+   * Change the root to the neighboring branch described by direction where direction is in [0:4[
    */
-  static void changeRoot(SpeciesTree &speciesTree, bool left1, bool left2);
-  static void revertChangeRoot(SpeciesTree &speciesTree, bool left1, bool left2);
+  static void changeRoot(SpeciesTree &speciesTree, int direction);
+  static void revertChangeRoot(SpeciesTree &speciesTree, int direction);
 };
 
 
