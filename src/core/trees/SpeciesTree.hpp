@@ -1,6 +1,7 @@
 #pragma once
 
 #include <IO/LibpllParsers.hpp>
+#include <IO/FamiliesFileParser.hpp>
 #include <likelihoods/ReconciliationEvaluation.hpp>
 #include <string>
 #include <maths/DTLRates.hpp>
@@ -15,6 +16,7 @@ class SpeciesTree {
 public:
   SpeciesTree(const std::string &newick, bool isFile = true);
   SpeciesTree(const std::unordered_set<std::string> &leafLabels);
+  SpeciesTree(const std::vector<FamiliesFileParser::FamilyInfo> &families);
   ~SpeciesTree();
 
   void setRates(const DTLRates &rates);
@@ -36,6 +38,7 @@ public:
 private:
   pll_rtree_t *_speciesTree;
   DTLRates _rates;
+  void buildFromLabels(const std::unordered_set<std::string> &leafLabels);
 };
 
 

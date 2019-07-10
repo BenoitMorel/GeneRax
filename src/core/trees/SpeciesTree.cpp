@@ -5,7 +5,7 @@
 #include <likelihoods/ReconciliationEvaluation.hpp>
 #include <trees/PerCoreGeneTrees.hpp>
 #include <parallelization/ParallelContext.hpp>
-
+#include <IO/FileSystem.hpp>
 
 SpeciesTree::SpeciesTree(const std::string &newick, bool fromFile):
   _speciesTree(0)
@@ -34,7 +34,7 @@ pll_rnode_t *createNode(const std::string &label, std::vector<pll_rnode_t *> &al
   pll_rnode_t *node = static_cast<pll_rnode_t *>(malloc(sizeof(pll_rnode_t)));
   node->label = 0;
   if (label.size()) {
-    node->label = static_cast<char *>(calloc(label.size(), sizeof(char)));
+    node->label = static_cast<char *>(calloc(label.size() + 1, sizeof(char)));
     assert(node->label);
     strcpy(node->label, label.c_str());
   }
@@ -43,15 +43,20 @@ pll_rnode_t *createNode(const std::string &label, std::vector<pll_rnode_t *> &al
   node->parent = 0;
   node->left = 0;
   node->right = 0;
+  node->data = 0;
   allNodes.push_back(node);
   return node;
 }
 
 SpeciesTree::SpeciesTree(const std::unordered_set<std::string> &leafLabels)
 {
+  buildFromLabels(leafLabels);
+}
+
+void SpeciesTree::buildFromLabels(const std::unordered_set<std::string> &leafLabels)
+{
   std::vector<pll_rnode_t *> allNodes;
   pll_rnode_t *root = 0;
-  unsigned int index = 0;
   for (auto &label: leafLabels) {
     if (allNodes.size() == 0) {
       root = createNode(label, allNodes);
@@ -77,11 +82,29 @@ SpeciesTree::SpeciesTree(const std::unordered_set<std::string> &leafLabels)
     _speciesTree->nodes[i] = allNodes[i];
   }
   _speciesTree->tip_count = allNodes.size() / 2 + 1;
-  _speciesTree->inner_count = allNodes.size() / 2 - 1;
+  _speciesTree->inner_count = allNodes.size() / 2;
   _speciesTree->edge_count = allNodes.size() - 1;
   
   assert(_speciesTree->tip_count == getTaxaNumber());
   LibpllParsers::labelRootedTree(_speciesTree);
+}
+  
+SpeciesTree::SpeciesTree(const std::vector<FamiliesFileParser::FamilyInfo> &families)
+{
+  GeneSpeciesMapping mappings;
+  for (const auto &family: families) {
+    std::string geneTreeStr;
+    FileSystem::getFileContent(family.startingGeneTree, geneTreeStr);
+    mappings.fill(family.mappingFile, geneTreeStr);
+  }
+  std::unordered_set<std::string> leaves;
+  for (auto &mapping: mappings.getMap()) {
+    leaves.insert(mapping.second);
+  }
+  for (auto &label: leaves) {
+    Logger::info << label << std::endl;
+  }
+  buildFromLabels(leaves);
 }
 
 SpeciesTree::~SpeciesTree()

@@ -40,14 +40,15 @@ int internal_main(int argc, char** argv, void* comm)
   
   
   PerCoreGeneTrees geneTrees(initialFamilies); 
-  SpeciesTree speciesTree(arguments.speciesTree);
+  SpeciesTree speciesTree(initialFamilies);
   DTLRates rates(0.1, 0.2, 0.1);
   speciesTree.setRates(rates);
-  SpeciesTreeOperator::changeRoot(speciesTree, 1);
-  SpeciesTreeOperator::changeRoot(speciesTree, 1);
-  Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, recModel) << std::endl;
+  Logger::info << speciesTree << std::endl;
+  //SpeciesTree speciesTree(arguments.speciesTree);
+  //SpeciesTreeOperator::changeRoot(speciesTree, 1);
+  //SpeciesTreeOperator::changeRoot(speciesTree, 1);
+  //Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, recModel) << std::endl;
   SpeciesTreeOptimizer::rootExhaustiveSearch(speciesTree, geneTrees, recModel);
-  
 
   speciesTree.saveToFile(FileSystem::joinPaths(arguments.output, "inferred_species_tree.newick"));
   ParallelContext::finalize();
