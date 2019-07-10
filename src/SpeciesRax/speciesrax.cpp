@@ -43,13 +43,12 @@ int internal_main(int argc, char** argv, void* comm)
   SpeciesTree speciesTree(arguments.speciesTree);
   DTLRates rates(0.1, 0.2, 0.1);
   speciesTree.setRates(rates);
-  SpeciesTreeOperator::changeRoot(speciesTree, 3);
-  SpeciesTreeOperator::changeRoot(speciesTree, 3);
-  Logger::info << "Tree: " << std::endl << speciesTree << std::endl;
+  SpeciesTreeOperator::changeRoot(speciesTree, 1);
+  SpeciesTreeOperator::changeRoot(speciesTree, 1);
   Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, recModel) << std::endl;
-  
-  
-  SpeciesTreeOptimizer::rootSlidingSearch(speciesTree, geneTrees, recModel);
+  Logger::info << "Tree: " << std::endl << speciesTree << std::endl;
+  SpeciesTreeOptimizer::rootExhaustiveSearch(speciesTree, geneTrees, recModel);
+  Logger::info << "Tree: " << std::endl << speciesTree << std::endl;
   
 
   speciesTree.saveToFile(FileSystem::joinPaths(arguments.output, "inferred_species_tree.newick"));

@@ -170,5 +170,41 @@ void SpeciesTreeOptimizer::rootSlidingSearch(SpeciesTree &speciesTree, PerCoreGe
   Logger::info << "End of root sliding search: ll = " << bestLL << std::endl;
 }
   
+void rootExhaustiveSearchAux(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, std::vector<unsigned int> &movesHistory, std::vector<unsigned int> &bestMovesHistory, double &bestLL, unsigned int &visits)
+{
+  std::vector<unsigned int> moves;
+  moves.push_back(movesHistory.back() % 2);
+  moves.push_back(2 + (movesHistory.back() % 2));
+  for (auto direction: moves) {
+    if (SpeciesTreeOperator::canChangeRoot(speciesTree, direction)) {
+      movesHistory.push_back(direction);
+      SpeciesTreeOperator::changeRoot(speciesTree, direction);
+      double ll = speciesTree.computeReconciliationLikelihood(geneTrees, model);
+      visits++;
+      if (ll > bestLL) {
+        bestLL = ll;
+        bestMovesHistory = movesHistory;
+      }
+      rootExhaustiveSearchAux(speciesTree, geneTrees, model, movesHistory, bestMovesHistory, bestLL, visits);
+      SpeciesTreeOperator::revertChangeRoot(speciesTree, direction);
+      movesHistory.pop_back();
+    }
+  }
+}
 
+void SpeciesTreeOptimizer::rootExhaustiveSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model)
+{
+  std::vector<unsigned int> movesHistory;
+  std::vector<unsigned int> bestMovesHistory;
+  double bestLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
+  unsigned int visits = 1;
+  movesHistory.push_back(0);
+  rootExhaustiveSearchAux(speciesTree, geneTrees, model, movesHistory, bestMovesHistory, bestLL, visits); 
+  movesHistory[0] = 1;
+  rootExhaustiveSearchAux(speciesTree, geneTrees, model, movesHistory, bestMovesHistory, bestLL, visits); 
+  assert (visits == 2 * speciesTree.getTaxaNumber() - 1);
+  for (unsigned int i = 1; i < bestMovesHistory.size(); ++i) {
+    SpeciesTreeOperator::changeRoot(speciesTree, bestMovesHistory[i]);
+  }
+}
 

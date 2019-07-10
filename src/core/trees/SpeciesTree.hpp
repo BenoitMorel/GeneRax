@@ -55,6 +55,6 @@ public:
 class SpeciesTreeOptimizer {
 public:
   static void rootSlidingSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model);
-
+  static void rootExhaustiveSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model);
 };
 
