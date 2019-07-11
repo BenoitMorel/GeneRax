@@ -49,6 +49,9 @@ int internal_main(int argc, char** argv, void* comm)
   //SpeciesTreeOperator::changeRoot(speciesTree, 1);
   //SpeciesTreeOperator::changeRoot(speciesTree, 1);
   //Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, recModel) << std::endl;
+  SpeciesTreeOptimizer::sprSearch(speciesTree, geneTrees, recModel, 1);
+  SpeciesTreeOptimizer::rootExhaustiveSearch(speciesTree, geneTrees, recModel);
+  SpeciesTreeOptimizer::sprSearch(speciesTree, geneTrees, recModel, 1);
   SpeciesTreeOptimizer::rootExhaustiveSearch(speciesTree, geneTrees, recModel);
 
   speciesTree.saveToFile(FileSystem::joinPaths(arguments.output, "inferred_species_tree.newick"));

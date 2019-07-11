@@ -31,7 +31,6 @@ void testRootMoves()
   for (unsigned int i = 0; i < 4; ++i) {
     checkRootMove(speciesTree, i);
   }
-  std::cout << "Test species tree ok!" << std::endl;
 }
 
 void testSPRMoves()
@@ -39,15 +38,13 @@ void testSPRMoves()
   std::string initialTreeStr = "((A, (B, C)),((D, E), (F, G)));";
   SpeciesTree speciesTree(initialTreeStr, false);
   unsigned int radius = 10;
-  for (unsigned int i = 0; i < speciesTree.getMaxNodeIndex(); ++i) {
+  std::vector<unsigned int> prunes;
+  SpeciesTreeOperator::getPossiblePrunes(speciesTree, prunes);
+  for (auto prune: prunes) {
     std::vector<unsigned int> regrafts;
-    auto pruneNode = speciesTree.getNode(i);
-    if (pruneNode == speciesTree.getRoot()) {
-      continue;
-    }
-    SpeciesTreeOperator::getPossibleRegrafts(speciesTree, pruneNode->node_index, radius, regrafts);
+    SpeciesTreeOperator::getPossibleRegrafts(speciesTree, prune, radius, regrafts);
     for (auto regraft: regrafts) {
-      checkSPRMove(speciesTree, pruneNode->node_index, regraft); 
+      checkSPRMove(speciesTree, prune, regraft); 
     }
   }
 }
@@ -59,7 +56,6 @@ void testBuildRandomTree()
     labels.insert(std::string("S" + std::to_string(i)));
   }
   SpeciesTree speciesTree(labels);
-  std::cout << speciesTree << std::endl;
 }
 
 int main(int argc, char** argv)
@@ -67,6 +63,7 @@ int main(int argc, char** argv)
   testRootMoves();
   testBuildRandomTree();
   testSPRMoves();
+  std::cout << "Test species tree ok!" << std::endl;
   return 0;
 }
 

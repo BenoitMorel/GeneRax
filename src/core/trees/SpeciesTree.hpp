@@ -55,6 +55,7 @@ public:
   static void revertChangeRoot(SpeciesTree &speciesTree, int direction);
   static unsigned int applySPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int regraft);
   static void reverseSPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int applySPRMoveReturnValue);
+  static void getPossiblePrunes(SpeciesTree &speciesTree, std::vector<unsigned int> &prunes);
   static void getPossibleRegrafts(SpeciesTree &speciesTree, unsigned int prune, unsigned int radius, std::vector<unsigned int> &regrafts);
 };
 
@@ -65,5 +66,7 @@ class SpeciesTreeOptimizer {
 public:
   static void rootSlidingSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model);
   static void rootExhaustiveSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model);
+  static double sprRound(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, int radius);
+  static double sprSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, int radius);
 };
 

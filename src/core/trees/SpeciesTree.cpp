@@ -291,6 +291,17 @@ void recursiveGetNodes(pll_rnode_t *node, unsigned int direction, unsigned int r
 
 }
   
+void SpeciesTreeOperator::getPossiblePrunes(SpeciesTree &speciesTree, std::vector<unsigned int> &prunes)
+{
+  for (unsigned int i = 0; i < speciesTree.getMaxNodeIndex(); ++i) {
+    auto pruneNode = speciesTree.getNode(i);
+    if (pruneNode == speciesTree.getRoot()) {
+      continue;
+    }
+    prunes.push_back(pruneNode->node_index); 
+  }
+}
+  
 void SpeciesTreeOperator::getPossibleRegrafts(SpeciesTree &speciesTree, unsigned int prune, unsigned int radius, std::vector<unsigned int> &regrafts)
 {
   auto pruneNode = speciesTree.getNode(prune);
@@ -368,5 +379,37 @@ void SpeciesTreeOptimizer::rootExhaustiveSearch(SpeciesTree &speciesTree, PerCor
   for (unsigned int i = 1; i < bestMovesHistory.size(); ++i) {
     SpeciesTreeOperator::changeRoot(speciesTree, bestMovesHistory[i]);
   }
+}
+  
+double SpeciesTreeOptimizer::sprRound(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, int radius)
+{
+  std::vector<unsigned int> prunes;
+  SpeciesTreeOperator::getPossiblePrunes(speciesTree, prunes);
+  double bestLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
+  for (auto prune: prunes) {
+    std::vector<unsigned int> regrafts;
+    SpeciesTreeOperator::getPossibleRegrafts(speciesTree, prune, radius, regrafts);
+    for (auto regraft: regrafts) {
+      unsigned int rollback = SpeciesTreeOperator::applySPRMove(speciesTree, prune, regraft);
+      double newLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
+      if (newLL > bestLL) {
+        return newLL;
+      }
+      SpeciesTreeOperator::reverseSPRMove(speciesTree, prune, rollback);
+    }
+  }
+  return bestLL;
+}
+
+double SpeciesTreeOptimizer::sprSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, int radius)
+{
+  double bestLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
+  double newLL = bestLL;
+  do {
+    bestLL = newLL;
+    std::cout << "LL = " << bestLL << std::endl;
+    newLL = sprRound(speciesTree, geneTrees, model, radius);
+  } while (newLL - bestLL > 0.001);
+  return newLL;
 }
 
