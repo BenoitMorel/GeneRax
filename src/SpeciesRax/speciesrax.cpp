@@ -41,6 +41,7 @@ int internal_main(int argc, char** argv, void* comm)
   
   PerCoreGeneTrees geneTrees(initialFamilies); 
   SpeciesTree speciesTree(initialFamilies);
+  speciesTree.saveToFile(FileSystem::joinPaths(arguments.output, "starting_species_tree.newick"));
   DTLRates rates(0.1, 0.2, 0.1);
   speciesTree.setRates(rates);
   Logger::info << speciesTree << std::endl;
