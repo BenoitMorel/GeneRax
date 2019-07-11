@@ -28,7 +28,9 @@ public:
   const pll_rnode_t *getRoot() const {return _speciesTree->root;}
   pll_rnode_t *getRoot() {return _speciesTree->root;}
   unsigned int getTaxaNumber() const;
-  
+  pll_rnode_t *getRandomNode();
+  pll_rnode_t *getNode(unsigned int nodeIndex) {return _speciesTree->nodes[nodeIndex];}
+  unsigned int getMaxNodeIndex() const { return _speciesTree->tip_count + _speciesTree->inner_count;}
   friend std::ostream& operator<<(std::ostream& os, const SpeciesTree &speciesTree) {
     os << speciesTree.toString() << "(" << speciesTree.getTaxaNumber() << " taxa)" << std::endl;
     return os;
@@ -51,6 +53,9 @@ public:
    */
   static void changeRoot(SpeciesTree &speciesTree, int direction);
   static void revertChangeRoot(SpeciesTree &speciesTree, int direction);
+  static unsigned int applySPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int regraft);
+  static void reverseSPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int applySPRMoveReturnValue);
+  static void getPossibleRegrafts(SpeciesTree &speciesTree, unsigned int prune, unsigned int radius, std::vector<unsigned int> &regrafts);
 };
 
 

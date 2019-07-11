@@ -162,6 +162,11 @@ void SpeciesTree::saveToFile(const std::string &newick)
 {
   LibpllParsers::saveRtree(_speciesTree->root, newick);  
 }
+  
+pll_rnode_t *SpeciesTree::getRandomNode() 
+{
+  return getNode(rand() % (_speciesTree->tip_count + _speciesTree->inner_count)); 
+}
 
 
 
@@ -220,6 +225,85 @@ void SpeciesTreeOperator::changeRoot(SpeciesTree &speciesTree, int direction)
 void SpeciesTreeOperator::revertChangeRoot(SpeciesTree &speciesTree, int direction)
 {
   changeRoot(speciesTree, 3 - direction);
+}
+
+pll_rnode_t *getBrother(pll_rnode_t *node) {
+  auto father = node->parent;
+  assert(father);
+  return father->left == node ? father->right : father->left;
+}
+  
+unsigned int SpeciesTreeOperator::applySPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int regraft)
+{
+  auto pruneNode = speciesTree.getNode(prune);
+  auto pruneFatherNode = pruneNode->parent;
+  assert(pruneFatherNode);
+  auto pruneGrandFatherNode = pruneFatherNode->parent;
+  auto pruneBrotherNode = getBrother(pruneNode);
+  unsigned int res = pruneBrotherNode->node_index;
+  // prune
+  if (pruneGrandFatherNode) {
+    setSon(pruneGrandFatherNode, pruneBrotherNode, pruneGrandFatherNode->left == pruneFatherNode);
+  } else {
+    speciesTree.setRoot(pruneBrotherNode);
+  }
+  // regraft
+  auto regraftNode = speciesTree.getNode(regraft);
+  auto regraftParentNode = regraftNode->parent;
+  if (!regraftParentNode) {
+    // regraft is the root
+    speciesTree.setRoot(pruneFatherNode);
+    setSon(pruneFatherNode, regraftNode, pruneFatherNode->left != pruneNode);
+  } else {
+    setSon(regraftParentNode, pruneFatherNode, regraftParentNode->left == regraftNode);
+    setSon(pruneFatherNode, regraftNode, pruneFatherNode->left != pruneNode);
+  }
+  return res;
+}
+  
+void SpeciesTreeOperator::reverseSPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int applySPRMoveReturnValue)
+{
+  applySPRMove(speciesTree, prune, applySPRMoveReturnValue);
+}
+
+
+// direction: 0 == from parent, 1 == from left, 2 == from right
+void recursiveGetNodes(pll_rnode_t *node, unsigned int direction, unsigned int radius, std::vector<unsigned int> &nodes)
+{
+  if (radius == 0 || node == 0) {
+    return;
+  }
+  nodes.push_back(node->node_index);
+  switch (direction) {
+    case 0:
+      recursiveGetNodes(node->left, 0, radius - 1, nodes);
+      recursiveGetNodes(node->right, 0, radius - 1, nodes);
+      break;
+    case 1: case 2:
+      recursiveGetNodes((direction == 1 ? node->right : node->left), 0, radius - 1, nodes);
+      if (node->parent) {
+        recursiveGetNodes(node->parent, node->parent->left == node ? 1 : 2, radius - 1, nodes);
+      }
+      break;
+    default:
+      assert(false);
+  };
+
+}
+  
+void SpeciesTreeOperator::getPossibleRegrafts(SpeciesTree &speciesTree, unsigned int prune, unsigned int radius, std::vector<unsigned int> &regrafts)
+{
+  auto pruneNode = speciesTree.getNode(prune);
+  auto pruneParentNode = pruneNode->parent;
+  if (!pruneParentNode) {
+    return;
+  }
+  if (pruneParentNode->parent) {
+    int parentDirection = (pruneParentNode->parent->left == pruneParentNode ? 1 : 2);
+    recursiveGetNodes(pruneParentNode->parent, parentDirection, radius, regrafts);
+  }
+  recursiveGetNodes(getBrother(pruneNode)->left, 0, radius, regrafts);
+  recursiveGetNodes(getBrother(pruneNode)->right, 0, radius, regrafts);
 }
   
 void SpeciesTreeOptimizer::rootSlidingSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model)
