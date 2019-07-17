@@ -25,8 +25,8 @@ macro(add_program program_name program_sources)
   endif()
   target_link_libraries(${program_name} 
     jointsearch-core
-    ${MPI_LIBRARIES}
     ${PLL_LIBRARIES}
+    ${MPI_LIBRARIES}
     )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
   if (JOINTSEARCH_BUILD_AS_LIBRARY AND NOT APPLE)

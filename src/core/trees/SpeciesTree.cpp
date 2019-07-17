@@ -1,6 +1,7 @@
 #include "SpeciesTree.hpp"
 #include <cassert>
 
+#include <optimizers/DTLOptimizer.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <likelihoods/ReconciliationEvaluation.hpp>
 #include <trees/PerCoreGeneTrees.hpp>
@@ -367,49 +368,72 @@ void rootExhaustiveSearchAux(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTre
 
 void SpeciesTreeOptimizer::rootExhaustiveSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model)
 {
+  Logger::info << "Exhaustive root search on " << speciesTree << std::endl;
   std::vector<unsigned int> movesHistory;
   std::vector<unsigned int> bestMovesHistory;
   double bestLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
   unsigned int visits = 1;
   movesHistory.push_back(0);
+  Logger::info << "pif" << std::endl;
   rootExhaustiveSearchAux(speciesTree, geneTrees, model, movesHistory, bestMovesHistory, bestLL, visits); 
   movesHistory[0] = 1;
+  Logger::info << "paf" << std::endl;
   rootExhaustiveSearchAux(speciesTree, geneTrees, model, movesHistory, bestMovesHistory, bestLL, visits); 
   assert (visits == 2 * speciesTree.getTaxaNumber() - 3);
+  Logger::info << "Roots to try: " << bestMovesHistory.size() << std::endl;
   for (unsigned int i = 1; i < bestMovesHistory.size(); ++i) {
     SpeciesTreeOperator::changeRoot(speciesTree, bestMovesHistory[i]);
   }
+  Logger::info << "End of root search" << std::endl;
 }
   
 double SpeciesTreeOptimizer::sprRound(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, int radius)
 {
+  Logger::info << "Spr Round" << std::endl;
   std::vector<unsigned int> prunes;
   SpeciesTreeOperator::getPossiblePrunes(speciesTree, prunes);
   double bestLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
+  Logger::info << "trying " << prunes.size() << " prunes" << std::endl;
   for (auto prune: prunes) {
     std::vector<unsigned int> regrafts;
     SpeciesTreeOperator::getPossibleRegrafts(speciesTree, prune, radius, regrafts);
+    Logger::info << "  " << regrafts.size() << " regrafts" << std::endl;
     for (auto regraft: regrafts) {
+      Logger::info << "-";
       unsigned int rollback = SpeciesTreeOperator::applySPRMove(speciesTree, prune, regraft);
       double newLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
       if (newLL > bestLL) {
+        Logger::info << "*" << std::endl;
         return newLL;
       }
       SpeciesTreeOperator::reverseSPRMove(speciesTree, prune, rollback);
     }
+    Logger::info << "+" << std::endl;
   }
+  Logger::info << "end of sprRound" << std::endl;
   return bestLL;
 }
 
 double SpeciesTreeOptimizer::sprSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, int radius)
 {
+  Logger::perrank << "Start sprSearch" << std::endl;
   double bestLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
   double newLL = bestLL;
   do {
     bestLL = newLL;
-    std::cout << "LL = " << bestLL << std::endl;
+    Logger::info << "LL = " << bestLL << std::endl;
     newLL = sprRound(speciesTree, geneTrees, model, radius);
   } while (newLL - bestLL > 0.001);
+  Logger::perrank << "End sprSearch" << std::endl;
   return newLL;
+}
+  
+void SpeciesTreeOptimizer::ratesOptimization(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model)
+{
+  Logger::perrank << "Start SpeciesTreeOptimizer::ratesOptimization" << std::endl;
+  DTLRates rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree.getTree(), model);
+  Logger::info << " Best rates: " << rates << std::endl;
+  speciesTree.setRates(rates);
+  Logger::perrank << "End of SpeciesTreeOptimizer::ratesOptimization" << std::endl;
 }
 

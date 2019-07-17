@@ -51,8 +51,13 @@ int internal_main(int argc, char** argv, void* comm)
   //Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, recModel) << std::endl;
   SpeciesTreeOptimizer::sprSearch(speciesTree, geneTrees, recModel, 1);
   SpeciesTreeOptimizer::rootExhaustiveSearch(speciesTree, geneTrees, recModel);
-  SpeciesTreeOptimizer::sprSearch(speciesTree, geneTrees, recModel, 1);
+  SpeciesTreeOptimizer::ratesOptimization(speciesTree, geneTrees, recModel);
+  SpeciesTreeOptimizer::sprSearch(speciesTree, geneTrees, recModel, 2);
   SpeciesTreeOptimizer::rootExhaustiveSearch(speciesTree, geneTrees, recModel);
+  SpeciesTreeOptimizer::ratesOptimization(speciesTree, geneTrees, recModel);
+  SpeciesTreeOptimizer::sprSearch(speciesTree, geneTrees, recModel, 2);
+  SpeciesTreeOptimizer::ratesOptimization(speciesTree, geneTrees, recModel);
+  SpeciesTreeOptimizer::sprSearch(speciesTree, geneTrees, recModel, 3);
 
   speciesTree.saveToFile(FileSystem::joinPaths(arguments.output, "inferred_species_tree.newick"));
   ParallelContext::finalize();

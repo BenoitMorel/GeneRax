@@ -26,7 +26,7 @@ class Logger: public std::ofstream
 {
 private:
   enum LoggerType {
-    lt_info, lt_error, lt_timed
+    lt_info, lt_error, lt_timed, lt_perrank
   };
   LoggerType _type;
   std::ostream *_os; 
@@ -42,6 +42,9 @@ public:
   static void initFileOutput(const std::string &output);
 
   bool isSilent() {
+    if (_type == lt_perrank) {
+      return false;
+    }
     return (_type == lt_timed || _type == lt_info) && ParallelContext::getRank(); 
   }
 
@@ -77,6 +80,10 @@ public:
         if (logFile)
           *logFile << "[Error] " << t;
         return Logger::info;
+      } else if (_type == lt_perrank) {
+        initRankFileOutput();
+        *rankLogFile << t;
+        return *this;
       } else {
         *_os << t;
         _os->flush();
@@ -91,17 +98,28 @@ public:
     if (isSilent()) {
       return *this;
     }
-    manip(*_os);
-    if (logFile) 
+    if (_type != lt_perrank) {
+      manip(*_os);
+    }
+    if (logFile && _type != lt_perrank) { 
       manip(*logFile);
+    }
+    if (_type == lt_perrank) {
+      manip(*rankLogFile);
+    }
     return *this;
   }
+
+  static void initRankFileOutput();
 
   static Logger info;
   static Logger error;
   static Logger timed;
+  static Logger perrank;
   static TimePoint start;
+  static std::string outputdir;
   static std::ofstream *logFile;
+  static std::ofstream *rankLogFile;
   static std::ofstream *saveLogFile;
 };
 

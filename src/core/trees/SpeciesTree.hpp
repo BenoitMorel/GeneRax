@@ -1,8 +1,8 @@
 #pragma once
 
+#include <likelihoods/ReconciliationEvaluation.hpp>
 #include <IO/LibpllParsers.hpp>
 #include <IO/FamiliesFileParser.hpp>
-#include <likelihoods/ReconciliationEvaluation.hpp>
 #include <string>
 #include <maths/DTLRates.hpp>
 #include <util/enums.hpp>
@@ -28,6 +28,7 @@ public:
   const pll_rnode_t *getRoot() const {return _speciesTree->root;}
   pll_rnode_t *getRoot() {return _speciesTree->root;}
   unsigned int getTaxaNumber() const;
+  pll_rtree_t *getTree() {return _speciesTree;}
   pll_rnode_t *getRandomNode();
   pll_rnode_t *getNode(unsigned int nodeIndex) {return _speciesTree->nodes[nodeIndex];}
   unsigned int getMaxNodeIndex() const { return _speciesTree->tip_count + _speciesTree->inner_count;}
@@ -68,5 +69,6 @@ public:
   static void rootExhaustiveSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model);
   static double sprRound(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, int radius);
   static double sprSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, int radius);
+  static void ratesOptimization(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model);
 };
 
