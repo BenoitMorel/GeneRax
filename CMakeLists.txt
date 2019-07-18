@@ -35,5 +35,4 @@ set(JOINTSEARCH_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src/core
   
 
 add_subdirectory(src)
-add_subdirectory(tests/src)
 

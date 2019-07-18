@@ -58,7 +58,7 @@ void testBuildRandomTree()
   SpeciesTree speciesTree(labels);
 }
 
-int main(int argc, char** argv)
+int main(int, char**)
 {
   testRootMoves();
   testBuildRandomTree();
