@@ -16,6 +16,7 @@ public:
 public:
    int argc;
    char ** argv;
+   unsigned int seed;
    std::string families;
    std::string speciesTree;
    RecModel reconciliationModel;

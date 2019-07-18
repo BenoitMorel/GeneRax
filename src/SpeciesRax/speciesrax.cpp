@@ -8,7 +8,7 @@
 #include <sstream>
 #include <trees/SpeciesTree.hpp>
 #include <trees/PerCoreGeneTrees.hpp>
-
+#include <memory>
 
 void initFolders(const std::string &output, std::vector<FamiliesFileParser::FamilyInfo> &families) 
 {
@@ -27,8 +27,8 @@ int internal_main(int argc, char** argv, void* comm)
   Logger::init();
   SpeciesRaxArguments arguments(argc, argv);
   FileSystem::mkdir(arguments.output, true);
-  Logger::initFileOutput(FileSystem::joinPaths(arguments.output, "generax"));
-  
+  Logger::initFileOutput(FileSystem::joinPaths(arguments.output, "speciesrax"));
+  srand(arguments.seed);
   arguments.printCommand();
   arguments.printSummary();
   
@@ -40,26 +40,30 @@ int internal_main(int argc, char** argv, void* comm)
   
   
   PerCoreGeneTrees geneTrees(initialFamilies); 
-  SpeciesTree speciesTree(initialFamilies);
-  speciesTree.saveToFile(FileSystem::joinPaths(arguments.output, "starting_species_tree.newick"));
-  DTLRates rates(0.1, 0.2, 0.1);
-  speciesTree.setRates(rates);
-  Logger::info << speciesTree << std::endl;
-  //SpeciesTree speciesTree(arguments.speciesTree);
-  //SpeciesTreeOperator::changeRoot(speciesTree, 1);
-  //SpeciesTreeOperator::changeRoot(speciesTree, 1);
-  //Logger::info << "Reconciliation likelihood " << speciesTree.computeReconciliationLikelihood(geneTrees, recModel) << std::endl;
-  SpeciesTreeOptimizer::sprSearch(speciesTree, geneTrees, recModel, 1);
-  SpeciesTreeOptimizer::rootExhaustiveSearch(speciesTree, geneTrees, recModel);
-  SpeciesTreeOptimizer::ratesOptimization(speciesTree, geneTrees, recModel);
-  SpeciesTreeOptimizer::sprSearch(speciesTree, geneTrees, recModel, 2);
-  SpeciesTreeOptimizer::rootExhaustiveSearch(speciesTree, geneTrees, recModel);
-  SpeciesTreeOptimizer::ratesOptimization(speciesTree, geneTrees, recModel);
-  SpeciesTreeOptimizer::sprSearch(speciesTree, geneTrees, recModel, 2);
-  SpeciesTreeOptimizer::ratesOptimization(speciesTree, geneTrees, recModel);
-  SpeciesTreeOptimizer::sprSearch(speciesTree, geneTrees, recModel, 3);
+  std::unique_ptr<SpeciesTree> speciesTree;
+  Logger::info << "species tree: " << arguments.speciesTree << std::endl;
+  if (arguments.speciesTree == "random") {
+    speciesTree = std::make_unique<SpeciesTree>(initialFamilies);
+    DTLRates rates(0.1, 0.2, 0.1);
+    speciesTree->setRates(rates);
+  } else {
+    speciesTree = std::make_unique<SpeciesTree>(arguments.speciesTree);
+    SpeciesTreeOptimizer::ratesOptimization(*speciesTree, geneTrees, recModel);
+  }
+  speciesTree->saveToFile(FileSystem::joinPaths(arguments.output, "starting_species_tree.newick"));
+  Logger::info << *speciesTree << std::endl;
+  SpeciesTreeOptimizer::sprSearch(*speciesTree, geneTrees, recModel, 1);
+  SpeciesTreeOptimizer::rootExhaustiveSearch(*speciesTree, geneTrees, recModel);
+  SpeciesTreeOptimizer::ratesOptimization(*speciesTree, geneTrees, recModel);
+  SpeciesTreeOptimizer::sprSearch(*speciesTree, geneTrees, recModel, 2);
+  SpeciesTreeOptimizer::rootExhaustiveSearch(*speciesTree, geneTrees, recModel);
+  SpeciesTreeOptimizer::ratesOptimization(*speciesTree, geneTrees, recModel);
+  SpeciesTreeOptimizer::sprSearch(*speciesTree, geneTrees, recModel, 2);
+  SpeciesTreeOptimizer::ratesOptimization(*speciesTree, geneTrees, recModel);
+  SpeciesTreeOptimizer::sprSearch(*speciesTree, geneTrees, recModel, 3);
 
-  speciesTree.saveToFile(FileSystem::joinPaths(arguments.output, "inferred_species_tree.newick"));
+  Logger::timed << "End of the run" << std::endl;
+  speciesTree->saveToFile(FileSystem::joinPaths(arguments.output, "inferred_species_tree.newick"));
   ParallelContext::finalize();
   return 0;
 }

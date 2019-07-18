@@ -9,6 +9,8 @@
 SpeciesRaxArguments::SpeciesRaxArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
+  seed(42),
+  speciesTree("random"),
   reconciliationModel(UndatedDL),
   reconciliationOpt(Simplex),
   output("SpeciesRax"),
@@ -27,6 +29,8 @@ SpeciesRaxArguments::SpeciesRaxArguments(int iargc, char * iargv[]):
     if (arg == "-h" || arg == "--help") {
       printHelp();
       ParallelContext::abort(0);
+    } else if (arg == "--seed") {
+      seed = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "-f" || arg == "--families") {
       families = std::string(argv[++i]);
     } else if (arg == "-s" || arg == "--species-tree") {
@@ -84,8 +88,10 @@ void SpeciesRaxArguments::checkInputs() {
     Logger::error << "Aborting." << std::endl;
     ParallelContext::abort(1);
   }
-  
-  assertFileExists(speciesTree);
+ 
+  if (speciesTree != "random") {
+    assertFileExists(speciesTree);
+  }
 }
 
 void SpeciesRaxArguments::printHelp() {
