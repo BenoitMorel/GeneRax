@@ -1,7 +1,6 @@
 #include "SpeciesTree.hpp"
 #include <cassert>
 
-#include <optimizers/DTLOptimizer.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <likelihoods/ReconciliationEvaluation.hpp>
 #include <trees/PerCoreGeneTrees.hpp>
@@ -9,7 +8,6 @@
 #include <IO/FileSystem.hpp>
 #include <set>
 
-const double EPSILON = 0.0000001;
 
 SpeciesTree::SpeciesTree(const std::string &newick, bool fromFile):
   _speciesTree(0)
@@ -326,109 +324,3 @@ void SpeciesTreeOperator::getPossibleRegrafts(SpeciesTree &speciesTree, unsigned
   recursiveGetNodes(getBrother(pruneNode)->right, 0, radius, regrafts);
 }
   
-void SpeciesTreeOptimizer::rootSlidingSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model)
-{
-  double bestLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
-  int bestMove = -1;
-  do {
-    bestMove = -1;
-    Logger::info << "Current ll: " << bestLL << std::endl;
-    for (unsigned int i = 0; i < 4; ++i) { 
-      if (SpeciesTreeOperator::canChangeRoot(speciesTree, i)) {
-        SpeciesTreeOperator::changeRoot(speciesTree, i); 
-        double newLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
-        Logger::info << "  New ll: " << newLL << std::endl;
-        if (newLL > bestLL) {
-          bestLL = newLL;
-          bestMove = i;
-        }
-        SpeciesTreeOperator::revertChangeRoot(speciesTree, i); 
-      }
-    }
-    if (bestMove != -1) {
-      SpeciesTreeOperator::changeRoot(speciesTree, bestMove);  
-    }
-  } while (bestMove != -1); 
-  Logger::info << "End of root sliding search: ll = " << bestLL << std::endl;
-}
-  
-void rootExhaustiveSearchAux(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, std::vector<unsigned int> &movesHistory, std::vector<unsigned int> &bestMovesHistory, double &bestLL, unsigned int &visits)
-{
-  std::vector<unsigned int> moves;
-  moves.push_back(movesHistory.back() % 2);
-  moves.push_back(2 + (movesHistory.back() % 2));
-  for (auto direction: moves) {
-    if (SpeciesTreeOperator::canChangeRoot(speciesTree, direction)) {
-      movesHistory.push_back(direction);
-      SpeciesTreeOperator::changeRoot(speciesTree, direction);
-      double ll = speciesTree.computeReconciliationLikelihood(geneTrees, model);
-      visits++;
-      if (ll > bestLL) {
-        bestLL = ll;
-        bestMovesHistory = movesHistory;
-      }
-      rootExhaustiveSearchAux(speciesTree, geneTrees, model, movesHistory, bestMovesHistory, bestLL, visits);
-      SpeciesTreeOperator::revertChangeRoot(speciesTree, direction);
-      movesHistory.pop_back();
-    }
-  }
-}
-
-void SpeciesTreeOptimizer::rootExhaustiveSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model)
-{
-  Logger::info << "Trying to re-root the species tree" << std::endl;
-  std::vector<unsigned int> movesHistory;
-  std::vector<unsigned int> bestMovesHistory;
-  double bestLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
-  unsigned int visits = 1;
-  movesHistory.push_back(0);
-  rootExhaustiveSearchAux(speciesTree, geneTrees, model, movesHistory, bestMovesHistory, bestLL, visits); 
-  movesHistory[0] = 1;
-  rootExhaustiveSearchAux(speciesTree, geneTrees, model, movesHistory, bestMovesHistory, bestLL, visits); 
-  assert (visits == 2 * speciesTree.getTaxaNumber() - 3);
-  for (unsigned int i = 1; i < bestMovesHistory.size(); ++i) {
-    SpeciesTreeOperator::changeRoot(speciesTree, bestMovesHistory[i]);
-  }
-}
-  
-double SpeciesTreeOptimizer::sprRound(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, int radius)
-{
-  std::vector<unsigned int> prunes;
-  SpeciesTreeOperator::getPossiblePrunes(speciesTree, prunes);
-  double bestLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
-  for (auto prune: prunes) {
-    std::vector<unsigned int> regrafts;
-    SpeciesTreeOperator::getPossibleRegrafts(speciesTree, prune, radius, regrafts);
-    for (auto regraft: regrafts) {
-      unsigned int rollback = SpeciesTreeOperator::applySPRMove(speciesTree, prune, regraft);
-      double newLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
-      if (newLL > (bestLL + EPSILON)) {
-        return newLL;
-      }
-      SpeciesTreeOperator::reverseSPRMove(speciesTree, prune, rollback);
-    }
-  }
-  return bestLL;
-}
-
-double SpeciesTreeOptimizer::sprSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, int radius)
-{
-  Logger::info << "Starting species SPR round (radius=" << radius << ")" <<std::endl;
-  double bestLL = speciesTree.computeReconciliationLikelihood(geneTrees, model);
-  double newLL = bestLL;
-  do {
-    bestLL = newLL;
-    Logger::info << "LL = " << bestLL << std::endl;
-    newLL = sprRound(speciesTree, geneTrees, model, radius);
-  } while (newLL - bestLL > 0.001);
-  return newLL;
-}
-  
-void SpeciesTreeOptimizer::ratesOptimization(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model)
-{
-  Logger::info << "Starting DTL rates optimization" << std::endl;
-  DTLRates rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree.getTree(), model);
-  Logger::info << " Best rates: " << rates << std::endl;
-  speciesTree.setRates(rates);
-}
-

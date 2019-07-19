@@ -49,10 +49,10 @@ void optimizeStep(GeneRaxArguments &arguments,
     long &sumElapsedSPR)
 {
   Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, rates, sumElapsedRates);
+  Routines::gatherLikelihoods(families, totalLibpllLL, totalRecLL);
   GeneTreeSearchMaster::optimizeGeneTrees(families, recModel, rates, arguments.output,
       arguments.execPath, arguments.speciesTree, arguments.reconciliationOpt, arguments.rootedGeneTree,
       arguments.recWeight, true, sprRadius, currentIteration, useSplitImplem(), sumElapsedSPR);
-  Routines::gatherLikelihoods(families, totalLibpllLL, totalRecLL);
 }
 
 

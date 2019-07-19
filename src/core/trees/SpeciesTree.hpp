@@ -2,7 +2,7 @@
 
 #include <likelihoods/ReconciliationEvaluation.hpp>
 #include <IO/LibpllParsers.hpp>
-#include <IO/FamiliesFileParser.hpp>
+#include <families/Families.hpp>
 #include <string>
 #include <maths/DTLRates.hpp>
 #include <util/enums.hpp>
@@ -62,13 +62,4 @@ public:
 
 
 
-
-class SpeciesTreeOptimizer {
-public:
-  static void rootSlidingSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model);
-  static void rootExhaustiveSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model);
-  static double sprRound(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, int radius);
-  static double sprSearch(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, int radius);
-  static void ratesOptimization(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model);
-};
 

@@ -6,6 +6,7 @@
 #include <limits>
 #include <IO/FileSystem.hpp>
 #include <sstream>
+#include <optimizers/SpeciesTreeOptimizer.hpp>
 #include <trees/SpeciesTree.hpp>
 #include <trees/PerCoreGeneTrees.hpp>
 #include <memory>
@@ -38,32 +39,16 @@ int internal_main(int argc, char** argv, void* comm)
   Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
   initFolders(arguments.output, initialFamilies);
   
-  
-  PerCoreGeneTrees geneTrees(initialFamilies); 
-  std::unique_ptr<SpeciesTree> speciesTree;
-  Logger::info << "species tree: " << arguments.speciesTree << std::endl;
-  if (arguments.speciesTree == "random") {
-    speciesTree = std::make_unique<SpeciesTree>(initialFamilies);
-    DTLRates rates(0.1, 0.2, 0.1);
-    speciesTree->setRates(rates);
-  } else {
-    speciesTree = std::make_unique<SpeciesTree>(arguments.speciesTree);
-    SpeciesTreeOptimizer::ratesOptimization(*speciesTree, geneTrees, recModel);
-  }
-  speciesTree->saveToFile(FileSystem::joinPaths(arguments.output, "starting_species_tree.newick"));
-  Logger::info << *speciesTree << std::endl;
-  SpeciesTreeOptimizer::sprSearch(*speciesTree, geneTrees, recModel, 1);
-  SpeciesTreeOptimizer::rootExhaustiveSearch(*speciesTree, geneTrees, recModel);
-  SpeciesTreeOptimizer::ratesOptimization(*speciesTree, geneTrees, recModel);
-  SpeciesTreeOptimizer::sprSearch(*speciesTree, geneTrees, recModel, 2);
-  SpeciesTreeOptimizer::rootExhaustiveSearch(*speciesTree, geneTrees, recModel);
-  SpeciesTreeOptimizer::ratesOptimization(*speciesTree, geneTrees, recModel);
-  SpeciesTreeOptimizer::sprSearch(*speciesTree, geneTrees, recModel, 2);
-  SpeciesTreeOptimizer::ratesOptimization(*speciesTree, geneTrees, recModel);
-  SpeciesTreeOptimizer::sprSearch(*speciesTree, geneTrees, recModel, 3);
+  SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, recModel, arguments.output);
+  speciesTreeOptimizer.sprSearch(1);
+  speciesTreeOptimizer.rootExhaustiveSearch();
+  speciesTreeOptimizer.ratesOptimization();
+  speciesTreeOptimizer.sprSearch(2);
+  speciesTreeOptimizer.rootExhaustiveSearch();
+  speciesTreeOptimizer.ratesOptimization();
+  speciesTreeOptimizer.sprSearch(3);
 
   Logger::timed << "End of the run" << std::endl;
-  speciesTree->saveToFile(FileSystem::joinPaths(arguments.output, "inferred_species_tree.newick"));
   ParallelContext::finalize();
   return 0;
 }
