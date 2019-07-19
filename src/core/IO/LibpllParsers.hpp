@@ -33,7 +33,7 @@ public:
   static pll_rtree_t *readRootedFromStr(const std::string &newickFile);
   static void fillLeavesFromUtree(pll_utree_t *utree, std::unordered_set<std::string> &leaves);
   static void fillLeavesFromRtree(pll_rtree_t *rtree, std::unordered_set<std::string> &leaves);
-  static std::vector<unsigned int> parallelGetTreeSizes(const std::vector<FamiliesFileParser::FamilyInfo> &families);
+  static std::vector<unsigned int> parallelGetTreeSizes(const Families &families);
   static void saveUtree(const pll_unode_t *utree, 
     const std::string &fileName, 
     bool append = false);

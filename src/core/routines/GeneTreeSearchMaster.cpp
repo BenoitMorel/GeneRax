@@ -14,7 +14,7 @@ std::string toArg(const std::string &str) {
 }
 
 
-void GeneTreeSearchMaster::optimizeGeneTrees(std::vector<FamiliesFileParser::FamilyInfo> &families,
+void GeneTreeSearchMaster::optimizeGeneTrees(Families &families,
     RecModel recModel,
     DTLRatesVector &rates,
     const std::string &output, 

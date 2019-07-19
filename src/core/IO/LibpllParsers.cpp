@@ -137,7 +137,7 @@ void LibpllParsers::getRtreeHierarchicalString(const pll_rtree_t *rtree, std::st
   newick = os.str();
 }
 
-std::vector<unsigned int> LibpllParsers::parallelGetTreeSizes(const std::vector<FamiliesFileParser::FamilyInfo> &families) 
+std::vector<unsigned int> LibpllParsers::parallelGetTreeSizes(const Families &families) 
 {
   unsigned int treesNumber = static_cast<unsigned int>(families.size());
   std::vector<unsigned int> localTreeSizes((treesNumber - 1 ) / ParallelContext::getSize() + 1, 0);

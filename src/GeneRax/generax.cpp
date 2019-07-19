@@ -20,7 +20,7 @@ bool useSplitImplem() {
   return ParallelContext::getSize() > 2;
 }
 
-void initFolders(const std::string &output, std::vector<FamiliesFileParser::FamilyInfo> &families) 
+void initFolders(const std::string &output, Families &families) 
 {
   std::string results = FileSystem::joinPaths(output, "results");
   FileSystem::mkdir(results, true);
@@ -39,7 +39,7 @@ void saveStats(const std::string &outputDir, double totalLibpllLL, double totalR
 
 void optimizeStep(GeneRaxArguments &arguments, 
     RecModel recModel,
-    std::vector<FamiliesFileParser::FamilyInfo> &families,
+    Families &families,
     DTLRatesVector &rates,
     int sprRadius,
     int currentIteration,
@@ -56,7 +56,7 @@ void optimizeStep(GeneRaxArguments &arguments,
 }
 
 
-void search(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
+void search(const Families &initialFamilies,
     GeneRaxArguments &arguments)
 
 {
@@ -67,7 +67,7 @@ void search(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   long sumElapsedSPR = 0;
   long sumElapsedLibpll = 0;
   DTLRatesVector rates(DTLRates(arguments.dupRate, arguments.lossRate, arguments.transferRate));
-  std::vector<FamiliesFileParser::FamilyInfo> currentFamilies = initialFamilies;
+  Families currentFamilies = initialFamilies;
   int iteration = 0;
   bool randoms = Routines::createRandomTrees(arguments.output, currentFamilies); 
   if (randoms) {
@@ -88,12 +88,12 @@ void search(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
   Logger::timed << "End of GeneRax execution" << std::endl;
 }
 
-void eval(const std::vector<FamiliesFileParser::FamilyInfo> &initialFamilies,
+void eval(const Families &initialFamilies,
     GeneRaxArguments &arguments)
 {
   long dummy = 0;
   DTLRatesVector rates(DTLRates(arguments.dupRate, arguments.lossRate, arguments.transferRate));
-  std::vector<FamiliesFileParser::FamilyInfo> families = initialFamilies;
+  Families families = initialFamilies;
   RecModel recModel;
   bool randoms = Routines::createRandomTrees(arguments.output, families);
   if (randoms) {
@@ -130,7 +130,7 @@ int generax_main(int argc, char** argv, void* comm)
   std::string labelledSpeciesTree = arguments.speciesTree + std::string(".labelled");
   LibpllParsers::labelRootedTree(arguments.speciesTree, labelledSpeciesTree);
   arguments.speciesTree = labelledSpeciesTree;
-  std::vector<FamiliesFileParser::FamilyInfo> initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
+  Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
   Logger::timed << "Number of gene families: " << initialFamilies.size() << std::endl;
   initFolders(arguments.output, initialFamilies);
   switch (arguments.strategy) {

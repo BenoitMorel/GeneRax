@@ -4,28 +4,9 @@
 #include <vector>
 
 
-
+#include <families/Families.hpp>
 
 class FamiliesFileParser {
 public:
-  struct FamilyInfo {
-    std::string name;
-    std::string startingGeneTree;
-    std::string alignmentFile;
-    std::string mappingFile;
-    std::string libpllModel;
-    std::string statsFile;
-    FamilyInfo() {
-      reset();
-    }
-    void reset() {
-      name = "";
-      startingGeneTree = "__random__";
-      alignmentFile = "";
-      mappingFile = "";
-      libpllModel = "GTR";
-      statsFile = "";
-    }
-  };
-  static std::vector<FamilyInfo> parseFamiliesFile(const std::string &familiesFile);
+  static Families parseFamiliesFile(const std::string &familiesFile);
 };

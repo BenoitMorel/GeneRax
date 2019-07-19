@@ -7,7 +7,7 @@
 #include <parallelization/Scheduler.hpp>
 #include <sstream>
 
-void RaxmlMaster::runRaxmlOptimization(std::vector<FamiliesFileParser::FamilyInfo> &families,
+void RaxmlMaster::runRaxmlOptimization(Families &families,
     const std::string &output,
     const std::string &execPath,
     int iteration,

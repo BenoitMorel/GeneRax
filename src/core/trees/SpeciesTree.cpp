@@ -98,7 +98,7 @@ void SpeciesTree::buildFromLabels(const std::unordered_set<std::string> &leafLab
   LibpllParsers::labelRootedTree(_speciesTree);
 }
   
-SpeciesTree::SpeciesTree(const std::vector<FamiliesFileParser::FamilyInfo> &families)
+SpeciesTree::SpeciesTree(const Families &families)
 {
   GeneSpeciesMapping mappings;
   for (const auto &family: families) {

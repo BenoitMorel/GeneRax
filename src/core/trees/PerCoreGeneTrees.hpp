@@ -15,7 +15,7 @@ public:
     ~GeneTree() {pll_utree_destroy(tree, 0);}
   };
 
-  PerCoreGeneTrees(const std::vector<FamiliesFileParser::FamilyInfo> &families);
+  PerCoreGeneTrees(const Families &families);
   std::vector<GeneTree> &getTrees() {return _geneTrees;}
   bool checkMappings(const std::string &speciesTreeFile);
 private:

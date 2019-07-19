@@ -6,7 +6,7 @@
 
 class RaxmlMaster {
 public:
-  static void runRaxmlOptimization(std::vector<FamiliesFileParser::FamilyInfo> &families,
+  static void runRaxmlOptimization(Families &families,
     const std::string &output,
     const std::string &execPath,
     int iteration,

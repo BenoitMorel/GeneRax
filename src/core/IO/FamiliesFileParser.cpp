@@ -11,8 +11,8 @@ enum FFPStep {
 
 
 bool update_family(const std::string &line, 
-    FamiliesFileParser::FamilyInfo &currentFamily,
-    std::vector<FamiliesFileParser::FamilyInfo> &families)
+    FamilyInfo &currentFamily,
+    Families &families)
 {
   if (line[0] == '-') {
       if (currentFamily.name.size()) {
@@ -40,9 +40,9 @@ bool update_family(const std::string &line,
   return true;
 }
 
-std::vector<FamiliesFileParser::FamilyInfo> FamiliesFileParser::parseFamiliesFile(const std::string &familiesFile)
+Families FamiliesFileParser::parseFamiliesFile(const std::string &familiesFile)
 {
-  std::vector<FamilyInfo> families;
+  Families families;
   std::ifstream reader(familiesFile);
   std::string line;
   FFPStep step = header;

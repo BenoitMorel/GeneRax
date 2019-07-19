@@ -16,7 +16,7 @@ class SpeciesTree {
 public:
   SpeciesTree(const std::string &newick, bool isFile = true);
   SpeciesTree(const std::unordered_set<std::string> &leafLabels);
-  SpeciesTree(const std::vector<FamiliesFileParser::FamilyInfo> &families);
+  SpeciesTree(const Families &families);
   ~SpeciesTree();
 
   void setRates(const DTLRates &rates);

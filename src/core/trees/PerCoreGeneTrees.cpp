@@ -39,7 +39,7 @@ std::vector<size_t> getMyIndices(const std::vector<unsigned int> &treeSizes)
   return myIndices;
 }
 
-PerCoreGeneTrees::PerCoreGeneTrees(const std::vector<FamiliesFileParser::FamilyInfo> &families)
+PerCoreGeneTrees::PerCoreGeneTrees(const Families &families)
 {
   auto treeSizes = LibpllParsers::parallelGetTreeSizes(families);
   auto myIndices = getMyIndices(treeSizes);

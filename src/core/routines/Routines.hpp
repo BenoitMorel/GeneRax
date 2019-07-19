@@ -17,7 +17,7 @@ public:
   static void optimizeRates(bool userDTLRates, 
     const std::string &speciesTreeFile,
     RecModel recModel,
-    std::vector<FamiliesFileParser::FamilyInfo> &families,
+    Families &families,
     bool perSpeciesRates, 
     DTLRatesVector &rates,
     long &sumElapsed);
@@ -28,7 +28,7 @@ public:
    */
   static void inferReconciliation(
     const std::string &speciesTreeFile,
-    std::vector<FamiliesFileParser::FamilyInfo> &families,
+    Families &families,
     RecModel model,
     DTLRatesVector &rates,
     const std::string &outputDir
@@ -40,13 +40,13 @@ public:
    * least one random tree to generate
    */
   static bool createRandomTrees(const std::string &geneRaxOutputDir, 
-      std::vector<FamiliesFileParser::FamilyInfo> &families);
+      Families &families);
   
 
   /**
    * Read the family stats files and sum the sequence and reconciliation likelihoods
    */
-  static void gatherLikelihoods(std::vector<FamiliesFileParser::FamilyInfo> &families,
+  static void gatherLikelihoods(Families &families,
     double &totalLibpllLL,
     double &totalRecLL);
 

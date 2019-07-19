@@ -10,7 +10,7 @@
 #include <trees/PerCoreGeneTrees.hpp>
 #include <memory>
 
-void initFolders(const std::string &output, std::vector<FamiliesFileParser::FamilyInfo> &families) 
+void initFolders(const std::string &output, Families &families) 
 {
   std::string results = FileSystem::joinPaths(output, "results");
   FileSystem::mkdir(results, true);
@@ -34,7 +34,7 @@ int internal_main(int argc, char** argv, void* comm)
   
   RecModel recModel = arguments.reconciliationModel;
 
-  std::vector<FamiliesFileParser::FamilyInfo> initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
+  Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
   Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
   initFolders(arguments.output, initialFamilies);
   

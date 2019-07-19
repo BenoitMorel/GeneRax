@@ -12,7 +12,7 @@
 void Routines::optimizeRates(bool userDTLRates, 
     const std::string &speciesTreeFile,
     RecModel recModel,
-    std::vector<FamiliesFileParser::FamilyInfo> &families,
+    Families &families,
     bool perSpeciesRates, 
     DTLRatesVector &rates,
     long &sumElapsed) 
@@ -45,7 +45,7 @@ void Routines::optimizeRates(bool userDTLRates,
 
 void Routines::inferReconciliation(
     const std::string &speciesTreeFile,
-    std::vector<FamiliesFileParser::FamilyInfo> &families,
+    Families &families,
     RecModel model,
     DTLRatesVector &rates,
     const std::string &outputDir
@@ -82,7 +82,7 @@ void Routines::inferReconciliation(
   pll_rtree_destroy(speciesTree, 0);
 }
 
-bool Routines::createRandomTrees(const std::string &geneRaxOutputDir, std::vector<FamiliesFileParser::FamilyInfo> &families)
+bool Routines::createRandomTrees(const std::string &geneRaxOutputDir, Families &families)
 {
   std::string startingTreesDir = FileSystem::joinPaths(geneRaxOutputDir, "startingTrees");
   bool startingTreesDirCreated = false;
@@ -103,7 +103,7 @@ bool Routines::createRandomTrees(const std::string &geneRaxOutputDir, std::vecto
   return startingTreesDirCreated;
 }
 
-void Routines::gatherLikelihoods(std::vector<FamiliesFileParser::FamilyInfo> &families,
+void Routines::gatherLikelihoods(Families &families,
     double &totalLibpllLL,
     double &totalRecLL)
 {
