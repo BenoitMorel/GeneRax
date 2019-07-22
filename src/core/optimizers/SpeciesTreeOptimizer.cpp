@@ -2,6 +2,7 @@
 
 #include <optimizers/DTLOptimizer.hpp>
 #include <IO/FileSystem.hpp>
+#include <routines/GeneTreeSearchMaster.hpp>
 
 SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile, 
     const Families &initialFamilies, 
@@ -96,6 +97,7 @@ double SpeciesTreeOptimizer::sprSearch(int radius)
     Logger::info << "LL = " << bestLL << std::endl;
     newLL = sprRound(radius);
   } while (newLL - bestLL > 0.001);
+  saveCurrentSpeciesTree();
   return newLL;
 }
   
@@ -111,3 +113,25 @@ void SpeciesTreeOptimizer::saveCurrentSpeciesTree()
 {
   _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "inferred_species_tree.newick"));
 }
+
+void SpeciesTreeOptimizer::optimizeGeneTrees(int radius, const std::string &execPath)
+{
+  saveCurrentSpeciesTree();
+  std::string speciesTree = FileSystem::joinPaths(_outputDir, "inferred_species_tree.newick");
+  RecOpt recOpt = Simplex;
+  bool rootedGeneTree = true;
+  double recWeight = 1.0;
+  unsigned int currentIteration = 0;
+  bool useSplitImplem = true;
+  long int sumElapsedSPR = 0;
+  auto rates = _speciesTree->getRates();
+  DTLRatesVector ratesVector(rates);
+    GeneTreeSearchMaster::optimizeGeneTrees(_currentFamilies, 
+        _model, ratesVector, _outputDir, 
+        execPath, speciesTree, recOpt, rootedGeneTree, 
+        recWeight, true, radius, currentIteration, 
+        useSplitImplem, sumElapsedSPR);
+
+  _geneTrees = std::make_unique<PerCoreGeneTrees>(_currentFamilies);
+}
+

@@ -19,7 +19,7 @@ public:
   double sprRound(int radius);
   double sprSearch(int radius);
   void ratesOptimization();
-
+  void optimizeGeneTrees(int radius, const std::string &execPath);
 private:
   std::shared_ptr<SpeciesTree> _speciesTree;
   std::shared_ptr<PerCoreGeneTrees> _geneTrees;

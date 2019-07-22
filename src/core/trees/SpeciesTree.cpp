@@ -167,6 +167,7 @@ unsigned int SpeciesTree::getTaxaNumber() const
 
 void SpeciesTree::saveToFile(const std::string &newick)
 {
+  Logger::info << "Saving species tree in " << newick << std::endl;
   LibpllParsers::saveRtree(_speciesTree->root, newick);  
 }
   

@@ -3,6 +3,7 @@
 #include <IO/FamiliesFileParser.hpp>
 #include <IO/Logger.hpp>
 #include <algorithm>
+#include <routines/GeneRaxSlaves.hpp>
 #include <limits>
 #include <IO/FileSystem.hpp>
 #include <sstream>
@@ -21,7 +22,7 @@ void initFolders(const std::string &output, Families &families)
 }
 
 
-int internal_main(int argc, char** argv, void* comm)
+int speciesrax_main(int argc, char** argv, void* comm)
 {
   // the order is very important
   ParallelContext::init(comm); 
@@ -40,14 +41,17 @@ int internal_main(int argc, char** argv, void* comm)
   initFolders(arguments.output, initialFamilies);
   
   SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, recModel, arguments.output);
-  speciesTreeOptimizer.sprSearch(1);
+  unsigned int maxRadius = 7;
+  for (unsigned int radius = 1; radius <= maxRadius; ++radius) {
+    speciesTreeOptimizer.sprSearch(radius);
+    speciesTreeOptimizer.rootExhaustiveSearch();
+    speciesTreeOptimizer.ratesOptimization();
+  }
   speciesTreeOptimizer.rootExhaustiveSearch();
-  speciesTreeOptimizer.ratesOptimization();
-  speciesTreeOptimizer.sprSearch(2);
-  speciesTreeOptimizer.rootExhaustiveSearch();
-  speciesTreeOptimizer.ratesOptimization();
-  speciesTreeOptimizer.sprSearch(3);
-
+  
+  //speciesTreeOptimizer.optimizeGeneTrees(1, argv[0]);
+  //speciesTreeOptimizer.ratesOptimization();
+  //speciesTreeOptimizer.sprSearch(maxRadius);
   Logger::timed << "End of the run" << std::endl;
   ParallelContext::finalize();
   return 0;
@@ -55,8 +59,25 @@ int internal_main(int argc, char** argv, void* comm)
 
 
 
+/**
+ * GeneRax can call itself with the scheduler. This function
+ * decides whether we are in the main called by the user (generax_main)
+ * or if we are called by the scheduler to execute some 
+ * intermediate step (static_scheduled_main)
+ */
+int internal_main(int argc, char** argv, void* comm)
+{
+  if (GeneRaxSlaves::is_slave(argc, argv)) {
+    int slaveComm = -1; 
+    return static_scheduled_main(argc, argv, &slaveComm);
+  } else {
+    return speciesrax_main(argc, argv, comm);
+  }
+}
+
 int main(int argc, char** argv)
 {
   return internal_main(argc, argv, 0);
 }
+
 

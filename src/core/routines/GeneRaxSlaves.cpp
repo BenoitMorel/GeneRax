@@ -1,5 +1,4 @@
 #include "GeneRaxSlaves.hpp"
-#include "GeneRaxArguments.hpp"
 #include <parallelization/ParallelContext.hpp>
 #include <IO/FamiliesFileParser.hpp>
 #include <IO/Logger.hpp>

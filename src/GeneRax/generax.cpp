@@ -10,7 +10,7 @@
 #include <maths/DTLRates.hpp>
 #include <IO/FileSystem.hpp>
 #include <IO/ParallelOfstream.hpp>
-#include "GeneRaxSlaves.hpp"
+#include <routines/GeneRaxSlaves.hpp>
 #include <parallelization/Scheduler.hpp>
 #include <routines/RaxmlMaster.hpp>
 #include <routines/GeneTreeSearchMaster.hpp>

@@ -16,6 +16,7 @@ set(jointsearch-core_SOURCES
   optimizers/SpeciesTreeOptimizer.cpp
   parallelization/ParallelContext.cpp
   parallelization/Scheduler.cpp
+  routines/GeneRaxSlaves.cpp
   routines/RaxmlMaster.cpp
   routines/RaxmlSlave.cpp
   routines/Routines.cpp
