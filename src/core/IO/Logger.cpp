@@ -11,7 +11,7 @@ std::ofstream *Logger::logFile = 0;
 std::ofstream *Logger::rankLogFile = 0;
 std::ofstream *Logger::saveLogFile = 0;
 
-Logger::Logger(): _os(&std::cout) {
+Logger::Logger(): _os(&std::cout), _silent(false) {
   setType(lt_info);  
 }
 

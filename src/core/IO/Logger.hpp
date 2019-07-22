@@ -29,7 +29,8 @@ private:
     lt_info, lt_error, lt_timed, lt_perrank
   };
   LoggerType _type;
-  std::ostream *_os; 
+  std::ostream *_os;
+  bool _silent;
   Logger();
   void setStream(std::ostream &os) {_os = &os;}
   void setType(LoggerType type) {_type = type;}
@@ -40,8 +41,14 @@ public:
   static void close();
 
   static void initFileOutput(const std::string &output);
+  
+  static void mute() {info._silent = timed._silent = true;}
+  static void unmute() {info._silent = timed._silent = false;}
 
   bool isSilent() {
+    if (_silent) {
+      return true;
+    }
     if (_type == lt_perrank) {
       return false;
     }

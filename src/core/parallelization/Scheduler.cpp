@@ -28,7 +28,10 @@ void Scheduler::schedule(const std::string &outputDir, const std::string &comman
   ParallelContext::barrier(); 
   if (splitImplem || ParallelContext::getRank() == 0) {
     void *comm = splitImplem ? static_cast<void *>(&ParallelContext::getComm()) : 0;
+    // this is a terrible hack
+    std::cout.setstate(std::ios::failbit) ;
     mpi_scheduler_main(static_cast<int>(argv.size()), &argv[0], comm);
+    std::cout.clear() ;
   }
   ParallelContext::barrier(); 
 }

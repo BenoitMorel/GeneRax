@@ -13,21 +13,26 @@ public:
   SpeciesTreeOptimizer(const std::string speciesTreeFile, 
       const Families &initialFamilies, 
       RecModel model, 
-      const std::string &outputDir);
+      const std::string &outputDir,
+      const std::string &execPath);
 
-  void rootExhaustiveSearch();
-  double sprRound(int radius);
-  double sprSearch(int radius);
+  void rootExhaustiveSearch(bool doOptimizeGeneTrees);
+  double sprRound(int radius, bool doOptimizeGeneTrees);
+  double sprSearch(int radius, bool doOptimizeGeneTrees);
   void ratesOptimization();
-  void optimizeGeneTrees(int radius, const std::string &execPath);
+  void advancedRatesOptimization(int radius);
+  void optimizeGeneTrees(int radius);
 private:
   std::shared_ptr<SpeciesTree> _speciesTree;
   std::shared_ptr<PerCoreGeneTrees> _geneTrees;
   Families _currentFamilies;
   RecModel _model;
   std::string _outputDir;
-
+  std::string _execPath;
+  unsigned int _geneTreeIteration;
 private:
+  double computeReconciliationLikelihood(bool doOptimizeGeneTrees, int geneSPRRadius = 1);
+  void rootExhaustiveSearchAux(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, bool doOptimizeGeneTrees, std::vector<unsigned int> &movesHistory, std::vector<unsigned int> &bestMovesHistory, double &bestLL, unsigned int &visits);
   void saveCurrentSpeciesTree();
 };
 
