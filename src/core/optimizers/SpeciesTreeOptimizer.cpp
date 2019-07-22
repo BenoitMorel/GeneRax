@@ -4,6 +4,7 @@
 #include <IO/FileSystem.hpp>
 #include <routines/GeneTreeSearchMaster.hpp>
 #include <routines/Routines.hpp>
+#include <algorithm>
 
 SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile, 
     const Families &initialFamilies, 
@@ -71,6 +72,10 @@ void SpeciesTreeOptimizer::rootExhaustiveSearch(bool doOptimizeGeneTrees)
   }
 }
   
+std::string likelihoodName(bool doOptimizeGeneTrees) {
+  return doOptimizeGeneTrees ? std::string("Joint LL") : std::string("Rec LL");
+}
+
 double SpeciesTreeOptimizer::sprRound(int radius, bool doOptimizeGeneTrees)
 {
   std::vector<unsigned int> prunes;
@@ -83,6 +88,7 @@ double SpeciesTreeOptimizer::sprRound(int radius, bool doOptimizeGeneTrees)
       unsigned int rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
       double newLL = computeReconciliationLikelihood(doOptimizeGeneTrees);
       if (newLL > bestLL) {
+        Logger::info << "New best " << likelihoodName(doOptimizeGeneTrees) << ": " << newLL << std::endl; 
         return newLL;
       }
       SpeciesTreeOperator::reverseSPRMove(*_speciesTree, prune, rollback);
@@ -91,17 +97,88 @@ double SpeciesTreeOptimizer::sprRound(int radius, bool doOptimizeGeneTrees)
   return bestLL;
 }
 
+struct EvaluatedMove {
+  unsigned int prune;
+  unsigned int regraft;
+  double ll;
+};
+
+struct less_than_evaluatedmove
+{
+  inline bool operator() (const EvaluatedMove& e1, const EvaluatedMove& e2)
+  {
+    return e1.ll > e2.ll;
+  }
+};
+
+
+double SpeciesTreeOptimizer::hybridSprRound(int radius)
+{
+  Logger::info << "Start hybrid spr round" << std::endl;
+  std::vector<unsigned int> prunes;
+  SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, prunes);
+  double bestLL = computeReconciliationLikelihood(false, 1);
+  std::vector<EvaluatedMove> evaluatedMoves;
+  for (auto prune: prunes) {
+    std::vector<unsigned int> regrafts;
+    SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
+    for (auto regraft: regrafts) {
+      unsigned int rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
+      EvaluatedMove em;
+      em.prune = prune;
+      em.regraft = regraft;
+      em.ll = computeReconciliationLikelihood(false);
+      evaluatedMoves.push_back(em);
+      SpeciesTreeOperator::reverseSPRMove(*_speciesTree, em.prune, rollback);
+    }
+  }
+  std::sort(evaluatedMoves.begin(), evaluatedMoves.end(), less_than_evaluatedmove());
+  unsigned int movesToTry = 10;
+  bestLL = computeReconciliationLikelihood(true, 1);
+  srand(42);
+  Logger::info << "Mistgabel!!! " << bestLL << std::endl;
+  srand(42);
+  Logger::info << "Mistgabel!!! " << computeReconciliationLikelihood(true, 1) << std::endl;
+  srand(42);
+  Logger::info << "Mistgabel!!! " << computeReconciliationLikelihood(true, 1) << std::endl;
+  srand(42);
+  Logger::info << "Mistgabel!!! " << computeReconciliationLikelihood(true, 1) << std::endl;
+  for (unsigned int i = 0; i < movesToTry; ++i) {
+    auto &em = evaluatedMoves[i];
+    Logger::info << "evaluated move with initial rec ll = " << em.ll << std::endl;
+    unsigned int rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, em.prune, em.regraft);
+    double newLL = computeReconciliationLikelihood(true);
+    if (newLL > bestLL) {
+      Logger::info << "New best " << likelihoodName(true) << ": " << newLL << std::endl;
+      optimizeGeneTrees(1);
+      Logger::info << "End of  hybrid spr round" << std::endl;
+      return newLL;
+    }
+    SpeciesTreeOperator::reverseSPRMove(*_speciesTree, em.prune, rollback);
+  } 
+  Logger::info << "End of  hybrid spr round" << std::endl;
+  return bestLL;
+}
+
 double SpeciesTreeOptimizer::sprSearch(int radius, bool doOptimizeGeneTrees)
 {
-  Logger::info << "Starting species SPR round (radius=" << radius << ")" <<std::endl;
+  Logger::info << "Starting species SPR search (radius=" << radius << ")" <<std::endl;
   double bestLL = computeReconciliationLikelihood(doOptimizeGeneTrees);
   double newLL = bestLL;
+  Logger::info << "Initial " << likelihoodName(doOptimizeGeneTrees) << ": " << newLL << std::endl;
   do {
     bestLL = newLL;
-    Logger::info << "LL = " << bestLL << std::endl;
-    newLL = sprRound(radius, doOptimizeGeneTrees);
+    if (doOptimizeGeneTrees) {
+      newLL = hybridSprRound(radius); 
+    } else {
+      newLL = sprRound(radius, doOptimizeGeneTrees);
+    }
+    if (doOptimizeGeneTrees) {
+      Logger::info << "hey " << newLL << " " << bestLL << std::endl;
+    }
   } while (newLL - bestLL > 0.001);
   saveCurrentSpeciesTree();
+  Logger::info <<"End of SPR Search" << std::endl;
   return newLL;
 }
   
@@ -153,15 +230,19 @@ void SpeciesTreeOptimizer::advancedRatesOptimization(int radius)
 double SpeciesTreeOptimizer::computeReconciliationLikelihood(bool doOptimizeGeneTrees, int geneSPRRadius)
 {
   if (doOptimizeGeneTrees) {
+    Logger::info << _currentFamilies[0].startingGeneTree << std::endl;
     auto initialFamilies = _currentFamilies;
     optimizeGeneTrees(geneSPRRadius);
+    Logger::info << _currentFamilies[0].startingGeneTree << std::endl;
     double totalLibpllLL = 0.0;
     double totalRecLL = 0.0;
     Logger::mute();
     Routines::gatherLikelihoods(_currentFamilies, totalLibpllLL, totalRecLL);
     Logger::unmute();
     _currentFamilies = initialFamilies;
+    Logger::info << _currentFamilies[0].startingGeneTree << std::endl;
     _geneTrees = std::make_unique<PerCoreGeneTrees>(_currentFamilies);
+    Logger::info << totalLibpllLL + totalRecLL << " " << totalLibpllLL << " " << totalRecLL << std::endl;
     return totalLibpllLL + totalRecLL;
   }
   return _speciesTree->computeReconciliationLikelihood(*_geneTrees, _model);

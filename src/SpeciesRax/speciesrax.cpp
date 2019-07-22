@@ -47,8 +47,10 @@ int speciesrax_main(int argc, char** argv, void* comm)
     speciesTreeOptimizer.rootExhaustiveSearch(false);
     speciesTreeOptimizer.advancedRatesOptimization(1);
   }
-  speciesTreeOptimizer.rootExhaustiveSearch(true);
-  speciesTreeOptimizer.sprSearch(1, true);
+  //speciesTreeOptimizer.rootExhaustiveSearch(true);
+  //speciesTreeOptimizer.sprSearch(maxRadius, true);
+  //speciesTreeOptimizer.rootExhaustiveSearch(true);
+  //speciesTreeOptimizer.advancedRatesOptimization(1);
   
   //speciesTreeOptimizer.optimizeGeneTrees(1);
   //speciesTreeOptimizer.ratesOptimization();

@@ -18,6 +18,7 @@ public:
 
   void rootExhaustiveSearch(bool doOptimizeGeneTrees);
   double sprRound(int radius, bool doOptimizeGeneTrees);
+  double hybridSprRound(int radius);
   double sprSearch(int radius, bool doOptimizeGeneTrees);
   void ratesOptimization();
   void advancedRatesOptimization(int radius);
