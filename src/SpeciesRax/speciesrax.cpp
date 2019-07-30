@@ -43,18 +43,21 @@ int speciesrax_main(int argc, char** argv, void* comm)
   Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
   initFolders(arguments.output, initialFamilies);
   
-  SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, recModel, arguments.output, argv[0]);
+  SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, UndatedDL, arguments.output, argv[0]);
   for (unsigned int radius = 1; radius <= arguments.fastRadius; ++radius) {
+    if (radius == arguments.fastRadius) {
+      speciesTreeOptimizer.setModel(recModel);
+    }
     speciesTreeOptimizer.ratesOptimization();
     speciesTreeOptimizer.sprSearch(radius, false);
     speciesTreeOptimizer.rootExhaustiveSearch(false);
+
   }
   for (unsigned int radius = 1; radius <= arguments.slowRadius; ++radius) {
     speciesTreeOptimizer.advancedRatesOptimization(1);
     speciesTreeOptimizer.sprSearch(radius, true);
     speciesTreeOptimizer.rootExhaustiveSearch(true);
   } 
-  speciesTreeOptimizer.rootExhaustiveSearch(true);
   Logger::timed << "End of the run" << std::endl;
   ParallelContext::finalize();
   return 0;

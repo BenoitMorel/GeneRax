@@ -15,6 +15,8 @@ public:
       RecModel model, 
       const std::string &outputDir,
       const std::string &execPath);
+  void setModel(RecModel model) {_model = model;}
+
 
   void rootExhaustiveSearch(bool doOptimizeGeneTrees);
   double sprRound(int radius, bool doOptimizeGeneTrees);

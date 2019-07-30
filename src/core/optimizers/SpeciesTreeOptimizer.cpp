@@ -163,7 +163,7 @@ double SpeciesTreeOptimizer::hybridSprRound(int radius)
 
 double SpeciesTreeOptimizer::sprSearch(int radius, bool doOptimizeGeneTrees)
 {
-  Logger::info << "Starting species SPR search (radius=" << radius << ")" <<std::endl;
+  Logger::info << "Starting species SPR search (" << (doOptimizeGeneTrees ? "SLOW" : "FAST") << ", radius=" << radius << ")" <<std::endl;
   double bestLL = computeReconciliationLikelihood(doOptimizeGeneTrees);
   double newLL = bestLL;
   Logger::info << "Initial " << likelihoodName(doOptimizeGeneTrees) << ": " << newLL << std::endl;
@@ -195,7 +195,6 @@ void SpeciesTreeOptimizer::saveCurrentSpeciesTree()
 
 void SpeciesTreeOptimizer::optimizeGeneTrees(int radius)
 {
-  auto proposalFamilies = _currentFamilies;
   saveCurrentSpeciesTree();
   std::string speciesTree = FileSystem::joinPaths(_outputDir, "inferred_species_tree.newick");
   RecOpt recOpt = Simplex;
@@ -207,7 +206,7 @@ void SpeciesTreeOptimizer::optimizeGeneTrees(int radius)
   DTLRatesVector ratesVector(rates);
   Logger::mute();
   std::string resultName = "proposals";
-  GeneTreeSearchMaster::optimizeGeneTrees(proposalFamilies, 
+  GeneTreeSearchMaster::optimizeGeneTrees(_currentFamilies, 
       _model, ratesVector, _outputDir, resultName, 
       _execPath, speciesTree, recOpt, rootedGeneTree, 
       recWeight, true, radius, _geneTreeIteration, 
