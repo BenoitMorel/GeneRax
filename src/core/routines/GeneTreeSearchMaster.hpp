@@ -13,6 +13,7 @@ public:
     RecModel recModel,
     DTLRatesVector &rates,
     const std::string &output, 
+    const std::string &resultName, 
     const std::string &execPath, 
     const std::string &speciesTreePath,
     RecOpt reconciliationOpt,

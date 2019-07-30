@@ -18,7 +18,9 @@ SpeciesRaxArguments::SpeciesRaxArguments(int iargc, char * iargv[]):
   userDTLRates(false),
   dupRate(1.0),
   lossRate(1.0),
-  transferRate(0.0)
+  transferRate(0.0),
+  fastRadius(6),
+  slowRadius(0)
 {
   if (argc == 1) {
     printHelp();
@@ -52,6 +54,10 @@ SpeciesRaxArguments::SpeciesRaxArguments(int iargc, char * iargv[]):
     } else if (arg == "--transferRate") {
       transferRate = atof(argv[++i]);
       userDTLRates = true;
+    } else if (arg == "--fast-radius") {
+      fastRadius = atoi(argv[++i]);
+    } else if (arg == "--slow-radius") {
+      slowRadius = atoi(argv[++i]);
     } else {
       Logger::error << "Unrecognized argument " << arg << std::endl;
       Logger::error << "Aborting" << std::endl;
@@ -105,6 +111,8 @@ void SpeciesRaxArguments::printHelp() {
   Logger::info << "--dupRate <duplication rate>" << std::endl;
   Logger::info << "--lossRate <loss rate>" << std::endl;
   Logger::info << "--transferRate <transfer rate>" << std::endl;
+  Logger::info << "--fast-radius <fastRadius>" << std::endl;
+  Logger::info << "--slow-radius <slowRadius>" << std::endl;
   Logger::info << std::endl;
 
 }
@@ -127,5 +135,7 @@ void SpeciesRaxArguments::printSummary() {
   Logger::info << "Prefix: " << output << std::endl;
   Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << std::endl;
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << std::endl;
+  Logger::info << "Fast radius: " << fastRadius << std::endl;
+  Logger::info << "Slow radius: " << slowRadius << std::endl;
   Logger::info << std::endl;
 }

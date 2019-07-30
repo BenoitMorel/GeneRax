@@ -15,9 +15,12 @@
 void initFolders(const std::string &output, Families &families) 
 {
   std::string results = FileSystem::joinPaths(output, "results");
+  std::string proposals = FileSystem::joinPaths(output, "proposals");
   FileSystem::mkdir(results, true);
+  FileSystem::mkdir(proposals, true);
   for (auto &family: families) {
     FileSystem::mkdir(FileSystem::joinPaths(results, family.name), true);
+    FileSystem::mkdir(FileSystem::joinPaths(proposals, family.name), true);
   }
 }
 
@@ -41,20 +44,17 @@ int speciesrax_main(int argc, char** argv, void* comm)
   initFolders(arguments.output, initialFamilies);
   
   SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, recModel, arguments.output, argv[0]);
-  unsigned int maxRadius = 7;
-  for (unsigned int radius = 1; radius <= maxRadius; ++radius) {
+  for (unsigned int radius = 1; radius <= arguments.fastRadius; ++radius) {
+    speciesTreeOptimizer.ratesOptimization();
     speciesTreeOptimizer.sprSearch(radius, false);
     speciesTreeOptimizer.rootExhaustiveSearch(false);
-    speciesTreeOptimizer.advancedRatesOptimization(1);
   }
-  //speciesTreeOptimizer.rootExhaustiveSearch(true);
-  //speciesTreeOptimizer.sprSearch(maxRadius, true);
-  //speciesTreeOptimizer.rootExhaustiveSearch(true);
-  //speciesTreeOptimizer.advancedRatesOptimization(1);
-  
-  //speciesTreeOptimizer.optimizeGeneTrees(1);
-  //speciesTreeOptimizer.ratesOptimization();
-  //speciesTreeOptimizer.sprSearch(maxRadius);
+  for (unsigned int radius = 1; radius <= arguments.slowRadius; ++radius) {
+    speciesTreeOptimizer.advancedRatesOptimization(1);
+    speciesTreeOptimizer.sprSearch(radius, true);
+    speciesTreeOptimizer.rootExhaustiveSearch(true);
+  } 
+  speciesTreeOptimizer.rootExhaustiveSearch(true);
   Logger::timed << "End of the run" << std::endl;
   ParallelContext::finalize();
   return 0;

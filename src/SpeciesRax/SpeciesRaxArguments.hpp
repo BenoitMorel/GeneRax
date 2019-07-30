@@ -27,5 +27,7 @@ public:
    double dupRate;
    double lossRate;
    double transferRate;
+   unsigned int fastRadius;
+   unsigned int slowRadius;
 };
 

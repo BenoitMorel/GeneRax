@@ -17,7 +17,8 @@ std::string toArg(const std::string &str) {
 void GeneTreeSearchMaster::optimizeGeneTrees(Families &families,
     RecModel recModel,
     DTLRatesVector &rates,
-    const std::string &output, 
+    const std::string &output,
+    const std::string &resultName,
     const std::string &execPath, 
     const std::string &speciesTreePath,
     RecOpt recOpt,
@@ -42,7 +43,7 @@ void GeneTreeSearchMaster::optimizeGeneTrees(Families &families,
   rates.save(ratesFile);
   for (size_t i = 0; i < families.size(); ++i) {
     auto &family = families[i];
-    std::string familyOutput = FileSystem::joinPaths(output, "results");
+    std::string familyOutput = FileSystem::joinPaths(output, resultName);
     familyOutput = FileSystem::joinPaths(familyOutput, family.name);
     std::string geneTreePath = FileSystem::joinPaths(familyOutput, "geneTree.newick");
     std::string outputStats = FileSystem::joinPaths(familyOutput, "stats.txt");
