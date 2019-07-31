@@ -5,7 +5,7 @@ std::ofstream ParallelContext::sink("/dev/null");
 bool ParallelContext::ownMPIContext(true);
 std::stack<MPI_Comm> ParallelContext::_commStack;
 std::stack<bool> ParallelContext::_ownsMPIContextStack;
-bool ParallelContext::_mpiEnabled = true;
+bool ParallelContext::_mpiEnabled = false;
 
 void ParallelContext::init(void *commPtr)
 {
