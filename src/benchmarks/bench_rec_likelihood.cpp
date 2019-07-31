@@ -67,11 +67,11 @@ void plop()
 int main(int, char**)
 {
   // Input parameters
-  unsigned int speciesNumber = 20;
+  unsigned int speciesNumber = 15;
   unsigned int familiesNumber = 10;
-  unsigned int geneTaxaNumber = 30;
-  unsigned int fastRadius = 1;
-  RecModel recModel = UndatedDL;
+  unsigned int geneTaxaNumber = 20;
+  unsigned int fastRadius = 3;
+  RecModel recModel = UndatedDTL;
   
   
   

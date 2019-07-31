@@ -44,15 +44,6 @@ void UndatedDTLModel::updateTransferSums(ScaledValue &transferSum,
   transferSum /= speciesNodes_.size();
 }
 
-ScaledValue UndatedDTLModel::getCorrectedTransferExtinctionSum(unsigned int speciesNode) const
-{
-  return _transferExtinctionSum - _ancestralExctinctionCorrection[speciesNode];
-}
-
-ScaledValue UndatedDTLModel::getCorrectedTransferSum(unsigned int geneId, unsigned int speciesId) const
-{
-  return _survivingTransferSums[geneId] - _ancestralCorrection[geneId][speciesId];
-}
 
 void UndatedDTLModel::setRates(const std::vector<double> &dupRates,
       const std::vector<double> &lossRates,
@@ -99,7 +90,13 @@ void UndatedDTLModel::resetTransferSums(ScaledValue &transferSum,
     std::vector<ScaledValue> &ancestralCorrection)
 {
   transferSum = ScaledValue();
-  ancestralCorrection = std::vector<ScaledValue>(speciesNodesCount_);
+  if (ancestralCorrection.size()) {
+    for (auto &e: ancestralCorrection) {
+      e.setNull();
+    }
+  } else {
+    ancestralCorrection = std::vector<ScaledValue>(speciesNodesCount_);
+  }
 }
 
 

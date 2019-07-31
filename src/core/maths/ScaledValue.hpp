@@ -23,11 +23,12 @@ public:
   ScaledValue():value(0.0), scaler(NULL_SCALER) {
   }
 
+  void setNull() {
+    value = 0.0;
+    scaler = NULL_SCALER;
+  }
+
   void scale() {
-    if (! (value >= 0.0)) {
-      std::cerr << value << " " << scaler << std::endl;
-    }
-    assert(value >= 0.0);
     if (value == 0.0) {
       scaler = NULL_SCALER;
       value = 0.0;
@@ -45,9 +46,10 @@ public:
    * @param v value
    * @param s scaler
    */
-  explicit ScaledValue(double v, int s = 0):value(v), scaler(s) {
+  explicit ScaledValue(double v, int s = 0):value(v), scaler(s)  {
     scale();
   } 
+
 
   /**
    * ScaledValue sum operator
@@ -62,7 +64,7 @@ public:
     scale();
     return *this;
   }
-  
+
   /**
    * ScaledValue sum operator
    */
