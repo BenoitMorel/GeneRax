@@ -440,20 +440,15 @@ DTLRates optimizeDTLRatesAux(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTr
   return rates[0];
 }
 
-double randDouble() {
-  return rand() / double(RAND_MAX);
-}
-
 DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
 {
   std::vector<DTLRates> bestRates;
   if (Enums::accountsForTransfers(model)) {
     bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 1.0, 1.0, 1.0));
-    for (unsigned int i = 0; i < 5; ++i) {
-      bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, randDouble(), randDouble(), randDouble()));
-    }
+    bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 0.2, 0.4, 0.2));
   } else {
-    bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 1.0, 1.0, 1.0));
+    bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 1.0, 1.0, 0.0));
+    bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 0.2, 0.2, 0.0));
   }
   sort(bestRates.begin(), bestRates.end());
 
