@@ -70,7 +70,7 @@ private:
 
   ScaledValue getCorrectedTransferSum(unsigned int geneId, unsigned int speciesId) const
   {
-    return _survivingTransferSums[geneId], _ancestralCorrection[geneId][speciesId];
+    return _survivingTransferSums[geneId] - _ancestralCorrection[geneId][speciesId];
 
   }
 
