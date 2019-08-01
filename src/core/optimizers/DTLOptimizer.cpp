@@ -377,18 +377,20 @@ DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees,
   return rates[0];
 }
 
-DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
+
+DTLRates optimizeDTLRatesAux(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, 
+    double dupRadius, double lossRadius, double transferRadius)
 {
   std::vector<DTLRates> rates;
   if (Enums::accountsForTransfers(model)) {
-    rates.push_back(DTLRates(0.01, 0.01, 0.0));
-    rates.push_back(DTLRates(1.0, 1.0, 0.0));
-    rates.push_back(DTLRates(0.01, 1.0, 1.0));
-    rates.push_back(DTLRates(0.5, 1.0, 0.5));
+    rates.push_back(DTLRates(dupRadius / 100.0, lossRadius / 100.0, 0.0));
+    rates.push_back(DTLRates(dupRadius        , lossRadius        , 0.0));
+    rates.push_back(DTLRates(dupRadius / 100.0, lossRadius        , transferRadius));
+    rates.push_back(DTLRates(dupRadius        , lossRadius / 100.0, transferRadius));
   } else {
-    rates.push_back(DTLRates(0.01, 0.01, 0.0));
-    rates.push_back(DTLRates(1.0, 0.01, 0.0));
-    rates.push_back(DTLRates(0.01, 1.0, 0.0));
+    rates.push_back(DTLRates(dupRadius / 100.0, lossRadius / 100, 0.0));
+    rates.push_back(DTLRates(dupRadius        , lossRadius / 100, 0.0));
+    rates.push_back(DTLRates(dupRadius / 100.0, lossRadius      , 0.0));
   }
   int llCalls = 0;
   for (auto &r: rates) {
@@ -415,14 +417,8 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
     DTLRates previous;
     DTLRates current = x1;
     current.ll = -10000000000;
-    int i = 0;
-    int downgrades = 0;
-    int upgrades = 0;
     double stepSize = 1 / double(iterations - 1);
-    do { //for (int i = 0; i < iterations; i++) {
-      if (upgrades > 2) {
-        stepSize *= 2;
-      }
+    for (int i = 0; i < iterations; i++) {
       previous = current;
       current = x1 + ((x2 - x1) * i * stepSize);
       updateLL(current, geneTrees, speciesTree, model);
@@ -430,15 +426,7 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
       if (current < bestRates) {
         bestRates = current;
       }
-      if (current < previous) {
-        downgrades = 0;
-        upgrades++;
-      } else {
-        upgrades = 0;
-        downgrades ++;
-      }
-      ++i;
-    } while (downgrades < 2);
+    } //while (downgrades < 2);
     if (bestRates < rates[rates.size() - 1] ) {
       rates.back() = bestRates;
     }
@@ -452,4 +440,23 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
   return rates[0];
 }
 
+double randDouble() {
+  return rand() / double(RAND_MAX);
+}
+
+DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
+{
+  std::vector<DTLRates> bestRates;
+  if (Enums::accountsForTransfers(model)) {
+    bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 1.0, 1.0, 1.0));
+    for (unsigned int i = 0; i < 5; ++i) {
+      bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, randDouble(), randDouble(), randDouble()));
+    }
+  } else {
+    bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 1.0, 1.0, 1.0));
+  }
+  sort(bestRates.begin(), bestRates.end());
+
+  return bestRates[0];
+}
   
