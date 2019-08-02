@@ -89,7 +89,7 @@ double SpeciesTreeOptimizer::sprRound(int radius, bool doOptimizeGeneTrees)
       unsigned int rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
       double newLL = computeReconciliationLikelihood(doOptimizeGeneTrees);
       if (newLL > bestLL) {
-        Logger::info << "New best " << likelihoodName(doOptimizeGeneTrees) << ": " << newLL << std::endl; 
+        //Logger::info << "New best " << likelihoodName(doOptimizeGeneTrees) << ": " << newLL << std::endl; 
         return newLL;
       }
       SpeciesTreeOperator::reverseSPRMove(*_speciesTree, prune, rollback);
@@ -186,6 +186,15 @@ void SpeciesTreeOptimizer::ratesOptimization()
   DTLRates rates = DTLOptimizer::optimizeDTLRates(*_geneTrees, _speciesTree->getTree(), _model);
   Logger::info << " Best rates: " << rates << std::endl;
   _speciesTree->setRates(rates);
+}
+  
+void SpeciesTreeOptimizer::perSpeciesRatesOptimization()
+{
+  Logger::info << "Starting DTL rates vector optimization" << std::endl;
+  DTLRatesVector rates = DTLOptimizer::optimizeDTLRatesVector(*_geneTrees, _speciesTree->getTree(), _model);
+  Logger::info << "LL after DTL rates optimization: " << rates.getLL() << std::endl;
+  _speciesTree->setRatesVector(rates);
+  
 }
 
 void SpeciesTreeOptimizer::saveCurrentSpeciesTree()

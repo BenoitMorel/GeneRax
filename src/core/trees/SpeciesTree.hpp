@@ -20,7 +20,8 @@ public:
   ~SpeciesTree();
 
   void setRates(const DTLRates &rates);
-  const DTLRates &getRates() const;
+  void setRatesVector(const DTLRatesVector &rates);
+  const DTLRatesVector &getRates() const;
   double computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees, RecModel model);
 
   std::string toString() const;
@@ -40,7 +41,7 @@ public:
   void saveToFile(const std::string &newick);
 private:
   pll_rtree_t *_speciesTree;
-  DTLRates _rates;
+  DTLRatesVector _rates;
   void buildFromLabels(const std::unordered_set<std::string> &leafLabels);
 };
 

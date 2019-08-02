@@ -65,30 +65,25 @@ void optimizeDTLRatesNewton(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTre
   while (!stop) {
     stop = true;
     DTLRatesVector gradient(species);
-    Logger::info << "gradient " << gradient << std::endl;
     for (unsigned int j = 0; j < species; ++j) {
       for (unsigned int i = 0; i < dimensions; ++i) {
         DTLRatesVector closeRates = currentRates;
         closeRates.getRates(j).rates[i] -= epsilon;
         updateLL(closeRates, geneTrees, evaluations);
-        Logger::info << closeRates.getLL() << std::endl;
         gradient.getRates(j).rates[i] = (currentRates.getLL() - closeRates.getLL()) / epsilon;
       }
     }
     double alpha = 0.1;
-    Logger::info << "gradient " << gradient << std::endl;
     while (alpha > 0.001) {
       gradient.normalize(alpha);
-      Logger::info << "alpha " << alpha << std::endl;
-      Logger::info << "normalized gradient " << gradient << std::endl;
       DTLRatesVector proposal = currentRates + (gradient * alpha);
       updateLL(proposal, geneTrees, evaluations);
       if (currentRates.getLL() < proposal.getLL()) {
         currentRates = proposal;
-        alpha *= 1.5;
+        alpha *= 1.25;
         stop = false;
       } else {
-        alpha *= 0.5;
+        alpha *= 0.75;
       }
     }
   }
@@ -103,7 +98,6 @@ DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees,
   if (previousVector && previousVector->size() == speciesNumber) {
     starting = *previousVector;    
   }
-  Logger::info << "previous vector " << *previousVector << std::endl;
   optimizeDTLRatesNewton(geneTrees, speciesTree, model, starting);
   return starting;
   std::vector<std::shared_ptr<ReconciliationEvaluation> > evaluations;
@@ -274,10 +268,10 @@ DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speci
       updateLL(proposal, geneTrees, speciesTree, model);
       if (currentRates.ll < proposal.ll) {
         currentRates = proposal;
-        alpha *= 1.5;
+        alpha *= 1.25;
         stop = false;
       } else {
-        alpha *= 0.5;
+        alpha *= 0.75;
       }
     }
   }
@@ -287,9 +281,20 @@ DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speci
 
 DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
 {
-  DTLRates startingRates(1.0, 1.0, 1.0);
-  return optimizeDTLRatesNewtoon(geneTrees, speciesTree, model, startingRates);
-  
+  std::vector<DTLRates> startingRates;
+  startingRates.push_back(DTLRates(1.0, 1.0, 1.0));
+  startingRates.push_back(DTLRates(0.1, 0.2, 0.0));
+  startingRates.push_back(DTLRates(0.02, 0.01, 0.01));
+  startingRates.push_back(DTLRates(0.3, 0.3, 0.0));
+  DTLRates best;
+  best.ll = -10000000000;
+  for (auto rates: startingRates) {
+    DTLRates newRates = optimizeDTLRatesNewtoon(geneTrees, speciesTree, model, rates);
+    if (newRates.ll > best.ll) {
+      best = newRates;
+    }
+  }
+  return best; 
   std::vector<DTLRates> bestRates;
   if (Enums::accountsForTransfers(model)) {
     bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 1.0, 1.0, 1.0));

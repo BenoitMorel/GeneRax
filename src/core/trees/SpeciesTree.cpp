@@ -123,10 +123,14 @@ SpeciesTree::~SpeciesTree()
 
 void SpeciesTree::setRates(const DTLRates &rates) 
 {
+  _rates = DTLRatesVector(getMaxNodeIndex(), rates);
+}
+void SpeciesTree::setRatesVector(const DTLRatesVector &rates) 
+{
   _rates = rates;
 }
 
-const DTLRates &SpeciesTree::getRates() const
+const DTLRatesVector &SpeciesTree::getRates() const
 {
   return _rates;
 }
@@ -137,7 +141,7 @@ double SpeciesTree::computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees,
   double ll = 0.0;
   for (auto &tree: geneTrees.getTrees()) {
     ReconciliationEvaluation evaluation(_speciesTree, tree.mapping, model, false);
-    evaluation.setRates(_rates.rates[0], _rates.rates[1], _rates.rates[2]);
+    evaluation.setRates(_rates);
     ll += evaluation.evaluate(tree.tree);
   }
   ParallelContext::sumDouble(ll);

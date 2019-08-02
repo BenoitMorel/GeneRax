@@ -23,6 +23,7 @@ public:
   double hybridSprRound(int radius);
   double sprSearch(int radius, bool doOptimizeGeneTrees);
   void ratesOptimization();
+  void perSpeciesRatesOptimization();
   void advancedRatesOptimization(int radius);
   void optimizeGeneTrees(int radius);
 private:
