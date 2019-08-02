@@ -1,7 +1,7 @@
 #include "JointTree.hpp"
 #include <search/Moves.hpp>
 #include <parallelization/ParallelContext.hpp>
-#include <optimizers/DTLOptimizer.hpp>
+#include <optimizers/PerFamilyDTLOptimizer.hpp>
 #include <IO/LibpllParsers.hpp>
 #include <chrono>
 #include <limits>
@@ -163,9 +163,9 @@ void JointTree::optimizeParameters(bool felsenstein, bool reconciliation) {
   }
   if (reconciliation && enableReconciliation_ && optimizeDTLRates_) {
     if (reconciliationEvaluation_->implementsTransfers()) {  
-      DTLOptimizer::optimizeDTLRates(*this, recOpt_);
+      PerFamilyDTLOptimizer::optimizeDTLRates(*this, recOpt_);
     } else {
-      DTLOptimizer::optimizeDLRates(*this, recOpt_);
+      PerFamilyDTLOptimizer::optimizeDLRates(*this, recOpt_);
     }
   }
 }

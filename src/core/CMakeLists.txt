@@ -13,6 +13,7 @@ set(jointsearch-core_SOURCES
   likelihoods/reconciliation_models/UndatedDLModel.cpp
   likelihoods/reconciliation_models/UndatedDTLModel.cpp
   optimizers/DTLOptimizer.cpp
+  optimizers/PerFamilyDTLOptimizer.cpp
   optimizers/SpeciesTreeOptimizer.cpp
   parallelization/ParallelContext.cpp
   parallelization/Scheduler.cpp
