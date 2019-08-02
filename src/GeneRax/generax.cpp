@@ -39,6 +39,7 @@ void saveStats(const std::string &outputDir, double totalLibpllLL, double totalR
 
 void optimizeStep(GeneRaxArguments &arguments, 
     RecModel recModel,
+    bool enableLipll,
     Families &families,
     DTLRatesVector &rates,
     int sprRadius,
@@ -51,7 +52,7 @@ void optimizeStep(GeneRaxArguments &arguments,
   Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, rates, sumElapsedRates);
   GeneTreeSearchMaster::optimizeGeneTrees(families, recModel, rates, arguments.output, "results",
       arguments.execPath, arguments.speciesTree, arguments.reconciliationOpt, arguments.rootedGeneTree,
-      arguments.recWeight, true, true, sprRadius, currentIteration, useSplitImplem(), sumElapsedSPR);
+      arguments.recWeight, true, enableLipll, sprRadius, currentIteration, useSplitImplem(), sumElapsedSPR);
   Routines::gatherLikelihoods(families, totalLibpllLL, totalRecLL);
 }
 
@@ -75,8 +76,11 @@ void search(const Families &initialFamilies,
     Routines::gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
   }
   RecModel recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
+  for (unsigned int i = 1; i <= arguments.recRadius; ++i) { 
+    optimizeStep(arguments, recModel, false, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+  }
   for (int i = 1; i <= arguments.maxSPRRadius; ++i) {
-      optimizeStep(arguments, recModel, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+      optimizeStep(arguments, recModel, true, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
   Routines::inferReconciliation(arguments.speciesTree, currentFamilies, recModel, rates, arguments.output);

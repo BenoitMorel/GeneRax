@@ -13,6 +13,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   reconciliationOpt(Simplex),
   output("GeneRax"),
   rootedGeneTree(true),
+  recRadius(0),
   perSpeciesDTLRates(false),
   userDTLRates(false),
   dupRate(1.0),
@@ -46,6 +47,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       output = std::string(argv[++i]);
     } else if (arg == "--unrooted-gene-tree") {
       rootedGeneTree = false;
+    } else if (arg == "--rec-radius") {
+      recRadius = atoi(argv[++i]);;
     } else if (arg == "--per-species-rates") {
       perSpeciesDTLRates = true;
     } else if (arg == "--dup-rate") {
@@ -148,6 +151,7 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "DTL rates: " << (perSpeciesDTLRates ? "per-species" : "global") << std::endl;
   Logger::info << "Prefix: " << output << std::endl;
   Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << std::endl;
+  Logger::info << "Reconciliation radius: " << recRadius << std::endl;
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << std::endl;
   Logger::info << "Max SPR radius: " << maxSPRRadius << std::endl;
   Logger::info << "Reconciliation likelihood weight: " << recWeight << std::endl;

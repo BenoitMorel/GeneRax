@@ -69,6 +69,7 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
       ratesVector
       );
   jointTree->enableReconciliation(enableRec);
+  jointTree->enableLibpll(enableLibpll);
   Logger::info << "Taxa number: " << jointTree->getGeneTaxaNumber() << std::endl;
   jointTree->optimizeParameters(true, false); // only optimize felsenstein likelihood
   double bestLoglk = jointTree->computeJointLoglk();
@@ -99,7 +100,7 @@ std::string getArg(const std::string &str)
 
 int optimizeGeneTreesMain(int argc, char** argv, void* comm)
 {
-  assert(argc == 16);
+  assert(argc == 17);
   ParallelContext::init(comm);
   Logger::timed << "Starting optimizeGeneTreesSlave" << std::endl;
   int i = 2;
