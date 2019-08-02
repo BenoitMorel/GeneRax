@@ -76,12 +76,7 @@ void search(const Families &initialFamilies,
   }
   RecModel recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
   for (int i = 1; i <= arguments.maxSPRRadius; ++i) {
-      optimizeStep(arguments, UndatedDL, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
-  
-  }
-  if (recModel != UndatedDL) {
-    optimizeStep(arguments, recModel, currentFamilies, rates, 1, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
-    optimizeStep(arguments, recModel, currentFamilies, rates, arguments.maxSPRRadius, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+      optimizeStep(arguments, recModel, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
   Routines::inferReconciliation(arguments.speciesTree, currentFamilies, recModel, rates, arguments.output);
