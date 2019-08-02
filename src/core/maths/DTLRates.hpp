@@ -159,6 +159,7 @@ public:
     for (auto &rates: v._rates) {
       os << rates << " ";
     }
+    os << "]";
     return os;
   }
 
@@ -194,6 +195,11 @@ public:
       res += pow(getRates(i).distance(v.getRates(i)), 2.0);
     }
     return sqrt(res) / double(size());
+  }
+  
+  void normalize(double norm = 1.0) {
+    double av = distance(DTLRatesVector(_rates.size()));
+    *this = *this * (norm / av);
   }
 
 private:
