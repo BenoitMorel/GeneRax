@@ -9,6 +9,10 @@ enum RecModel {
 class Enums {
 public:
   
+  static int freeParameters(RecModel m)  {
+    return m == UndatedDL ? 2 : 3;
+  }
+
   static bool accountsForTransfers(RecModel m) 
   {
     switch (m) {

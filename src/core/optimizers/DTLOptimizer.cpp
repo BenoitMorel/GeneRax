@@ -25,7 +25,7 @@ void updateLL(DTLRates &rates, PerCoreGeneTrees &trees, pll_rtree_t *speciesTree
   }
   ParallelContext::sumDouble(rates.ll);
   if (!isValidLikelihood(rates.ll)) {
-    rates.ll = -100000000000.0;
+    rates.ll = -std::numeric_limits<double>::infinity();
   }
 }
 
@@ -41,7 +41,7 @@ void updateLL(DTLRatesVector &rates, PerCoreGeneTrees &trees, std::vector<std::s
   }
   ParallelContext::sumDouble(ll);
   if (!isValidLikelihood(ll)) {
-    ll = -100000000000.0;
+    ll = -std::numeric_limits<double>::infinity();
   }
   rates.setLL(ll);
 }
@@ -191,8 +191,49 @@ DTLRates optimizeDTLRatesAux(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTr
   return rates[0];
 }
 
+
+DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const DTLRates &startingRates)
+{
+  double epsilon = 0.000001;
+  unsigned int dimensions = Enums::freeParameters(model);
+  DTLRates currentRates;
+  for (unsigned int i = 0; i < dimensions; ++i) {
+    currentRates.rates[i] = startingRates.rates[i];
+  }
+  updateLL(currentRates, geneTrees, speciesTree, model);
+  bool stop = false;
+  while (!stop) {
+    stop = true;
+    DTLRates gradient;
+    std::vector<DTLRates> closeRates(dimensions, currentRates);
+    for (unsigned int i = 0; i < dimensions; ++i) {
+      closeRates[i].rates[i] -= epsilon;
+      updateLL(closeRates[i], geneTrees, speciesTree, model);
+      gradient.rates[i] = (currentRates.ll - closeRates[i].ll) / epsilon;
+    }
+    double alpha = 0.1;
+    while (alpha > 0.001) {
+      gradient.normalize(alpha);
+      DTLRates proposal = currentRates + (gradient * alpha);
+      updateLL(proposal, geneTrees, speciesTree, model);
+      if (currentRates.ll < proposal.ll) {
+        currentRates = proposal;
+        alpha *= 1.5;
+        stop = false;
+      } else {
+        alpha *= 0.5;
+      }
+    }
+  }
+  Logger::info << "Newton rates: " << currentRates << std::endl;
+  return currentRates;
+}
+
 DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
 {
+  DTLRates startingRates(1.0, 1.0, 1.0);
+  return optimizeDTLRatesNewtoon(geneTrees, speciesTree, model, startingRates);
+  
   std::vector<DTLRates> bestRates;
   if (Enums::accountsForTransfers(model)) {
     bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 1.0, 1.0, 1.0));

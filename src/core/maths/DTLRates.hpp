@@ -63,6 +63,11 @@ struct DTLRates {
     d += pow(rates[2] - v.rates[2], 2.0);
     return sqrt(d);
   }
+
+  void normalize(double norm = 1.0) {
+    double av = distance(DTLRates());
+    *this = *this * (norm / av);
+  }
 };
 
 static double randfrom(double min, double max, 
