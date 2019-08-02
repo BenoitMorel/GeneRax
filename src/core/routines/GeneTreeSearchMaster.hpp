@@ -20,6 +20,7 @@ public:
     bool rootedGeneTree,
     double recWeight,
     bool enableRec,
+    bool enableLibpll,
     int sprRadius,
     int iteration,
     bool schedulerSplitImplem,

@@ -209,7 +209,7 @@ void SpeciesTreeOptimizer::optimizeGeneTrees(int radius)
   GeneTreeSearchMaster::optimizeGeneTrees(_currentFamilies, 
       _model, ratesVector, _outputDir, resultName, 
       _execPath, speciesTree, recOpt, rootedGeneTree, 
-      recWeight, true, radius, _geneTreeIteration, 
+      recWeight, true, true, radius, _geneTreeIteration, 
         useSplitImplem, sumElapsedSPR);
   _geneTreeIteration++;
   Logger::unmute();

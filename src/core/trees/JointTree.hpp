@@ -60,6 +60,7 @@ public:
     }
     bool isSafeMode() {return safeMode_;}
     void enableReconciliation(bool enable) {enableReconciliation_ = enable;}
+    void enableLibll(bool enable) {enableLibpll_ = enable;}
     unsigned int getGeneTaxaNumber() {return getTreeInfo()->tip_count;}
 private:
     std::shared_ptr<LibpllEvaluation> libpllEvaluation_;
@@ -73,6 +74,7 @@ private:
     bool optimizeDTLRates_;
     bool safeMode_;
     bool enableReconciliation_;
+    bool enableLibpll_;
     RecOpt recOpt_;
     double _recWeight;
 };

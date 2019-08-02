@@ -45,6 +45,7 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
     bool rootedGeneTree,
     double recWeight,
     bool enableRec,
+    bool enableLibpll,
     int sprRadius,
     const std::string &outputGeneTree,
     const std::string &outputStats) 
@@ -114,6 +115,7 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
   bool rootedGeneTree = bool(atoi(argv[i++]));
   double recWeight = double(atof(argv[i++]));
   bool enableRec = bool(atoi(argv[i++]));
+  bool enableLibpll = bool(atoi(argv[i++]));
   int sprRadius = atoi(argv[i++]);
   std::string outputGeneTree(argv[i++]);
   std::string outputStats(argv[i++]);
@@ -128,6 +130,7 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
       rootedGeneTree,
       recWeight,
       enableRec,
+      enableLibpll,
       sprRadius,
       outputGeneTree,
       outputStats);

@@ -51,7 +51,7 @@ void optimizeStep(GeneRaxArguments &arguments,
   Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, rates, sumElapsedRates);
   GeneTreeSearchMaster::optimizeGeneTrees(families, recModel, rates, arguments.output, "results",
       arguments.execPath, arguments.speciesTree, arguments.reconciliationOpt, arguments.rootedGeneTree,
-      arguments.recWeight, true, sprRadius, currentIteration, useSplitImplem(), sumElapsedSPR);
+      arguments.recWeight, true, true, sprRadius, currentIteration, useSplitImplem(), sumElapsedSPR);
   Routines::gatherLikelihoods(families, totalLibpllLL, totalRecLL);
 }
 
@@ -106,7 +106,7 @@ void eval(const Families &initialFamilies,
   int currentIteration = 0;
   GeneTreeSearchMaster::optimizeGeneTrees(families, recModel, rates, arguments.output, "results", arguments.execPath,
       arguments.speciesTree, arguments.reconciliationOpt, arguments.rootedGeneTree, arguments.recWeight,
-      true, sprRadius, currentIteration, useSplitImplem(), dummy);
+      true, true, sprRadius, currentIteration, useSplitImplem(), dummy);
   
   double totalLibpllLL = 0.0;
   double totalRecLL = 0.0;

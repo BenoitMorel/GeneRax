@@ -25,6 +25,7 @@ void GeneTreeSearchMaster::optimizeGeneTrees(Families &families,
     bool rootedGeneTree,
     double recWeight,
     bool enableRec,
+    bool enableLibpll,
     int sprRadius,
     int iteration,
     bool schedulerSplitImplem,
@@ -77,6 +78,7 @@ void GeneTreeSearchMaster::optimizeGeneTrees(Families &families,
     os << static_cast<int>(rootedGeneTree)  << " ";
     os << recWeight  << " ";
     os << static_cast<int>(enableRec)  << " ";
+    os << static_cast<int>(enableLibpll)  << " ";
     os << sprRadius  << " ";
     os << geneTreePath << " ";
     os << outputStats <<  std::endl;

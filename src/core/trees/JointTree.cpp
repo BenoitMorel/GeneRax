@@ -127,6 +127,7 @@ JointTree::JointTree(const std::string &newick_string,
   optimizeDTLRates_(optimizeDTLRates),
   safeMode_(safeMode),
   enableReconciliation_(true),
+  enableLibpll_(true),
   recOpt_(reconciliationOpt),
   _recWeight(recWeight)
 {
@@ -158,7 +159,7 @@ void JointTree::printLibpllTree() const {
 
 
 void JointTree::optimizeParameters(bool felsenstein, bool reconciliation) {
-  if (felsenstein) {
+  if (felsenstein && enableLibpll_) {
     libpllEvaluation_->optimizeAllParameters();
   }
   if (reconciliation && enableReconciliation_ && optimizeDTLRates_) {
@@ -171,6 +172,9 @@ void JointTree::optimizeParameters(bool felsenstein, bool reconciliation) {
 }
 
 double JointTree::computeLibpllLoglk(bool incremental) {
+  if (!enableLibpll_) {
+    return 1.0;
+  }
   return libpllEvaluation_->computeLikelihood(incremental);
 }
 
@@ -207,7 +211,9 @@ void JointTree::applyMove(std::shared_ptr<Move> move) {
 }
 
 void JointTree::optimizeMove(std::shared_ptr<Move> move) {
-  move->optimizeMove(*this);
+  if (enableLibpll_) {
+    move->optimizeMove(*this);
+  }
 }
 
 
