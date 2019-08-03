@@ -131,7 +131,7 @@ int generax_main(int argc, char** argv, void* comm)
   Logger::initFileOutput(FileSystem::joinPaths(arguments.output, "generax"));
   arguments.printCommand();
   arguments.printSummary();
-  std::string labelledSpeciesTree = arguments.speciesTree + std::string(".labelled");
+  std::string labelledSpeciesTree = FileSystem::joinPaths(arguments.output, "labelled_species_tree.newick");
   LibpllParsers::labelRootedTree(arguments.speciesTree, labelledSpeciesTree);
   arguments.speciesTree = labelledSpeciesTree;
   Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);

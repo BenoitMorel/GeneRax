@@ -290,8 +290,12 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
   best.ll = -10000000000;
   for (auto rates: startingRates) {
     DTLRates newRates = optimizeDTLRatesNewtoon(geneTrees, speciesTree, model, rates);
+    bool stop = (fabs(newRates.ll - best.ll) < 0.1);
     if (newRates.ll > best.ll) {
       best = newRates;
+    }
+    if (stop) {
+      break;
     }
   }
   return best; 
