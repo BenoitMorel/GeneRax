@@ -135,6 +135,9 @@ JointTree::JointTree(const std::string &newick_string,
   info_.model = substitutionModel;
   libpllEvaluation_ = LibpllEvaluation::buildFromString(newick_string, info_.alignmentFilename, info_.model);
   pllSpeciesTree_ = pll_rtree_parse_newick(speciestree_file.c_str());
+  if (!pllSpeciesTree_) {
+    Logger::perrank << "Cannot read tree " << speciestree_file << " !" << std::endl;
+  }
   assert(pllSpeciesTree_);
   geneSpeciesMap_.fill(geneSpeciesMap_file, newick_string);
   reconciliationEvaluation_ = std::make_shared<ReconciliationEvaluation>(pllSpeciesTree_,  

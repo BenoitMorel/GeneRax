@@ -56,7 +56,7 @@ void optimizeDTLRatesNewton(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTre
    // cache.addTree(tree.tree, tree.mapping);
    // evaluation->getReconciliationModel()->setCache(&cache); 
   }
-  double epsilon = 0.000001;
+  double epsilon = -0.000001;
   unsigned int dimensions = Enums::freeParameters(model);
   unsigned int species = ratesVector.size();
   DTLRatesVector currentRates = ratesVector;
@@ -243,7 +243,7 @@ DTLRates optimizeDTLRatesAux(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTr
 
 DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const DTLRates &startingRates)
 {
-  double epsilon = 0.000001;
+  double epsilon = -0.000001;
   unsigned int dimensions = Enums::freeParameters(model);
   DTLRates currentRates;
   for (unsigned int i = 0; i < dimensions; ++i) {

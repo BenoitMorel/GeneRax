@@ -65,7 +65,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
     } else if (arg == "--rec-weight") {
       recWeight = atof(argv[++i]);
     } else if (arg == "--seed") {
-      recWeight = atoi(argv[++i]);
+      seed = atoi(argv[++i]);
     } else {
       Logger::error << "Unrecognized argument " << arg << std::endl;
       Logger::error << "Aborting" << std::endl;
