@@ -21,7 +21,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   transferRate(0.0),
   maxSPRRadius(5),
   recWeight(1.0), 
-  seed(42)
+  seed(123)
 {
   if (argc == 1) {
     printHelp();
@@ -40,7 +40,6 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       strategy = Arguments::strToStrategy(std::string(argv[++i]));
     } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModelStr = std::string(argv[++i]);
-      //reconciliationModel = Arguments::strToRecModel(std::string(argv[++i]));
     } else if (arg == "--rec-opt") {
       reconciliationOpt = Arguments::strToRecOpt(std::string(argv[++i]));
     } else if (arg == "-p" || arg == "--prefix") {
@@ -65,7 +64,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
     } else if (arg == "--rec-weight") {
       recWeight = atof(argv[++i]);
     } else if (arg == "--seed") {
-      recWeight = atoi(argv[++i]);
+      seed = atoi(argv[++i]);
     } else {
       Logger::error << "Unrecognized argument " << arg << std::endl;
       Logger::error << "Aborting" << std::endl;
