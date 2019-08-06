@@ -61,8 +61,9 @@ public:
    *  @return the log likeihood of the tree
    */
   double optimizeAllParameters(double tolerance = TOLERANCE);
+  double optimizeBranches(double tolerance = TOLERANCE);
 
-  double raxmlSPRRounds(int minRadius, int maxRadius, int thorough);
+  double raxmlSPRRounds(int minRadius, int maxRadius, int thorough, unsigned int toKeep);
 
   /**
    *  Accessor to the wrapped treeinfo structure

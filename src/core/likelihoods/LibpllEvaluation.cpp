@@ -231,12 +231,12 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromFile(const std::str
       info.model);
 }
 
-double LibpllEvaluation::raxmlSPRRounds(int minRadius, int maxRadius, int thorough)
+double LibpllEvaluation::raxmlSPRRounds(int minRadius, int maxRadius, int thorough, unsigned toKeep)
 {
   return pllmod_algo_spr_round(getTreeInfo().get(),
       minRadius,
       maxRadius,
-      1, // params.ntopol_keep
+      toKeep, // params.ntopol_keep
       thorough, // THOROUGH
       0, //int brlen_opt_method,
       RAXML_BRLEN_MIN,
@@ -251,6 +251,15 @@ double LibpllEvaluation::raxmlSPRRounds(int minRadius, int maxRadius, int thorou
 double LibpllEvaluation::computeLikelihood(bool incremental)
 {
   return pllmod_treeinfo_compute_loglh(_treeinfo.get(), incremental);
+}
+
+double LibpllEvaluation::optimizeBranches(double tolerance)
+{
+  unsigned int toOptimize = _treeinfo->params_to_optimize[0];
+  _treeinfo->params_to_optimize[0] = PLLMOD_OPT_PARAM_BRANCHES_ITERATIVE;
+  double res = optimizeAllParameters(tolerance);
+  _treeinfo->params_to_optimize[0] = toOptimize;
+  return res;
 }
 
 double LibpllEvaluation::optimizeAllParameters(double tolerance)
