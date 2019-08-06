@@ -349,7 +349,7 @@ void LibpllEvaluation::parsePhylip(const char *phylipFile,
   if (!weights) 
     throw LibpllException("Error while parsing fasta: cannot compress sites");
   for (auto i = 0; i < msa->count; ++i) {
-    pll_sequence_ptr seq(new pll_sequence(msa->label[i], msa->sequence[i], static_cast<unsigned int>(msa->count)));
+    pll_sequence_ptr seq(new pll_sequence(msa->label[i], msa->sequence[i], static_cast<unsigned int>(msa->length)));
     sequences.push_back(seq);
     // avoid freeing these buffers with pll_msa_destroy
     msa->label[i] = nullptr;
