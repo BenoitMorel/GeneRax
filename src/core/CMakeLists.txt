@@ -22,7 +22,6 @@ set(jointsearch-core_SOURCES
   routines/RaxmlSlave.cpp
   routines/Routines.cpp
   routines/GeneTreeSearchMaster.cpp
-  routines/GeneTreeSearchSlave.cpp
   search/Moves.cpp
   search/Rollbacks.cpp
   search/SearchUtils.cpp
