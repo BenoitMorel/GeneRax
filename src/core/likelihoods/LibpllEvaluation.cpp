@@ -16,7 +16,7 @@ extern "C" {
 #include <sstream>
 #include <IO/Model.hpp>
 
-const double DEFAULT_BL = 0.000001;
+const double DEFAULT_BL = 0.1;
 
 
 // constants taken from RAXML
@@ -27,7 +27,7 @@ const double DEFAULT_BL = 0.000001;
 #define RAXML_BRLEN_SMOOTHINGS    32
 #define RAXML_BRLEN_DEFAULT       0.1
 #define RAXML_BRLEN_MIN           1.0e-6
-#define RAXML_BRLEN_MAX           1000.
+#define RAXML_BRLEN_MAX           100.
 #define RAXML_BRLEN_TOLERANCE     1.0e-7
 #define RAXML_FREERATE_MIN        0.001
 #define RAXML_FREERATE_MAX        100.
@@ -54,7 +54,9 @@ struct pll_sequence {
 unsigned int getBestLibpllAttribute() {
   pll_hardware_probe();
   unsigned int arch = PLL_ATTRIB_ARCH_CPU;
-  if (pll_hardware.avx_present) {
+  if (pll_hardware.avx2_present) {
+    arch = PLL_ATTRIB_ARCH_AVX2;
+  } else if (pll_hardware.avx_present) {
     arch = PLL_ATTRIB_ARCH_AVX;
   } else if (pll_hardware.sse_present) {
     arch = PLL_ATTRIB_ARCH_SSE;
@@ -231,8 +233,14 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromFile(const std::str
       info.model);
 }
 
-double LibpllEvaluation::raxmlSPRRounds(int minRadius, int maxRadius, int thorough, unsigned toKeep)
+double LibpllEvaluation::raxmlSPRRounds(int minRadius, int maxRadius, int thorough, unsigned toKeep, double cutoff)
 {
+  cutoff_info_t cutoff_info;
+  if (cutoff != 0.0) {
+    cutoff_info.lh_dec_count = 0;
+    cutoff_info.lh_dec_sum = 0.;
+    cutoff_info.lh_cutoff = computeLikelihood(false) / -1000.0;
+  }
   return pllmod_algo_spr_round(getTreeInfo().get(),
       minRadius,
       maxRadius,
@@ -243,8 +251,8 @@ double LibpllEvaluation::raxmlSPRRounds(int minRadius, int maxRadius, int thorou
       RAXML_BRLEN_MAX,
       RAXML_BRLEN_SMOOTHINGS,
       0.1,
-      0, //cutoff_info_t * cutoff_info,
-      0.0); //double subtree_cutoff);
+      cutoff == 0 ? 0 : &cutoff_info, //cutoff_info_t * cutoff_info,
+      cutoff); //double subtree_cutoff);
 }
 
 
@@ -267,7 +275,6 @@ double LibpllEvaluation::optimizeAllParameters(double tolerance)
   if (_treeinfo->params_to_optimize[0] == 0) {
     return computeLikelihood();
   }
-  Logger::timed << "Starting libpll rates optimization" << std::endl;
   double previousLogl = computeLikelihood(); 
   double newLogl = previousLogl;
   do {

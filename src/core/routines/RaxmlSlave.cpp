@@ -20,17 +20,16 @@ void optimizeParameters(std::shared_ptr<LibpllEvaluation> evaluation, double rad
 
 void optimizeBranches(std::shared_ptr<LibpllEvaluation> evaluation, double radius) 
 {
-  double initialLL = evaluation->computeLikelihood(false);
-  Logger::timed << "["  << initialLL << "]" << " Optimize branches (" << radius << ")" << std::endl;
-  evaluation->optimizeBranches(10.0);
+  evaluation->optimizeBranches(radius);
 }
 
-bool optimizeTopology(std::shared_ptr<LibpllEvaluation> evaluation, unsigned int radiusMin, unsigned int radiusMax, unsigned int thorough, unsigned int toKeep) 
+bool optimizeTopology(std::shared_ptr<LibpllEvaluation> evaluation, unsigned int radiusMin, unsigned int radiusMax, unsigned int thorough, unsigned int toKeep, double cutoff) 
 {
   
   double initialLL = evaluation->computeLikelihood(false);
   Logger::timed << "["  << initialLL << "] " << (thorough ? "SLOW" : "FAST") << " SPR Round (radius=" << radiusMax << ")" << std::endl;
-  double ll = evaluation->raxmlSPRRounds(radiusMin, radiusMax, thorough, toKeep);
+  double ll = evaluation->raxmlSPRRounds(radiusMin, radiusMax, thorough, toKeep, cutoff);
+  optimizeBranches(evaluation, 1.0);
   return ll > initialLL + 0.1;
 }
 
@@ -38,6 +37,7 @@ int RaxmlSlave::runRaxmlOptimization(int argc, char** argv, void* comm)
 {
   assert(argc == 8);
   ParallelContext::init(comm);
+  Logger::init();
   int i = 2;
   std::string startingGeneTreeFile(argv[i++]);
   std::string alignmentFile(argv[i++]);
@@ -59,8 +59,9 @@ int RaxmlSlave::runRaxmlOptimization(int argc, char** argv, void* comm)
   unsigned int radiusLimit = std::min(22, (int) evaluation->getTreeInfo()->tip_count - 3 );
   unsigned int toKeep = 0;
   unsigned int thorough = 0;
+  double cutoff = 0.0;
   while (radiusMax < radiusLimit) {
-    if (optimizeTopology(evaluation, radiusMin, radiusMax, thorough, toKeep)) {
+    if (optimizeTopology(evaluation, radiusMin, radiusMax, thorough, toKeep, cutoff)) {
       radiusMin += 5;
       radiusMax += 5;
     } else {
@@ -72,16 +73,16 @@ int RaxmlSlave::runRaxmlOptimization(int argc, char** argv, void* comm)
   optimizeParameters(evaluation, 3.0);
   radiusMin = 1;
   toKeep = 20;
-  while (optimizeTopology(evaluation, radiusMin, radiusMax, 0, toKeep)) {
+  cutoff = 1.0;
+  while (optimizeTopology(evaluation, radiusMin, radiusMax, 0, toKeep, cutoff)) {
   }
   thorough = 1;
+  optimizeParameters(evaluation, 1.0);
   for (radiusMax = 5; radiusMax <= radiusLimit; radiusMax += 5) {
-    if (optimizeTopology(evaluation, 1, radiusMax, thorough, toKeep)) {
+    if (optimizeTopology(evaluation, 1, radiusMax, thorough, toKeep, cutoff)) {
       radiusMax = 5;
     }
   }
-  optimizeParameters(evaluation, 1.0);
-  optimizeTopology(evaluation, 1, 25, thorough, toKeep);
   ParallelOfstream stats(outputStats);
   stats << evaluation->computeLikelihood(false) <<  " 0.0";
   stats.close();

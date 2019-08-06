@@ -128,5 +128,6 @@ public:
   static std::ofstream *logFile;
   static std::ofstream *rankLogFile;
   static std::ofstream *saveLogFile;
+  static bool inited;
 };
 

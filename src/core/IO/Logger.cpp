@@ -10,12 +10,17 @@ std::string Logger::outputdir;
 std::ofstream *Logger::logFile = 0;
 std::ofstream *Logger::rankLogFile = 0;
 std::ofstream *Logger::saveLogFile = 0;
+bool Logger::inited = false;
 
 Logger::Logger(): _os(&std::cout), _silent(false) {
   setType(lt_info);  
 }
 
 void Logger::init() {
+  if (inited) {
+    return;
+  }
+  inited = true;
   info.setType(lt_info);
   error.setStream(std::cout);
   error.setType(lt_error);
