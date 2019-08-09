@@ -251,6 +251,9 @@ DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speci
   }
   updateLL(currentRates, geneTrees, speciesTree, model);
   bool stop = false;
+  unsigned int llComputations = 0;
+  double minImprovement = 0.1;
+  double lastAlpha = 0.1;
   while (!stop) {
     stop = true;
     DTLRates gradient;
@@ -259,23 +262,27 @@ DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speci
       DTLRates closeRates = currentRates;
       closeRates.rates[i] -= epsilon;
       updateLL(closeRates, geneTrees, speciesTree, model);
+      llComputations++;
       gradient.rates[i] = (currentRates.ll - closeRates.ll) / epsilon;
     }
-    double alpha = 0.1;
-    while (alpha > 0.001) {
+    double alpha = lastAlpha / 8.0;
+    lastAlpha = 0.0;
+    while (alpha > 0.01) {
       gradient.normalize(alpha);
       DTLRates proposal = currentRates + (gradient * alpha);
       updateLL(proposal, geneTrees, speciesTree, model);
-      if (currentRates.ll < proposal.ll) {
+      llComputations++;
+      if (currentRates.ll + minImprovement < proposal.ll) {
         currentRates = proposal;
-        alpha *= 1.25;
+        lastAlpha += alpha;
+        alpha *= 2.0;
         stop = false;
       } else {
-        alpha *= 0.75;
+        alpha *= 0.5;
       }
     }
   }
-  Logger::info << "Newton rates: " << currentRates << std::endl;
+  Logger::info << "Newton rates: " << currentRates << "(after " << llComputations << " recomputations) " << std::endl;
   return currentRates;
 }
 
@@ -290,7 +297,7 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
   best.ll = -10000000000;
   for (auto rates: startingRates) {
     DTLRates newRates = optimizeDTLRatesNewtoon(geneTrees, speciesTree, model, rates);
-    bool stop = (fabs(newRates.ll - best.ll) < 0.1);
+    bool stop = (fabs(newRates.ll - best.ll) < 1.0);
     if (newRates.ll > best.ll) {
       best = newRates;
     }
