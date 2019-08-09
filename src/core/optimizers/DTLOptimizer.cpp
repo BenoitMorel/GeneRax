@@ -298,7 +298,7 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
   if (Enums::freeParameters(model) == 2) {
     startingRates.push_back(DTLRates(0.1, 0.2, 0.0));
     startingRates.push_back(DTLRates(0.2, 0.2, 0.0));
-    startingRates.push_back(DTLRates(0.5, 1.0, 0.0));
+    startingRates.push_back(DTLRates(0.5, 0.5, 0.0));
     startingRates.push_back(DTLRates(0.5, 1.0, 0.0));
     startingRates.push_back(DTLRates(0.01, 0.01, 0.0));
   } else {
