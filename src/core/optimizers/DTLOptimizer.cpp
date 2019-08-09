@@ -243,7 +243,7 @@ DTLRates optimizeDTLRatesAux(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTr
 
 DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const DTLRates &startingRates)
 {
-  double epsilon = -0.000001;
+  double epsilon = 0.0000001;
   unsigned int dimensions = Enums::freeParameters(model);
   DTLRates currentRates;
   for (unsigned int i = 0; i < dimensions; ++i) {
@@ -253,7 +253,7 @@ DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speci
   bool stop = false;
   unsigned int llComputations = 0;
   const double minImprovement = 0.1;
-  const double minAlpha = (dimensions == 2 ? 0.00001 : 0.001);
+  const double minAlpha = (dimensions == 2 ? epsilon : 0.001);
   double lastAlpha = 0.1;
   
   while (!stop) {
@@ -262,10 +262,10 @@ DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speci
     std::vector<DTLRates> closeRates(dimensions, currentRates);
     for (unsigned int i = 0; i < dimensions; ++i) {
       DTLRates closeRates = currentRates;
-      closeRates.rates[i] -= epsilon;
+      closeRates.rates[i] += epsilon;
       updateLL(closeRates, geneTrees, speciesTree, model);
       llComputations++;
-      gradient.rates[i] = (currentRates.ll - closeRates.ll) / epsilon;
+      gradient.rates[i] = (currentRates.ll - closeRates.ll) / (-epsilon);
     }
     double alpha = lastAlpha / 8.0;
     lastAlpha = 0.0;
@@ -296,15 +296,16 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
 {
   std::vector<DTLRates> startingRates;
   if (Enums::freeParameters(model) == 2) {
+    startingRates.push_back(DTLRates(0.1, 0.2, 0.0));
     startingRates.push_back(DTLRates(0.2, 0.2, 0.0));
-    for (unsigned int i = 0; i < 10; ++i) {
-      startingRates.push_back(DTLRates(getRand() / 0.5, getRand() / 0.5, 0.0));
-    }
+    startingRates.push_back(DTLRates(0.5, 1.0, 0.0));
+    startingRates.push_back(DTLRates(0.5, 1.0, 0.0));
+    startingRates.push_back(DTLRates(0.01, 0.01, 0.0));
   } else {
     startingRates.push_back(DTLRates(0.5, 0.5, 0.2));
     startingRates.push_back(DTLRates(0.1, 0.2, 0.1));
-    startingRates.push_back(DTLRates(getRand() / 0.5, getRand() / 0.5, getRand() / 0.5));
-    startingRates.push_back(DTLRates(getRand() / 0.5, getRand() / 0.5, getRand() / 0.5));
+    startingRates.push_back(DTLRates(0.2, 0.2, 0.0));
+    startingRates.push_back(DTLRates(0.01, 0.01, 0.01));
   }
   DTLRates best;
   best.ll = -10000000000;
