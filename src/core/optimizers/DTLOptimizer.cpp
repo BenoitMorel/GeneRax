@@ -254,7 +254,6 @@ DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speci
   unsigned int llComputations = 0;
   const double minImprovement = 0.1;
   const double minAlpha = (dimensions == 2 ? epsilon : 0.001);
-  double lastAlpha = 0.1;
   
   while (!stop) {
     stop = true;
@@ -267,8 +266,7 @@ DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speci
       llComputations++;
       gradient.rates[i] = (currentRates.ll - closeRates.ll) / (-epsilon);
     }
-    double alpha = lastAlpha / 8.0;
-    lastAlpha = 0.0;
+    double alpha = 0.1; 
     while (alpha > minAlpha) {
       gradient.normalize(alpha);
       DTLRates proposal = currentRates + (gradient * alpha);
@@ -276,7 +274,6 @@ DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speci
       llComputations++;
       if (currentRates.ll + minImprovement < proposal.ll) {
         currentRates = proposal;
-        lastAlpha += alpha;
         alpha *= 2.0;
         stop = false;
       } else {
