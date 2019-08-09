@@ -252,8 +252,10 @@ DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speci
   updateLL(currentRates, geneTrees, speciesTree, model);
   bool stop = false;
   unsigned int llComputations = 0;
-  double minImprovement = 0.1;
+  const double minImprovement = 0.1;
+  const double minAlpha = (dimensions == 2 ? 0.00001 : 0.001);
   double lastAlpha = 0.1;
+  
   while (!stop) {
     stop = true;
     DTLRates gradient;
@@ -267,7 +269,7 @@ DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speci
     }
     double alpha = lastAlpha / 8.0;
     lastAlpha = 0.0;
-    while (alpha > 0.01) {
+    while (alpha > minAlpha) {
       gradient.normalize(alpha);
       DTLRates proposal = currentRates + (gradient * alpha);
       updateLL(proposal, geneTrees, speciesTree, model);
@@ -286,18 +288,29 @@ DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speci
   return currentRates;
 }
 
+double getRand() {
+  return double(rand()) / double(RAND_MAX);
+}
+
 DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
 {
   std::vector<DTLRates> startingRates;
-  startingRates.push_back(DTLRates(1.0, 1.0, 1.0));
-  startingRates.push_back(DTLRates(0.1, 0.2, 0.0));
-  startingRates.push_back(DTLRates(0.02, 0.01, 0.01));
-  startingRates.push_back(DTLRates(0.3, 0.3, 0.0));
+  if (Enums::freeParameters(model) == 2) {
+    startingRates.push_back(DTLRates(0.2, 0.2, 0.0));
+    for (unsigned int i = 0; i < 10; ++i) {
+      startingRates.push_back(DTLRates(getRand() / 0.5, getRand() / 0.5, 0.0));
+    }
+  } else {
+    startingRates.push_back(DTLRates(0.5, 0.5, 0.2));
+    startingRates.push_back(DTLRates(0.1, 0.2, 0.1));
+    startingRates.push_back(DTLRates(getRand() / 0.5, getRand() / 0.5, getRand() / 0.5));
+    startingRates.push_back(DTLRates(getRand() / 0.5, getRand() / 0.5, getRand() / 0.5));
+  }
   DTLRates best;
   best.ll = -10000000000;
   for (auto rates: startingRates) {
     DTLRates newRates = optimizeDTLRatesNewtoon(geneTrees, speciesTree, model, rates);
-    bool stop = (fabs(newRates.ll - best.ll) < 1.0);
+    bool stop = (fabs(newRates.ll - best.ll) < 3.0);
     if (newRates.ll > best.ll) {
       best = newRates;
     }
@@ -306,16 +319,5 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
     }
   }
   return best; 
-  std::vector<DTLRates> bestRates;
-  if (Enums::accountsForTransfers(model)) {
-    bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 1.0, 1.0, 1.0));
-    bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 0.2, 0.4, 0.2));
-  } else {
-    bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 1.0, 1.0, 0.0));
-    bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 0.2, 0.2, 0.0));
-  }
-  sort(bestRates.begin(), bestRates.end());
-
-  return bestRates[0];
 }
   
