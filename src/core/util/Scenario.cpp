@@ -49,6 +49,7 @@ void Scenario::recursivelySaveTreeWithEvents(pll_unode_t *node, ParallelOfstream
   } else {
     os << "n" << node->node_index; 
   }
+  os << ":" << node->length;
   Event event = _geneIdToEvent[node->node_index];
   if (event.speciesNode != INVALID) {
     os << "[&&NHX";
