@@ -243,7 +243,7 @@ DTLRates optimizeDTLRatesAux(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTr
 
 DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const DTLRates &startingRates)
 {
-  double epsilon = -0.000001;
+  double epsilon = 0.0000001;
   unsigned int dimensions = Enums::freeParameters(model);
   DTLRates currentRates;
   for (unsigned int i = 0; i < dimensions; ++i) {
@@ -251,46 +251,64 @@ DTLRates optimizeDTLRatesNewtoon(PerCoreGeneTrees &geneTrees, pll_rtree_t *speci
   }
   updateLL(currentRates, geneTrees, speciesTree, model);
   bool stop = false;
+  unsigned int llComputations = 0;
+  const double minImprovement = 0.1;
+  const double minAlpha = (dimensions == 2 ? epsilon : 0.001);
+  
   while (!stop) {
     stop = true;
     DTLRates gradient;
     std::vector<DTLRates> closeRates(dimensions, currentRates);
     for (unsigned int i = 0; i < dimensions; ++i) {
       DTLRates closeRates = currentRates;
-      closeRates.rates[i] -= epsilon;
+      closeRates.rates[i] += epsilon;
       updateLL(closeRates, geneTrees, speciesTree, model);
-      gradient.rates[i] = (currentRates.ll - closeRates.ll) / epsilon;
+      llComputations++;
+      gradient.rates[i] = (currentRates.ll - closeRates.ll) / (-epsilon);
     }
-    double alpha = 0.1;
-    while (alpha > 0.001) {
+    double alpha = 0.1; 
+    while (alpha > minAlpha) {
       gradient.normalize(alpha);
       DTLRates proposal = currentRates + (gradient * alpha);
       updateLL(proposal, geneTrees, speciesTree, model);
-      if (currentRates.ll < proposal.ll) {
+      llComputations++;
+      if (currentRates.ll + minImprovement < proposal.ll) {
         currentRates = proposal;
-        alpha *= 1.25;
+        alpha *= 2.0;
         stop = false;
       } else {
-        alpha *= 0.75;
+        alpha *= 0.5;
       }
     }
   }
-  Logger::info << "Newton rates: " << currentRates << std::endl;
+  Logger::info << "Newton rates: " << currentRates << "(after " << llComputations << " recomputations) " << std::endl;
   return currentRates;
+}
+
+double getRand() {
+  return double(rand()) / double(RAND_MAX);
 }
 
 DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
 {
   std::vector<DTLRates> startingRates;
-  startingRates.push_back(DTLRates(1.0, 1.0, 1.0));
-  startingRates.push_back(DTLRates(0.1, 0.2, 0.0));
-  startingRates.push_back(DTLRates(0.02, 0.01, 0.01));
-  startingRates.push_back(DTLRates(0.3, 0.3, 0.0));
+  if (Enums::freeParameters(model) == 2) {
+    startingRates.push_back(DTLRates(0.1, 0.2, 0.0));
+    startingRates.push_back(DTLRates(0.2, 0.2, 0.0));
+    startingRates.push_back(DTLRates(0.5, 1.0, 0.0));
+    startingRates.push_back(DTLRates(0.5, 1.0, 0.0));
+    startingRates.push_back(DTLRates(0.01, 0.01, 0.0));
+  } else {
+    startingRates.push_back(DTLRates(0.5, 0.5, 0.2));
+    startingRates.push_back(DTLRates(0.1, 0.2, 0.1));
+    startingRates.push_back(DTLRates(0.2, 0.2, 0.0));
+    startingRates.push_back(DTLRates(0.01, 0.01, 0.01));
+  }
   DTLRates best;
   best.ll = -10000000000;
   for (auto rates: startingRates) {
     DTLRates newRates = optimizeDTLRatesNewtoon(geneTrees, speciesTree, model, rates);
-    bool stop = (fabs(newRates.ll - best.ll) < 0.1);
+    bool stop = (fabs(newRates.ll - best.ll) < 3.0);
     if (newRates.ll > best.ll) {
       best = newRates;
     }
@@ -299,16 +317,5 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
     }
   }
   return best; 
-  std::vector<DTLRates> bestRates;
-  if (Enums::accountsForTransfers(model)) {
-    bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 1.0, 1.0, 1.0));
-    bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 0.2, 0.4, 0.2));
-  } else {
-    bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 1.0, 1.0, 0.0));
-    bestRates.push_back(optimizeDTLRatesAux(geneTrees, speciesTree, model, 0.2, 0.2, 0.0));
-  }
-  sort(bestRates.begin(), bestRates.end());
-
-  return bestRates[0];
 }
   

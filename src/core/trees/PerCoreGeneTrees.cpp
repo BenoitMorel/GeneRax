@@ -62,7 +62,10 @@ bool PerCoreGeneTrees::checkMappings(const std::string &speciesTreeFile)
   bool ok = true;
   auto *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile);
   for (auto &tree: _geneTrees) {
-    ok &= tree.mapping.check(tree.tree, speciesTree);
+    if (!tree.mapping.check(tree.tree, speciesTree)) {
+      ok = false;
+      Logger::error << "Invalid mapping for tree " << tree.name << std::endl;
+    }
   }
   pll_rtree_destroy(speciesTree, 0);
   ParallelContext::parallelAnd(ok);
