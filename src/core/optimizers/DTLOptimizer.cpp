@@ -46,7 +46,35 @@ void updateLL(DTLRatesVector &rates, PerCoreGeneTrees &trees, std::vector<std::s
   rates.setLL(ll);
 }
 
-void optimizeDTLRatesGradient(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, DTLRatesVector &ratesVector)
+
+static bool lineSearchVector(PerCoreGeneTrees &geneTrees, std::vector<std::shared_ptr<ReconciliationEvaluation> > &evaluations, DTLRatesVector &currentRates, const DTLRatesVector &gradient, unsigned int &llComputationsLine)
+{
+  double alpha = 0.1; 
+  double epsilon = 0.0000001;
+  const double minAlpha = epsilon; //(dimensions == 2 ? epsilon : 0.001);
+  const double minImprovement = 0.1;
+  DTLRatesVector currentGradient(gradient);
+  bool stop = true;
+  while (alpha > minAlpha) {
+    currentGradient.normalize(alpha);
+    DTLRatesVector proposal = currentRates + (currentGradient * alpha);
+    updateLL(proposal, geneTrees, evaluations);
+    llComputationsLine++;
+    if (currentRates.getLL() + minImprovement < proposal.getLL()) {
+      currentRates = proposal;
+      stop = false;
+      alpha *= 1.5;
+    } else {
+      alpha *= 0.5;
+      if (!stop) {
+        return !stop;
+      }
+    }
+  }
+  return !stop;
+}
+
+static void optimizeDTLRatesVectorGradient(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, DTLRatesVector &ratesVector)
 {
   std::vector<std::shared_ptr<ReconciliationEvaluation> > evaluations;
   //SubtreeRepeatsCache cache;
@@ -61,10 +89,9 @@ void optimizeDTLRatesGradient(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesT
   unsigned int species = ratesVector.size();
   DTLRatesVector currentRates = ratesVector;
   updateLL(currentRates, geneTrees, evaluations);
-  bool stop = false;
-  while (!stop) {
-    stop = true;
-    DTLRatesVector gradient(species);
+  unsigned int llComputationsLine = 0;
+  DTLRatesVector gradient(species);
+  do {
     for (unsigned int j = 0; j < species; ++j) {
       for (unsigned int i = 0; i < dimensions; ++i) {
         DTLRatesVector closeRates = currentRates;
@@ -73,20 +100,7 @@ void optimizeDTLRatesGradient(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesT
         gradient.getRates(j).rates[i] = (currentRates.getLL() - closeRates.getLL()) / epsilon;
       }
     }
-    double alpha = 0.1;
-    while (alpha > 0.001) {
-      gradient.normalize(alpha);
-      DTLRatesVector proposal = currentRates + (gradient * alpha);
-      updateLL(proposal, geneTrees, evaluations);
-      if (currentRates.getLL() < proposal.getLL()) {
-        currentRates = proposal;
-        alpha *= 1.25;
-        stop = false;
-      } else {
-        alpha *= 0.75;
-      }
-    }
-  }
+  } while (lineSearchVector(geneTrees, evaluations, currentRates, gradient, llComputationsLine));
   Logger::info << "Gradient ll: " << currentRates.getLL() << std::endl;
   ratesVector = currentRates;
 }
@@ -94,16 +108,18 @@ void optimizeDTLRatesGradient(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesT
 DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, DTLRatesVector *previousVector)
 {
   unsigned int speciesNumber = speciesTree->inner_count + speciesTree->tip_count;
-  DTLRatesVector starting(speciesNumber, DTLRates(1.0, 1.0, 1.0));
+  DTLRatesVector starting;
   if (previousVector && previousVector->size() == speciesNumber) {
     starting = *previousVector;    
+  } else {
+    starting = DTLRatesVector(speciesNumber, optimizeDTLRates(geneTrees, speciesTree, model));
   }
-  optimizeDTLRatesGradient(geneTrees, speciesTree, model, starting);
+  optimizeDTLRatesVectorGradient(geneTrees, speciesTree, model, starting);
   return starting;
 }
 
 
-bool lineSearch(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, DTLRates &currentRates, const DTLRates &gradient, unsigned int &llComputationsLine)
+static bool lineSearch(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, DTLRates &currentRates, const DTLRates &gradient, unsigned int &llComputationsLine)
 {
   double alpha = 0.1; 
   double epsilon = 0.0000001;
