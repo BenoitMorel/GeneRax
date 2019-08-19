@@ -15,7 +15,7 @@ public:
   /**
    * Per-species rates optimization
    */
-  static DTLRatesVector optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, DTLRatesVector *previousVector = 0);
+  static DTLRatesVector optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model);
   
   /**
    * Global rates optimization

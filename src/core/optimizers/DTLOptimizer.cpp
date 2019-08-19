@@ -105,15 +105,10 @@ static void optimizeDTLRatesVectorGradient(PerCoreGeneTrees &geneTrees, pll_rtre
   ratesVector = currentRates;
 }
 
-DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, DTLRatesVector *previousVector)
+DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
 {
   unsigned int speciesNumber = speciesTree->inner_count + speciesTree->tip_count;
-  DTLRatesVector starting;
-  if (previousVector && previousVector->size() == speciesNumber) {
-    starting = *previousVector;    
-  } else {
-    starting = DTLRatesVector(speciesNumber, optimizeDTLRates(geneTrees, speciesTree, model));
-  }
+  DTLRatesVector starting = DTLRatesVector(speciesNumber, optimizeDTLRates(geneTrees, speciesTree, model));
   optimizeDTLRatesVectorGradient(geneTrees, speciesTree, model, starting);
   return starting;
 }
@@ -168,7 +163,7 @@ DTLRates optimizeDTLRatesGradient(PerCoreGeneTrees &geneTrees, pll_rtree_t *spec
       gradient.rates[i] = (currentRates.ll - closeRates.ll) / (-epsilon);
     }
   } while (lineSearch(geneTrees, speciesTree, model, currentRates, gradient, llComputationsLine));
-  Logger::info << "Gradient rates: " << currentRates << "(after " << llComputationsGrad << " + " << llComputationsLine << " recomputations) " << std::endl;
+  Logger::info << "Global rates: " << currentRates << "(after " << llComputationsGrad << " + " << llComputationsLine << " recomputations) " << std::endl;
   return currentRates;
 }
 

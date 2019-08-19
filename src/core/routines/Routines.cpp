@@ -32,7 +32,7 @@ void Routines::optimizeRates(bool userDTLRates,
   if (!perSpeciesRates) {
     rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, recModel);
   } else {
-    rates = DTLOptimizer::optimizeDTLRatesVector(geneTrees, speciesTree, recModel, &rates);
+    rates = DTLOptimizer::optimizeDTLRatesVector(geneTrees, speciesTree, recModel);
   }
   pll_rtree_destroy(speciesTree, 0);
   ParallelContext::barrier(); 
