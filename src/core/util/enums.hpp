@@ -34,3 +34,6 @@ enum Strategy {
   SPR, EVAL
 };
 
+enum SpeciesRaxStrategy {
+  SIMPLE_SEARCH, SUBSAMPLE_SEARCH
+};

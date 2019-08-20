@@ -14,6 +14,7 @@ SpeciesRaxArguments::SpeciesRaxArguments(int iargc, char * iargv[]):
   reconciliationModel(UndatedDL),
   reconciliationOpt(Simplex),
   output("SpeciesRax"),
+  strategy(SIMPLE_SEARCH),
   rootedGeneTree(true),
   userDTLRates(false),
   dupRate(1.0),
@@ -43,6 +44,8 @@ SpeciesRaxArguments::SpeciesRaxArguments(int iargc, char * iargv[]):
       reconciliationOpt = Arguments::strToRecOpt(std::string(argv[++i]));
     } else if (arg == "-p" || arg == "--prefix") {
       output = std::string(argv[++i]);
+    } else if (arg == "--strategy") {
+      strategy = Arguments::strToSpeciesRaxStrategy(std::string(argv[++i]));
     } else if (arg == "--unrooted-gene-tree") {
       rootedGeneTree = false;
     } else if (arg == "--dupRate") {
@@ -133,6 +136,7 @@ void SpeciesRaxArguments::printSummary() {
   Logger::info << "Reconciliation model: " << Arguments::recModelToStr(reconciliationModel) << std::endl;
   Logger::info << "Reconciliation opt: " << Arguments::recOptToStr(reconciliationOpt) << std::endl;
   Logger::info << "Prefix: " << output << std::endl;
+  Logger::info << "Search strategy: " << Arguments::speciesRaxStrategyToStr(strategy) << std::endl;
   Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << std::endl;
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << std::endl;
   Logger::info << "Fast radius: " << fastRadius << std::endl;

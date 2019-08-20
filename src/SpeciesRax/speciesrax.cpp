@@ -25,6 +25,42 @@ void initFolders(const std::string &output, Families &families)
 }
 
 
+void simpleSearch(SpeciesRaxArguments &arguments, char ** argv)
+{
+  RecModel recModel = arguments.reconciliationModel;
+  Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
+  Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
+  initFolders(arguments.output, initialFamilies);
+  SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, UndatedDL, arguments.output, argv[0]);
+  for (unsigned int radius = 1; radius <= arguments.fastRadius; ++radius) {
+    if (radius == arguments.fastRadius) {
+      speciesTreeOptimizer.setModel(recModel);
+    }
+    speciesTreeOptimizer.ratesOptimization();
+    speciesTreeOptimizer.sprSearch(radius, false);
+    speciesTreeOptimizer.rootExhaustiveSearch(false);
+  }
+  for (unsigned int radius = 1; radius <= arguments.slowRadius; ++radius) {
+    speciesTreeOptimizer.advancedRatesOptimization(1);
+    speciesTreeOptimizer.sprSearch(radius, true);
+    speciesTreeOptimizer.rootExhaustiveSearch(true);
+  } 
+}
+
+void subsampleSearch(SpeciesRaxArguments &arguments, char ** argv)
+{
+  RecModel recModel = arguments.reconciliationModel;
+  Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
+  Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
+  initFolders(arguments.output, initialFamilies);
+  SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, recModel, arguments.output, argv[0]);
+  for (unsigned int radius = 1; radius <= 3; ++radius) {
+    speciesTreeOptimizer.ratesOptimization();
+    speciesTreeOptimizer.sprSearch(radius, false);
+    speciesTreeOptimizer.rootExhaustiveSearch(false);
+  }
+}
+
 int speciesrax_main(int argc, char** argv, void* comm)
 {
   // the order is very important
@@ -37,27 +73,14 @@ int speciesrax_main(int argc, char** argv, void* comm)
   arguments.printCommand();
   arguments.printSummary();
   
-  RecModel recModel = arguments.reconciliationModel;
-
-  Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
-  Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
-  initFolders(arguments.output, initialFamilies);
-  
-  SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, UndatedDL, arguments.output, argv[0]);
-  for (unsigned int radius = 1; radius <= arguments.fastRadius; ++radius) {
-    if (radius == arguments.fastRadius) {
-      speciesTreeOptimizer.setModel(recModel);
-    }
-    speciesTreeOptimizer.ratesOptimization();
-    speciesTreeOptimizer.sprSearch(radius, false);
-    speciesTreeOptimizer.rootExhaustiveSearch(false);
-
+  switch (arguments.strategy) {
+  case SIMPLE_SEARCH:
+    simpleSearch(arguments, argv);
+    break;
+  case SUBSAMPLE_SEARCH:
+    subsampleSearch(arguments, argv);
+    break;
   }
-  for (unsigned int radius = 1; radius <= arguments.slowRadius; ++radius) {
-    speciesTreeOptimizer.advancedRatesOptimization(1);
-    speciesTreeOptimizer.sprSearch(radius, true);
-    speciesTreeOptimizer.rootExhaustiveSearch(true);
-  } 
   Logger::timed << "End of the run" << std::endl;
   ParallelContext::finalize();
   return 0;

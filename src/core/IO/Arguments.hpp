@@ -30,6 +30,29 @@ public:
       exit(41);
     }
   }
+ 
+  static std::string speciesRaxStrategyToStr(SpeciesRaxStrategy s)
+  {
+    switch(s) {
+    case SIMPLE_SEARCH:
+      return "SimpleSearch";
+    case SUBSAMPLE_SEARCH:
+      return "SubsampleSearch";
+    }
+    exit(41);
+  }
+
+  static SpeciesRaxStrategy strToSpeciesRaxStrategy(const std::string &str) 
+  {
+    if (str == "SimpleSearch") {
+      return SIMPLE_SEARCH;
+    } else if (str == "SubsampleSearch") {
+      return SUBSAMPLE_SEARCH;
+    } else {
+      Logger::info << "Invalid strategy " << str << std::endl;
+      exit(41);
+    }
+  }
 
   static std::string recModelToStr(RecModel recModel)
   {

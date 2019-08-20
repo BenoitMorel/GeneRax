@@ -22,6 +22,7 @@ public:
    RecModel reconciliationModel;
    RecOpt reconciliationOpt;
    std::string output;
+   SpeciesRaxStrategy strategy;
    bool rootedGeneTree;
    bool userDTLRates;
    double dupRate;
