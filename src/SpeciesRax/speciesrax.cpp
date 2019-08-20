@@ -61,9 +61,9 @@ void subsampleSearch(SpeciesRaxArguments &arguments, char ** argv)
   initFamilies(arguments.output, initialFamilies);
   SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, recModel, arguments.output, argv[0]);
  
-  unsigned int sampleSize = 20;
+  unsigned int sampleSize = initialFamilies.size() / 3;
   unsigned int sampleNumber = 5;
-  unsigned int iterations = 5;
+  unsigned int iterations = 1;
   for (unsigned int it = 0; it < iterations; ++it) {
     std::unordered_set<std::string> speciesIds;
     for (unsigned int i = 0; i < sampleNumber; ++i) {
