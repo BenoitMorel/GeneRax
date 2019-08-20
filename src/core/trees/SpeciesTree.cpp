@@ -54,6 +54,13 @@ SpeciesTree::SpeciesTree(const std::unordered_set<std::string> &leafLabels)
 {
   buildFromLabels(leafLabels);
 }
+  
+std::shared_ptr<SpeciesTree> SpeciesTree::buildRandomTree() const
+{
+   std::unordered_set<std::string> labels;
+   getLabels(labels);
+   return std::make_shared<SpeciesTree>(labels);
+}
 
 void SpeciesTree::buildFromLabels(const std::unordered_set<std::string> &leafLabels)
 {
@@ -169,8 +176,11 @@ unsigned int SpeciesTree::getTaxaNumber() const
 }
 
 
-void SpeciesTree::saveToFile(const std::string &newick)
+void SpeciesTree::saveToFile(const std::string &newick, bool masterRankOnly)
 {
+  if (masterRankOnly && !ParallelContext::getRank()) {
+    return;
+  }
   LibpllParsers::saveRtree(_speciesTree->root, newick);  
 }
   
@@ -179,7 +189,15 @@ pll_rnode_t *SpeciesTree::getRandomNode()
   return getNode(rand() % (_speciesTree->tip_count + _speciesTree->inner_count)); 
 }
 
-
+void SpeciesTree::getLabels(std::unordered_set<std::string> &leafLabels) const
+{
+  for (unsigned int i = 0; i < _speciesTree->tip_count + _speciesTree->inner_count; ++i) {
+    auto node = getNode(i);
+    if (!node->left && !node->right) {
+      leafLabels.insert(std::string(node->label));
+    }
+  }
+}
 
 bool SpeciesTreeOperator::canChangeRoot(const SpeciesTree &speciesTree, int direction)
 {
@@ -327,4 +345,5 @@ void SpeciesTreeOperator::getPossibleRegrafts(SpeciesTree &speciesTree, unsigned
   recursiveGetNodes(getBrother(pruneNode)->left, 0, radius, regrafts);
   recursiveGetNodes(getBrother(pruneNode)->right, 0, radius, regrafts);
 }
+  
   

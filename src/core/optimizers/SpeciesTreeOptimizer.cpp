@@ -26,7 +26,11 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
     ratesOptimization();
   }
-  _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"));
+  _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"), true);
+  std::string subsamplesPath = FileSystem::joinPaths(_outputDir, "subsamples");
+  FileSystem::mkdir(FileSystem::joinPaths(_outputDir, "sub_genes_opt"), true);
+  FileSystem::mkdir(subsamplesPath, true);
+  saveCurrentSpeciesTree();
 }
 
 
@@ -45,7 +49,6 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree, Per
       double ll = computeReconciliationLikelihood(doOptimizeGeneTrees);
       visits++;
       if (ll > bestLL) {
-        Logger::info << "Found best root " << std::endl;
         bestLL = ll;
         bestMovesHistory = movesHistory;
       }
@@ -166,7 +169,7 @@ double SpeciesTreeOptimizer::sprSearch(int radius, bool doOptimizeGeneTrees)
   Logger::info << "Starting species SPR search (" << (doOptimizeGeneTrees ? "SLOW" : "FAST") << ", radius=" << radius << ")" <<std::endl;
   double bestLL = computeReconciliationLikelihood(doOptimizeGeneTrees);
   double newLL = bestLL;
-  Logger::info << "Initial " << likelihoodName(doOptimizeGeneTrees) << ": " << newLL << std::endl;
+  //Logger::info << "Initial " << likelihoodName(doOptimizeGeneTrees) << ": " << newLL << std::endl;
   do {
     bestLL = newLL;
     if (doOptimizeGeneTrees) {
@@ -184,7 +187,7 @@ void SpeciesTreeOptimizer::ratesOptimization()
 {
   Logger::info << "Starting DTL rates optimization" << std::endl;
   DTLRates rates = DTLOptimizer::optimizeDTLRates(*_geneTrees, _speciesTree->getTree(), _model);
-  Logger::info << " Best rates: " << rates << std::endl;
+  //Logger::info << " Best rates: " << rates << std::endl;
   _speciesTree->setRates(rates);
 }
   
@@ -192,17 +195,19 @@ void SpeciesTreeOptimizer::perSpeciesRatesOptimization()
 {
   Logger::info << "Starting DTL rates vector optimization" << std::endl;
   DTLRatesVector rates = DTLOptimizer::optimizeDTLRatesVector(*_geneTrees, _speciesTree->getTree(), _model);
-  Logger::info << "LL after DTL rates optimization: " << rates.getLL() << std::endl;
+  //Logger::info << "LL after DTL rates optimization: " << rates.getLL() << std::endl;
   _speciesTree->setRatesVector(rates);
   
 }
 
 void SpeciesTreeOptimizer::saveCurrentSpeciesTree()
 {
-  _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "inferred_species_tree.newick"));
+  Logger::info << "Saving current species tree " << FileSystem::joinPaths(_outputDir, "inferred_species_tree.newick") << std::endl;
+  _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "inferred_species_tree.newick"), true);
+  ParallelContext::barrier();
 }
 
-void SpeciesTreeOptimizer::optimizeGeneTrees(int radius)
+void SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
 {
   saveCurrentSpeciesTree();
   std::string speciesTree = FileSystem::joinPaths(_outputDir, "inferred_species_tree.newick");
@@ -219,7 +224,7 @@ void SpeciesTreeOptimizer::optimizeGeneTrees(int radius)
       _model, ratesVector, _outputDir, resultName, 
       _execPath, speciesTree, recOpt, rootedGeneTree, 
       recWeight, true, true, radius, _geneTreeIteration, 
-        useSplitImplem, sumElapsedSPR);
+        useSplitImplem, sumElapsedSPR, inPlace);
   _geneTreeIteration++;
   Logger::unmute();
   _geneTrees = std::make_unique<PerCoreGeneTrees>(_currentFamilies);
@@ -251,4 +256,60 @@ double SpeciesTreeOptimizer::computeReconciliationLikelihood(bool doOptimizeGene
     return totalLibpllLL + totalRecLL;
   }
   return _speciesTree->computeReconciliationLikelihood(*_geneTrees, _model);
+}
+
+
+void SpeciesTreeOptimizer::inferSpeciesTreeFromSamples(unsigned int sampleSize, const std::string &outputSpeciesId)
+{
+  Logger::info << "Infer species tree from gene tree samples " << outputSpeciesId << std::endl;
+  std::string subsamplesPath = FileSystem::joinPaths(_outputDir, "subsamples");
+  std::string subOutputDir = FileSystem::joinPaths(subsamplesPath, outputSpeciesId);
+  FileSystem::mkdir(subOutputDir, true);
+  auto speciesTree = _speciesTree->buildRandomTree();
+  std::string speciesTreePath = getSpeciesTreePath(outputSpeciesId);
+  ParallelContext::barrier();
+  speciesTree->saveToFile(speciesTreePath, true);
+  ParallelContext::barrier();
+  Families subFamilies;
+  for (unsigned int i = 0; i < sampleSize; ++i) {
+    subFamilies.push_back(_currentFamilies[rand() % _currentFamilies.size()]);
+  }
+  SpeciesTreeOptimizer subOptimizer(speciesTreePath, subFamilies, _model, subOutputDir, _execPath);
+  for (unsigned int radius = 0; radius < 7; ++radius) {
+    subOptimizer.ratesOptimization();
+    subOptimizer.sprSearch(radius, false);
+    subOptimizer.rootExhaustiveSearch(false);
+  }
+  subOptimizer.saveCurrentSpeciesTree();
+}
+
+std::string SpeciesTreeOptimizer::getSpeciesTreePath(const std::string &speciesId)
+{
+  std::string subsamplesPath = FileSystem::joinPaths(_outputDir, "subsamples");
+  std::string subOutputDir = FileSystem::joinPaths(subsamplesPath, speciesId);
+  return FileSystem::joinPaths(subOutputDir, "inferred_species_tree.newick");
+}
+
+void SpeciesTreeOptimizer::optimizeGeneTreesFromSamples(const std::unordered_set<std::string> &speciesIds, const std::string &stepId)
+{
+  Logger::info << "Optimize gene trees from sample species trees " << stepId << std::endl;
+  std::string geneOptPath = FileSystem::joinPaths(_outputDir, "sub_genes_opt");
+  std::string stepPath = FileSystem::joinPaths(geneOptPath, stepId);
+  FileSystem::mkdir(stepPath, true);
+  auto families = _currentFamilies;
+  std::random_shuffle(families.begin(), families.end());
+  unsigned int i = 0;
+  unsigned int step = families.size() / speciesIds.size();
+  for (auto &speciesId: speciesIds) {
+    std::string subStepPath = FileSystem::joinPaths(stepPath, std::string("substep_" + std::to_string(i)));
+    FileSystem::mkdir(subStepPath, true);
+    unsigned int begin = step * i;
+    unsigned int end = std::min<unsigned int>(begin + step, families.size());
+    auto subFamilies = Families(families.begin() + begin, families.begin() + end);
+    auto speciesTreePath = getSpeciesTreePath(speciesId);
+    SpeciesTreeOptimizer subOptimizer(speciesTreePath, subFamilies, _model, subStepPath, _execPath);
+    subOptimizer.optimizeGeneTrees(1, true);
+    ++i;
+  }
+  _geneTrees = std::make_unique<PerCoreGeneTrees>(_currentFamilies);
 }

@@ -6,6 +6,7 @@
 #include <string>
 #include <maths/DTLRates.hpp>
 #include <util/enums.hpp>
+#include <memory>
 
 class PerCoreGeneTrees;
 
@@ -18,6 +19,7 @@ public:
   SpeciesTree(const std::unordered_set<std::string> &leafLabels);
   SpeciesTree(const Families &families);
   ~SpeciesTree();
+  std::shared_ptr<SpeciesTree> buildRandomTree() const;
 
   void setRates(const DTLRates &rates);
   void setRatesVector(const DTLRatesVector &rates);
@@ -32,17 +34,19 @@ public:
   pll_rtree_t *getTree() {return _speciesTree;}
   pll_rnode_t *getRandomNode();
   pll_rnode_t *getNode(unsigned int nodeIndex) {return _speciesTree->nodes[nodeIndex];}
+  const pll_rnode_t *getNode(unsigned int nodeIndex) const {return _speciesTree->nodes[nodeIndex];}
   unsigned int getMaxNodeIndex() const { return _speciesTree->tip_count + _speciesTree->inner_count;}
   friend std::ostream& operator<<(std::ostream& os, const SpeciesTree &speciesTree) {
     os << speciesTree.toString() << "(" << speciesTree.getTaxaNumber() << " taxa)" << std::endl;
     return os;
   }
 
-  void saveToFile(const std::string &newick);
+  void saveToFile(const std::string &newick, bool masterRankOnly);
 private:
   pll_rtree_t *_speciesTree;
   DTLRatesVector _rates;
   void buildFromLabels(const std::unordered_set<std::string> &leafLabels);
+  void getLabels(std::unordered_set<std::string> &leafLabels) const;
 };
 
 

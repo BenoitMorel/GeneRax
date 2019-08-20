@@ -54,6 +54,7 @@ PerCoreGeneTrees::PerCoreGeneTrees(const Families &families)
     _geneTrees[index].tree = LibpllParsers::readNewickFromFile(families[i].startingGeneTree);
     index++;
   }
+  ParallelContext::barrier();
 }
   
 

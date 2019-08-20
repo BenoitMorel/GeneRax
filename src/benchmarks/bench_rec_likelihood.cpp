@@ -89,7 +89,7 @@ int main(int, char**)
   }
   SpeciesTree speciesTree(speciesLabels);
   std::string speciesTreeFile = FileSystem::joinPaths(dataDirectory, "speciesTree.newick");
-  speciesTree.saveToFile(speciesTreeFile);
+  speciesTree.saveToFile(speciesTreeFile, true);
   Families families;
   generateRandomFamilies(dataDirectory, 
       speciesLabels,

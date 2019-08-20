@@ -25,7 +25,10 @@ public:
   void ratesOptimization();
   void perSpeciesRatesOptimization();
   void advancedRatesOptimization(int radius);
-  void optimizeGeneTrees(int radius);
+  void optimizeGeneTrees(int radius, bool inPlace = false);
+
+  void inferSpeciesTreeFromSamples(unsigned int sampleSize, const std::string &outputSpeciesId);
+  void optimizeGeneTreesFromSamples(const std::unordered_set<std::string> &speciesIds, const std::string &stepId);
 private:
   std::shared_ptr<SpeciesTree> _speciesTree;
   std::shared_ptr<PerCoreGeneTrees> _geneTrees;
@@ -38,6 +41,7 @@ private:
   double computeReconciliationLikelihood(bool doOptimizeGeneTrees, int geneSPRRadius = 1);
   void rootExhaustiveSearchAux(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, bool doOptimizeGeneTrees, std::vector<unsigned int> &movesHistory, std::vector<unsigned int> &bestMovesHistory, double &bestLL, unsigned int &visits);
   void saveCurrentSpeciesTree();
+  std::string getSpeciesTreePath(const std::string &speciesId);
 };
 
 

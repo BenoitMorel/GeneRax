@@ -37,6 +37,15 @@ public:
     content.assign((std::istreambuf_iterator<char>(ifs)),
       (std::istreambuf_iterator<char>()) );
   }
-
+  
+  static void copy(const std::string &f1, const std::string &f2, bool masterRankOnly) 
+  {
+    if (masterRankOnly && ParallelContext::getRank() != 0) {
+      return;
+    }
+    std::ifstream  src(f1, std::ios::binary);
+    std::ofstream  dst(f2,   std::ios::binary);
+    dst << src.rdbuf();
+  }
 };
 

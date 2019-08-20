@@ -24,5 +24,6 @@ public:
     int sprRadius,
     int iteration,
     bool schedulerSplitImplem,
-    long &sumElapsed); 
+    long &sumElapsed,
+    bool inPlace = false); 
 };

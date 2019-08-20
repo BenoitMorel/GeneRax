@@ -12,16 +12,22 @@
 #include <trees/PerCoreGeneTrees.hpp>
 #include <memory>
 
-void initFolders(const std::string &output, Families &families) 
+void initFamilies(const std::string &output, Families &families) 
 {
   std::string results = FileSystem::joinPaths(output, "results");
   std::string proposals = FileSystem::joinPaths(output, "proposals");
   FileSystem::mkdir(results, true);
   FileSystem::mkdir(proposals, true);
   for (auto &family: families) {
-    FileSystem::mkdir(FileSystem::joinPaths(results, family.name), true);
+    std::string familyResultsDir = FileSystem::joinPaths(results, family.name);
+    FileSystem::mkdir(familyResultsDir, true);
     FileSystem::mkdir(FileSystem::joinPaths(proposals, family.name), true);
+    std::string inputGeneTree = family.startingGeneTree;
+    std::string outputGeneTree = FileSystem::joinPaths(familyResultsDir, family.name + ".newick");
+    FileSystem::copy(inputGeneTree, outputGeneTree, true);
+    family.startingGeneTree = outputGeneTree;
   }
+  ParallelContext::barrier();
 }
 
 
@@ -30,7 +36,7 @@ void simpleSearch(SpeciesRaxArguments &arguments, char ** argv)
   RecModel recModel = arguments.reconciliationModel;
   Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
   Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
-  initFolders(arguments.output, initialFamilies);
+  initFamilies(arguments.output, initialFamilies);
   SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, UndatedDL, arguments.output, argv[0]);
   for (unsigned int radius = 1; radius <= arguments.fastRadius; ++radius) {
     if (radius == arguments.fastRadius) {
@@ -52,13 +58,34 @@ void subsampleSearch(SpeciesRaxArguments &arguments, char ** argv)
   RecModel recModel = arguments.reconciliationModel;
   Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
   Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
-  initFolders(arguments.output, initialFamilies);
+  initFamilies(arguments.output, initialFamilies);
   SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, recModel, arguments.output, argv[0]);
-  for (unsigned int radius = 1; radius <= 3; ++radius) {
+ 
+  unsigned int sampleSize = 20;
+  unsigned int sampleNumber = 5;
+  unsigned int iterations = 5;
+  for (unsigned int it = 0; it < iterations; ++it) {
+    std::unordered_set<std::string> speciesIds;
+    for (unsigned int i = 0; i < sampleNumber; ++i) {
+      std::string speciesId = std::string("sample_") + std::to_string(it) + std::string("_") + std::to_string(i);
+      speciesTreeOptimizer.inferSpeciesTreeFromSamples(sampleSize, speciesId);
+      speciesIds.insert(speciesId);
+    }
+    for (unsigned int i =0; i < 1; ++i) {
+      speciesTreeOptimizer.optimizeGeneTreesFromSamples(speciesIds, std::string("opt_sub_genetrees_") + std::to_string(it) + std::string("_") + std::to_string(i));
+    }
+  }
+  
+  
+  for (unsigned int radius = 1; radius <= arguments.fastRadius; ++radius) {
+    if (radius == arguments.fastRadius) {
+      speciesTreeOptimizer.setModel(recModel);
+    }
     speciesTreeOptimizer.ratesOptimization();
     speciesTreeOptimizer.sprSearch(radius, false);
     speciesTreeOptimizer.rootExhaustiveSearch(false);
   }
+
 }
 
 int speciesrax_main(int argc, char** argv, void* comm)
@@ -81,6 +108,7 @@ int speciesrax_main(int argc, char** argv, void* comm)
     subsampleSearch(arguments, argv);
     break;
   }
+  Logger::timed << "Output in " << arguments.output << std::endl;
   Logger::timed << "End of the run" << std::endl;
   ParallelContext::finalize();
   return 0;

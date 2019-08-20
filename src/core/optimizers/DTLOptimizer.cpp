@@ -101,7 +101,7 @@ static void optimizeDTLRatesVectorGradient(PerCoreGeneTrees &geneTrees, pll_rtre
       }
     }
   } while (lineSearchVector(geneTrees, evaluations, currentRates, gradient, llComputationsLine));
-  Logger::info << "Gradient ll: " << currentRates.getLL() << std::endl;
+  //Logger::info << "Gradient ll: " << currentRates.getLL() << std::endl;
   ratesVector = currentRates;
 }
 
@@ -163,7 +163,7 @@ DTLRates optimizeDTLRatesGradient(PerCoreGeneTrees &geneTrees, pll_rtree_t *spec
       gradient.rates[i] = (currentRates.ll - closeRates.ll) / (-epsilon);
     }
   } while (lineSearch(geneTrees, speciesTree, model, currentRates, gradient, llComputationsLine));
-  Logger::info << "Global rates: " << currentRates << "(after " << llComputationsGrad << " + " << llComputationsLine << " recomputations) " << std::endl;
+  //Logger::info << "Global rates: " << currentRates << "(after " << llComputationsGrad << " + " << llComputationsLine << " recomputations) " << std::endl;
   return currentRates;
 }
 

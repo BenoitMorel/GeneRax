@@ -29,7 +29,8 @@ void GeneTreeSearchMaster::optimizeGeneTrees(Families &families,
     int sprRadius,
     int iteration,
     bool schedulerSplitImplem,
-    long &sumElapsed) 
+    long &sumElapsed,
+    bool inPlace) 
 {
   auto start = Logger::getElapsedSec();
   Logger::timed << "Starting SPR rounds with radius " << sprRadius << std::endl;
@@ -47,6 +48,10 @@ void GeneTreeSearchMaster::optimizeGeneTrees(Families &families,
     std::string familyOutput = FileSystem::joinPaths(output, resultName);
     familyOutput = FileSystem::joinPaths(familyOutput, family.name);
     std::string geneTreePath = FileSystem::joinPaths(familyOutput, "geneTree.newick");
+    if (inPlace) {
+      // todobenoit make this the normal behavior?
+      geneTreePath = family.startingGeneTree;
+    }
     std::string outputStats = FileSystem::joinPaths(familyOutput, "stats.txt");
     auto taxa = geneTreeSizes[i];
     unsigned int cores = 1;
