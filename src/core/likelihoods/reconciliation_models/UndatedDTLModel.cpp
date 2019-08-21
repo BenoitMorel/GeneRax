@@ -11,7 +11,8 @@ UndatedDTLModel::UndatedDTLModel()
   _maxGeneId = 1;
 }
 
-#define ASSERT_PROBA(x) assert(x.isProba());
+#define IS_PROBA(x) ((x) >= 0 && (x) <= 1 && !std::isnan(x))
+#define ASSERT_PROBA(x) assert(IS_PROBA(x));
 
 void UndatedDTLModel::setInitialGeneTree(pll_utree_t *tree)
 {
@@ -92,7 +93,7 @@ void UndatedDTLModel::resetTransferSums(ScaledValue &transferSum,
   transferSum = ScaledValue();
   if (ancestralCorrection.size()) {
     for (auto &e: ancestralCorrection) {
-      e.setNull();
+      e = 0.0;
     }
   } else {
     ancestralCorrection = std::vector<ScaledValue>(speciesNodesCount_);
@@ -124,7 +125,7 @@ pll_rnode_t *UndatedDTLModel::getBestTransfer(unsigned int gid, pll_rnode_t *spe
     parents.insert(parent->node_index);
   }
   pll_rnode_t *bestSpecies = 0;
-  ScaledValue bestProba;
+  ScaledValue bestProba = 0.0;
   for (auto node: speciesNodes_) {
     if (parents.count(node->node_index)) {
       continue;
@@ -193,7 +194,7 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
 
   unsigned int maxValueIndex = static_cast<unsigned int>(distance(values.begin(), max_element(values.begin(), values.end())));
   // safety check
-  if (values[maxValueIndex].isNull()) {
+  if (values[maxValueIndex] == 0.0) {
     ScaledValue proba;
     computeProbability(geneNode, speciesNode, proba, isVirtualRoot);
     std::cerr << "warning: null ll scenario " << _uq[gid][e] << " " << proba  << std::endl;
@@ -260,13 +261,13 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
   bool isGeneLeaf = !geneNode->next;
   bool isSpeciesLeaf = !speciesNode->left;
   
-  if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) {
-    proba = ScaledValue(_PS[e], 0);
+  if (isSpeciesLeaf and isGeneLeaf and e == geneToSpecies_[gid]) { //  todobenoit
+    proba = _PS[e];
     return;
   }
   
   ScaledValue oldProba = proba;
-  proba = ScaledValue();
+  proba = 0.0;
   
   pll_unode_t *leftGeneNode = 0;     
   pll_unode_t *rightGeneNode = 0;     
@@ -285,9 +286,12 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
     auto u_left = leftGeneNode->node_index;
     auto u_right = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
+      /*
       proba += ScaledValue::superMult1(_uq[u_left][f], _uq[u_right][g],
           _uq[u_left][g], _uq[u_right][f],
           _PS[e]);
+          */
+      proba += (_uq[u_left][f] * _uq[u_right][g] + _uq[u_left][g] * _uq[u_right][f]) * _PS[e];
     }
     // D event
     ScaledValue temp = _uq[u_left][e];
@@ -300,10 +304,13 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
   }
   if (not isSpeciesLeaf) {
     // SL event
+    proba += (_uq[gid][f] * _uE[g] + _uq[gid][g] * _uE[f]) * _PS[e];
+    /*
     proba += ScaledValue::superMult2(
         _uq[gid][f], _uE[g],
         _uq[gid][g], _uE[f],
         _PS[e]);
+        */
   }
   // TL event
   proba += oldProba * getCorrectedTransferExtinctionSum(e);
@@ -335,7 +342,7 @@ void UndatedDTLModel::computeRootLikelihood(pll_unode_t *virtualRoot)
 
 ScaledValue UndatedDTLModel::getRootLikelihood(pll_unode_t *root) const
 {
-  ScaledValue sum;
+  ScaledValue sum = 0.0;
   auto u = root->node_index + _maxGeneId + 1;;
   for (auto speciesNode: speciesNodes_) {
     auto e = speciesNode->node_index;

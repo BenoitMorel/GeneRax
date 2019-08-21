@@ -4,6 +4,12 @@
 #include <climits>
 #include <iostream>
 
+#ifndef SCALED_VALUES
+
+typedef double ScaledValue;
+
+#else
+
 #define JS_SCALE_FACTOR 115792089237316195423570985008687907853269984665640564039457584007913129639936.0  /*  2**256 (exactly)  */
 #define JS_SCALE_THRESHOLD (1.0/JS_SCALE_FACTOR)
 
@@ -249,4 +255,4 @@ public:
   int scaler;
 };
 
-
+#endif

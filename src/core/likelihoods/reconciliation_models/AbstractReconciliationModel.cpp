@@ -238,7 +238,7 @@ void AbstractReconciliationModel::computeMLRoot(pll_unode_t *&bestGeneRoot, pll_
 {
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
-  ScaledValue max;
+  ScaledValue max = 0.0;
   for (auto root: roots) {
     for (auto speciesNode: speciesNodes_) {
       ScaledValue ll = getRootLikelihood(root, speciesNode);
@@ -256,7 +256,7 @@ pll_unode_t *AbstractReconciliationModel::computeMLRoot()
   pll_unode_t *bestRoot = 0;
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
-  ScaledValue max;
+  ScaledValue max = 0.0;
   for (auto root: roots) {
     ScaledValue rootProba = getRootLikelihood(root);
     if (max < rootProba) {
@@ -269,19 +269,19 @@ pll_unode_t *AbstractReconciliationModel::computeMLRoot()
 
 double AbstractReconciliationModel::getSumLikelihood()
 {
-  ScaledValue total;
+  ScaledValue total = 0.0;
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
   for (auto root: roots) {
     total += getRootLikelihood(root);
   }
-  return total.getLogValue(); 
+  return log(total);  
 }
 
 
 void AbstractReconciliationModel::computeLikelihoods()
 {
-  std::vector<ScaledValue> zeros(speciesNodesCount_); 
+  std::vector<ScaledValue> zeros(speciesNodesCount_, 0.0); 
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
   for (auto root: roots) {
