@@ -46,12 +46,17 @@ void simpleSearch(SpeciesRaxArguments &arguments, char ** argv)
     speciesTreeOptimizer.ratesOptimization();
     speciesTreeOptimizer.sprSearch(radius, false);
     speciesTreeOptimizer.rootExhaustiveSearch(false);
+    Logger::info << "RecLL = " << speciesTreeOptimizer.getReconciliationLikelihood() << std::endl;
   }
   for (unsigned int radius = 1; radius <= arguments.slowRadius; ++radius) {
     speciesTreeOptimizer.advancedRatesOptimization(1);
     speciesTreeOptimizer.sprSearch(radius, true);
     speciesTreeOptimizer.rootExhaustiveSearch(true);
+    Logger::info << "RecLL = " << speciesTreeOptimizer.getReconciliationLikelihood() << std::endl;
   } 
+  speciesTreeOptimizer.sprSearch(arguments.slowRadius, true);
+  Logger::info << "FInal LL = " << speciesTreeOptimizer.computeReconciliationLikelihood(true) << std::endl;
+  speciesTreeOptimizer.saveCurrentSpeciesTree();
 }
 
 void subsampleSearch(SpeciesRaxArguments &arguments, char ** argv)
@@ -75,6 +80,7 @@ void subsampleSearch(SpeciesRaxArguments &arguments, char ** argv)
     for (unsigned int i =0; i < 1; ++i) {
       speciesTreeOptimizer.optimizeGeneTreesFromSamples(speciesIds, std::string("opt_sub_genetrees_") + std::to_string(it) + std::string("_") + std::to_string(i));
     }
+    Logger::info << "RecLL = " << speciesTreeOptimizer.getReconciliationLikelihood() << std::endl;
   }
   
   
@@ -85,8 +91,8 @@ void subsampleSearch(SpeciesRaxArguments &arguments, char ** argv)
     speciesTreeOptimizer.ratesOptimization();
     speciesTreeOptimizer.sprSearch(radius, false);
     speciesTreeOptimizer.rootExhaustiveSearch(false);
+    Logger::info << "RecLL = " << speciesTreeOptimizer.getReconciliationLikelihood() << std::endl;
   }
-
 }
 
 int speciesrax_main(int argc, char** argv, void* comm)
