@@ -3,6 +3,12 @@
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
+#include <maths/ScaledValue.hpp>
+
+
+
+
+
 
 /*
 * Implement the undated model described here:
@@ -25,8 +31,8 @@ protected:
   // overload from parent
   virtual void updateCLV(pll_unode_t *geneNode);
   // overload from parent
-  virtual double getRootLikelihood(pll_unode_t *root) const;
-  virtual double getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {return _uq[root->node_index + _maxGeneId + 1][speciesRoot->node_index];}
+  virtual ScaledValue getRootLikelihood(pll_unode_t *root) const;
+  virtual ScaledValue getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {return _uq[root->node_index + _maxGeneId + 1][speciesRoot->node_index];}
   // overload from parent
   virtual void computeRootLikelihood(pll_unode_t *virtualRoot);
   // overlead from parent
@@ -38,15 +44,15 @@ private:
   std::vector<double> _PL; // Loss probability, per species branch
   std::vector<double> _PS; // Speciation probability, per species branch
   std::vector<double> _uE; // Extinction probability, per species branch
-  std::vector<double> _DLTerm; 
   
   // uq[geneId][speciesId] = probability of a gene node rooted at a species node
   // to produce the subtree of this gene node
-  std::vector<std::vector<double> > _uq;
+  std::vector<std::vector<ScaledValue> > _uq;
 
 private:
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
-      double &proba,
+      ScaledValue &proba,
       bool isVirtualRoot = false) const;
+  void accountForSpeciesRoot(pll_unode_t *virtualRoot);
 };
 
