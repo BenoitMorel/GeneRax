@@ -17,17 +17,17 @@ UndatedDTLModel::UndatedDTLModel()
 void UndatedDTLModel::setInitialGeneTree(pll_utree_t *tree)
 {
   AbstractReconciliationModel::setInitialGeneTree(tree);
-  std::vector<ScaledValue> zeros(speciesNodesCount_);
-  _uq = std::vector<std::vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
-  _survivingTransferSums = std::vector<ScaledValue>(2 * (_maxGeneId + 1));
-  _ancestralCorrection = std::vector<std::vector<ScaledValue> >(2 * (_maxGeneId + 1),zeros);
+  std::vector<double> zeros(speciesNodesCount_);
+  _uq = std::vector<std::vector<double> >(2 * (_maxGeneId + 1),zeros);
+  _survivingTransferSums = std::vector<double>(2 * (_maxGeneId + 1));
+  _ancestralCorrection = std::vector<std::vector<double> >(2 * (_maxGeneId + 1),zeros);
 }
 
-void UndatedDTLModel::updateTransferSums(ScaledValue &transferSum,
-    std::vector<ScaledValue> &ancestralCorrection,
-    const std::vector<ScaledValue> &probabilities)
+void UndatedDTLModel::updateTransferSums(double &transferSum,
+    std::vector<double> &ancestralCorrection,
+    const std::vector<double> &probabilities)
 {
-  transferSum = ScaledValue();
+  transferSum = double();
   for (int i = static_cast<int>(speciesNodes_.size()) - 1; i >= 0; --i) {
     auto speciesNode = speciesNodes_[static_cast<unsigned int>(i)];
     auto e = speciesNode->node_index;
@@ -66,12 +66,12 @@ void UndatedDTLModel::setRates(const std::vector<double> &dupRates,
     _PT[e] /= sum;
     _PS[e] /= sum;
   } 
-  _uE = std::vector<ScaledValue>(speciesNodesCount_);
+  _uE = std::vector<double>(speciesNodesCount_);
   resetTransferSums(_transferExtinctionSum, _ancestralExctinctionCorrection);
   for (unsigned int it = 0; it < IT; ++it) {
     for (auto speciesNode: speciesNodes_) {
       auto e = speciesNode->node_index;
-      ScaledValue proba(_PL[e]);
+      double proba(_PL[e]);
       proba += _uE[e] * _uE[e] * _PD[e] + getCorrectedTransferExtinctionSum(e) * _uE[e];
       if (speciesNode->left) {
         proba += _uE[speciesNode->left->node_index]  * _uE[speciesNode->right->node_index] * _PS[e];
@@ -87,16 +87,16 @@ void UndatedDTLModel::setRates(const std::vector<double> &dupRates,
 UndatedDTLModel::~UndatedDTLModel() { }
 
 
-void UndatedDTLModel::resetTransferSums(ScaledValue &transferSum,
-    std::vector<ScaledValue> &ancestralCorrection)
+void UndatedDTLModel::resetTransferSums(double &transferSum,
+    std::vector<double> &ancestralCorrection)
 {
-  transferSum = ScaledValue();
+  transferSum = double();
   if (ancestralCorrection.size()) {
     for (auto &e: ancestralCorrection) {
       e = 0.0;
     }
   } else {
-    ancestralCorrection = std::vector<ScaledValue>(speciesNodesCount_);
+    ancestralCorrection = std::vector<double>(speciesNodesCount_);
   }
 }
 
@@ -105,7 +105,7 @@ void UndatedDTLModel::updateCLV(pll_unode_t *geneNode)
 {
   auto gid = geneNode->node_index;
   for (auto speciesNode: speciesNodes_) {
-    _uq[gid][speciesNode->node_index] = ScaledValue();
+    _uq[gid][speciesNode->node_index] = double();
   }
   resetTransferSums(_survivingTransferSums[gid], _ancestralCorrection[gid]);
   for (unsigned int it = 0; it < IT; ++it) {
@@ -125,7 +125,7 @@ pll_rnode_t *UndatedDTLModel::getBestTransfer(unsigned int gid, pll_rnode_t *spe
     parents.insert(parent->node_index);
   }
   pll_rnode_t *bestSpecies = 0;
-  ScaledValue bestProba = 0.0;
+  double bestProba = 0.0;
   for (auto node: speciesNodes_) {
     if (parents.count(node->node_index)) {
       continue;
@@ -167,7 +167,7 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
     g = speciesNode->right->node_index;
   }
   
-  std::vector<ScaledValue> values(8);
+  std::vector<double> values(8);
   if (not isGeneLeaf) {
     // S event
     u_left = leftGeneNode->node_index;
@@ -195,7 +195,7 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
   unsigned int maxValueIndex = static_cast<unsigned int>(distance(values.begin(), max_element(values.begin(), values.end())));
   // safety check
   if (values[maxValueIndex] == 0.0) {
-    ScaledValue proba;
+    double proba;
     computeProbability(geneNode, speciesNode, proba, isVirtualRoot);
     std::cerr << "warning: null ll scenario " << _uq[gid][e] << " " << proba  << std::endl;
     assert(false);
@@ -253,7 +253,7 @@ void UndatedDTLModel::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode,
 
 
 void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
-      ScaledValue &proba,
+      double &proba,
       bool isVirtualRoot)
 {
   auto gid = geneNode->node_index;
@@ -266,7 +266,7 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
     return;
   }
   
-  ScaledValue oldProba = proba;
+  double oldProba = proba;
   proba = 0.0;
   
   pll_unode_t *leftGeneNode = 0;     
@@ -287,14 +287,14 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
     auto u_right = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
       /*
-      proba += ScaledValue::superMult1(_uq[u_left][f], _uq[u_right][g],
+      proba += double::superMult1(_uq[u_left][f], _uq[u_right][g],
           _uq[u_left][g], _uq[u_right][f],
           _PS[e]);
           */
       proba += (_uq[u_left][f] * _uq[u_right][g] + _uq[u_left][g] * _uq[u_right][f]) * _PS[e];
     }
     // D event
-    ScaledValue temp = _uq[u_left][e];
+    double temp = _uq[u_left][e];
     temp *= _uq[u_right][e];
     temp *= _PD[e];
     proba += temp;
@@ -306,7 +306,7 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
     // SL event
     proba += (_uq[gid][f] * _uE[g] + _uq[gid][g] * _uE[f]) * _PS[e];
     /*
-    proba += ScaledValue::superMult2(
+    proba += double::superMult2(
         _uq[gid][f], _uE[g],
         _uq[gid][g], _uE[f],
         _PS[e]);
@@ -327,7 +327,7 @@ void UndatedDTLModel::computeRootLikelihood(pll_unode_t *virtualRoot)
   auto u = virtualRoot->node_index;;
   for (auto speciesNode: speciesNodes_) {
     auto e = speciesNode->node_index;
-    _uq[u][e] = ScaledValue();
+    _uq[u][e] = double();
   }
   resetTransferSums(_survivingTransferSums[u], _ancestralCorrection[u]);
   for (unsigned int it = 0; it < IT; ++it) {
@@ -340,9 +340,9 @@ void UndatedDTLModel::computeRootLikelihood(pll_unode_t *virtualRoot)
 }
 
 
-ScaledValue UndatedDTLModel::getRootLikelihood(pll_unode_t *root) const
+double UndatedDTLModel::getRootLikelihood(pll_unode_t *root) const
 {
-  ScaledValue sum = 0.0;
+  double sum = 0.0;
   auto u = root->node_index + _maxGeneId + 1;;
   for (auto speciesNode: speciesNodes_) {
     auto e = speciesNode->node_index;

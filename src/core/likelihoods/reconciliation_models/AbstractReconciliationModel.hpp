@@ -5,7 +5,6 @@
 #include <util/Scenario.hpp>
 
 #include <unordered_set>
-#include <maths/ScaledValue.hpp>
 class SubtreeRepeatsCache;
 
 /**
@@ -80,8 +79,8 @@ protected:
   // Called by computeLogLikelihood
   virtual void computeRootLikelihood(pll_unode_t *virtualRoot) = 0;
   // Called by computeLogLikelihood
-  virtual ScaledValue getRootLikelihood(pll_unode_t *root) const = 0;
-  virtual ScaledValue getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) = 0;
+  virtual double getRootLikelihood(pll_unode_t *root) const = 0;
+  virtual double getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) = 0;
   // Called by inferMLScenario
   // fills scenario with the best likelihood set of events that 
   // would lead to the subtree of geneNode under speciesNode
