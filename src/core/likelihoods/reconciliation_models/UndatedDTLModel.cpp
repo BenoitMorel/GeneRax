@@ -67,6 +67,7 @@ void UndatedDTLModel::setRates(const std::vector<double> &dupRates,
     _PS[e] /= sum;
   } 
   _uE = std::vector<double>(speciesNodesCount_);
+  _DLTerm = std::vector<double>(speciesNodesCount_);
   resetTransferSums(_transferExtinctionSum, _ancestralExctinctionCorrection);
   for (unsigned int it = 0; it < IT; ++it) {
     for (auto speciesNode: speciesNodes_) {
@@ -77,7 +78,8 @@ void UndatedDTLModel::setRates(const std::vector<double> &dupRates,
         proba += _uE[speciesNode->left->node_index]  * _uE[speciesNode->right->node_index] * _PS[e];
       }
       ASSERT_PROBA(proba)
-      _uE[speciesNode->node_index] = proba;
+      _uE[e] = proba;
+      _DLTerm[e] = _uE[e] * 2.0 * _PD[e];
     }
     updateTransferSums(_transferExtinctionSum, _ancestralExctinctionCorrection, _uE);
   }
@@ -286,18 +288,10 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
     auto u_left = leftGeneNode->node_index;
     auto u_right = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
-      /*
-      proba += double::superMult1(_uq[u_left][f], _uq[u_right][g],
-          _uq[u_left][g], _uq[u_right][f],
-          _PS[e]);
-          */
       proba += (_uq[u_left][f] * _uq[u_right][g] + _uq[u_left][g] * _uq[u_right][f]) * _PS[e];
     }
     // D event
-    double temp = _uq[u_left][e];
-    temp *= _uq[u_right][e];
-    temp *= _PD[e];
-    proba += temp;
+    proba += _uq[u_left][e] * _uq[u_right][e] * _PD[e];
     // T event
     proba += getCorrectedTransferSum(u_left, e) * _uq[u_right][e]; 
     proba += getCorrectedTransferSum(u_right, e) * _uq[u_left][e]; 
@@ -305,19 +299,13 @@ void UndatedDTLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spe
   if (not isSpeciesLeaf) {
     // SL event
     proba += (_uq[gid][f] * _uE[g] + _uq[gid][g] * _uE[f]) * _PS[e];
-    /*
-    proba += double::superMult2(
-        _uq[gid][f], _uE[g],
-        _uq[gid][g], _uE[f],
-        _PS[e]);
-        */
   }
   // TL event
   proba += oldProba * getCorrectedTransferExtinctionSum(e);
   proba += getCorrectedTransferSum(gid, e) * _uE[e];
 
   // DL event
-  proba += oldProba * _uE[e] * (2.0 * _PD[e]); 
+  proba += oldProba * _DLTerm[e]; 
   //assert(proba.isProba());
 }
 

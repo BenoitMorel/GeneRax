@@ -44,6 +44,7 @@ void UndatedDLModel::setRates(const std::vector<double> &dupRates,
     _PS[e] /= sum;
   }
   _uE = std::vector<double>(speciesNodesCount_, 0.0);
+  _DLTerm = std::vector<double>(speciesNodesCount_, 0.0);
   for (auto speciesNode: speciesNodes_) {
     auto e = speciesNode->node_index;
     double a = _PD[e];
@@ -54,7 +55,8 @@ void UndatedDLModel::setRates(const std::vector<double> &dupRates,
     }
     double proba = solveSecondDegreePolynome(a, b, c);
     ASSERT_PROBA(proba)
-    _uE[speciesNode->node_index] = proba;
+    _uE[e] = proba;
+    _DLTerm[e]  =  (1.0 - 2.0 * _PD[e] * _uE[e]);
   }
   invalidateAllCLVs();
 }
@@ -179,13 +181,11 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
     f = speciesNode->left->node_index;
     g = speciesNode->right->node_index;
   }
-  proba = double();
+  proba = 0.0;
   if (isSpeciesLeaf and isGeneLeaf) {
     // present
     if (e == geneToSpecies_[gid]) {
-      proba = _PS[e];
-    } else {
-      proba = 0.0;
+      proba = 1.0;
     }
     return;
   }
@@ -204,7 +204,7 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
     proba += (_uq[gid][f] * _uE[g] + _uq[gid][g] * _uE[f]) * _PS[e];
   }
   // DL event
-  proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
+  proba /= _DLTerm[e]; 
   ASSERT_PROBA(proba);
 }
   
@@ -219,27 +219,6 @@ double UndatedDLModel::getRootLikelihood(pll_unode_t *root) const
   return sum;
 }
 
-void UndatedDLModel::accountForSpeciesRoot(pll_unode_t *virtualRoot)
-{
-  auto u = virtualRoot->node_index;
-  std::vector<double> save_uq(_uq[u]);
-  auto leftGeneNode = getLeft(virtualRoot, true);
-  auto rightGeneNode = getRight(virtualRoot, true);
-  for (auto speciesNode: speciesNodes_) {
-    auto e = speciesNode->node_index;
-    double proba = 0.0;
-    // D
-    auto gp_i = leftGeneNode->node_index;
-    auto gpp_i = rightGeneNode->node_index;
-    proba += _uq[gp_i][e] * _uq[gpp_i][e] * _PD[e];
-    // no event
-    proba += save_uq[e] * (1.0 - _PD[e]);
-    // DL
-    proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
-    
-    _uq[u][e] = proba;
-  }
-}
 
 void UndatedDLModel::computeRootLikelihood(pll_unode_t *virtualRoot)
 {

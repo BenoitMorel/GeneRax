@@ -38,6 +38,7 @@ private:
   std::vector<double> _PL; // Loss probability, per species branch
   std::vector<double> _PS; // Speciation probability, per species branch
   std::vector<double> _uE; // Extinction probability, per species branch
+  std::vector<double> _DLTerm; 
   
   // uq[geneId][speciesId] = probability of a gene node rooted at a species node
   // to produce the subtree of this gene node
@@ -47,6 +48,5 @@ private:
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       double &proba,
       bool isVirtualRoot = false) const;
-  void accountForSpeciesRoot(pll_unode_t *virtualRoot);
 };
 

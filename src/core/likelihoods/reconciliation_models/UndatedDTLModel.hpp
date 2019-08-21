@@ -41,6 +41,7 @@ private:
 
   // SPECIES
   std::vector<double> _uE; // Probability for a gene to become extinct on each brance
+  std::vector<double> _DLTerm; 
   double _transferExtinctionSum;
   std::vector<double> _ancestralExctinctionCorrection;  
 
