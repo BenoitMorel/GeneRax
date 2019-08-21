@@ -16,6 +16,7 @@ SpeciesRaxArguments::SpeciesRaxArguments(int iargc, char * iargv[]):
   output("SpeciesRax"),
   strategy(SIMPLE_SEARCH),
   rootedGeneTree(true),
+  perSpeciesDTLRates(false),
   userDTLRates(false),
   dupRate(1.0),
   lossRate(1.0),
@@ -48,6 +49,8 @@ SpeciesRaxArguments::SpeciesRaxArguments(int iargc, char * iargv[]):
       strategy = Arguments::strToSpeciesRaxStrategy(std::string(argv[++i]));
     } else if (arg == "--unrooted-gene-tree") {
       rootedGeneTree = false;
+    } else if (arg == "--per-species-rates") {
+      perSpeciesDTLRates = true;
     } else if (arg == "--dupRate") {
       dupRate = atof(argv[++i]);
       userDTLRates = true;
@@ -111,6 +114,7 @@ void SpeciesRaxArguments::printHelp() {
   Logger::info << "--rec-opt <reconciliationOpt>  {window, simplex}" << std::endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << std::endl;
   Logger::info << "--unrooted-gene-tree" << std::endl;
+  Logger::info << "--per-species-rates" << std::endl;
   Logger::info << "--dupRate <duplication rate>" << std::endl;
   Logger::info << "--lossRate <loss rate>" << std::endl;
   Logger::info << "--transferRate <transfer rate>" << std::endl;
@@ -135,6 +139,7 @@ void SpeciesRaxArguments::printSummary() {
   Logger::info << "Species tree: " << speciesTree << std::endl;
   Logger::info << "Reconciliation model: " << Arguments::recModelToStr(reconciliationModel) << std::endl;
   Logger::info << "Reconciliation opt: " << Arguments::recOptToStr(reconciliationOpt) << std::endl;
+  Logger::info << "DTL rates: " << (perSpeciesDTLRates ? "per-species" : "global") << std::endl;
   Logger::info << "Prefix: " << output << std::endl;
   Logger::info << "Search strategy: " << Arguments::speciesRaxStrategyToStr(strategy) << std::endl;
   Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << std::endl;

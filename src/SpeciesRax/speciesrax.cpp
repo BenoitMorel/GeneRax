@@ -38,6 +38,7 @@ void simpleSearch(SpeciesRaxArguments &arguments, char ** argv)
   Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
   initFamilies(arguments.output, initialFamilies);
   SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, UndatedDL, arguments.output, argv[0]);
+  speciesTreeOptimizer.setPerSpeciesRatesOptimization(arguments.perSpeciesDTLRates); 
   for (unsigned int radius = 1; radius <= arguments.fastRadius; ++radius) {
     if (radius == arguments.fastRadius) {
       speciesTreeOptimizer.setModel(recModel);
@@ -60,7 +61,7 @@ void subsampleSearch(SpeciesRaxArguments &arguments, char ** argv)
   Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
   initFamilies(arguments.output, initialFamilies);
   SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, recModel, arguments.output, argv[0]);
- 
+  speciesTreeOptimizer.setPerSpeciesRatesOptimization(arguments.perSpeciesDTLRates); 
   unsigned int sampleSize = initialFamilies.size() / 3;
   unsigned int sampleNumber = 5;
   unsigned int iterations = 1;

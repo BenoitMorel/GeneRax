@@ -17,7 +17,8 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _model(model),
   _outputDir(outputDir),
   _execPath(execPath),
-  _geneTreeIteration(0)
+  _geneTreeIteration(0),
+  _perSpeciesRatesOptimization(false)
 {
   if (speciesTreeFile == "random") {
     _speciesTree = std::make_unique<SpeciesTree>(initialFamilies);
@@ -184,7 +185,11 @@ double SpeciesTreeOptimizer::sprSearch(int radius, bool doOptimizeGeneTrees)
 }
   
 void SpeciesTreeOptimizer::ratesOptimization()
-{
+{ 
+  if (_perSpeciesRatesOptimization) {
+    perSpeciesRatesOptimization();
+    return;
+  }
   Logger::info << "Starting DTL rates optimization" << std::endl;
   DTLRates rates = DTLOptimizer::optimizeDTLRates(*_geneTrees, _speciesTree->getTree(), _model);
   //Logger::info << " Best rates: " << rates << std::endl;
