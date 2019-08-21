@@ -41,7 +41,7 @@ public:
    */
   void setRates(const DTLRatesVector &ratesVector);
 
-  AbstractReconciliationModel *getReconciliationModel() {return reconciliationModel.get();}
+  AbstractReconciliationModel<ScaledValue> *getReconciliationModel() {return reconciliationModel.get();}
 
   pll_unode_t *getRoot() {return reconciliationModel->getRoot();}
   void setRoot(pll_unode_t * root) {reconciliationModel->setRoot(root);}
@@ -67,8 +67,8 @@ public:
   }
 
 private:
-  std::shared_ptr<AbstractReconciliationModel> getRecModelObject(RecModel recModel);
-  std::shared_ptr<AbstractReconciliationModel> reconciliationModel;
+  std::shared_ptr<AbstractReconciliationModel<ScaledValue> > getRecModelObject(RecModel recModel);
+  std::shared_ptr<AbstractReconciliationModel<ScaledValue> > reconciliationModel;
   RecModel _model;
   unsigned int _speciesCount;
 };

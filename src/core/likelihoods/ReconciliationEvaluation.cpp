@@ -57,13 +57,13 @@ void ReconciliationEvaluation::invalidateCLV(unsigned int nodeIndex)
   reconciliationModel->invalidateCLV(nodeIndex);
 }
 
-std::shared_ptr<AbstractReconciliationModel> ReconciliationEvaluation::getRecModelObject(RecModel recModel)
+std::shared_ptr<AbstractReconciliationModel<ScaledValue> > ReconciliationEvaluation::getRecModelObject(RecModel recModel)
 {
   switch(recModel) {
   case UndatedDL:
-    return  std::make_shared<UndatedDLModel>();
+    return  std::make_shared<UndatedDLModel<ScaledValue> >();
   case UndatedDTL:
-    return  std::make_shared<UndatedDTLModel>();
+    return  std::make_shared<UndatedDTLModel<ScaledValue> >();
   }
   assert(false);
   return 0;
