@@ -185,7 +185,7 @@ void UndatedDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *spec
   if (isSpeciesLeaf and isGeneLeaf) {
     // present
     if (e == geneToSpecies_[gid]) {
-      proba = 1.0;
+      proba = _PS[e];
     }
     return;
   }
