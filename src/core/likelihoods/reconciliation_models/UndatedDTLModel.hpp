@@ -3,7 +3,6 @@
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
-#include <maths/ScaledValue.hpp>
 
 
 /*
@@ -26,10 +25,10 @@ protected:
   // overloaded from parent
   virtual void updateCLV(pll_unode_t *geneNode);
   // overloaded from parent
-  virtual ScaledValue getRootLikelihood(pll_unode_t *root) const;
+  virtual double getRootLikelihood(pll_unode_t *root) const;
   // overload from parent
   virtual void computeRootLikelihood(pll_unode_t *virtualRoot);
-  virtual ScaledValue getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {return _uq[root->node_index + _maxGeneId + 1][speciesRoot->node_index];}
+  virtual double getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {return _uq[root->node_index + _maxGeneId + 1][speciesRoot->node_index];}
   virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       Scenario &scenario,
       bool isVirtualRoot = false);
@@ -41,34 +40,35 @@ private:
   std::vector<double> _PS; // Speciation probability, per branch
 
   // SPECIES
-  std::vector<ScaledValue> _uE; // Probability for a gene to become extinct on each brance
-  ScaledValue _transferExtinctionSum;
-  std::vector<ScaledValue> _ancestralExctinctionCorrection;  
+  std::vector<double> _uE; // Probability for a gene to become extinct on each brance
+  std::vector<double> _DLTerm; 
+  double _transferExtinctionSum;
+  std::vector<double> _ancestralExctinctionCorrection;  
 
   // CLVs
   // _uq[geneId][speciesId] = probability of a gene node rooted at a species node
   // to produce the subtree of this gene node
-  std::vector<std::vector<ScaledValue> > _uq;
-  std::vector<ScaledValue> _survivingTransferSums;
-  std::vector<std::vector<ScaledValue> > _ancestralCorrection;
+  std::vector<std::vector<double> > _uq;
+  std::vector<double> _survivingTransferSums;
+  std::vector<std::vector<double> > _ancestralCorrection;
 
 
 
 private:
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
-      ScaledValue &proba,
+      double &proba,
       bool isVirtualRoot = false);
-  void updateTransferSums(ScaledValue &transferExtinctionSum,
-    std::vector<ScaledValue> &ancestralExtinctionCorrection,
-    const std::vector<ScaledValue> &probabilities);
-  void resetTransferSums(ScaledValue &transferSum,
-    std::vector<ScaledValue> &ancestralCorrection);
+  void updateTransferSums(double &transferExtinctionSum,
+    std::vector<double> &ancestralExtinctionCorrection,
+    const std::vector<double> &probabilities);
+  void resetTransferSums(double &transferSum,
+    std::vector<double> &ancestralCorrection);
   
-  ScaledValue getCorrectedTransferExtinctionSum(unsigned int speciesNode) const {
+  double getCorrectedTransferExtinctionSum(unsigned int speciesNode) const {
   return _transferExtinctionSum - _ancestralExctinctionCorrection[speciesNode];
   }
 
-  ScaledValue getCorrectedTransferSum(unsigned int geneId, unsigned int speciesId) const
+  double getCorrectedTransferSum(unsigned int geneId, unsigned int speciesId) const
   {
     return _survivingTransferSums[geneId] - _ancestralCorrection[geneId][speciesId];
 
