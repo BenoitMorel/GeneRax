@@ -65,8 +65,6 @@ UndatedDLModel<REAL>::UndatedDLModel()
   this->_maxGeneId = 1;
 }
 
-#define IS_PROBA(x) ((x) >= 0 && (x) <= 1 && !std::isnan(x))
-#define ASSERT_PROBA(x) assert(IS_PROBA(x));
 
 template <class REAL>
 void UndatedDLModel<REAL>::setInitialGeneTree(pll_utree_t *tree)
@@ -179,9 +177,9 @@ void UndatedDLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *species
     values[4] = _uq[gid][g] * (_uE[f] * _PS[e]);
   }
 
-  unsigned maxValueIndex = static_cast<unsigned int>(distance(values.begin(), max_element(values.begin(), values.end())));
+  unsigned int maxValueIndex = static_cast<unsigned int>(distance(values.begin(), max_element(values.begin(), values.end())));
   // safety check
-  if (values[maxValueIndex].isNull()) {
+  if (values[maxValueIndex] == REAL()) {
     REAL proba;
     computeProbability(geneNode, speciesNode, proba, isVirtualRoot);
     std::cerr << "warning: null ll scenario " << _uq[gid][e] << " " << proba  << std::endl;
@@ -244,7 +242,7 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
   if (isSpeciesLeaf and isGeneLeaf) {
     // present
     if (e == this->geneToSpecies_[gid]) {
-      proba = REAL(_PS[e], 0);
+      proba = REAL(_PS[e]);
     } else {
       proba = REAL();
     }
@@ -255,9 +253,7 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
     auto gpp_i = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
       // S event
-      proba += REAL::superMult1(_uq[gp_i][f], _uq[gpp_i][g],
-          _uq[gp_i][g], _uq[gpp_i][f],
-          _PS[e]);
+      proba += (_uq[gp_i][f] * _uq[gpp_i][g] + _uq[gp_i][g] * _uq[gpp_i][f]) *_PS[e];
     }
     // D event
     REAL temp = _uq[gp_i][e];
@@ -267,20 +263,17 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
   }
   if (not isSpeciesLeaf) {
     // SL event
-    proba += REAL::superMult2(
-        _uq[gid][f], _uE[g],
-        _uq[gid][g], _uE[f],
-        _PS[e]);
+    proba += (_uq[gid][f] * _uE[g] + _uq[gid][g] * _uE[f]) * _PS[e];
   }
   // DL event
   proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
-  assert(proba.isProba());
+  ASSERT_PROBA(proba);
 }
   
 template <class REAL>
 REAL UndatedDLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
 {
-  REAL sum;
+  REAL sum = REAL();
   auto u = root->node_index + this->_maxGeneId + 1;;
   for (auto speciesNode: this->speciesNodes_) {
     auto e = speciesNode->node_index;

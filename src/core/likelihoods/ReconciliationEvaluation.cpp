@@ -5,6 +5,11 @@
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <cmath>
 
+double log(ScaledValue v) 
+{
+  return v.getLogValue();
+}
+
 ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
   const GeneSpeciesMapping& geneSpeciesMapping,
   RecModel recModel,

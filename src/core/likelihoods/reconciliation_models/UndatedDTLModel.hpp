@@ -89,7 +89,6 @@ UndatedDTLModel<REAL>::UndatedDTLModel()
   this->_maxGeneId = 1;
 }
 
-#define MYASSERT_PROBA(x) assert(x.isProba());
 
 template <class REAL>
 void UndatedDTLModel<REAL>::setInitialGeneTree(pll_utree_t *tree)
@@ -156,7 +155,7 @@ void UndatedDTLModel<REAL>::setRates(const std::vector<double> &dupRates,
       if (speciesNode->left) {
         proba += _uE[speciesNode->left->node_index]  * _uE[speciesNode->right->node_index] * _PS[e];
       }
-      MYASSERT_PROBA(proba)
+      ASSERT_PROBA(proba)
       _uE[speciesNode->node_index] = proba;
     }
     updateTransferSums(_transferExtinctionSum, _ancestralExctinctionCorrection, _uE);
@@ -175,7 +174,7 @@ void UndatedDTLModel<REAL>::resetTransferSums(REAL &transferSum,
   transferSum = REAL();
   if (ancestralCorrection.size()) {
     for (auto &e: ancestralCorrection) {
-      e.setNull();
+      e = REAL();
     }
   } else {
     ancestralCorrection = std::vector<REAL>(this->speciesNodesCount_);
@@ -209,7 +208,7 @@ pll_rnode_t *UndatedDTLModel<REAL>::getBestTransfer(unsigned int gid, pll_rnode_
     parents.insert(parent->node_index);
   }
   pll_rnode_t *bestSpecies = 0;
-  REAL bestProba;
+  REAL bestProba = REAL();
   for (auto node: this->speciesNodes_) {
     if (parents.count(node->node_index)) {
       continue;
@@ -279,7 +278,7 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
 
   unsigned int maxValueIndex = static_cast<unsigned int>(distance(values.begin(), max_element(values.begin(), values.end())));
   // safety check
-  if (values[maxValueIndex].isNull()) {
+  if (values[maxValueIndex] == REAL()) {
     REAL proba;
     computeProbability(geneNode, speciesNode, proba, isVirtualRoot);
     std::cerr << "warning: null ll scenario " << _uq[gid][e] << " " << proba  << std::endl;
@@ -348,7 +347,7 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
   bool isSpeciesLeaf = !speciesNode->left;
   
   if (isSpeciesLeaf and isGeneLeaf and e == this->geneToSpecies_[gid]) {
-    proba = REAL(_PS[e], 0);
+    proba = REAL(_PS[e]);
     return;
   }
   
@@ -372,9 +371,7 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     auto u_left = leftGeneNode->node_index;
     auto u_right = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
-      proba += REAL::superMult1(_uq[u_left][f], _uq[u_right][g],
-          _uq[u_left][g], _uq[u_right][f],
-          _PS[e]);
+      proba += (_uq[u_left][f] * _uq[u_right][g] + _uq[u_left][g] * _uq[u_right][f]) * _PS[e];
     }
     // D event
     REAL temp = _uq[u_left][e];
@@ -387,10 +384,7 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
   }
   if (not isSpeciesLeaf) {
     // SL event
-    proba += REAL::superMult2(
-        _uq[gid][f], _uE[g],
-        _uq[gid][g], _uE[f],
-        _PS[e]);
+    proba += (_uq[gid][f] * _uE[g] + _uq[gid][g] * _uE[f]) *_PS[e];
   }
   // TL event
   proba += oldProba * getCorrectedTransferExtinctionSum(e);
@@ -424,7 +418,7 @@ void UndatedDTLModel<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
 template <class REAL>
 REAL UndatedDTLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
 {
-  REAL sum;
+  REAL sum = REAL();
   auto u = root->node_index + this->_maxGeneId + 1;;
   for (auto speciesNode: this->speciesNodes_) {
     auto e = speciesNode->node_index;

@@ -156,6 +156,11 @@ public:
     }
     return value < v.value;
   }
+  
+  inline bool operator ==(const ScaledValue& v) const
+  {
+    return scaler == v.scaler && value == v.value;
+  }
 
   inline bool operator <=(const ScaledValue& v) const
   {

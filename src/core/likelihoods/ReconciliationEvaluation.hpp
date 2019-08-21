@@ -7,6 +7,7 @@
 #include <memory>
 #include <maths/DTLRates.hpp>
 
+double log(ScaledValue v) ;
   
 /**
  *  Wrapper around the reconciliation likelihood classes

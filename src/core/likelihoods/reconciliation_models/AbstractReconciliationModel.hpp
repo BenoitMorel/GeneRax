@@ -10,6 +10,12 @@
 #include <maths/ScaledValue.hpp>
 class SubtreeRepeatsCache;
 
+
+//#define IS_PROBA(x) ((x) >= REAL(0) && (x) <= REAL(1))
+//#define ASSERT_PROBA(x) assert(IS_PROBA(x));
+#define ASSERT_PROBA(x) assert(true);
+
+
 /**
  *  Interface and common implementations for 
  *  all the reconciliation likelihood computation
@@ -406,7 +412,7 @@ void AbstractReconciliationModel<REAL>::computeMLRoot(pll_unode_t *&bestGeneRoot
 {
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
-  REAL max;
+  REAL max = REAL();
   for (auto root: roots) {
     for (auto speciesNode: speciesNodes_) {
       REAL ll = getRootLikelihood(root, speciesNode);
@@ -425,7 +431,7 @@ pll_unode_t *AbstractReconciliationModel<REAL>::computeMLRoot()
   pll_unode_t *bestRoot = 0;
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
-  REAL max;
+  REAL max = REAL();
   for (auto root: roots) {
     REAL rootProba = getRootLikelihood(root);
     if (max < rootProba) {
@@ -439,13 +445,13 @@ pll_unode_t *AbstractReconciliationModel<REAL>::computeMLRoot()
 template <class REAL>
 double AbstractReconciliationModel<REAL>::getSumLikelihood()
 {
-  REAL total;
+  REAL total = REAL();
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
   for (auto root: roots) {
     total += getRootLikelihood(root);
   }
-  return total.getLogValue(); 
+  return log(total); 
 }
 
 
