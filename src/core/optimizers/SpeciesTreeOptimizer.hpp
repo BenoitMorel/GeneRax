@@ -19,11 +19,10 @@ public:
   void setPerSpeciesRatesOptimization(bool perSpecies) {_perSpeciesRatesOptimization = perSpecies;}
 
   void rootExhaustiveSearch(bool doOptimizeGeneTrees);
-  double sprRound(int radius, bool doOptimizeGeneTrees);
-  double hybridSprRound(int radius, double bestLL);
+  double sprRound(int radius);
+  double sortedSprRound(int radius, double bestLL);
   double sprSearch(int radius, bool doOptimizeGeneTrees);
   void ratesOptimization();
-  void advancedRatesOptimization(int radius);
   double optimizeGeneTrees(int radius, bool inPlace = false);
 
   void inferSpeciesTreeFromSamples(unsigned int sampleSize, const std::string &outputSpeciesId);

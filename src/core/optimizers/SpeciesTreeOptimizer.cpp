@@ -81,19 +81,18 @@ std::string likelihoodName(bool doOptimizeGeneTrees) {
   return doOptimizeGeneTrees ? std::string("Joint LL") : std::string("Rec LL");
 }
 
-double SpeciesTreeOptimizer::sprRound(int radius, bool doOptimizeGeneTrees)
+double SpeciesTreeOptimizer::sprRound(int radius)
 {
   std::vector<unsigned int> prunes;
   SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, prunes);
-  double bestLL = computeLikelihood(doOptimizeGeneTrees, 1);
+  double bestLL = computeLikelihood(false, 1);
   for (auto prune: prunes) {
     std::vector<unsigned int> regrafts;
     SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
     for (auto regraft: regrafts) {
       unsigned int rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
-      double newLL = computeLikelihood(doOptimizeGeneTrees, 1);
+      double newLL = computeLikelihood(false, 1);
       if (newLL > bestLL) {
-        //Logger::info << "New best " << likelihoodName(doOptimizeGeneTrees) << ": " << newLL << std::endl; 
         return newLL;
       }
       SpeciesTreeOperator::reverseSPRMove(*_speciesTree, prune, rollback);
@@ -117,7 +116,7 @@ struct less_than_evaluatedmove
 };
 
 
-double SpeciesTreeOptimizer::hybridSprRound(int radius, double bestLL)
+double SpeciesTreeOptimizer::sortedSprRound(int radius, double bestLL)
 {
   std::vector<unsigned int> prunes;
   SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, prunes);
@@ -163,9 +162,9 @@ double SpeciesTreeOptimizer::sprSearch(int radius, bool doOptimizeGeneTrees)
   do {
     bestLL = newLL;
     if (doOptimizeGeneTrees) {
-      newLL = hybridSprRound(radius, bestLL); 
+      newLL = sortedSprRound(radius, bestLL); 
     } else {
-      newLL = sprRound(radius, doOptimizeGeneTrees);
+      newLL = sprRound(radius);
     }
   } while (newLL - bestLL > 0.001);
   saveCurrentSpeciesTree();
@@ -230,16 +229,6 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
   }
   return totalLibpllLL + totalRecLL;
   //_geneTrees = std::make_unique<PerCoreGeneTrees>(_currentFamilies);
-}
-  
-void SpeciesTreeOptimizer::advancedRatesOptimization(int radius)
-{
-  auto initialFamilies = _currentFamilies;
-  optimizeGeneTrees(radius);
-  ratesOptimization();
-  _currentFamilies = initialFamilies;
-  _geneTrees = std::make_unique<PerCoreGeneTrees>(_currentFamilies);
-
 }
   
 double SpeciesTreeOptimizer::computeLikelihood(bool doOptimizeGeneTrees, int geneSPRRadius)
