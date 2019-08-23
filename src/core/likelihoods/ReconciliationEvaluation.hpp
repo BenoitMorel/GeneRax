@@ -7,6 +7,7 @@
 #include <memory>
 #include <maths/DTLRates.hpp>
 
+double log(ScaledValue v) ;
   
 /**
  *  Wrapper around the reconciliation likelihood classes
@@ -41,10 +42,9 @@ public:
    */
   void setRates(const DTLRatesVector &ratesVector);
 
-  AbstractReconciliationModel *getReconciliationModel() {return reconciliationModel.get();}
 
-  pll_unode_t *getRoot() {return reconciliationModel->getRoot();}
-  void setRoot(pll_unode_t * root) {reconciliationModel->setRoot(root);}
+  pll_unode_t *getRoot() {return _reconciliationModel->getRoot();}
+  void setRoot(pll_unode_t * root) {_reconciliationModel->setRoot(root);}
 
   double evaluate(pll_utree_t *utree);
   /**
@@ -63,13 +63,21 @@ public:
   
   
   void inferMLScenario(Scenario &scenario) {
-    reconciliationModel->inferMLScenario(scenario);
+    _reconciliationModel->inferMLScenario(scenario);
   }
 
 private:
-  std::shared_ptr<AbstractReconciliationModel> getRecModelObject(RecModel recModel);
-  std::shared_ptr<AbstractReconciliationModel> reconciliationModel;
-  RecModel _model;
+  pll_rtree_t *_speciesTree;
   unsigned int _speciesCount;
+  GeneSpeciesMapping _geneSpeciesMapping;
+  bool _rootedGeneTree;
+  RecModel _model; 
+  bool _infinitePrecision;
+  std::vector<double> _dupRates;
+  std::vector<double> _lossRates;
+  std::vector<double> _transferRates;
+  std::unique_ptr<ReconciliationModelInterface> _reconciliationModel;
+  std::unique_ptr<ReconciliationModelInterface> buildRecModelObject(RecModel recModel, bool infinitePrecision);
+  void updatePrecision(bool infinitePrecision);
 };
 
