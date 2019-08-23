@@ -122,9 +122,5 @@ void Routines::gatherLikelihoods(Families &families,
   }
   ParallelContext::sumDouble(totalRecLL);
   ParallelContext::sumDouble(totalLibpllLL);
-  Logger::info << "Likelihoods: ";
-  Logger::info << "joint = " << totalLibpllLL + totalRecLL << ", ";
-  Logger::info << "libpll = " << totalLibpllLL << ", ";
-  Logger::info << "rec = " << totalRecLL << std::endl;
 }
 

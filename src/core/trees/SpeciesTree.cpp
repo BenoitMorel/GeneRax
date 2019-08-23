@@ -297,12 +297,14 @@ void SpeciesTreeOperator::reverseSPRMove(SpeciesTree &speciesTree, unsigned int 
 
 
 // direction: 0 == from parent, 1 == from left, 2 == from right
-void recursiveGetNodes(pll_rnode_t *node, unsigned int direction, unsigned int radius, std::vector<unsigned int> &nodes)
+static void recursiveGetNodes(pll_rnode_t *node, unsigned int direction, unsigned int radius, std::vector<unsigned int> &nodes, bool addNode = true)
 {
   if (radius == 0 || node == 0) {
     return;
   }
-  nodes.push_back(node->node_index);
+  if (addNode) {
+    nodes.push_back(node->node_index);
+  }
   switch (direction) {
     case 0:
       recursiveGetNodes(node->left, 0, radius - 1, nodes);
@@ -333,6 +335,10 @@ void SpeciesTreeOperator::getPossiblePrunes(SpeciesTree &speciesTree, std::vecto
   
 void SpeciesTreeOperator::getPossibleRegrafts(SpeciesTree &speciesTree, unsigned int prune, unsigned int radius, std::vector<unsigned int> &regrafts)
 {
+  /**
+   *  Hack: we do not add the nodes at the first radius, because they are equivalent to moves from the second radius
+   */
+  radius +=1 ;
   auto pruneNode = speciesTree.getNode(prune);
   auto pruneParentNode = pruneNode->parent;
   if (!pruneParentNode) {
@@ -340,10 +346,10 @@ void SpeciesTreeOperator::getPossibleRegrafts(SpeciesTree &speciesTree, unsigned
   }
   if (pruneParentNode->parent) {
     int parentDirection = (pruneParentNode->parent->left == pruneParentNode ? 1 : 2);
-    recursiveGetNodes(pruneParentNode->parent, parentDirection, radius, regrafts);
+    recursiveGetNodes(pruneParentNode->parent, parentDirection, radius, regrafts, false);
   }
-  recursiveGetNodes(getBrother(pruneNode)->left, 0, radius, regrafts);
-  recursiveGetNodes(getBrother(pruneNode)->right, 0, radius, regrafts);
+  recursiveGetNodes(getBrother(pruneNode)->left, 0, radius, regrafts, false);
+  recursiveGetNodes(getBrother(pruneNode)->right, 0, radius, regrafts, false);
 }
   
   

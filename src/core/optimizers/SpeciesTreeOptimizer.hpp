@@ -29,8 +29,8 @@ public:
   void inferSpeciesTreeFromSamples(unsigned int sampleSize, const std::string &outputSpeciesId);
   void optimizeGeneTreesFromSamples(const std::unordered_set<std::string> &speciesIds, const std::string &stepId);
 
-  double getReconciliationLikelihood() {return computeReconciliationLikelihood(false);}
-  double computeReconciliationLikelihood(bool doOptimizeGeneTrees, int geneSPRRadius = 1);
+  double getReconciliationLikelihood() {return computeLikelihood(false);}
+  double computeLikelihood(bool doOptimizeGeneTrees, int geneSPRRadius = 1);
   void saveCurrentSpeciesTree(std::string str = "inferred_species_tree.newick" );
 
 private:

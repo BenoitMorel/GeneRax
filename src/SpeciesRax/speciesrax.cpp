@@ -48,14 +48,18 @@ void simpleSearch(SpeciesRaxArguments &arguments, char ** argv)
     speciesTreeOptimizer.rootExhaustiveSearch(false);
     Logger::info << "RecLL = " << speciesTreeOptimizer.getReconciliationLikelihood() << std::endl;
   }
-  for (unsigned int radius = 1; radius <= arguments.slowRadius; ++radius) {
-    speciesTreeOptimizer.advancedRatesOptimization(1);
-    speciesTreeOptimizer.sprSearch(radius, true);
+  if (arguments.slowRadius) {
+    Logger::info << "FIRST SLOW RADIUS SEARCH, WITHOUT TRANSFER " << std::endl;
+    speciesTreeOptimizer.setModel(UndatedDL); 
+    speciesTreeOptimizer.sprSearch(arguments.fastRadius, true);
     speciesTreeOptimizer.rootExhaustiveSearch(true);
-    Logger::info << "RecLL = " << speciesTreeOptimizer.getReconciliationLikelihood() << std::endl;
-  } 
-  speciesTreeOptimizer.sprSearch(arguments.slowRadius, true);
-  Logger::info << "FInal LL = " << speciesTreeOptimizer.computeReconciliationLikelihood(true) << std::endl;
+    if (recModel != UndatedDL) {
+      Logger::info << "SECOND SLOW RADIUS SEARCH WITH TRANSFERS " << std::endl;
+      speciesTreeOptimizer.setModel(recModel); 
+      speciesTreeOptimizer.sprSearch(arguments.fastRadius, true);
+    }
+  }
+  Logger::info << "Joint LL = " << speciesTreeOptimizer.computeLikelihood(true) << std::endl;
   speciesTreeOptimizer.saveCurrentSpeciesTree();
 }
 
@@ -92,6 +96,7 @@ void subsampleSearch(SpeciesRaxArguments &arguments, char ** argv)
     speciesTreeOptimizer.sprSearch(radius, false);
     speciesTreeOptimizer.rootExhaustiveSearch(false);
     Logger::info << "RecLL = " << speciesTreeOptimizer.getReconciliationLikelihood() << std::endl;
+    Logger::info << "Joint LL = " << speciesTreeOptimizer.computeLikelihood(true) << std::endl;
   }
 }
 
