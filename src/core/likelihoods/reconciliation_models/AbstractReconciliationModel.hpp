@@ -5,6 +5,7 @@
 #include <util/Scenario.hpp>
 #include <IO/Logger.hpp>
 #include <likelihoods/SubtreeRepeatsCache.hpp>
+#include <util/enums.hpp>
 
 #include <unordered_set>
 #include <maths/ScaledValue.hpp>
@@ -16,29 +17,23 @@ class SubtreeRepeatsCache;
 #define ASSERT_PROBA(x) assert(true);
 
 
+
+
 /**
  *  Interface and common implementations for 
  *  all the reconciliation likelihood computation
  *  classes
  */
-template <class REAL>
-class AbstractReconciliationModel {
+class ReconciliationModelInterface {
 public:
-  AbstractReconciliationModel();
-     
+  virtual ~ReconciliationModelInterface() {};
+  
   /**
    *  Has to be called just after the constructor before anything else
    *  We do not call it in the constructor because it is virtual and
    *  calls virtual functions
    */
-  virtual void init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree);
-  
-  virtual ~AbstractReconciliationModel() {};
- 
-  /**
-   * Set the DTL rates, and update probabilities relative to the species tree only
-   */
-  void setRates(double dupRate, double lossRate, double transferRate = 0.0);
+  virtual void init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree) = 0;
   
   /*
    * Set the per-species lineage rates
@@ -49,39 +44,63 @@ public:
   virtual void setRates(const std::vector<double> &dupRates,
       const std::vector<double> &lossRates,
       const std::vector<double> &transferRates) = 0;
-
   
   /**
    * (incrementally) compute and return the likelihood of the input gene tree 
    */
-  double computeLogLikelihood(pll_utree_t *tree);
-  
+  virtual double computeLogLikelihood(pll_utree_t *tree) = 0;
   
   /**
    *  Get/set the root of the gene tree (only relevant in rooted gene tree mode)
    */ 
-  void setRoot(pll_unode_t * root) {geneRoot_ = root;}
-  pll_unode_t *getRoot() {return geneRoot_;}
- 
+  virtual void setRoot(pll_unode_t * root) = 0;
+  virtual pll_unode_t *getRoot() = 0;
+  
   /**
    * invalidate one or all the gene CLVs
    */
-  void invalidateAllCLVs();
-  void invalidateCLV(unsigned int geneNodeIndex);
-
+  virtual void invalidateAllCLVs() = 0;
+  virtual void invalidateCLV(unsigned int geneNodeIndex) = 0;
+  
   /**
    *  Fill scenario with the maximum likelihood set of 
    *  events that would lead to the  current tree
    **/
-  void inferMLScenario(Scenario &scenario);
-  
-  void setCache(SubtreeRepeatsCache *cache) {_cache = cache;} 
+  virtual void inferMLScenario(Scenario &scenario) = 0;
+};
 
 
+/*
+ * Introduce the REAL template (normal double or infinite precision) 
+ * Implement util methods shared by its children
+ */
+template <class REAL>
+class AbstractReconciliationModel: public ReconciliationModelInterface {
+public:
+  AbstractReconciliationModel();
+  // overload from parent
+  virtual void init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree);
+  // overload from parent
+  virtual ~AbstractReconciliationModel() {};
+  // overload from parent
+  virtual void setRates(const std::vector<double> &dupRates,
+      const std::vector<double> &lossRates,
+      const std::vector<double> &transferRates) = 0;
+  // overload from parent
+  virtual double computeLogLikelihood(pll_utree_t *tree);
+  // overload from parent
+  virtual void setRoot(pll_unode_t * root) {geneRoot_ = root;}
+  // overload from parent
+  virtual pll_unode_t *getRoot() {return geneRoot_;}
+  // overload from parent
+  virtual void invalidateAllCLVs();
+  // overload from parent
+  virtual void invalidateCLV(unsigned int geneNodeIndex);
+  // overload from parent
+  virtual void inferMLScenario(Scenario &scenario);
 protected:
   // called by the constructor
   virtual void setSpeciesTree(pll_rtree_t *speciesTree);
-
   // Called when computeLogLikelihood is called for the first time
   virtual void setInitialGeneTree(pll_utree_t *tree);
   // Called by computeLogLikelihood
@@ -229,16 +248,6 @@ void AbstractReconciliationModel<REAL>::fillNodesPostOrder(pll_rnode_t *node, st
   nodes.push_back(node);
 }
 
-template <class REAL>
-void AbstractReconciliationModel<REAL>::setRates(double dupRate, 
-  double lossRate,
-  double transferRate)
-{
-  std::vector<double> dupRates(speciesNodesCount_, dupRate);
-  std::vector<double> lossRates(speciesNodesCount_, lossRate);
-  std::vector<double> transferRates(speciesNodesCount_, transferRate);
-  setRates(dupRates, lossRates, transferRates);
-}
 
 template <class REAL>
 void AbstractReconciliationModel<REAL>::setSpeciesTree(pll_rtree_t *speciesTree)

@@ -9,9 +9,6 @@ set(jointsearch-core_SOURCES
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ReconciliationEvaluation.cpp
   likelihoods/SubtreeRepeatsCache.cpp
-  likelihoods/reconciliation_models/AbstractReconciliationModel.cpp
-  likelihoods/reconciliation_models/UndatedDLModel.cpp
-  likelihoods/reconciliation_models/UndatedDTLModel.cpp
   optimizers/DTLOptimizer.cpp
   optimizers/PerFamilyDTLOptimizer.cpp
   optimizers/SpeciesTreeOptimizer.cpp
