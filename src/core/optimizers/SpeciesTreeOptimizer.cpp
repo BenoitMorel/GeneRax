@@ -62,7 +62,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree, Per
 
 void SpeciesTreeOptimizer::rootExhaustiveSearch(bool doOptimizeGeneTrees)
 {
-  Logger::info << "Trying to re-root the species tree" << std::endl;
+  Logger::timed << "Trying to re-root the species tree" << std::endl;
   std::vector<unsigned int> movesHistory;
   std::vector<unsigned int> bestMovesHistory;
   double bestLL = computeLikelihood(doOptimizeGeneTrees, 1);
@@ -156,7 +156,7 @@ double SpeciesTreeOptimizer::sortedSprRound(int radius, double bestLL)
 double SpeciesTreeOptimizer::sprSearch(int radius, bool doOptimizeGeneTrees)
 {
   double bestLL = computeLikelihood(doOptimizeGeneTrees, doOptimizeGeneTrees);
-  Logger::info << "Starting species SPR search (" << (doOptimizeGeneTrees ? "SLOW" : "FAST") << ", radius=" << radius << ", bestLL=" << bestLL << ")" <<std::endl;
+  Logger::timed << "Starting species SPR search (" << (doOptimizeGeneTrees ? "SLOW" : "FAST") << ", radius=" << radius << ", bestLL=" << bestLL << ")" <<std::endl;
   double newLL = bestLL;
   //Logger::info << "Initial " << likelihoodName(doOptimizeGeneTrees) << ": " << newLL << std::endl;
   do {
@@ -168,7 +168,6 @@ double SpeciesTreeOptimizer::sprSearch(int radius, bool doOptimizeGeneTrees)
     }
   } while (newLL - bestLL > 0.001);
   saveCurrentSpeciesTree();
-  Logger::info <<"End of SPR Search" << std::endl;
   return newLL;
 }
   
@@ -178,7 +177,7 @@ void SpeciesTreeOptimizer::ratesOptimization()
     perSpeciesRatesOptimization();
     return;
   }
-  Logger::info << "Starting DTL rates optimization" << std::endl;
+  Logger::timed << "Starting DTL rates optimization" << std::endl;
   DTLRates rates = DTLOptimizer::optimizeDTLRates(*_geneTrees, _speciesTree->getTree(), _model);
   //Logger::info << " Best rates: " << rates << std::endl;
   _speciesTree->setRates(rates);
@@ -225,7 +224,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
   //Logger::info << "optll " << totalLibpllLL + totalRecLL << " " << totalLibpllLL << " " << totalRecLL << std::endl;
   if (inPlace) {
     ratesOptimization();
-    Logger::info << "Updated the gene trees " << totalLibpllLL + totalRecLL << " " << totalLibpllLL << " " << totalRecLL << std::endl;
+    Logger::info << "Uptimed the gene trees " << totalLibpllLL + totalRecLL << " " << totalLibpllLL << " " << totalRecLL << std::endl;
   }
   return totalLibpllLL + totalRecLL;
   //_geneTrees = std::make_unique<PerCoreGeneTrees>(_currentFamilies);
