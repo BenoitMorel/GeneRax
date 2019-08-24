@@ -58,8 +58,8 @@ void simpleSearch(SpeciesRaxArguments &arguments, char ** argv)
       speciesTreeOptimizer.setModel(recModel); 
       speciesTreeOptimizer.sprSearch(arguments.fastRadius, true);
     }
+    Logger::info << "Joint LL = " << speciesTreeOptimizer.computeLikelihood(true) << std::endl;
   }
-  Logger::info << "Joint LL = " << speciesTreeOptimizer.computeLikelihood(true) << std::endl;
   speciesTreeOptimizer.saveCurrentSpeciesTree();
 }
 
