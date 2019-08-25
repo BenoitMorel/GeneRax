@@ -60,6 +60,11 @@ void simpleSearch(SpeciesRaxArguments &arguments, char ** argv)
     }
     Logger::info << "Joint LL = " << speciesTreeOptimizer.computeLikelihood(true) << std::endl;
   }
+  if (arguments.finalGeneRadius) {
+    Logger::info << "Final gene tree optimization step, with radius " << arguments.finalGeneRadius << std::endl;
+    speciesTreeOptimizer.optimizeGeneTrees(arguments.finalGeneRadius, true);
+    Logger::info << "Joint LL = " << speciesTreeOptimizer.computeLikelihood(true) << std::endl;
+  }
   speciesTreeOptimizer.saveCurrentSpeciesTree();
 }
 
@@ -98,6 +103,7 @@ void subsampleSearch(SpeciesRaxArguments &arguments, char ** argv)
     Logger::info << "RecLL = " << speciesTreeOptimizer.getReconciliationLikelihood() << std::endl;
     Logger::info << "Joint LL = " << speciesTreeOptimizer.computeLikelihood(true) << std::endl;
   }
+
 }
 
 int speciesrax_main(int argc, char** argv, void* comm)

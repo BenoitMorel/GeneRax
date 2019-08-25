@@ -15,14 +15,15 @@ SpeciesRaxArguments::SpeciesRaxArguments(int iargc, char * iargv[]):
   reconciliationOpt(Simplex),
   output("SpeciesRax"),
   strategy(SIMPLE_SEARCH),
-  rootedGeneTree(true),
   perSpeciesDTLRates(false),
+  rootedGeneTree(true),
   userDTLRates(false),
   dupRate(1.0),
   lossRate(1.0),
   transferRate(0.0),
   fastRadius(6),
-  slowRadius(0)
+  slowRadius(0),
+  finalGeneRadius(0)
 {
   if (argc == 1) {
     printHelp();
@@ -64,6 +65,8 @@ SpeciesRaxArguments::SpeciesRaxArguments(int iargc, char * iargv[]):
       fastRadius = atoi(argv[++i]);
     } else if (arg == "--slow-radius") {
       slowRadius = atoi(argv[++i]);
+    } else if (arg == "--final-gene-radius") {
+      finalGeneRadius = atoi(argv[++i]);
     } else {
       Logger::error << "Unrecognized argument " << arg << std::endl;
       Logger::error << "Aborting" << std::endl;
@@ -120,6 +123,7 @@ void SpeciesRaxArguments::printHelp() {
   Logger::info << "--transferRate <transfer rate>" << std::endl;
   Logger::info << "--fast-radius <fastRadius>" << std::endl;
   Logger::info << "--slow-radius <slowRadius>" << std::endl;
+  Logger::info << "--final-gene-radius <final gene radius>" << std::endl;
   Logger::info << std::endl;
 
 }
@@ -146,5 +150,6 @@ void SpeciesRaxArguments::printSummary() {
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << std::endl;
   Logger::info << "Fast radius: " << fastRadius << std::endl;
   Logger::info << "Slow radius: " << slowRadius << std::endl;
+  Logger::info << "Final gene radius: " << finalGeneRadius << std::endl;
   Logger::info << std::endl;
 }

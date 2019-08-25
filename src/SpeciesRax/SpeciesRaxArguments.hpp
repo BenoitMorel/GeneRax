@@ -31,5 +31,6 @@ public:
    double transferRate;
    unsigned int fastRadius;
    unsigned int slowRadius;
+   unsigned int finalGeneRadius;
 };
 
