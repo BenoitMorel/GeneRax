@@ -37,7 +37,6 @@ void simpleSearch(SpeciesRaxArguments &arguments, char ** argv)
   Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
   Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
   initFamilies(arguments.output, initialFamilies);
-  Logger::perrank << "after init families rand " << rand() << std::endl;
   SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, UndatedDL, arguments.output, argv[0]);
   speciesTreeOptimizer.setPerSpeciesRatesOptimization(arguments.perSpeciesDTLRates); 
   for (unsigned int radius = 1; radius <= arguments.fastRadius; ++radius) {
