@@ -7,6 +7,7 @@
 #include <parallelization/ParallelContext.hpp>
 #include <IO/FileSystem.hpp>
 #include <set>
+#include <functional>
 
 
 SpeciesTree::SpeciesTree(const std::string &newick, bool fromFile):
@@ -352,4 +353,32 @@ void SpeciesTreeOperator::getPossibleRegrafts(SpeciesTree &speciesTree, unsigned
   recursiveGetNodes(getBrother(pruneNode)->right, 0, radius, regrafts, false);
 }
   
+static size_t leafHash(const pll_rnode_t *leaf) {
+  assert(leaf);
+  std::hash<std::string> hash_fn;
+  return hash_fn(std::string(leaf->label));
+}
+
+static size_t getTreeHashRec(const pll_rnode_t *node, size_t i) {
+  assert(node);
+  if (i == 0) 
+    i = 1;
+  if (!node->left) {
+    return leafHash(node);
+  }
+  auto hash1 = getTreeHashRec(node->left, i + 1);
+  auto hash2 = getTreeHashRec(node->right, i + 1);
+  //Logger::info << "(" << hash1 << "," << hash2 << ") ";
+  std::hash<size_t> hash_fn;
+  auto m = std::min(hash1, hash2);
+  auto M = std::max(hash1, hash2);
+  return hash_fn(m * i + M);
+}
+  
+size_t SpeciesTree::getHash() const
+{
+  auto res = getTreeHashRec(getRoot(), 0);
+  return res % 100000;
+  
+}
   

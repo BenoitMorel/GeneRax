@@ -42,6 +42,7 @@ public:
   }
 
   void saveToFile(const std::string &newick, bool masterRankOnly);
+  size_t getHash() const;
 private:
   pll_rtree_t *_speciesTree;
   DTLRatesVector _rates;

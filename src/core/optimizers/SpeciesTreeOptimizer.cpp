@@ -144,6 +144,7 @@ double SpeciesTreeOptimizer::sortedSprRound(int radius, double bestLL)
     unsigned int rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, em.prune, em.regraft);
     double newLL = computeLikelihood(true);
     if (newLL > bestLL + 0.001) {
+      Logger::info << "Best tree " << _speciesTree->getHash() << " ll=" << newLL << std::endl;
       saveCurrentSpeciesTree();
       optimizeGeneTrees(1, true);
       return newLL;
