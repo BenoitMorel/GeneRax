@@ -58,6 +58,7 @@ double ReconciliationEvaluation::evaluate(pll_utree_t *utree)
   if (!_infinitePrecision && !std::isnormal(res)) {
     updatePrecision(true);  
     res = _reconciliationModel->computeLogLikelihood(utree);
+    updatePrecision(false);  
   }
   return res;
 }
