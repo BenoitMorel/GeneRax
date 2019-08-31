@@ -58,8 +58,8 @@ static bool read_param(std::istringstream& s, std::string& val)
     // consume the opening bracket
     s.get();
 
-    char str[1024];
-    if (!s.getline(str, 1024, delim))
+    char str[50000];
+    if (!s.getline(str, 50000, delim))
       throw parse_error();
     val = str;
 
@@ -120,8 +120,8 @@ static bool read_param_file(std::istringstream& s, std::vector<T>& vec)
     // consume the opening bracket
     s.get();
 
-    char fname[1024];
-    s.getline(fname, 1024, delim);
+    char fname[50000];
+    s.getline(fname, 50000, delim);
     std::ifstream fs(fname);
     if (fs.good())
     {
