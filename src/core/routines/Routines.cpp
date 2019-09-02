@@ -60,14 +60,16 @@ void Routines::inferReconciliation(
   ParallelContext::barrier();
   for (auto &tree: geneTrees.getTrees()) {
     std::string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
-    std::string treeWithEventsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
+    std::string treeWithEventsFileNHX = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
+    std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.recml");
     Scenario scenario;
     ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
     evaluation.setRates(rates);
     evaluation.evaluate(tree.tree);
     evaluation.inferMLScenario(scenario);
     scenario.saveEventsCounts(eventCountsFile, false);
-    scenario.saveTreeWithEvents(treeWithEventsFile, false);
+    scenario.saveReconciliations(treeWithEventsFileNHX, NHX, false);
+    scenario.saveReconciliations(treeWithEventsFileRecPhyloXML, RecPhyloXML, false);
     for (auto &event: scenario.getEvents()) {
       if (event.type == Scenario::D) {
         dup_count[event.speciesNode]++;

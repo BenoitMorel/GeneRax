@@ -125,7 +125,7 @@ int internal_main(int argc, char** argv, void* comm)
       jointTree->inferMLScenario(scenario);
       Logger::info << std::endl;
       scenario.saveEventsCounts(eventCountsFile);
-      scenario.saveTreeWithEvents(treeWithEventsFile);
+      scenario.saveReconciliations(treeWithEventsFile, NHX);
     }
     firstRun = false;
   }  

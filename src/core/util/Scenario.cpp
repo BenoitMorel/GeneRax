@@ -35,13 +35,13 @@ void Scenario::saveEventsCounts(const std::string &filename, bool masterRankOnly
 }
 
 
-void Scenario::recursivelySaveTreeWithEvents(pll_unode_t *node, ParallelOfstream &os)
+void Scenario::recursivelySaveReconciliationsNHX(pll_unode_t *node, ParallelOfstream &os)
 {
   if(node->next) {
     os << "(";
-    recursivelySaveTreeWithEvents(node->next->back, os);
+    recursivelySaveReconciliationsNHX(node->next->back, os);
     os << ",";
-    recursivelySaveTreeWithEvents(node->next->next->back, os);
+    recursivelySaveReconciliationsNHX(node->next->next->back, os);
     os << ")";
   } 
   if (node->label) {
@@ -68,14 +68,34 @@ void Scenario::recursivelySaveTreeWithEvents(pll_unode_t *node, ParallelOfstream
     os << "]";
   }
 }
-
-void Scenario::saveTreeWithEvents(const std::string &filename, bool masterRankOnly)
+  
+void Scenario::saveReconciliationsNHX(const std::string &filename, bool masterRankOnly)
 {
   ParallelOfstream os(filename, masterRankOnly);
   os << "(";
-  recursivelySaveTreeWithEvents(_geneRoot, os);
+  recursivelySaveReconciliationsNHX(_geneRoot, os);
   os << ",";
-  recursivelySaveTreeWithEvents(_geneRoot->back, os);
+  recursivelySaveReconciliationsNHX(_geneRoot->back, os);
   os << ");";
+}
+
+void Scenario::saveReconciliationsRecPhyloXML(const std::string &filename, bool masterRankOnly)
+{
+  ParallelOfstream os(filename, masterRankOnly);
+  os << "<recPhylo xsi:schemaLocation=\"http://www.recg.org ./recGeneTreeXML.xsd\">" << std::endl;
+  
+  os << "</recPhylo";
+}
+
+void Scenario::saveReconciliations(const std::string &filename, ReconciliationFormat format, bool masterRankOnly)
+{
+  switch (format) {
+  case NHX:
+    saveReconciliationsNHX(filename, masterRankOnly);
+    break;
+  case RecPhyloXML:
+    saveReconciliationsRecPhyloXML(filename, masterRankOnly);
+    break;
+  }
 }
 

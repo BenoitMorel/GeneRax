@@ -37,3 +37,10 @@ enum Strategy {
 enum SpeciesRaxStrategy {
   SIMPLE_SEARCH, SUBSAMPLE_SEARCH
 };
+
+enum ReconciliationFormat {
+  NHX = 0, RecPhyloXML
+};
+
+
+

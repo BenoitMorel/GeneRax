@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <util/enums.hpp>
 #include <IO/ParallelOfstream.hpp>
 extern "C" {
 #include <pll.h>
@@ -22,7 +23,6 @@ public:
   enum EventType {
     S = 0 , SL, D, T, TL, None, Invalid
   };
-
   struct Event {
     Event(): type(S), geneNode(INVALID), speciesNode(INVALID), destSpeciesNode(INVALID) {}
     EventType type;
@@ -46,7 +46,7 @@ public:
 
   void saveEventsCounts(const std::string &filename, bool masterRankOnly = true); 
 
-  void saveTreeWithEvents(const std::string &filename, bool masterRankOnly = true);
+  void saveReconciliations(const std::string &filename, ReconciliationFormat format, bool masterRankOnly = true);
 
   const std::vector<Event> &getEvents() {return _events;}
 private:
@@ -56,7 +56,9 @@ private:
   std::vector<Event> _geneIdToEvent;
   pll_unode_t *_geneRoot;
   pll_rtree_t *_speciesTree;
-  void recursivelySaveTreeWithEvents(pll_unode_t *node, ParallelOfstream &os);
+  void saveReconciliationsNHX(const std::string &filename, bool masterRankOnly = true);
+  void saveReconciliationsRecPhyloXML(const std::string &filename, bool masterRankOnly = true);
+  void recursivelySaveReconciliationsNHX(pll_unode_t *node, ParallelOfstream &os);
 };
 
 
