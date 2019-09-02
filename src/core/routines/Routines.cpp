@@ -71,7 +71,7 @@ void Routines::inferReconciliation(
     scenario.saveReconciliations(treeWithEventsFileNHX, NHX, false);
     scenario.saveReconciliations(treeWithEventsFileRecPhyloXML, RecPhyloXML, false);
     for (auto &event: scenario.getEvents()) {
-      if (event.type == Scenario::D) {
+      if (event.type == EVENT_D) {
         dup_count[event.speciesNode]++;
       } 
     }

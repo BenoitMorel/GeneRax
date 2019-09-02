@@ -4,11 +4,11 @@
 const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "None", "Invalid"};
 
 
-void Scenario::addEvent(EventType type, unsigned int geneNode, unsigned int speciesNode) {
+void Scenario::addEvent(ReconciliationEventType type, unsigned int geneNode, unsigned int speciesNode) {
   addTransfer(type, geneNode, speciesNode, INVALID);
 }
   
-void Scenario::addTransfer(EventType type, 
+void Scenario::addTransfer(ReconciliationEventType type, 
   unsigned int geneNode, 
   unsigned int speciesNode, 
   unsigned int destSpeciesNode)
@@ -29,7 +29,7 @@ void Scenario::addTransfer(EventType type,
 
 void Scenario::saveEventsCounts(const std::string &filename, bool masterRankOnly) {
   ParallelOfstream os(filename, masterRankOnly);
-  for (unsigned int i = 0; i < static_cast<unsigned int>(Invalid); ++i) {
+  for (unsigned int i = 0; i < static_cast<unsigned int>(EVENT_Invalid); ++i) {
     os << eventNames[i] << ":" << _eventsCount[i] << std::endl;
   }
 }
@@ -56,9 +56,9 @@ void Scenario::recursivelySaveReconciliationsNHX(pll_unode_t *node, ParallelOfst
     if (_speciesTree->nodes[event.speciesNode]->label) {
       os << ":S=" << _speciesTree->nodes[event.speciesNode]->label;
     }
-    os << ":D=" << (event.type == D ? "Y" : "N" );
-    os << ":H=" << (event.type == T || event.type == TL ? "Y" : "N" );
-    if (event.type == T || event.type == TL) {
+    os << ":D=" << (event.type == EVENT_D ? "Y" : "N" );
+    os << ":H=" << (event.type == EVENT_T || event.type == EVENT_TL ? "Y" : "N" );
+    if (event.type == EVENT_T || event.type == EVENT_TL) {
       assert(_speciesTree->nodes[event.speciesNode]->label);
       assert(_speciesTree->nodes[event.destSpeciesNode]->label);
       os << "@" << _speciesTree->nodes[event.speciesNode]->label;

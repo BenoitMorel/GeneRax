@@ -232,7 +232,7 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
   bool isSpeciesLeaf = !speciesNode->left;
   
   if (isSpeciesLeaf and isGeneLeaf and e == this->geneToSpecies_[gid]) {
-    scenario.addEvent(Scenario::None, gid, e);
+    scenario.addEvent(EVENT_None, gid, e);
     return;
   }
   
@@ -287,43 +287,43 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
   pll_rnode_t *dest = 0;
   switch(maxValueIndex) {
     case 0: 
-      scenario.addEvent(Scenario::S, gid, e);
+      scenario.addEvent(EVENT_S, gid, e);
       backtrace(leftGeneNode, speciesNode->left, scenario); 
       backtrace(rightGeneNode, speciesNode->right, scenario); 
       break;
     case 1:
-      scenario.addEvent(Scenario::S, gid, e);
+      scenario.addEvent(EVENT_S, gid, e);
       backtrace(leftGeneNode, speciesNode->right, scenario); 
       backtrace(rightGeneNode, speciesNode->left, scenario); 
       break;
     case 2:
-      scenario.addEvent(Scenario::D, gid, e);
+      scenario.addEvent(EVENT_D, gid, e);
       backtrace(leftGeneNode, speciesNode, scenario); 
       backtrace(rightGeneNode, speciesNode, scenario); 
       break;
     case 3:
       dest =  getBestTransfer(u_left, speciesNode);
-      scenario.addTransfer(Scenario::T, gid, e, dest->node_index);
+      scenario.addTransfer(EVENT_T, gid, e, dest->node_index);
       backtrace(leftGeneNode, dest, scenario);
       backtrace(rightGeneNode, speciesNode, scenario);
       break;
     case 4:
       dest =  getBestTransfer(u_right, speciesNode);
-      scenario.addTransfer(Scenario::T, gid, e, dest->node_index);
+      scenario.addTransfer(EVENT_T, gid, e, dest->node_index);
       backtrace(rightGeneNode, dest, scenario);
       backtrace(leftGeneNode, speciesNode, scenario);
       break;
     case 5: 
-      scenario.addEvent(Scenario::SL, gid, e);
+      scenario.addEvent(EVENT_SL, gid, e);
       backtrace(geneNode, speciesNode->left, scenario); 
       break;
     case 6:
-      scenario.addEvent(Scenario::SL, gid, e);
+      scenario.addEvent(EVENT_SL, gid, e);
       backtrace(geneNode, speciesNode->right, scenario); 
       break;
     case 7:
       dest = getBestTransfer(gid, speciesNode);
-      scenario.addTransfer(Scenario::TL, gid, e, dest->node_index); 
+      scenario.addTransfer(EVENT_TL, gid, e, dest->node_index); 
       backtrace(geneNode, dest, scenario); 
       break;
     default:

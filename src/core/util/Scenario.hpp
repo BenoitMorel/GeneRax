@@ -20,26 +20,25 @@ class Scenario {
 public:
   static const unsigned int INVALID = static_cast<unsigned int>(-1);
 
-  enum EventType {
-    S = 0 , SL, D, T, TL, None, Invalid
-  };
+private:
   struct Event {
-    Event(): type(S), geneNode(INVALID), speciesNode(INVALID), destSpeciesNode(INVALID) {}
-    EventType type;
+    Event(): type(EVENT_S), geneNode(INVALID), speciesNode(INVALID), destSpeciesNode(INVALID) {}
+    ReconciliationEventType type;
     unsigned int geneNode;
     unsigned int speciesNode;
     unsigned int destSpeciesNode; // for transfers
   };
+public:
 
 
-  Scenario(): _eventsCount(static_cast<unsigned int>(Invalid), 0), _geneRoot(0) {}
+  Scenario(): _eventsCount(static_cast<unsigned int>(EVENT_Invalid), 0), _geneRoot(0) {}
  
   void setGeneRoot(pll_unode_t *geneRoot) {_geneRoot = geneRoot;}
   
   void setSpeciesTree(pll_rtree_t *speciesTree) {_speciesTree = speciesTree;}
 
-  void addEvent(EventType type, unsigned int geneNode, unsigned int speciesNode);
-  void addTransfer(EventType type, 
+  void addEvent(ReconciliationEventType type, unsigned int geneNode, unsigned int speciesNode);
+  void addTransfer(ReconciliationEventType type, 
     unsigned int geneNode, 
     unsigned int speciesNode, 
     unsigned int destSpeciesNode);

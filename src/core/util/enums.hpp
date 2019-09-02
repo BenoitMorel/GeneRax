@@ -43,4 +43,7 @@ enum ReconciliationFormat {
 };
 
 
+enum ReconciliationEventType {
+  EVENT_S = 0 , EVENT_SL, EVENT_D, EVENT_T, EVENT_TL, EVENT_None, EVENT_Invalid
+};
 
