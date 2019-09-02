@@ -6,6 +6,7 @@ set(jointsearch-core_SOURCES
   IO/LibpllParsers.cpp
   IO/Model.cpp
   IO/ParallelOfstream.cpp
+  IO/ReconciliationWriter.cpp
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ReconciliationEvaluation.cpp
   likelihoods/SubtreeRepeatsCache.cpp

@@ -3,7 +3,6 @@
 #include <vector>
 #include <string>
 #include <util/enums.hpp>
-#include <IO/ParallelOfstream.hpp>
 extern "C" {
 #include <pll.h>
 }
@@ -20,15 +19,14 @@ class Scenario {
 public:
   static const unsigned int INVALID = static_cast<unsigned int>(-1);
 
-private:
   struct Event {
     Event(): type(EVENT_S), geneNode(INVALID), speciesNode(INVALID), destSpeciesNode(INVALID) {}
     ReconciliationEventType type;
     unsigned int geneNode;
     unsigned int speciesNode;
     unsigned int destSpeciesNode; // for transfers
+    bool isValid() { return speciesNode != INVALID; }
   };
-public:
 
 
   Scenario(): _eventsCount(static_cast<unsigned int>(EVENT_Invalid), 0), _geneRoot(0) {}
@@ -45,7 +43,7 @@ public:
 
   void saveEventsCounts(const std::string &filename, bool masterRankOnly = true); 
 
-  void saveReconciliations(const std::string &filename, ReconciliationFormat format, bool masterRankOnly = true);
+  void saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly = true);
 
   const std::vector<Event> &getEvents() {return _events;}
 private:
@@ -55,9 +53,6 @@ private:
   std::vector<Event> _geneIdToEvent;
   pll_unode_t *_geneRoot;
   pll_rtree_t *_speciesTree;
-  void saveReconciliationsNHX(const std::string &filename, bool masterRankOnly = true);
-  void saveReconciliationsRecPhyloXML(const std::string &filename, bool masterRankOnly = true);
-  void recursivelySaveReconciliationsNHX(pll_unode_t *node, ParallelOfstream &os);
 };
 
 

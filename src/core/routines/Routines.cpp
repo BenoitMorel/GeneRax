@@ -68,8 +68,8 @@ void Routines::inferReconciliation(
     evaluation.evaluate(tree.tree);
     evaluation.inferMLScenario(scenario);
     scenario.saveEventsCounts(eventCountsFile, false);
-    scenario.saveReconciliations(treeWithEventsFileNHX, NHX, false);
-    scenario.saveReconciliations(treeWithEventsFileRecPhyloXML, RecPhyloXML, false);
+    scenario.saveReconciliation(treeWithEventsFileNHX, NHX, false);
+    scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, RecPhyloXML, false);
     for (auto &event: scenario.getEvents()) {
       if (event.type == EVENT_D) {
         dup_count[event.speciesNode]++;

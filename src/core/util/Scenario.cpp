@@ -1,5 +1,7 @@
 #include "util/Scenario.hpp"
 #include <IO/Logger.hpp>
+#include <IO/ReconciliationWriter.hpp>
+#include <IO/ParallelOfstream.hpp>
 
 const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "None", "Invalid"};
 
@@ -34,67 +36,14 @@ void Scenario::saveEventsCounts(const std::string &filename, bool masterRankOnly
   }
 }
 
-
-void Scenario::recursivelySaveReconciliationsNHX(pll_unode_t *node, ParallelOfstream &os)
-{
-  if(node->next) {
-    os << "(";
-    recursivelySaveReconciliationsNHX(node->next->back, os);
-    os << ",";
-    recursivelySaveReconciliationsNHX(node->next->next->back, os);
-    os << ")";
-  } 
-  if (node->label) {
-    os << node->label;
-  } else {
-    os << "n" << node->node_index; 
-  }
-  os << ":" << node->length;
-  Event event = _geneIdToEvent[node->node_index];
-  if (event.speciesNode != INVALID) {
-    os << "[&&NHX";
-    if (_speciesTree->nodes[event.speciesNode]->label) {
-      os << ":S=" << _speciesTree->nodes[event.speciesNode]->label;
-    }
-    os << ":D=" << (event.type == EVENT_D ? "Y" : "N" );
-    os << ":H=" << (event.type == EVENT_T || event.type == EVENT_TL ? "Y" : "N" );
-    if (event.type == EVENT_T || event.type == EVENT_TL) {
-      assert(_speciesTree->nodes[event.speciesNode]->label);
-      assert(_speciesTree->nodes[event.destSpeciesNode]->label);
-      os << "@" << _speciesTree->nodes[event.speciesNode]->label;
-      os << "@" << _speciesTree->nodes[event.destSpeciesNode]->label;
-    }
-    os << ":B=" << node->length;
-    os << "]";
-  }
-}
-  
-void Scenario::saveReconciliationsNHX(const std::string &filename, bool masterRankOnly)
-{
-  ParallelOfstream os(filename, masterRankOnly);
-  os << "(";
-  recursivelySaveReconciliationsNHX(_geneRoot, os);
-  os << ",";
-  recursivelySaveReconciliationsNHX(_geneRoot->back, os);
-  os << ");";
-}
-
-void Scenario::saveReconciliationsRecPhyloXML(const std::string &filename, bool masterRankOnly)
-{
-  ParallelOfstream os(filename, masterRankOnly);
-  os << "<recPhylo xsi:schemaLocation=\"http://www.recg.org ./recGeneTreeXML.xsd\">" << std::endl;
-  
-  os << "</recPhylo";
-}
-
-void Scenario::saveReconciliations(const std::string &filename, ReconciliationFormat format, bool masterRankOnly)
+void Scenario::saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly)
 {
   switch (format) {
   case NHX:
-    saveReconciliationsNHX(filename, masterRankOnly);
+    ReconciliationWriter::saveReconciliationNHX(_speciesTree, _geneRoot, _geneIdToEvent, filename, masterRankOnly);
     break;
   case RecPhyloXML:
-    saveReconciliationsRecPhyloXML(filename, masterRankOnly);
+    ReconciliationWriter::saveReconciliationRecPhyloXML(_speciesTree, _geneRoot, _geneIdToEvent, filename, masterRankOnly);
     break;
   }
 }
