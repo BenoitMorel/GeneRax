@@ -7,18 +7,20 @@ const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "None", "Inval
 
 
 void Scenario::addEvent(ReconciliationEventType type, unsigned int geneNode, unsigned int speciesNode) {
-  addTransfer(type, geneNode, speciesNode, INVALID);
+  addTransfer(type, geneNode, speciesNode, INVALID, INVALID);
 }
   
 void Scenario::addTransfer(ReconciliationEventType type, 
   unsigned int geneNode, 
   unsigned int speciesNode, 
+    unsigned int transferedGeneNode,
   unsigned int destSpeciesNode)
 {
   Event event;
   event.type = type;
   event.geneNode = geneNode;
   event.speciesNode = speciesNode;
+  event.transferedGeneNode = transferedGeneNode;
   event.destSpeciesNode = destSpeciesNode;
   _events.push_back(event);
   assert(static_cast<int>(type) >= 0);

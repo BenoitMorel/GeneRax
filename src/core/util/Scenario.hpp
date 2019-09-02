@@ -20,10 +20,11 @@ public:
   static const unsigned int INVALID = static_cast<unsigned int>(-1);
 
   struct Event {
-    Event(): type(EVENT_S), geneNode(INVALID), speciesNode(INVALID), destSpeciesNode(INVALID) {}
+    Event(): type(EVENT_S), geneNode(INVALID), speciesNode(INVALID), transferedGeneNode(INVALID), destSpeciesNode(INVALID) {}
     ReconciliationEventType type;
     unsigned int geneNode;
     unsigned int speciesNode;
+    unsigned int transferedGeneNode; 
     unsigned int destSpeciesNode; // for transfers
     bool isValid() { return speciesNode != INVALID; }
   };
@@ -39,6 +40,7 @@ public:
   void addTransfer(ReconciliationEventType type, 
     unsigned int geneNode, 
     unsigned int speciesNode, 
+    unsigned int transferedGeneNode,
     unsigned int destSpeciesNode);
 
   void saveEventsCounts(const std::string &filename, bool masterRankOnly = true); 
