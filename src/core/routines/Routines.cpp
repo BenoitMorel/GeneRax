@@ -61,7 +61,7 @@ void Routines::inferReconciliation(
   for (auto &tree: geneTrees.getTrees()) {
     std::string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
     std::string treeWithEventsFileNHX = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
-    std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.recml");
+    std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.xml");
     Scenario scenario;
     ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
     evaluation.setRates(rates);
