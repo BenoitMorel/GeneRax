@@ -81,15 +81,16 @@ static void saveSpeciesTreeRecPhyloXML(pll_rtree_t *speciesTree, ParallelOfstrea
 static void writeEventRecPhyloXML(pll_unode_t *geneTree,
     pll_rtree_t *speciesTree, 
     Scenario::Event  &event,
-    const Scenario::Event &previousEvent,
+    const Scenario::Event *previousEvent,
     std::string &indent, 
     ParallelOfstream &os)
 {
   auto species = speciesTree->nodes[event.speciesNode];
   pll_rnode_t *speciesOut = 0;
   os << indent << "<eventsRec>" << std::endl;
-  if (previousEvent.type == EVENT_T && geneTree->node_index == previousEvent.transferedGeneNode) {
-    auto previousEventSpeciesOut = speciesTree->nodes[previousEvent.destSpeciesNode];
+  bool previousWasTransfer = previousEvent->type == EVENT_T || previousEvent->type == EVENT_TL;
+  if (previousWasTransfer && geneTree->node_index == previousEvent->transferedGeneNode && event.type != EVENT_L) {
+    auto previousEventSpeciesOut = speciesTree->nodes[previousEvent->destSpeciesNode];
     os << indent << "\t<transferBack destinationSpecies=\"" << previousEventSpeciesOut->label << "\"/>" << std::endl;
   }
   
@@ -105,7 +106,7 @@ static void writeEventRecPhyloXML(pll_unode_t *geneTree,
   case EVENT_D:
     os << indent << "\t<duplication speciesLocation=\"" << species->label << "\"/>" << std::endl;
     break;
-  case EVENT_T:
+  case EVENT_T: case EVENT_TL:
     speciesOut = speciesTree->nodes[event.speciesNode];
     os << indent << "\t<branchingOut speciesLocation=\"" << speciesOut->label << "\"/>" << std::endl;
     break; 
@@ -124,7 +125,7 @@ static void writeEventRecPhyloXML(pll_unode_t *geneTree,
 static void recursivelySaveGeneTreeRecPhyloXML(pll_unode_t *geneTree, 
     pll_rtree_t *speciesTree, 
     std::vector<std::vector<Scenario::Event> > &geneToEvents,
-    const Scenario::Event &previousEvent,
+    const Scenario::Event *previousEvent,
     std::string &indent,
     ParallelOfstream &os)
 {
@@ -138,12 +139,17 @@ static void recursivelySaveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
     auto &event = events[i];
     os << indent << "<name>" << (geneTree->label ? geneTree->label : "NULL") << "</name>" << std::endl;
     writeEventRecPhyloXML(geneTree, speciesTree, event, previousEvent, indent, os);  
-    if (event.type == EVENT_SL) {
+    previousEvent = &event;
+    if (event.type == EVENT_SL || event.type == EVENT_TL) {
       Scenario::Event loss;
       loss.type = EVENT_L;
-      auto parentSpecies = speciesTree->nodes[event.speciesNode];
-      auto lostSpecies = (parentSpecies->left->node_index == event.destSpeciesNode) ? parentSpecies->right : parentSpecies->left;
-      loss.speciesNode = lostSpecies->node_index;
+      if (event.type == EVENT_SL) {
+        auto parentSpecies = speciesTree->nodes[event.speciesNode];
+        auto lostSpecies = (parentSpecies->left->node_index == event.destSpeciesNode) ? parentSpecies->right : parentSpecies->left;
+        loss.speciesNode = lostSpecies->node_index;
+      } else if (event.type == EVENT_TL) {
+        loss.speciesNode = event.speciesNode;
+      }
       indent += "\t";
       os << indent << "<clade>" << std::endl;
       os << indent << "<name>loss</name>" << std::endl;
@@ -151,7 +157,7 @@ static void recursivelySaveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
       indent.pop_back();
       os << indent << "</clade>" << std::endl;
     } else {
-      assert(false);
+      assert(false); 
     }
   }
 
@@ -162,8 +168,8 @@ static void recursivelySaveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
   writeEventRecPhyloXML(geneTree, speciesTree, event, previousEvent, indent, os);  
 
   if (geneTree->next) {
-    recursivelySaveGeneTreeRecPhyloXML(geneTree->next->back, speciesTree, geneToEvents, event, indent, os);
-    recursivelySaveGeneTreeRecPhyloXML(geneTree->next->next->back, speciesTree, geneToEvents, event, indent, os);
+    recursivelySaveGeneTreeRecPhyloXML(geneTree->next->back, speciesTree, geneToEvents, &event, indent, os);
+    recursivelySaveGeneTreeRecPhyloXML(geneTree->next->next->back, speciesTree, geneToEvents, &event, indent, os);
   }
   for (unsigned int i = 0; i < events.size() - 1; ++i) {
     indent.pop_back();
@@ -183,7 +189,7 @@ static void saveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
   std::string indent;
   Scenario::Event noEvent;
   noEvent.type = EVENT_None;
-  recursivelySaveGeneTreeRecPhyloXML(geneTree, speciesTree, geneToEvents, noEvent, indent, os); 
+  recursivelySaveGeneTreeRecPhyloXML(geneTree, speciesTree, geneToEvents, &noEvent, indent, os); 
   os << "</phylogeny>" << std::endl;
   os << "</recGeneTree>" << std::endl;
 }
@@ -203,13 +209,5 @@ void ReconciliationWriter::saveReconciliationRecPhyloXML(pll_rtree_t *speciesTre
   saveGeneTreeRecPhyloXML(geneRoot, speciesTree, geneToEvents, os);
   os << "</recPhylo>";
 
-  const char *eventNames[]  = {"S", "SL", "D", "T", "TL", "Leaf", "Invalid"};
-  std::cerr << filename << std::endl;
-  for (auto &events: geneToEvents) {
-    for (auto &event: events) {
-      std::cerr << eventNames[event.type] << " ";
-    }
-    std::cerr << std::endl; 
-  }
 }
 

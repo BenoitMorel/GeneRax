@@ -18,7 +18,6 @@ void Scenario::addTransfer(ReconciliationEventType type,
     unsigned int transferedGeneNode,
   unsigned int destSpeciesNode)
 {
-  std::cerr << "Add " << eventNames[type] << std::endl;
   Event event;
   event.type = type;
   event.geneNode = geneNode;

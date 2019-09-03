@@ -26,7 +26,7 @@ void filterFamilies(Families &families)
     }
   }
   if (invalid) {
-    Logger::error << "Found " << invalid << " invalid families (they will be discarded from the analysis)" << std::endl;
+    Logger::info << "WARNING!!! Found " << invalid << " invalid families (they will be discarded from the analysis)" << std::endl;
   }   
 }
 
