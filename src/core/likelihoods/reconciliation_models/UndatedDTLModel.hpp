@@ -65,7 +65,18 @@ private:
     const std::vector<REAL> &probabilities);
   void resetTransferSums(REAL &transferSum,
     std::vector<REAL> &ancestralCorrection);
-  
+  void getBestTransfer(pll_unode_t *parentGeneNode, 
+    pll_rnode_t *originSpeciesNode,
+    bool isVirtualRoot,
+    pll_unode_t *&transferedGene,
+    pll_unode_t *&stayingGene,
+    pll_rnode_t *&recievingSpecies,
+    REAL &proba);
+  void getBestTransferLoss(pll_unode_t *parentGeneNode, 
+    pll_rnode_t *originSpeciesNode,
+    pll_rnode_t *&recievingSpecies,
+    REAL &proba);
+    
   REAL getCorrectedTransferExtinctionSum(unsigned int speciesNode) const {
   return _transferExtinctionSum - _ancestralExctinctionCorrection[speciesNode];
   }
@@ -76,7 +87,6 @@ private:
 
   }
 
-  pll_rnode_t *getBestTransfer(unsigned int gid, pll_rnode_t *speciesNode); 
 };
 
 
@@ -200,25 +210,71 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
   }
 }
 
+
 template <class REAL>
-pll_rnode_t *UndatedDTLModel<REAL>::getBestTransfer(unsigned int gid, pll_rnode_t *speciesNode) 
+void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode, 
+  pll_rnode_t *originSpeciesNode,
+  bool isVirtualRoot,
+  pll_unode_t *&transferedGene,
+  pll_unode_t *&stayingGene,
+  pll_rnode_t *&recievingSpecies,
+  REAL &proba)
 {
+  proba = REAL();
+  auto e = originSpeciesNode->node_index;
+  auto u_left = this->getLeft(parentGeneNode, isVirtualRoot);
+  auto u_right = this->getRight(parentGeneNode, isVirtualRoot);
   std::unordered_set<unsigned int> parents;
-  for (auto parent = speciesNode; parent->parent != 0; parent = parent->parent) {
+  for (auto parent = originSpeciesNode; parent->parent != 0; parent = parent->parent) {
     parents.insert(parent->node_index);
   }
-  pll_rnode_t *bestSpecies = 0;
-  REAL bestProba = REAL();
-  for (auto node: this->speciesNodes_) {
-    if (parents.count(node->node_index)) {
+  for (auto species: this->speciesNodes_) {
+    auto h = species->node_index;
+    if (parents.count(h)) {
       continue;
     }
-    if (bestProba < _uq[gid][node->node_index]) {
-      bestProba = _uq[gid][node->node_index];
-      bestSpecies = node;
+    double factor = _PT[e] / static_cast<double>(this->speciesNodes_.size());
+    REAL probaLeftTransfered = (_uq[u_left->node_index][h] * _uq[u_right->node_index][e]) * factor;
+    REAL probaRightTransfered = (_uq[u_right->node_index][h] * _uq[u_left->node_index][e]) * factor;
+    if (proba < probaLeftTransfered) {
+      proba = probaLeftTransfered;
+      transferedGene = u_left;
+      stayingGene = u_right;
+      recievingSpecies = species;
     }
-  } 
-  return bestSpecies;
+    if (proba < probaRightTransfered) {
+      proba = probaRightTransfered;
+      transferedGene = u_right;
+      stayingGene = u_left;
+      recievingSpecies = species;
+    }
+  }
+}
+
+template <class REAL>
+void UndatedDTLModel<REAL>::getBestTransferLoss(pll_unode_t *parentGeneNode, 
+  pll_rnode_t *originSpeciesNode,
+  pll_rnode_t *&recievingSpecies,
+  REAL &proba)
+{
+  proba = REAL();
+  auto e = originSpeciesNode->node_index;
+  std::unordered_set<unsigned int> parents;
+  for (auto parent = originSpeciesNode; parent->parent != 0; parent = parent->parent) {
+    parents.insert(parent->node_index);
+  }
+  for (auto species: this->speciesNodes_) {
+    auto h = species->node_index;
+    if (parents.count(h)) {
+      continue;
+    }
+    REAL factor = _uE[e] * (_PT[e] / static_cast<double>(this->speciesNodes_.size()));
+    REAL newProba = _uq[parentGeneNode->node_index][h] * factor;  
+    if (proba < newProba) {
+      proba = newProba;
+      recievingSpecies = species;
+    }
+  }
 }
 
 template <class REAL>
@@ -252,6 +308,10 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
   }
   
   std::vector<REAL> values(8);
+  // for transfers only:
+  pll_unode_t *transferedGene = 0;
+  pll_unode_t *stayingGene = 0;
+  pll_rnode_t *recievingSpecies = 0; 
   if (not isGeneLeaf) {
     // S event
     u_left = leftGeneNode->node_index;
@@ -265,16 +325,16 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
     values[2] *= _uq[u_right][e];
     values[2] *= _PD[e];
     // T event
-    // @todobenoit we should actually look at the max value and not at the sum here
-    values[3] = getCorrectedTransferSum(u_left, e) * _uq[u_right][e]; 
-    values[4] = getCorrectedTransferSum(u_right, e) * _uq[u_left][e]; 
+    getBestTransfer(geneNode, speciesNode, isVirtualRoot, transferedGene, stayingGene, recievingSpecies, values[5]);
+    //values[5] = getCorrectedTransferSum(u_left, e) * _uq[u_right][e]; 
+    //values[6] = getCorrectedTransferSum(u_right, e) * _uq[u_left][e]; 
   }
   if (not isSpeciesLeaf) {
     // SL event
-    values[5] = _uq[gid][f] * _uE[g] * _PS[e];
-    values[6] = _uq[gid][g] * _uE[f] * _PS[e];
+    values[3] = _uq[gid][f] * _uE[g] * _PS[e];
+    values[4] = _uq[gid][g] * _uE[f] * _PS[e];
   }
-  values[7] = getCorrectedTransferSum(gid, e) * _uE[e];
+  getBestTransferLoss(geneNode, speciesNode, recievingSpecies, values[6]);
 
   unsigned int maxValueIndex = static_cast<unsigned int>(distance(values.begin(), max_element(values.begin(), values.end())));
   // safety check
@@ -284,7 +344,6 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
     std::cerr << "warning: null ll scenario " << _uq[gid][e] << " " << proba  << std::endl;
     assert(false);
   }
-  pll_rnode_t *dest = 0;
   switch(maxValueIndex) {
     case 0: 
       scenario.addEvent(EVENT_S, gid, e);
@@ -301,30 +360,22 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
       backtrace(leftGeneNode, speciesNode, scenario); 
       backtrace(rightGeneNode, speciesNode, scenario); 
       break;
-    case 3:
-      dest =  getBestTransfer(u_left, speciesNode);
-      scenario.addTransfer(EVENT_T, gid, e, u_left, dest->node_index);
-      backtrace(leftGeneNode, dest, scenario);
-      backtrace(rightGeneNode, speciesNode, scenario);
-      break;
-    case 4:
-      dest =  getBestTransfer(u_right, speciesNode);
-      scenario.addTransfer(EVENT_T, gid, e, u_right, dest->node_index);
-      backtrace(rightGeneNode, dest, scenario);
-      backtrace(leftGeneNode, speciesNode, scenario);
-      break;
-    case 5: 
+    case 3: 
       scenario.addEvent(EVENT_SL, gid, e, speciesNode->left->node_index);
       backtrace(geneNode, speciesNode->left, scenario); 
       break;
-    case 6:
+    case 4:
       scenario.addEvent(EVENT_SL, gid, e, speciesNode->right->node_index);
       backtrace(geneNode, speciesNode->right, scenario); 
       break;
-    case 7:
-      dest = getBestTransfer(gid, speciesNode);
-      scenario.addTransfer(EVENT_TL, gid, e, gid, dest->node_index); 
-      backtrace(geneNode, dest, scenario); 
+    case 5:
+      scenario.addTransfer(EVENT_T, gid, e, transferedGene->node_index, recievingSpecies->node_index);
+      backtrace(transferedGene, recievingSpecies, scenario);
+      backtrace(stayingGene, speciesNode, scenario);
+      break;
+    case 6:
+      scenario.addTransfer(EVENT_TL, gid, e, gid, recievingSpecies->node_index); 
+      backtrace(geneNode, recievingSpecies, scenario); 
       break;
     default:
       std::cerr << "event " << maxValueIndex << std::endl;
