@@ -186,7 +186,7 @@ void UndatedDLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *species
     assert(false);
   }
   switch(maxValueIndex) {
-    case 0: 
+    case 0:
       scenario.addEvent(EVENT_S, gid, e);
       backtrace(leftGeneNode, speciesNode->left, scenario); 
       backtrace(rightGeneNode, speciesNode->right, scenario); 

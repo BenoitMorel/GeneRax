@@ -47,7 +47,7 @@ void Scenario::saveReconciliation(const std::string &filename, ReconciliationFor
     ReconciliationWriter::saveReconciliationNHX(_speciesTree, _geneRoot, _geneIdToEvents, filename, masterRankOnly);
     break;
   case RecPhyloXML:
-    ReconciliationWriter::saveReconciliationRecPhyloXML(_speciesTree, _geneRoot, _geneIdToEvents, filename, masterRankOnly);
+    ReconciliationWriter::saveReconciliationRecPhyloXML(_speciesTree, _geneRoot, _virtualRootIndex, _geneIdToEvents, filename, masterRankOnly);
     break;
   }
 }

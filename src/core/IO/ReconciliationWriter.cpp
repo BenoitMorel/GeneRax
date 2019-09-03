@@ -73,6 +73,7 @@ static void saveSpeciesTreeRecPhyloXML(pll_rtree_t *speciesTree, ParallelOfstrea
   os << "<spTree>" << std::endl;
   os << "<phylogeny>" << std::endl;
   std::string indent = "";
+  
   recursivelySaveSpeciesTreeRecPhyloXML(speciesTree->root, indent, os);
   os << "</phylogeny>" << std::endl;
   os << "</spTree>" << std::endl;
@@ -123,6 +124,7 @@ static void writeEventRecPhyloXML(pll_unode_t *geneTree,
 }
 
 static void recursivelySaveGeneTreeRecPhyloXML(pll_unode_t *geneTree, 
+    bool isVirtualRoot,
     pll_rtree_t *speciesTree, 
     std::vector<std::vector<Scenario::Event> > &geneToEvents,
     const Scenario::Event *previousEvent,
@@ -168,8 +170,14 @@ static void recursivelySaveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
   writeEventRecPhyloXML(geneTree, speciesTree, event, previousEvent, indent, os);  
 
   if (geneTree->next) {
-    recursivelySaveGeneTreeRecPhyloXML(geneTree->next->back, speciesTree, geneToEvents, &event, indent, os);
-    recursivelySaveGeneTreeRecPhyloXML(geneTree->next->next->back, speciesTree, geneToEvents, &event, indent, os);
+    auto left = geneTree->next->back;
+    auto right = geneTree->next->next->back;
+    if (isVirtualRoot) {
+      left = geneTree->next;
+      right = geneTree->next->back;
+    }
+    recursivelySaveGeneTreeRecPhyloXML(left, false, speciesTree, geneToEvents, &event, indent, os);
+    recursivelySaveGeneTreeRecPhyloXML(right, false, speciesTree, geneToEvents, &event, indent, os);
   }
   for (unsigned int i = 0; i < events.size() - 1; ++i) {
     indent.pop_back();
@@ -180,6 +188,7 @@ static void recursivelySaveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
 }
 
 static void saveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
+    unsigned int virtualRootIndex,
     pll_rtree_t *speciesTree,
     std::vector<std::vector<Scenario::Event> > &geneToEvents, 
     ParallelOfstream &os)
@@ -189,13 +198,17 @@ static void saveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
   std::string indent;
   Scenario::Event noEvent;
   noEvent.type = EVENT_None;
-  recursivelySaveGeneTreeRecPhyloXML(geneTree, speciesTree, geneToEvents, &noEvent, indent, os); 
+  pll_unode_t virtualRoot;
+  virtualRoot.next = geneTree;
+  virtualRoot.node_index = virtualRootIndex;
+  recursivelySaveGeneTreeRecPhyloXML(&virtualRoot, true, speciesTree, geneToEvents, &noEvent, indent, os); 
   os << "</phylogeny>" << std::endl;
   os << "</recGeneTree>" << std::endl;
 }
 
 void ReconciliationWriter::saveReconciliationRecPhyloXML(pll_rtree_t *speciesTree, 
     pll_unode_t *geneRoot, 
+    unsigned int virtualRootIndex,
     std::vector<std::vector<Scenario::Event> > &geneToEvents, 
     const std::string &filename, 
     bool masterRankOnly) 
@@ -206,7 +219,7 @@ void ReconciliationWriter::saveReconciliationRecPhyloXML(pll_rtree_t *speciesTre
   os << "\txsi:schemaLocation=\"http://www.recg.org ./recGeneTreeXML.xsd\"" << std::endl;
   os << "\txmlns=\"http://www.recg.org\">" << std::endl;
   saveSpeciesTreeRecPhyloXML(speciesTree, os);
-  saveGeneTreeRecPhyloXML(geneRoot, speciesTree, geneToEvents, os);
+  saveGeneTreeRecPhyloXML(geneRoot, virtualRootIndex, speciesTree, geneToEvents, os);
   os << "</recPhylo>";
 
 }

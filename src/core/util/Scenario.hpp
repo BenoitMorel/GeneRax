@@ -30,11 +30,12 @@ public:
   };
 
 
-  Scenario(): _eventsCount(static_cast<unsigned int>(EVENT_Invalid), 0), _geneRoot(0) {}
+  Scenario(): _eventsCount(static_cast<unsigned int>(EVENT_Invalid), 0), _geneRoot(0), _virtualRootIndex(-1) {}
  
   void setGeneRoot(pll_unode_t *geneRoot) {_geneRoot = geneRoot;}
   
   void setSpeciesTree(pll_rtree_t *speciesTree) {_speciesTree = speciesTree;}
+  void setVirtualRootIndex(unsigned int virtualRootIndex) {_virtualRootIndex = virtualRootIndex;}
 
   void addEvent(ReconciliationEventType type, unsigned int geneNode, unsigned int speciesNode, unsigned int destSpeciesNode = INVALID);
   void addTransfer(ReconciliationEventType type, 
@@ -54,6 +55,7 @@ private:
   std::vector<std::vector<Event> > _geneIdToEvents;
   pll_unode_t *_geneRoot;
   pll_rtree_t *_speciesTree;
+  unsigned int _virtualRootIndex;
 };
 
 

@@ -493,6 +493,7 @@ void AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario)
   pll_unode_t virtualRoot;
   virtualRoot.next = geneRoot;
   virtualRoot.node_index = geneRoot->node_index + _maxGeneId + 1;
+  scenario.setVirtualRootIndex(virtualRoot.node_index);
   backtrace(&virtualRoot, speciesRoot, scenario, true);
 }
   

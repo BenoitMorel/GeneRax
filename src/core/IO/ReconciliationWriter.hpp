@@ -18,6 +18,7 @@ public:
 
   static void saveReconciliationRecPhyloXML(pll_rtree_t *speciesTree,  
       pll_unode_t *geneRoot, 
+      unsigned int virtualRootIndex,
       std::vector<std::vector<Scenario::Event> > &geneToEvent, 
       const std::string &filename,
       bool masterRankOnly); 
