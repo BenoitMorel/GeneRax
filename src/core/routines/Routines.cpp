@@ -69,7 +69,7 @@ void Routines::inferReconciliation(
     evaluation.inferMLScenario(scenario);
     scenario.saveEventsCounts(eventCountsFile, false);
     scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, RecPhyloXML, false);
-    //scenario.saveReconciliation(treeWithEventsFileNHX, NHX, false);
+    scenario.saveReconciliation(treeWithEventsFileNHX, NHX, false);
   }
   auto initialSpeciesTreeStr = pll_rtree_export_newick(speciesTree->root, 0);
   free(initialSpeciesTreeStr);

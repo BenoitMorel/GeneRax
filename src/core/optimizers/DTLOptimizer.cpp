@@ -198,6 +198,7 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
       break;
     }
   }
+  Logger::info << "Best rates " << best << std::endl;
   return best; 
 }
   
