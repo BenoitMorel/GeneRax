@@ -314,11 +314,11 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
       backtrace(leftGeneNode, speciesNode, scenario);
       break;
     case 5: 
-      scenario.addEvent(EVENT_SL, gid, e);
+      scenario.addEvent(EVENT_SL, gid, e, speciesNode->left->node_index);
       backtrace(geneNode, speciesNode->left, scenario); 
       break;
     case 6:
-      scenario.addEvent(EVENT_SL, gid, e);
+      scenario.addEvent(EVENT_SL, gid, e, speciesNode->right->node_index);
       backtrace(geneNode, speciesNode->right, scenario); 
       break;
     case 7:
