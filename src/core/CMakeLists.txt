@@ -1,5 +1,6 @@
 
 set(jointsearch-core_SOURCES 
+  families/Families.cpp
   IO/Logger.cpp
   IO/GeneSpeciesMapping.cpp
   IO/FamiliesFileParser.cpp

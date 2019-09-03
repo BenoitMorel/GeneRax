@@ -82,6 +82,9 @@ public:
 
   std::string getModelStr();
 
+  static bool isValidAlignment(const std::string &alignmentFilename,
+      const std::string &modelStr);
+
 private:
   /**
    * Constructors
@@ -95,6 +98,11 @@ private:
    */
   static void setMissingBL(pll_utree_t * tree, 
     double length);
+
+  static void parseMSA(const std::string &alignmentFilename, 
+    const pll_state_t *stateMap,
+    pll_sequences &sequences,
+    unsigned int *&weights);
 
   /**
    *  parse sequences and pattern weights from fasta file

@@ -5,7 +5,6 @@
 
 
 
-
 struct FamilyInfo {
   std::string name;
   std::string startingGeneTree;
@@ -27,5 +26,6 @@ struct FamilyInfo {
 };
 
 typedef std::vector<FamilyInfo> Families;
+void filterFamilies(Families &families);
 
 

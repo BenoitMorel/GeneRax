@@ -113,6 +113,27 @@ void LibpllEvaluation::createAndSaveRandomTree(const std::string &alignmentFilen
   auto evaluation = buildFromString("__random__", alignmentFilename, modelStrOrFile);
   LibpllParsers::saveUtree(evaluation->_utree->nodes[0], outputTreeFile, false);
 }
+  
+
+
+bool LibpllEvaluation::isValidAlignment(const std::string &alignmentFilename,
+    const std::string &modelStr)
+{
+  Model model(modelStr);
+  pll_sequences sequences;
+  unsigned int *patternWeights = nullptr;
+  bool res = true;
+  try {
+    parseMSA(alignmentFilename, model.charmap(), sequences, patternWeights);
+    if (sequences.size() < 3) {
+      res = false;
+    }
+  } catch (...) {
+    res = false;
+  }
+  free(patternWeights);
+  return res;
+}
 
 std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::string &newickString,
     const std::string& alignmentFilename,
@@ -132,17 +153,7 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::s
   assert(model.num_submodels() == 1);
   pll_utree_t *utree = 0;
   {
-    if (!std::ifstream(alignmentFilename.c_str()).good()) {
-      throw LibpllException("Alignment file " + alignmentFilename + "does not exist");
-    }
-    try {
-      parseFasta(alignmentFilename.c_str(),
-          model.charmap(), sequences, patternWeights);
-    } catch (...) {
-      parsePhylip(alignmentFilename.c_str(),
-          model.charmap(), sequences,
-          patternWeights);
-    }
+    parseMSA(alignmentFilename, model.charmap(), sequences, patternWeights);
     // tree
     if (newickString == "__random__") {
       std::vector<const char*> labels;
@@ -298,6 +309,24 @@ void LibpllEvaluation::setMissingBL(pll_utree_t * tree,
     if (0.0 == tree->nodes[i]->next->next->length)
       tree->nodes[i]->next->next->length = length;
   }  
+}
+
+void LibpllEvaluation::parseMSA(const std::string &alignmentFilename, 
+    const pll_state_t *stateMap,
+    pll_sequences &sequences,
+    unsigned int *&weights)
+{
+  if (!std::ifstream(alignmentFilename.c_str()).good()) {
+    throw LibpllException("Alignment file " + alignmentFilename + "does not exist");
+  }
+  try {
+    parseFasta(alignmentFilename.c_str(),
+        stateMap, sequences, weights);
+  } catch (...) {
+    parsePhylip(alignmentFilename.c_str(),
+        stateMap, sequences,
+        weights);
+  }
 }
 
 void LibpllEvaluation::parseFasta(const char *fastaFile, 

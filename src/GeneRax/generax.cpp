@@ -135,6 +135,7 @@ int generax_main(int argc, char** argv, void* comm)
   LibpllParsers::labelRootedTree(arguments.speciesTree, labelledSpeciesTree);
   arguments.speciesTree = labelledSpeciesTree;
   Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
+  filterFamilies(initialFamilies);
   Logger::timed << "Number of gene families: " << initialFamilies.size() << std::endl;
   initFolders(arguments.output, initialFamilies);
   switch (arguments.strategy) {
