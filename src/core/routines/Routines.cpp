@@ -70,13 +70,7 @@ void Routines::inferReconciliation(
     scenario.saveEventsCounts(eventCountsFile, false);
     scenario.saveReconciliation(treeWithEventsFileNHX, NHX, false);
     scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, RecPhyloXML, false);
-    for (auto &event: scenario.getEvents()) {
-      if (event.type == EVENT_D) {
-        dup_count[event.speciesNode]++;
-      } 
-    }
   }
-  ParallelContext::sumVectorDouble(dup_count);
   auto initialSpeciesTreeStr = pll_rtree_export_newick(speciesTree->root, 0);
   free(initialSpeciesTreeStr);
   auto speciesTreeStr = pll_rtree_export_newick(speciesTree->root, 0);

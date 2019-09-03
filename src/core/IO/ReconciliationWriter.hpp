@@ -12,13 +12,13 @@ class ReconciliationWriter {
 public:
   static void saveReconciliationNHX(pll_rtree_t *speciesTree,  
       pll_unode_t *geneRoot, 
-      std::vector<Scenario::Event> &events, 
+      std::vector<std::vector<Scenario::Event> > &geneToEvent, 
       const std::string &filename,
       bool masterRankOnly); 
 
   static void saveReconciliationRecPhyloXML(pll_rtree_t *speciesTree,  
       pll_unode_t *geneRoot, 
-      std::vector<Scenario::Event> &events, 
+      std::vector<std::vector<Scenario::Event> > &geneToEvent, 
       const std::string &filename,
       bool masterRankOnly); 
 };

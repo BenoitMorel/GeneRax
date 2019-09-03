@@ -3,11 +3,13 @@
 #include <IO/ReconciliationWriter.hpp>
 #include <IO/ParallelOfstream.hpp>
 
-const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "None", "Invalid"};
+const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "Leaf", "Invalid"};
 
 
-void Scenario::addEvent(ReconciliationEventType type, unsigned int geneNode, unsigned int speciesNode) {
-  addTransfer(type, geneNode, speciesNode, INVALID, INVALID);
+void Scenario::addEvent(ReconciliationEventType type, unsigned int geneNode, unsigned int speciesNode, unsigned int destSpeciesNode) 
+{
+  
+  addTransfer(type, geneNode, speciesNode, INVALID, destSpeciesNode);
 }
   
 void Scenario::addTransfer(ReconciliationEventType type, 
@@ -16,6 +18,7 @@ void Scenario::addTransfer(ReconciliationEventType type,
     unsigned int transferedGeneNode,
   unsigned int destSpeciesNode)
 {
+  std::cerr << "Add " << eventNames[type] << std::endl;
   Event event;
   event.type = type;
   event.geneNode = geneNode;
@@ -25,10 +28,10 @@ void Scenario::addTransfer(ReconciliationEventType type,
   _events.push_back(event);
   assert(static_cast<int>(type) >= 0);
   _eventsCount[static_cast<unsigned int>(type)] ++;
-  if (_geneIdToEvent.size() <= static_cast<size_t>(geneNode)) {
-    _geneIdToEvent.resize(geneNode + 1);
+  if (_geneIdToEvents.size() <= static_cast<size_t>(geneNode)) {
+    _geneIdToEvents.resize(geneNode + 1);
   }
-  _geneIdToEvent[geneNode] = event;
+  _geneIdToEvents[geneNode].push_back(event);
 }
 
 void Scenario::saveEventsCounts(const std::string &filename, bool masterRankOnly) {
@@ -42,10 +45,10 @@ void Scenario::saveReconciliation(const std::string &filename, ReconciliationFor
 {
   switch (format) {
   case NHX:
-    ReconciliationWriter::saveReconciliationNHX(_speciesTree, _geneRoot, _geneIdToEvent, filename, masterRankOnly);
+    ReconciliationWriter::saveReconciliationNHX(_speciesTree, _geneRoot, _geneIdToEvents, filename, masterRankOnly);
     break;
   case RecPhyloXML:
-    ReconciliationWriter::saveReconciliationRecPhyloXML(_speciesTree, _geneRoot, _geneIdToEvent, filename, masterRankOnly);
+    ReconciliationWriter::saveReconciliationRecPhyloXML(_speciesTree, _geneRoot, _geneIdToEvents, filename, masterRankOnly);
     break;
   }
 }

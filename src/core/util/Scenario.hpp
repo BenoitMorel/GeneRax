@@ -36,7 +36,7 @@ public:
   
   void setSpeciesTree(pll_rtree_t *speciesTree) {_speciesTree = speciesTree;}
 
-  void addEvent(ReconciliationEventType type, unsigned int geneNode, unsigned int speciesNode);
+  void addEvent(ReconciliationEventType type, unsigned int geneNode, unsigned int speciesNode, unsigned int destSpeciesNode = INVALID);
   void addTransfer(ReconciliationEventType type, 
     unsigned int geneNode, 
     unsigned int speciesNode, 
@@ -47,12 +47,11 @@ public:
 
   void saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly = true);
 
-  const std::vector<Event> &getEvents() {return _events;}
 private:
   static const char *eventNames[];
   std::vector<Event> _events;
   std::vector<unsigned int> _eventsCount;
-  std::vector<Event> _geneIdToEvent;
+  std::vector<std::vector<Event> > _geneIdToEvents;
   pll_unode_t *_geneRoot;
   pll_rtree_t *_speciesTree;
 };
