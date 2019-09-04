@@ -312,6 +312,7 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
   pll_unode_t *transferedGene = 0;
   pll_unode_t *stayingGene = 0;
   pll_rnode_t *recievingSpecies = 0; 
+  pll_rnode_t *tlRecievingSpecies = 0; 
   if (not isGeneLeaf) {
     // S event
     u_left = leftGeneNode->node_index;
@@ -334,7 +335,7 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
     values[3] = _uq[gid][f] * _uE[g] * _PS[e];
     values[4] = _uq[gid][g] * _uE[f] * _PS[e];
   }
-  getBestTransferLoss(geneNode, speciesNode, recievingSpecies, values[6]);
+  getBestTransferLoss(geneNode, speciesNode, tlRecievingSpecies, values[6]);
 
   unsigned int maxValueIndex = static_cast<unsigned int>(distance(values.begin(), max_element(values.begin(), values.end())));
   // safety check
@@ -374,7 +375,7 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
       backtrace(stayingGene, speciesNode, scenario);
       break;
     case 6:
-      scenario.addTransfer(EVENT_TL, gid, e, gid, recievingSpecies->node_index); 
+      scenario.addTransfer(EVENT_TL, gid, e, gid, tlRecievingSpecies->node_index); 
       backtrace(geneNode, recievingSpecies, scenario); 
       break;
     default:
