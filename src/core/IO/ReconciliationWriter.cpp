@@ -200,6 +200,7 @@ static void saveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
   pll_unode_t virtualRoot;
   virtualRoot.next = geneTree;
   virtualRoot.node_index = virtualRootIndex;
+  virtualRoot.label = 0;
   recursivelySaveGeneTreeRecPhyloXML(&virtualRoot, true, speciesTree, geneToEvents, &noEvent, indent, os); 
   os << "</phylogeny>" << std::endl;
   os << "</recGeneTree>" << std::endl;
