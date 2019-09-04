@@ -117,7 +117,6 @@ static void writeEventRecPhyloXML(pll_unode_t *geneTree,
     break;
   default:
     const char *eventNames[]  = {"S", "SL", "D", "T", "TL", "None", "Invalid"};
-    std::cerr << "please handle " << eventNames[(unsigned int)event.type] << std::endl; 
     break;
   }
   os << indent << "</eventsRec>" << std::endl;
