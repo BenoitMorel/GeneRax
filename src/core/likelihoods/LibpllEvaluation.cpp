@@ -117,8 +117,14 @@ void LibpllEvaluation::createAndSaveRandomTree(const std::string &alignmentFilen
 
 
 bool LibpllEvaluation::isValidAlignment(const std::string &alignmentFilename,
-    const std::string &modelStr)
+    const std::string &modelStrOrFile)
 {
+  std::string modelStr = modelStrOrFile;
+  std::ifstream f(modelStr);
+  if (f.good()) {
+    getline(f, modelStr);
+    modelStr = modelStr.substr(0, modelStr.find(","));
+  }
   Model model(modelStr);
   pll_sequences sequences;
   unsigned int *patternWeights = nullptr;
