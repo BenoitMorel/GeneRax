@@ -62,6 +62,8 @@ public:
     void enableReconciliation(bool enable) {enableReconciliation_ = enable;}
     void enableLibpll(bool enable) {enableLibpll_ = enable;}
     unsigned int getGeneTaxaNumber() {return getTreeInfo()->tip_count;}
+    pll_utree_t *getGeneTree() {return libpllEvaluation_->getGeneTree();}
+    const GeneSpeciesMapping &getMappings() const {return geneSpeciesMap_;}
 private:
     std::shared_ptr<LibpllEvaluation> libpllEvaluation_;
     std::shared_ptr<ReconciliationEvaluation> reconciliationEvaluation_;

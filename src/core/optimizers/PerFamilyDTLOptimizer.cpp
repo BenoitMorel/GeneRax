@@ -3,12 +3,14 @@
 #include <likelihoods/SubtreeRepeatsCache.hpp>
 #include <parallelization/ParallelContext.hpp>
 #include <trees/JointTree.hpp>
+#include <trees/PerCoreGeneTrees.hpp>
 #include <IO/Logger.hpp>
 #include <limits>
 #include <algorithm>
 #include <likelihoods/ReconciliationEvaluation.hpp>
 #include <iostream>
 #include <cmath>
+#include <optimizers/DTLOptimizer.hpp>
 
 static bool isValidLikelihood(double ll) {
   return std::isnormal(ll) && ll < -0.0000001;
@@ -107,6 +109,9 @@ void PerFamilyDTLOptimizer::optimizeDTLRates(JointTree &jointTree, RecOpt method
   case Simplex:
     optimizeRateSimplex(jointTree, true);
     break;
+  case Gradient:
+    optimizeDTLRatesGradient(jointTree);
+    break;
   }
   /*
   Logger::info << "best rates " << std::endl;
@@ -123,6 +128,9 @@ void PerFamilyDTLOptimizer::optimizeDLRates(JointTree &jointTree, RecOpt method)
     break;
   case Simplex:
     optimizeRateSimplex(jointTree, false);
+    break;
+  case Gradient:
+    optimizeDTLRatesGradient(jointTree);
     break;
   }
 }
@@ -264,4 +272,13 @@ void PerFamilyDTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool trans
 }
 
   
+void PerFamilyDTLOptimizer::optimizeDTLRatesGradient(JointTree &jointTree)
+{
+  auto speciesTree = jointTree.getSpeciesTree();
+  PerCoreGeneTrees geneTrees(jointTree.getMappings(), jointTree.getGeneTree());
+  RecModel recModel = jointTree.getReconciliationEvaluation()->getRecModel();
+  DTLRates rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, recModel, jointTree.getRatesVector().getRates(0));
+  Logger::info << "Per family rates: " << rates << std::endl;
+  jointTree.setRates(rates);
+}
 

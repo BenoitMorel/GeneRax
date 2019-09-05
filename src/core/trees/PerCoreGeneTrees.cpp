@@ -52,7 +52,20 @@ PerCoreGeneTrees::PerCoreGeneTrees(const Families &families)
     _geneTrees[index].name = families[i].name;
     _geneTrees[index].mapping.fill(families[i].mappingFile, geneTreeStr);
     _geneTrees[index].tree = LibpllParsers::readNewickFromFile(families[i].startingGeneTree);
+    _geneTrees[index].ownTree = true;
     index++;
+  }
+  ParallelContext::barrier();
+}
+  
+PerCoreGeneTrees::PerCoreGeneTrees(const GeneSpeciesMapping &mapping, pll_utree_t *tree)
+{
+  if (ParallelContext::getRank() == 0) {
+    _geneTrees.resize(1);
+    _geneTrees[0].name = "JointTree";
+    _geneTrees[0].mapping = mapping;
+    _geneTrees[0].tree = tree;
+    _geneTrees[0].ownTree = false;
   }
   ParallelContext::barrier();
 }

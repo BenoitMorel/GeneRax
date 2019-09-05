@@ -34,10 +34,11 @@ private:
       double &bestDup,
       double &bestLoss,
       double &bestLL) ;
-  static void optimizePerSpeciesRateSimplex(JointTree &jointTree, bool transfers);
   static void optimizeRateSimplex(JointTree &jointTree, bool transfers);
   static void optimizeDLRatesWindow(JointTree &jointTree);
   static void optimizeDTLRatesWindow(JointTree &jointTree);
+
+  static void optimizeDTLRatesGradient(JointTree &jointTree);
 };
 
 

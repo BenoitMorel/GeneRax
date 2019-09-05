@@ -10,12 +10,16 @@ public:
   struct GeneTree {
     std::string name;
     GeneSpeciesMapping mapping;
-    std::string treeFile;
     pll_utree_t *tree;
-    ~GeneTree() {pll_utree_destroy(tree, 0);}
+    bool ownTree; // If true, I am responsible for destroying the tree
+    ~GeneTree() {
+      if (ownTree) {
+        pll_utree_destroy(tree, 0);}
+    }
   };
 
   PerCoreGeneTrees(const Families &families);
+  PerCoreGeneTrees(const GeneSpeciesMapping &mapping, pll_utree_t *tree);
   std::vector<GeneTree> &getTrees() {return _geneTrees;}
   bool checkMappings(const std::string &speciesTreeFile);
 private:

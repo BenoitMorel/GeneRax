@@ -83,6 +83,8 @@ public:
       return "grid";
     case Simplex:
       return "simplex";
+    case Gradient:
+      return "gradient";
     }
     exit(41);
   }
@@ -92,6 +94,8 @@ public:
       return Grid;
     } else if (str == "simplex") {
       return Simplex;
+    } else if (str == "gradient") {
+      return Gradient;
     } else {
       Logger::info << "Invalid reconciliation optimization method " << str << std::endl;
       exit(41);

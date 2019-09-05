@@ -66,13 +66,13 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
       rootedGeneTree,
       recWeight,
       false, //check
-      false, // optimize DTL
+      perFamilyDTLRates, // optimize DTL
       ratesVector
       );
   jointTree->enableReconciliation(enableRec);
   jointTree->enableLibpll(enableLibpll);
   Logger::info << "Taxa number: " << jointTree->getGeneTaxaNumber() << std::endl;
-  jointTree->optimizeParameters(true,  perFamilyDTLRates);
+  jointTree->optimizeParameters(true,  enableRec);
   double bestLoglk = jointTree->computeJointLoglk();
   jointTree->printLoglk();
   Logger::info << "Initial ll = " << bestLoglk << std::endl;

@@ -66,6 +66,7 @@ public:
     _reconciliationModel->inferMLScenario(scenario);
   }
 
+  RecModel getRecModel() const {return _model;}
 private:
   pll_rtree_t *_speciesTree;
   unsigned int _speciesCount;

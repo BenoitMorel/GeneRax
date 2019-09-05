@@ -141,7 +141,7 @@ static bool lineSearch(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, Re
   return !stop;
 }
 
-DTLRates optimizeDTLRatesGradient(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const DTLRates &startingRates)
+DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const DTLRates &startingRates)
 {
   double epsilon = 0.0000001;
   unsigned int dimensions = Enums::freeParameters(model);
@@ -189,7 +189,7 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
   DTLRates best;
   best.ll = -10000000000;
   for (auto rates: startingRates) {
-    DTLRates newRates = optimizeDTLRatesGradient(geneTrees, speciesTree, model, rates);
+    DTLRates newRates = optimizeDTLRates(geneTrees, speciesTree, model, rates);
     bool stop = (fabs(newRates.ll - best.ll) < 3.0);
     if (newRates.ll > best.ll) {
       best = newRates;

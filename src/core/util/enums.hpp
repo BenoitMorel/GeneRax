@@ -27,7 +27,7 @@ public:
 };
 
 enum RecOpt {
-  Grid, Simplex
+  Grid, Simplex, Gradient
 };
 
 enum Strategy {

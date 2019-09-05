@@ -85,6 +85,8 @@ public:
   static bool isValidAlignment(const std::string &alignmentFilename,
       const std::string &modelStr);
 
+  pll_utree_t *getGeneTree() {return _utree.get();}
+
 private:
   /**
    * Constructors

@@ -10,7 +10,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   argv(iargv),
   strategy(SPR),
   reconciliationModelStr("UndatedDL"),
-  reconciliationOpt(Simplex),
+  reconciliationOpt(Grid),
   output("GeneRax"),
   perFamilyDTLRates(false),
   rootedGeneTree(true),

@@ -166,6 +166,7 @@ void JointTree::optimizeParameters(bool felsenstein, bool reconciliation) {
     libpllEvaluation_->optimizeAllParameters();
   }
   if (reconciliation && enableReconciliation_ && optimizeDTLRates_) {
+    std::cerr << "optimize parametres per family" << std::endl;
     if (reconciliationEvaluation_->implementsTransfers()) {  
       PerFamilyDTLOptimizer::optimizeDTLRates(*this, recOpt_);
     } else {
