@@ -376,7 +376,7 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
       break;
     case 6:
       scenario.addTransfer(EVENT_TL, gid, e, gid, tlRecievingSpecies->node_index); 
-      backtrace(geneNode, recievingSpecies, scenario); 
+      backtrace(geneNode, tlRecievingSpecies, scenario); 
       break;
     default:
       std::cerr << "event " << maxValueIndex << std::endl;
