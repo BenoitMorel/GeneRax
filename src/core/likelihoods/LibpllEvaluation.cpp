@@ -7,7 +7,6 @@ extern "C" {
 }
 
 #include "LibpllEvaluation.hpp"
-#include <IO/LibpllParsers.hpp>
 #include <map>
 #include <fstream>
 #include <iostream>
@@ -37,19 +36,6 @@ const double DEFAULT_BL = 0.1;
 
 
 
-struct pll_sequence {
-  pll_sequence(char *label_, char *seq_, unsigned int len_):
-    label(label_),
-    seq(seq_),
-    len(len_) {}
-  char *label;
-  char *seq;
-  unsigned int len;
-  ~pll_sequence() {
-    free(label);
-    free(seq);
-  }
-};
 
 unsigned int getBestLibpllAttribute() {
   pll_hardware_probe();
@@ -116,37 +102,12 @@ void LibpllEvaluation::createAndSaveRandomTree(const std::string &alignmentFilen
   
 
 
-bool LibpllEvaluation::isValidAlignment(const std::string &alignmentFilename,
-    const std::string &modelStrOrFile)
-{
-  std::string modelStr = modelStrOrFile;
-  std::ifstream f(modelStr);
-  if (f.good()) {
-    getline(f, modelStr);
-    modelStr = modelStr.substr(0, modelStr.find(","));
-  }
-  Model model(modelStr);
-  pll_sequences sequences;
-  unsigned int *patternWeights = nullptr;
-  bool res = true;
-  try {
-    parseMSA(alignmentFilename, model.charmap(), sequences, patternWeights);
-    if (sequences.size() < 3) {
-      res = false;
-    }
-  } catch (...) {
-    res = false;
-  }
-  free(patternWeights);
-  return res;
-}
-
 std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::string &newickString,
     const std::string& alignmentFilename,
     const std::string &modelStrOrFile)
 {
   // sequences 
-  pll_sequences sequences;
+  PLLSequencePtrs sequences;
   unsigned int *patternWeights = nullptr;
   std::string modelStr = modelStrOrFile;
   std::ifstream f(modelStr);
@@ -159,7 +120,7 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::s
   assert(model.num_submodels() == 1);
   pll_utree_t *utree = 0;
   {
-    parseMSA(alignmentFilename, model.charmap(), sequences, patternWeights);
+    LibpllParsers::parseMSA(alignmentFilename, model.charmap(), sequences, patternWeights);
     // tree
     if (newickString == "__random__") {
       std::vector<const char*> labels;
@@ -315,98 +276,6 @@ void LibpllEvaluation::setMissingBL(pll_utree_t * tree,
     if (0.0 == tree->nodes[i]->next->next->length)
       tree->nodes[i]->next->next->length = length;
   }  
-}
-
-void LibpllEvaluation::parseMSA(const std::string &alignmentFilename, 
-    const pll_state_t *stateMap,
-    pll_sequences &sequences,
-    unsigned int *&weights)
-{
-  if (!std::ifstream(alignmentFilename.c_str()).good()) {
-    throw LibpllException("Alignment file " + alignmentFilename + "does not exist");
-  }
-  try {
-    parseFasta(alignmentFilename.c_str(),
-        stateMap, sequences, weights);
-  } catch (...) {
-    parsePhylip(alignmentFilename.c_str(),
-        stateMap, sequences,
-        weights);
-  }
-}
-
-void LibpllEvaluation::parseFasta(const char *fastaFile, 
-    const pll_state_t *stateMap,
-    pll_sequences &sequences,
-    unsigned int *&weights)
-{
-  auto reader = pll_fasta_open(fastaFile, pll_map_fasta);
-  if (!reader) {
-    throw LibpllException("Cannot parse fasta file ", fastaFile);
-  }
-  char * head;
-  long head_len;
-  char *seq;
-  long seq_len;
-  long seqno;
-  int length;
-  while (pll_fasta_getnext(reader, &head, &head_len, &seq, &seq_len, &seqno)) {
-    sequences.push_back(pll_sequence_ptr(new pll_sequence(head, seq, static_cast<unsigned int>(seq_len))));
-    length = static_cast<int>(seq_len);
-  }
-  unsigned int count = static_cast<unsigned int>(sequences.size());
-  char** buffer = static_cast<char**>(malloc(static_cast<size_t>(count) * sizeof(char *)));
-  assert(buffer);
-  for (unsigned int i = 0; i < count; ++i) {
-    buffer[i] = sequences[i]->seq;
-  }
-  weights = pll_compress_site_patterns(buffer, stateMap, static_cast<int>(count), &length);
-  if (!weights) 
-    throw LibpllException("Error while parsing fasta: cannot compress sites from ", fastaFile);
-  for (unsigned int i = 0; i < count; ++i) {
-    sequences[i]->len = static_cast<unsigned int>(length);
-  }
-  free(buffer);
-  pll_fasta_close(reader);
-}
-  
-void LibpllEvaluation::parsePhylip(const char *phylipFile, 
-    const pll_state_t *stateMap,
-    pll_sequences &sequences,
-    unsigned int *&weights)
-{
-  assert(phylipFile);
-  assert(stateMap);
-  std::shared_ptr<pll_phylip_t> reader(pll_phylip_open(phylipFile, pll_map_phylip),
-      pll_phylip_close);
-  if (!reader) {
-    throw LibpllException("Error while opening phylip file ", phylipFile);
-  }
-  pll_msa_t *msa = nullptr;
-  // todobenoit check memory leaks when using the std::exception trick
-  try {
-    msa = pll_phylip_parse_interleaved(reader.get());
-    if (!msa) {
-      throw LibpllException("failed to parse ", phylipFile);
-    }
-  } catch (...) {
-    std::shared_ptr<pll_phylip_t> reader2(pll_phylip_open(phylipFile, pll_map_phylip), pll_phylip_close);
-    msa = pll_phylip_parse_sequential(reader2.get());
-    if (!msa) {
-      throw LibpllException("failed to parse ", phylipFile);
-    }
-  }
-  weights = pll_compress_site_patterns(msa->sequence, stateMap, msa->count, &msa->length);
-  if (!weights) 
-    throw LibpllException("Error while parsing fasta: cannot compress sites");
-  for (auto i = 0; i < msa->count; ++i) {
-    pll_sequence_ptr seq(new pll_sequence(msa->label[i], msa->sequence[i], static_cast<unsigned int>(msa->length)));
-    sequences.push_back(seq);
-    // avoid freeing these buffers with pll_msa_destroy
-    msa->label[i] = nullptr;
-    msa->sequence[i] = nullptr;
-  }
-  pll_msa_destroy(msa);
 }
 
 

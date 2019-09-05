@@ -9,6 +9,7 @@ extern "C" {
 #include <pll_tree.h>
 #include <pllmod_util.h>  
 }
+#include <IO/LibpllParsers.hpp>
 
 #include <string>
 #include <memory>
@@ -19,10 +20,6 @@ extern "C" {
 const double TOLERANCE = 0.5;
 
 
-class Model;
-struct pll_sequence;
-using pll_sequence_ptr = std::shared_ptr<pll_sequence>;
-using pll_sequences = std::vector<pll_sequence_ptr>;
 
 
 struct LibpllAlignmentInfo {
@@ -82,9 +79,6 @@ public:
 
   std::string getModelStr();
 
-  static bool isValidAlignment(const std::string &alignmentFilename,
-      const std::string &modelStr);
-
   pll_utree_t *getGeneTree() {return _utree.get();}
 
 private:
@@ -101,34 +95,6 @@ private:
   static void setMissingBL(pll_utree_t * tree, 
     double length);
 
-  static void parseMSA(const std::string &alignmentFilename, 
-    const pll_state_t *stateMap,
-    pll_sequences &sequences,
-    unsigned int *&weights);
-
-  /**
-   *  parse sequences and pattern weights from fasta file
-   *  @param fasta_file Input file
-   *  @param stdmap state std::map
-   *  @param sequences Compressed (each site appears only once) sequences
-   *  @param weights Pattern weights
-   */
-  static void parseFasta(const char *fasta_file, 
-    const pll_state_t *stateMap,
-    pll_sequences &sequences,
-    unsigned int *&weights);
-
-  /**
-   *  parse sequences and pattern weights from phylip file
-   *  @param phylip_file Input file
-   *  @param stdmap state std::map
-   *  @param sequences Compressed (each site appears only once) sequences
-   *  @param weights Pattern weights
-   */
-  static void parsePhylip(const char *phylip_file, 
-    const pll_state_t *stateMap,
-    pll_sequences &sequences,
-    unsigned int *&weights);
 
   static double optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, double tolerance);
   

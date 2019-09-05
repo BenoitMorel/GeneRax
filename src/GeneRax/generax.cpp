@@ -101,7 +101,7 @@ void eval(const Families &initialFamilies,
   RecModel recModel;
   bool randoms = Routines::createRandomTrees(arguments.output, families);
   if (randoms) {
-    Logger::error << "You are running GeneRax in EVAL mode, but at least one starting gene tree was not provided. Aborting..." << std::endl;
+    Logger::info << "[Error] You are running GeneRax in EVAL mode, but at least one starting gene tree was not provided. Aborting..." << std::endl;
     return;
   }
   recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
@@ -133,9 +133,14 @@ int generax_main(int argc, char** argv, void* comm)
   arguments.printSummary();
   std::string labelledSpeciesTree = FileSystem::joinPaths(arguments.output, "labelled_species_tree.newick");
   LibpllParsers::labelRootedTree(arguments.speciesTree, labelledSpeciesTree);
+  ParallelContext::barrier();
   arguments.speciesTree = labelledSpeciesTree;
   Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
-  filterFamilies(initialFamilies);
+  filterFamilies(initialFamilies, arguments.speciesTree);
+  if (!initialFamilies.size()) {
+    Logger::info << "[Error] No valid families! Aborting GeneRax" << std::endl;
+    ParallelContext::abort(10);
+  }
   Logger::timed << "Number of gene families: " << initialFamilies.size() << std::endl;
   initFolders(arguments.output, initialFamilies);
   switch (arguments.strategy) {

@@ -26,6 +26,6 @@ struct FamilyInfo {
 };
 
 typedef std::vector<FamilyInfo> Families;
-void filterFamilies(Families &families);
+void filterFamilies(Families &families, const std::string &speciesTreeFile);
 
 

@@ -6,6 +6,7 @@
 #include <cstring>
 #include <sstream>
 #include <stack>
+#include <IO/Model.hpp>
 
 extern "C" {
 #include <pll.h>
@@ -173,4 +174,119 @@ void LibpllParsers::fillLeavesFromRtree(pll_rtree_t *rtree, std::unordered_set<s
   }
 }
 
+void LibpllParsers::parseMSA(const std::string &alignmentFilename, 
+    const pll_state_t *stateMap,
+    PLLSequencePtrs &sequences,
+    unsigned int *&weights)
+{
+  if (!std::ifstream(alignmentFilename.c_str()).good()) {
+    throw LibpllException("Alignment file " + alignmentFilename + "does not exist");
+  }
+  try {
+    parseFasta(alignmentFilename.c_str(),
+        stateMap, sequences, weights);
+  } catch (...) {
+    parsePhylip(alignmentFilename.c_str(),
+        stateMap, sequences,
+        weights);
+  }
+}
+
+void LibpllParsers::parseFasta(const char *fastaFile, 
+    const pll_state_t *stateMap,
+    PLLSequencePtrs &sequences,
+    unsigned int *&weights)
+{
+  auto reader = pll_fasta_open(fastaFile, pll_map_fasta);
+  if (!reader) {
+    throw LibpllException("Cannot parse fasta file ", fastaFile);
+  }
+  char * head;
+  long head_len;
+  char *seq;
+  long seq_len;
+  long seqno;
+  int length;
+  while (pll_fasta_getnext(reader, &head, &head_len, &seq, &seq_len, &seqno)) {
+    sequences.push_back(PLLSequencePtr(new PLLSequence(head, seq, static_cast<unsigned int>(seq_len))));
+    length = static_cast<int>(seq_len);
+  }
+  unsigned int count = static_cast<unsigned int>(sequences.size());
+  char** buffer = static_cast<char**>(malloc(static_cast<size_t>(count) * sizeof(char *)));
+  assert(buffer);
+  for (unsigned int i = 0; i < count; ++i) {
+    buffer[i] = sequences[i]->seq;
+  }
+  weights = pll_compress_site_patterns(buffer, stateMap, static_cast<int>(count), &length);
+  if (!weights) 
+    throw LibpllException("Error while parsing fasta: cannot compress sites from ", fastaFile);
+  for (unsigned int i = 0; i < count; ++i) {
+    sequences[i]->len = static_cast<unsigned int>(length);
+  }
+  free(buffer);
+  pll_fasta_close(reader);
+}
+  
+void LibpllParsers::parsePhylip(const char *phylipFile, 
+    const pll_state_t *stateMap,
+    PLLSequencePtrs &sequences,
+    unsigned int *&weights)
+{
+  assert(phylipFile);
+  assert(stateMap);
+  std::shared_ptr<pll_phylip_t> reader(pll_phylip_open(phylipFile, pll_map_phylip),
+      pll_phylip_close);
+  if (!reader) {
+    throw LibpllException("Error while opening phylip file ", phylipFile);
+  }
+  pll_msa_t *msa = nullptr;
+  // todobenoit check memory leaks when using the std::exception trick
+  try {
+    msa = pll_phylip_parse_interleaved(reader.get());
+    if (!msa) {
+      throw LibpllException("failed to parse ", phylipFile);
+    }
+  } catch (...) {
+    std::shared_ptr<pll_phylip_t> reader2(pll_phylip_open(phylipFile, pll_map_phylip), pll_phylip_close);
+    msa = pll_phylip_parse_sequential(reader2.get());
+    if (!msa) {
+      throw LibpllException("failed to parse ", phylipFile);
+    }
+  }
+  weights = pll_compress_site_patterns(msa->sequence, stateMap, msa->count, &msa->length);
+  if (!weights) 
+    throw LibpllException("Error while parsing fasta: cannot compress sites");
+  for (auto i = 0; i < msa->count; ++i) {
+    PLLSequencePtr seq(new PLLSequence(msa->label[i], msa->sequence[i], static_cast<unsigned int>(msa->length)));
+    sequences.push_back(seq);
+    // avoid freeing these buffers with pll_msa_destroy
+    msa->label[i] = nullptr;
+    msa->sequence[i] = nullptr;
+  }
+  pll_msa_destroy(msa);
+}
+
+bool LibpllParsers::fillLabelsFromAlignment(const std::string &alignmentFilename, const std::string& modelStrOrFilename,  std::unordered_set<std::string> &leaves)
+{
+  std::string modelStr = modelStrOrFilename;
+  std::ifstream f(modelStr);
+  if (f.good()) {
+    getline(f, modelStr);
+    modelStr = modelStr.substr(0, modelStr.find(","));
+  }
+  Model model(modelStr);
+  PLLSequencePtrs sequences;
+  unsigned int *patternWeights = nullptr;
+  bool res = true;
+  try { 
+    LibpllParsers::parseMSA(alignmentFilename, model.charmap(), sequences, patternWeights);
+  } catch (...) {
+    res = false;
+  }
+  free(patternWeights);
+  for (auto &sequence: sequences) {
+    leaves.insert(sequence->label);
+  }
+  return res;
+}
   

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fstream>
 #include <string> 
 #include <sys/types.h> 
 #include <sys/stat.h> 
@@ -23,6 +24,12 @@ public:
 
   }
 
+
+  static bool exists (const std::string& name) {
+    std::ifstream f(name.c_str());
+    return f.good();
+  }
+
   static std::string joinPaths(const std::string &p1, const std::string &p2) {
     std::string sep = "/";
 #ifdef _WIN32
@@ -36,6 +43,15 @@ public:
     std::ifstream ifs(filePath);
     content.assign((std::istreambuf_iterator<char>(ifs)),
       (std::istreambuf_iterator<char>()) );
+  }
+
+  static void replaceWithContentIfFile(std::string &str)
+  {
+    std::ifstream ifs(str);
+    if (ifs.good()) {
+      str.assign((std::istreambuf_iterator<char>(ifs)),
+        (std::istreambuf_iterator<char>()) );
+    }
   }
   
   static void copy(const std::string &f1, const std::string &f2, bool masterRankOnly) 

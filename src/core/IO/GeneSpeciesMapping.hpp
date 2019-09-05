@@ -3,7 +3,7 @@
 #include <string>
 #include <map>
 #include <fstream>
-
+#include <unordered_set>
 
 typedef struct pll_utree_s pll_utree_t;
 typedef struct pll_unode_s pll_unode_t;
@@ -24,9 +24,10 @@ public:
   
   GeneSpeciesMapping() {}
   
-  void fill(const std::string &mappingFile, const std::string &geneTreeStr); 
+  void fill(const std::string &mappingFile, const std::string &geneTreeStrOrFile); 
 
   bool check(pll_utree_t *geneTree, pll_rtree_t *speciesTree);
+  bool check(const std::unordered_set<std::string> &genes, const std::unordered_set<std::string> &species);
   void fill(const GeneSpeciesMapping &mapping);
 
   /**
@@ -45,6 +46,6 @@ private:
   void buildFromPhyldogMapping(std::ifstream &f);
   void buildFromTreerecsMapping(std::ifstream &f);
   void buildFromMappingFile(const std::string &mappingFile); 
-  void buildFromTrees(const std::string &geneTreeStr); 
+  void buildFromTrees(const std::string &geneTreeStrOrFile); 
 };
 

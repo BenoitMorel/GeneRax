@@ -5,16 +5,17 @@
 #include <algorithm>
 #include <IO/LibpllParsers.hpp>
 #include <IO/Logger.hpp>
+#include <IO/FileSystem.hpp>
 extern "C" {
 #include <pll.h>
 }
 
-void GeneSpeciesMapping::fill(const std::string &mappingFile, const std::string &geneTreeStr) 
+void GeneSpeciesMapping::fill(const std::string &mappingFile, const std::string &geneTreeStrOrFile) 
 {
   if (mappingFile.size()) {
     buildFromMappingFile(mappingFile);
   } else {
-    buildFromTrees(geneTreeStr);
+    buildFromTrees(geneTreeStrOrFile);
   }
 }
   
@@ -31,7 +32,14 @@ bool GeneSpeciesMapping::check(pll_utree_t *geneTree, pll_rtree_t *speciesTree)
   std::unordered_set<std::string> geneLeaves;
   std::unordered_set<std::string> speciesLeaves;
   LibpllParsers::fillLeavesFromUtree(geneTree, geneLeaves); 
-  LibpllParsers::fillLeavesFromRtree(speciesTree, speciesLeaves); 
+  LibpllParsers::fillLeavesFromRtree(speciesTree, speciesLeaves);
+  return check(geneLeaves, speciesLeaves);
+}
+
+
+
+bool GeneSpeciesMapping::check(const std::unordered_set<std::string> &geneLeaves, const std::unordered_set<std::string> &speciesLeaves)
+{
   bool ok = true;
   for (auto pair: getMap()) {
     auto &gene = pair.first;
@@ -106,9 +114,11 @@ void GeneSpeciesMapping::buildFromTreerecsMapping(std::ifstream &f)
   }
 }
 
-void GeneSpeciesMapping::buildFromTrees(const std::string &geneTreeStr)
+void GeneSpeciesMapping::buildFromTrees(const std::string &geneTreeStrOrFile)
 {
-  pll_utree_t *tree = LibpllParsers::readNewickFromStr(geneTreeStr);
+  std::string str = geneTreeStrOrFile;
+  FileSystem::replaceWithContentIfFile(str);
+  pll_utree_t *tree = LibpllParsers::readNewickFromStr(str);
   auto nodes = tree->tip_count + tree->inner_count;
   for (unsigned int i = 0; i < nodes; ++i) {
     auto node = tree->nodes[i];
