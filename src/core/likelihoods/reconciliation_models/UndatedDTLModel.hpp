@@ -370,11 +370,14 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
       backtrace(geneNode, speciesNode->right, scenario); 
       break;
     case 5:
+      assert(transferedGene);
+      assert(recievingSpecies);
       scenario.addTransfer(EVENT_T, gid, e, transferedGene->node_index, recievingSpecies->node_index);
       backtrace(transferedGene, recievingSpecies, scenario);
       backtrace(stayingGene, speciesNode, scenario);
       break;
     case 6:
+      assert(tlRecievingSpecies);
       scenario.addTransfer(EVENT_TL, gid, e, gid, tlRecievingSpecies->node_index); 
       backtrace(geneNode, tlRecievingSpecies, scenario); 
       break;
