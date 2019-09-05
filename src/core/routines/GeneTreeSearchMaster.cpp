@@ -22,6 +22,7 @@ void GeneTreeSearchMaster::optimizeGeneTrees(Families &families,
     const std::string &execPath, 
     const std::string &speciesTreePath,
     RecOpt recOpt,
+    bool perFamilyDTLRates,
     bool rootedGeneTree,
     double recWeight,
     bool enableRec,
@@ -80,6 +81,7 @@ void GeneTreeSearchMaster::optimizeGeneTrees(Families &families,
     os << ratesFile << " ";
     os << static_cast<int>(recModel)  << " ";
     os << static_cast<int>(recOpt)  << " ";
+    os << static_cast<int>(perFamilyDTLRates)  << " ";
     os << static_cast<int>(rootedGeneTree)  << " ";
     os << recWeight  << " ";
     os << static_cast<int>(enableRec)  << " ";

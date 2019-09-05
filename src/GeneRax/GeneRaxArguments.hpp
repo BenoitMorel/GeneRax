@@ -24,6 +24,7 @@ public:
    std::string reconciliationModelStr;
    RecOpt reconciliationOpt;
    std::string output;
+   bool perFamilyDTLRates;
    bool rootedGeneTree;
    unsigned int recRadius;
    bool perSpeciesDTLRates;

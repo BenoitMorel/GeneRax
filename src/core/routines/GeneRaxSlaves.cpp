@@ -42,6 +42,7 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
     const std::string &ratesFile,
     RecModel recModel,
     RecOpt recOpt,
+    bool perFamilyDTLRates,
     bool rootedGeneTree,
     double recWeight,
     bool enableRec,
@@ -71,7 +72,7 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
   jointTree->enableReconciliation(enableRec);
   jointTree->enableLibpll(enableLibpll);
   Logger::info << "Taxa number: " << jointTree->getGeneTaxaNumber() << std::endl;
-  jointTree->optimizeParameters(true, false); // only optimize felsenstein likelihood
+  jointTree->optimizeParameters(true,  perFamilyDTLRates);
   double bestLoglk = jointTree->computeJointLoglk();
   jointTree->printLoglk();
   Logger::info << "Initial ll = " << bestLoglk << std::endl;
@@ -100,7 +101,7 @@ std::string getArg(const std::string &str)
 
 int optimizeGeneTreesMain(int argc, char** argv, void* comm)
 {
-  assert(argc == 17);
+  assert(argc == 18);
   ParallelContext::init(comm);
   Logger::timed << "Starting optimizeGeneTreesSlave" << std::endl;
   int i = 2;
@@ -113,6 +114,7 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
   Logger::info << "LibpllModel " << libpllModel << std::endl;
   RecModel recModel = RecModel(atoi(argv[i++])); 
   RecOpt recOpt = RecOpt(atoi(argv[i++])); 
+  bool perFamilyDTLRates = bool(atoi(argv[i++]));
   bool rootedGeneTree = bool(atoi(argv[i++]));
   double recWeight = double(atof(argv[i++]));
   bool enableRec = bool(atoi(argv[i++]));
@@ -128,6 +130,7 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
       ratesFile,
       recModel,
       recOpt,
+      perFamilyDTLRates,
       rootedGeneTree,
       recWeight,
       enableRec,

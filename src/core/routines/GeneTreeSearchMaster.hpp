@@ -17,6 +17,7 @@ public:
     const std::string &execPath, 
     const std::string &speciesTreePath,
     RecOpt reconciliationOpt,
+    bool perFamilyDTLRates,
     bool rootedGeneTree,
     double recWeight,
     bool enableRec,

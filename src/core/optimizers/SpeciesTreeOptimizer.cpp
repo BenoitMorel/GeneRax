@@ -204,6 +204,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
   saveCurrentSpeciesTree("proposal_species_tree.newick");
   std::string speciesTree = FileSystem::joinPaths(_outputDir, "proposal_species_tree.newick");
   RecOpt recOpt = Simplex;
+  bool perFamilyDTLRates = false;
   bool rootedGeneTree = true;
   double recWeight = 1.0;
   bool useSplitImplem = true;
@@ -215,7 +216,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
   Families families = _currentFamilies;
   GeneTreeSearchMaster::optimizeGeneTrees(families, 
       _model, ratesVector, _outputDir, resultName, 
-      _execPath, speciesTree, recOpt, rootedGeneTree, 
+      _execPath, speciesTree, recOpt, perFamilyDTLRates, rootedGeneTree, 
       recWeight, true, true, radius, _geneTreeIteration, 
         useSplitImplem, sumElapsedSPR, inPlace);
   _geneTreeIteration++;
