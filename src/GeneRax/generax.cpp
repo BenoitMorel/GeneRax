@@ -195,7 +195,7 @@ int generax_main(int argc, char** argv, void* comm)
   ParallelContext::barrier();
   arguments.speciesTree = labelledSpeciesTree;
   Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
-  filterFamilies(initialFamilies, arguments.speciesTree);
+  //filterFamilies(initialFamilies, arguments.speciesTree);
   if (!initialFamilies.size()) {
     Logger::info << "[Error] No valid families! Aborting GeneRax" << std::endl;
     ParallelContext::abort(10);
