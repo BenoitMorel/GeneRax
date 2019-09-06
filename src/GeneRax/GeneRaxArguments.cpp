@@ -13,6 +13,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   reconciliationOpt(Grid),
   output("GeneRax"),
   perFamilyDTLRates(false),
+  duplicates(1),
+  initStrategies(4),
   rootedGeneTree(true),
   recRadius(0),
   perSpeciesDTLRates(false),
@@ -47,10 +49,14 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       output = std::string(argv[++i]);
     } else if (arg == "--per-family-rates") {
       perFamilyDTLRates = true;
+    } else if (arg == "--init-strategies") {
+      initStrategies = atoi(argv[++i]);
+    } else if (arg == "--duplicates") {
+      duplicates = atoi(argv[++i]);
     } else if (arg == "--unrooted-gene-tree") {
       rootedGeneTree = false;
     } else if (arg == "--rec-radius") {
-      recRadius = atoi(argv[++i]);;
+      recRadius = atoi(argv[++i]);
     } else if (arg == "--per-species-rates") {
       perSpeciesDTLRates = true;
     } else if (arg == "--dup-rate") {
@@ -125,6 +131,8 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, Auto}" << std::endl;
   Logger::info << "--rec-opt <reconciliationOpt>  {window, simplex}" << std::endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << std::endl;
+  Logger::info << "--duplicates <DUPLICATES_NUMBER>" << std::endl;
+  Logger::info << "--init-strategies <1 or 4>" << std::endl;
   Logger::info << "--unrooted-gene-tree" << std::endl;
   Logger::info << "--per-family-rates" << std::endl;
   Logger::info << "--per-species-rates" << std::endl;
@@ -164,6 +172,10 @@ void GeneRaxArguments::printSummary() {
     Logger::info << "global rates" << std::endl;
   }
   Logger::info << "Prefix: " << output << std::endl;
+  Logger::info << "Duplicates: " << duplicates << std::endl;
+  if (duplicates > 1) {
+    Logger::info << "Init strategies: " << initStrategies << std::endl;
+  }
   Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << std::endl;
   Logger::info << "Reconciliation radius: " << recRadius << std::endl;
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << std::endl;

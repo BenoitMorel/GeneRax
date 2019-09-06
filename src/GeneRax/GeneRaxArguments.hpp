@@ -25,6 +25,8 @@ public:
    RecOpt reconciliationOpt;
    std::string output;
    bool perFamilyDTLRates;
+   unsigned int duplicates;
+   unsigned int initStrategies;
    bool rootedGeneTree;
    unsigned int recRadius;
    bool perSpeciesDTLRates;

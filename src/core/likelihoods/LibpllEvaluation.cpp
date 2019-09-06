@@ -127,7 +127,7 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::s
       for (auto seq: sequences) {
         labels.push_back(seq->label);
       }
-      unsigned int seed = 0;
+      unsigned int seed = rand();
       utree = pllmod_utree_create_random(static_cast<unsigned int>(labels.size()), &labels[0], seed);
     } else {
       utree = LibpllParsers::readNewickFromStr(newickString);

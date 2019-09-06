@@ -6,6 +6,9 @@
 #include <IO/ParallelOfstream.hpp>
 #include <parallelization/Scheduler.hpp>
 #include <sstream>
+#include <functional>  
+
+
 
 void RaxmlMaster::runRaxmlOptimization(Families &families,
     const std::string &output,

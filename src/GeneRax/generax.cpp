@@ -57,31 +57,90 @@ void optimizeStep(GeneRaxArguments &arguments,
 }
 
 
+
+
 void search(const Families &initialFamilies,
     GeneRaxArguments &arguments)
 
 {
+  unsigned int duplicates = arguments.duplicates;
+  
   Logger::timed << "Start SPR search" << std::endl;
   double totalLibpllLL = 0.0;
   double totalRecLL = 0.0;
   long sumElapsedRates = 0;
   long sumElapsedSPR = 0;
   long sumElapsedLibpll = 0;
+  RecModel recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
   DTLRatesVector rates(DTLRates(arguments.dupRate, arguments.lossRate, arguments.transferRate));
-  Families currentFamilies = initialFamilies;
+  Families currentFamilies;
+  if (duplicates > 1) {
+    duplicatesFamilies(initialFamilies, currentFamilies, duplicates);
+    initFolders(arguments.output, currentFamilies);
+    ParallelContext::barrier();
+  } else {
+    currentFamilies = initialFamilies;
+  }
+  
   int iteration = 0;
   bool randoms = Routines::createRandomTrees(arguments.output, currentFamilies); 
   if (randoms) {
-    RaxmlMaster::runRaxmlOptimization(currentFamilies, arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
-    Routines::gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
+    if (duplicates == 1 || arguments.initStrategies == 1) {
+      RaxmlMaster::runRaxmlOptimization(currentFamilies, arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
+      Routines::gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
+    } else {
+      std::vector<Families> splitFamilies;
+      ParallelContext::barrier();
+      unsigned int splits = arguments.initStrategies;
+      unsigned int recRadius = 5;
+      splitInitialFamilies(currentFamilies, splitFamilies, duplicates, splits);
+      ParallelContext::barrier();
+      // only raxml
+      Logger::timed << "Optimizing part of the duplicated families with sequences only" << std::endl;
+      RaxmlMaster::runRaxmlOptimization(splitFamilies[0], arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
+      // only rec
+      if (splits > 1) {
+        Logger::timed << "Optimizing part of the duplicated families with species tree only" << std::endl;
+        for (unsigned int i = 1; i <= recRadius; ++i) {
+          optimizeStep(arguments, recModel, false, splitFamilies[1], rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+        }
+      }
+      if (splits > 2) {
+        // raxml and rec
+        Logger::timed << "Optimizing part of the duplicated families with sequences only and then species tree only" << std::endl;
+        RaxmlMaster::runRaxmlOptimization(splitFamilies[2], arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
+        for (unsigned int i = 1; i <= recRadius; ++i) {
+          optimizeStep(arguments, recModel, false, splitFamilies[2], rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+        }
+      }
+      if (splits > 3) {
+        // rec and raxml
+        Logger::timed << "Optimizing part of the duplicated families with species only and then sequences tree only" << std::endl;
+        RaxmlMaster::runRaxmlOptimization(splitFamilies[3], arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
+        for (unsigned int i = 1; i <= recRadius; ++i) {
+          optimizeStep(arguments, recModel, false, splitFamilies[3], rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+        }
+      }
+      mergeSplitFamilies(splitFamilies, currentFamilies, splits);
+    }
   }
-  RecModel recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
   for (unsigned int i = 1; i <= arguments.recRadius; ++i) { 
     optimizeStep(arguments, recModel, false, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
   for (int i = 1; i <= arguments.maxSPRRadius; ++i) {
       optimizeStep(arguments, recModel, true, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
+
+  if (randoms && duplicates > 1) {
+    Families contracted = initialFamilies;
+    contractFamilies(currentFamilies, contracted);
+    currentFamilies = contracted;
+    optimizeStep(arguments, recModel, true, currentFamilies, rates, 0, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+  }
+
+  
+  Logger::info << "Joint=" << totalLibpllLL + totalRecLL << ", Libpll=" << totalLibpllLL << ", Rec=" << totalRecLL << std::endl;
+
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
   Routines::inferReconciliation(arguments.speciesTree, currentFamilies, recModel, rates, arguments.output);
   if (sumElapsedLibpll) {
@@ -111,7 +170,7 @@ void eval(const Families &initialFamilies,
   GeneTreeSearchMaster::optimizeGeneTrees(families, recModel, rates, arguments.output, "results", arguments.execPath,
       arguments.speciesTree, arguments.reconciliationOpt, arguments.perFamilyDTLRates, arguments.rootedGeneTree, arguments.recWeight,
       true, true, sprRadius, currentIteration, useSplitImplem(), dummy);
-  
+
   double totalLibpllLL = 0.0;
   double totalRecLL = 0.0;
   Routines::gatherLikelihoods(families, totalLibpllLL, totalRecLL);

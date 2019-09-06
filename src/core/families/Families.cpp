@@ -128,5 +128,67 @@ void filterFamilies(Families &families, const std::string &speciesTreeFile)
   }   
 }
 
+void duplicatesFamilies(const Families &families, Families &duplicatedFamilies, unsigned int factor)
+{
+  duplicatedFamilies.clear();
+  for (auto &family: families) {
+    for (unsigned int i = 0; i < factor; ++i) {
+      FamilyInfo child = family;
+      child.name += "_" + std::to_string(i);
+      duplicatedFamilies.push_back(child);
+    }
+  }
+}
+
+double getLL(const FamilyInfo &family)
+{
+    std::ifstream is(family.statsFile);
+    double libpllLL = 0.0;
+    double recLL = 0.0;
+    is >> libpllLL;
+    is >> recLL;
+    return libpllLL + recLL;
+}
+void contractFamilies(const Families &duplicatedFamilies, Families &families)
+{
+  unsigned int factor = duplicatedFamilies.size() / families.size();
+  for (unsigned int f = 0; f < families.size(); ++f) {
+    double bestLL = -999999999;
+    unsigned int bestIndex = 0;
+    for (unsigned int i = 0; i < factor; ++i) {
+      auto &duplicatedFamily = duplicatedFamilies[f * factor + i];
+      auto ll = getLL(duplicatedFamily);
+      if (ll > bestLL) {
+        bestIndex = f * factor + i;
+        bestLL = ll;
+      }
+    }
+    auto name = families[f].name;
+    families[f] = duplicatedFamilies[bestIndex];
+    families[f].name = name;
+    Logger::info << "color " << families[f].color  <<  " chunk: " << (bestIndex / factor) << std::endl;
+  }
+
+}
 
 
+void splitInitialFamilies(const Families &families, std::vector<Families> &splitFamilies, unsigned int duplicates, unsigned int splitsNumber)
+{
+  splitFamilies.clear();
+  splitFamilies.resize(splitsNumber);
+  for (unsigned int i = 0; i < families.size(); ++i) {
+    splitFamilies[i % splitsNumber].push_back(families[i]);
+    splitFamilies[i % splitsNumber].back().color = i % splitsNumber;
+    assert(families[i].name ==  splitFamilies[i % splitsNumber][i / splitsNumber].name);
+
+  }
+}
+
+
+void mergeSplitFamilies(const std::vector<Families> &splitFamilies, Families &families, unsigned int splitsNumber)
+{
+  for (unsigned int i = 0; i < families.size(); ++i) {
+    assert(families[i].name ==  splitFamilies[i % splitsNumber][i / splitsNumber].name);
+    families[i]  = splitFamilies[i % splitsNumber][i / splitsNumber];
+  }
+}
