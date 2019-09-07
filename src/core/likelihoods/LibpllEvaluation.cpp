@@ -182,7 +182,7 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::s
   std::vector<unsigned int> params_indices(model.num_ratecats(), 0); 
   auto treeinfo = pllmod_treeinfo_create(root, 
       tipNumber, 1, PLLMOD_COMMON_BRLEN_SCALED);
-  if (!treeinfo)
+  if (!treeinfo || !treeinfo->root)
     throw LibpllException("Cannot create treeinfo");
   pllmod_treeinfo_init_partition(treeinfo, 0, partition,
       params_to_optimize,

@@ -28,7 +28,6 @@ void optimizeBranchesSlow(JointTree &tree,
     const std::vector<pll_unode_t *> &nodesToOptimize)
 {
     auto root = tree.getTreeInfo()->root;
-    assert(root);
     // could be incremental and thus faster
     unsigned int params_indices[4] = {0,0,0,0};
     auto treeinfo = tree.getTreeInfo();
@@ -83,7 +82,6 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
   auto root = tree.getRoot();
   auto prune = tree.getNode(pruneIndex_);
   auto regraft = tree.getNode(regraftIndex_);
-  assert(root);
   assert (prune && prune->next);
   assert (regraft && regraft);
   tree.invalidateCLV(prune->next->back);
