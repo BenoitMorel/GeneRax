@@ -104,6 +104,7 @@ void search(const Families &initialFamilies,
         for (unsigned int i = 1; i <= recRadius; ++i) {
           optimizeStep(arguments, recModel, false, splitFamilies[1], rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
         }
+        RaxmlMaster::runRaxmlOptimization(splitFamilies[3], arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
       }
       if (splits > 2) {
         // raxml and rec
@@ -116,10 +117,10 @@ void search(const Families &initialFamilies,
       if (splits > 3) {
         // rec and raxml
         Logger::timed << "Optimizing part of the duplicated families with species only and then sequences tree only" << std::endl;
-        RaxmlMaster::runRaxmlOptimization(splitFamilies[3], arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
         for (unsigned int i = 1; i <= recRadius; ++i) {
           optimizeStep(arguments, recModel, false, splitFamilies[3], rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
         }
+        RaxmlMaster::runRaxmlOptimization(splitFamilies[3], arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
       }
       mergeSplitFamilies(splitFamilies, currentFamilies, splits);
     }
