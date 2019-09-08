@@ -36,6 +36,7 @@ protected:
   // overload from parent
   virtual REAL getRootLikelihood(pll_unode_t *root) const;
   virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {return _uq[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];}
+  virtual REAL getLikelihoodFactor() const {return REAL(1.0);}
   // overload from parent
   virtual void computeRootLikelihood(pll_unode_t *virtualRoot);
   // overlead from parent

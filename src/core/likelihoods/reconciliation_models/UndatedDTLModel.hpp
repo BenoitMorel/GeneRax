@@ -32,6 +32,7 @@ protected:
   // overload from parent
   virtual void computeRootLikelihood(pll_unode_t *virtualRoot);
   virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {return _uq[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];}
+  virtual REAL getLikelihoodFactor() const;
   virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       Scenario &scenario,
       bool isVirtualRoot = false);
@@ -482,4 +483,15 @@ REAL UndatedDTLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
   return sum;
 }
 
+template <class REAL>
+REAL UndatedDTLModel<REAL>::getLikelihoodFactor() const
+{
+  REAL factor(1.0);
+  for (auto speciesNode: this->speciesNodes_) {
+    auto e = speciesNode->node_index;
+    factor *= (REAL(1.0) - _uE[e]);
+  }
+  return factor;
+      
+}
 

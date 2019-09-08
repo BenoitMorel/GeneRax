@@ -67,6 +67,7 @@ public:
    *  events that would lead to the  current tree
    **/
   virtual void inferMLScenario(Scenario &scenario) = 0;
+
 };
 
 
@@ -110,6 +111,7 @@ protected:
   // Called by computeLogLikelihood
   virtual REAL getRootLikelihood(pll_unode_t *root) const = 0;
   virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) = 0;
+  virtual REAL getLikelihoodFactor() const = 0;
   // Called by inferMLScenario
   // fills scenario with the best likelihood set of events that 
   // would lead to the subtree of geneNode under speciesNode
@@ -460,7 +462,7 @@ double AbstractReconciliationModel<REAL>::getSumLikelihood()
   for (auto root: roots) {
     total += getRootLikelihood(root);
   }
-  return log(total); 
+  return log(total) - log(getLikelihoodFactor()); 
 }
 
 

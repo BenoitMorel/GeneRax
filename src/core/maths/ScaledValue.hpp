@@ -40,13 +40,17 @@ public:
       }
     }
   }
+  
+  explicit ScaledValue(double v):value(v), scaler(0)  {
+    scale();
+  } 
 
   /**
    * General constructor
    * @param v value
    * @param s scaler
    */
-  explicit ScaledValue(double v, int s = 0):value(v), scaler(s)  {
+  explicit ScaledValue(double v, int s):value(v), scaler(s)  {
     scale();
   } 
 
