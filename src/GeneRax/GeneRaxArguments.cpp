@@ -16,6 +16,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   duplicates(1),
   initStrategies(3),
   rootedGeneTree(true),
+  pruneSpeciesTree(false),
   recRadius(0),
   perSpeciesDTLRates(false),
   userDTLRates(false),
@@ -55,6 +56,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       duplicates = atoi(argv[++i]);
     } else if (arg == "--unrooted-gene-tree") {
       rootedGeneTree = false;
+    } else if (arg == "--prune-species-tree") {
+      pruneSpeciesTree = true;
     } else if (arg == "--rec-radius") {
       recRadius = atoi(argv[++i]);
     } else if (arg == "--per-species-rates") {
@@ -177,6 +180,7 @@ void GeneRaxArguments::printSummary() {
     Logger::info << "Init strategies: " << initStrategies << std::endl;
   }
   Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << std::endl;
+  Logger::info << "Prune species tree: " << boolStr[pruneSpeciesTree] << std::endl;
   Logger::info << "Reconciliation radius: " << recRadius << std::endl;
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << std::endl;
   Logger::info << "Max SPR radius: " << maxSPRRadius << std::endl;

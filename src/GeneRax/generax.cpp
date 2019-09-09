@@ -49,11 +49,25 @@ void optimizeStep(GeneRaxArguments &arguments,
     long &sumElapsedRates,
     long &sumElapsedSPR)
 {
+  long elapsed = 0;
+  Logger::timed << "Optimizing global DTL rates... " << std::endl;
   Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, rates, sumElapsedRates);
+  if (rates.size() == 1) {
+    DTLRates r = rates.getRates(0);
+    Logger::info << "\tD=" << r.rates[0] << " L=" << r.rates[1] << " T=" << r.rates[2];
+    Logger::info << " RecLL=" << r.ll;
+  } else {
+    Logger::info << " RecLL=" << rates.getLL();
+  }
+  Logger::info << std::endl;
+  Logger::timed << "Optimizing gene trees with radius=" << sprRadius << "... " << std::endl; 
   GeneTreeSearchMaster::optimizeGeneTrees(families, recModel, rates, arguments.output, "results",
       arguments.execPath, arguments.speciesTree, arguments.reconciliationOpt, arguments.perFamilyDTLRates, arguments.rootedGeneTree, 
-      arguments.recWeight, true, enableLipll, sprRadius, currentIteration, useSplitImplem(), sumElapsedSPR);
+      arguments.pruneSpeciesTree, arguments.recWeight, true, enableLipll, sprRadius, currentIteration, useSplitImplem(), elapsed);
+  sumElapsedSPR += elapsed;
   Routines::gatherLikelihoods(families, totalLibpllLL, totalRecLL);
+  Logger::info << "\tJointLL=" << totalLibpllLL + totalRecLL << " RecLL=" << totalRecLL << " LibpllLL=" << totalLibpllLL << std::endl;
+  Logger::info << std::endl;
 }
 
 
@@ -143,10 +157,6 @@ void search(const Families &initialFamilies,
     currentFamilies = contracted;
     optimizeStep(arguments, recModel, true, currentFamilies, rates, 0, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
-
-  
-  Logger::info << "Joint=" << totalLibpllLL + totalRecLL << ", Libpll=" << totalLibpllLL << ", Rec=" << totalRecLL << std::endl;
-
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
   Routines::inferReconciliation(arguments.speciesTree, currentFamilies, recModel, rates, arguments.output);
   if (sumElapsedLibpll) {
@@ -174,7 +184,7 @@ void eval(const Families &initialFamilies,
   int sprRadius = 0;
   int currentIteration = 0;
   GeneTreeSearchMaster::optimizeGeneTrees(families, recModel, rates, arguments.output, "results", arguments.execPath,
-      arguments.speciesTree, arguments.reconciliationOpt, arguments.perFamilyDTLRates, arguments.rootedGeneTree, arguments.recWeight,
+      arguments.speciesTree, arguments.reconciliationOpt, arguments.perFamilyDTLRates, arguments.rootedGeneTree, arguments.pruneSpeciesTree, arguments.recWeight,
       true, true, sprRadius, currentIteration, useSplitImplem(), dummy);
 
   double totalLibpllLL = 0.0;

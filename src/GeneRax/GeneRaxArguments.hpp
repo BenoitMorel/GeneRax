@@ -28,6 +28,7 @@ public:
    unsigned int duplicates;
    unsigned int initStrategies;
    bool rootedGeneTree;
+   bool pruneSpeciesTree;
    unsigned int recRadius;
    bool perSpeciesDTLRates;
    bool userDTLRates;

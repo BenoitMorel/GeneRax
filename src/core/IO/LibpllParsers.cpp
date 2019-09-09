@@ -98,11 +98,16 @@ void LibpllParsers::saveRtree(const pll_rnode_t *rtree,
   free(newick);
 }
   
-void LibpllParsers::getRtreeNewickString(const pll_rtree_t *rtree, std::string &newick)
+void LibpllParsers::getRnodeNewickString(const pll_rnode_t *rnode, std::string &newick)
 {
-  char *newickStr = pll_rtree_export_newick(rtree->root, 0);
+  char *newickStr = pll_rtree_export_newick(rnode, 0);
   newick = std::string(newickStr);
   free(newickStr);
+}
+  
+void LibpllParsers::getRtreeNewickString(const pll_rtree_t *rtree, std::string &newick)
+{
+  getRnodeNewickString(rtree->root, newick);
 }
 
 void rtreeHierarchicalStringAux(const pll_rnode_t *node, std::vector<bool> &lefts, std::ostringstream &os)

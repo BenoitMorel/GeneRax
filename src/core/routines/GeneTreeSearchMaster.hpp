@@ -19,12 +19,13 @@ public:
     RecOpt reconciliationOpt,
     bool perFamilyDTLRates,
     bool rootedGeneTree,
+    bool pruneSpeciesTree,
     double recWeight,
     bool enableRec,
     bool enableLibpll,
     int sprRadius,
     int iteration,
     bool schedulerSplitImplem,
-    long &sumElapsed,
+    long &elapsed,
     bool inPlace = false); 
 };

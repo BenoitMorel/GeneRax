@@ -21,7 +21,6 @@ void Routines::optimizeRates(bool userDTLRates,
     return;
   }
   auto start = Logger::getElapsedSec();
-  Logger::timed << "Start optimizing rates..." << std::endl;
   PerCoreGeneTrees geneTrees(families);
   bool ok = geneTrees.checkMappings(speciesTreeFile); 
   if (!ok) {
@@ -38,9 +37,10 @@ void Routines::optimizeRates(bool userDTLRates,
   ParallelContext::barrier(); 
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
+  /*
   Logger::timed << "Finished optimizing rates: "
     << "Loglk=" << rates.getLL() 
-    << " (after " << elapsed << "s)" << std::endl;
+    << " (after " << elapsed << "s)" << std::endl;*/
 }
 
 void Routines::inferReconciliation(

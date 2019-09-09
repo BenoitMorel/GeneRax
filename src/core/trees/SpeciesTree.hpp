@@ -11,8 +11,6 @@
 class PerCoreGeneTrees;
 
 
-
-
 class SpeciesTree {
 public:
   SpeciesTree(const std::string &newick, bool isFile = true);

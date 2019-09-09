@@ -25,6 +25,7 @@ public:
               RecModel reconciliationModel,
               RecOpt reconciliationOpt,
               bool rootedGeneTree,
+              bool pruneSpeciesTree,
               double recWeight,
               bool safeMode,
               bool optimizeDTLRates,

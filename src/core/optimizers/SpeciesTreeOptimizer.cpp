@@ -209,6 +209,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
   double recWeight = 1.0;
   bool useSplitImplem = true;
   long int sumElapsedSPR = 0;
+  bool pruneSpeciesTree = false;
   auto rates = _speciesTree->getRates();
   DTLRatesVector ratesVector(rates);
   Logger::mute();
@@ -216,7 +217,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
   Families families = _currentFamilies;
   GeneTreeSearchMaster::optimizeGeneTrees(families, 
       _model, ratesVector, _outputDir, resultName, 
-      _execPath, speciesTree, recOpt, perFamilyDTLRates, rootedGeneTree, 
+      _execPath, speciesTree, recOpt, perFamilyDTLRates, rootedGeneTree, pruneSpeciesTree, 
       recWeight, true, true, radius, _geneTreeIteration, 
         useSplitImplem, sumElapsedSPR, inPlace);
   _geneTreeIteration++;

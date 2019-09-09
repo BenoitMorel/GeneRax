@@ -24,17 +24,17 @@ void GeneTreeSearchMaster::optimizeGeneTrees(Families &families,
     RecOpt recOpt,
     bool perFamilyDTLRates,
     bool rootedGeneTree,
+    bool pruneSpeciesTree,
     double recWeight,
     bool enableRec,
     bool enableLibpll,
     int sprRadius,
     int iteration,
     bool schedulerSplitImplem,
-    long &sumElapsed,
+    long &elapsed,
     bool inPlace) 
 {
   auto start = Logger::getElapsedSec();
-  Logger::timed << "Starting SPR rounds with radius " << sprRadius << std::endl;
   std::stringstream outputDirName;
   outputDirName << "gene_optimization_" << iteration;
   std::string outputDir = FileSystem::joinPaths(output, outputDirName.str());
@@ -83,6 +83,7 @@ void GeneTreeSearchMaster::optimizeGeneTrees(Families &families,
     os << static_cast<int>(recOpt)  << " ";
     os << static_cast<int>(perFamilyDTLRates)  << " ";
     os << static_cast<int>(rootedGeneTree)  << " ";
+    os << static_cast<int>(pruneSpeciesTree)  << " ";
     os << recWeight  << " ";
     os << static_cast<int>(enableRec)  << " ";
     os << static_cast<int>(enableLibpll)  << " ";
@@ -94,8 +95,6 @@ void GeneTreeSearchMaster::optimizeGeneTrees(Families &families,
   } 
   os.close();
   Scheduler::schedule(outputDir, commandFile, schedulerSplitImplem, execPath); 
-  auto elapsed = (Logger::getElapsedSec() - start);
-  sumElapsed += elapsed;
-  Logger::timed << "End of SPR rounds (after " << elapsed << "s)"  << std::endl;
+  elapsed = (Logger::getElapsedSec() - start);
 }
 

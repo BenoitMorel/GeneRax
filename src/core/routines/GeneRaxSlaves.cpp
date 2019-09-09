@@ -44,6 +44,7 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
     RecOpt recOpt,
     bool perFamilyDTLRates,
     bool rootedGeneTree,
+    bool pruneSpeciesTree,
     double recWeight,
     bool enableRec,
     bool enableLibpll,
@@ -64,6 +65,7 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
       recModel,
       recOpt,
       rootedGeneTree,
+      pruneSpeciesTree,
       recWeight,
       false, //check
       perFamilyDTLRates, // optimize DTL
@@ -79,7 +81,7 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
   if (sprRadius > 0) {
     while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk, true)) {} 
   }
-  Logger::info << "Final ll = " << bestLoglk << std::endl;
+  jointTree->printLoglk();
   if (outputGeneTree.size()) {
     jointTree->save(outputGeneTree, false);
   }
@@ -101,7 +103,7 @@ std::string getArg(const std::string &str)
 
 int optimizeGeneTreesMain(int argc, char** argv, void* comm)
 {
-  assert(argc == 18);
+  assert(argc == 19);
   ParallelContext::init(comm);
   Logger::timed << "Starting optimizeGeneTreesSlave" << std::endl;
   int i = 2;
@@ -116,6 +118,7 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
   RecOpt recOpt = RecOpt(atoi(argv[i++])); 
   bool perFamilyDTLRates = bool(atoi(argv[i++]));
   bool rootedGeneTree = bool(atoi(argv[i++]));
+  bool pruneSpeciesTree = bool(atoi(argv[i++]));
   double recWeight = double(atof(argv[i++]));
   bool enableRec = bool(atoi(argv[i++]));
   bool enableLibpll = bool(atoi(argv[i++]));
@@ -132,6 +135,7 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
       recOpt,
       perFamilyDTLRates,
       rootedGeneTree,
+      pruneSpeciesTree,
       recWeight,
       enableRec,
       enableLibpll,

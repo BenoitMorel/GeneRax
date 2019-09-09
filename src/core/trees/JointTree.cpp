@@ -111,6 +111,43 @@ void printLibpllTreeRooted(pll_unode_t *root, Logger &os){
   os << ");" << std::endl;
 }
 
+static pll_rtree_t *clone(pll_rnode_t *root) {
+  std::string newStr;
+  LibpllParsers::getRnodeNewickString(root, newStr);
+  return LibpllParsers::readRootedFromStr(newStr);
+}
+
+static pll_rtree_t *getPrunedTree(pll_rtree_t *inputSpeciesTree,
+    std::unordered_set<std::string> &geneLeaves,
+    GeneSpeciesMapping &mapping)
+{
+  std::unordered_set<std::string> representedSpecies;
+  for (auto &geneLeaf: geneLeaves) {
+    representedSpecies.insert(mapping.getSpecies(geneLeaf));
+  }
+  unsigned int speciesNumber = inputSpeciesTree->inner_count + inputSpeciesTree->tip_count;
+  std::vector<bool> inThePath(speciesNumber, false);
+  for (unsigned int e = 0; e < speciesNumber; ++e) {
+    auto node = inputSpeciesTree->nodes[e];
+    if (!node->left) { // leaf
+      inThePath[e] = (representedSpecies.find(std::string(node->label)) != representedSpecies.end());
+    } else { // internal node
+      inThePath[e] = inThePath[node->left->node_index] || inThePath[node->right->node_index];
+    }
+  }
+  auto root = inputSpeciesTree->root;
+  while (root->left && root->right) {
+    if (!inThePath[root->left->node_index]) {
+      root = root->right;
+    } else if (!inThePath[root->right->node_index]) {
+      root = root->left;
+    } else {
+      break;
+    }
+  }
+  return clone(root);
+}
+
 
 JointTree::JointTree(const std::string &newick_string,
     const std::string &alignment_file,
@@ -120,6 +157,7 @@ JointTree::JointTree(const std::string &newick_string,
     RecModel reconciliationModel,
     RecOpt reconciliationOpt,
     bool rootedGeneTree,
+    bool pruneSpeciesTree,
     double recWeight,
     bool safeMode,
     bool optimizeDTLRates,
@@ -140,6 +178,16 @@ JointTree::JointTree(const std::string &newick_string,
   }
   assert(pllSpeciesTree_);
   geneSpeciesMap_.fill(geneSpeciesMap_file, newick_string);
+  if (pruneSpeciesTree) {
+    std::unordered_set<std::string> geneLeaves;
+    LibpllParsers::fillLeavesFromUtree(libpllEvaluation_->getGeneTree(), geneLeaves);
+    auto clone = getPrunedTree(pllSpeciesTree_, geneLeaves, geneSpeciesMap_);
+    pll_rtree_destroy(pllSpeciesTree_, 0);
+    pllSpeciesTree_ = clone;
+    std::string newStr;
+    LibpllParsers::getRnodeNewickString(pllSpeciesTree_->root, newStr);
+    Logger::info << "species tree: " << newStr << std::endl;
+  }
   reconciliationEvaluation_ = std::make_shared<ReconciliationEvaluation>(pllSpeciesTree_,  
       geneSpeciesMap_, 
       reconciliationModel,
