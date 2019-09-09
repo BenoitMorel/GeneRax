@@ -486,10 +486,10 @@ REAL UndatedDTLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
 template <class REAL>
 REAL UndatedDTLModel<REAL>::getLikelihoodFactor() const
 {
-  REAL factor(1.0);
+  REAL factor(0.0);
   for (auto speciesNode: this->speciesNodes_) {
     auto e = speciesNode->node_index;
-    factor *= (REAL(1.0) - _uE[e]);
+    factor += (REAL(1.0) - _uE[e]);
   }
   return factor;
       

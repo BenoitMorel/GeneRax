@@ -36,7 +36,7 @@ protected:
   // overload from parent
   virtual REAL getRootLikelihood(pll_unode_t *root) const;
   virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {return _uq[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];}
-  virtual REAL getLikelihoodFactor() const {return REAL(1.0);}
+  virtual REAL getLikelihoodFactor() const;
   // overload from parent
   virtual void computeRootLikelihood(pll_unode_t *virtualRoot);
   // overlead from parent
@@ -318,6 +318,17 @@ void UndatedDLModel<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
     computeProbability(virtualRoot, speciesNode, _uq[u][e], true);
   }
 //  accountForSpeciesRoot(virtualRoot);
+}
+
+template <class REAL>
+REAL UndatedDLModel<REAL>::getLikelihoodFactor() const
+{
+  REAL factor(0.0);
+  for (auto speciesNode: this->speciesNodes_) {
+    auto e = speciesNode->node_index;
+    factor += (REAL(1.0) - REAL(_uE[e]));
+  }
+  return factor;
 }
 
 
