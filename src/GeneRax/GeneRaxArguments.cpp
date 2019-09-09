@@ -14,7 +14,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   output("GeneRax"),
   perFamilyDTLRates(false),
   duplicates(1),
-  initStrategies(4),
+  initStrategies(3),
   rootedGeneTree(true),
   recRadius(0),
   perSpeciesDTLRates(false),

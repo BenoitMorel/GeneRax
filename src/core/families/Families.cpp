@@ -155,24 +155,26 @@ void contractFamilies(const Families &duplicatedFamilies, Families &families)
   for (unsigned int f = 0; f < families.size(); ++f) {
     double bestLL = -999999999;
     unsigned int bestIndex = 0;
+    unsigned int bestChunk = 0;
     for (unsigned int i = 0; i < factor; ++i) {
       auto &duplicatedFamily = duplicatedFamilies[f * factor + i];
       auto ll = getLL(duplicatedFamily);
       if (ll > bestLL) {
         bestIndex = f * factor + i;
         bestLL = ll;
+        bestChunk = i;
       }
     }
     auto name = families[f].name;
     families[f] = duplicatedFamilies[bestIndex];
     families[f].name = name;
-    Logger::info << "color " << families[f].color  <<  " chunk: " << (bestIndex / factor) << std::endl;
+    Logger::info << "color " << families[f].color  <<  " chunk: " << bestChunk << std::endl;
   }
 
 }
 
 
-void splitInitialFamilies(const Families &families, std::vector<Families> &splitFamilies, unsigned int duplicates, unsigned int splitsNumber)
+void splitInitialFamilies(const Families &families, std::vector<Families> &splitFamilies, unsigned int splitsNumber)
 {
   splitFamilies.clear();
   splitFamilies.resize(splitsNumber);

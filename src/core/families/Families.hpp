@@ -32,7 +32,7 @@ void filterFamilies(Families &families, const std::string &speciesTreeFile);
 void duplicatesFamilies(const Families &families, Families &duplicatedFamilies, unsigned int factor);
 void contractFamilies(const Families &duplicatedFamilies, Families &families);
 
-void splitInitialFamilies(const Families &families, std::vector<Families> &splitFamilies, unsigned int duplicates, unsigned int splitsNumber);
+void splitInitialFamilies(const Families &families, std::vector<Families> &splitFamilies, unsigned int splitsNumber);
 void mergeSplitFamilies(const std::vector<Families> &splitFamilies, Families &families, unsigned int splitsNumber);
 
 
