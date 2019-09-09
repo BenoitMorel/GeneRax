@@ -5,22 +5,8 @@ extern "C" {
 #include <pll.h>
 }
 
-static void recursivelySaveReconciliationsNHX(pll_rtree_t *speciesTree,  pll_unode_t *node, std::vector<std::vector<Scenario::Event> > &geneToEvents, ParallelOfstream &os)
+static void printEvent(const Scenario::Event &event, pll_rtree_t *speciesTree, pll_unode_t *node, ParallelOfstream &os)
 {
-  if(node->next) {
-    os << "(";
-    recursivelySaveReconciliationsNHX(speciesTree, node->next->back, geneToEvents, os);
-    os << ",";
-    recursivelySaveReconciliationsNHX(speciesTree, node->next->next->back, geneToEvents, os);
-    os << ")";
-  } 
-  if (node->label) {
-    os << node->label;
-  } else {
-    os << "n" << node->node_index; 
-  }
-  os << ":" << node->length;
-  auto event = geneToEvents[node->node_index].back();
   if (event.isValid()) {
     os << "[&&NHX";
     if (speciesTree->nodes[event.speciesNode]->label) {
@@ -38,18 +24,45 @@ static void recursivelySaveReconciliationsNHX(pll_rtree_t *speciesTree,  pll_uno
     os << "]";
   }
 }
+
+static void recursivelySaveReconciliationsNHX(pll_rtree_t *speciesTree,  pll_unode_t *node, bool isVirtualRoot, std::vector<std::vector<Scenario::Event> > &geneToEvents, ParallelOfstream &os)
+{
+  
+  if(node->next) {
+    auto left = node->next->back;
+    auto right = node->next->next->back;
+    if (isVirtualRoot) {
+      left = node->next;
+      right = node->next->back;
+    }
+    os << "(";
+    recursivelySaveReconciliationsNHX(speciesTree, left, false, geneToEvents, os);
+    os << ",";
+    recursivelySaveReconciliationsNHX(speciesTree, right, false, geneToEvents, os);
+    os << ")";
+  } 
+  if (node->label) {
+    os << node->label;
+  } else {
+    os << "n" << node->node_index; 
+  }
+  os << ":" << node->length;
+  printEvent(geneToEvents[node->node_index].back(), speciesTree, node, os);
+}
   
 void ReconciliationWriter::saveReconciliationNHX(pll_rtree_t *speciesTree, 
     pll_unode_t *geneRoot, 
+    unsigned int virtualRootIndex,
     std::vector<std::vector<Scenario::Event> > &geneToEvents, 
     const std::string &filename, 
     bool masterRankOnly) 
 {
+  pll_unode_t virtualRoot;
+  virtualRoot.next = geneRoot;
+  virtualRoot.node_index = virtualRootIndex;
+  virtualRoot.label = 0;
   ParallelOfstream os(filename, masterRankOnly);
-  os << "(";
-  recursivelySaveReconciliationsNHX(speciesTree, geneRoot, geneToEvents, os);
-  os << ",";
-  recursivelySaveReconciliationsNHX(speciesTree, geneRoot->back, geneToEvents, os);
+  recursivelySaveReconciliationsNHX(speciesTree, &virtualRoot, true, geneToEvents, os);
   os << ");";
 }
 
@@ -116,7 +129,6 @@ static void writeEventRecPhyloXML(pll_unode_t *geneTree,
     os << indent << "\t<loss speciesLocation=\"" << speciesOut->label << "\"/>" << std::endl;
     break;
   default:
-    const char *eventNames[]  = {"S", "SL", "D", "T", "TL", "None", "Invalid"};
     break;
   }
   os << indent << "</eventsRec>" << std::endl;

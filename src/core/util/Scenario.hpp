@@ -26,7 +26,7 @@ public:
     unsigned int speciesNode;
     unsigned int transferedGeneNode; 
     unsigned int destSpeciesNode; // for transfers
-    bool isValid() { return speciesNode != INVALID; }
+    bool isValid() const { return speciesNode != INVALID; }
   };
 
 
