@@ -40,7 +40,7 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
   // this handles both per-species and global rates
   for (unsigned int d = 0; d < rates.size(); ++d) {
     for (unsigned int e = 0; e < _speciesCount; ++e) {
-      (*rates[d])[e] = parameters.get((e * rates.size() + d) % parameters.dimensions());
+      (*rates[d])[e] = parameters[(e * rates.size() + d) % parameters.dimensions()];
     }
   }
   _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates);

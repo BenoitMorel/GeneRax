@@ -31,9 +31,9 @@ public:
     }
   }
 
-  inline double get(unsigned int i) const {return _parameters[i];}
-  inline void set(unsigned int i, double value) {_parameters[i] = value;}
-
+  double operator [](unsigned int i) const    {return _parameters[i];}
+  double & operator [](unsigned int i) {return _parameters[i];}
+  
   inline double getScore() const {return _score;}
   inline void setScore(double score) {_score = score;}
   
@@ -82,7 +82,7 @@ public:
   inline double distance(const Parameters &v) const {
     double d = 0.0;
     for (unsigned int i = 0; i < dimensions(); ++i) {
-      d += pow(get(i) - v.get(i), 2.0);
+      d += pow((*this)[i] - v[i], 2.0);
     }
     return sqrt(d);
   }

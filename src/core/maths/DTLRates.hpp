@@ -113,6 +113,7 @@ public:
   inline DTLRates &getRates(unsigned int index) {return _rates[index];}
 
   inline const std::vector<DTLRates> &getRatesVector() const {return _rates;}
+  inline std::vector<DTLRates> &getRatesVector() {return _rates;}
 
   inline void ensureValidity() {
     for (auto &r: _rates) {
