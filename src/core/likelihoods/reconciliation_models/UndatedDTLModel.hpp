@@ -78,13 +78,13 @@ private:
     pll_rnode_t *&recievingSpecies,
     REAL &proba);
     
-  REAL getCorrectedTransferExtinctionSum(unsigned int speciesNode) const {
-  return _transferExtinctionSum - _ancestralExctinctionCorrection[speciesNode];
+  REAL getCorrectedTransferExtinctionSum(unsigned int speciesId) const {
+    return (_transferExtinctionSum - _ancestralExctinctionCorrection[speciesId]) * _PT[speciesId];
   }
 
   REAL getCorrectedTransferSum(unsigned int geneId, unsigned int speciesId) const
   {
-    return _survivingTransferSums[geneId] - _ancestralCorrection[geneId][speciesId];
+    return (_survivingTransferSums[geneId] - _ancestralCorrection[geneId][speciesId]) * _PT[speciesId];
 
   }
 
@@ -120,7 +120,7 @@ void UndatedDTLModel<REAL>::updateTransferSums(REAL &transferSum,
   for (int i = static_cast<int>(this->speciesNodes_.size()) - 1; i >= 0; --i) {
     auto speciesNode = this->speciesNodes_[static_cast<unsigned int>(i)];
     auto e = speciesNode->node_index;
-    ancestralCorrection[e] = probabilities[e] * _PT[e];
+    ancestralCorrection[e] = probabilities[e];
     if (speciesNode->parent) {
       auto p = speciesNode->parent->node_index;
       ancestralCorrection[e] += ancestralCorrection[p];
@@ -129,7 +129,7 @@ void UndatedDTLModel<REAL>::updateTransferSums(REAL &transferSum,
   for (auto speciesNode: this->speciesNodes_) {
     auto e = speciesNode->node_index;
     ancestralCorrection[e] /= double(this->speciesNodes_.size());
-    transferSum += probabilities[e] * _PT[e];
+    transferSum += probabilities[e];
   }
   transferSum /= this->speciesNodes_.size();
 }
