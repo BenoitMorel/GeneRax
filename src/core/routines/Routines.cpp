@@ -28,7 +28,7 @@ void Routines::optimizeRates(bool userDTLRates,
     ParallelContext::abort(42);
   }
   pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
-  if (!perSpeciesRates) {
+  if (perSpeciesRates) {
     rates = DTLOptimizer::optimizeParametersPerSpecies(geneTrees, speciesTree, recModel);
   } else {
     rates = DTLOptimizer::optimizeParametersGlobalDTL(geneTrees, speciesTree, recModel);
