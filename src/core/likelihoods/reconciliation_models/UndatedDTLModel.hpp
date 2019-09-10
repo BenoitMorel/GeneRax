@@ -226,8 +226,9 @@ void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode,
   auto u_left = this->getLeft(parentGeneNode, isVirtualRoot);
   auto u_right = this->getRight(parentGeneNode, isVirtualRoot);
   std::unordered_set<unsigned int> parents;
+  parents.insert(originSpeciesNode->node_index);
   for (auto parent = originSpeciesNode; parent->parent != 0; parent = parent->parent) {
-    parents.insert(parent->node_index);
+    parents.insert(parent->parent->node_index);
   }
   for (auto species: this->speciesNodes_) {
     auto h = species->node_index;
@@ -261,8 +262,9 @@ void UndatedDTLModel<REAL>::getBestTransferLoss(pll_unode_t *parentGeneNode,
   proba = REAL();
   auto e = originSpeciesNode->node_index;
   std::unordered_set<unsigned int> parents;
+  parents.insert(originSpeciesNode->node_index);
   for (auto parent = originSpeciesNode; parent->parent != 0; parent = parent->parent) {
-    parents.insert(parent->node_index);
+    parents.insert(parent->parent->node_index);
   }
   for (auto species: this->speciesNodes_) {
     auto h = species->node_index;

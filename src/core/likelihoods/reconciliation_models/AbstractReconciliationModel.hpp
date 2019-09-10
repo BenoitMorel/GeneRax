@@ -484,6 +484,7 @@ template <class REAL>
 void AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario)
 {
   // make sure the CLVs are filled
+  invalidateAllCLVs();
   updateCLVs();
   computeLikelihoods(); 
   

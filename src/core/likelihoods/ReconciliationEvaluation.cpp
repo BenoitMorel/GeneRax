@@ -25,6 +25,27 @@ ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
   _reconciliationModel->init(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
 }
 
+
+void ReconciliationEvaluation::setRates(const Parameters &parameters)
+{
+  std::vector<std::vector<double> *> rates;
+  rates.push_back(&_dupRates);
+  rates.push_back(&_lossRates);
+  if (implementsTransfers()) {
+    rates.push_back(&_transferRates);
+  }
+  for (auto r: rates) {
+    r->resize(_speciesCount);
+  }
+  // this handles both per-species and global rates
+  for (unsigned int d = 0; d < rates.size(); ++d) {
+    for (unsigned int e = 0; e < _speciesCount; ++e) {
+      (*rates[d])[e] = parameters.get((e * rates.size() + d) % parameters.dimensions());
+    }
+  }
+  _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates);
+}
+
 void ReconciliationEvaluation::setRates(double dupRate, double lossRate,
   double transferRate)
 {

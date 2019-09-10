@@ -6,6 +6,7 @@
 #include <vector>
 #include <memory>
 #include <maths/DTLRates.hpp>
+#include <maths/Parameters.hpp>
 
 double log(ScaledValue v) ;
   
@@ -26,6 +27,8 @@ public:
     const GeneSpeciesMapping& geneSpeciesMapping,
     RecModel recModel,
     bool rootedGeneTree);
+
+  void setRates(const Parameters &parameters);
 
   /**
    *  Set the DTL rates

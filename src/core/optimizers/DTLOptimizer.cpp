@@ -15,18 +15,19 @@ static bool isValidLikelihood(double ll) {
 }
 
 
-void updateLL(DTLRates &rates, PerCoreGeneTrees &trees, pll_rtree_t *speciesTree, RecModel model) {
-  rates.ensureValidity();
-  rates.ll = 0.0;
+void updateLL(Parameters &rates, PerCoreGeneTrees &trees, pll_rtree_t *speciesTree, RecModel model) {
+  rates.ensurePositivity();
+  double ll = 0.0;
   for (auto &tree: trees.getTrees()) {
     ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
-    evaluation.setRates(rates.rates[0], rates.rates[1], rates.rates[2]);
-    rates.ll += evaluation.evaluate(tree.tree);
+    evaluation.setRates(rates);
+    ll += evaluation.evaluate(tree.tree);
   }
-  ParallelContext::sumDouble(rates.ll);
-  if (!isValidLikelihood(rates.ll)) {
-    rates.ll = -std::numeric_limits<double>::infinity();
+  ParallelContext::sumDouble(ll);
+  if (!isValidLikelihood(ll)) {
+    ll = -std::numeric_limits<double>::infinity();
   }
+  rates.setScore(ll);
 }
 
 void updateLL(DTLRatesVector &rates, PerCoreGeneTrees &trees, std::vector<std::shared_ptr<ReconciliationEvaluation> > &evaluations) {
@@ -114,20 +115,20 @@ DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees,
 }
 
 
-static bool lineSearch(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, DTLRates &currentRates, const DTLRates &gradient, unsigned int &llComputationsLine)
+static bool lineSearchParameters(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, Parameters &currentRates, const Parameters &gradient, unsigned int &llComputationsLine)
 {
   double alpha = 0.1; 
   double epsilon = 0.0000001;
   const double minAlpha = epsilon; //(dimensions == 2 ? epsilon : 0.001);
   const double minImprovement = 0.1;
-  DTLRates currentGradient(gradient);
+  Parameters currentGradient(gradient);
   bool stop = true;
   while (alpha > minAlpha) {
     currentGradient.normalize(alpha);
-    DTLRates proposal = currentRates + (currentGradient * alpha);
+    Parameters proposal = currentRates + (currentGradient * alpha);
     updateLL(proposal, geneTrees, speciesTree, model);
     llComputationsLine++;
-    if (currentRates.ll + minImprovement < proposal.ll) {
+    if (currentRates.getScore() + minImprovement < proposal.getScore()) {
       currentRates = proposal;
       stop = false;
       alpha *= 1.5;
@@ -141,30 +142,45 @@ static bool lineSearch(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, Re
   return !stop;
 }
 
-DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const DTLRates &startingRates)
+Parameters DTLOptimizer::optimizeParameters(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const Parameters &startingParameters)
 {
   double epsilon = 0.0000001;
-  unsigned int dimensions = Enums::freeParameters(model);
-  DTLRates currentRates;
-  for (unsigned int i = 0; i < dimensions; ++i) {
-    currentRates.rates[i] = startingRates.rates[i];
-  }
+  Parameters currentRates = startingParameters;
   updateLL(currentRates, geneTrees, speciesTree, model);
   unsigned int llComputationsGrad = 0;
   unsigned int llComputationsLine = 0;
-  DTLRates gradient;
+  unsigned int dimensions = startingParameters.dimensions();
+  Parameters gradient(dimensions);
   do {
-    std::vector<DTLRates> closeRates(dimensions, currentRates);
+    std::vector<Parameters> closeRates(dimensions, currentRates);
     for (unsigned int i = 0; i < dimensions; ++i) {
-      DTLRates closeRates = currentRates;
-      closeRates.rates[i] += epsilon;
+      Parameters closeRates = currentRates;
+      closeRates.set(i, closeRates.get(i) + epsilon);
       updateLL(closeRates, geneTrees, speciesTree, model);
       llComputationsGrad++;
-      gradient.rates[i] = (currentRates.ll - closeRates.ll) / (-epsilon);
+      gradient.set(i, (currentRates.getScore() - closeRates.getScore()) / (-epsilon));
     }
-  } while (lineSearch(geneTrees, speciesTree, model, currentRates, gradient, llComputationsLine));
-  //Logger::info << "Global rates: " << currentRates << "(after " << llComputationsGrad << " + " << llComputationsLine << " recomputations) " << std::endl;
+  } while (lineSearchParameters(geneTrees, speciesTree, model, currentRates, gradient, llComputationsLine));
   return currentRates;
+
+}
+  
+
+DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const DTLRates &startingRates)
+{
+
+  unsigned int dimensions = Enums::freeParameters(model);
+  DTLRates result;
+  Parameters startingParameters(dimensions);
+  for (unsigned int i = 0; i < dimensions; ++i) {
+    startingParameters.set(i, startingRates.rates[i]);
+  }
+  auto resultParameter = optimizeParameters(geneTrees, speciesTree, model, startingParameters);
+  for (unsigned int i = 0; i < dimensions; ++i) {
+    result.rates[i] = resultParameter.get(i);
+  }
+  result.ll = resultParameter.getScore();
+  return result;
 }
 
 double getRand() {
@@ -201,4 +217,3 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
   //Logger::info << "Best rates " << best << std::endl;
   return best; 
 }
-  

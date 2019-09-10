@@ -6,7 +6,7 @@ class PerCoreGeneTrees;
 #include <string>
 #include <util/enums.hpp>
 #include <maths/DTLRates.hpp>
-
+#include <maths/Parameters.hpp>
 
 
 
@@ -22,6 +22,8 @@ public:
    */
   static DTLRates optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model);
   static DTLRates optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const DTLRates &startingRates);
+
+  static Parameters optimizeParameters(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const Parameters &startingParameters);
 };
 
 
