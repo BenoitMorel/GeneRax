@@ -7,7 +7,7 @@
 #include <limits>
 #include <trees/PerCoreGeneTrees.hpp>
 #include <optimizers/DTLOptimizer.hpp>
-#include <maths/DTLRates.hpp>
+#include <maths/Parameters.hpp>
 #include <trees/JointTree.hpp>
 #include <search/SPRSearch.hpp>
 #include <IO/FileSystem.hpp>
@@ -56,7 +56,7 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
   std::vector<std::string> geneTreeStrings;
   getTreeStrings(startingGeneTreeFile, geneTreeStrings);
   assert(geneTreeStrings.size() == 1);
-  DTLRatesVector ratesVector(ratesFile);
+  Parameters ratesVector(ratesFile);
   auto jointTree = std::make_shared<JointTree>(geneTreeStrings[0],
       alignmentFile,
       speciesTreeFile,

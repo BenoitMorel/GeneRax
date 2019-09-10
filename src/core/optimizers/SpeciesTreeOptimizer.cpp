@@ -22,7 +22,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
 {
   if (speciesTreeFile == "random") {
     _speciesTree = std::make_unique<SpeciesTree>(initialFamilies);
-    _speciesTree->setRates(DTLRates(0.1, 0.2, 0.1));
+    _speciesTree->setRates(Parameters(0.1, 0.2, 0.1));
   } else {
     _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
     ratesOptimization();
@@ -179,7 +179,7 @@ void SpeciesTreeOptimizer::ratesOptimization()
     return;
   }
   Logger::timed << "Starting DTL rates optimization" << std::endl;
-  DTLRates rates = DTLOptimizer::optimizeDTLRates(*_geneTrees, _speciesTree->getTree(), _model);
+  auto rates = DTLOptimizer::optimizeParametersGlobalDTL(*_geneTrees, _speciesTree->getTree(), _model);
   //Logger::info << " Best rates: " << rates << std::endl;
   _speciesTree->setRates(rates);
 }
@@ -187,10 +187,8 @@ void SpeciesTreeOptimizer::ratesOptimization()
 void SpeciesTreeOptimizer::perSpeciesRatesOptimization()
 {
   Logger::info << "Starting DTL rates vector optimization" << std::endl;
-  DTLRatesVector rates = DTLOptimizer::optimizeDTLRatesVector(*_geneTrees, _speciesTree->getTree(), _model);
-  //Logger::info << "LL after DTL rates optimization: " << rates.getLL() << std::endl;
+  Parameters rates = DTLOptimizer::optimizeParametersPerSpecies(*_geneTrees, _speciesTree->getTree(), _model);
   _speciesTree->setRatesVector(rates);
-  
 }
 
 void SpeciesTreeOptimizer::saveCurrentSpeciesTree(std::string name)
@@ -211,12 +209,11 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
   long int sumElapsedSPR = 0;
   bool pruneSpeciesTree = false;
   auto rates = _speciesTree->getRates();
-  DTLRatesVector ratesVector(rates);
   Logger::mute();
   std::string resultName = "proposals";
   Families families = _currentFamilies;
   GeneTreeSearchMaster::optimizeGeneTrees(families, 
-      _model, ratesVector, _outputDir, resultName, 
+      _model, rates, _outputDir, resultName, 
       _execPath, speciesTree, recOpt, perFamilyDTLRates, rootedGeneTree, pruneSpeciesTree, 
       recWeight, true, true, radius, _geneTreeIteration, 
         useSplitImplem, sumElapsedSPR, inPlace);

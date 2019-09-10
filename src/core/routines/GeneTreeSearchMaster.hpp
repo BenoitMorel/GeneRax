@@ -5,13 +5,13 @@
 #include <IO/FamiliesFileParser.hpp>
 #include <util/enums.hpp>
 
-class DTLRatesVector;
+class Parameters;
 
 class GeneTreeSearchMaster {
 public:
   static void optimizeGeneTrees(Families &families,
     RecModel recModel,
-    DTLRatesVector &rates,
+    Parameters &rates,
     const std::string &output, 
     const std::string &resultName, 
     const std::string &execPath, 

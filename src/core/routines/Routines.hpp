@@ -5,7 +5,7 @@
 #include <IO/FamiliesFileParser.hpp>
 #include <util/enums.hpp>
 
-class DTLRatesVector;
+class Parameters;
 
 
 class Routines {
@@ -19,7 +19,7 @@ public:
     RecModel recModel,
     Families &families,
     bool perSpeciesRates, 
-    DTLRatesVector &rates,
+    Parameters &rates,
     long &sumElapsed);
 
   /**
@@ -30,7 +30,7 @@ public:
     const std::string &speciesTreeFile,
     Families &families,
     RecModel model,
-    DTLRatesVector &rates,
+    Parameters &rates,
     const std::string &outputDir
     );
 

@@ -129,16 +129,16 @@ SpeciesTree::~SpeciesTree()
   }
 }
 
-void SpeciesTree::setRates(const DTLRates &rates) 
+void SpeciesTree::setRates(const Parameters &globalRates) 
 {
-  _rates = DTLRatesVector(getMaxNodeIndex(), rates);
+  _rates = Parameters(getMaxNodeIndex(), globalRates);
 }
-void SpeciesTree::setRatesVector(const DTLRatesVector &rates) 
+void SpeciesTree::setRatesVector(const Parameters &rates) 
 {
   _rates = rates;
 }
 
-const DTLRatesVector &SpeciesTree::getRates() const
+const Parameters &SpeciesTree::getRates() const
 {
   return _rates;
 }

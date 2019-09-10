@@ -4,7 +4,7 @@
 #include <IO/FileSystem.hpp>
 #include <IO/LibpllParsers.hpp>
 #include <IO/ParallelOfstream.hpp>
-#include <maths/DTLRates.hpp>
+#include <maths/Parameters.hpp>
 #include <parallelization/Scheduler.hpp>
 #include <sstream>
 
@@ -16,7 +16,7 @@ std::string toArg(const std::string &str) {
 
 void GeneTreeSearchMaster::optimizeGeneTrees(Families &families,
     RecModel recModel,
-    DTLRatesVector &rates,
+    Parameters &rates,
     const std::string &output,
     const std::string &resultName,
     const std::string &execPath, 

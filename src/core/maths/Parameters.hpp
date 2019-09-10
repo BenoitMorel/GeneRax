@@ -1,9 +1,16 @@
 #pragma once
 
 #include <vector>
+#include <string>
+#include <IO/ParallelOfstream.hpp>
+#include <fstream>
+#include <cmath>
+
 
 class Parameters {
 public:
+  Parameters(): _score(0.0) {}
+  
   Parameters(unsigned int dimensions): _parameters(dimensions, 0.0),
     _score(0.0)
   {
@@ -20,7 +27,20 @@ public:
       }
     }
   }
+  
+  Parameters(double d, double l): _score(0.0) {
+    _parameters.push_back(d);
+    _parameters.push_back(l);
+  }
+  
+  Parameters(double d, double l, double t): _score(0.0) {
+    _parameters.push_back(d);
+    _parameters.push_back(l);
+    _parameters.push_back(t);
+  }
 
+  Parameters(const std::string &src): _score(0.0) {load(src);} 
+  
   inline unsigned int dimensions() const {
     return _parameters.size();
   }
@@ -82,9 +102,9 @@ public:
   inline double distance(const Parameters &v) const {
     double d = 0.0;
     for (unsigned int i = 0; i < dimensions(); ++i) {
-      d += pow((*this)[i] - v[i], 2.0);
+      d += std::pow((*this)[i] - v[i], 2.0);
     }
-    return sqrt(d);
+    return std::sqrt(d);
   }
 
   void normalize(double norm = 1.0) {
@@ -99,6 +119,28 @@ public:
     }
     os << "score = " << v.getScore() << ")";
     return os;
+  }
+  
+  void save(const std::string &dest) 
+  {
+    ParallelOfstream os(dest);
+    for (auto &r: _parameters) {
+      os << r << " ";
+    }
+  }
+
+  void load(const std::string &src) 
+  {
+    _parameters.clear();
+    std::ifstream is(src);
+    while (!is.eof()) {
+      double a;
+      is >> a;
+      if (!is.good())  {
+        break;
+      }
+      _parameters.push_back(a);
+    }
   }
 private:
   std::vector<double> _parameters;

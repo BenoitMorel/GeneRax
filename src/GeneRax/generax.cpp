@@ -7,7 +7,7 @@
 #include <limits>
 #include <trees/PerCoreGeneTrees.hpp>
 #include <optimizers/DTLOptimizer.hpp>
-#include <maths/DTLRates.hpp>
+#include <maths/Parameters.hpp>
 #include <IO/FileSystem.hpp>
 #include <IO/ParallelOfstream.hpp>
 #include <routines/GeneRaxSlaves.hpp>
@@ -41,7 +41,7 @@ void optimizeStep(GeneRaxArguments &arguments,
     RecModel recModel,
     bool enableLipll,
     Families &families,
-    DTLRatesVector &rates,
+    Parameters &rates,
     int sprRadius,
     int currentIteration,
     double &totalLibpllLL,
@@ -52,12 +52,10 @@ void optimizeStep(GeneRaxArguments &arguments,
   long elapsed = 0;
   Logger::timed << "Optimizing global DTL rates... " << std::endl;
   Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, rates, sumElapsedRates);
-  if (rates.size() == 1) {
-    DTLRates r = rates.getRates(0);
-    Logger::info << "\tD=" << r.rates[0] << " L=" << r.rates[1] << " T=" << r.rates[2];
-    Logger::info << " RecLL=" << r.ll;
+  if (rates.dimensions() <= 3) {
+    Logger::info << rates << std::endl;
   } else {
-    Logger::info << " RecLL=" << rates.getLL();
+    Logger::info << " RecLL=" << rates.getScore();
   }
   Logger::info << std::endl;
   Logger::timed << "Optimizing gene trees with radius=" << sprRadius << "... " << std::endl; 
@@ -86,7 +84,10 @@ void search(const Families &initialFamilies,
   long sumElapsedSPR = 0;
   long sumElapsedLibpll = 0;
   RecModel recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
-  DTLRatesVector rates(DTLRates(arguments.dupRate, arguments.lossRate, arguments.transferRate));
+  Parameters rates(3);
+  rates[0] = arguments.dupRate;
+  rates[1] = arguments.lossRate;
+  rates[2] = arguments.transferRate;
   Families currentFamilies;
   if (duplicates > 1) {
     duplicatesFamilies(initialFamilies, currentFamilies, duplicates);
@@ -171,7 +172,11 @@ void eval(const Families &initialFamilies,
     GeneRaxArguments &arguments)
 {
   long dummy = 0;
-  DTLRatesVector rates(DTLRates(arguments.dupRate, arguments.lossRate, arguments.transferRate));
+  
+  Parameters rates(3);
+  rates[0] = arguments.dupRate;
+  rates[1] = arguments.lossRate;
+  rates[2] = arguments.transferRate;
   Families families = initialFamilies;
   RecModel recModel;
   bool randoms = Routines::createRandomTrees(arguments.output, families);

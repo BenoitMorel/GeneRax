@@ -16,12 +16,12 @@ static bool isValidLikelihood(double ll) {
   return std::isnormal(ll) && ll < -0.0000001;
 }
 
-void updateLL(DTLRates &rates, JointTree &jointTree) {
-  rates.ensureValidity();
-  jointTree.setRates(DTLRatesVector(rates));
-  rates.ll = jointTree.computeReconciliationLoglk();
-  if (!isValidLikelihood(rates.ll)) {
-    rates.ll = -100000000000.0;
+void updateLL(Parameters &rates, JointTree &jointTree) {
+  rates.ensurePositivity();
+  jointTree.setRates(rates);
+  rates.setScore(jointTree.computeReconciliationLoglk());
+  if (!isValidLikelihood(rates.getScore())) {
+    rates.setScore(-100000000000.0);
   }
 }
 
@@ -41,7 +41,7 @@ void PerFamilyDTLOptimizer::findBestRatesDL(JointTree &jointTree,
     auto j = s % steps;
     double dup = minDup + (maxDup - minDup) * double(i) / double(steps);
     double loss = minLoss + (maxLoss - minLoss) * double(j) / double(steps);
-    jointTree.setRates(DTLRatesVector(DTLRates(dup, loss)));
+    jointTree.setRates(Parameters(dup, loss));
     double newLL = jointTree.computeReconciliationLoglk();
     if (!isValidLikelihood(newLL)) {
       continue;
@@ -56,7 +56,7 @@ void PerFamilyDTLOptimizer::findBestRatesDL(JointTree &jointTree,
   ParallelContext::getMax(bestLL, bestRank);
   ParallelContext::broadcastDouble(bestRank, bestDup);
   ParallelContext::broadcastDouble(bestRank, bestLoss);
-  jointTree.setRates(DTLRatesVector(DTLRates(bestDup, bestLoss)));
+  jointTree.setRates(Parameters(bestDup, bestLoss));
 }
 
 void PerFamilyDTLOptimizer::findBestRatesDTL(JointTree &jointTree,
@@ -80,7 +80,7 @@ void PerFamilyDTLOptimizer::findBestRatesDTL(JointTree &jointTree,
     double dup = minDup + (maxDup - minDup) * double(i) / double(steps);
     double loss = minLoss + (maxLoss - minLoss) * double(j) / double(steps);
     double trans = minTrans + (maxTrans - minTrans) * double(k) / double(steps);
-    jointTree.setRates(DTLRatesVector(DTLRates(dup, loss, trans)));
+    jointTree.setRates(Parameters(dup, loss, trans));
     double newLL = jointTree.computeReconciliationLoglk();
     if (!isValidLikelihood(newLL)) {
       continue;
@@ -97,7 +97,7 @@ void PerFamilyDTLOptimizer::findBestRatesDTL(JointTree &jointTree,
   ParallelContext::broadcastDouble(bestRank, bestDup);
   ParallelContext::broadcastDouble(bestRank, bestLoss);
   ParallelContext::broadcastDouble(bestRank, bestTrans);
-  jointTree.setRates(DTLRatesVector(DTLRates(bestDup, bestLoss, bestTrans)));
+  jointTree.setRates(Parameters(bestDup, bestLoss, bestTrans));
 }
 
 
@@ -205,13 +205,13 @@ void PerFamilyDTLOptimizer::optimizeDTLRatesWindow(JointTree &jointTree) {
 /*
  *  Find the point between  r1 and r2. Parallelized over the iterations
  */
-DTLRates findBestPoint(DTLRates r1, DTLRates r2, unsigned int iterations, JointTree &jointTree) 
+Parameters findBestPoint(Parameters r1, Parameters r2, unsigned int iterations, JointTree &jointTree) 
 {
-  DTLRates best = r1;
-  best.ll = -100000000000;
+  Parameters best = r1;
+  best.setScore(-100000000000);
   unsigned int bestI = 0;
   for (auto i = ParallelContext::getRank(); i < iterations; i += ParallelContext::getSize()) {
-    DTLRates current = r1 + ((r2 - r1) * (double(i) / double(iterations - 1)));
+    Parameters current = r1 + ((r2 - r1) * (double(i) / double(iterations - 1)));
     updateLL(current, jointTree);
     if (current < best) {
       best = current;
@@ -219,13 +219,15 @@ DTLRates findBestPoint(DTLRates r1, DTLRates r2, unsigned int iterations, JointT
     }
   }
   unsigned int bestRank = 0;
-  ParallelContext::getMax(best.ll, bestRank);
+  double ll = best.getScore();
+  ParallelContext::getMax(ll, bestRank);
   ParallelContext::broadcastUInt(bestRank, bestI);
   if (ParallelContext::getRank() != bestRank) {
     best = r1 + ((r2 - r1) * (double(bestI) / double(iterations - 1)));
-    best.ensureValidity();
+    best.ensurePositivity();
   }
-  ParallelContext::broadcastDouble(bestRank, best.ll);
+  ParallelContext::broadcastDouble(bestRank, ll);
+  best.setScore(ll);
   return best;
 }
 
@@ -234,32 +236,32 @@ DTLRates findBestPoint(DTLRates r1, DTLRates r2, unsigned int iterations, JointT
 void PerFamilyDTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool transfers)
 {
   Logger::timed << "Starting DTL rates optimization" << std::endl;
-  std::vector<DTLRates> rates;
-  rates.push_back(DTLRates(0.01, 0.01, 0.01));
-  rates.push_back(DTLRates(1.0, 0.01, 0.01));
-  rates.push_back(DTLRates(0.01, 1.0, 1.0));
+  std::vector<Parameters> rates;
+  rates.push_back(Parameters(0.01, 0.01, 0.01));
+  rates.push_back(Parameters(1.0, 0.01, 0.01));
+  rates.push_back(Parameters(0.01, 1.0, 1.0));
   if (transfers) {
-    rates.push_back(DTLRates(0.01, 0.01, 1.0));
+    rates.push_back(Parameters(0.01, 0.01, 1.0));
   }
   for (auto &r: rates) {
     updateLL(r, jointTree);
   }
-  DTLRates worstRate;
+  Parameters worstRate;
   unsigned int currentIt = 0;
   while (worstRate.distance(rates.back()) > 0.005) {
     sort(rates.begin(), rates.end());
     worstRate = rates.back();
     // centroid
-    DTLRates x0;
+    Parameters x0;
     for (unsigned int i = 0; i < rates.size() - 1; ++i) {
       x0 = x0 + rates[i];
     }
     x0 = x0 / double(rates.size() - 1);
     // reflexion, exansion and contraction at the same time
-    DTLRates x1 = x0 - (x0 - rates.back()) * 0.5;  
-    DTLRates x2 = x0 + (x0 - rates.back()) * 1.5;  
+    Parameters x1 = x0 - (x0 - rates.back()) * 0.5;  
+    Parameters x2 = x0 + (x0 - rates.back()) * 1.5;  
     unsigned int iterations = 8;
-    DTLRates xr = findBestPoint(x1, x2, iterations, jointTree);
+    Parameters xr = findBestPoint(x1, x2, iterations, jointTree);
     if (xr < rates[rates.size() - 1] ) {
       rates.back() = xr;
     }
@@ -277,7 +279,7 @@ void PerFamilyDTLOptimizer::optimizeDTLRatesGradient(JointTree &jointTree)
   auto speciesTree = jointTree.getSpeciesTree();
   PerCoreGeneTrees geneTrees(jointTree.getMappings(), jointTree.getGeneTree());
   RecModel recModel = jointTree.getReconciliationEvaluation()->getRecModel();
-  DTLRates rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, recModel, jointTree.getRatesVector().getRates(0));
+  Parameters rates = DTLOptimizer::optimizeParameters(geneTrees, speciesTree, recModel, jointTree.getRatesVector());
   Logger::info << "Per family rates: " << rates << std::endl;
   jointTree.setRates(rates);
 }

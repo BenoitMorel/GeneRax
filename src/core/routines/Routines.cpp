@@ -14,7 +14,7 @@ void Routines::optimizeRates(bool userDTLRates,
     RecModel recModel,
     Families &families,
     bool perSpeciesRates, 
-    DTLRatesVector &rates,
+    Parameters &rates,
     long &sumElapsed) 
 {
   if (userDTLRates) {
@@ -29,25 +29,21 @@ void Routines::optimizeRates(bool userDTLRates,
   }
   pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
   if (!perSpeciesRates) {
-    rates = DTLOptimizer::optimizeDTLRates(geneTrees, speciesTree, recModel);
+    rates = DTLOptimizer::optimizeParametersPerSpecies(geneTrees, speciesTree, recModel);
   } else {
-    rates = DTLOptimizer::optimizeDTLRatesVector(geneTrees, speciesTree, recModel);
+    rates = DTLOptimizer::optimizeParametersGlobalDTL(geneTrees, speciesTree, recModel);
   }
   pll_rtree_destroy(speciesTree, 0);
   ParallelContext::barrier(); 
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
-  /*
-  Logger::timed << "Finished optimizing rates: "
-    << "Loglk=" << rates.getLL() 
-    << " (after " << elapsed << "s)" << std::endl;*/
 }
 
 void Routines::inferReconciliation(
     const std::string &speciesTreeFile,
     Families &families,
     RecModel model,
-    DTLRatesVector &rates,
+    Parameters &rates,
     const std::string &outputDir
     )
 {

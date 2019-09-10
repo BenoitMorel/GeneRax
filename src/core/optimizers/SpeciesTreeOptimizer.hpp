@@ -3,7 +3,7 @@
 #include <trees/SpeciesTree.hpp>
 #include <trees/PerCoreGeneTrees.hpp>
 #include <string>
-#include <maths/DTLRates.hpp>
+#include <maths/Parameters.hpp>
 #include <util/enums.hpp>
 #include <families/Families.hpp>
 #include <memory>

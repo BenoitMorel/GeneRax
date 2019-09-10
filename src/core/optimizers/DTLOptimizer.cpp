@@ -57,7 +57,7 @@ static bool lineSearchParameters(PerCoreGeneTrees &geneTrees, pll_rtree_t *speci
   return !stop;
 }
 
-static Parameters optimizeParameters(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const Parameters &startingParameters)
+Parameters DTLOptimizer::optimizeParameters(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const Parameters &startingParameters)
 {
   double epsilon = 0.0000001;
   Parameters currentRates = startingParameters;
@@ -77,81 +77,29 @@ static Parameters optimizeParameters(PerCoreGeneTrees &geneTrees, pll_rtree_t *s
     }
   } while (lineSearchParameters(geneTrees, speciesTree, model, currentRates, gradient, llComputationsLine));
   return currentRates;
-
 }
-  
-static void optimizeDTLRatesVectorGradient(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, DTLRatesVector &ratesVector)
+
+Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
 {
-  unsigned int dimensions = Enums::freeParameters(model);
-  Parameters startingParameters(ratesVector.size() * dimensions);
-  unsigned int index = 0;
-  for (const auto &r: ratesVector.getRatesVector()) {
-    for (unsigned int i = 0; i < dimensions; ++i) {
-      startingParameters[index++] = r.rates[i];
-    }
-  }
-  auto resultParameter = optimizeParameters(geneTrees, speciesTree, model, startingParameters);
-  index = 0;
-  for (auto &r: ratesVector.getRatesVector()) {
-    for (unsigned int i = 0; i < dimensions; ++i) {
-      r.rates[i] = resultParameter[index++];
-    }
-  }
-  ratesVector.setLL(resultParameter.getScore());
-}
-
-DTLRatesVector DTLOptimizer::optimizeDTLRatesVector(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
-{
-  unsigned int speciesNumber = speciesTree->inner_count + speciesTree->tip_count;
-  DTLRatesVector starting = DTLRatesVector(speciesNumber, optimizeDTLRates(geneTrees, speciesTree, model));
-  optimizeDTLRatesVectorGradient(geneTrees, speciesTree, model, starting);
-  return starting;
-}
-
-
-
-DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const DTLRates &startingRates)
-{
-
-  unsigned int dimensions = Enums::freeParameters(model);
-  DTLRates result;
-  Parameters startingParameters(dimensions);
-  for (unsigned int i = 0; i < dimensions; ++i) {
-    startingParameters[i] = startingRates.rates[i];
-  }
-  auto resultParameter = optimizeParameters(geneTrees, speciesTree, model, startingParameters);
-  for (unsigned int i = 0; i < dimensions; ++i) {
-    result.rates[i] = resultParameter[i];
-  }
-  result.ll = resultParameter.getScore();
-  return result;
-}
-
-double getRand() {
-  return double(rand()) / double(RAND_MAX);
-}
-
-DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
-{
-  std::vector<DTLRates> startingRates;
+  std::vector<Parameters> startingRates;
   if (Enums::freeParameters(model) == 2) {
-    startingRates.push_back(DTLRates(0.1, 0.2, 0.0));
-    startingRates.push_back(DTLRates(0.2, 0.2, 0.0));
-    startingRates.push_back(DTLRates(0.5, 0.5, 0.0));
-    startingRates.push_back(DTLRates(0.5, 1.0, 0.0));
-    startingRates.push_back(DTLRates(0.01, 0.01, 0.0));
+    startingRates.push_back(Parameters(0.1, 0.2, 0.0));
+    startingRates.push_back(Parameters(0.2, 0.2, 0.0));
+    startingRates.push_back(Parameters(0.5, 0.5, 0.0));
+    startingRates.push_back(Parameters(0.5, 1.0, 0.0));
+    startingRates.push_back(Parameters(0.01, 0.01, 0.0));
   } else {
-    startingRates.push_back(DTLRates(0.5, 0.5, 0.2));
-    startingRates.push_back(DTLRates(0.1, 0.2, 0.1));
-    startingRates.push_back(DTLRates(0.2, 0.2, 0.0));
-    startingRates.push_back(DTLRates(0.01, 0.01, 0.01));
+    startingRates.push_back(Parameters(0.5, 0.5, 0.2));
+    startingRates.push_back(Parameters(0.1, 0.2, 0.1));
+    startingRates.push_back(Parameters(0.2, 0.2, 0.0));
+    startingRates.push_back(Parameters(0.01, 0.01, 0.01));
   }
-  DTLRates best;
-  best.ll = -10000000000;
+  Parameters best;
+  best.setScore(-10000000000);
   for (auto rates: startingRates) {
-    DTLRates newRates = optimizeDTLRates(geneTrees, speciesTree, model, rates);
-    bool stop = (fabs(newRates.ll - best.ll) < 3.0);
-    if (newRates.ll > best.ll) {
+    Parameters newRates = optimizeParameters(geneTrees, speciesTree, model, rates);
+    bool stop = (fabs(newRates.getScore() - best.getScore()) < 3.0);
+    if (newRates.getScore() > best.getScore()) {
       best = newRates;
     }
     if (stop) {
@@ -160,3 +108,17 @@ DTLRates DTLOptimizer::optimizeDTLRates(PerCoreGeneTrees &geneTrees, pll_rtree_t
   }
   return best; 
 }
+
+
+Parameters DTLOptimizer::optimizeParametersPerSpecies(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model)
+{
+  unsigned int speciesCount = speciesTree->tip_count + speciesTree->inner_count;
+  Parameters globalRates = optimizeParametersGlobalDTL(geneTrees, speciesTree, model);
+  Parameters startingSpeciesRates(speciesCount, globalRates);
+  Parameters rates = DTLOptimizer::optimizeParameters(geneTrees, speciesTree, model, startingSpeciesRates);
+  return rates; 
+}
+
+
+
+

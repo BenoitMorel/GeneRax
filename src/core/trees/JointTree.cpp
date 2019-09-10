@@ -161,7 +161,7 @@ JointTree::JointTree(const std::string &newick_string,
     double recWeight,
     bool safeMode,
     bool optimizeDTLRates,
-    const DTLRatesVector &ratesVector):
+    const Parameters &ratesVector):
   optimizeDTLRates_(optimizeDTLRates),
   safeMode_(safeMode),
   enableReconciliation_(true),
@@ -295,7 +295,7 @@ void JointTree::invalidateCLV(pll_unode_s *node)
 }
 
 
-void JointTree::setRates(const DTLRatesVector &ratesVector)
+void JointTree::setRates(const Parameters &ratesVector)
 {
   _ratesVector = ratesVector;
   if (enableReconciliation_) {

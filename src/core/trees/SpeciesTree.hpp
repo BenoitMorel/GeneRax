@@ -4,7 +4,7 @@
 #include <IO/LibpllParsers.hpp>
 #include <families/Families.hpp>
 #include <string>
-#include <maths/DTLRates.hpp>
+#include <maths/Parameters.hpp>
 #include <util/enums.hpp>
 #include <memory>
 
@@ -19,9 +19,9 @@ public:
   ~SpeciesTree();
   std::shared_ptr<SpeciesTree> buildRandomTree() const;
 
-  void setRates(const DTLRates &rates);
-  void setRatesVector(const DTLRatesVector &rates);
-  const DTLRatesVector &getRates() const;
+  void setRates(const Parameters &rates);
+  void setRatesVector(const Parameters &rates);
+  const Parameters &getRates() const;
   double computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees, RecModel model);
 
   std::string toString() const;
@@ -29,6 +29,7 @@ public:
   const pll_rnode_t *getRoot() const {return _speciesTree->root;}
   pll_rnode_t *getRoot() {return _speciesTree->root;}
   unsigned int getTaxaNumber() const;
+  unsigned int getNodesNumber() const {return _speciesTree->tip_count + _speciesTree->inner_count;}
   pll_rtree_t *getTree() {return _speciesTree;}
   pll_rnode_t *getRandomNode();
   pll_rnode_t *getNode(unsigned int nodeIndex) {return _speciesTree->nodes[nodeIndex];}
@@ -43,7 +44,7 @@ public:
   size_t getHash() const;
 private:
   pll_rtree_t *_speciesTree;
-  DTLRatesVector _rates;
+  Parameters _rates;
   void buildFromLabels(const std::unordered_set<std::string> &leafLabels);
   void getLabels(std::unordered_set<std::string> &leafLabels) const;
 };
