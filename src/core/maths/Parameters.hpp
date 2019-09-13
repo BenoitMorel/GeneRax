@@ -21,7 +21,7 @@ public:
   {
     _parameters.resize(number * initValue.dimensions());
     unsigned int index = 0;
-    for (unsigned int i = 0; i < initValue.dimensions(); ++i) {
+    for (unsigned int i = 0; i < number; ++i) {
       for (auto p: initValue._parameters) {
         _parameters[index++] = p;
       }
