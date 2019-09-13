@@ -3,6 +3,7 @@
 #include <IO/Logger.hpp>
 #include <likelihoods/reconciliation_models/UndatedDLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
+#include <likelihoods/reconciliation_models/UndatedDTLModelAdvanced.hpp>
 #include <cmath>
 
 double log(ScaledValue v) 
@@ -110,6 +111,12 @@ std::unique_ptr<ReconciliationModelInterface> ReconciliationEvaluation::buildRec
       return  std::make_unique<UndatedDTLModel<ScaledValue> >();
     } else {
       return  std::make_unique<UndatedDTLModel<double> >();
+    }
+  case UndatedDTLAdvanced:
+    if (infinitePrecision) {
+      return  std::make_unique<UndatedDTLModelAdvanced<ScaledValue> >();
+    } else {
+      return  std::make_unique<UndatedDTLModelAdvanced<double> >();
     }
   }
   assert(false);

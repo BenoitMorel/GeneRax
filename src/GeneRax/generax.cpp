@@ -184,7 +184,7 @@ void search(const Families &initialFamilies,
     Families contracted = initialFamilies;
     contractFamilies(currentFamilies, contracted);
     currentFamilies = contracted;
-    bool perSpeciesDTLRates = arguments.false;
+    bool perSpeciesDTLRates = false;
     bool enableLibpll = true;
     optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, 0, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
