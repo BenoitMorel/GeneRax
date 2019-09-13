@@ -42,11 +42,11 @@ public:
 
   void saveToFile(const std::string &newick, bool masterRankOnly);
   size_t getHash() const;
+  void getLabels(std::unordered_set<std::string> &leafLabels, bool leafOnly = true) const;
 private:
   pll_rtree_t *_speciesTree;
   Parameters _rates;
   void buildFromLabels(const std::unordered_set<std::string> &leafLabels);
-  void getLabels(std::unordered_set<std::string> &leafLabels) const;
 };
 
 

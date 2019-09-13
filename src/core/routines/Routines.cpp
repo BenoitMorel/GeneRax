@@ -1,9 +1,10 @@
 
 #include "Routines.hpp"
-
+#include <sstream>
 #include <IO/Logger.hpp>
 #include <IO/LibpllParsers.hpp>
 #include <trees/PerCoreGeneTrees.hpp>
+#include <trees/SpeciesTree.hpp>
 #include <optimizers/DTLOptimizer.hpp>
 #include <parallelization/ParallelContext.hpp>
 #include <IO/FileSystem.hpp>
@@ -14,6 +15,7 @@ void Routines::optimizeRates(bool userDTLRates,
     RecModel recModel,
     Families &families,
     bool perSpeciesRates, 
+    const std::string &outputDir,
     Parameters &rates,
     long &sumElapsed) 
 {
@@ -29,7 +31,14 @@ void Routines::optimizeRates(bool userDTLRates,
   }
   pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
   if (perSpeciesRates) {
-    rates = DTLOptimizer::optimizeParametersPerSpecies(geneTrees, speciesTree, recModel);
+    auto ratesGlobal = DTLOptimizer::optimizeParametersGlobalDTL(geneTrees, speciesTree, recModel);
+    auto ratesEmpirical = ratesGlobal;
+    optimizeSpeciesRatesEmpirical(speciesTreeFile, recModel, families, ratesEmpirical, outputDir, sumElapsed);
+    auto rates1 = DTLOptimizer::optimizeParametersPerSpecies(geneTrees, speciesTree, recModel);
+    Logger::timed << " Per-species DTL rates optimization from global rates: RecLL=" << rates1.getScore() << std::endl;
+    auto rates2 = DTLOptimizer::optimizeParameters(geneTrees, speciesTree, recModel, ratesEmpirical);
+    Logger::timed << " Per-species DTL rates optimization from empitical rates: RecLL=" << rates2.getScore() << std::endl;
+    rates = (rates1.getScore() > rates2.getScore() ? rates1 : rates2);
   } else {
     rates = DTLOptimizer::optimizeParametersGlobalDTL(geneTrees, speciesTree, recModel);
   }
@@ -37,6 +46,12 @@ void Routines::optimizeRates(bool userDTLRates,
   ParallelContext::barrier(); 
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
+}
+
+
+static std::string getSpeciesEventCountFile(const std::string &outputDir, const std::string &familyName)
+{
+  return FileSystem::joinPaths(outputDir, FileSystem::joinPaths("reconciliations", familyName + "_speciesEventCounts.txt"));
 }
 
 void Routines::inferReconciliation(
@@ -56,6 +71,7 @@ void Routines::inferReconciliation(
   ParallelContext::barrier();
   for (auto &tree: geneTrees.getTrees()) {
     std::string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
+    std::string speciesEventCountsFile = getSpeciesEventCountFile(outputDir, tree.name);
     std::string treeWithEventsFileNHX = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
     std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.xml");
     Scenario scenario;
@@ -64,6 +80,7 @@ void Routines::inferReconciliation(
     evaluation.evaluate(tree.tree);
     evaluation.inferMLScenario(scenario);
     scenario.saveEventsCounts(eventCountsFile, false);
+    scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
     scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, RecPhyloXML, false);
     scenario.saveReconciliation(treeWithEventsFileNHX, NHX, false);
   }
@@ -72,6 +89,7 @@ void Routines::inferReconciliation(
   auto speciesTreeStr = pll_rtree_export_newick(speciesTree->root, 0);
   free(speciesTreeStr);
   pll_rtree_destroy(speciesTree, 0);
+  ParallelContext::barrier();
 }
 
 bool Routines::createRandomTrees(const std::string &geneRaxOutputDir, Families &families)
@@ -115,4 +133,56 @@ void Routines::gatherLikelihoods(Families &families,
   ParallelContext::sumDouble(totalRecLL);
   ParallelContext::sumDouble(totalLibpllLL);
 }
+  
+void Routines::optimizeSpeciesRatesEmpirical(const std::string &speciesTreeFile,
+    RecModel recModel,
+    Families &families,
+    Parameters &rates,
+    const std::string &outputDir,
+    long &sumElapsed)
+{
+  inferReconciliation(speciesTreeFile, families, recModel, rates, outputDir);
+  SpeciesTree speciesTree(speciesTreeFile);
+  std::unordered_set<std::string> labels;
+  std::unordered_map<std::string, std::vector<double> > frequencies;
+  speciesTree.getLabels(labels, false);
+  std::vector<double> defaultFrequences(4, 0.0);
+  for (auto &label: labels) {
+    frequencies.insert(std::pair<std::string, std::vector<double>>(label, defaultFrequences));
+  }
+  for (auto &family: families) {
+    std::string speciesEventCountsFile = getSpeciesEventCountFile(outputDir, family.name);
+    std::ifstream is(speciesEventCountsFile);
+    assert(is.good());
+    std::string line;
+    while (std::getline(is, line))
+    {
+      std::istringstream iss(line);
+      std::string label;
+      iss >> label;
+      auto &speciesFreq = frequencies[label];
+      for (unsigned int i = 0; i < 4; ++i) {
+        double temp;
+        iss>> temp;
+        speciesFreq[i] += temp;
+      }
+    }
+  }
+  unsigned int perSpeciesFreeParameters = Enums::freeParameters(recModel); 
+  rates = Parameters(speciesTree.getNodesNumber() * perSpeciesFreeParameters);
+  for (unsigned int i = 0; i < speciesTree.getNodesNumber(); ++i) {
+    auto speciesNode = speciesTree.getNode(i);
+    auto &speciesFreq = frequencies[speciesNode->label];
+    double S = speciesFreq[0] + 1.0;
+    for (unsigned int j = 0; j < perSpeciesFreeParameters; ++j) {
+      unsigned int ratesIndex = speciesNode->node_index * perSpeciesFreeParameters + j;
+      rates[ratesIndex] = (speciesFreq[j + 1] + 1.0) / S;
+    }
+  }
+}
+
+
+
+
+
 

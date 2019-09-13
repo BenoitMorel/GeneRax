@@ -28,6 +28,7 @@ ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
 
 void ReconciliationEvaluation::setRates(const Parameters &parameters)
 {
+  assert(parameters.dimensions());
   std::vector<std::vector<double> *> rates;
   rates.push_back(&_dupRates);
   rates.push_back(&_lossRates);

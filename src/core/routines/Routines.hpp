@@ -19,7 +19,15 @@ public:
     RecModel recModel,
     Families &families,
     bool perSpeciesRates, 
+    const std::string &outputDir,
     Parameters &rates,
+    long &sumElapsed);
+
+  static void optimizeSpeciesRatesEmpirical(const std::string &speciesTreeFile,
+    RecModel recModel,
+    Families &families,
+    Parameters &rates,
+    const std::string &outputDir,
     long &sumElapsed);
 
   /**

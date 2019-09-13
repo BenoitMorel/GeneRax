@@ -39,7 +39,8 @@ void saveStats(const std::string &outputDir, double totalLibpllLL, double totalR
 
 void optimizeStep(const GeneRaxArguments &arguments, 
     RecModel recModel,
-    bool enableLipll,
+    bool perSpeciesDTLRates,
+    bool enableLibpll,
     Families &families,
     Parameters &rates,
     int sprRadius,
@@ -50,8 +51,12 @@ void optimizeStep(const GeneRaxArguments &arguments,
     long &sumElapsedSPR)
 {
   long elapsed = 0;
-  Logger::timed << "Optimizing global DTL rates... " << std::endl;
-  Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, rates, sumElapsedRates);
+  if (perSpeciesDTLRates) {
+    Logger::timed << "Optimizing global DTL rates... " << std::endl;
+  } else {
+    Logger::timed << "Optimizing per species DTL rates... " << std::endl;
+  }
+  Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, perSpeciesDTLRates, arguments.output, rates, sumElapsedRates);
   if (rates.dimensions() <= 3) {
     Logger::info << rates << std::endl;
   } else {
@@ -61,7 +66,7 @@ void optimizeStep(const GeneRaxArguments &arguments,
   Logger::timed << "Optimizing gene trees with radius=" << sprRadius << "... " << std::endl; 
   GeneTreeSearchMaster::optimizeGeneTrees(families, recModel, rates, arguments.output, "results",
       arguments.execPath, arguments.speciesTree, arguments.reconciliationOpt, arguments.perFamilyDTLRates, arguments.rootedGeneTree, 
-      arguments.pruneSpeciesTree, arguments.recWeight, true, enableLipll, sprRadius, currentIteration, useSplitImplem(), elapsed);
+      arguments.pruneSpeciesTree, arguments.recWeight, true, enableLibpll, sprRadius, currentIteration, useSplitImplem(), elapsed);
   sumElapsedSPR += elapsed;
   Routines::gatherLikelihoods(families, totalLibpllLL, totalRecLL);
   Logger::info << "\tJointLL=" << totalLibpllLL + totalRecLL << " RecLL=" << totalRecLL << " LibpllLL=" << totalLibpllLL << std::endl;
@@ -108,7 +113,9 @@ void initRandomTrees(const GeneRaxArguments &arguments,
       Logger::mute();
       RaxmlMaster::runRaxmlOptimization(splitFamilies[1], arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
       for (unsigned int i = 1; i <= recRadius; ++i) {
-        optimizeStep(arguments, recModel, false, splitFamilies[1], rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+        bool enableLibpll = false;
+        bool perSpeciesDTLRates = false;
+        optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, splitFamilies[1], rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
       }
       Logger::unmute();
     }
@@ -117,7 +124,9 @@ void initRandomTrees(const GeneRaxArguments &arguments,
       Logger::timed << "[Initialization] Optimizing some of the duplicated families with species only and then sequences tree only" << std::endl;
       for (unsigned int i = 1; i <= recRadius; ++i) {
         Logger::mute();
-        optimizeStep(arguments, recModel, false, splitFamilies[2], rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+        bool enableLibpll = false;
+        bool perSpeciesDTLRates = false;
+        optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, splitFamilies[2], rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
       }
       RaxmlMaster::runRaxmlOptimization(splitFamilies[2], arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
       Logger::unmute();
@@ -127,8 +136,6 @@ void initRandomTrees(const GeneRaxArguments &arguments,
   Logger::timed << "[Initialization] Finished optimizing some of the gene trees" << std::endl;
   Logger::info << std::endl;
 }
-
-
 
 
 void search(const Families &initialFamilies,
@@ -163,17 +170,23 @@ void search(const Families &initialFamilies,
     initRandomTrees(arguments, currentFamilies, rates, iteration, sumElapsedLibpll, sumElapsedRates, sumElapsedSPR);
   }
   for (unsigned int i = 1; i <= arguments.recRadius; ++i) { 
-    optimizeStep(arguments, recModel, false, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+    bool enableLibpll = false;
+    bool perSpeciesDTLRates = false;
+    optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
   for (int i = 1; i <= arguments.maxSPRRadius; ++i) {
-      optimizeStep(arguments, recModel, true, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+      bool enableLibpll = true;
+      bool perSpeciesDTLRates = arguments.perSpeciesDTLRates && (i == arguments.maxSPRRadius);
+      optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
 
   if (randoms && duplicates > 1) {
     Families contracted = initialFamilies;
     contractFamilies(currentFamilies, contracted);
     currentFamilies = contracted;
-    optimizeStep(arguments, recModel, true, currentFamilies, rates, 0, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+    bool perSpeciesDTLRates = arguments.perSpeciesDTLRates;
+    bool enableLibpll = true;
+    optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, 0, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
   Routines::inferReconciliation(arguments.speciesTree, currentFamilies, recModel, rates, arguments.output);
@@ -202,7 +215,7 @@ void eval(const Families &initialFamilies,
     return;
   }
   recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
-  Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, rates, dummy);
+  Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, arguments.output, rates, dummy);
   int sprRadius = 0;
   int currentIteration = 0;
   GeneTreeSearchMaster::optimizeGeneTrees(families, recModel, rates, arguments.output, "results", arguments.execPath,

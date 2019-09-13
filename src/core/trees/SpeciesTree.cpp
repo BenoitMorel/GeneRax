@@ -190,11 +190,11 @@ pll_rnode_t *SpeciesTree::getRandomNode()
   return getNode(rand() % (_speciesTree->tip_count + _speciesTree->inner_count)); 
 }
 
-void SpeciesTree::getLabels(std::unordered_set<std::string> &leafLabels) const
+void SpeciesTree::getLabels(std::unordered_set<std::string> &leafLabels, bool labelsOnly) const
 {
   for (unsigned int i = 0; i < _speciesTree->tip_count + _speciesTree->inner_count; ++i) {
     auto node = getNode(i);
-    if (!node->left && !node->right) {
+    if (!labelsOnly || (!node->left && !node->right)) {
       leafLabels.insert(std::string(node->label));
     }
   }
