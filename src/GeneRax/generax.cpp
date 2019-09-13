@@ -37,7 +37,7 @@ void saveStats(const std::string &outputDir, double totalLibpllLL, double totalR
   os << "RecLL: " << totalRecLL;
 }
 
-void optimizeStep(GeneRaxArguments &arguments, 
+void optimizeStep(const GeneRaxArguments &arguments, 
     RecModel recModel,
     bool enableLipll,
     Families &families,
@@ -65,6 +65,66 @@ void optimizeStep(GeneRaxArguments &arguments,
   sumElapsedSPR += elapsed;
   Routines::gatherLikelihoods(families, totalLibpllLL, totalRecLL);
   Logger::info << "\tJointLL=" << totalLibpllLL + totalRecLL << " RecLL=" << totalRecLL << " LibpllLL=" << totalLibpllLL << std::endl;
+  Logger::info << std::endl;
+}
+
+
+void initRandomTrees(const GeneRaxArguments &arguments, 
+    Families &currentFamilies,
+    Parameters rates, //, by copy, yes
+    int &iteration,
+    long &sumElapsedLibpll,
+    long &sumElapsedRates,
+    long &sumElapsedSPR
+    )
+{
+  double totalLibpllLL = 0.0;
+  double totalRecLL = 0.0;
+  unsigned int duplicates = arguments.duplicates;
+  RecModel recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
+  Logger::info << std::endl;
+  Logger::timed << "[Initialization] Initial optimization of the starting random gene trees" << std::endl;
+  if (duplicates == 1 || arguments.initStrategies == 1) {
+    Logger::timed << "[Initialization] All the families will first be optimized with sequences only" << std::endl;
+    Logger::mute();
+    RaxmlMaster::runRaxmlOptimization(currentFamilies, arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
+    Logger::unmute();
+    Routines::gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
+  } else {
+    std::vector<Families> splitFamilies;
+    ParallelContext::barrier();
+    unsigned int splits = arguments.initStrategies;
+    unsigned int recRadius = 5;
+    splitInitialFamilies(currentFamilies, splitFamilies, splits);
+    ParallelContext::barrier();
+    // only raxml
+    Logger::timed << "[Initialization] Optimizing some of the duplicated families with sequences only" << std::endl;
+    Logger::mute();
+    RaxmlMaster::runRaxmlOptimization(splitFamilies[0], arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
+    Logger::unmute();
+    if (splits > 1) {
+      // raxml and rec
+      Logger::timed << "[Initialization] Optimizing some of the duplicated families with sequences only and then species tree only" << std::endl;
+      Logger::mute();
+      RaxmlMaster::runRaxmlOptimization(splitFamilies[1], arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
+      for (unsigned int i = 1; i <= recRadius; ++i) {
+        optimizeStep(arguments, recModel, false, splitFamilies[1], rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+      }
+      Logger::unmute();
+    }
+    if (splits > 2) {
+      // rec and raxml
+      Logger::timed << "[Initialization] Optimizing some of the duplicated families with species only and then sequences tree only" << std::endl;
+      for (unsigned int i = 1; i <= recRadius; ++i) {
+        Logger::mute();
+        optimizeStep(arguments, recModel, false, splitFamilies[2], rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+      }
+      RaxmlMaster::runRaxmlOptimization(splitFamilies[2], arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
+      Logger::unmute();
+    }
+    mergeSplitFamilies(splitFamilies, currentFamilies, splits);
+  }
+  Logger::timed << "[Initialization] Finished optimizing some of the gene trees" << std::endl;
   Logger::info << std::endl;
 }
 
@@ -100,50 +160,7 @@ void search(const Families &initialFamilies,
   int iteration = 0;
   bool randoms = Routines::createRandomTrees(arguments.output, currentFamilies); 
   if (randoms) {
-    Logger::info << std::endl;
-    Logger::timed << "[Initialization] Initial optimization of the starting random gene trees" << std::endl;
-    if (duplicates == 1 || arguments.initStrategies == 1) {
-      Logger::timed << "[Initialization] All the families will first be optimized with sequences only" << std::endl;
-      Logger::mute();
-      RaxmlMaster::runRaxmlOptimization(currentFamilies, arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
-      Logger::unmute();
-      Routines::gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
-    } else {
-      std::vector<Families> splitFamilies;
-      ParallelContext::barrier();
-      unsigned int splits = arguments.initStrategies;
-      unsigned int recRadius = 5;
-      splitInitialFamilies(currentFamilies, splitFamilies, splits);
-      ParallelContext::barrier();
-      // only raxml
-      Logger::timed << "[Initialization] Optimizing some of the duplicated families with sequences only" << std::endl;
-      Logger::mute();
-      RaxmlMaster::runRaxmlOptimization(splitFamilies[0], arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
-      Logger::unmute();
-      if (splits > 1) {
-        // raxml and rec
-        Logger::timed << "[Initialization] Optimizing some of the duplicated families with sequences only and then species tree only" << std::endl;
-        Logger::mute();
-        RaxmlMaster::runRaxmlOptimization(splitFamilies[1], arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
-        for (unsigned int i = 1; i <= recRadius; ++i) {
-          optimizeStep(arguments, recModel, false, splitFamilies[1], rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
-        }
-        Logger::unmute();
-      }
-      if (splits > 2) {
-        // rec and raxml
-        Logger::timed << "[Initialization] Optimizing some of the duplicated families with species only and then sequences tree only" << std::endl;
-        for (unsigned int i = 1; i <= recRadius; ++i) {
-        Logger::mute();
-          optimizeStep(arguments, recModel, false, splitFamilies[2], rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
-        }
-        RaxmlMaster::runRaxmlOptimization(splitFamilies[2], arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
-        Logger::unmute();
-      }
-      mergeSplitFamilies(splitFamilies, currentFamilies, splits);
-    }
-    Logger::timed << "[Initialization] Finished optimizing some of the gene trees" << std::endl;
-    Logger::info << std::endl;
+    initRandomTrees(arguments, currentFamilies, rates, iteration, sumElapsedLibpll, sumElapsedRates, sumElapsedSPR);
   }
   for (unsigned int i = 1; i <= arguments.recRadius; ++i) { 
     optimizeStep(arguments, recModel, false, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
