@@ -52,9 +52,9 @@ void optimizeStep(const GeneRaxArguments &arguments,
 {
   long elapsed = 0;
   if (perSpeciesDTLRates) {
-    Logger::timed << "Optimizing global DTL rates... " << std::endl;
-  } else {
     Logger::timed << "Optimizing per species DTL rates... " << std::endl;
+  } else {
+    Logger::timed << "Optimizing global DTL rates... " << std::endl;
   }
   Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, perSpeciesDTLRates, arguments.output, rates, sumElapsedRates);
   if (rates.dimensions() <= 3) {
@@ -184,7 +184,7 @@ void search(const Families &initialFamilies,
     Families contracted = initialFamilies;
     contractFamilies(currentFamilies, contracted);
     currentFamilies = contracted;
-    bool perSpeciesDTLRates = arguments.perSpeciesDTLRates;
+    bool perSpeciesDTLRates = arguments.false;
     bool enableLibpll = true;
     optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, 0, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
