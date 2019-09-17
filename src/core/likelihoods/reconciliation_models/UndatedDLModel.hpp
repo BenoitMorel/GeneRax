@@ -140,7 +140,7 @@ void UndatedDLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *species
   auto gid = geneNode->node_index;
   pll_unode_t *leftGeneNode = 0;     
   pll_unode_t *rightGeneNode = 0;   
-  std::vector<REAL> values(5);
+  std::vector<REAL> values(5, REAL());
   bool isGeneLeaf = !geneNode->next;
   if (!isGeneLeaf) {
     leftGeneNode = this->getLeft(geneNode, isVirtualRoot);
@@ -150,6 +150,7 @@ void UndatedDLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *species
   auto e = speciesNode->node_index;
   unsigned int f = 0;
   unsigned int g = 0;
+  assert(!(_uq[gid][e] == REAL())); // check that this scenario is possible
   if (!isSpeciesLeaf) {
     f = speciesNode->left->node_index;
     g = speciesNode->right->node_index;

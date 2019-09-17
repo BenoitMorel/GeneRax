@@ -176,7 +176,7 @@ void search(const Families &initialFamilies,
   }
   for (int i = 1; i <= arguments.maxSPRRadius; ++i) {
       bool enableLibpll = true;
-      bool perSpeciesDTLRates = arguments.perSpeciesDTLRates && (i == arguments.maxSPRRadius);
+      bool perSpeciesDTLRates = arguments.perSpeciesDTLRates && (i >= arguments.maxSPRRadius - 1); // only apply per-species optimization at the two last rounds
       optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
 
@@ -184,7 +184,7 @@ void search(const Families &initialFamilies,
     Families contracted = initialFamilies;
     contractFamilies(currentFamilies, contracted);
     currentFamilies = contracted;
-    bool perSpeciesDTLRates = arguments.false;
+    bool perSpeciesDTLRates = false;
     bool enableLibpll = true;
     optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, 0, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }

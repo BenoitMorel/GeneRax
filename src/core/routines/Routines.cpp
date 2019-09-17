@@ -31,14 +31,16 @@ void Routines::optimizeRates(bool userDTLRates,
   }
   pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
   if (perSpeciesRates) {
-    auto ratesGlobal = DTLOptimizer::optimizeParametersGlobalDTL(geneTrees, speciesTree, recModel);
-    auto ratesEmpirical = ratesGlobal;
-    optimizeSpeciesRatesEmpirical(speciesTreeFile, recModel, families, ratesEmpirical, outputDir, sumElapsed);
-    auto rates1 = DTLOptimizer::optimizeParametersPerSpecies(geneTrees, speciesTree, recModel);
+    //auto ratesGlobal = DTLOptimizer::optimizeParametersGlobalDTL(geneTrees, speciesTree, recModel);
+    //auto ratesEmpirical = ratesGlobal;
+    //optimizeSpeciesRatesEmpirical(speciesTreeFile, recModel, families, ratesEmpirical, outputDir, sumElapsed);
+    auto rates = DTLOptimizer::optimizeParametersPerSpecies(geneTrees, speciesTree, recModel);
+    /*
     Logger::timed << " Per-species DTL rates optimization from global rates: RecLL=" << rates1.getScore() << std::endl;
     auto rates2 = DTLOptimizer::optimizeParameters(geneTrees, speciesTree, recModel, ratesEmpirical);
     Logger::timed << " Per-species DTL rates optimization from empitical rates: RecLL=" << rates2.getScore() << std::endl;
     rates = (rates1.getScore() > rates2.getScore() ? rates1 : rates2);
+    */
   } else {
     rates = DTLOptimizer::optimizeParametersGlobalDTL(geneTrees, speciesTree, recModel);
   }

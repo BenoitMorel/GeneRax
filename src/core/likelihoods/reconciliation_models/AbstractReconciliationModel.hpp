@@ -491,6 +491,8 @@ void AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario)
   pll_unode_t *geneRoot = 0;
   pll_rnode_t *speciesRoot = 0;
   computeMLRoot(geneRoot, speciesRoot);
+  assert(geneRoot);
+  assert(speciesRoot);
   scenario.setGeneRoot(geneRoot);
   scenario.setSpeciesTree(speciesTree_);
   pll_unode_t virtualRoot;
