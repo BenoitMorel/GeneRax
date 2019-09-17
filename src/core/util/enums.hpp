@@ -3,14 +3,21 @@
 #include <cassert>
 
 enum RecModel {
-  UndatedDL, UndatedDTL
+  UndatedDL, UndatedDTL, UndatedDTLAdvanced
 };
 
 class Enums {
 public:
   
-  static int freeParameters(RecModel m)  {
-    return m == UndatedDL ? 2 : 3;
+  static int freeParameters(RecModel m, unsigned int speciesCount = 1)  {
+    switch (m) {
+      case UndatedDL:
+        return 2;
+      case UndatedDTL:
+        return 3;
+      case UndatedDTLAdvanced:
+        return 2 + speciesCount;
+    }
   }
 
   static bool accountsForTransfers(RecModel m) 
@@ -19,6 +26,8 @@ public:
     case UndatedDL:
       return false;
     case UndatedDTL:
+      return true;
+    case UndatedDTLAdvanced:
       return true;
     }
     assert(false);

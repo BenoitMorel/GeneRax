@@ -143,6 +143,7 @@ void Routines::optimizeSpeciesRatesEmpirical(const std::string &speciesTreeFile,
     const std::string &outputDir,
     long &sumElapsed)
 {
+  auto start = Logger::getElapsedSec();
   inferReconciliation(speciesTreeFile, families, recModel, rates, outputDir);
   SpeciesTree speciesTree(speciesTreeFile);
   std::unordered_set<std::string> labels;
@@ -181,6 +182,8 @@ void Routines::optimizeSpeciesRatesEmpirical(const std::string &speciesTreeFile,
       rates[ratesIndex] = (speciesFreq[j + 1] + 1.0) / S;
     }
   }
+  auto elapsed = (Logger::getElapsedSec() - start);
+  sumElapsed += elapsed;
 }
 
 
