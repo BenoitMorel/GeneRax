@@ -65,9 +65,7 @@ public:
   void invalidateCLV(unsigned int nodeIndex);
   
   
-  void inferMLScenario(Scenario &scenario) {
-    _reconciliationModel->inferMLScenario(scenario);
-  }
+  void inferMLScenario(pll_utree_t *tree, Scenario &scenario);
 
   RecModel getRecModel() const {return _model;}
 private:

@@ -189,6 +189,7 @@ void search(const Families &initialFamilies,
     optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, 0, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
+  Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
   Routines::inferReconciliation(arguments.speciesTree, currentFamilies, recModel, rates, arguments.output);
   if (sumElapsedLibpll) {
     Logger::info << "Initial time spent on optimizing random trees: " << sumElapsedLibpll << "s" << std::endl;
@@ -216,6 +217,7 @@ void eval(const Families &initialFamilies,
   }
   recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
   Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, arguments.output, rates, dummy);
+  Logger::info << " RecLL=" << rates.getScore();
   int sprRadius = 0;
   int currentIteration = 0;
   GeneTreeSearchMaster::optimizeGeneTrees(families, recModel, rates, arguments.output, "results", arguments.execPath,
@@ -226,6 +228,11 @@ void eval(const Families &initialFamilies,
   double totalRecLL = 0.0;
   Routines::gatherLikelihoods(families, totalLibpllLL, totalRecLL);
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
+  Logger::info << "Joint likelihood = " << totalLibpllLL + totalRecLL << std::endl; 
+  Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
+  Logger::info << "Rates: " << rates << std::endl;
+  Routines::inferReconciliation(arguments.speciesTree, families, recModel, rates, arguments.output);
+  Logger::timed << "End of GeneRax execution" << std::endl;
 }
 
 

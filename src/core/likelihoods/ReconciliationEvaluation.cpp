@@ -98,7 +98,6 @@ void ReconciliationEvaluation::invalidateCLV(unsigned int nodeIndex)
 
 std::unique_ptr<ReconciliationModelInterface> ReconciliationEvaluation::buildRecModelObject(RecModel recModel, bool infinitePrecision)
 {
-  
   switch(recModel) {
   case UndatedDL:
     if (infinitePrecision) {
@@ -131,5 +130,13 @@ void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
     _reconciliationModel->init(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates);
   }
+}
+void ReconciliationEvaluation::inferMLScenario(pll_utree_t *tree, Scenario &scenario) {
+  assert(tree);
+  auto infinitePrecision = _infinitePrecision;
+  updatePrecision(true);
+  auto ll = evaluate(tree);
+  _reconciliationModel->inferMLScenario(scenario);
+  updatePrecision(infinitePrecision);
 }
 
