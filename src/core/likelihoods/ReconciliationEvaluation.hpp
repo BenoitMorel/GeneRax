@@ -49,6 +49,8 @@ public:
   pll_unode_t *getRoot() {return _reconciliationModel->getRoot();}
   void setRoot(pll_unode_t * root) {_reconciliationModel->setRoot(root);}
 
+  pll_unode_t *computeMLRoot() {return _reconciliationModel->computeMLRoot();}
+
   double evaluate(pll_utree_t *utree);
   /**
    *  @param input treeinfo

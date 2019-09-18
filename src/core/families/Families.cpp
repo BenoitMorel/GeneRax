@@ -43,6 +43,8 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
     if (!LibpllParsers::fillLabelsFromAlignment(family.alignmentFile, family.libpllModel, alignmentLabels)) {
       return ERROR_READ_ALIGNMENT;
     }
+  } catch (LibpllException e) {
+    std::cerr << e.what() << std::endl;
   } catch(...) {
     return  ERROR_READ_ALIGNMENT;
   }
@@ -58,6 +60,8 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
     pll_utree_t * utree = 0;
     try {
       utree = LibpllParsers::readNewickFromFile(family.startingGeneTree);
+    } catch (LibpllException e) {
+      std::cerr << e.what() << std::endl;
     } catch (...) {}
     if (!utree) {
       return ERROR_READ_GENE_TREE;
