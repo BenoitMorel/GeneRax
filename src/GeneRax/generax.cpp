@@ -56,7 +56,7 @@ void optimizeStep(const GeneRaxArguments &arguments,
   } else {
     Logger::timed << "Optimizing global DTL rates... " << std::endl;
   }
-  Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, perSpeciesDTLRates, arguments.output, rates, sumElapsedRates);
+  Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, perSpeciesDTLRates, rates, sumElapsedRates);
   if (rates.dimensions() <= 3) {
     Logger::info << rates << std::endl;
   } else {
@@ -215,7 +215,7 @@ void eval(const Families &initialFamilies,
     return;
   }
   recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
-  Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates, arguments.output, rates, dummy);
+  Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, arguments.perSpeciesDTLRates,  rates, dummy);
   int sprRadius = 0;
   int currentIteration = 0;
   GeneTreeSearchMaster::optimizeGeneTrees(families, recModel, rates, arguments.output, "results", arguments.execPath,

@@ -15,7 +15,6 @@ void Routines::optimizeRates(bool userDTLRates,
     RecModel recModel,
     Families &families,
     bool perSpeciesRates, 
-    const std::string &outputDir,
     Parameters &rates,
     long &sumElapsed) 
 {

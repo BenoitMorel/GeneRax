@@ -18,6 +18,7 @@ public:
       case UndatedDTLAdvanced:
         return 2 + speciesCount;
     }
+    assert(false);
   }
 
   static bool accountsForTransfers(RecModel m) 
