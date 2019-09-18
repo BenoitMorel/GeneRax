@@ -51,8 +51,8 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
   if (alignmentLabels.size() < 3) {
     return ERROR_NOT_ENOUGH_GENES;
   }
-  // gene tree
-  if (family.startingGeneTree != "__random__") {
+  // gene tree. Only check if one is given!
+  if (family.startingGeneTree != "__random__" && family.startingGeneTree.size()) {
     if (!FileSystem::exists(family.startingGeneTree)) {
       return ERROR_GENE_TREE_FILE_EXISTENCE;
     }  
