@@ -43,14 +43,16 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
     if (!LibpllParsers::fillLabelsFromAlignment(family.alignmentFile, family.libpllModel, alignmentLabels)) {
       return ERROR_READ_ALIGNMENT;
     }
+  } catch (LibpllException e) {
+    std::cerr << e.what() << std::endl;
   } catch(...) {
     return  ERROR_READ_ALIGNMENT;
   }
   if (alignmentLabels.size() < 3) {
     return ERROR_NOT_ENOUGH_GENES;
   }
-  // gene tree
-  if (family.startingGeneTree != "__random__") {
+  // gene tree. Only check if one is given!
+  if (family.startingGeneTree != "__random__" && family.startingGeneTree.size()) {
     if (!FileSystem::exists(family.startingGeneTree)) {
       return ERROR_GENE_TREE_FILE_EXISTENCE;
     }  
@@ -58,6 +60,8 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
     pll_utree_t * utree = 0;
     try {
       utree = LibpllParsers::readNewickFromFile(family.startingGeneTree);
+    } catch (LibpllException e) {
+      std::cerr << e.what() << std::endl;
     } catch (...) {}
     if (!utree) {
       return ERROR_READ_GENE_TREE;

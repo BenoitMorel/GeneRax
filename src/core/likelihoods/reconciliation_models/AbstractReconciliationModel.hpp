@@ -57,6 +57,11 @@ public:
   virtual pll_unode_t *getRoot() = 0;
   
   /**
+   * Compute and set the maximum likelihood root. Relevant in both rooted and unrooted gene tree modes
+   */
+  virtual pll_unode_t *computeMLRoot() = 0;
+  
+  /**
    * invalidate one or all the gene CLVs
    */
   virtual void invalidateAllCLVs() = 0;
@@ -141,6 +146,7 @@ protected:
 
   
   void updateCLVs();
+  virtual pll_unode_t *computeMLRoot();
 protected:
   bool rootedGeneTree_;
   pll_unode_t *geneRoot_;
@@ -155,7 +161,6 @@ protected:
 
 private:
   void mapGenesToSpecies();
-  pll_unode_t *computeMLRoot();
   void computeMLRoot(pll_unode_t *&bestGeneRoot, pll_rnode_t *&bestSpeciesRoot);
   virtual void computeLikelihoods();
   double getSumLikelihood();

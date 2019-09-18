@@ -36,16 +36,24 @@ void LibpllParsers::labelRootedTree(const std::string &unlabelledNewickFile, con
 
 pll_utree_t *LibpllParsers::readNewickFromFile(const std::string &newickFilename)
 {
-  std::ifstream t(newickFilename);
-  if (!t)
+  std::ifstream is(newickFilename);
+  if (!is)
     throw LibpllException("Could not load open newick file ", newickFilename);
-  
-  std::string str((std::istreambuf_iterator<char>(t)),
-                       std::istreambuf_iterator<char>());
+
+  std::string line;
+  if (!std::getline(is, line)) {
+    throw LibpllException("Error while reading tree (file is empty) from file: ", newickFilename); 
+  }
+  std::string temp;
+  while (std::getline(is, temp)) {
+    if (line.size() > 0) {
+      throw LibpllException("Error: found more than one tree in the file: ", newickFilename);
+    }
+  }
   
   pll_utree_t *res = 0;
   try {
-    res = readNewickFromStr(str);
+    res = readNewickFromStr(line);
   } catch (...) {
     throw LibpllException("Error while reading tree from file: ", newickFilename);
   }

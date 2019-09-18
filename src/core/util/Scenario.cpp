@@ -71,6 +71,8 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
         eventCount[2]++;
         eventCount[3]++;
         break;
+      default:
+        break;
     }
   }
   for (auto &it: speciesToEventCount) {

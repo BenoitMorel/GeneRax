@@ -61,6 +61,8 @@ public:
       return "UndatedDL";
     case UndatedDTL:
       return "UndatedDTL";
+    case UndatedDTLAdvanced:
+      return "UndatedDTLAdvanced";
     };
     exit(41);
   }

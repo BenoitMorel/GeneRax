@@ -15,7 +15,6 @@ void Routines::optimizeRates(bool userDTLRates,
     RecModel recModel,
     Families &families,
     bool perSpeciesRates, 
-    const std::string &outputDir,
     Parameters &rates,
     long &sumElapsed) 
 {
@@ -79,7 +78,7 @@ void Routines::inferReconciliation(
     Scenario scenario;
     ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
     evaluation.setRates(rates);
-    double ll = evaluation.evaluate(tree.tree);
+    evaluation.evaluate(tree.tree);
     evaluation.inferMLScenario(tree.tree, scenario);
     scenario.saveEventsCounts(eventCountsFile, false);
     scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
