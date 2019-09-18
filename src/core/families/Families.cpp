@@ -51,6 +51,11 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
   if (alignmentLabels.size() < 3) {
     return ERROR_NOT_ENOUGH_GENES;
   }
+  if (family.mappingFile.size()) {
+    if (!FileSystem::exists(family.mappingFile)) {
+      return ERROR_MAPPING_FILE_EXISTENCE;
+    }
+  }
   // gene tree. Only check if one is given!
   if (family.startingGeneTree != "__random__" && family.startingGeneTree.size()) {
     if (!FileSystem::exists(family.startingGeneTree)) {
@@ -72,16 +77,11 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
         return ERROR_GENE_TREE_SEQUENCES_MISMATCH; 
       }
     }
-  }
-  if (family.mappingFile.size()) {
-    if (!FileSystem::exists(family.mappingFile)) {
-      return ERROR_MAPPING_FILE_EXISTENCE;
+    GeneSpeciesMapping mapping;
+    mapping.fill(family.mappingFile, family.startingGeneTree);
+    if (!mapping.check(alignmentLabels, speciesTreeLabels)) {
+      return ERROR_MAPPING_MISMATCH;
     }
-  }
-  GeneSpeciesMapping mapping;
-  mapping.fill(family.mappingFile, family.startingGeneTree);
-  if (!mapping.check(alignmentLabels, speciesTreeLabels)) {
-    return ERROR_MAPPING_MISMATCH;
   }
   return ERROR_OK;
 }
