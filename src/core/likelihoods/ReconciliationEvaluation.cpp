@@ -136,7 +136,25 @@ void ReconciliationEvaluation::inferMLScenario(pll_utree_t *tree, Scenario &scen
   auto infinitePrecision = _infinitePrecision;
   updatePrecision(true);
   auto ll = evaluate(tree);
+  assert(std::isnormal(ll) && ll < 0.0);
   _reconciliationModel->inferMLScenario(scenario);
   updatePrecision(infinitePrecision);
+}
+  
+pll_unode_t *ReconciliationEvaluation::computeMLRoot() 
+{
+  return  _reconciliationModel->computeMLRoot();
+}
+  
+pll_unode_t *ReconciliationEvaluation::inferMLRoot(pll_utree_t *tree)
+{
+  auto infinitePrecision = _infinitePrecision;
+  updatePrecision(true);
+  auto ll = evaluate(tree); 
+  assert(std::isnormal(ll) && ll < 0.0);
+  auto res = computeMLRoot();
+  updatePrecision(infinitePrecision);
+  assert(res);
+  return res;
 }
 
