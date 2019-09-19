@@ -95,4 +95,18 @@ void Scenario::saveReconciliation(const std::string &filename, ReconciliationFor
     break;
   }
 }
+  
+void Scenario::saveTransfers(const std::string &filename, bool masterRankOnly)
+{
+  ParallelOfstream os(filename, masterRankOnly);
+  for (auto &event: _events) {
+    if (event.type == EVENT_T || event.type == EVENT_TL) {
+      os << _speciesTree->nodes[event.speciesNode]->label << " " << _speciesTree->nodes[event.destSpeciesNode]->label << std::endl;
+    }
+  }
+}
+
+
+
+
 

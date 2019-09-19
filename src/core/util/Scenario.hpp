@@ -46,6 +46,7 @@ public:
 
   void saveEventsCounts(const std::string &filename, bool masterRankOnly = true); 
   void savePerSpeciesEventsCounts(const std::string &filename, bool masterRankOnly = true); 
+  void saveTransfers(const std::string &filename, bool masterRankOnly = true); 
 
   void saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly = true);
 

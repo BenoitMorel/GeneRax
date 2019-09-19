@@ -189,6 +189,11 @@ void search(const Families &initialFamilies,
     optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, 0, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
+  
+  {
+    TransferFrequencies transferFrequencies;
+    Routines::getTransfersFrequencies(arguments.speciesTree, recModel, currentFamilies, rates, transferFrequencies, arguments.output);
+  }
   Routines::inferReconciliation(arguments.speciesTree, currentFamilies, recModel, rates, arguments.output);
   if (sumElapsedLibpll) {
     Logger::info << "Initial time spent on optimizing random trees: " << sumElapsedLibpll << "s" << std::endl;

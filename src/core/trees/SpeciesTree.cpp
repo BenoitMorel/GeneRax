@@ -381,4 +381,15 @@ size_t SpeciesTree::getHash() const
   return res % 100000;
   
 }
+void SpeciesTree::getLabelsToId(std::unordered_map<std::string, unsigned int> &map) const
+{
+  map.clear();
+  for (unsigned int i = 0; i < getMaxNodeIndex(); ++i) {
+    auto node = getNode(i);
+    map.insert(std::pair<std::string, unsigned int>(node->label, node->node_index));
+  }
+}
+
+
+
   

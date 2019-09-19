@@ -43,6 +43,7 @@ public:
   void saveToFile(const std::string &newick, bool masterRankOnly);
   size_t getHash() const;
   void getLabels(std::unordered_set<std::string> &leafLabels, bool leafOnly = true) const;
+  void getLabelsToId(std::unordered_map<std::string, unsigned int> &map) const;
 private:
   pll_rtree_t *_speciesTree;
   Parameters _rates;

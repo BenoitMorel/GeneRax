@@ -55,11 +55,16 @@ static std::string getSpeciesEventCountFile(const std::string &outputDir, const 
   return FileSystem::joinPaths(outputDir, FileSystem::joinPaths("reconciliations", familyName + "_speciesEventCounts.txt"));
 }
 
+static std::string getTransfersFile(const std::string &outputDir, const std::string &familyName)
+{
+  return FileSystem::joinPaths(outputDir, FileSystem::joinPaths("reconciliations", familyName + "_transfers.txt"));
+}
+
 void Routines::inferReconciliation(
     const std::string &speciesTreeFile,
     Families &families,
     RecModel model,
-    Parameters &rates,
+    const Parameters &rates,
     const std::string &outputDir
     )
 {
@@ -73,6 +78,7 @@ void Routines::inferReconciliation(
   for (auto &tree: geneTrees.getTrees()) {
     std::string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
     std::string speciesEventCountsFile = getSpeciesEventCountFile(outputDir, tree.name);
+    std::string transfersFile = getTransfersFile(outputDir, tree.name);
     std::string treeWithEventsFileNHX = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
     std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.xml");
     Scenario scenario;
@@ -82,6 +88,7 @@ void Routines::inferReconciliation(
     evaluation.inferMLScenario(scenario);
     scenario.saveEventsCounts(eventCountsFile, false);
     scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
+    scenario.saveTransfers(transfersFile, false);
     scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, RecPhyloXML, false);
     scenario.saveReconciliation(treeWithEventsFileNHX, NHX, false);
   }
@@ -184,6 +191,47 @@ void Routines::optimizeSpeciesRatesEmpirical(const std::string &speciesTreeFile,
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
 }
+
+std::string getTransferKey(const std::string &label1, const std::string &label2)
+{
+  return label1 + "-_-" + label2; 
+}
+
+void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
+    RecModel recModel,
+    Families &families,
+    const Parameters &rates,
+    TransferFrequencies &transferFrequencies,
+    const std::string &outputDir)
+{
+  inferReconciliation(speciesTreeFile, families, recModel, rates, outputDir);
+  SpeciesTree speciesTree(speciesTreeFile);
+  
+  for (auto &family: families) {
+    std::string transfersFile = getTransfersFile(outputDir, family.name);
+    std::string line;
+    std::ifstream is(transfersFile);
+    assert(is.good());
+    while (std::getline(is, line))
+    {
+      std::istringstream iss(line);
+      std::string label1;
+      std::string label2;
+      iss >> label1 >> label2;
+      std::string key = getTransferKey(label1, label2);
+      if (transferFrequencies.end() == transferFrequencies.find(key)) {
+        transferFrequencies.insert(std::pair<std::string, unsigned int>(key, 1));
+      } else {
+        transferFrequencies[key]++;
+      }
+    }
+  }
+  ParallelOfstream os(FileSystem::joinPaths(outputDir, "transfers.txt"));
+  for (auto &freq: transferFrequencies) {
+    os << freq.first << " " << freq.second << std::endl;
+  }
+}
+
 
 
 
