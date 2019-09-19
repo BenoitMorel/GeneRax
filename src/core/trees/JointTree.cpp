@@ -278,8 +278,9 @@ void JointTree::rollbackLastMove() {
 void JointTree::save(const std::string &fileName, bool append) {
   auto root = reconciliationEvaluation_->getRoot();
   if (!root) {
-    root = reconciliationEvaluation_->computeMLRoot();
+    root = reconciliationEvaluation_->inferMLRoot(getTreeInfo()->tree);
   }
+  assert(root);
   LibpllParsers::saveUtree(root, fileName, append);
 }
 

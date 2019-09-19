@@ -49,7 +49,6 @@ public:
   pll_unode_t *getRoot() {return _reconciliationModel->getRoot();}
   void setRoot(pll_unode_t * root) {_reconciliationModel->setRoot(root);}
 
-  pll_unode_t *computeMLRoot() {return _reconciliationModel->computeMLRoot();}
 
   double evaluate(pll_utree_t *utree);
   /**
@@ -65,14 +64,14 @@ public:
    *  Must be called on the nodes affected by a move 
    */
   void invalidateCLV(unsigned int nodeIndex);
+ 
+  pll_unode_t *inferMLRoot(pll_utree_t *utree);
   
-  
-  void inferMLScenario(Scenario &scenario) {
-    _reconciliationModel->inferMLScenario(scenario);
-  }
+  void inferMLScenario(pll_utree_t *tree, Scenario &scenario);
 
   RecModel getRecModel() const {return _model;}
 private:
+  pll_unode_t *computeMLRoot();
   pll_rtree_t *_speciesTree;
   unsigned int _speciesCount;
   GeneSpeciesMapping _geneSpeciesMapping;

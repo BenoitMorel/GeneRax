@@ -68,6 +68,7 @@ void Routines::inferReconciliation(
     const std::string &outputDir
     )
 {
+  ParallelContext::barrier();
   pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
   PerCoreGeneTrees geneTrees(families);
   std::string reconciliationsDir = FileSystem::joinPaths(outputDir, "reconciliations");
@@ -85,7 +86,7 @@ void Routines::inferReconciliation(
     ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
     evaluation.setRates(rates);
     evaluation.evaluate(tree.tree);
-    evaluation.inferMLScenario(scenario);
+    evaluation.inferMLScenario(tree.tree, scenario);
     scenario.saveEventsCounts(eventCountsFile, false);
     scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
     scenario.saveTransfers(transfersFile, false);
@@ -125,6 +126,7 @@ void Routines::gatherLikelihoods(Families &families,
     double &totalLibpllLL,
     double &totalRecLL)
 {
+  ParallelContext::barrier();
   totalRecLL = 0.0;
   totalLibpllLL = 0.0;
   unsigned int familiesNumber = static_cast<unsigned int>(families.size());
@@ -149,6 +151,7 @@ void Routines::optimizeSpeciesRatesEmpirical(const std::string &speciesTreeFile,
     const std::string &outputDir,
     long &sumElapsed)
 {
+  ParallelContext::barrier();
   auto start = Logger::getElapsedSec();
   inferReconciliation(speciesTreeFile, families, recModel, rates, outputDir);
   SpeciesTree speciesTree(speciesTreeFile);
@@ -190,6 +193,7 @@ void Routines::optimizeSpeciesRatesEmpirical(const std::string &speciesTreeFile,
   }
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
+  ParallelContext::barrier();
 }
 
 std::string getTransferKey(const std::string &label1, const std::string &label2)

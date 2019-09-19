@@ -53,6 +53,7 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
     const std::string &outputStats) 
 {
   Logger::timed << "Starting optimizing gene tree" << std::endl;
+  Logger::info << "Number of ranks " << ParallelContext::getSize() << std::endl;
   std::vector<std::string> geneTreeStrings;
   getTreeStrings(startingGeneTreeFile, geneTreeStrings);
   assert(geneTreeStrings.size() == 1);
@@ -82,8 +83,11 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
     while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk, true)) {} 
   }
   jointTree->printLoglk();
-  if (outputGeneTree.size()) {
+  if (outputGeneTree.size() && ParallelContext::getRank() == 0) {
+    Logger::info << "Saving tree in " <<outputGeneTree << std::endl;
     jointTree->save(outputGeneTree, false);
+    Logger::info << "Finished saving  " <<outputGeneTree << std::endl;
+
   }
   if (outputStats.size()) {
     ParallelOfstream stats(outputStats);

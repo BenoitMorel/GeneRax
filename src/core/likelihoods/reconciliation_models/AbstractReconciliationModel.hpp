@@ -6,7 +6,7 @@
 #include <IO/Logger.hpp>
 #include <likelihoods/SubtreeRepeatsCache.hpp>
 #include <util/enums.hpp>
-
+#include <cmath>
 #include <unordered_set>
 #include <maths/ScaledValue.hpp>
 class SubtreeRepeatsCache;
@@ -492,7 +492,9 @@ void AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario)
   invalidateAllCLVs();
   updateCLVs();
   computeLikelihoods(); 
-  
+  auto ll = getSumLikelihood();
+  assert(std::isnormal(ll) && ll < 0.0);
+
   pll_unode_t *geneRoot = 0;
   pll_rnode_t *speciesRoot = 0;
   computeMLRoot(geneRoot, speciesRoot);
@@ -505,6 +507,7 @@ void AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario)
   virtualRoot.node_index = geneRoot->node_index + _maxGeneId + 1;
   scenario.setVirtualRootIndex(virtualRoot.node_index);
   backtrace(&virtualRoot, speciesRoot, scenario, true);
+
 }
   
 
