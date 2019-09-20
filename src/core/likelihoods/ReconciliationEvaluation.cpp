@@ -48,33 +48,6 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
   _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates);
 }
 
-void ReconciliationEvaluation::setRates(double dupRate, double lossRate,
-  double transferRate)
-{
-  DTLRatesVector v(DTLRates(dupRate, lossRate, transferRate));;
-  setRates(v);
-}
-  
-void ReconciliationEvaluation::setRates(const DTLRatesVector &ratesVector)
-{
-  _dupRates.clear();
-  _lossRates.clear();
-  _transferRates.clear();
-  if (ratesVector.size() == 1) {
-    _dupRates = std::vector<double>(_speciesCount, ratesVector.getRates(0).rates[0]);
-    _lossRates = std::vector<double>(_speciesCount, ratesVector.getRates(0).rates[1]);
-    _transferRates = std::vector<double>(_speciesCount, ratesVector.getRates(0).rates[2]);
-  } else {
-    assert(ratesVector.size() == _speciesCount);
-    for (auto &r: ratesVector.getRatesVector()) {
-      _dupRates.push_back(r.rates[0]); 
-      _lossRates.push_back(r.rates[1]); 
-      _transferRates.push_back(r.rates[2]); 
-    }
-  }
-  _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates);
-}
-
 double ReconciliationEvaluation::evaluate(pll_utree_t *utree)
 {
   double res = _reconciliationModel->computeLogLikelihood(utree);
@@ -84,11 +57,6 @@ double ReconciliationEvaluation::evaluate(pll_utree_t *utree)
     updatePrecision(false);  
   }
   return res;
-}
-
-double ReconciliationEvaluation::evaluate(std::shared_ptr<pllmod_treeinfo_t> treeinfo)
-{
-  return evaluate(treeinfo->tree);
 }
 
 void ReconciliationEvaluation::invalidateCLV(unsigned int nodeIndex)

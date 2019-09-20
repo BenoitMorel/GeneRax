@@ -30,32 +30,22 @@ public:
 
   void setRates(const Parameters &parameters);
 
+
   /**
-   *  Set the DTL rates
-   *  @param dupRate
-   *  @param lossRate
-   *  @param transferRate
-   */ 
-  void setRates(double dupRate, double lossRate, 
-    double transferRate = 0.0);
-
-  /*
-   * Set the per-species lineage rates
-   *  @param ratesVector DTL rates indexed with species node index
+   * Get the current root of the gene tree. Return null if the tree does not have a 
+   * current root (in unrooted mode)
+   * This method is mostly used for rollbacking to a previous state. In most of the
+   * cases you should call inferMLRoot instead.
    */
-  void setRates(const DTLRatesVector &ratesVector);
-
-
   pll_unode_t *getRoot() {return _reconciliationModel->getRoot();}
   void setRoot(pll_unode_t * root) {_reconciliationModel->setRoot(root);}
 
 
-  double evaluate(pll_utree_t *utree);
   /**
-   *  @param input treeinfo
+   *  @param input utree
    *  @return the reconciliation likelihood of this tree
    */
-  double evaluate(std::shared_ptr<pllmod_treeinfo_t> treeinfo);
+  double evaluate(pll_utree_t *utree);
 
   bool implementsTransfers() {return Enums::accountsForTransfers(_model);} 
 

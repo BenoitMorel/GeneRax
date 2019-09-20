@@ -234,7 +234,7 @@ double JointTree::computeReconciliationLoglk () {
   if (!enableReconciliation_) {
     return 1.0;
   }
-  return reconciliationEvaluation_->evaluate(libpllEvaluation_->getTreeInfo()) * _recWeight;
+  return reconciliationEvaluation_->evaluate(libpllEvaluation_->getTreeInfo()->tree) * _recWeight;
 }
 
 double JointTree::computeJointLoglk() {
