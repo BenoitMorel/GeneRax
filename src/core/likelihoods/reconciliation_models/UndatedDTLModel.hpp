@@ -21,7 +21,8 @@ public:
   // overloaded from parent
   virtual void setRates(const std::vector<double> &dupRates,
       const std::vector<double> &lossRates,
-      const std::vector<double> &transferRates);
+      const std::vector<double> &transferRates,
+      const std::vector< std::vector <double > > &transferFrequencies);
 protected:
   // overloaded from parent
   virtual void setInitialGeneTree(pll_utree_t *tree);
@@ -138,7 +139,8 @@ void UndatedDTLModel<REAL>::updateTransferSums(REAL &transferSum,
 template <class REAL>
 void UndatedDTLModel<REAL>::setRates(const std::vector<double> &dupRates,
       const std::vector<double> &lossRates,
-      const std::vector<double> &transferRates)
+      const std::vector<double> &transferRates,
+      const std::vector< std::vector <double > > &)
 {
   this->geneRoot_ = 0;
   assert(this->speciesNodesCount_ == dupRates.size());

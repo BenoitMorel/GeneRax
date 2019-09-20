@@ -6,6 +6,7 @@
 #include <IO/Logger.hpp>
 #include <algorithm>
 
+static const int TRANSFER_FREQUENCIES_EPSILON = 0.1;
 
 /*
 * Implement the undated model described here:
@@ -21,7 +22,8 @@ public:
   // overloaded from parent
   virtual void setRates(const std::vector<double> &dupRates,
       const std::vector<double> &lossRates,
-      const std::vector<double> &transferRates);
+      const std::vector<double> &transferRates,
+      const std::vector< std::vector <double > > &transferFrequencies);
 protected:
   // overloaded from parent
   virtual void setInitialGeneTree(pll_utree_t *tree);
@@ -120,21 +122,35 @@ void UndatedDTLModelAdvanced<REAL>::updateTransferSums(REAL &transferSum,
 template <class REAL>
 void UndatedDTLModelAdvanced<REAL>::setRates(const std::vector<double> &dupRates,
       const std::vector<double> &lossRates,
-      const std::vector<double> &transferRates)
+      const std::vector<double> &transferRates,
+      const std::vector< std::vector <double > > &transferFrequencies)
 {
   this->geneRoot_ = 0;
   assert(this->speciesNodesCount_ == dupRates.size());
   assert(this->speciesNodesCount_ == lossRates.size());
   assert(this->speciesNodesCount_ == transferRates.size());
+  assert(this->speciesNodesCount_ == transferFrequencies.size());
   _PD = dupRates;
   _PL = lossRates;
   _PT = std::vector<std::vector<double> >(this->speciesNodesCount_, transferRates);
   _PS = std::vector<double>(this->speciesNodesCount_, 1.0);
-  for (auto speciesNode: this->speciesNodes_) {
-    auto e = speciesNode->node_index;
+  auto normalizedTransferFrequencies = transferFrequencies;
+  for (unsigned int e = 0; e < this->speciesNodesCount_; ++e) {
+    double sum = 0.0;
+    assert(normalizedTransferFrequencies[e].size() == this->speciesNodesCount_);
+    for (unsigned int f = 0; f < this->speciesNodesCount_; ++f) {
+      normalizedTransferFrequencies[e][f] += TRANSFER_FREQUENCIES_EPSILON;
+      sum += normalizedTransferFrequencies[e][f];
+    }
+    for (unsigned int f = 0; f < this->speciesNodesCount_; ++f) {
+      normalizedTransferFrequencies[e][f] /= sum;
+    }
+  }
+  for (unsigned int e = 0; e < this->speciesNodesCount_; ++e) {
     auto sum = _PD[e] + _PL[e] + _PS[e];
-    for (auto PT: _PT[e]) {
-      sum += PT;
+    for (unsigned int f = 0; f < this->speciesNodesCount_; ++f) {
+      _PT[e][f] *= normalizedTransferFrequencies[e][f];
+      sum += _PT[e][f];
     }
     _PD[e] /= sum;
     _PL[e] /= sum;
