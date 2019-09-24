@@ -6,7 +6,9 @@ matrix:
   include:
     - os: linux
       dist: trusty
-      env: CXX_COMPILER=g++-6
+      env: :
+      - CC=G++-6
+      - CXX=G++-6
       addons:
         apt:
           sources:
