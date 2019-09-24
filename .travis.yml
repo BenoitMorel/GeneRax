@@ -15,6 +15,7 @@ matrix:
           - g++-6
           - pandoc
           - mpich
+          - libmpich-dev
     - os: osx
       osx_image: xcode9.2
 
