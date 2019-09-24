@@ -23,7 +23,9 @@ before_install:
   - if [ -n "${CXX_COMPILER}" ]; then export CXX="${CXX_COMPILER}"; fi
 
 install:
-  - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
+  - export TRAVIS_ROOT=$HOME/travis
+  - mkdir $TRAVIS_ROOT
+  - sh ./travis/install-mpi.sh $TRAVIS_ROOT mpich
 
 script: 
   - ./install.sh
