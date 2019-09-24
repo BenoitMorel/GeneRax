@@ -16,8 +16,7 @@ addons:
       - cmake
       - g++-5
       - clang
-      - mpich2 
-      - mpich2-doc
+      - mpich
       - libmpich-dev
       - python
 
