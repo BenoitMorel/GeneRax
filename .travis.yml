@@ -6,9 +6,9 @@ matrix:
   include:
     - os: linux
       dist: trusty
-      env: 
-      - CC=G++-6
-      - CXX=G++-6
+      env:
+      - CC=g++-6
+      - CXX=g++-6
       addons:
         apt:
           sources:
@@ -17,18 +17,14 @@ matrix:
           - g++-6
           - pandoc
           - mpich
-      env : MPI_IMPL=mpich
     - os: osx
       osx_image: xcode9.2
-      env: MPI_IMPL=mpich
 
 
 before_install:
   - export TRAVIS_ROOT=$HOME/travis
   - mkdir $TRAVIS_ROOT
 
-install:
-  - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
 
 
 script: 
