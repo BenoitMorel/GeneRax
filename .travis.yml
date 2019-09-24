@@ -6,7 +6,7 @@ matrix:
   include:
     - os: linux
       dist: trusty
-      env: :
+      env: 
       - CC=G++-6
       - CXX=G++-6
       addons:
