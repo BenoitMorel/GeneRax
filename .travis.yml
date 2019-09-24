@@ -17,7 +17,8 @@ matrix:
           - mpich
     - os: osx
       osx_image: xcode9.2
-
+      install:
+      - sh ./travis/install-mpi.sh $TRAVIS_ROOT $MPI_IMPL
 
 before_install:
   - if [ -n "${C_COMPILER}" ]; then export CC="${C_COMPILER}"; fi
