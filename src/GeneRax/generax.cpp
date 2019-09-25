@@ -175,9 +175,14 @@ void search(const Families &initialFamilies,
     optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
   for (int i = 1; i <= arguments.maxSPRRadius; ++i) {
-      bool enableLibpll = true;
-      bool perSpeciesDTLRates = arguments.perSpeciesDTLRates && (i >= arguments.maxSPRRadius - 1); // only apply per-species optimization at the two last rounds
-      optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+    bool enableLibpll = true;
+    bool perSpeciesDTLRates = arguments.perSpeciesDTLRates && (i >= arguments.maxSPRRadius - 1); // only apply per-species optimization at the two last rounds
+    if (i == arguments.maxSPRRadius && arguments.useTransferFrequencies && recModel == UndatedDTL) {
+      TransferFrequencies transferFrequencies;
+      Routines::getTransfersFrequencies(arguments.speciesTree, recModel, currentFamilies, rates, transferFrequencies, arguments.output);
+      recModel = UndatedDTLAdvanced;
+    }
+    optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
 
   if (randoms && duplicates > 1) {
@@ -189,13 +194,12 @@ void search(const Families &initialFamilies,
     optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, 0, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
   saveStats(arguments.output, totalLibpllLL, totalRecLL);
-  
-  {
-    TransferFrequencies transferFrequencies;
-    Routines::getTransfersFrequencies(arguments.speciesTree, recModel, currentFamilies, rates, transferFrequencies, arguments.output);
-  }
   Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
-  Routines::inferReconciliation(arguments.speciesTree, currentFamilies, recModel, rates, arguments.output);
+  if (recModel == UndatedDTLAdvanced) {
+    Logger::info << "Skipping reconciliation inference" << std::endl;
+  } else {
+    Routines::inferReconciliation(arguments.speciesTree, currentFamilies, recModel, rates, arguments.output);
+  }
   if (sumElapsedLibpll) {
     Logger::info << "Initial time spent on optimizing random trees: " << sumElapsedLibpll << "s" << std::endl;
   }

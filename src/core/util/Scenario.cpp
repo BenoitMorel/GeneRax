@@ -4,6 +4,8 @@
 #include <IO/ParallelOfstream.hpp>
 #include <vector>
 #include <string>
+#include <map>
+
 
 const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "Leaf", "Invalid"};
 

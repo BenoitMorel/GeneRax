@@ -86,7 +86,6 @@ private:
   REAL getCorrectedTransferSum(unsigned int geneId, unsigned int speciesId) const
   {
     return (_survivingTransferSums[geneId] - _ancestralCorrection[geneId][speciesId]) * _PT[speciesId];
-
   }
 
 };

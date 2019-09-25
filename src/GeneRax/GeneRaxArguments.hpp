@@ -31,6 +31,7 @@ public:
    bool pruneSpeciesTree;
    unsigned int recRadius;
    bool perSpeciesDTLRates;
+   bool useTransferFrequencies;
    bool userDTLRates;
    double dupRate;
    double lossRate;

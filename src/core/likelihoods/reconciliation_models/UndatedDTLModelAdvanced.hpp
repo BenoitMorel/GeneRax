@@ -160,19 +160,23 @@ void UndatedDTLModelAdvanced<REAL>::setRates(const std::vector<double> &dupRates
     }
   } 
   _uE = std::vector<REAL>(this->speciesNodesCount_);
-  resetTransferSums(_transferExtinctionSum);
   for (unsigned int it = 0; it < IT_ADVANCED; ++it) {
     for (auto speciesNode: this->speciesNodes_) {
       auto e = speciesNode->node_index;
       REAL proba(_PL[e]);
-      proba += _uE[e] * _uE[e] * _PD[e] + getTransferExtinctionSum(e) * _uE[e];
+      proba += _uE[e] * _uE[e] * _PD[e];// + getTransferExtinctionSum(e) * _uE[e];
+      auto transferTerm = REAL();
+      for (auto recievingSpeciesNode: this->speciesNodes_) {
+        auto h = recievingSpeciesNode->node_index;
+        transferTerm += _uE[h] * _PT[e][h];
+      }
+      proba += transferTerm * _uE[e] * (1 / double(this->speciesNodesCount_));
       if (speciesNode->left) {
         proba += _uE[speciesNode->left->node_index]  * _uE[speciesNode->right->node_index] * _PS[e];
       }
       ASSERT_PROBA(proba)
       _uE[speciesNode->node_index] = proba;
     }
-    updateTransferSums(_transferExtinctionSum, _uE);
   }
   this->invalidateAllCLVs();
 }
@@ -268,8 +272,8 @@ void UndatedDTLModelAdvanced<REAL>::computeProbability(pll_unode_t *geneNode, pl
     proba += (_uq[gid][f] * _uE[g] + _uq[gid][g] * _uE[f]) *_PS[e];
   }
   // TL event
-  proba += oldProba * getTransferExtinctionSum(e);
-  proba += getTransferSum(gid, e) * _uE[e];
+  //proba += oldProba * getTransferExtinctionSum(e);
+  //proba += getTransferSum(gid, e) * _uE[e];
 
   // DL event
   proba += oldProba * _uE[e] * (2.0 * _PD[e]); 
@@ -314,6 +318,9 @@ REAL UndatedDTLModelAdvanced<REAL>::getLikelihoodFactor() const
   REAL factor(0.0);
   for (auto speciesNode: this->speciesNodes_) {
     auto e = speciesNode->node_index;
+    if (!(_uE[e] < REAL(1.0))) {
+      std::cerr << "error : " <<  _uE[e] << std::endl;
+    }
     factor += (REAL(1.0) - _uE[e]);
   }
   return factor;

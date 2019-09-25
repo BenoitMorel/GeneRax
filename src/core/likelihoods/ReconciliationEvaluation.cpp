@@ -48,7 +48,7 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
   if (_model == UndatedDTLAdvanced) {
     _transferFrequencies.resize(_speciesCount);
     for (unsigned int e = 0; e < _speciesCount; ++e) {
-      _transferFrequencies[e] = std::vector<double>(_speciesCount, 0.0);
+      _transferFrequencies[e] = std::vector<double>(_speciesCount, 1.0 / _speciesCount);
     }
   }
   _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates, _transferFrequencies);

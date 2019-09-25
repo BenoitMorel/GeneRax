@@ -19,6 +19,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   pruneSpeciesTree(false),
   recRadius(0),
   perSpeciesDTLRates(false),
+  useTransferFrequencies(false),
   userDTLRates(false),
   dupRate(1.0),
   lossRate(1.0),
@@ -62,6 +63,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       recRadius = atoi(argv[++i]);
     } else if (arg == "--per-species-rates") {
       perSpeciesDTLRates = true;
+    } else if (arg == "--use-transfer-frequencies") {
+      useTransferFrequencies = true;
     } else if (arg == "--dup-rate") {
       dupRate = atof(argv[++i]);
       userDTLRates = true;

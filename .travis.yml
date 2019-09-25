@@ -1,25 +1,30 @@
-language: c++
+sudo: required
+cache: apt
+language: cpp
 
 matrix:
   include:
     - os: linux
-      compiler: gcc
-      before_script: CC=gcc-5 && CXX=g++-5
+      dist: trusty
+      env: CXX_COMPILER=g++-6
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test
+          packages:
+          - g++-6
+          - pandoc
+          - mpich
+          - libmpich-dev
+    - os: osx
+      osx_image: xcode9.2
 
-addons:
-  apt:
-    sources:
-      - george-edison55-precise-backports
-      - ubuntu-toolchain-r-test
-    packages:
-      - cmake-data
-      - cmake
-      - g++-5
-      - clang
-      - mpich
-      - libmpich-dev
-      - python
+before_install:
+  - if [ -n "${C_COMPILER}" ]; then export CC="${C_COMPILER}"; fi
+  - if [ -n "${CXX_COMPILER}" ]; then export CXX="${CXX_COMPILER}"; fi
 
+install:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then  brew install mpich        ; fi
 
 script: 
   - ./install.sh
