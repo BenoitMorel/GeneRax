@@ -50,8 +50,8 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
     for (unsigned int e = 0; e < _speciesCount; ++e) {
       _transferFrequencies[e] = std::vector<double>(_speciesCount, 0.0);
     }
-    _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates, _transferFrequencies);
   }
+  _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates, _transferFrequencies);
 }
 
 double ReconciliationEvaluation::evaluate(pll_utree_t *utree)
@@ -102,8 +102,7 @@ void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
     _infinitePrecision = infinitePrecision;
     _reconciliationModel = buildRecModelObject(_model, _infinitePrecision);
     _reconciliationModel->init(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
-    std::vector < std::vector <double> > transferFrequencies;
-    _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates, transferFrequencies);
+    _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates, _transferFrequencies);
  }
 }
 void ReconciliationEvaluation::inferMLScenario(pll_utree_t *tree, Scenario &scenario) {
