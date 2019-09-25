@@ -205,9 +205,9 @@ std::string getTransferKey(const std::string &label1, const std::string &label2)
 
 void getLabelsFromTransferKey(const std::string &key, std::string &label1, std::string &label2)
 {
-  int pos = key.find_first_of(keyDelimiter);
+  int pos = key.find(keyDelimiter);
   label1 = key.substr(0, pos);
-  label2 = key.substr(pos + key.size());
+  label2 = key.substr(pos + keyDelimiter.size());
 }
 void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     RecModel recModel,

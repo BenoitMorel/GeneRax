@@ -182,6 +182,12 @@ void search(const Families &initialFamilies,
       Parameters parameterTransferFrequencies;
       Routines::getTransfersFrequencies(arguments.speciesTree, recModel, currentFamilies, rates, transferFrequencies, arguments.output);
       Routines::getParametersFromTransferFrequencies(arguments.speciesTree, transferFrequencies, parameterTransferFrequencies);
+      // now this is a terrible temporary hack
+      std::string transferFrequenciesFile = "/tmp/transferFrequencies.txt";
+      if (ParallelContext::getRank() == 0) {
+        parameterTransferFrequencies.save(transferFrequenciesFile);
+      }
+      ParallelContext::barrier();
       recModel = UndatedDTLAdvanced;
     }
     optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);

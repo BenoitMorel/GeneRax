@@ -5,6 +5,7 @@
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModelAdvanced.hpp>
 #include <cmath>
+#include <IO/FileSystem.hpp>
 
 double log(ScaledValue v) 
 {
@@ -59,10 +60,17 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
       (*rates[d])[e] = parameters[(e * rates.size() + d) % parameters.dimensions()];
     }
   }
-  if (_model == UndatedDTLAdvanced && _transferFrequencies.size() != _speciesCount) {
-    _transferFrequencies.resize(_speciesCount);
-    for (unsigned int e = 0; e < _speciesCount; ++e) {
-      _transferFrequencies[e] = std::vector<double>(_speciesCount, 1.0 / _speciesCount);
+  if (_model == UndatedDTLAdvanced) {
+    std::string transferFrequenciesFile = "/tmp/transferFrequencies.txt";
+    if (FileSystem::exists(transferFrequenciesFile)) {
+      Parameters parameters;
+      parameters.load(transferFrequenciesFile);
+      setTransferFrequencies(parameters);
+    } else {
+      _transferFrequencies.resize(_speciesCount);
+      for (unsigned int e = 0; e < _speciesCount; ++e) {
+        _transferFrequencies[e] = std::vector<double>(_speciesCount, 1.0 / _speciesCount);
+      }
     }
   }
   _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates, _transferFrequencies);
