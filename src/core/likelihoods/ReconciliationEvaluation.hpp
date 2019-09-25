@@ -28,6 +28,7 @@ public:
     RecModel recModel,
     bool rootedGeneTree);
 
+  void setTransferFrequencies(const Parameters &parameters);
   void setRates(const Parameters &parameters);
 
 

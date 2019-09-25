@@ -179,7 +179,9 @@ void search(const Families &initialFamilies,
     bool perSpeciesDTLRates = arguments.perSpeciesDTLRates && (i >= arguments.maxSPRRadius - 1); // only apply per-species optimization at the two last rounds
     if (i == arguments.maxSPRRadius && arguments.useTransferFrequencies && recModel == UndatedDTL) {
       TransferFrequencies transferFrequencies;
+      Parameters parameterTransferFrequencies;
       Routines::getTransfersFrequencies(arguments.speciesTree, recModel, currentFamilies, rates, transferFrequencies, arguments.output);
+      Routines::getParametersFromTransferFrequencies(arguments.speciesTree, transferFrequencies, parameterTransferFrequencies);
       recModel = UndatedDTLAdvanced;
     }
     optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);

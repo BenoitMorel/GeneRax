@@ -41,6 +41,10 @@ public:
     const Parameters &rates,
     TransferFrequencies &frequencies,
     const std::string &outputDir);
+  
+  static void getParametersFromTransferFrequencies(const std::string &speciesTreeFile,
+      const TransferFrequencies &frequencies, 
+      Parameters &parameters);
 
   /**
    * Infer the reconciliation between the families gene trees and the 

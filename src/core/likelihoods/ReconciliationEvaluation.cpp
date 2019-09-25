@@ -27,6 +27,20 @@ ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
 }
 
 
+void ReconciliationEvaluation::setTransferFrequencies(const Parameters &parameters)
+{
+  assert(parameters.dimensions() == _speciesCount * _speciesCount);
+  _transferFrequencies.resize(_speciesCount);
+  unsigned int index = 0;
+  for (unsigned int e = 0; e < _speciesCount; ++e) {
+    _transferFrequencies[e].resize(_speciesCount);
+    for (unsigned int h = 0; h < _speciesCount; ++h) {
+      _transferFrequencies[e][h] = parameters[index++];
+    }
+  }
+}
+
+
 void ReconciliationEvaluation::setRates(const Parameters &parameters)
 {
   assert(parameters.dimensions());
@@ -45,7 +59,7 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
       (*rates[d])[e] = parameters[(e * rates.size() + d) % parameters.dimensions()];
     }
   }
-  if (_model == UndatedDTLAdvanced) {
+  if (_model == UndatedDTLAdvanced && _transferFrequencies.size() != _speciesCount) {
     _transferFrequencies.resize(_speciesCount);
     for (unsigned int e = 0; e < _speciesCount; ++e) {
       _transferFrequencies[e] = std::vector<double>(_speciesCount, 1.0 / _speciesCount);

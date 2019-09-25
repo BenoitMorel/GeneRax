@@ -196,11 +196,19 @@ void Routines::optimizeSpeciesRatesEmpirical(const std::string &speciesTreeFile,
   ParallelContext::barrier();
 }
 
+static const std::string keyDelimiter("-_-");
+
 std::string getTransferKey(const std::string &label1, const std::string &label2)
 {
-  return label1 + "-_-" + label2; 
+  return label1 + keyDelimiter + label2; 
 }
 
+void getLabelsFromTransferKey(const std::string &key, std::string &label1, std::string &label2)
+{
+  int pos = key.find_first_of(keyDelimiter);
+  label1 = key.substr(0, pos);
+  label2 = key.substr(pos + key.size());
+}
 void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     RecModel recModel,
     Families &families,
@@ -235,6 +243,32 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     os << freq.first << " " << freq.second << std::endl;
   }
 }
+
+
+void Routines::getParametersFromTransferFrequencies(const std::string &speciesTreeFile,
+  const TransferFrequencies &frequencies, 
+  Parameters &parameters)
+{
+  SpeciesTree speciesTree(speciesTreeFile);
+  std::unordered_map<std::string, unsigned int> labelsToIds;
+  speciesTree.getLabelsToId(labelsToIds);
+  unsigned int species = speciesTree.getNodesNumber();
+  parameters = Parameters(species * species);
+  for (auto &frequency: frequencies) {
+    std::string label1;
+    std::string label2;
+    getLabelsFromTransferKey(frequency.first, label1, label2);
+    unsigned int id1 = labelsToIds[label1];
+    unsigned int id2 = labelsToIds[label2];
+    parameters[id1 * species + id2] = frequency.second;
+
+  }
+  
+
+
+
+}
+
 
 
 
