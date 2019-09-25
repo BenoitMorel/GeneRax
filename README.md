@@ -9,7 +9,7 @@ GeneRax accounts for sequence substitutions, gene duplication, gene loss and hor
 
 ## Requirement
 
-* A Linux environnement
+* A Linux or MacOS environnement
 * gcc 5.0 or > 
 * CMake 3.6 or >
 * MPI
