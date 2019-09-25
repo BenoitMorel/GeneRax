@@ -67,12 +67,19 @@ public:
     exit(41);
   }
 
+  static bool isValidRecModel(const std::string &str)
+  {
+    return (str == "UndatedDL") || (str == "UndatedDTL") || (str == "UndatedDTLAdvanced");
+  }
+
   static RecModel strToRecModel(const std::string &str)
   {
     if (str == "UndatedDL") {
       return UndatedDL;
     } else if (str == "UndatedDTL") {
       return UndatedDTL;
+    } else if (str == "UndatedDTLAdvanced") {
+      return UndatedDTLAdvanced;
     } else {
       Logger::info << "Invalid reconciliation model " << str << std::endl;
       exit(41);

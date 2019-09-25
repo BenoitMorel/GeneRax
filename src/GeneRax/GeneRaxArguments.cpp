@@ -103,23 +103,27 @@ bool isIn(const std::string &elem, const std::vector<std::string> &v) {
 void GeneRaxArguments::checkInputs() {
   bool ok = true;
   if (!speciesTree.size()) {
-    Logger::error << "You need to provide a species tree." << std::endl;
+    Logger::info << "[Error] You need to provide a species tree." << std::endl;
     ok = false;
   }
   if (userDTLRates && perSpeciesDTLRates) {
-    Logger::error << "You cannot specify the rates when using per-species DTL rates" << std::endl;
+    Logger::info << "[Error] You cannot specify the rates when using per-species DTL rates" << std::endl;
     ok = false;
   }
   if (userDTLRates && (dupRate < 0.0 || lossRate < 0.0)) {
-    Logger::error << "You specified at least one of the duplication and loss rates, but not both of them." << std::endl;
+    Logger::info << "[Error] You specified at least one of the duplication and loss rates, but not both of them." << std::endl;
     ok = false;
   }
   if (perSpeciesDTLRates && perFamilyDTLRates) {
-    Logger::error << "You cannot use per-family and per-species rates at the same time" << std::endl;
+    Logger::info << "[Error] You cannot use per-family and per-species rates at the same time" << std::endl;
+    ok = false;
+  }
+  if (!Arguments::isValidRecModel(reconciliationModelStr)) {
+    Logger::info << "[Error] Invalid reconciliation model string " << reconciliationModelStr << std::endl;
     ok = false;
   }
   if (!ok) {
-    Logger::error << "Aborting." << std::endl;
+    Logger::info << "Aborting." << std::endl;
     ParallelContext::abort(1);
   }
   
