@@ -6,7 +6,7 @@
 #include <IO/Logger.hpp>
 #include <algorithm>
 
-static const int TRANSFER_FREQUENCIES_EPSILON = 0.1;
+static const int TRANSFER_FREQUENCIES_EPSILON = 0.01;
 
 /*
 * Implement the undated model described here:
@@ -114,8 +114,10 @@ void UndatedDTLModelAdvanced<REAL>::setRates(const std::vector<double> &dupRates
       normalizedTransferFrequencies[e][f] += TRANSFER_FREQUENCIES_EPSILON;
       sum += normalizedTransferFrequencies[e][f];
     }
-    for (unsigned int f = 0; f < this->speciesNodesCount_; ++f) {
-      normalizedTransferFrequencies[e][f] /= sum;
+    if (sum > 0.0) {
+      for (unsigned int f = 0; f < this->speciesNodesCount_; ++f) {
+        normalizedTransferFrequencies[e][f] /= sum;
+      }
     }
   }
   for (unsigned int e = 0; e < this->speciesNodesCount_; ++e) {
@@ -140,7 +142,9 @@ void UndatedDTLModelAdvanced<REAL>::setRates(const std::vector<double> &dupRates
       auto transferTerm = REAL();
       for (auto recievingSpeciesNode: this->speciesNodes_) {
         auto h = recievingSpeciesNode->node_index;
-        transferTerm += _uE[h] * _PT[e][h];
+        if (h!= e) {
+          transferTerm += _uE[h] * _PT[e][h];
+        }
       }
       proba += transferTerm * _uE[e] * (1 / double(this->speciesNodesCount_));
       if (speciesNode->left) {

@@ -37,6 +37,7 @@ void ReconciliationEvaluation::setTransferFrequencies(const Parameters &paramete
     _transferFrequencies[e].resize(_speciesCount);
     for (unsigned int h = 0; h < _speciesCount; ++h) {
       _transferFrequencies[e][h] = parameters[index++];
+      assert(std::isfinite(_transferFrequencies[e][h]));
     }
   }
 }
@@ -79,7 +80,7 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
 double ReconciliationEvaluation::evaluate(pll_utree_t *utree)
 {
   double res = _reconciliationModel->computeLogLikelihood(utree);
-  if (!_infinitePrecision && !std::isnormal(res)) {
+  if (!_infinitePrecision && !std::isfinite(res)) {
     updatePrecision(true);  
     res = _reconciliationModel->computeLogLikelihood(utree);
     updatePrecision(false);  
@@ -132,7 +133,7 @@ void ReconciliationEvaluation::inferMLScenario(pll_utree_t *tree, Scenario &scen
   auto infinitePrecision = _infinitePrecision;
   updatePrecision(true);
   auto ll = evaluate(tree);
-  assert(std::isnormal(ll) && ll < 0.0);
+  assert(std::isfinite(ll) && ll < 0.0);
   _reconciliationModel->inferMLScenario(scenario);
   updatePrecision(infinitePrecision);
 }
@@ -147,7 +148,7 @@ pll_unode_t *ReconciliationEvaluation::inferMLRoot(pll_utree_t *tree)
   auto infinitePrecision = _infinitePrecision;
   updatePrecision(true);
   auto ll = evaluate(tree); 
-  assert(std::isnormal(ll) && ll < 0.0);
+  assert(std::isfinite(ll) && ll < 0.0);
   auto res = computeMLRoot();
   updatePrecision(infinitePrecision);
   assert(res);

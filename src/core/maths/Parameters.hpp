@@ -132,9 +132,13 @@ public:
   void load(const std::string &src) 
   {
     _parameters.clear();
+    std::ifstream is2(src);
+    std::string debugStr;
+    std::getline(is2, debugStr);
     std::ifstream is(src);
+    assert(is.good());
     while (!is.eof()) {
-      double a;
+      double a = -42;
       is >> a;
       if (!is.good())  {
         break;
