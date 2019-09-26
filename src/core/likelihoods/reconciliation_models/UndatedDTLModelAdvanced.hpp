@@ -138,7 +138,7 @@ void UndatedDTLModelAdvanced<REAL>::setRates(const std::vector<double> &dupRates
     for (auto speciesNode: this->speciesNodes_) {
       auto e = speciesNode->node_index;
       REAL proba(_PL[e]);
-      proba += _uE[e] * _uE[e] * _PD[e];// + getTransferExtinctionSum(e) * _uE[e];
+      proba += _uE[e] * _uE[e] * _PD[e];
       auto transferTerm = REAL();
       for (auto recievingSpeciesNode: this->speciesNodes_) {
         auto h = recievingSpeciesNode->node_index;
@@ -146,7 +146,7 @@ void UndatedDTLModelAdvanced<REAL>::setRates(const std::vector<double> &dupRates
           transferTerm += _uE[h] * _PT[e][h];
         }
       }
-      proba += transferTerm * _uE[e] * (1 / double(this->speciesNodesCount_));
+      proba += transferTerm * _uE[e];
       if (speciesNode->left) {
         proba += _uE[speciesNode->left->node_index]  * _uE[speciesNode->right->node_index] * _PS[e];
       }
@@ -236,7 +236,7 @@ void UndatedDTLModelAdvanced<REAL>::computeProbability(pll_unode_t *geneNode, pl
     REAL transferTerm = REAL();
     for (auto *recievingSpeciesNode: this->speciesNodes_) {
       auto h = recievingSpeciesNode->node_index;
-      transferTerm += (_uq[u_left][h] * _uq[u_right][e] + _uq[u_left][e] * _uq[u_right][h]) * (_PT[e][h] / this->speciesNodesCount_) ;
+      transferTerm += (_uq[u_left][h] * _uq[u_right][e] + _uq[u_left][e] * _uq[u_right][h]) * (_PT[e][h]); 
     }
     proba += transferTerm;
   }
