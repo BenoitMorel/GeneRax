@@ -85,6 +85,7 @@ double ReconciliationEvaluation::evaluate(pll_utree_t *utree)
     res = _reconciliationModel->computeLogLikelihood(utree);
     updatePrecision(false);  
   }
+  assert(std::isnormal(res));
   return res;
 }
 
