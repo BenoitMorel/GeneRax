@@ -33,7 +33,7 @@ void Routines::optimizeRates(bool userDTLRates,
     //auto ratesGlobal = DTLOptimizer::optimizeParametersGlobalDTL(geneTrees, speciesTree, recModel);
     //auto ratesEmpirical = ratesGlobal;
     //optimizeSpeciesRatesEmpirical(speciesTreeFile, recModel, families, ratesEmpirical, outputDir, sumElapsed);
-    auto rates = DTLOptimizer::optimizeParametersPerSpecies(geneTrees, speciesTree, recModel);
+    rates = DTLOptimizer::optimizeParametersPerSpecies(geneTrees, speciesTree, recModel);
     /*
     Logger::timed << " Per-species DTL rates optimization from global rates: RecLL=" << rates1.getScore() << std::endl;
     auto rates2 = DTLOptimizer::optimizeParameters(geneTrees, speciesTree, recModel, ratesEmpirical);
