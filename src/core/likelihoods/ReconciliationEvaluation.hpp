@@ -71,6 +71,7 @@ private:
   std::vector<double> _dupRates;
   std::vector<double> _lossRates;
   std::vector<double> _transferRates;
+  Parameters _parameters; // remove this
   std::vector< std::vector<double> > _transferFrequencies;
   std::unique_ptr<ReconciliationModelInterface> _reconciliationModel;
   std::unique_ptr<ReconciliationModelInterface> buildRecModelObject(RecModel recModel, bool infinitePrecision);
