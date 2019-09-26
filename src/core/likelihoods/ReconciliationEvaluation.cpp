@@ -80,10 +80,13 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
 double ReconciliationEvaluation::evaluate(pll_utree_t *utree)
 {
   double res = _reconciliationModel->computeLogLikelihood(utree);
-  if (!_infinitePrecision && !std::isfinite(res)) {
+  if (!_infinitePrecision && !std::isnormal(res)) {
     updatePrecision(true);  
     res = _reconciliationModel->computeLogLikelihood(utree);
     updatePrecision(false);  
+  }
+  if (!std::isnormal(res)) {
+    std::cerr << "wrong reconciliation ll " << res << std::endl;
   }
   assert(std::isnormal(res));
   return res;
