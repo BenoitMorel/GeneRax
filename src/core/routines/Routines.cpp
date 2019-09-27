@@ -93,10 +93,6 @@ void Routines::inferReconciliation(
     scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, RecPhyloXML, false);
     scenario.saveReconciliation(treeWithEventsFileNHX, NHX, false);
   }
-  auto initialSpeciesTreeStr = pll_rtree_export_newick(speciesTree->root, 0);
-  free(initialSpeciesTreeStr);
-  auto speciesTreeStr = pll_rtree_export_newick(speciesTree->root, 0);
-  free(speciesTreeStr);
   pll_rtree_destroy(speciesTree, 0);
   ParallelContext::barrier();
 }
