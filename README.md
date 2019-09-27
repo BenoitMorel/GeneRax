@@ -1,11 +1,12 @@
 # GeneRax 
 
-GeneRax is a parallel tool for sequence- and species-aware maximum-likelihood gene tree inference.
+GeneRax is a parallel tool for species tree-aware maximum likelihood based gene tree inference under gene duplication, transfer, and loss.
 
-GeneRax infers gene trees from their aligned sequences and a rooted undated species tree.
+It infers gene trees from their aligned sequences, the mapping between genes and species, and a rooted undated species tree.
 
-GeneRax accounts for sequence substitutions, gene duplication, gene loss and horizontal gene transfer.
+It accounts for sequence substitutions, gene duplication, gene loss and horizontal gene transfer.
 
+Preprint: https://www.biorxiv.org/content/biorxiv/early/2019/09/26/779066.full.pdf
 
 ## Requirement
 
