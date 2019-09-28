@@ -45,7 +45,7 @@ enum Strategy {
 };
 
 enum SpeciesRaxStrategy {
-  SIMPLE_SEARCH, SUBSAMPLE_SEARCH
+  SIMPLE_SEARCH
 };
 
 enum ReconciliationFormat {

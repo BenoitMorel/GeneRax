@@ -68,44 +68,6 @@ void simpleSearch(SpeciesRaxArguments &arguments, char ** argv)
   speciesTreeOptimizer.saveCurrentSpeciesTree();
 }
 
-void subsampleSearch(SpeciesRaxArguments &arguments, char ** argv)
-{
-  RecModel recModel = arguments.reconciliationModel;
-  Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
-  Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
-  initFamilies(arguments.output, initialFamilies);
-  SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, recModel, arguments.output, argv[0]);
-  speciesTreeOptimizer.setPerSpeciesRatesOptimization(arguments.perSpeciesDTLRates); 
-  unsigned int sampleSize = initialFamilies.size() / 3;
-  unsigned int sampleNumber = 5;
-  unsigned int iterations = 1;
-  for (unsigned int it = 0; it < iterations; ++it) {
-    std::unordered_set<std::string> speciesIds;
-    for (unsigned int i = 0; i < sampleNumber; ++i) {
-      std::string speciesId = std::string("sample_") + std::to_string(it) + std::string("_") + std::to_string(i);
-      speciesTreeOptimizer.inferSpeciesTreeFromSamples(sampleSize, speciesId);
-      speciesIds.insert(speciesId);
-    }
-    for (unsigned int i =0; i < 1; ++i) {
-      speciesTreeOptimizer.optimizeGeneTreesFromSamples(speciesIds, std::string("opt_sub_genetrees_") + std::to_string(it) + std::string("_") + std::to_string(i));
-    }
-    Logger::info << "RecLL = " << speciesTreeOptimizer.getReconciliationLikelihood() << std::endl;
-  }
-  
-  
-  for (unsigned int radius = 1; radius <= arguments.fastRadius; ++radius) {
-    if (radius == arguments.fastRadius) {
-      speciesTreeOptimizer.setModel(recModel);
-    }
-    speciesTreeOptimizer.ratesOptimization();
-    speciesTreeOptimizer.sprSearch(radius, false);
-    speciesTreeOptimizer.rootExhaustiveSearch(false);
-    Logger::info << "RecLL = " << speciesTreeOptimizer.getReconciliationLikelihood() << std::endl;
-    Logger::info << "Joint LL = " << speciesTreeOptimizer.computeLikelihood(true) << std::endl;
-  }
-
-}
-
 int speciesrax_main(int argc, char** argv, void* comm)
 {
   // the order is very important
@@ -123,9 +85,6 @@ int speciesrax_main(int argc, char** argv, void* comm)
   switch (arguments.strategy) {
   case SIMPLE_SEARCH:
     simpleSearch(arguments, argv);
-    break;
-  case SUBSAMPLE_SEARCH:
-    subsampleSearch(arguments, argv);
     break;
   }
   Logger::timed << "Output in " << arguments.output << std::endl;

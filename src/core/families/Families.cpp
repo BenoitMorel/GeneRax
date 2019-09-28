@@ -74,6 +74,16 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
       LibpllParsers::fillLeavesFromUtree(utree, geneTreeLabels);
       pll_utree_destroy(utree, 0);
       if (alignmentLabels != geneTreeLabels) {
+        for (auto &l: alignmentLabels) {
+          std::cerr << l << " ";
+        }
+        std::cerr << std::endl;
+        for (auto &l: geneTreeLabels) {
+          std::cerr << l << " ";
+        }
+        std::cerr << std::endl;
+        std::cerr << std::endl;
+        
         return ERROR_GENE_TREE_SEQUENCES_MISMATCH; 
       }
     }
