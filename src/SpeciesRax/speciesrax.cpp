@@ -4,6 +4,7 @@
 #include <IO/Logger.hpp>
 #include <algorithm>
 #include <routines/GeneRaxSlaves.hpp>
+#include <routines/Routines.hpp>
 #include <limits>
 #include <IO/FileSystem.hpp>
 #include <sstream>
@@ -36,6 +37,9 @@ void simpleSearch(SpeciesRaxArguments &arguments, char ** argv)
   RecModel recModel = arguments.reconciliationModel;
   Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
   Logger::info << "Number of gene families: " << initialFamilies.size() << std::endl;
+  
+  bool randoms = Routines::createRandomTrees(arguments.output, initialFamilies); 
+  
   initFamilies(arguments.output, initialFamilies);
   SpeciesTreeOptimizer speciesTreeOptimizer(arguments.speciesTree, initialFamilies, UndatedDL, arguments.output, argv[0]);
   speciesTreeOptimizer.setPerSpeciesRatesOptimization(arguments.perSpeciesDTLRates); 

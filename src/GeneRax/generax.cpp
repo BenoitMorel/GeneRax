@@ -1,4 +1,5 @@
 #include "GeneRaxArguments.hpp"
+#include "GeneRaxInstance.hpp"
 #include <parallelization/ParallelContext.hpp>
 #include <IO/FamiliesFileParser.hpp>
 #include <IO/Logger.hpp>
@@ -37,18 +38,12 @@ void saveStats(const std::string &outputDir, double totalLibpllLL, double totalR
   os << "RecLL: " << totalRecLL;
 }
 
-void optimizeStep(const GeneRaxArguments &arguments, 
-    RecModel recModel,
+
+
+void optimizeStep(GeneRaxInstance &instance,
     bool perSpeciesDTLRates,
     bool enableLibpll,
-    Families &families,
-    Parameters &rates,
-    int sprRadius,
-    int currentIteration,
-    double &totalLibpllLL,
-    double &totalRecLL,
-    long &sumElapsedRates,
-    long &sumElapsedSPR)
+    unsigned int sprRadius)
 {
   long elapsed = 0;
   if (perSpeciesDTLRates) {
@@ -56,46 +51,38 @@ void optimizeStep(const GeneRaxArguments &arguments,
   } else {
     Logger::timed << "Optimizing global DTL rates... " << std::endl;
   }
-  Routines::optimizeRates(arguments.userDTLRates, arguments.speciesTree, recModel, families, perSpeciesDTLRates, rates, sumElapsedRates);
-  if (rates.dimensions() <= 3) {
-    Logger::info << rates << std::endl;
+  Routines::optimizeRates(instance.args.userDTLRates, instance.speciesTree, instance.recModel, instance.currentFamilies, perSpeciesDTLRates, instance.rates, instance.elapsedRates);
+  if (instance.rates.dimensions() <= 3) {
+    Logger::info << instance.rates << std::endl;
   } else {
-    Logger::info << " RecLL=" << rates.getScore();
+    Logger::info << " RecLL=" << instance.rates.getScore();
   }
   Logger::info << std::endl;
   Logger::timed << "Optimizing gene trees with radius=" << sprRadius << "... " << std::endl; 
-  GeneTreeSearchMaster::optimizeGeneTrees(families, recModel, rates, arguments.output, "results",
-      arguments.execPath, arguments.speciesTree, arguments.reconciliationOpt, arguments.perFamilyDTLRates, arguments.rootedGeneTree, 
-      arguments.pruneSpeciesTree, arguments.recWeight, true, enableLibpll, sprRadius, currentIteration, useSplitImplem(), elapsed);
-  sumElapsedSPR += elapsed;
-  Routines::gatherLikelihoods(families, totalLibpllLL, totalRecLL);
-  Logger::info << "\tJointLL=" << totalLibpllLL + totalRecLL << " RecLL=" << totalRecLL << " LibpllLL=" << totalLibpllLL << std::endl;
+  GeneTreeSearchMaster::optimizeGeneTrees(instance.currentFamilies, instance.recModel, instance.rates, instance.args.output, "results",
+      instance.args.execPath, instance.args.speciesTree, instance.args.reconciliationOpt, instance.args.perFamilyDTLRates, instance.args.rootedGeneTree, 
+     instance.args.pruneSpeciesTree, instance.args.recWeight, true, enableLibpll, sprRadius, instance.currentIteration, useSplitImplem(), elapsed);
+  instance.elapsedSPR += elapsed;
+  Routines::gatherLikelihoods(instance.currentFamilies, instance.totalLibpllLL, instance.totalRecLL);
+  Logger::info << "\tJointLL=" << instance.totalLibpllLL + instance.totalRecLL << " RecLL=" << instance.totalRecLL << " LibpllLL=" << instance.totalLibpllLL << std::endl;
   Logger::info << std::endl;
 }
 
 
-void initRandomTrees(const GeneRaxArguments &arguments, 
-    Families &currentFamilies,
-    Parameters rates, //, by copy, yes
-    int &iteration,
-    long &sumElapsedLibpll,
-    long &sumElapsedRates,
-    long &sumElapsedSPR
-    )
+void initRandomTrees(GeneRaxInstance &instance)
 {
-  double totalLibpllLL = 0.0;
-  double totalRecLL = 0.0;
-  unsigned int duplicates = arguments.duplicates;
-  RecModel recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
+  unsigned int duplicates = instance.args.duplicates;
   Logger::info << std::endl;
   Logger::timed << "[Initialization] Initial optimization of the starting random gene trees" << std::endl;
-  if (duplicates == 1 || arguments.initStrategies == 1) {
+  if (duplicates == 1 || instance.args.initStrategies == 1) {
     Logger::timed << "[Initialization] All the families will first be optimized with sequences only" << std::endl;
     Logger::mute();
-    RaxmlMaster::runRaxmlOptimization(currentFamilies, arguments.output, arguments.execPath, iteration++, useSplitImplem(), sumElapsedLibpll);
+    RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, instance.args.execPath, instance.currentIteration++, useSplitImplem(), instance.elapsedRaxml);
     Logger::unmute();
-    Routines::gatherLikelihoods(currentFamilies, totalLibpllLL, totalRecLL);
+    Routines::gatherLikelihoods(instance.currentFamilies, instance.totalLibpllLL, instance.totalRecLL);
   } else {
+    assert(false); // todobenoit
+/*
     std::vector<Families> splitFamilies;
     ParallelContext::barrier();
     unsigned int splits = arguments.initStrategies;
@@ -132,66 +119,40 @@ void initRandomTrees(const GeneRaxArguments &arguments,
       Logger::unmute();
     }
     mergeSplitFamilies(splitFamilies, currentFamilies, splits);
+    */
   }
   Logger::timed << "[Initialization] Finished optimizing some of the gene trees" << std::endl;
   Logger::info << std::endl;
 }
 
 
-void search(const Families &initialFamilies,
-    GeneRaxArguments &arguments)
+void search(GeneRaxInstance &instance)
 
 {
-  unsigned int duplicates = arguments.duplicates;
-  
+  unsigned int duplicates = instance.args.duplicates;
   Logger::timed << "Start search" << std::endl;
-  double totalLibpllLL = 0.0;
-  double totalRecLL = 0.0;
-  long sumElapsedRates = 0;
-  long sumElapsedSPR = 0;
-  long sumElapsedLibpll = 0;
-  RecModel recModel = Arguments::strToRecModel(arguments.reconciliationModelStr);
-  Parameters rates(3);
-  rates[0] = arguments.dupRate;
-  rates[1] = arguments.lossRate;
-  rates[2] = arguments.transferRate;
-  Families currentFamilies;
   if (duplicates > 1) {
-    duplicatesFamilies(initialFamilies, currentFamilies, duplicates);
-    initFolders(arguments.output, currentFamilies);
+    duplicatesFamilies(instance.initialFamilies, instance.currentFamilies, duplicates);
+    initFolders(instance.args.output, instance.currentFamilies);
     ParallelContext::barrier();
   } else {
-    currentFamilies = initialFamilies;
+    instance.currentFamilies = instance.initialFamilies;
   }
-  
-  int iteration = 0;
-  bool randoms = Routines::createRandomTrees(arguments.output, currentFamilies); 
+  bool randoms = Routines::createRandomTrees(instance.args.output, instance.currentFamilies); 
   if (randoms) {
-    initRandomTrees(arguments, currentFamilies, rates, iteration, sumElapsedLibpll, sumElapsedRates, sumElapsedSPR);
+    initRandomTrees(instance);
   }
-  for (unsigned int i = 1; i <= arguments.recRadius; ++i) { 
+  for (unsigned int i = 1; i <= instance.args.recRadius; ++i) { 
     bool enableLibpll = false;
     bool perSpeciesDTLRates = false;
-    optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+    optimizeStep(instance, perSpeciesDTLRates, enableLibpll, i);
   }
-  for (int i = 1; i <= arguments.maxSPRRadius; ++i) {
+  for (int i = 1; i <= instance.args.maxSPRRadius; ++i) {
     bool enableLibpll = true;
-    bool perSpeciesDTLRates = arguments.perSpeciesDTLRates && (i >= arguments.maxSPRRadius - 1); // only apply per-species optimization at the two last rounds
-    if (i == arguments.maxSPRRadius && arguments.useTransferFrequencies && recModel == UndatedDTL) {
-      TransferFrequencies transferFrequencies;
-      Parameters parameterTransferFrequencies;
-      Routines::getTransfersFrequencies(arguments.speciesTree, recModel, currentFamilies, rates, transferFrequencies, arguments.output);
-      Routines::getParametersFromTransferFrequencies(arguments.speciesTree, transferFrequencies, parameterTransferFrequencies);
-      // now this is a terrible temporary hack
-      std::string transferFrequenciesFile = "/tmp/transferFrequencies.txt";
-      if (ParallelContext::getRank() == 0) {
-        parameterTransferFrequencies.save(transferFrequenciesFile);
-      }
-      ParallelContext::barrier();
-      recModel = UndatedDTLAdvanced;
-    }
-    optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, i, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
+    bool perSpeciesDTLRates = instance.args.perSpeciesDTLRates && (i >= instance.args.maxSPRRadius - 1); // only apply per-species optimization at the two last rounds
+    optimizeStep(instance, perSpeciesDTLRates, enableLibpll, i);
   }
+  /*
 
   if (randoms && duplicates > 1) {
     Families contracted = initialFamilies;
@@ -201,18 +162,15 @@ void search(const Families &initialFamilies,
     bool enableLibpll = true;
     optimizeStep(arguments, recModel, perSpeciesDTLRates, enableLibpll, currentFamilies, rates, 0, iteration++, totalLibpllLL, totalRecLL, sumElapsedRates, sumElapsedSPR);
   }
-  saveStats(arguments.output, totalLibpllLL, totalRecLL);
+  */
+  saveStats(instance.args.output, instance.totalLibpllLL, instance.totalRecLL);
   Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
-  if (recModel == UndatedDTLAdvanced) {
-    Logger::info << "Skipping reconciliation inference" << std::endl;
-  } else {
-    Routines::inferReconciliation(arguments.speciesTree, currentFamilies, recModel, rates, arguments.output);
+  Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, instance.recModel, instance.rates, instance.args.output);
+  if (instance.elapsedRaxml) {
+    Logger::info << "Initial time spent on optimizing random trees: " << instance.elapsedRaxml << "s" << std::endl;
   }
-  if (sumElapsedLibpll) {
-    Logger::info << "Initial time spent on optimizing random trees: " << sumElapsedLibpll << "s" << std::endl;
-  }
-  Logger::info << "Time spent on optimizing rates: " << sumElapsedRates << "s" << std::endl;
-  Logger::info << "Time spent on optimizing gene trees: " << sumElapsedSPR << "s" << std::endl;
+  Logger::info << "Time spent on optimizing rates: " << instance.elapsedRates << "s" << std::endl;
+  Logger::info << "Time spent on optimizing gene trees: " << instance.elapsedSPR << "s" << std::endl;
   Logger::timed << "End of GeneRax execution" << std::endl;
 }
 
@@ -253,38 +211,42 @@ void eval(const Families &initialFamilies,
   Logger::timed << "End of GeneRax execution" << std::endl;
 }
 
+void initInstance(GeneRaxInstance &instance) 
+{
+  srand(instance.args.seed);
+  FileSystem::mkdir(instance.args.output, true);
+  Logger::initFileOutput(FileSystem::joinPaths(instance.args.output, "generax"));
+  instance.args.printCommand();
+  instance.args.printSummary();
+  instance.speciesTree = FileSystem::joinPaths(instance.args.output, "labelled_species_tree.newick");
+  LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
+  ParallelContext::barrier();
+  instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
+  Logger::info << "Filtering invalid families..." << std::endl;
+  filterFamilies(instance.initialFamilies, instance.speciesTree);
+  if (!instance.initialFamilies.size()) {
+    Logger::info << "[Error] No valid families! Aborting GeneRax" << std::endl;
+    ParallelContext::abort(10);
+  }
+  Logger::timed << "Number of gene families: " << instance.initialFamilies.size() << std::endl;
+  initFolders(instance.args.output, instance.initialFamilies);
+  instance.args.speciesTree = instance.speciesTree; // todobenoit remove this line
+}
 
 int generax_main(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm); 
   Logger::init();
-  GeneRaxArguments arguments(argc, argv);
+  GeneRaxInstance instance(argc, argv);
   ParallelContext::barrier();
   Logger::timed << "All cores started" << std::endl;
-  srand(arguments.seed);
-  FileSystem::mkdir(arguments.output, true);
-  Logger::initFileOutput(FileSystem::joinPaths(arguments.output, "generax"));
-  arguments.printCommand();
-  arguments.printSummary();
-  std::string labelledSpeciesTree = FileSystem::joinPaths(arguments.output, "labelled_species_tree.newick");
-  LibpllParsers::labelRootedTree(arguments.speciesTree, labelledSpeciesTree);
-  ParallelContext::barrier();
-  arguments.speciesTree = labelledSpeciesTree;
-  Families initialFamilies = FamiliesFileParser::parseFamiliesFile(arguments.families);
-  Logger::info << "Filtering invalid families..." << std::endl;
-  filterFamilies(initialFamilies, arguments.speciesTree);
-  if (!initialFamilies.size()) {
-    Logger::info << "[Error] No valid families! Aborting GeneRax" << std::endl;
-    ParallelContext::abort(10);
-  }
-  Logger::timed << "Number of gene families: " << initialFamilies.size() << std::endl;
-  initFolders(arguments.output, initialFamilies);
-  switch (arguments.strategy) {
+  initInstance(instance);
+  switch (instance.args.strategy) {
   case SPR:
-    search(initialFamilies, arguments);
+    search(instance);
     break;
   case EVAL:
-    eval(initialFamilies, arguments);
+    eval(instance.initialFamilies, instance.args);
     break;
   }
   Logger::close();
