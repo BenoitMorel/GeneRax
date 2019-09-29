@@ -179,7 +179,7 @@ unsigned int SpeciesTree::getTaxaNumber() const
 
 void SpeciesTree::saveToFile(const std::string &newick, bool masterRankOnly)
 {
-  if (masterRankOnly && !ParallelContext::getRank()) {
+  if (masterRankOnly && ParallelContext::getRank()) {
     return;
   }
   LibpllParsers::saveRtree(_speciesTree->root, newick);  

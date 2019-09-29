@@ -16,6 +16,8 @@
 #include <routines/RaxmlMaster.hpp>
 #include <routines/GeneTreeSearchMaster.hpp>
 #include <routines/Routines.hpp>
+#include <optimizers/SpeciesTreeOptimizer.hpp>
+#include <trees/SpeciesTree.hpp>
 
 bool useSplitImplem() {
   return ParallelContext::getSize() > 2;
@@ -60,7 +62,7 @@ void optimizeStep(GeneRaxInstance &instance,
   Logger::info << std::endl;
   Logger::timed << "Optimizing gene trees with radius=" << sprRadius << "... " << std::endl; 
   GeneTreeSearchMaster::optimizeGeneTrees(instance.currentFamilies, instance.recModel, instance.rates, instance.args.output, "results",
-      instance.args.execPath, instance.args.speciesTree, instance.args.reconciliationOpt, instance.args.perFamilyDTLRates, instance.args.rootedGeneTree, 
+      instance.args.execPath, instance.speciesTree, instance.args.reconciliationOpt, instance.args.perFamilyDTLRates, instance.args.rootedGeneTree, 
      instance.args.pruneSpeciesTree, instance.args.recWeight, true, enableLibpll, sprRadius, instance.currentIteration++, useSplitImplem(), elapsed);
   instance.elapsedSPR += elapsed;
   Routines::gatherLikelihoods(instance.currentFamilies, instance.totalLibpllLL, instance.totalRecLL);
@@ -148,6 +150,29 @@ void initGeneTrees(GeneRaxInstance &instance)
   }
 }
 
+void speciesTreeSearch(GeneRaxInstance &instance)
+{
+  if (!instance.args.optimizeSpeciesTree) {
+    return;
+  }
+  ParallelContext::barrier();
+  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, UndatedDL, instance.args.output, instance.args.exec);
+  speciesTreeOptimizer.setPerSpeciesRatesOptimization(instance.args.perSpeciesDTLRates); 
+  for (unsigned int radius = 1; radius < 5; ++radius) {
+    if (radius == 5) {
+      speciesTreeOptimizer.setModel(instance.recModel);
+    }
+    speciesTreeOptimizer.ratesOptimization();
+    speciesTreeOptimizer.sprSearch(radius, false);
+    speciesTreeOptimizer.rootExhaustiveSearch(false);
+    Logger::info << "RecLL = " << speciesTreeOptimizer.getReconciliationLikelihood() << std::endl;
+  }
+  if (ParallelContext::getRank() == 0) {
+    speciesTreeOptimizer.saveCurrentSpeciesTree(instance.speciesTree);
+  }
+  ParallelContext::barrier();
+}
+
 void geneSPRSearch(GeneRaxInstance &instance)
 {
   for (unsigned int i = 1; i <= instance.args.recRadius; ++i) { 
@@ -200,10 +225,19 @@ void initInstance(GeneRaxInstance &instance)
   Logger::initFileOutput(FileSystem::joinPaths(instance.args.output, "generax"));
   instance.args.printCommand();
   instance.args.printSummary();
-  instance.speciesTree = FileSystem::joinPaths(instance.args.output, "labelled_species_tree.newick");
-  LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
-  ParallelContext::barrier();
   instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
+  if (instance.args.speciesTree == "random") {
+    Logger::info << "Generating random starting species tree" << std::endl;
+    SpeciesTree speciesTree(instance.initialFamilies);
+    instance.speciesTree = FileSystem::joinPaths(instance.args.output, "randomSpeciesTree.newick");
+    Logger::info << "before save to " << std::endl;
+    speciesTree.saveToFile(instance.speciesTree, true);
+    ParallelContext::barrier();
+  } else {
+    instance.speciesTree = FileSystem::joinPaths(instance.args.output, "labelled_species_tree.newick");
+    LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
+    ParallelContext::barrier();
+  }
   Logger::info << "Filtering invalid families..." << std::endl;
   filterFamilies(instance.initialFamilies, instance.speciesTree);
   if (!instance.initialFamilies.size()) {
@@ -212,7 +246,6 @@ void initInstance(GeneRaxInstance &instance)
   }
   Logger::timed << "Number of gene families: " << instance.initialFamilies.size() << std::endl;
   initFolders(instance.args.output, instance.initialFamilies);
-  instance.args.speciesTree = instance.speciesTree; // todobenoit remove this line
 }
 
 int generax_main(int argc, char** argv, void* comm)
@@ -225,6 +258,7 @@ int generax_main(int argc, char** argv, void* comm)
   GeneRaxInstance instance(argc, argv);
   initInstance(instance);
   initGeneTrees(instance);
+  speciesTreeSearch(instance);
   geneSPRSearch(instance);
   postProcessGeneTrees(instance);
   reconcile(instance);

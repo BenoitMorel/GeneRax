@@ -9,6 +9,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
   strategy(SPR),
+  optimizeSpeciesTree(false),
   reconciliationModelStr("UndatedDL"),
   reconciliationOpt(Grid),
   output("GeneRax"),
@@ -26,7 +27,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   transferRate(0.0),
   maxSPRRadius(5),
   recWeight(1.0), 
-  seed(123)
+  seed(123),
+  exec(iargv[0])
 {
   if (argc == 1) {
     printHelp();
@@ -46,6 +48,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       if (strategy == EVAL) {
         recRadius = maxSPRRadius = 0;
       }
+    } else if (arg == "--optimize-species-tree") {
+      optimizeSpeciesTree = true;
     } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModelStr = std::string(argv[++i]);
     } else if (arg == "--rec-opt") {
@@ -108,8 +112,8 @@ bool isIn(const std::string &elem, const std::vector<std::string> &v) {
 
 void GeneRaxArguments::checkInputs() {
   bool ok = true;
-  if (!speciesTree.size()) {
-    Logger::info << "[Error] You need to provide a species tree." << std::endl;
+  if (!speciesTree.size() && !optimizeSpeciesTree) {
+    Logger::info << "[Error] You need to provide a species tree or to optimize it." << std::endl;
     ok = false;
   }
   if (userDTLRates && perSpeciesDTLRates) {
@@ -132,8 +136,9 @@ void GeneRaxArguments::checkInputs() {
     Logger::info << "Aborting." << std::endl;
     ParallelContext::abort(1);
   }
-  
-  assertFileExists(speciesTree);
+  if (speciesTree.size() && speciesTree != "random") {
+    assertFileExists(speciesTree);
+  }
 }
 
 void GeneRaxArguments::printHelp() {
