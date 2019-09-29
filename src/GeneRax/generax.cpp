@@ -128,12 +128,9 @@ void initRandomTrees(GeneRaxInstance &instance)
   Logger::info << std::endl;
 }
 
-
-void search(GeneRaxInstance &instance)
-
+void initGeneTrees(GeneRaxInstance &instance)
 {
   unsigned int duplicates = instance.args.duplicates;
-  Logger::timed << "Start search" << std::endl;
   if (duplicates > 1) {
     duplicatesFamilies(instance.initialFamilies, instance.currentFamilies, duplicates);
     initFolders(instance.args.output, instance.currentFamilies);
@@ -142,9 +139,17 @@ void search(GeneRaxInstance &instance)
     instance.currentFamilies = instance.initialFamilies;
   }
   bool randoms = Routines::createRandomTrees(instance.args.output, instance.currentFamilies); 
+  if (!randoms && duplicates > 1) {
+    Logger::info << "Error: multiple starting trees (duplicates option) is only compatible with random starting trees" << std::endl;
+    ParallelContext::abort(42);
+  }
   if (randoms) {
     initRandomTrees(instance);
   }
+}
+
+void geneSPRSearch(GeneRaxInstance &instance)
+{
   for (unsigned int i = 1; i <= instance.args.recRadius; ++i) { 
     bool enableLibpll = false;
     bool perSpeciesDTLRates = false;
@@ -155,7 +160,11 @@ void search(GeneRaxInstance &instance)
     bool perSpeciesDTLRates = instance.args.perSpeciesDTLRates && (i >= instance.args.maxSPRRadius - 1); // only apply per-species optimization at the two last rounds
     optimizeStep(instance, perSpeciesDTLRates, enableLibpll, i);
   }
-  if (randoms && duplicates > 1) {
+}
+
+void postProcessGeneTrees(GeneRaxInstance &instance)
+{
+  if (instance.args.duplicates > 1) {
     Families contracted = instance.initialFamilies;
     contractFamilies(instance.currentFamilies, contracted);
     instance.currentFamilies = contracted;
@@ -164,8 +173,16 @@ void search(GeneRaxInstance &instance)
     optimizeStep(instance, perSpeciesDTLRates, enableLibpll, 0);
   }
   saveStats(instance.args.output, instance.totalLibpllLL, instance.totalRecLL);
+}
+
+void reconcile(GeneRaxInstance &instance)
+{
   Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
-  Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, instance.recModel, instance.rates, instance.args.output);
+   Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, instance.recModel, instance.rates, instance.args.output);
+}
+  
+void outputLastResults(GeneRaxInstance &instance)
+{
   if (instance.elapsedRaxml) {
     Logger::info << "Initial time spent on optimizing random trees: " << instance.elapsedRaxml << "s" << std::endl;
   }
@@ -173,6 +190,8 @@ void search(GeneRaxInstance &instance)
   Logger::info << "Time spent on optimizing gene trees: " << instance.elapsedSPR << "s" << std::endl;
   Logger::timed << "End of GeneRax execution" << std::endl;
 }
+
+
 
 void initInstance(GeneRaxInstance &instance) 
 {
@@ -200,11 +219,17 @@ int generax_main(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm); 
   Logger::init();
-  GeneRaxInstance instance(argc, argv);
   ParallelContext::barrier();
   Logger::timed << "All cores started" << std::endl;
+  
+  GeneRaxInstance instance(argc, argv);
   initInstance(instance);
-  search(instance);
+  initGeneTrees(instance);
+  geneSPRSearch(instance);
+  postProcessGeneTrees(instance);
+  reconcile(instance);
+  outputLastResults(instance);
+  
   Logger::close();
   ParallelContext::finalize();
   return 0;
