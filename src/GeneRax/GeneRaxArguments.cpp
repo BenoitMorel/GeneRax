@@ -43,6 +43,9 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       speciesTree = std::string(argv[++i]);
     } else if (arg == "--strategy") {
       strategy = Arguments::strToStrategy(std::string(argv[++i]));
+      if (strategy == EVAL) {
+        recRadius = maxSPRRadius = 0;
+      }
     } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModelStr = std::string(argv[++i]);
     } else if (arg == "--rec-opt") {
