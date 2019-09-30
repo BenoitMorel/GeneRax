@@ -92,6 +92,12 @@ public:
   static void barrier();
   static void abort(int errorCode);
 
+  /**
+   *  Do we have enough cores to allow the split implementation
+   *  in the scheduler?
+   */
+  static bool allowSchedulerSplitImplementation();
+
   static MPI_Comm &getComm() {return _commStack.top();}
 private:
   static void setComm(MPI_Comm newComm);

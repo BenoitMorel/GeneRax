@@ -261,4 +261,8 @@ void ParallelContext::abort(int errorCode)
   }
 }
 
+bool ParallelContext::allowSchedulerSplitImplementation()
+{
+  return getSize() > 4;
+}
 
