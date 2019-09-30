@@ -69,7 +69,7 @@ void simpleSearch(SpeciesRaxArguments &arguments, char ** argv)
     speciesTreeOptimizer.optimizeGeneTrees(arguments.finalGeneRadius, true);
     Logger::info << "Joint LL = " << speciesTreeOptimizer.computeLikelihood(true) << std::endl;
   }
-  speciesTreeOptimizer.saveCurrentSpeciesTree();
+  speciesTreeOptimizer.saveCurrentSpeciesTreeId();
 }
 
 int speciesrax_main(int argc, char** argv, void* comm)

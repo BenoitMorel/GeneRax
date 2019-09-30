@@ -17,7 +17,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _model(model),
   _outputDir(outputDir),
   _execPath(execPath),
-  _geneTreeIteration(0),
+  _geneTreeIteration(1000000000),
   _perSpeciesRatesOptimization(false)
 {
   if (speciesTreeFile == "random") {
@@ -31,7 +31,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   std::string subsamplesPath = FileSystem::joinPaths(_outputDir, "subsamples");
   FileSystem::mkdir(FileSystem::joinPaths(_outputDir, "sub_genes_opt"), true);
   FileSystem::mkdir(subsamplesPath, true);
-  saveCurrentSpeciesTree();
+  saveCurrentSpeciesTreeId();
 }
 
 
@@ -118,9 +118,15 @@ struct less_than_evaluatedmove
 
 double SpeciesTreeOptimizer::sortedSprRound(int radius, double bestLL)
 {
+  Logger::info << "Starting tree " << _speciesTree->getHash() << std::endl;
   std::vector<unsigned int> prunes;
   SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, prunes);
   std::vector<EvaluatedMove> evaluatedMoves;
+  std::vector<double> perRadiusBestLL;
+  unsigned int maxGeneRadius = 3;
+  for (unsigned int radius  = 0; radius < maxGeneRadius; ++radius) {
+    perRadiusBestLL.push_back(computeLikelihood(true, radius + 1));
+  }
   for (auto prune: prunes) {
     std::vector<unsigned int> regrafts;
     SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
@@ -135,19 +141,32 @@ double SpeciesTreeOptimizer::sortedSprRound(int radius, double bestLL)
     }
   }
   std::sort(evaluatedMoves.begin(), evaluatedMoves.end(), less_than_evaluatedmove());
-  unsigned int movesToTry = 50;
+  unsigned int movesToTry = 30;
   if (movesToTry > evaluatedMoves.size()) {
     movesToTry = evaluatedMoves.size();
   }
   for (unsigned int i = 0; i < movesToTry; ++i) {
     auto &em = evaluatedMoves[i];
     unsigned int rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, em.prune, em.regraft);
-    double newLL = computeLikelihood(true);
-    if (newLL > bestLL + 0.001) {
-      Logger::info << "Best tree " << _speciesTree->getHash() << " ll=" << newLL << std::endl;
-      saveCurrentSpeciesTree();
-      optimizeGeneTrees(1, true);
-      return newLL;
+    bool isBetter = true;
+    double newBestLL;
+    for (unsigned int radius; radius < maxGeneRadius; ++radius) {
+      newBestLL = computeLikelihood(true, radius + 1);
+      double limit = -50;
+      if (radius == maxGeneRadius - 1 ) {
+        limit = 0;
+      }
+      if (newBestLL < perRadiusBestLL[radius] + limit) {
+        isBetter = false;
+        Logger::info << "rejected at gene radius " << radius << " " << newBestLL << " " << perRadiusBestLL[radius] << std::endl;
+        break;
+      } 
+    }
+    
+    if (isBetter && newBestLL > perRadiusBestLL.back()) {
+      Logger::info << "Better tree " << _speciesTree->getHash() << " ll=" << newBestLL << " (previous ll = " << perRadiusBestLL.back() << ")" << std::endl;
+      saveCurrentSpeciesTreeId();
+      return newBestLL;
     }
     SpeciesTreeOperator::reverseSPRMove(*_speciesTree, em.prune, rollback);
   } 
@@ -156,7 +175,7 @@ double SpeciesTreeOptimizer::sortedSprRound(int radius, double bestLL)
 
 double SpeciesTreeOptimizer::sprSearch(int radius, bool doOptimizeGeneTrees)
 {
-  double bestLL = computeLikelihood(doOptimizeGeneTrees, doOptimizeGeneTrees);
+  double bestLL = computeLikelihood(doOptimizeGeneTrees, 1);
   Logger::timed << "Starting species SPR search (" << (doOptimizeGeneTrees ? "SLOW" : "FAST") << ", radius=" << radius << ", bestLL=" << bestLL << ")" <<std::endl;
   double newLL = bestLL;
   //Logger::info << "Initial " << likelihoodName(doOptimizeGeneTrees) << ": " << newLL << std::endl;
@@ -168,7 +187,7 @@ double SpeciesTreeOptimizer::sprSearch(int radius, bool doOptimizeGeneTrees)
       newLL = sprRound(radius);
     }
   } while (newLL - bestLL > 0.001);
-  saveCurrentSpeciesTree();
+  saveCurrentSpeciesTreeId();
   return newLL;
 }
   
@@ -191,14 +210,19 @@ void SpeciesTreeOptimizer::perSpeciesRatesOptimization()
   _speciesTree->setRatesVector(rates);
 }
 
-void SpeciesTreeOptimizer::saveCurrentSpeciesTree(std::string name, bool masterRankOnly)
+void SpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
 {
-  _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, name), masterRankOnly);
+  saveCurrentSpeciesTreePath(FileSystem::joinPaths(_outputDir, name), masterRankOnly);
+}
+
+void SpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly)
+{
+  _speciesTree->saveToFile(str, masterRankOnly);
 }
 
 double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
 {
-  saveCurrentSpeciesTree("proposal_species_tree.newick");
+  saveCurrentSpeciesTreeId("proposal_species_tree.newick");
   std::string speciesTree = FileSystem::joinPaths(_outputDir, "proposal_species_tree.newick");
   RecOpt recOpt = Simplex;
   bool perFamilyDTLRates = false;
@@ -225,6 +249,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
     ratesOptimization();
     Logger::info << "Uptimed the gene trees " << totalLibpllLL + totalRecLL << " " << totalLibpllLL << " " << totalRecLL << std::endl;
   }
+  //Logger::info << "OptimizeGeneTree " << totalLibpllLL + totalRecLL << " " << totalLibpllLL << " " << totalRecLL << std::endl;
   return totalLibpllLL + totalRecLL;
   //_geneTrees = std::make_unique<PerCoreGeneTrees>(_currentFamilies);
 }
@@ -233,7 +258,7 @@ double SpeciesTreeOptimizer::computeLikelihood(bool doOptimizeGeneTrees, int gen
 {
   if (doOptimizeGeneTrees) {
     auto initialFamilies = _currentFamilies;
-    double jointLL = optimizeGeneTrees(geneSPRRadius);
+    double jointLL = optimizeGeneTrees(geneSPRRadius, false);
     _currentFamilies = initialFamilies;
     _geneTrees = std::make_unique<PerCoreGeneTrees>(_currentFamilies);
     return jointLL;
@@ -263,7 +288,7 @@ void SpeciesTreeOptimizer::inferSpeciesTreeFromSamples(unsigned int sampleSize, 
     subOptimizer.sprSearch(radius, false);
     subOptimizer.rootExhaustiveSearch(false);
   }
-  subOptimizer.saveCurrentSpeciesTree();
+  subOptimizer.saveCurrentSpeciesTreeId();
 }
 
 std::string SpeciesTreeOptimizer::getSpeciesTreePath(const std::string &speciesId)

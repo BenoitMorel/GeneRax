@@ -81,18 +81,20 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
   ParallelContext::barrier();
   SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, UndatedDL, instance.args.output, instance.args.exec);
   speciesTreeOptimizer.setPerSpeciesRatesOptimization(instance.args.perSpeciesDTLRates); 
-  for (unsigned int radius = 1; radius < 5; ++radius) {
-    if (radius == 5) {
+  for (unsigned int radius = 1; radius <= instance.args.speciesFastRadius; ++radius) {
+    if (radius == instance.args.speciesFastRadius) {
       speciesTreeOptimizer.setModel(instance.recModel);
     }
     speciesTreeOptimizer.ratesOptimization();
     speciesTreeOptimizer.sprSearch(radius, false);
     speciesTreeOptimizer.rootExhaustiveSearch(false);
-    Logger::info << "RecLL = " << speciesTreeOptimizer.getReconciliationLikelihood() << std::endl;
   }
-  if (ParallelContext::getRank() == 0) {
-    speciesTreeOptimizer.saveCurrentSpeciesTree(instance.speciesTree, true);
+  speciesTreeOptimizer.saveCurrentSpeciesTreePath(instance.speciesTree, true);
+  if (instance.args.speciesSlowRadius) {
+    speciesTreeOptimizer.setModel(instance.recModel);
+    speciesTreeOptimizer.sprSearch(instance.args.speciesSlowRadius, true);
   }
+  speciesTreeOptimizer.saveCurrentSpeciesTreePath(instance.speciesTree, true);
   ParallelContext::barrier();
 }
 
@@ -147,9 +149,16 @@ void GeneRaxCore::terminate(GeneRaxInstance &instance)
 void GeneRaxCore::initFolders(GeneRaxInstance &instance) 
 {
   std::string results = FileSystem::joinPaths(instance.args.output, "results");
+  std::string proposals = FileSystem::joinPaths(instance.args.output, "proposals");
   FileSystem::mkdir(results, true);
+  if (instance.args.optimizeSpeciesTree) {
+    FileSystem::mkdir(proposals, true);
+  }
   for (auto &family: instance.currentFamilies) {
     FileSystem::mkdir(FileSystem::joinPaths(results, family.name), true);
+    if (instance.args.optimizeSpeciesTree) {
+      FileSystem::mkdir(FileSystem::joinPaths(proposals, family.name), true);
+    }
   }
 }
 

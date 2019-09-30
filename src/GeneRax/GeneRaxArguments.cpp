@@ -9,7 +9,6 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
   strategy(SPR),
-  optimizeSpeciesTree(false),
   reconciliationModelStr("UndatedDL"),
   reconciliationOpt(Grid),
   output("GeneRax"),
@@ -28,7 +27,10 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   maxSPRRadius(5),
   recWeight(1.0), 
   seed(123),
-  exec(iargv[0])
+  exec(iargv[0]),
+  optimizeSpeciesTree(false),
+  speciesFastRadius(5),
+  speciesSlowRadius(0)
 {
   if (argc == 1) {
     printHelp();
@@ -48,8 +50,6 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       if (strategy == EVAL) {
         recRadius = maxSPRRadius = 0;
       }
-    } else if (arg == "--optimize-species-tree") {
-      optimizeSpeciesTree = true;
     } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModelStr = std::string(argv[++i]);
     } else if (arg == "--rec-opt") {
@@ -87,6 +87,12 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       recWeight = atof(argv[++i]);
     } else if (arg == "--seed") {
       seed = atoi(argv[++i]);
+    } else if (arg == "--species-fast-radius") {
+      speciesFastRadius = atoi(argv[++i]);
+    } else if (arg == "--species-slow-radius") {
+      speciesSlowRadius = atoi(argv[++i]);
+    } else if (arg == "--optimize-species-tree") {
+      optimizeSpeciesTree = true;
     } else {
       Logger::error << "Unrecognized argument " << arg << std::endl;
       Logger::error << "Aborting" << std::endl;

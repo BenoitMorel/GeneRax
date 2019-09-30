@@ -21,7 +21,6 @@ public:
    std::string families;
    std::string speciesTree;
    Strategy strategy;
-   bool optimizeSpeciesTree;
    std::string reconciliationModelStr;
    RecOpt reconciliationOpt;
    std::string output;
@@ -41,5 +40,11 @@ public:
    double recWeight;
    unsigned int seed;
    std::string exec;
+   
+   // species tree search
+   bool optimizeSpeciesTree;
+   unsigned int speciesFastRadius;
+   unsigned int speciesSlowRadius;
+
 };
 
