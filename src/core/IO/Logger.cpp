@@ -29,6 +29,7 @@ void Logger::init() {
   timed.setStream(std::cout);
   perrank.setType(lt_perrank);
   start = std::chrono::high_resolution_clock::now(); 
+  ParallelContext::barrier();
 }
 
 void Logger::initRankFileOutput()

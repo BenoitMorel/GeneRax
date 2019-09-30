@@ -30,7 +30,7 @@ public:
 
   double getReconciliationLikelihood() {return computeLikelihood(false);}
   double computeLikelihood(bool doOptimizeGeneTrees, int geneSPRRadius = 1);
-  void saveCurrentSpeciesTree(std::string str = "inferred_species_tree.newick" );
+  void saveCurrentSpeciesTree(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
 
 private:
   std::shared_ptr<SpeciesTree> _speciesTree;

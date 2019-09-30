@@ -191,10 +191,9 @@ void SpeciesTreeOptimizer::perSpeciesRatesOptimization()
   _speciesTree->setRatesVector(rates);
 }
 
-void SpeciesTreeOptimizer::saveCurrentSpeciesTree(std::string name)
+void SpeciesTreeOptimizer::saveCurrentSpeciesTree(std::string name, bool masterRankOnly)
 {
-  _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, name), true);
-  ParallelContext::barrier();
+  _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, name), masterRankOnly);
 }
 
 double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)

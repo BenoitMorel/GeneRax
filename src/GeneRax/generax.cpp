@@ -12,7 +12,6 @@ int generax_main(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm); 
   Logger::init();
-  ParallelContext::barrier();
   Logger::timed << "All cores started" << std::endl;
   
   GeneRaxInstance instance(argc, argv);
@@ -31,10 +30,10 @@ int generax_main(int argc, char** argv, void* comm)
 
 
 /**
- * GeneRax can call itself with the scheduler. This function
+ * GeneRax can call itself for executing routines from the scheduler. This function
  * decides whether we are in the main called by the user (generax_main)
  * or if we are called by the scheduler to execute some 
- * intermediate step (static_scheduled_main)
+ * intermediate routine (static_scheduled_main)
  */
 int internal_main(int argc, char** argv, void* comm)
 {

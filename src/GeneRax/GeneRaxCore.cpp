@@ -91,7 +91,7 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     Logger::info << "RecLL = " << speciesTreeOptimizer.getReconciliationLikelihood() << std::endl;
   }
   if (ParallelContext::getRank() == 0) {
-    speciesTreeOptimizer.saveCurrentSpeciesTree(instance.speciesTree);
+    speciesTreeOptimizer.saveCurrentSpeciesTree(instance.speciesTree, true);
   }
   ParallelContext::barrier();
 }
