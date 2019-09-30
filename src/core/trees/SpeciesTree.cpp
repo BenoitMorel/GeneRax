@@ -116,9 +116,6 @@ SpeciesTree::SpeciesTree(const Families &families)
   for (auto &mapping: mappings.getMap()) {
     leaves.insert(mapping.second);
   }
-  for (auto &label: leaves) {
-    Logger::info << label << std::endl;
-  }
   buildFromLabels(leaves);
 }
 
