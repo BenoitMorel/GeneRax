@@ -34,7 +34,6 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
     Logger::info << "Generating random starting species tree" << std::endl;
     SpeciesTree speciesTree(instance.initialFamilies);
     instance.speciesTree = FileSystem::joinPaths(instance.args.output, "randomSpeciesTree.newick");
-    Logger::info << "before save to " << std::endl;
     speciesTree.saveToFile(instance.speciesTree, true);
     ParallelContext::barrier();
   } else {

@@ -22,7 +22,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
 {
   if (speciesTreeFile == "random") {
     _speciesTree = std::make_unique<SpeciesTree>(initialFamilies);
-    _speciesTree->setRates(Parameters(0.1, 0.2, 0.1));
+    _speciesTree->setGlobalRates(Parameters(0.1, 0.2, 0.1));
   } else {
     _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
     ratesOptimization();
@@ -62,7 +62,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree, Per
 
 void SpeciesTreeOptimizer::rootExhaustiveSearch(bool doOptimizeGeneTrees)
 {
-  Logger::timed << "Trying to re-root the species tree" << std::endl;
+  Logger::timed << "[species tree opt] Trying to re-root the species tree" << std::endl;
   std::vector<unsigned int> movesHistory;
   std::vector<unsigned int> bestMovesHistory;
   double bestLL = computeLikelihood(doOptimizeGeneTrees, 1);
@@ -118,15 +118,16 @@ struct less_than_evaluatedmove
 
 double SpeciesTreeOptimizer::sortedSprRound(int radius, double bestLL)
 {
-  Logger::info << "Starting tree " << _speciesTree->getHash() << std::endl;
+  Logger::info << "[species tree opt] Starting tree " << _speciesTree->getHash() << std::endl;
   std::vector<unsigned int> prunes;
   SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, prunes);
   std::vector<EvaluatedMove> evaluatedMoves;
   std::vector<double> perRadiusBestLL;
   unsigned int maxGeneRadius = 3;
-  for (unsigned int radius  = 0; radius < maxGeneRadius; ++radius) {
+  for (unsigned int radius  = 0; radius <= maxGeneRadius; ++radius) {
     perRadiusBestLL.push_back(computeLikelihood(true, radius + 1));
   }
+  Logger::info << "Likelihood to beat: " <<  perRadiusBestLL.back() << std::endl;
   for (auto prune: prunes) {
     std::vector<unsigned int> regrafts;
     SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
@@ -135,22 +136,23 @@ double SpeciesTreeOptimizer::sortedSprRound(int radius, double bestLL)
       EvaluatedMove em;
       em.prune = prune;
       em.regraft = regraft;
-      em.ll = computeLikelihood(false, 1);
+      em.ll = computeLikelihood(false, 0);
       evaluatedMoves.push_back(em);
       SpeciesTreeOperator::reverseSPRMove(*_speciesTree, em.prune, rollback);
     }
   }
   std::sort(evaluatedMoves.begin(), evaluatedMoves.end(), less_than_evaluatedmove());
-  unsigned int movesToTry = 30;
+  unsigned int movesToTry = 20;
   if (movesToTry > evaluatedMoves.size()) {
     movesToTry = evaluatedMoves.size();
   }
+  Logger::timed << "done with sorting the moves" << std::endl;
   for (unsigned int i = 0; i < movesToTry; ++i) {
     auto &em = evaluatedMoves[i];
     unsigned int rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, em.prune, em.regraft);
     bool isBetter = true;
     double newBestLL;
-    for (unsigned int radius; radius < maxGeneRadius; ++radius) {
+    for (unsigned int radius = 1; radius <= maxGeneRadius; ++radius) {
       newBestLL = computeLikelihood(true, radius + 1);
       double limit = -50;
       if (radius == maxGeneRadius - 1 ) {
@@ -158,13 +160,13 @@ double SpeciesTreeOptimizer::sortedSprRound(int radius, double bestLL)
       }
       if (newBestLL < perRadiusBestLL[radius] + limit) {
         isBetter = false;
-        Logger::info << "rejected at gene radius " << radius << " " << newBestLL << " " << perRadiusBestLL[radius] << std::endl;
+        Logger::info << "[species tree opt] rejected at gene radius " << radius << " " << newBestLL << " " << perRadiusBestLL[radius] << std::endl;
         break;
       } 
     }
     
     if (isBetter && newBestLL > perRadiusBestLL.back()) {
-      Logger::info << "Better tree " << _speciesTree->getHash() << " ll=" << newBestLL << " (previous ll = " << perRadiusBestLL.back() << ")" << std::endl;
+      Logger::info << "[species tree opt] Better tree " << _speciesTree->getHash() << " ll=" << newBestLL << " (previous ll = " << perRadiusBestLL.back() << ")" << std::endl;
       saveCurrentSpeciesTreeId();
       return newBestLL;
     }
@@ -176,15 +178,15 @@ double SpeciesTreeOptimizer::sortedSprRound(int radius, double bestLL)
 double SpeciesTreeOptimizer::sprSearch(int radius, bool doOptimizeGeneTrees)
 {
   double bestLL = computeLikelihood(doOptimizeGeneTrees, 1);
-  Logger::timed << "Starting species SPR search (" << (doOptimizeGeneTrees ? "SLOW" : "FAST") << ", radius=" << radius << ", bestLL=" << bestLL << ")" <<std::endl;
+  Logger::timed << "[species tree opt] Starting species SPR search (" << (doOptimizeGeneTrees ? "SLOW" : "FAST") << ", radius=" << radius << ", bestLL=" << bestLL << ")" <<std::endl;
   double newLL = bestLL;
-  //Logger::info << "Initial " << likelihoodName(doOptimizeGeneTrees) << ": " << newLL << std::endl;
   do {
     bestLL = newLL;
     if (doOptimizeGeneTrees) {
       newLL = sortedSprRound(radius, bestLL); 
     } else {
       newLL = sprRound(radius);
+      Logger::info << "better tree " << newLL << std::endl;
     }
   } while (newLL - bestLL > 0.001);
   saveCurrentSpeciesTreeId();
@@ -192,20 +194,19 @@ double SpeciesTreeOptimizer::sprSearch(int radius, bool doOptimizeGeneTrees)
 }
   
 void SpeciesTreeOptimizer::ratesOptimization()
-{ 
+{
   if (_perSpeciesRatesOptimization) {
     perSpeciesRatesOptimization();
     return;
   }
-  Logger::timed << "Starting DTL rates optimization" << std::endl;
+  Logger::timed << "[species tree opt] Starting DTL rates optimization" << std::endl;
   auto rates = DTLOptimizer::optimizeParametersGlobalDTL(*_geneTrees, _speciesTree->getTree(), _model);
-  //Logger::info << " Best rates: " << rates << std::endl;
-  _speciesTree->setRates(rates);
+  _speciesTree->setGlobalRates(rates);
 }
   
 void SpeciesTreeOptimizer::perSpeciesRatesOptimization()
 {
-  Logger::info << "Starting DTL rates vector optimization" << std::endl;
+  Logger::timed << "[species tree opt] Starting DTL rates vector optimization" << std::endl;
   Parameters rates = DTLOptimizer::optimizeParametersPerSpecies(*_geneTrees, _speciesTree->getTree(), _model);
   _speciesTree->setRatesVector(rates);
 }
@@ -231,7 +232,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
   bool useSplitImplem = true;
   long int sumElapsedSPR = 0;
   bool pruneSpeciesTree = false;
-  auto rates = _speciesTree->getRates();
+  auto rates = _speciesTree->getRatesVector();
   Logger::mute();
   std::string resultName = "proposals";
   Families families = _currentFamilies;
@@ -256,9 +257,17 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
   
 double SpeciesTreeOptimizer::computeLikelihood(bool doOptimizeGeneTrees, int geneSPRRadius)
 {
-  if (doOptimizeGeneTrees) {
+  if (doOptimizeGeneTrees && geneSPRRadius >= 1) {
     auto initialFamilies = _currentFamilies;
+    auto saveRates = _speciesTree->getRatesVector();
+    if (_hack.dimensions() && geneSPRRadius >= 2) {
+      _speciesTree->setRatesVector(_hack);
+    }
     double jointLL = optimizeGeneTrees(geneSPRRadius, false);
+    ratesOptimization();
+    _hack = _speciesTree->getRatesVector();
+    Logger::info << geneSPRRadius << " " << jointLL << std::endl;
+    _speciesTree->setRatesVector(saveRates);
     _currentFamilies = initialFamilies;
     _geneTrees = std::make_unique<PerCoreGeneTrees>(_currentFamilies);
     return jointLL;

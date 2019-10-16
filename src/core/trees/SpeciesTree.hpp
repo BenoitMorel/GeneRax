@@ -19,9 +19,9 @@ public:
   ~SpeciesTree();
   std::shared_ptr<SpeciesTree> buildRandomTree() const;
 
-  void setRates(const Parameters &rates);
+  void setGlobalRates(const Parameters &rates);
   void setRatesVector(const Parameters &rates);
-  const Parameters &getRates() const;
+  const Parameters &getRatesVector() const;
   double computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees, RecModel model);
 
   std::string toString() const;

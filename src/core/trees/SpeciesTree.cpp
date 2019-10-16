@@ -126,8 +126,9 @@ SpeciesTree::~SpeciesTree()
   }
 }
 
-void SpeciesTree::setRates(const Parameters &globalRates) 
+void SpeciesTree::setGlobalRates(const Parameters &globalRates) 
 {
+  assert(globalRates.dimensions() <= 3);
   _rates = Parameters(getMaxNodeIndex(), globalRates);
 }
 void SpeciesTree::setRatesVector(const Parameters &rates) 
@@ -135,7 +136,7 @@ void SpeciesTree::setRatesVector(const Parameters &rates)
   _rates = rates;
 }
 
-const Parameters &SpeciesTree::getRates() const
+const Parameters &SpeciesTree::getRatesVector() const
 {
   return _rates;
 }

@@ -42,6 +42,7 @@ private:
   std::string _execPath;
   unsigned int _geneTreeIteration;
   bool _perSpeciesRatesOptimization;
+  Parameters _hack;
 private:
   void perSpeciesRatesOptimization();
   void rootExhaustiveSearchAux(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, bool doOptimizeGeneTrees, std::vector<unsigned int> &movesHistory, std::vector<unsigned int> &bestMovesHistory, double &bestLL, unsigned int &visits);

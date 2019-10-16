@@ -34,7 +34,7 @@ int generax_main(int argc, char** argv, void* comm)
  * decides whether we are in the main called by the user (generax_main)
  * or if we are called by the scheduler to execute some 
  * intermediate routine (static_scheduled_main)
- */
+*/
 int internal_main(int argc, char** argv, void* comm)
 {
   if (GeneRaxSlaves::is_slave(argc, argv)) {
