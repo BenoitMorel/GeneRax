@@ -59,6 +59,11 @@ bool isValidSPRMove(pll_unode_s *prune, pll_unode_s *regraft) {
 void getRegraftsRec(unsigned int pruneIndex, pll_unode_t *regraft, int maxRadius, std::vector<unsigned int> &path, std::vector<SPRMoveDesc> &moves)
 {
   assert(regraft);
+  double threshold = 1000.0;
+  double bootstrapValue = (nullptr == regraft->label) ? 0.0 : std::atof(regraft->label);
+  if (bootstrapValue > threshold) {
+    return;
+  }
   if (path.size()) {
     moves.push_back(SPRMoveDesc(pruneIndex, regraft->node_index, path));
   }
