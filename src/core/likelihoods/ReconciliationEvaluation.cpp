@@ -62,7 +62,7 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
       (*rates[d])[e] = parameters[(e * rates.size() + d) % parameters.dimensions()];
     }
   }
-  if (_model == UndatedDTLAdvanced) {
+  if (_model == RecModel::UndatedDTLAdvanced) {
     std::string transferFrequenciesFile = "/tmp/transferFrequencies.txt";
     if (FileSystem::exists(transferFrequenciesFile)) {
       Parameters parameters;
@@ -102,19 +102,19 @@ void ReconciliationEvaluation::invalidateCLV(unsigned int nodeIndex)
 std::unique_ptr<ReconciliationModelInterface> ReconciliationEvaluation::buildRecModelObject(RecModel recModel, bool infinitePrecision)
 {
   switch(recModel) {
-  case UndatedDL:
+  case RecModel::UndatedDL:
     if (infinitePrecision) {
       return  std::make_unique<UndatedDLModel<ScaledValue> >();
     } else {
       return  std::make_unique<UndatedDLModel<double> >();
     }
-  case UndatedDTL:
+  case RecModel::UndatedDTL:
     if (infinitePrecision) {
       return  std::make_unique<UndatedDTLModel<ScaledValue> >();
     } else {
       return  std::make_unique<UndatedDTLModel<double> >();
     }
-  case UndatedDTLAdvanced:
+  case RecModel::UndatedDTLAdvanced:
     if (infinitePrecision) {
       return  std::make_unique<UndatedDTLModelAdvanced<ScaledValue> >();
     } else {

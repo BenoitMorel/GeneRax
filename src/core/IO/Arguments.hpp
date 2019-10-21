@@ -11,9 +11,9 @@ public:
   static std::string strategyToStr(Strategy s)
   {
     switch(s) {
-    case SPR:
+    case Strategy::SPR:
       return "SPR";
-    case EVAL:
+    case Strategy::EVAL:
       return "EVAL";
     }
     exit(41);
@@ -22,42 +22,23 @@ public:
   static Strategy strToStrategy(const std::string &str) 
   {
     if (str == "SPR") {
-      return SPR;
+      return Strategy::SPR;
     }  else if (str == "EVAL") {
-      return EVAL;
+      return Strategy::EVAL;
     } else {
       Logger::info << "Invalid strategy " << str << std::endl;
       exit(41);
     }
   }
  
-  static std::string speciesRaxStrategyToStr(SpeciesRaxStrategy s)
-  {
-    switch(s) {
-    case SIMPLE_SEARCH:
-      return "SimpleSearch";
-    }
-    exit(41);
-  }
-
-  static SpeciesRaxStrategy strToSpeciesRaxStrategy(const std::string &str) 
-  {
-    if (str == "SimpleSearch") {
-      return SIMPLE_SEARCH;
-    } else {
-      Logger::info << "Invalid strategy " << str << std::endl;
-      exit(41);
-    }
-  }
-
   static std::string recModelToStr(RecModel recModel)
   {
     switch(recModel) {
-    case UndatedDL:
+    case RecModel::UndatedDL:
       return "UndatedDL";
-    case UndatedDTL:
+    case RecModel::UndatedDTL:
       return "UndatedDTL";
-    case UndatedDTLAdvanced:
+    case RecModel::UndatedDTLAdvanced:
       return "UndatedDTLAdvanced";
     };
     exit(41);
@@ -71,11 +52,11 @@ public:
   static RecModel strToRecModel(const std::string &str)
   {
     if (str == "UndatedDL") {
-      return UndatedDL;
+      return RecModel::UndatedDL;
     } else if (str == "UndatedDTL") {
-      return UndatedDTL;
+      return RecModel::UndatedDTL;
     } else if (str == "UndatedDTLAdvanced") {
-      return UndatedDTLAdvanced;
+      return RecModel::UndatedDTLAdvanced;
     } else {
       Logger::info << "Invalid reconciliation model " << str << std::endl;
       exit(41);
@@ -84,11 +65,11 @@ public:
 
   static std::string recOptToStr(RecOpt recOpt) {
     switch(recOpt) {
-    case Grid:
+    case RecOpt::Grid:
       return "grid";
-    case Simplex:
+    case RecOpt::Simplex:
       return "simplex";
-    case Gradient:
+    case RecOpt::Gradient:
       return "gradient";
     }
     exit(41);
@@ -96,11 +77,11 @@ public:
 
   static RecOpt strToRecOpt(const std::string &str) {
     if (str == "grid") {
-      return Grid;
+      return RecOpt::Grid;
     } else if (str == "simplex") {
-      return Simplex;
+      return RecOpt::Simplex;
     } else if (str == "gradient") {
-      return Gradient;
+      return RecOpt::Gradient;
     } else {
       Logger::info << "Invalid reconciliation optimization method " << str << std::endl;
       exit(41);

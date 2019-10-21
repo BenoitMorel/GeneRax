@@ -90,14 +90,14 @@ int internal_main(int argc, char** argv, void* comm)
     double initialRecLL = jointTree->computeReconciliationLoglk();
     double initialLibpllLL = jointTree->computeLibpllLoglk();
     Logger::timed << "Starting search..." << std::endl;
-    if (arguments.strategy == SPR) {
+    if (arguments.strategy == Strategy::SPR) {
       if (!geneTreeString.size() or geneTreeString == "__random__") {
         jointTree->enableReconciliation(false);
         SPRSearch::applySPRSearch(*jointTree);
         jointTree->enableReconciliation(true);
       }
       SPRSearch::applySPRSearch(*jointTree);
-    } else if (arguments.strategy == EVAL) {
+    } else if (arguments.strategy == Strategy::EVAL) {
     }
     Logger::timed << "End of search" << std::endl;
     jointTree->printLoglk();
@@ -126,7 +126,7 @@ int internal_main(int argc, char** argv, void* comm)
       jointTree->inferMLScenario(scenario);
       Logger::info << std::endl;
       scenario.saveEventsCounts(eventCountsFile);
-      scenario.saveReconciliation(treeWithEventsFile, NHX);
+      scenario.saveReconciliation(treeWithEventsFile, ReconciliationFormat::NHX);
     }
     firstRun = false;
   }  

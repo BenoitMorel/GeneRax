@@ -159,7 +159,7 @@ void UndatedDLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *species
   }
   if (isSpeciesLeaf and isGeneLeaf and e == this->geneToSpecies_[gid]) {
     // present
-    scenario.addEvent(EVENT_None, gid, e);
+    scenario.addEvent(ReconciliationEventType::EVENT_None, gid, e);
     return;
   }
   if (not isGeneLeaf) {
@@ -191,26 +191,26 @@ void UndatedDLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *species
   }
   switch(maxValueIndex) {
     case 0:
-      scenario.addEvent(EVENT_S, gid, e);
+      scenario.addEvent(ReconciliationEventType::EVENT_S, gid, e);
       backtrace(leftGeneNode, speciesNode->left, scenario); 
       backtrace(rightGeneNode, speciesNode->right, scenario); 
       break;
     case 1:
-      scenario.addEvent(EVENT_S, gid, e);
+      scenario.addEvent(ReconciliationEventType::EVENT_S, gid, e);
       backtrace(leftGeneNode, speciesNode->right, scenario); 
       backtrace(rightGeneNode, speciesNode->left, scenario); 
       break;
     case 2:
-      scenario.addEvent(EVENT_D, gid, e);
+      scenario.addEvent(ReconciliationEventType::EVENT_D, gid, e);
       backtrace(leftGeneNode, speciesNode, scenario); 
       backtrace(rightGeneNode, speciesNode, scenario); 
       break;
     case 3: 
-      scenario.addEvent(EVENT_SL, gid, e, speciesNode->left->node_index);
+      scenario.addEvent(ReconciliationEventType::EVENT_SL, gid, e, speciesNode->left->node_index);
       backtrace(geneNode, speciesNode->left, scenario); 
       break;
     case 4:
-      scenario.addEvent(EVENT_SL, gid, e, speciesNode->right->node_index);
+      scenario.addEvent(ReconciliationEventType::EVENT_SL, gid, e, speciesNode->right->node_index);
       backtrace(geneNode, speciesNode->right, scenario); 
       break;
     default:

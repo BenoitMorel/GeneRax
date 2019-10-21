@@ -20,7 +20,7 @@ public:
   static const unsigned int INVALID = static_cast<unsigned int>(-1);
 
   struct Event {
-    Event(): type(EVENT_S), geneNode(INVALID), speciesNode(INVALID), transferedGeneNode(INVALID), destSpeciesNode(INVALID) {}
+    Event(): type(ReconciliationEventType::EVENT_S), geneNode(INVALID), speciesNode(INVALID), transferedGeneNode(INVALID), destSpeciesNode(INVALID) {}
     ReconciliationEventType type;
     unsigned int geneNode;
     unsigned int speciesNode;
@@ -30,7 +30,7 @@ public:
   };
 
 
-  Scenario(): _eventsCount(static_cast<unsigned int>(EVENT_Invalid), 0), _geneRoot(0), _virtualRootIndex(-1) {}
+  Scenario(): _eventsCount(static_cast<unsigned int>(ReconciliationEventType::EVENT_Invalid), 0), _geneRoot(0), _virtualRootIndex(-1) {}
  
   void setGeneRoot(pll_unode_t *geneRoot) {_geneRoot = geneRoot;}
   

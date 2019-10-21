@@ -78,7 +78,7 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     return;
   }
   ParallelContext::barrier();
-  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, UndatedDL, instance.args.output, instance.args.exec);
+  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, RecModel::UndatedDL, instance.args.output, instance.args.exec);
   speciesTreeOptimizer.setPerSpeciesRatesOptimization(instance.args.perSpeciesDTLRates); 
   for (unsigned int radius = 1; radius <= instance.args.speciesFastRadius; ++radius) {
     if (radius == instance.args.speciesFastRadius) {

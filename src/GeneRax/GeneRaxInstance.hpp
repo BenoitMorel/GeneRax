@@ -32,12 +32,12 @@ struct GeneRaxInstance {
     currentIteration(0)
   {
     switch (recModel) {
-    case UndatedDL:
+      case RecModel::UndatedDL:
       rates = Parameters(2);
       rates[0] = args.dupRate;
       rates[1] = args.lossRate;
       break;
-    case UndatedDTL: case UndatedDTLAdvanced:
+      case RecModel::UndatedDTL: case RecModel::UndatedDTLAdvanced:
       rates = Parameters(3);
       rates[0] = args.dupRate;
       rates[1] = args.lossRate;

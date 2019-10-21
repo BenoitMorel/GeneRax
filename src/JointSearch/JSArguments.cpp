@@ -8,9 +8,9 @@
 JSArguments::JSArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
-  strategy(EVAL),
-  reconciliationModel(UndatedDL),
-  reconciliationOpt(Simplex),
+  strategy(Strategy::EVAL),
+  reconciliationModel(RecModel::UndatedDL),
+  reconciliationOpt(RecOpt::Simplex),
   libpllModel("GTR"),
   output("jointSearch"),
   check(false),

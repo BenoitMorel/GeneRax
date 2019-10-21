@@ -90,8 +90,8 @@ void Routines::inferReconciliation(
     scenario.saveEventsCounts(eventCountsFile, false);
     scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
     scenario.saveTransfers(transfersFile, false);
-    scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, RecPhyloXML, false);
-    scenario.saveReconciliation(treeWithEventsFileNHX, NHX, false);
+    scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, ReconciliationFormat::RecPhyloXML, false);
+    scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
   }
   pll_rtree_destroy(speciesTree, 0);
   ParallelContext::barrier();

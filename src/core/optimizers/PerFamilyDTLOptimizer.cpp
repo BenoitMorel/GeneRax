@@ -103,33 +103,27 @@ void PerFamilyDTLOptimizer::findBestRatesDTL(JointTree &jointTree,
 
 void PerFamilyDTLOptimizer::optimizeDTLRates(JointTree &jointTree, RecOpt method) {
   switch(method) {
-  case Grid:
+  case RecOpt::Grid:
     optimizeDTLRatesWindow(jointTree);
     break;
-  case Simplex:
+  case RecOpt::Simplex:
     optimizeRateSimplex(jointTree, true);
     break;
-  case Gradient:
+  case RecOpt::Gradient:
     optimizeDTLRatesGradient(jointTree);
     break;
   }
-  /*
-  Logger::info << "best rates " << std::endl;
-  Logger::info << "D " << jointTree.getDupRate() << std::endl;
-  Logger::info << "L " << jointTree.getLossRate() << std::endl;
-  Logger::info << "T " << jointTree.getTransferRate() << std::endl;
-  */
 }
 
 void PerFamilyDTLOptimizer::optimizeDLRates(JointTree &jointTree, RecOpt method) {
   switch(method) {
-  case Grid:
+  case RecOpt::Grid:
     optimizeDLRatesWindow(jointTree);
     break;
-  case Simplex:
+  case RecOpt::Simplex:
     optimizeRateSimplex(jointTree, false);
     break;
-  case Gradient:
+  case RecOpt::Gradient:
     optimizeDTLRatesGradient(jointTree);
     break;
   }

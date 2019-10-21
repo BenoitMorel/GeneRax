@@ -39,7 +39,7 @@ void Scenario::addTransfer(ReconciliationEventType type,
 
 void Scenario::saveEventsCounts(const std::string &filename, bool masterRankOnly) {
   ParallelOfstream os(filename, masterRankOnly);
-  for (unsigned int i = 0; i < static_cast<unsigned int>(EVENT_Invalid); ++i) {
+  for (unsigned int i = 0; i < static_cast<unsigned int>(ReconciliationEventType::EVENT_Invalid); ++i) {
     os << eventNames[i] << ":" << _eventsCount[i] << std::endl;
   }
 }
@@ -56,20 +56,20 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
   for (auto &event: _events) {
     auto &eventCount = speciesToEventCount[_speciesTree->nodes[event.speciesNode]->label];
     switch (event.type) {
-      case EVENT_S: 
-      case EVENT_None:
+      case ReconciliationEventType::EVENT_S: 
+      case ReconciliationEventType::EVENT_None:
         eventCount[0]++;
         break;
-      case EVENT_SL: 
+      case ReconciliationEventType::EVENT_SL: 
         eventCount[0]++;
         eventCount[2]++;
-      case EVENT_D:
+      case ReconciliationEventType::EVENT_D:
         eventCount[1]++;
         break;
-      case EVENT_T:
+      case ReconciliationEventType::EVENT_T:
         eventCount[3]++;
         break;
-      case EVENT_TL:
+      case ReconciliationEventType::EVENT_TL:
         eventCount[2]++;
         eventCount[3]++;
         break;
@@ -89,10 +89,10 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
 void Scenario::saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly)
 {
   switch (format) {
-  case NHX:
+  case ReconciliationFormat::NHX:
     ReconciliationWriter::saveReconciliationNHX(_speciesTree, _geneRoot, _virtualRootIndex, _geneIdToEvents, filename, masterRankOnly);
     break;
-  case RecPhyloXML:
+  case ReconciliationFormat::RecPhyloXML:
     ReconciliationWriter::saveReconciliationRecPhyloXML(_speciesTree, _geneRoot, _virtualRootIndex, _geneIdToEvents, filename, masterRankOnly);
     break;
   }
@@ -102,7 +102,7 @@ void Scenario::saveTransfers(const std::string &filename, bool masterRankOnly)
 {
   ParallelOfstream os(filename, masterRankOnly);
   for (auto &event: _events) {
-    if (event.type == EVENT_T || event.type == EVENT_TL) {
+    if (event.type == ReconciliationEventType::EVENT_T || event.type == ReconciliationEventType::EVENT_TL) {
       os << _speciesTree->nodes[event.speciesNode]->label << " " << _speciesTree->nodes[event.destSpeciesNode]->label << std::endl;
     }
   }

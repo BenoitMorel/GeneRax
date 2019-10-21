@@ -225,7 +225,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
 {
   saveCurrentSpeciesTreeId("proposal_species_tree.newick");
   std::string speciesTree = FileSystem::joinPaths(_outputDir, "proposal_species_tree.newick");
-  RecOpt recOpt = Simplex;
+  auto recOpt = RecOpt::Simplex;
   bool perFamilyDTLRates = false;
   bool rootedGeneTree = true;
   double recWeight = 1.0;

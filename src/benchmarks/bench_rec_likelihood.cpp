@@ -71,7 +71,7 @@ int main(int, char**)
   unsigned int familiesNumber = 20;
   unsigned int geneTaxaNumber = 20;
   unsigned int fastRadius = 3;
-  RecModel recModel = UndatedDTL;
+  RecModel recModel = RecModel::UndatedDTL;
   
   
   

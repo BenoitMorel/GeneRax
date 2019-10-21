@@ -292,7 +292,7 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
   bool isSpeciesLeaf = !speciesNode->left;
   
   if (isSpeciesLeaf and isGeneLeaf and e == this->geneToSpecies_[gid]) {
-    scenario.addEvent(EVENT_None, gid, e);
+    scenario.addEvent(ReconciliationEventType::EVENT_None, gid, e);
     return;
   }
   
@@ -351,38 +351,38 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
   }
   switch(maxValueIndex) {
     case 0: 
-      scenario.addEvent(EVENT_S, gid, e);
+      scenario.addEvent(ReconciliationEventType::EVENT_S, gid, e);
       backtrace(leftGeneNode, speciesNode->left, scenario); 
       backtrace(rightGeneNode, speciesNode->right, scenario); 
       break;
     case 1:
-      scenario.addEvent(EVENT_S, gid, e);
+      scenario.addEvent(ReconciliationEventType::EVENT_S, gid, e);
       backtrace(leftGeneNode, speciesNode->right, scenario); 
       backtrace(rightGeneNode, speciesNode->left, scenario); 
       break;
     case 2:
-      scenario.addEvent(EVENT_D, gid, e);
+      scenario.addEvent(ReconciliationEventType::EVENT_D, gid, e);
       backtrace(leftGeneNode, speciesNode, scenario); 
       backtrace(rightGeneNode, speciesNode, scenario); 
       break;
     case 3: 
-      scenario.addEvent(EVENT_SL, gid, e, speciesNode->left->node_index);
+      scenario.addEvent(ReconciliationEventType::EVENT_SL, gid, e, speciesNode->left->node_index);
       backtrace(geneNode, speciesNode->left, scenario); 
       break;
     case 4:
-      scenario.addEvent(EVENT_SL, gid, e, speciesNode->right->node_index);
+      scenario.addEvent(ReconciliationEventType::EVENT_SL, gid, e, speciesNode->right->node_index);
       backtrace(geneNode, speciesNode->right, scenario); 
       break;
     case 5:
       assert(transferedGene);
       assert(recievingSpecies);
-      scenario.addTransfer(EVENT_T, gid, e, transferedGene->node_index, recievingSpecies->node_index);
+      scenario.addTransfer(ReconciliationEventType::EVENT_T, gid, e, transferedGene->node_index, recievingSpecies->node_index);
       backtrace(transferedGene, recievingSpecies, scenario);
       backtrace(stayingGene, speciesNode, scenario);
       break;
     case 6:
       assert(tlRecievingSpecies);
-      scenario.addTransfer(EVENT_TL, gid, e, gid, tlRecievingSpecies->node_index); 
+      scenario.addTransfer(ReconciliationEventType::EVENT_TL, gid, e, gid, tlRecievingSpecies->node_index); 
       backtrace(geneNode, tlRecievingSpecies, scenario); 
       break;
     default:

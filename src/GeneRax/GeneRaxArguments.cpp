@@ -8,9 +8,9 @@
 GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
-  strategy(SPR),
+  strategy(Strategy::SPR),
   reconciliationModelStr("UndatedDL"),
-  reconciliationOpt(Grid),
+  reconciliationOpt(RecOpt::Grid),
   output("GeneRax"),
   perFamilyDTLRates(false),
   duplicates(1),
@@ -47,7 +47,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       speciesTree = std::string(argv[++i]);
     } else if (arg == "--strategy") {
       strategy = Arguments::strToStrategy(std::string(argv[++i]));
-      if (strategy == EVAL) {
+      if (strategy == Strategy::EVAL) {
         recRadius = maxSPRRadius = 0;
       }
     } else if (arg == "-r" || arg == "--rec-model") {
