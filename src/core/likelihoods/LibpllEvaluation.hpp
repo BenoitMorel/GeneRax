@@ -10,7 +10,7 @@ extern "C" {
 #include <pllmod_util.h>  
 }
 #include <IO/LibpllParsers.hpp>
-
+#include <trees/PLLUnrootedTree.hpp>
 #include <string>
 #include <memory>
 #include <exception>
@@ -79,7 +79,7 @@ public:
 
   std::string getModelStr();
 
-  pll_utree_t *getGeneTree() {return _utree.get();}
+  pll_utree_t *getGeneTree() {return _utree->getRawPtr();}
 
 private:
   /**
@@ -89,19 +89,12 @@ private:
   LibpllEvaluation(const LibpllEvaluation &) = delete;
  
 
-  /**
-   * set all the null branch lenghts to length
-   */
-  static void setMissingBL(pll_utree_t * tree, 
-    double length);
-
-
   static double optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, double tolerance);
   
   pll_unode_t *getNode(unsigned int nodeIndex) {return _treeinfo->subnodes[nodeIndex];}
 private:
   std::shared_ptr<pllmod_treeinfo_t> _treeinfo;
-  std::shared_ptr<pll_utree_t> _utree;
+  std::unique_ptr<PLLUnrootedTree> _utree;
   std::shared_ptr<Model> _model;
 };
 

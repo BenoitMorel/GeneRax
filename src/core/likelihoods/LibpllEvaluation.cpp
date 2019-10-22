@@ -51,13 +51,6 @@ unsigned int getBestLibpllAttribute() {
   return  arch;
 }
 
-void utreeDestroy(pll_utree_t *utree) {
-  if(!utree)
-    return;
-  free(utree->nodes);
-  free(utree);
-}
-
 void treeinfoDestroy(pllmod_treeinfo_t *treeinfo)
 {
   if (!treeinfo)
@@ -97,7 +90,7 @@ void LibpllEvaluation::createAndSaveRandomTree(const std::string &alignmentFilen
     const std::string &outputTreeFile)
 {
   auto evaluation = buildFromString("__random__", alignmentFilename, modelStrOrFile);
-  LibpllParsers::saveUtree(evaluation->_utree->nodes[0], outputTreeFile, false);
+  evaluation->_utree->save(outputTreeFile);
 }
   
 
@@ -118,7 +111,7 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::s
   Model model(modelStr);
   unsigned int statesNumber = model.num_states();
   assert(model.num_submodels() == 1);
-  pll_utree_t *utree = 0;
+  PLLUnrootedTree *utree = nullptr;
   {
     LibpllParsers::parseMSA(alignmentFilename, model.charmap(), sequences, patternWeights);
     // tree
@@ -128,9 +121,9 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::s
         labels.push_back(seq->label);
       }
       unsigned int seed = rand();
-      utree = pllmod_utree_create_random(static_cast<unsigned int>(labels.size()), &labels[0], seed);
+      utree = new PLLUnrootedTree(labels, seed);
     } else {
-      utree = LibpllParsers::readNewickFromStr(newickString);
+      utree = new PLLUnrootedTree(newickString, false);
     }
   }
   // partition
@@ -164,23 +157,19 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::s
   }
   sequences.clear();
   assign(partition, model);
-  pll_unode_t *root = utree->nodes[utree->tip_count + utree->inner_count - 1];
-  pll_utree_reset_template_indices(root, utree->tip_count);
-  setMissingBL(utree, DEFAULT_BL);
+  utree->setMissingBranchLengths(DEFAULT_BL);
   
-  // std::map tree to partition
-  for (unsigned int i = 0; i < utree->inner_count + utree->tip_count; ++i) {
-    auto node = utree->nodes[i];
-    if (!node->next) { // tip!
-      node->clv_index = tipsLabelling[node->label];
-    }
+  // map tree to partition
+  for (auto leaf: utree->getLeaves()) {
+    assert(tipsLabelling.find(leaf->label) != tipsLabelling.end());
+    leaf->clv_index = tipsLabelling[leaf->label];
   }
  
   // treeinfo
   int params_to_optimize = model.params_to_optimize();
   params_to_optimize |= PLLMOD_OPT_PARAM_BRANCHES_ITERATIVE;
   std::vector<unsigned int> params_indices(model.num_ratecats(), 0); 
-  auto treeinfo = pllmod_treeinfo_create(root, 
+  auto treeinfo = pllmod_treeinfo_create(utree->getAnyInnerNode(), 
       tipNumber, 1, PLLMOD_COMMON_BRLEN_SCALED);
   if (!treeinfo || !treeinfo->root)
     throw LibpllException("Cannot create treeinfo");
@@ -194,7 +183,7 @@ std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::s
   std::shared_ptr<LibpllEvaluation> evaluation(new LibpllEvaluation());
   evaluation->_model = std::make_shared<Model>(model);
   evaluation->_treeinfo = std::shared_ptr<pllmod_treeinfo_t>(treeinfo, treeinfoDestroy); 
-  evaluation->_utree = std::shared_ptr<pll_utree_t>(utree, utreeDestroy); 
+  evaluation->_utree = std::unique_ptr<PLLUnrootedTree>(utree);
   return evaluation;
 }
   
@@ -260,22 +249,6 @@ double LibpllEvaluation::optimizeAllParameters(double tolerance)
     newLogl = optimizeAllParametersOnce(_treeinfo.get(), tolerance);
   } while (newLogl - previousLogl > tolerance);
   return newLogl;
-}
-
-void LibpllEvaluation::setMissingBL(pll_utree_t * tree, 
-    double length)
-{
-  for (unsigned int i = 0; i < tree->tip_count; ++i)
-    if (0.0 == tree->nodes[i]->length)
-      tree->nodes[i]->length = length;
-  for (unsigned int i = tree->tip_count; i < tree->tip_count + tree->inner_count; ++i) {
-    if (0.0 == tree->nodes[i]->length)
-      tree->nodes[i]->length = length;
-    if (0.0 == tree->nodes[i]->next->length)
-      tree->nodes[i]->next->length = length;
-    if (0.0 == tree->nodes[i]->next->next->length)
-      tree->nodes[i]->next->next->length = length;
-  }  
 }
 
 

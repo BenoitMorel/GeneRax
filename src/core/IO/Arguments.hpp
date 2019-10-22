@@ -6,6 +6,9 @@
 
 
 
+/**
+ * Static methods for helping argument parsing
+ */
 class Arguments {
 public:
   static std::string strategyToStr(Strategy s)

@@ -25,6 +25,7 @@ set(jointsearch-core_SOURCES
   search/Rollbacks.cpp
   search/SearchUtils.cpp
   search/SPRSearch.cpp
+  trees/PLLUnrootedTree.cpp
   trees/JointTree.cpp
   trees/PerCoreGeneTrees.cpp
   trees/SpeciesTree.cpp
