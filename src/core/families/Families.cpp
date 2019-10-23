@@ -139,7 +139,8 @@ void filterFamilies(Families &families, const std::string &speciesTreeFile)
   }
   if (invalid) {
     Logger::info << "WARNING!!! Found " << invalid << " invalid families (they will be discarded from the analysis)" << std::endl;
-  }   
+  }  
+  pll_rtree_destroy(speciesTree, 0);
 }
 
 void duplicatesFamilies(const Families &families, Families &duplicatedFamilies, unsigned int factor)

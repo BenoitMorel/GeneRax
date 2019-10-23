@@ -46,7 +46,9 @@ static void recursivelySaveReconciliationsNHX(pll_rtree_t *speciesTree,  pll_uno
   } else {
     os << "n" << node->node_index; 
   }
-  os << ":" << node->length;
+  if (!isVirtualRoot) {
+    os << ":" << node->length;
+  }
   printEvent(geneToEvents[node->node_index].back(), speciesTree, node, os);
 }
   
@@ -60,7 +62,8 @@ void ReconciliationWriter::saveReconciliationNHX(pll_rtree_t *speciesTree,
   pll_unode_t virtualRoot;
   virtualRoot.next = geneRoot;
   virtualRoot.node_index = virtualRootIndex;
-  virtualRoot.label = 0;
+  virtualRoot.label = nullptr;
+  virtualRoot.length = 0.0;
   ParallelOfstream os(filename, masterRankOnly);
   recursivelySaveReconciliationsNHX(speciesTree, &virtualRoot, true, geneToEvents, os);
   os << ");";
