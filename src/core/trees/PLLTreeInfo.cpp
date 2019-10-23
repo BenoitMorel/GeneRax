@@ -28,6 +28,7 @@ void treeinfoDestroy(pllmod_treeinfo_t *treeinfo)
 {
   if (!treeinfo)
     return;
+  pll_partition_destroy(treeinfo->partitions[0]);
   pllmod_treeinfo_destroy(treeinfo);
 }
 
