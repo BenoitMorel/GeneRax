@@ -38,12 +38,6 @@ public:
   PLLUnrootedTree(PLLUnrootedTree &&) = delete;
   PLLUnrootedTree & operator = (PLLUnrootedTree &&) = delete;
 
-  /*
-   * Range iteration
-   */
-  CArrayRange<pll_unode_t*> getNodes();
-  CArrayRange<pll_unode_t*> getLeaves();
-  CArrayRange<pll_unode_t*> getInnerNodes();
 
   /*
    * Tree dimension
@@ -72,6 +66,8 @@ public:
    *  Direct access to the libpll structure
    */
   pll_utree_t *getRawPtr() {return _tree.get();}
+  
+  CArrayRange<pll_unode_t*> getLeaves();
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;
 };

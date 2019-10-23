@@ -284,7 +284,7 @@ void JointTree::save(const std::string &fileName, bool append) {
   LibpllParsers::saveUtree(root, fileName, append);
 }
 
-std::shared_ptr<pllmod_treeinfo_t> JointTree::getTreeInfo() {
+pllmod_treeinfo_t * JointTree::getTreeInfo() {
   return libpllEvaluation_->getTreeInfo();
 }
 

@@ -3,12 +3,15 @@
 #include <IO/LibpllParsers.hpp>
 #include <IO/Logger.hpp>
 
+void destroyNodeData(void *)
+{
+
+}
 
 void utreeDestroy(pll_utree_t *utree) {
   if(!utree)
     return;
-  free(utree->nodes);
-  free(utree);
+  pll_utree_destroy(utree, destroyNodeData);
 }
 
 static pll_utree_t *buildUtree(const std::string &str, bool isFile)
@@ -41,11 +44,10 @@ void PLLUnrootedTree::save(const std::string &fileName)
 void PLLUnrootedTree::setMissingBranchLengths(double minBL)
 {
   for (auto node: getLeaves()) {
-    std::cerr << node->label << std::endl;
+    if (0.0 == node->length) {
+      node->length = minBL;
+    } 
   }
-  for (unsigned int i = 0; i < _tree->tip_count; ++i)
-    if (0.0 == _tree->nodes[i]->length)
-      _tree->nodes[i]->length = minBL;
   for (unsigned int i = _tree->tip_count; i < _tree->tip_count + _tree->inner_count; ++i) {
     if (0.0 == _tree->nodes[i]->length)
       _tree->nodes[i]->length = minBL;
@@ -56,20 +58,11 @@ void PLLUnrootedTree::setMissingBranchLengths(double minBL)
   }  
 }
   
-CArrayRange<pll_unode_t*> PLLUnrootedTree::getNodes()
-{
-  return CArrayRange<pll_unode_t*>(_tree->nodes, getNodesNumber());
-}
-
 CArrayRange<pll_unode_t*> PLLUnrootedTree::getLeaves()
 {
   return CArrayRange<pll_unode_t*>(_tree->nodes, getLeavesNumber());
 }
 
-CArrayRange<pll_unode_t*> PLLUnrootedTree::getInnerNodes()
-{
-  return CArrayRange<pll_unode_t*>(_tree->nodes + getLeavesNumber(), getNodesNumber());
-}
 
 unsigned int PLLUnrootedTree::getNodesNumber() const
 {
@@ -93,6 +86,6 @@ pll_unode_t *PLLUnrootedTree::getNode(unsigned int node_index)
 
 pll_unode_t *PLLUnrootedTree::getAnyInnerNode()
 {
-  return getNode(getNodesNumber() - 1);
+  return getNode(getLeavesNumber());
 }
 

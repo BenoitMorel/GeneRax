@@ -11,6 +11,7 @@ extern "C" {
 }
 #include <IO/LibpllParsers.hpp>
 #include <trees/PLLUnrootedTree.hpp>
+#include <trees/PLLTreeInfo.hpp>
 #include <string>
 #include <memory>
 #include <exception>
@@ -65,7 +66,7 @@ public:
   /**
    *  Accessor to the wrapped treeinfo structure
    */
-  std::shared_ptr<pllmod_treeinfo_t> getTreeInfo() {return _treeinfo;}
+  pllmod_treeinfo_t *getTreeInfo() {return _plopi->getTreeInfo();}
 
   /**
    *  Invalidate a CLV at a given node index
@@ -79,22 +80,20 @@ public:
 
   std::string getModelStr();
 
-  pll_utree_t *getGeneTree() {return _utree->getRawPtr();}
+  pll_utree_t *getGeneTree() {return _plopi->getTree().getRawPtr();}
 
 private:
   /**
    * Constructors
    */
-  LibpllEvaluation():_treeinfo(nullptr) {}
+  LibpllEvaluation() {}
   LibpllEvaluation(const LibpllEvaluation &) = delete;
  
 
   static double optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, double tolerance);
   
-  pll_unode_t *getNode(unsigned int nodeIndex) {return _treeinfo->subnodes[nodeIndex];}
+  pll_unode_t *getNode(unsigned int nodeIndex) {return _plopi->getTreeInfo()->subnodes[nodeIndex];}
 private:
-  std::shared_ptr<pllmod_treeinfo_t> _treeinfo;
-  std::unique_ptr<PLLUnrootedTree> _utree;
-  std::shared_ptr<Model> _model;
+  std::unique_ptr<PLLTreeInfo> _plopi;
 };
 

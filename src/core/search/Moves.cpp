@@ -34,7 +34,7 @@ void optimizeBranchesSlow(JointTree &tree,
     tree.computeLibpllLoglk(); // update CLVs
     for (unsigned int j = 0; j < 2; ++j) {
       for (unsigned int i = 0; i < nodesToOptimize.size(); ++i) {
-          pllmod_treeinfo_set_root(treeinfo.get(), nodesToOptimize[i]);
+          pllmod_treeinfo_set_root(treeinfo, nodesToOptimize[i]);
           double oldLoglk = tree.computeLibpllLoglk(true);
           double newLoglk = pllmod_opt_optimize_branch_lengths_local(
               treeinfo->partitions[0],
@@ -49,7 +49,7 @@ void optimizeBranchesSlow(JointTree &tree,
          assert(oldLoglk <= newLoglk);
       }
     }
-    pllmod_treeinfo_set_root(treeinfo.get(), root);
+    pllmod_treeinfo_set_root(treeinfo, root);
 }
 
 bool equals(pll_unode_t *node1, pll_unode_t *node2) {

@@ -47,7 +47,7 @@ public:
     void printInfo();
     void rollbackLastMove();
     void save(const std::string &fileName, bool append);
-    std::shared_ptr<pllmod_treeinfo_t> getTreeInfo();
+    pllmod_treeinfo_t *getTreeInfo();
     void setRates(const Parameters &ratesVector);
     pll_rtree_t *getSpeciesTree() {return pllSpeciesTree_;}
     size_t getUnrootedTreeHash();
