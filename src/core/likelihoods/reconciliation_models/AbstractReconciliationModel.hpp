@@ -86,6 +86,12 @@ template <class REAL>
 class AbstractReconciliationModel: public ReconciliationModelInterface {
 public:
   AbstractReconciliationModel();
+  AbstractReconciliationModel(const AbstractReconciliationModel &) = delete;
+  AbstractReconciliationModel & operator = (const AbstractReconciliationModel &) = delete;
+  AbstractReconciliationModel(AbstractReconciliationModel &&) = delete;
+  AbstractReconciliationModel & operator = (AbstractReconciliationModel &&) = delete;
+  
+  
   // overload from parent
   virtual void init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree);
   // overload from parent

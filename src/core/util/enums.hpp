@@ -25,7 +25,8 @@ enum class ReconciliationEventType {
 
 class Enums {
 public:
-  
+  Enums() = delete;
+
   static int freeParameters(RecModel m, unsigned int speciesCount = 1)  {
     switch (m) {
       case RecModel::UndatedDL:

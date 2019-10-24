@@ -45,7 +45,6 @@ void ReconciliationEvaluation::setTransferFrequencies(const Parameters &paramete
 
 void ReconciliationEvaluation::setRates(const Parameters &parameters)
 {
-  _parameters = parameters;
   assert(parameters.dimensions());
   std::vector<std::vector<double> *> rates;
   rates.push_back(&_dupRates);
@@ -88,7 +87,6 @@ double ReconciliationEvaluation::evaluate(pll_utree_t *utree)
   }
   if (!std::isnormal(res)) {
     std::cerr << "wrong reconciliation ll " << res << std::endl;
-    std::cerr << _parameters << std::endl;   
   }
   assert(std::isnormal(res));
   return res;

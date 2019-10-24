@@ -33,6 +33,14 @@ struct LibpllAlignmentInfo {
  */
 class LibpllEvaluation {
 public:
+  /**
+   * Forbid copy
+   */
+  LibpllEvaluation(const LibpllEvaluation &) = delete;
+  LibpllEvaluation & operator = (const LibpllEvaluation &) = delete;
+  LibpllEvaluation(LibpllEvaluation &&) = delete;
+  LibpllEvaluation & operator = (LibpllEvaluation &&) = delete;
+
   /*
    * Build a LibpllEvaluation instance
    * @param newickString the tree in newick format
@@ -87,7 +95,6 @@ private:
    * Constructors
    */
   LibpllEvaluation() {}
-  LibpllEvaluation(const LibpllEvaluation &) = delete;
  
 
   static double optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, double tolerance);

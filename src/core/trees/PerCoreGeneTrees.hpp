@@ -20,6 +20,13 @@ public:
 
   PerCoreGeneTrees(const Families &families);
   PerCoreGeneTrees(const GeneSpeciesMapping &mapping, pll_utree_t *tree);
+  
+  PerCoreGeneTrees(const PerCoreGeneTrees &) = delete;
+  PerCoreGeneTrees & operator = (const PerCoreGeneTrees &) = delete;
+  PerCoreGeneTrees(PerCoreGeneTrees &&) = delete;
+  PerCoreGeneTrees & operator = (PerCoreGeneTrees &&) = delete;
+  
+  
   std::vector<GeneTree> &getTrees() {return _geneTrees;}
   bool checkMappings(const std::string &speciesTreeFile);
 private:

@@ -9,6 +9,8 @@ class Parameters;
 
 class GeneRaxMaster {
 public:
+  GeneRaxMaster() = delete;
+
   static void optimizeGeneTrees(Families &families,
     RecModel recModel,
     Parameters &rates,

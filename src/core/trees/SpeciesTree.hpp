@@ -17,6 +17,15 @@ public:
   SpeciesTree(const std::unordered_set<std::string> &leafLabels);
   SpeciesTree(const Families &families);
   ~SpeciesTree();
+  // forbid copy
+  SpeciesTree(const SpeciesTree &) = delete;
+  SpeciesTree & operator = (const SpeciesTree &) = delete;
+  SpeciesTree(SpeciesTree &&) = delete;
+  SpeciesTree & operator = (SpeciesTree &&) = delete;
+
+  
+  
+  
   std::shared_ptr<SpeciesTree> buildRandomTree() const;
 
   void setGlobalRates(const Parameters &rates);

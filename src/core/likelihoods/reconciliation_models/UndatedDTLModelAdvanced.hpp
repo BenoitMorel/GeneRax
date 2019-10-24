@@ -17,6 +17,10 @@ template <class REAL>
 class UndatedDTLModelAdvanced: public AbstractReconciliationModel<REAL> {
 public:
   UndatedDTLModelAdvanced();
+  UndatedDTLModelAdvanced(const UndatedDTLModelAdvanced &) = delete;
+  UndatedDTLModelAdvanced & operator = (const UndatedDTLModelAdvanced &) = delete;
+  UndatedDTLModelAdvanced(UndatedDTLModelAdvanced &&) = delete;
+  UndatedDTLModelAdvanced & operator = (UndatedDTLModelAdvanced &&) = delete;
   virtual ~UndatedDTLModelAdvanced();
   
   // overloaded from parent

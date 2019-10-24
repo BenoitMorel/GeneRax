@@ -8,6 +8,8 @@ class GeneRaxInstance;
  */
 class GeneRaxCore {
 public:
+  GeneRaxCore() = delete;
+  
   /*
    * Create output directories, initialize the logger, initialize the species tree,
    * read and filter the families

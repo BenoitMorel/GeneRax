@@ -10,6 +10,7 @@ class JointTree;
 
 class PerFamilyDTLOptimizer {
 public:
+  PerFamilyDTLOptimizer() = delete;
   /**
    * Per-family rates optimization
    */

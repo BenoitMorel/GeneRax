@@ -30,6 +30,10 @@ public:
               bool safeMode,
               bool optimizeDTLRates,
               const Parameters &ratesVector);
+    JointTree(const JointTree &) = delete;
+    JointTree & operator = (const JointTree &) = delete;
+    JointTree(JointTree &&) = delete;
+    JointTree & operator = (JointTree &&) = delete;
 
     virtual ~JointTree();
     void printLibpllTree() const;

@@ -11,7 +11,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     RecModel model, 
     const std::string &outputDir,
     const std::string &execPath):
-  _speciesTree(0),
+  _speciesTree(nullptr),
   _geneTrees(std::make_unique<PerCoreGeneTrees>(initialFamilies)),
   _currentFamilies(initialFamilies),
   _model(model),

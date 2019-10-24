@@ -27,6 +27,14 @@ public:
     const GeneSpeciesMapping& geneSpeciesMapping,
     RecModel recModel,
     bool rootedGeneTree);
+  
+  /**
+   * Forbid copy
+   */
+  ReconciliationEvaluation(const ReconciliationEvaluation &) = delete;
+  ReconciliationEvaluation & operator = (const ReconciliationEvaluation &) = delete;
+  ReconciliationEvaluation(ReconciliationEvaluation &&) = delete;
+  ReconciliationEvaluation & operator = (ReconciliationEvaluation &&) = delete;
 
   void setTransferFrequencies(const Parameters &parameters);
   void setRates(const Parameters &parameters);
@@ -61,8 +69,7 @@ public:
 
   RecModel getRecModel() const {return _model;}
 private:
-  pll_unode_t *computeMLRoot();
-  pll_rtree_t *_speciesTree;
+  pll_rtree_t *_speciesTree; // I do not own this one
   unsigned int _speciesCount;
   GeneSpeciesMapping _geneSpeciesMapping;
   bool _rootedGeneTree;
@@ -71,10 +78,12 @@ private:
   std::vector<double> _dupRates;
   std::vector<double> _lossRates;
   std::vector<double> _transferRates;
-  Parameters _parameters; // remove this
   std::vector< std::vector<double> > _transferFrequencies;
   std::unique_ptr<ReconciliationModelInterface> _reconciliationModel;
+private:
+  
   std::unique_ptr<ReconciliationModelInterface> buildRecModelObject(RecModel recModel, bool infinitePrecision);
+  pll_unode_t *computeMLRoot();
   void updatePrecision(bool infinitePrecision);
 };
 

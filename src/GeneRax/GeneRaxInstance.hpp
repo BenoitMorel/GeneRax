@@ -45,6 +45,11 @@ struct GeneRaxInstance {
       break; 
     }
   }
+  
+  GeneRaxInstance(const GeneRaxInstance &) = delete;
+  GeneRaxInstance & operator = (const GeneRaxInstance &) = delete;
+  GeneRaxInstance(GeneRaxInstance &&) = delete;
+  GeneRaxInstance & operator = (GeneRaxInstance &&) = delete;
 
 };
 

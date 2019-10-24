@@ -15,6 +15,13 @@ public:
       RecModel model, 
       const std::string &outputDir,
       const std::string &execPath);
+  
+  // forbid copy
+  SpeciesTreeOptimizer(const SpeciesTreeOptimizer &) = delete;
+  SpeciesTreeOptimizer & operator = (const SpeciesTreeOptimizer &) = delete;
+  SpeciesTreeOptimizer(SpeciesTreeOptimizer &&) = delete;
+  SpeciesTreeOptimizer & operator = (SpeciesTreeOptimizer &&) = delete;
+  
   void setModel(RecModel model) {_model = model;}
   void setPerSpeciesRatesOptimization(bool perSpecies) {_perSpeciesRatesOptimization = perSpecies;}
 
@@ -34,8 +41,8 @@ public:
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
   
 private:
-  std::shared_ptr<SpeciesTree> _speciesTree;
-  std::shared_ptr<PerCoreGeneTrees> _geneTrees;
+  std::unique_ptr<SpeciesTree> _speciesTree;
+  std::unique_ptr<PerCoreGeneTrees> _geneTrees;
   Families _currentFamilies;
   RecModel _model;
   std::string _outputDir;

@@ -16,6 +16,8 @@ typedef std::unordered_map<std::string, unsigned int> TransferFrequencies;
 class Routines {
 
 public:
+  Routines() = delete;
+  
   /**
    * Optimize the DTL rates for the families families. 
    * The result is stored into rates

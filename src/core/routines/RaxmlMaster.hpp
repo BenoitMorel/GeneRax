@@ -6,6 +6,7 @@
 
 class RaxmlMaster {
 public:
+  RaxmlMaster() = delete;
   static void runRaxmlOptimization(Families &families,
     const std::string &output,
     const std::string &execPath,

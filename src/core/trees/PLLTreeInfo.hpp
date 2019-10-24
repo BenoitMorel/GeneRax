@@ -26,6 +26,12 @@ public:
     bool isNewickAFile,
     const std::string& alignmentFilename,
     const std::string &modelStrOrFile);
+ 
+  // forbid copy
+  PLLTreeInfo(const PLLTreeInfo &) = delete;
+  PLLTreeInfo & operator = (const PLLTreeInfo &) = delete;
+  PLLTreeInfo(PLLTreeInfo &&) = delete;
+  PLLTreeInfo & operator = (PLLTreeInfo &&) = delete;
 
   pllmod_treeinfo_t *getTreeInfo() {return _treeinfo.get();}
   PLLUnrootedTree &getTree() {return *_utree;}

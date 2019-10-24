@@ -18,6 +18,7 @@ typedef struct pll_rnode_s pll_rnode_t;
 class Scenario {
 public:
   static const unsigned int INVALID = static_cast<unsigned int>(-1);
+  
 
   struct Event {
     Event(): type(ReconciliationEventType::EVENT_S), geneNode(INVALID), speciesNode(INVALID), transferedGeneNode(INVALID), destSpeciesNode(INVALID) {}
@@ -31,6 +32,12 @@ public:
 
 
   Scenario(): _eventsCount(static_cast<unsigned int>(ReconciliationEventType::EVENT_Invalid), 0), _geneRoot(0), _virtualRootIndex(-1) {}
+  
+  // forbid copy
+  Scenario(const Scenario &) = delete;
+  Scenario & operator = (const Scenario &) = delete;
+  Scenario(Scenario &&) = delete;
+  Scenario & operator = (Scenario &&) = delete;
  
   void setGeneRoot(pll_unode_t *geneRoot) {_geneRoot = geneRoot;}
   

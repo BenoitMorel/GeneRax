@@ -9,6 +9,7 @@ class PerCoreGeneTrees;
 
 class DTLOptimizer {
 public:
+  DTLOptimizer() = delete;
   static Parameters optimizeParameters(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model, const Parameters &startingParameters);
   static Parameters optimizeParametersGlobalDTL(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model);
   static Parameters optimizeParametersPerSpecies(PerCoreGeneTrees &geneTrees, pll_rtree_t *speciesTree, RecModel model);
