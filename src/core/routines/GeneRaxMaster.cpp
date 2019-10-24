@@ -1,4 +1,4 @@
-#include "GeneTreeSearchMaster.hpp"
+#include "GeneRaxMaster.hpp"
 
 #include <IO/Logger.hpp>
 #include <IO/FileSystem.hpp>
@@ -14,7 +14,7 @@ std::string toArg(const std::string &str) {
 }
 
 
-void GeneTreeSearchMaster::optimizeGeneTrees(Families &families,
+void GeneRaxMaster::optimizeGeneTrees(Families &families,
     RecModel recModel,
     Parameters &rates,
     const std::string &output,

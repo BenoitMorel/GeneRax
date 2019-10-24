@@ -5,7 +5,7 @@
 #include <IO/FileSystem.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <optimizers/SpeciesTreeOptimizer.hpp>
-#include <routines/GeneRaxSlaves.hpp>
+#include <routines/SlavesMain.hpp>
 
 void generateFakeAlignment(const std::vector<std::string> &taxa, const std::string &outputFile)
 {

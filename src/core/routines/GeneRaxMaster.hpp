@@ -7,7 +7,7 @@
 
 class Parameters;
 
-class GeneTreeSearchMaster {
+class GeneRaxMaster {
 public:
   static void optimizeGeneTrees(Families &families,
     RecModel recModel,

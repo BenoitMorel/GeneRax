@@ -2,7 +2,7 @@
 
 #include <optimizers/DTLOptimizer.hpp>
 #include <IO/FileSystem.hpp>
-#include <routines/GeneTreeSearchMaster.hpp>
+#include <routines/GeneRaxMaster.hpp>
 #include <routines/Routines.hpp>
 #include <algorithm>
 
@@ -236,7 +236,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
   Logger::mute();
   std::string resultName = "proposals";
   Families families = _currentFamilies;
-  GeneTreeSearchMaster::optimizeGeneTrees(families, 
+  GeneRaxMaster::optimizeGeneTrees(families, 
       _model, rates, _outputDir, resultName, 
       _execPath, speciesTree, recOpt, perFamilyDTLRates, rootedGeneTree, pruneSpeciesTree, 
       recWeight, true, true, radius, _geneTreeIteration, 

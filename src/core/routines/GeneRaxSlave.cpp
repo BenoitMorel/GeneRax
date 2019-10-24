@@ -1,4 +1,4 @@
-#include "GeneRaxSlaves.hpp"
+#include "GeneRaxSlave.hpp"
 #include <parallelization/ParallelContext.hpp>
 #include <IO/FamiliesFileParser.hpp>
 #include <IO/Logger.hpp>
@@ -16,7 +16,7 @@
 #include <sstream>
 #include <routines/RaxmlSlave.hpp>
 
-void getTreeStrings(const std::string &filename, std::vector<std::string> &treeStrings) 
+static void getTreeStrings(const std::string &filename, std::vector<std::string> &treeStrings) 
 {
   std::string geneTreeString;
   if (filename == "__random__" || filename.size() == 0) {
@@ -34,7 +34,7 @@ void getTreeStrings(const std::string &filename, std::vector<std::string> &treeS
 }
 
 
-void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
+static void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
     const std::string &mappingFile,
     const std::string &alignmentFile,
     const std::string &speciesTreeFile,
@@ -100,12 +100,12 @@ void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
   ParallelContext::barrier();
 }
 
-std::string getArg(const std::string &str)
+static std::string getArg(const std::string &str)
 {
   return (str == "NONE" ? std::string() : str);
 }
 
-int optimizeGeneTreesMain(int argc, char** argv, void* comm)
+int GeneRaxSlave::optimizeGeneTreesMain(int argc, char** argv, void* comm)
 {
   assert(argc == 19);
   ParallelContext::init(comm);
@@ -151,29 +151,4 @@ int optimizeGeneTreesMain(int argc, char** argv, void* comm)
   return 0;
 }
 
-
-bool GeneRaxSlaves::is_slave(int argc, char** argv)
-{
-  if (argc < 2) {
-    return false;
-  }
-  std::string key(argv[1]);
-  return key == "optimizeGeneTrees" || key == "raxmlLight";
-}
-
-extern "C" int static_scheduled_main(int argc, char** argv, void* comm)
-{
-  Logger::enableLogFile(false);
-  std::string key(argv[1]);
-  int res = 1;
-  if (key == "optimizeGeneTrees") {
-    res = optimizeGeneTreesMain(argc, argv, comm);   
-  } else if (key == "raxmlLight") {
-    res = RaxmlSlave::runRaxmlOptimization(argc, argv, comm);
-  } else {
-    assert(0);
-  }
-  Logger::enableLogFile(true);
-  return res;
-}
 

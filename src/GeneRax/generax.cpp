@@ -3,7 +3,7 @@
 #include "GeneRaxInstance.hpp"
 #include <parallelization/ParallelContext.hpp>
 #include <IO/Logger.hpp>
-#include <routines/GeneRaxSlaves.hpp>
+#include <routines/SlavesMain.hpp>
 
 
 
@@ -37,7 +37,7 @@ int generax_main(int argc, char** argv, void* comm)
 */
 int internal_main(int argc, char** argv, void* comm)
 {
-  if (GeneRaxSlaves::is_slave(argc, argv)) {
+  if (SlavesMain::isSlave(argc, argv)) {
     int slaveComm = -1; 
     return static_scheduled_main(argc, argv, &slaveComm);
   } else {
