@@ -25,6 +25,8 @@ private:
 
 class ParallelContext {
 public:
+  ParallelContext() = delete;
+
   /**
    *  Initialize the parallel context. Must always be called at the start of the programm
    *  @param commPtr a pointer to the MPI communicator used by this programm

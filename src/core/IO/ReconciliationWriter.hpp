@@ -10,6 +10,8 @@ typedef struct pll_rtree_s pll_rtree_t;
 
 class ReconciliationWriter {
 public:
+  ReconciliationWriter() = delete;
+
   static void saveReconciliationNHX(pll_rtree_t *speciesTree,  
       pll_unode_t *geneRoot, 
       unsigned int virtualRootIndex,

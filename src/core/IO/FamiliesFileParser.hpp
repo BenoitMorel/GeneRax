@@ -8,5 +8,6 @@
 
 class FamiliesFileParser {
 public:
+  FamiliesFileParser() = delete;
   static Families parseFamiliesFile(const std::string &familiesFile);
 };

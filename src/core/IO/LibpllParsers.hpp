@@ -44,6 +44,8 @@ private:
 
 class LibpllParsers {
 public:
+  LibpllParsers() = delete;
+
   static void labelRootedTree(pll_rtree_t *tree);
   static void labelRootedTree(const std::string &unlabelledNewickFile, const std::string &labelledNewickFile);
   static pll_utree_t *readNewickFromFile(const std::string &newickFile);

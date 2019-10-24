@@ -9,8 +9,10 @@
 /**
  * Static methods for helping argument parsing
  */
-class Arguments {
+class ArgumentsHelper {
 public:
+  ArgumentsHelper() = delete;
+
   static std::string strategyToStr(Strategy s)
   {
     switch(s) {

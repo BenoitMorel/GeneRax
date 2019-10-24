@@ -3,7 +3,7 @@
 #include <parallelization/ParallelContext.hpp>
 #include <algorithm>
 #include <vector>
-#include <IO/Arguments.hpp>
+#include <IO/ArgumentsHelper.hpp>
 
 JSArguments::JSArguments(int iargc, char * iargv[]):
   argc(iargc),
@@ -38,11 +38,11 @@ JSArguments::JSArguments(int iargc, char * iargv[]):
     } else if (arg == "-m" || arg == "--map") {
       geneSpeciesMap = std::string(argv[++i]);
     } else if (arg == "--strategy") {
-      strategy = Arguments::strToStrategy(std::string(argv[++i]));
+      strategy = ArgumentsHelper::strToStrategy(std::string(argv[++i]));
     } else if (arg == "-r" || arg == "--rec-model") {
-      reconciliationModel = Arguments::strToRecModel(std::string(argv[++i]));
+      reconciliationModel = ArgumentsHelper::strToRecModel(std::string(argv[++i]));
     } else if (arg == "--rec-opt") {
-      reconciliationOpt = Arguments::strToRecOpt(std::string(argv[++i]));
+      reconciliationOpt = ArgumentsHelper::strToRecOpt(std::string(argv[++i]));
     } else if (arg == "--libpll-model") {
       libpllModel = std::string(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
@@ -146,9 +146,9 @@ void JSArguments::printSummary() {
   Logger::info << "Alignment: " << alignment << std::endl; 
   Logger::info << "Species tree: " << speciesTree << std::endl;
   Logger::info << "Gene species map: " << geneSpeciesMap << std::endl;
-  Logger::info << "Strategy: " << Arguments::strategyToStr(strategy) << std::endl;
-  Logger::info << "Reconciliation model: " << Arguments::recModelToStr(reconciliationModel) << std::endl;
-  Logger::info << "Reconciliation opt: " << Arguments::recOptToStr(reconciliationOpt) << std::endl;
+  Logger::info << "Strategy: " << ArgumentsHelper::strategyToStr(strategy) << std::endl;
+  Logger::info << "Reconciliation model: " << ArgumentsHelper::recModelToStr(reconciliationModel) << std::endl;
+  Logger::info << "Reconciliation opt: " << ArgumentsHelper::recOptToStr(reconciliationOpt) << std::endl;
   Logger::info << "Libpll model: " << libpllModel << std::endl;
   Logger::info << "Prefix: " << output << std::endl;
   Logger::info << "Check mode: " << boolStr[check] << std::endl;

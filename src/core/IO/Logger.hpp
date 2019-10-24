@@ -29,7 +29,7 @@ private:
     lt_info, lt_error, lt_timed, lt_perrank
   };
   LoggerType _type;
-  std::ostream *_os;
+  std::ostream *_os; // I not own this one
   bool _silent;
   Logger();
   void setStream(std::ostream &os) {_os = &os;}

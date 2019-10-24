@@ -3,7 +3,7 @@
 #include <parallelization/ParallelContext.hpp>
 #include <fstream>
 #include <string>
-
+#include <memory>
 
 
 class ParallelOfstream {
@@ -13,7 +13,7 @@ public:
   ~ParallelOfstream();
 private:
   template<typename T> friend std::ostream& operator<<(ParallelOfstream&, T);
-  std::ostream *_os;
+  std::unique_ptr<std::ostream> _os;
 };
 
 template<typename T> 

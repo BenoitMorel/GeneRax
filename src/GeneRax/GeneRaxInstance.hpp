@@ -23,7 +23,7 @@ struct GeneRaxInstance {
   
   GeneRaxInstance(int argc, char** argv):
     args(argc, argv),
-    recModel(Arguments::strToRecModel(args.reconciliationModelStr)),
+    recModel(ArgumentsHelper::strToRecModel(args.reconciliationModelStr)),
     totalLibpllLL(0),
     totalRecLL(0),
     elapsedRates(0),

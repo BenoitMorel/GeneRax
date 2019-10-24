@@ -1,18 +1,16 @@
 #include <IO/ParallelOfstream.hpp>
   
-ParallelOfstream::ParallelOfstream(const std::string &fileName, bool masterRankOnly): _os(0)
+ParallelOfstream::ParallelOfstream(const std::string &fileName, bool masterRankOnly): _os(nullptr)
 {
   if (!ParallelContext::getRank() || !masterRankOnly) {
-    _os = new std::ofstream(fileName);
+    _os = std::make_unique<std::ofstream>(fileName);
   } else {
-    _os = new std::ostream(0);
+    _os = std::make_unique<std::ostream>(nullptr);
   }
 }
   
 void ParallelOfstream::close()
 {
-  delete _os;
-  _os = 0;
 }
 
 ParallelOfstream::~ParallelOfstream()

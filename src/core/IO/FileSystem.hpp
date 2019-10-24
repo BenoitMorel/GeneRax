@@ -10,6 +10,7 @@
 
 class FileSystem {
 public:
+  FileSystem() = delete;
 
   static void mkdir(const std::string &path, bool masterRankOnly) {
     if (masterRankOnly && ParallelContext::getRank() != 0) {

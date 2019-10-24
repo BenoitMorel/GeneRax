@@ -46,14 +46,14 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
     } else if (arg == "-s" || arg == "--species-tree") {
       speciesTree = std::string(argv[++i]);
     } else if (arg == "--strategy") {
-      strategy = Arguments::strToStrategy(std::string(argv[++i]));
+      strategy = ArgumentsHelper::strToStrategy(std::string(argv[++i]));
       if (strategy == Strategy::EVAL) {
         recRadius = maxSPRRadius = 0;
       }
     } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModelStr = std::string(argv[++i]);
     } else if (arg == "--rec-opt") {
-      reconciliationOpt = Arguments::strToRecOpt(std::string(argv[++i]));
+      reconciliationOpt = ArgumentsHelper::strToRecOpt(std::string(argv[++i]));
     } else if (arg == "-p" || arg == "--prefix") {
       output = std::string(argv[++i]);
     } else if (arg == "--per-family-rates") {
@@ -134,7 +134,7 @@ void GeneRaxArguments::checkInputs() {
     Logger::info << "[Error] You cannot use per-family and per-species rates at the same time" << std::endl;
     ok = false;
   }
-  if (!Arguments::isValidRecModel(reconciliationModelStr)) {
+  if (!ArgumentsHelper::isValidRecModel(reconciliationModelStr)) {
     Logger::info << "[Error] Invalid reconciliation model string " << reconciliationModelStr << std::endl;
     ok = false;
   }
@@ -184,9 +184,9 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "Parameters summary: " << std::endl;
   Logger::info << "Families information: " << families << std::endl;
   Logger::info << "Species tree: " << speciesTree << std::endl;
-  Logger::info << "Strategy: " << Arguments::strategyToStr(strategy) << std::endl;
+  Logger::info << "Strategy: " << ArgumentsHelper::strategyToStr(strategy) << std::endl;
   Logger::info << "Reconciliation model: " << reconciliationModelStr << std::endl;
-  Logger::info << "Reconciliation opt: " << Arguments::recOptToStr(reconciliationOpt) << std::endl;
+  Logger::info << "Reconciliation opt: " << ArgumentsHelper::recOptToStr(reconciliationOpt) << std::endl;
   Logger::info << "DTL rates: "; 
   if (perSpeciesDTLRates) {
     Logger::info << "per species rates" << std::endl;
