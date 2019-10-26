@@ -85,8 +85,8 @@ void Routines::inferReconciliation(
     Scenario scenario;
     ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
     evaluation.setRates(rates);
-    evaluation.evaluate(tree.tree);
-    evaluation.inferMLScenario(tree.tree, scenario);
+    evaluation.evaluate(*tree.geneTree);
+    evaluation.inferMLScenario(*tree.geneTree, scenario);
     scenario.saveEventsCounts(eventCountsFile, false);
     scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
     scenario.saveTransfers(transfersFile, false);

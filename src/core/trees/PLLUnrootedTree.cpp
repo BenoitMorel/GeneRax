@@ -26,7 +26,6 @@ static pll_utree_t *buildUtree(const std::string &str, bool isFile)
 PLLUnrootedTree::PLLUnrootedTree(const std::string &str, bool isFile):
   _tree(buildUtree(str, isFile), utreeDestroy)
 {
-  std::cerr << "Todo: check the nodes deallocation" << std::endl;
 }
 
 PLLUnrootedTree::PLLUnrootedTree(const std::vector<const char*> &labels,
@@ -87,5 +86,16 @@ pll_unode_t *PLLUnrootedTree::getNode(unsigned int node_index)
 pll_unode_t *PLLUnrootedTree::getAnyInnerNode()
 {
   return getNode(getLeavesNumber());
+}
+  
+std::unordered_set<std::string> PLLUnrootedTree::getLeavesLabels()
+{
+  std::unordered_set<std::string> res;
+  for (auto leaf: getLeaves()) {
+    if (leaf->label) {
+      res.insert(std::string(leaf->label));
+    }
+  }
+  return res;
 }
 

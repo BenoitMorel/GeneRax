@@ -13,7 +13,7 @@ extern "C" {
 #include <string>
 #include <memory>
 #include <vector>
-
+#include <unordered_set>
 #include <util/CArrayRange.hpp>
 
 
@@ -51,6 +51,11 @@ public:
    */
   pll_unode_t *getAnyInnerNode();
   pll_unode_t *getNode(unsigned int node_index);
+
+  /**
+   * labels
+   */
+  std::unordered_set<std::string> getLeavesLabels();
 
   /*
    * Save the tree in newick format in filename

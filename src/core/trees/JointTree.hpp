@@ -61,13 +61,13 @@ public:
     void setRoot(pll_unode_t * root) {reconciliationEvaluation_->setRoot(root);}
     const Parameters &getRatesVector() const {return _ratesVector;}
     void inferMLScenario(Scenario &scenario) {
-      reconciliationEvaluation_->inferMLScenario(getTreeInfo()->tree, scenario);
+      reconciliationEvaluation_->inferMLScenario(getGeneTree(), scenario);
     }
     bool isSafeMode() {return safeMode_;}
     void enableReconciliation(bool enable) {enableReconciliation_ = enable;}
     void enableLibpll(bool enable) {enableLibpll_ = enable;}
     unsigned int getGeneTaxaNumber() {return getTreeInfo()->tip_count;}
-    pll_utree_t *getGeneTree() {return libpllEvaluation_.getGeneTree();}
+    PLLUnrootedTree &getGeneTree() {return libpllEvaluation_.getGeneTree();}
     const GeneSpeciesMapping &getMappings() const {return geneSpeciesMap_;}
 private:
     LibpllEvaluation libpllEvaluation_;

@@ -7,6 +7,7 @@
 #include <memory>
 #include <maths/DTLRates.hpp>
 #include <maths/Parameters.hpp>
+#include <trees/PLLUnrootedTree.hpp>
 
 double log(ScaledValue v) ;
   
@@ -53,7 +54,7 @@ public:
    *  @param input utree
    *  @return the reconciliation likelihood of this tree
    */
-  double evaluate(pll_utree_t *utree);
+  double evaluate(PLLUnrootedTree &geneTree);
 
   bool implementsTransfers() {return Enums::accountsForTransfers(_model);} 
 
@@ -63,9 +64,9 @@ public:
    */
   void invalidateCLV(unsigned int nodeIndex);
  
-  pll_unode_t *inferMLRoot(pll_utree_t *utree);
+  pll_unode_t *inferMLRoot(PLLUnrootedTree &geneTree);
   
-  void inferMLScenario(pll_utree_t *tree, Scenario &scenario);
+  void inferMLScenario(PLLUnrootedTree &tree, Scenario &scenario);
 
   RecModel getRecModel() const {return _model;}
 private:

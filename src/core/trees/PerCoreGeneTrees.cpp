@@ -51,20 +51,20 @@ PerCoreGeneTrees::PerCoreGeneTrees(const Families &families)
     FileSystem::getFileContent(families[i].startingGeneTree, geneTreeStr);
     _geneTrees[index].name = families[i].name;
     _geneTrees[index].mapping.fill(families[i].mappingFile, geneTreeStr);
-    _geneTrees[index].tree = LibpllParsers::readNewickFromFile(families[i].startingGeneTree);
+    _geneTrees[index].geneTree = new PLLUnrootedTree(families[i].startingGeneTree, true);
     _geneTrees[index].ownTree = true;
     index++;
   }
   ParallelContext::barrier();
 }
   
-PerCoreGeneTrees::PerCoreGeneTrees(const GeneSpeciesMapping &mapping, pll_utree_t *tree)
+PerCoreGeneTrees::PerCoreGeneTrees(const GeneSpeciesMapping &mapping, PLLUnrootedTree &geneTree)
 {
   if (ParallelContext::getRank() == 0) {
     _geneTrees.resize(1);
     _geneTrees[0].name = "JointTree";
     _geneTrees[0].mapping = mapping;
-    _geneTrees[0].tree = tree;
+    _geneTrees[0].geneTree = &geneTree;
     _geneTrees[0].ownTree = false;
   }
   ParallelContext::barrier();
@@ -76,7 +76,7 @@ bool PerCoreGeneTrees::checkMappings(const std::string &speciesTreeFile)
   bool ok = true;
   auto *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile);
   for (auto &tree: _geneTrees) {
-    if (!tree.mapping.check(tree.tree, speciesTree)) {
+    if (!tree.mapping.check(tree.geneTree->getRawPtr(), speciesTree)) {
       ok = false;
       Logger::error << "Invalid mapping for tree " << tree.name << std::endl;
     }

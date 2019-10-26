@@ -77,8 +77,9 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
   _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates, _transferFrequencies);
 }
 
-double ReconciliationEvaluation::evaluate(pll_utree_t *utree)
+double ReconciliationEvaluation::evaluate(PLLUnrootedTree &geneTree)
 {
+  auto utree = geneTree.getRawPtr();
   double res = _reconciliationModel->computeLogLikelihood(utree);
   if (!_infinitePrecision && !std::isnormal(res)) {
     updatePrecision(true);  
@@ -132,11 +133,10 @@ void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
     _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates, _transferFrequencies);
  }
 }
-void ReconciliationEvaluation::inferMLScenario(pll_utree_t *tree, Scenario &scenario) {
-  assert(tree);
+void ReconciliationEvaluation::inferMLScenario(PLLUnrootedTree &geneTree, Scenario &scenario) {
   auto infinitePrecision = _infinitePrecision;
   updatePrecision(true);
-  auto ll = evaluate(tree);
+  auto ll = evaluate(geneTree);
   assert(std::isfinite(ll) && ll < 0.0);
   _reconciliationModel->inferMLScenario(scenario);
   updatePrecision(infinitePrecision);
@@ -147,11 +147,11 @@ pll_unode_t *ReconciliationEvaluation::computeMLRoot()
   return  _reconciliationModel->computeMLRoot();
 }
   
-pll_unode_t *ReconciliationEvaluation::inferMLRoot(pll_utree_t *tree)
+pll_unode_t *ReconciliationEvaluation::inferMLRoot(PLLUnrootedTree &geneTree)
 {
   auto infinitePrecision = _infinitePrecision;
   updatePrecision(true);
-  auto ll = evaluate(tree); 
+  auto ll = evaluate(geneTree); 
   assert(std::isfinite(ll) && ll < 0.0);
   auto res = computeMLRoot();
   updatePrecision(infinitePrecision);

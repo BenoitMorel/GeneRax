@@ -3,23 +3,24 @@
 #include <IO/FamiliesFileParser.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
-
+#include <trees/PLLUnrootedTree.hpp>
 
 class PerCoreGeneTrees {
 public:
   struct GeneTree {
     std::string name;
     GeneSpeciesMapping mapping;
-    pll_utree_t *tree;
+    PLLUnrootedTree *geneTree;
     bool ownTree; // If true, I am responsible for destroying the tree
     ~GeneTree() {
       if (ownTree) {
-        pll_utree_destroy(tree, 0);}
+        delete geneTree;
+      }
     }
   };
 
   PerCoreGeneTrees(const Families &families);
-  PerCoreGeneTrees(const GeneSpeciesMapping &mapping, pll_utree_t *tree);
+  PerCoreGeneTrees(const GeneSpeciesMapping &mapping, PLLUnrootedTree &geneTree);
   
   PerCoreGeneTrees(const PerCoreGeneTrees &) = delete;
   PerCoreGeneTrees & operator = (const PerCoreGeneTrees &) = delete;

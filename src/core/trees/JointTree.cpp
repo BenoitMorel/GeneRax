@@ -177,8 +177,7 @@ JointTree::JointTree(const std::string &newickString,
   assert(pllSpeciesTree_);
   geneSpeciesMap_.fill(geneSpeciesMap_file, newickString);
   if (pruneSpeciesTree) {
-    std::unordered_set<std::string> geneLeaves;
-    LibpllParsers::fillLeavesFromUtree(libpllEvaluation_.getGeneTree(), geneLeaves);
+    std::unordered_set<std::string> geneLeaves = libpllEvaluation_.getGeneTree().getLeavesLabels();
     auto clone = getPrunedTree(pllSpeciesTree_, geneLeaves, geneSpeciesMap_);
     pll_rtree_destroy(pllSpeciesTree_, 0);
     pllSpeciesTree_ = clone;
@@ -232,7 +231,7 @@ double JointTree::computeReconciliationLoglk () {
   if (!enableReconciliation_) {
     return 1.0;
   }
-  return reconciliationEvaluation_->evaluate(libpllEvaluation_.getTreeInfo()->tree) * _recWeight;
+  return reconciliationEvaluation_->evaluate(getGeneTree()) * _recWeight;
 }
 
 double JointTree::computeJointLoglk() {
@@ -275,7 +274,7 @@ void JointTree::rollbackLastMove() {
 void JointTree::save(const std::string &fileName, bool append) {
   auto root = reconciliationEvaluation_->getRoot();
   if (!root) {
-    root = reconciliationEvaluation_->inferMLRoot(getTreeInfo()->tree);
+    root = reconciliationEvaluation_->inferMLRoot(getGeneTree());
   }
   assert(root);
   LibpllParsers::saveUtree(root, fileName, append);

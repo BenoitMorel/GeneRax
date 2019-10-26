@@ -21,7 +21,7 @@ void updateLL(Parameters &rates, PerCoreGeneTrees &trees, pll_rtree_t *speciesTr
   for (auto &tree: trees.getTrees()) {
     ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
     evaluation.setRates(rates);
-    ll += evaluation.evaluate(tree.tree);
+    ll += evaluation.evaluate(*tree.geneTree);
   }
   ParallelContext::sumDouble(ll);
   if (!isValidLikelihood(ll)) {

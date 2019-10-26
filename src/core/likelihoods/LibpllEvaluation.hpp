@@ -88,7 +88,7 @@ public:
 
   std::string getModelStr();
 
-  pll_utree_t *getGeneTree() {return _treeInfo->getTree().getRawPtr();}
+  PLLUnrootedTree &getGeneTree() {return _treeInfo->getTree();}
 
 private:
   /**
