@@ -191,7 +191,7 @@ void ParallelContext::concatenateIntVectors(const std::vector<int> &localVector,
     static_cast<int>(localVector.size()),
     MPI_INT,
     getComm());
-else
+#else
   assert(false);
 #endif
 }
