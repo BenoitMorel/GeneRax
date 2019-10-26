@@ -47,6 +47,11 @@ int internal_main(int argc, char** argv, void* comm)
 
 int main(int argc, char** argv)
 {
+#ifdef WITH_MPI
   return internal_main(argc, argv, 0);
+#else
+  int noMPIComm = -1;
+  return internal_main(argc, argv, &noMPIComm);
+#endif
 }
 

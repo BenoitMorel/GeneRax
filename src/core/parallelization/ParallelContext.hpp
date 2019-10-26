@@ -2,8 +2,12 @@
 
 #include <fstream>
 #include <vector>
-#include <mpi.h>
 #include <stack>
+#ifdef WITH_MPI
+  #include <mpi.h>
+#else
+  typedef int MPI_Comm;
+#endif
 
 
 class ParallelException: public std::exception
@@ -99,7 +103,6 @@ public:
    *  in the scheduler?
    */
   static bool allowSchedulerSplitImplementation();
-
   static MPI_Comm &getComm() {return _commStack.top();}
 private:
   static void setComm(MPI_Comm newComm);

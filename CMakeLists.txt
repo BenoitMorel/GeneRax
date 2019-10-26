@@ -28,7 +28,15 @@ endif()
 
 add_subdirectory(ext)
 
-find_package(MPI REQUIRED)
+if (NOT DISABLE_MPI)
+  include(FindMPI)
+  if(MPI_FOUND)
+    set(WITH_MPI TRUE)
+    add_definitions(-DWITH_MPI)
+    message(STATUS "WITH MPI ${OpenMP_EXE_LINKER_FLAGS}")
+  endif()
+endif()
+
 
 set(JOINTSEARCH_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/src/core
    ${CMAKE_CURRENT_SOURCE_DIR}/ext

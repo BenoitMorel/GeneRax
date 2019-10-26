@@ -1,5 +1,6 @@
 #include "parallelization/ParallelContext.hpp"
 #include <algorithm>
+#include <cassert>
 
 std::ofstream ParallelContext::sink("/dev/null");
 bool ParallelContext::ownMPIContext(true);
@@ -9,11 +10,12 @@ bool ParallelContext::_mpiEnabled = false;
 
 void ParallelContext::init(void *commPtr)
 {
+  if (commPtr && *static_cast<int *>(commPtr) == -1) {
+    _mpiEnabled = false;
+    return;
+  }
+#ifdef WITH_MPI
   if (commPtr) {
-    if (*static_cast<int *>(commPtr) == -1) {
-      _mpiEnabled = false;
-      return;
-    }
     _mpiEnabled = true;
     setComm(*(static_cast<MPI_Comm*>(commPtr)));
     setOwnMPIContext(false);
@@ -28,6 +30,10 @@ void ParallelContext::init(void *commPtr)
       setOwnMPIContext(false);
     }   
   }
+#else
+  assert(false);
+#endif  
+
 
 }
   
@@ -38,31 +44,43 @@ void ParallelContext::finalize()
   if (!_mpiEnabled) {
     return;
   }
+#ifdef WITH_MPI
   if (_ownsMPIContextStack.top()) {
     MPI_Finalize();
   }
   _commStack.pop();
   _ownsMPIContextStack.pop();
+#else
+  assert(false);
+#endif
 }
 
 unsigned int ParallelContext::getRank() 
 {
+#ifdef WITH_MPI
   if (!_mpiEnabled) {
     return 0;
   }
   int rank = 0;
   MPI_Comm_rank(getComm(), &rank);
   return static_cast<unsigned int>(rank);
+#else
+  return 0;
+#endif
 }
 
 unsigned int ParallelContext::getSize() 
 {
+#ifdef WITH_MPI
   if (!_mpiEnabled) {
     return 1;
   }
   int size = 0;
   MPI_Comm_size(getComm(), &size);
   return static_cast<unsigned int>(size);
+#else
+  return 1;
+#endif
 }
   
 void ParallelContext::setOwnMPIContext(bool own)
@@ -97,6 +115,7 @@ unsigned int ParallelContext::getEnd(unsigned int elems)
   
 void ParallelContext::sumDouble(double &value)
 {
+#ifdef WITH_MPI
   if (!_mpiEnabled) {
     return;
   }
@@ -104,10 +123,12 @@ void ParallelContext::sumDouble(double &value)
   barrier();
   MPI_Allreduce(&value, &sum, 1, MPI_DOUBLE, MPI_SUM, getComm());
   value = sum;
+#endif
 }
 
 void ParallelContext::sumVectorDouble(std::vector<double> &value)
 {
+#ifdef WITH_MPI
   if (!_mpiEnabled) {
     return;
   }
@@ -115,10 +136,12 @@ void ParallelContext::sumVectorDouble(std::vector<double> &value)
   barrier();
   MPI_Allreduce(&(value[0]), &(sum[0]), value.size(), MPI_DOUBLE, MPI_SUM, getComm());
   value = sum;
+#endif
 }
 
 void ParallelContext::parallelAnd(bool &value)
 {
+#ifdef WITH_MPI
   if (!_mpiEnabled) {
     return;
   }
@@ -126,6 +149,7 @@ void ParallelContext::parallelAnd(bool &value)
   int res = 0;
   MPI_Allreduce(&v, &res, 1, MPI_INT, MPI_MIN, getComm());
   value = (res == 1);
+#endif
 }
 
 
@@ -135,6 +159,7 @@ void ParallelContext::allGatherDouble(double localValue, std::vector<double> &al
     allValues.push_back(localValue);
     return;
   }
+#ifdef WITH_MPI
   allValues.resize(getSize());
   MPI_Allgather(
     &localValue,
@@ -144,6 +169,9 @@ void ParallelContext::allGatherDouble(double localValue, std::vector<double> &al
     1,
     MPI_DOUBLE,
     getComm());
+#else
+  assert(false);
+#endif
 }
 
 void ParallelContext::concatenateIntVectors(const std::vector<int> &localVector, std::vector<int> &globalVector)
@@ -153,6 +181,7 @@ void ParallelContext::concatenateIntVectors(const std::vector<int> &localVector,
     return;
   }
 
+#ifdef WITH_MPI
   globalVector.resize(getSize() * localVector.size(), 0);
   MPI_Allgather(
     &localVector[0],
@@ -162,6 +191,9 @@ void ParallelContext::concatenateIntVectors(const std::vector<int> &localVector,
     static_cast<int>(localVector.size()),
     MPI_INT,
     getComm());
+else
+  assert(false);
+#endif
 }
   
 void ParallelContext::concatenateUIntVectors(const std::vector<unsigned int> &localVector, 
@@ -172,6 +204,7 @@ void ParallelContext::concatenateUIntVectors(const std::vector<unsigned int> &lo
     return;
   }
 
+#ifdef WITH_MPI
   globalVector.resize(getSize() * localVector.size(), 0);
   MPI_Allgather(
     &localVector[0],
@@ -181,6 +214,9 @@ void ParallelContext::concatenateUIntVectors(const std::vector<unsigned int> &lo
     static_cast<int>(localVector.size()),
     MPI_UNSIGNED,
     getComm());
+#else
+  assert(false);
+#endif
 }
   
 void ParallelContext::broadcastInt(unsigned int fromRank, int &value)
@@ -188,12 +224,14 @@ void ParallelContext::broadcastInt(unsigned int fromRank, int &value)
   if (!_mpiEnabled) {
     return;
   }
+#ifdef WITH_MPI
   MPI_Bcast(
     &value,
     1,
     MPI_INT,
     static_cast<int>(fromRank),
     getComm());
+#endif
 }
 
 void ParallelContext::broadcastUInt(unsigned int fromRank, unsigned int &value)
@@ -201,12 +239,14 @@ void ParallelContext::broadcastUInt(unsigned int fromRank, unsigned int &value)
   if (!_mpiEnabled) {
     return;
   }
+#ifdef WITH_MPI
   MPI_Bcast(
     &value,
     1,
     MPI_UNSIGNED,
     static_cast<int>(fromRank),
     getComm());
+#endif
 }
 
 void ParallelContext::broadcastDouble(unsigned int fromRank, double &value)
@@ -214,12 +254,14 @@ void ParallelContext::broadcastDouble(unsigned int fromRank, double &value)
   if (!_mpiEnabled) {
     return;
   }
+#ifdef WITH_MPI
   MPI_Bcast(
     &value,
     1,
     MPI_DOUBLE,
     static_cast<int>(fromRank),
     getComm());
+#endif
 }
 
 unsigned int ParallelContext::getMax(double &value, unsigned int &bestRank)
@@ -245,7 +287,9 @@ void ParallelContext::barrier()
   if (!_mpiEnabled) {
     return;
   }
+#ifdef WITH_MPI
   MPI_Barrier(getComm());
+#endif
 }
 
 void ParallelContext::abort(int errorCode)
@@ -253,12 +297,16 @@ void ParallelContext::abort(int errorCode)
   if (!_mpiEnabled) {
     exit(errorCode);
   }
+#ifdef WITH_MPI
   if (_ownsMPIContextStack.top()) {
     MPI_Finalize();
     exit(errorCode);
   } else {
     throw ParallelException(errorCode); 
   }
+#else
+  assert(false);
+#endif
 }
 
 bool ParallelContext::allowSchedulerSplitImplementation()
