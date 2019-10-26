@@ -16,6 +16,16 @@ matrix:
           - pandoc
           - mpich
           - libmpich-dev
+    - os: linux
+      dist: trusty
+      env: CXX_COMPILER=g++-6
+      addons:
+        apt:
+          sources:
+          - ubuntu-toolchain-r-test
+          packages:
+          - g++-6
+          - pandoc
     - os: osx
       osx_image: xcode9.2
 

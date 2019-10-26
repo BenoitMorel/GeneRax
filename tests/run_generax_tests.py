@@ -2,6 +2,7 @@ import os
 import sys
 import subprocess
 import shutil
+from  distutils.spawn import find_executable
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 REPO_DIR = os.path.realpath(os.path.join(SCRIPT_DIR, os.pardir))
@@ -15,6 +16,8 @@ try:
 except:
   pass
 
+def is_mpi_installed():
+  return find_executable("mpiexec") is not None
 
 def get_test_name(dataset, with_starting_tree, strategy, model, cores):
   test_name = dataset
@@ -86,7 +89,10 @@ dataset_set = ["simulated_2"]
 with_starting_tree_set = [True, False]
 strategy_set = ["SPR", "EVAL"]
 model_set = ["UndatedDL", "UndatedDTL"]
-cores_set = [3, 1]
+cores_set = [1]
+if (is_mpi_installed()):
+  cores_set.append(3)
+
 ok = True
 for dataset in dataset_set:
   for with_starting_tree in with_starting_tree_set:
