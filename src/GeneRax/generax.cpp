@@ -12,8 +12,7 @@ int generax_main(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm); 
   Logger::init();
-  Logger::timed << "All cores started" << std::endl;
-  
+  Logger::timed << "GeneRax v1.0.0" << std::endl; 
   GeneRaxInstance instance(argc, argv);
   GeneRaxCore::initInstance(instance);
   GeneRaxCore::initRandomGeneTrees(instance);
