@@ -13,9 +13,9 @@ class Move {
 public:
   virtual ~Move() {}
   
-  static std::shared_ptr<Move> createSPRMove(unsigned int pruneIndex, unsigned int regraftIndex, const std::vector<unsigned int> &path);
+  static std::unique_ptr<Move> createSPRMove(unsigned int pruneIndex, unsigned int regraftIndex, const std::vector<unsigned int> &path);
   
-  virtual std::shared_ptr<Rollback> applyMove(JointTree &tree) = 0;
+  virtual std::unique_ptr<Rollback> applyMove(JointTree &tree) = 0;
   
   virtual void optimizeMove(JointTree &tree) = 0;
     
@@ -30,7 +30,7 @@ class SPRMove: public Move {
 public:
   SPRMove(unsigned int pruneIndex, unsigned int regraftIndex, const std::vector<unsigned int> &path);
   virtual ~SPRMove() {}
-  virtual std::shared_ptr<Rollback> applyMove(JointTree &tree);
+  virtual std::unique_ptr<Rollback> applyMove(JointTree &tree);
   virtual void optimizeMove(JointTree &tree);
   virtual std::ostream& print(std::ostream & os) const;
 private:
@@ -38,6 +38,5 @@ private:
   unsigned int regraftIndex_;
   std::vector<unsigned int> path_;
   std::vector<pll_unode_t *> branchesToOptimize_;
-  std::shared_ptr<SPRRollback> rollback_;
 };
 

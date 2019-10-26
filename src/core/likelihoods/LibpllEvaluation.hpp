@@ -42,17 +42,16 @@ public:
   LibpllEvaluation & operator = (LibpllEvaluation &&) = delete;
 
   /*
-   * Build a LibpllEvaluation instance
-   * @param newickString the tree in newick format
+   * Constructor 
+   * @param newickStrOrFile the tree in newick format: either a string or the path to a file containing the string
+   * @param isNewickAFile specifies whether newickStrOrFile is a string or a filepath
    * @param alignmentFilename path to the msa file
    * @param modelStrOrFile a std::string representing the model (GTR, DAYOFF...), or a file containing it
-   * @return a shared pointer wraping the LibpllEvaluation instance
    */
-  static std::shared_ptr<LibpllEvaluation> buildFromString(const std::string &newickString,
-      const std::string& alignmentFilename,
+  LibpllEvaluation(const std::string &newickStrOrFile,
+      bool isNewickAFile,
+      const std::string &alignmentFilename,
       const std::string &modelStrOrFile);
-  static std::shared_ptr<LibpllEvaluation> buildFromFile(const std::string &newickTree,
-      const LibpllAlignmentInfo &info);
 
 
   /*
@@ -74,7 +73,8 @@ public:
   /**
    *  Accessor to the wrapped treeinfo structure
    */
-  pllmod_treeinfo_t *getTreeInfo() {return _plopi->getTreeInfo();}
+  pllmod_treeinfo_t *getTreeInfo() {return _treeInfo->getTreeInfo();}
+  const pllmod_treeinfo_t *getTreeInfo() const {return _treeInfo->getTreeInfo();}
 
   /**
    *  Invalidate a CLV at a given node index
@@ -88,7 +88,7 @@ public:
 
   std::string getModelStr();
 
-  pll_utree_t *getGeneTree() {return _plopi->getTree().getRawPtr();}
+  pll_utree_t *getGeneTree() {return _treeInfo->getTree().getRawPtr();}
 
 private:
   /**
@@ -99,8 +99,8 @@ private:
 
   static double optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, double tolerance);
   
-  pll_unode_t *getNode(unsigned int nodeIndex) {return _plopi->getTreeInfo()->subnodes[nodeIndex];}
+  pll_unode_t *getNode(unsigned int nodeIndex) {return _treeInfo->getTreeInfo()->subnodes[nodeIndex];}
 private:
-  std::unique_ptr<PLLTreeInfo> _plopi;
+  std::unique_ptr<PLLTreeInfo> _treeInfo;
 };
 

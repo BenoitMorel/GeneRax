@@ -164,7 +164,7 @@ static void print_param(std::ostringstream& s, const std::vector<T>& vec)
 }
 
 Model::Model (DataType data_type, const std::string &model_string) :
-    _data_type(data_type), _custom_charmap(nullptr)
+    _data_type(data_type), _custom_charmap(nullptr, free)
 {
   // RAxML compatibility hack, TODO: generic model name aliases
   const std::string model_string_tmp = model_string == "DNA" ? "GTR+G+F" : model_string;
@@ -192,7 +192,7 @@ void Model::init_from_string(const std::string &model_string)
   if (_data_type == DataType::multistate)
   {
     _num_states = pllmod_util_model_numstates_mult(model_name.c_str());
-    _custom_charmap = std::shared_ptr<pll_state_t>(pllmod_util_model_charmap_mult(_num_states), free);
+    _custom_charmap = std::unique_ptr<pll_state_t, void(*)(void*)>(pllmod_util_model_charmap_mult(_num_states), free);
 
     //libpll_check_error("ERROR in model specification |" + model_name + "|");
     assert(_custom_charmap);
@@ -628,7 +628,7 @@ void Model::init_model_opts(const std::string &model_opts, const pllmod_mixture_
 
            read_param(ss, gap_chars);
 
-           _custom_charmap = std::shared_ptr<pll_state_t>(
+           _custom_charmap = std::unique_ptr<pll_state_t, void(*)(void*)>(
                pllmod_util_charmap_create(_num_states,
                                           state_chars.c_str(),
                                           gap_chars.c_str(),

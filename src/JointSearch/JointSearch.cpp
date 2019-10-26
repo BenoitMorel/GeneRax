@@ -71,7 +71,7 @@ int internal_main(int argc, char** argv, void* comm)
       lossRate = arguments.lossRate;
       transferRate = arguments.transferRate;
     }
-    auto jointTree = std::make_shared<JointTree>(geneTreeString,
+    auto jointTree = std::make_unique<JointTree>(geneTreeString,
         arguments.alignment,
         arguments.speciesTree,
         arguments.geneSpeciesMap,

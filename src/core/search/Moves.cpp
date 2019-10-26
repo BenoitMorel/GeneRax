@@ -19,8 +19,8 @@
   
 
 
-std::shared_ptr<Move> Move::createSPRMove(unsigned int pruneIndex, unsigned int regraftIndex, const std::vector<unsigned int> &path) {
-  return std::make_shared<SPRMove>(pruneIndex, regraftIndex, path);
+std::unique_ptr<Move> Move::createSPRMove(unsigned int pruneIndex, unsigned int regraftIndex, const std::vector<unsigned int> &path) {
+  return std::make_unique<SPRMove>(pruneIndex, regraftIndex, path);
 }
 
 
@@ -77,7 +77,7 @@ void printNode(pll_unode_s *node)
 
 
 
-std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
+std::unique_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
 {
   auto root = tree.getRoot();
   auto prune = tree.getNode(pruneIndex_);
@@ -115,8 +115,7 @@ std::shared_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
     savedBranches.push_back(branch);
   }
   assert(PLL_SUCCESS == pllmod_utree_spr(prune, regraft, &pll_rollback));
-  rollback_ = std::make_shared<SPRRollback>(tree, pll_rollback, savedBranches, root);
-  return rollback_;
+  return std::make_unique<SPRRollback>(tree, pll_rollback, savedBranches, root);
 }
   
 void SPRMove::optimizeMove(JointTree &tree)

@@ -72,8 +72,8 @@ bool getNextLine(std::ifstream &is, std::string &os)
 
 std::string LibpllEvaluation::getModelStr()
 {
-  assign(_plopi->getModel(), _plopi->getTreeInfo()->partitions[0]);
-  std::string modelStr = _plopi->getModel().to_string(true);
+  assign(_treeInfo->getModel(), _treeInfo->getTreeInfo()->partitions[0]);
+  std::string modelStr = _treeInfo->getModel().to_string(true);
   return modelStr;
 }
 
@@ -81,33 +81,16 @@ void LibpllEvaluation::createAndSaveRandomTree(const std::string &alignmentFilen
     const std::string &modelStrOrFile,
     const std::string &outputTreeFile)
 {
-  auto evaluation = buildFromString("__random__", alignmentFilename, modelStrOrFile);
-  evaluation->_plopi->getTree().save(outputTreeFile);
+  PLLTreeInfo treeInfo("__random__", false, alignmentFilename, modelStrOrFile);
+  treeInfo.getTree().save(outputTreeFile);
 }
   
-
-
-std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromString(const std::string &newickString,
-    const std::string& alignmentFilename,
-    const std::string &modelStrOrFile)
+LibpllEvaluation::LibpllEvaluation(const std::string &newickStrOrFile,
+      bool isNewickAFile,
+      const std::string& alignmentFilename,
+      const std::string &modelStrOrFile):
+  _treeInfo(std::make_unique<PLLTreeInfo>(newickStrOrFile, isNewickAFile, alignmentFilename, modelStrOrFile))
 {
-
-  auto res = std::shared_ptr<LibpllEvaluation>(new LibpllEvaluation());
-  res->_plopi = std::make_unique<PLLTreeInfo>(newickString, false, alignmentFilename, modelStrOrFile);
-  return res;
-}
-  
-std::shared_ptr<LibpllEvaluation> LibpllEvaluation::buildFromFile(const std::string &newickFilename,
-    const LibpllAlignmentInfo &info)
-{
-  std::ifstream t(newickFilename);
-  if (!t)
-    throw LibpllException("Could not load open newick file ", newickFilename);
-  std::string str((std::istreambuf_iterator<char>(t)),
-                       std::istreambuf_iterator<char>());
-  return buildFromString(str,
-      info.alignmentFilename,
-      info.model);
 }
 
 double LibpllEvaluation::raxmlSPRRounds(int minRadius, int maxRadius, int thorough, unsigned toKeep, double cutoff)
@@ -135,28 +118,28 @@ double LibpllEvaluation::raxmlSPRRounds(int minRadius, int maxRadius, int thorou
 
 double LibpllEvaluation::computeLikelihood(bool incremental)
 {
-  return pllmod_treeinfo_compute_loglh(_plopi->getTreeInfo(), incremental);
+  return pllmod_treeinfo_compute_loglh(_treeInfo->getTreeInfo(), incremental);
 }
 
 double LibpllEvaluation::optimizeBranches(double tolerance)
 {
-  unsigned int toOptimize = _plopi->getTreeInfo()->params_to_optimize[0];
-  _plopi->getTreeInfo()->params_to_optimize[0] = PLLMOD_OPT_PARAM_BRANCHES_ITERATIVE;
+  unsigned int toOptimize = _treeInfo->getTreeInfo()->params_to_optimize[0];
+  _treeInfo->getTreeInfo()->params_to_optimize[0] = PLLMOD_OPT_PARAM_BRANCHES_ITERATIVE;
   double res = optimizeAllParameters(tolerance);
-  _plopi->getTreeInfo()->params_to_optimize[0] = toOptimize;
+  _treeInfo->getTreeInfo()->params_to_optimize[0] = toOptimize;
   return res;
 }
 
 double LibpllEvaluation::optimizeAllParameters(double tolerance)
 {
-  if (_plopi->getTreeInfo()->params_to_optimize[0] == 0) {
+  if (_treeInfo->getTreeInfo()->params_to_optimize[0] == 0) {
     return computeLikelihood();
   }
   double previousLogl = computeLikelihood(); 
   double newLogl = previousLogl;
   do {
     previousLogl = newLogl;
-    newLogl = optimizeAllParametersOnce(_plopi->getTreeInfo(), tolerance);
+    newLogl = optimizeAllParametersOnce(_treeInfo->getTreeInfo(), tolerance);
   } while (newLogl - previousLogl > tolerance);
   return newLogl;
 }
@@ -266,7 +249,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, 
 
 void LibpllEvaluation::invalidateCLV(unsigned int nodeIndex)
 {
-  pllmod_treeinfo_invalidate_clv(_plopi->getTreeInfo(), getNode(nodeIndex));
-  pllmod_treeinfo_invalidate_pmatrix(_plopi->getTreeInfo(), getNode(nodeIndex));
+  pllmod_treeinfo_invalidate_clv(_treeInfo->getTreeInfo(), getNode(nodeIndex));
+  pllmod_treeinfo_invalidate_pmatrix(_treeInfo->getTreeInfo(), getNode(nodeIndex));
 }
 

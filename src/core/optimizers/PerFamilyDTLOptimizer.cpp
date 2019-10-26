@@ -272,7 +272,7 @@ void PerFamilyDTLOptimizer::optimizeDTLRatesGradient(JointTree &jointTree)
 {
   auto speciesTree = jointTree.getSpeciesTree();
   PerCoreGeneTrees geneTrees(jointTree.getMappings(), jointTree.getGeneTree());
-  RecModel recModel = jointTree.getReconciliationEvaluation()->getRecModel();
+  RecModel recModel = jointTree.getReconciliationEvaluation().getRecModel();
   Parameters rates = DTLOptimizer::optimizeParameters(geneTrees, speciesTree, recModel, jointTree.getRatesVector());
   Logger::info << "Per family rates: " << rates << std::endl;
   jointTree.setRates(rates);

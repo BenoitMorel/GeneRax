@@ -26,7 +26,7 @@ public:
   
   
   
-  std::shared_ptr<SpeciesTree> buildRandomTree() const;
+  std::unique_ptr<SpeciesTree> buildRandomTree() const;
 
   void setGlobalRates(const Parameters &rates);
   void setRatesVector(const Parameters &rates);

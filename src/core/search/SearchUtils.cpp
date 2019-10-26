@@ -6,7 +6,7 @@
 
 
 void SearchUtils::testMove(JointTree &jointTree,
-    std::shared_ptr<Move> move,
+    Move &move,
     double initialReconciliationLoglk,
     double initialLibpllLoglk,
 #ifdef SUPER_OPTIM
@@ -34,7 +34,7 @@ void SearchUtils::testMove(JointTree &jointTree,
       std::cerr << "small rollback lead to different likelihoods: " << initialLoglk
         << " " << jointTree.computeJointLoglk() << std::endl;
       std::cerr << " rank " << ParallelContext::getRank() << std::endl;
-      std::cerr << "Move: " << *move << std::endl;
+      std::cerr << "Move: " << move << std::endl;
       exit(1);
     }
     return;
@@ -54,7 +54,7 @@ void SearchUtils::testMove(JointTree &jointTree,
         << " " << rbLoglk << std::endl;
       std::cerr << "recomputing the ll again: " << jointTree.computeJointLoglk() << std::endl;
       std::cerr << " rank " << ParallelContext::getRank() << std::endl;
-      std::cerr << "Move: " << *move << std::endl;
+      std::cerr << "Move: " << move << std::endl;
       exit(1);
     }
   }
@@ -63,7 +63,7 @@ void SearchUtils::testMove(JointTree &jointTree,
 //#define STOP
 
 bool SearchUtils::findBestMove(JointTree &jointTree,
-    std::vector<std::shared_ptr<Move> > &allMoves,
+    std::vector<std::unique_ptr<Move> > &allMoves,
     double &bestLoglk,
     unsigned int &bestMoveIndex,
     bool blo,
@@ -92,9 +92,8 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
   }
 #endif
   for (auto i = begin; i < end; ++i) {
-    auto move = allMoves[i];
     auto loglk = bestLoglk;
-    SearchUtils::testMove(jointTree, move, 
+    SearchUtils::testMove(jointTree, *allMoves[i], 
         initialReconciliationLoglk,
         initialLibpllLoglk, 
         averageReconciliationDiff,

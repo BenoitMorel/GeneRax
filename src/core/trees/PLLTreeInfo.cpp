@@ -107,7 +107,7 @@ pll_partition_t * PLLTreeInfo::buildPartition(const PLLSequencePtrs &sequences,
   // fill partition
   std::map<std::string, unsigned int> tipsLabelling;
   unsigned int labelIndex = 0;
-  for (auto seq: sequences) {
+  for (auto &seq: sequences) {
     tipsLabelling[seq->label] = labelIndex;
     pll_set_tip_states(partition, labelIndex, _model->charmap(), seq->seq);
     labelIndex++;

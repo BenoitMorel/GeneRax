@@ -149,8 +149,8 @@ static pll_rtree_t *getPrunedTree(pll_rtree_t *inputSpeciesTree,
 }
 
 
-JointTree::JointTree(const std::string &newick_string,
-    const std::string &alignment_file,
+JointTree::JointTree(const std::string &newickString,
+    const std::string &alignmentFilename,
     const std::string &speciestree_file,
     const std::string &geneSpeciesMap_file,
     const std::string &substitutionModel,
@@ -162,6 +162,7 @@ JointTree::JointTree(const std::string &newick_string,
     bool safeMode,
     bool optimizeDTLRates,
     const Parameters &ratesVector):
+  libpllEvaluation_(newickString, false, alignmentFilename, substitutionModel),
   optimizeDTLRates_(optimizeDTLRates),
   safeMode_(safeMode),
   enableReconciliation_(true),
@@ -169,18 +170,15 @@ JointTree::JointTree(const std::string &newick_string,
   recOpt_(reconciliationOpt),
   _recWeight(recWeight)
 {
-   info_.alignmentFilename = alignment_file;
-  info_.model = substitutionModel;
-  libpllEvaluation_ = LibpllEvaluation::buildFromString(newick_string, info_.alignmentFilename, info_.model);
   pllSpeciesTree_ = pll_rtree_parse_newick(speciestree_file.c_str());
   if (!pllSpeciesTree_) {
     Logger::perrank << "Cannot read tree " << speciestree_file << " !" << std::endl;
   }
   assert(pllSpeciesTree_);
-  geneSpeciesMap_.fill(geneSpeciesMap_file, newick_string);
+  geneSpeciesMap_.fill(geneSpeciesMap_file, newickString);
   if (pruneSpeciesTree) {
     std::unordered_set<std::string> geneLeaves;
-    LibpllParsers::fillLeavesFromUtree(libpllEvaluation_->getGeneTree(), geneLeaves);
+    LibpllParsers::fillLeavesFromUtree(libpllEvaluation_.getGeneTree(), geneLeaves);
     auto clone = getPrunedTree(pllSpeciesTree_, geneLeaves, geneSpeciesMap_);
     pll_rtree_destroy(pllSpeciesTree_, 0);
     pllSpeciesTree_ = clone;
@@ -188,7 +186,7 @@ JointTree::JointTree(const std::string &newick_string,
     LibpllParsers::getRnodeNewickString(pllSpeciesTree_->root, newStr);
     Logger::info << "species tree: " << newStr << std::endl;
   }
-  reconciliationEvaluation_ = std::make_shared<ReconciliationEvaluation>(pllSpeciesTree_,  
+  reconciliationEvaluation_ = std::make_unique<ReconciliationEvaluation>(pllSpeciesTree_,  
       geneSpeciesMap_, 
       reconciliationModel,
       rootedGeneTree);
@@ -204,14 +202,14 @@ JointTree::~JointTree()
 
 
 void JointTree::printLibpllTree() const {
-  printLibpllTreeRooted(libpllEvaluation_->getTreeInfo()->root, Logger::info);
+  printLibpllTreeRooted(libpllEvaluation_.getTreeInfo()->root, Logger::info);
 }
 
 
 
 void JointTree::optimizeParameters(bool felsenstein, bool reconciliation) {
   if (felsenstein && enableLibpll_) {
-    libpllEvaluation_->optimizeAllParameters();
+    libpllEvaluation_.optimizeAllParameters();
   }
   if (reconciliation && enableReconciliation_ && optimizeDTLRates_) {
     std::cerr << "optimize parametres per family" << std::endl;
@@ -227,14 +225,14 @@ double JointTree::computeLibpllLoglk(bool incremental) {
   if (!enableLibpll_) {
     return 1.0;
   }
-  return libpllEvaluation_->computeLikelihood(incremental);
+  return libpllEvaluation_.computeLikelihood(incremental);
 }
 
 double JointTree::computeReconciliationLoglk () {
   if (!enableReconciliation_) {
     return 1.0;
   }
-  return reconciliationEvaluation_->evaluate(libpllEvaluation_->getTreeInfo()->tree) * _recWeight;
+  return reconciliationEvaluation_->evaluate(libpllEvaluation_.getTreeInfo()->tree) * _recWeight;
 }
 
 double JointTree::computeJointLoglk() {
@@ -257,14 +255,13 @@ pll_unode_t *JointTree::getNode(unsigned int index) {
 }
 
 
-void JointTree::applyMove(std::shared_ptr<Move> move) {
-  auto rollback = move->applyMove(*this);
-  rollbacks_.push(rollback);
+void JointTree::applyMove(Move &move) {
+  rollbacks_.push(std::move(move.applyMove(*this)));
 }
 
-void JointTree::optimizeMove(std::shared_ptr<Move> move) {
+void JointTree::optimizeMove(Move &move) {
   if (enableLibpll_) {
-    move->optimizeMove(*this);
+    move.optimizeMove(*this);
   }
 }
 
@@ -285,14 +282,14 @@ void JointTree::save(const std::string &fileName, bool append) {
 }
 
 pllmod_treeinfo_t * JointTree::getTreeInfo() {
-  return libpllEvaluation_->getTreeInfo();
+  return libpllEvaluation_.getTreeInfo();
 }
 
 
 void JointTree::invalidateCLV(pll_unode_s *node)
 {
   reconciliationEvaluation_->invalidateCLV(node->node_index);
-  libpllEvaluation_->invalidateCLV(node->node_index);
+  libpllEvaluation_.invalidateCLV(node->node_index);
 }
 
 

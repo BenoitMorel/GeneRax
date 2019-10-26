@@ -11,7 +11,7 @@ class JointTree;
 class SearchUtils {
 public:
   static void testMove(JointTree &jointTree,
-    std::shared_ptr<Move> move,
+    Move &move,
     double initialReconciliationLoglk,
     double initialLibpllLoglk,
     double &averageReconciliationDiff,
@@ -21,7 +21,7 @@ public:
     );
  
   static bool findBestMove(JointTree &jointTree,
-    std::vector<std::shared_ptr<Move> > &allMoves,
+    std::vector<std::unique_ptr<Move> > &allMoves,
     double &bestLoglk,
     unsigned int &bestMoveIndex,
     bool blo,

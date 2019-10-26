@@ -27,7 +27,7 @@ struct PLLSequence {
     free(seq);
   }
 };
-using PLLSequencePtr = std::shared_ptr<PLLSequence>;
+using PLLSequencePtr = std::unique_ptr<PLLSequence>;
 using PLLSequencePtrs = std::vector<PLLSequencePtr>;
 
 class LibpllException: public std::exception {

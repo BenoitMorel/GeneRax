@@ -17,7 +17,7 @@ void printLibpllTreeRooted(pll_unode_t *root, std::ostream &os);
 
 class JointTree {
 public:
-    JointTree(const std::string &newick_string,
+    JointTree(const std::string &newickString,
               const std::string &alignment_file,
               const std::string &speciestree_file,
               const std::string &geneSpeciesMap_file,
@@ -43,8 +43,8 @@ public:
     double computeJointLoglk();
     void printLoglk(bool libpll = true, bool rec = true, bool joint = true, Logger &os = Logger::info);
     pll_unode_t *getNode(unsigned int index);
-    void applyMove(std::shared_ptr<Move> move);
-    void optimizeMove(std::shared_ptr<Move> move);
+    void applyMove(Move &move);
+    void optimizeMove(Move &move);
   
     void invalidateCLV(pll_unode_s *node);
     void printAllNodes(std::ostream &os);
@@ -55,7 +55,7 @@ public:
     void setRates(const Parameters &ratesVector);
     pll_rtree_t *getSpeciesTree() {return pllSpeciesTree_;}
     size_t getUnrootedTreeHash();
-    std::shared_ptr<ReconciliationEvaluation> getReconciliationEvaluation() {return reconciliationEvaluation_;}
+    ReconciliationEvaluation &getReconciliationEvaluation() {return *reconciliationEvaluation_;}
     
     pll_unode_t *getRoot() {return reconciliationEvaluation_->getRoot();}
     void setRoot(pll_unode_t * root) {reconciliationEvaluation_->setRoot(root);}
@@ -67,16 +67,15 @@ public:
     void enableReconciliation(bool enable) {enableReconciliation_ = enable;}
     void enableLibpll(bool enable) {enableLibpll_ = enable;}
     unsigned int getGeneTaxaNumber() {return getTreeInfo()->tip_count;}
-    pll_utree_t *getGeneTree() {return libpllEvaluation_->getGeneTree();}
+    pll_utree_t *getGeneTree() {return libpllEvaluation_.getGeneTree();}
     const GeneSpeciesMapping &getMappings() const {return geneSpeciesMap_;}
 private:
-    std::shared_ptr<LibpllEvaluation> libpllEvaluation_;
-    std::shared_ptr<ReconciliationEvaluation> reconciliationEvaluation_;
+    LibpllEvaluation libpllEvaluation_;
+    std::unique_ptr<ReconciliationEvaluation> reconciliationEvaluation_;
     pll_rtree_t *pllSpeciesTree_;
     GeneSpeciesMapping geneSpeciesMap_;
-    LibpllAlignmentInfo info_;
     Parameters _ratesVector;
-    std::stack<std::shared_ptr<Rollback> > rollbacks_;
+    std::stack<std::unique_ptr<Rollback> > rollbacks_;
     double reconciliationLL_;
     bool optimizeDTLRates_;
     bool safeMode_;

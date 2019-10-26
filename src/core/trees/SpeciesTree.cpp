@@ -56,11 +56,11 @@ SpeciesTree::SpeciesTree(const std::unordered_set<std::string> &leafLabels)
   buildFromLabels(leafLabels);
 }
   
-std::shared_ptr<SpeciesTree> SpeciesTree::buildRandomTree() const
+std::unique_ptr<SpeciesTree> SpeciesTree::buildRandomTree() const
 {
    std::unordered_set<std::string> labels;
    getLabels(labels);
-   return std::make_shared<SpeciesTree>(labels);
+   return std::make_unique<SpeciesTree>(labels);
 }
 
 void SpeciesTree::buildFromLabels(const std::unordered_set<std::string> &leafLabels)

@@ -247,7 +247,7 @@ void LibpllParsers::parsePhylip(const char *phylipFile,
 {
   assert(phylipFile);
   assert(stateMap);
-  std::shared_ptr<pll_phylip_t> reader(pll_phylip_open(phylipFile, pll_map_phylip),
+  std::unique_ptr<pll_phylip_t, void (*)(pll_phylip_t*)> reader(pll_phylip_open(phylipFile, pll_map_phylip),
       pll_phylip_close);
   if (!reader) {
     throw LibpllException("Error while opening phylip file ", phylipFile);
@@ -260,7 +260,7 @@ void LibpllParsers::parsePhylip(const char *phylipFile,
       throw LibpllException("failed to parse ", phylipFile);
     }
   } catch (...) {
-    std::shared_ptr<pll_phylip_t> reader2(pll_phylip_open(phylipFile, pll_map_phylip), pll_phylip_close);
+    std::unique_ptr<pll_phylip_t, void(*)(pll_phylip_t*)> reader2(pll_phylip_open(phylipFile, pll_map_phylip), pll_phylip_close);
     msa = pll_phylip_parse_sequential(reader2.get());
     if (!msa) {
       throw LibpllException("failed to parse ", phylipFile);
@@ -271,7 +271,7 @@ void LibpllParsers::parsePhylip(const char *phylipFile,
     throw LibpllException("Error while parsing fasta: cannot compress sites");
   for (auto i = 0; i < msa->count; ++i) {
     PLLSequencePtr seq(new PLLSequence(msa->label[i], msa->sequence[i], static_cast<unsigned int>(msa->length)));
-    sequences.push_back(seq);
+    sequences.push_back(std::move(seq));
     // avoid freeing these buffers with pll_msa_destroy
     msa->label[i] = nullptr;
     msa->sequence[i] = nullptr;

@@ -75,20 +75,6 @@ void getRegraftsRec(unsigned int pruneIndex, pll_unode_t *regraft, int maxRadius
   }
 }
 
-
-void printPossibleMoves(JointTree &jointTree, std::vector<std::shared_ptr<Move> > &allMoves)
-{
-  Logger::info << "Possible moves from " << jointTree.getUnrootedTreeHash() << std::endl;
-  std::unordered_set<size_t> hashs;
-  for (auto move: allMoves) {
-    jointTree.applyMove(move);
-    auto hashValue = jointTree.getUnrootedTreeHash();
-    hashs.insert(hashValue);
-    jointTree.rollbackLastMove();
-  }
-  Logger::info << "Unique moves" << hashs.size() << std::endl;
-}
-
 void getRegrafts(JointTree &jointTree, unsigned int pruneIndex, int maxRadius, std::vector<SPRMoveDesc> &moves) 
 {
   pll_unode_t *pruneNode = jointTree.getNode(pruneIndex);
@@ -98,11 +84,10 @@ void getRegrafts(JointTree &jointTree, unsigned int pruneIndex, int maxRadius, s
 }
 
 bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLoglk, bool blo) {
-  std::shared_ptr<Move> bestMove(0);
   std::vector<unsigned int> allNodes;
   getAllPruneIndices(jointTree, allNodes);
   std::vector<SPRMoveDesc> potentialMoves;
-  std::vector<std::shared_ptr<Move> > allMoves;
+  std::vector<std::unique_ptr<Move> > allMoves;
   for (unsigned int i = 0; i < allNodes.size(); ++i) {
       auto pruneIndex = allNodes[i];
       getRegrafts(jointTree, pruneIndex, radius, potentialMoves);
@@ -129,9 +114,8 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
       redundantNNIMoves[nniBranchIndex][nniType] = true; 
     }
 
-    allMoves.push_back(Move::createSPRMove(pruneIndex, regraftIndex, move.path));
+    allMoves.push_back(std::move(Move::createSPRMove(pruneIndex, regraftIndex, move.path)));
   }
-  //printPossibleMoves(jointTree, allMoves);
   
   Logger::info << "Start SPR round " 
     << "(std::hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
@@ -139,9 +123,9 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
   unsigned int bestMoveIndex = static_cast<unsigned int>(-1);
   auto foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex, blo, jointTree.isSafeMode()); 
   if (foundBetterMove) {
-    jointTree.applyMove(allMoves[bestMoveIndex]);
+    jointTree.applyMove(*allMoves[bestMoveIndex]);
     if (blo) {
-      jointTree.optimizeMove(allMoves[bestMoveIndex]);
+      jointTree.optimizeMove(*allMoves[bestMoveIndex]);
     }
     double ll = jointTree.computeJointLoglk();
     if (fabs(ll - bestLoglk) > 0.00000001) {
