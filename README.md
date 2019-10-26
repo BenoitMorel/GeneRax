@@ -1,25 +1,35 @@
 # GeneRax 
 
-GeneRax is a parallel tool for sequence- and species-aware maximum-likelihood gene tree inference.
+GeneRax is a parallel tool for species tree-aware maximum likelihood based gene tree inference under gene duplication, transfer, and loss.
 
-GeneRax infers gene trees from their aligned sequences and a rooted undated species tree.
+It infers gene trees from their aligned sequences, the mapping between genes and species, and a rooted undated species tree.
 
-GeneRax accounts for sequence substitutions, gene duplication, gene loss and horizontal gene transfer.
+It accounts for sequence substitutions, gene duplication, gene loss and horizontal gene transfer.
 
+Preprint: https://www.biorxiv.org/content/biorxiv/early/2019/09/26/779066.full.pdf
 
 ## Requirement
 
-* A Linux environnement
+* A Linux or MacOS environnement
 * gcc 5.0 or > 
 * CMake 3.6 or >
 * MPI
+* bison and flex parsers
 
 ## Installation
 
-Please use git,  and clone with --recursive!!!
+Installing the dependencies on Ubuntu and other Debian-based systems:
+```
+sudo apt-get install flex bison libgmp3-dev
+```
+
+On other systems: [`GNU Bison`](http://www.gnu.org/software/bison/) [`Flex`](http://flex.sourceforge.net/) [`GMP`](https://gmplib.org/)
+
+
+ To download GeneRax, please use git,  and clone with --recursive!!!
 
 ```
-git clone --recursive git@github.com:BenoitMorel/GeneRax.git
+git clone --recursive https://github.com/BenoitMorel/GeneRax
 ```
 
 To build the sources:
