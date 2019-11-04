@@ -151,9 +151,8 @@ void Routines::optimizeSpeciesRatesEmpirical(const std::string &speciesTreeFile,
   auto start = Logger::getElapsedSec();
   inferReconciliation(speciesTreeFile, families, recModel, rates, outputDir);
   SpeciesTree speciesTree(speciesTreeFile);
-  std::unordered_set<std::string> labels;
+  std::unordered_set<std::string> labels = speciesTree.getTree().getLabels(false);
   std::unordered_map<std::string, std::vector<double> > frequencies;
-  speciesTree.getLabels(labels, false);
   std::vector<double> defaultFrequences(4, 0.0);
   for (auto &label: labels) {
     frequencies.insert(std::pair<std::string, std::vector<double>>(label, defaultFrequences));
@@ -177,9 +176,8 @@ void Routines::optimizeSpeciesRatesEmpirical(const std::string &speciesTreeFile,
     }
   }
   unsigned int perSpeciesFreeParameters = Enums::freeParameters(recModel); 
-  rates = Parameters(speciesTree.getNodesNumber() * perSpeciesFreeParameters);
-  for (unsigned int i = 0; i < speciesTree.getNodesNumber(); ++i) {
-    auto speciesNode = speciesTree.getNode(i);
+  rates = Parameters(speciesTree.getTree().getNodesNumber() * perSpeciesFreeParameters);
+  for (auto speciesNode: speciesTree.getTree().getNodes()) {
     auto &speciesFreq = frequencies[speciesNode->label];
     double S = speciesFreq[0] + 1.0;
     for (unsigned int j = 0; j < perSpeciesFreeParameters; ++j) {
@@ -248,7 +246,7 @@ void Routines::getParametersFromTransferFrequencies(const std::string &speciesTr
   SpeciesTree speciesTree(speciesTreeFile);
   std::unordered_map<std::string, unsigned int> labelsToIds;
   speciesTree.getLabelsToId(labelsToIds);
-  unsigned int species = speciesTree.getNodesNumber();
+  unsigned int species = speciesTree.getTree().getNodesNumber();
   parameters = Parameters(species * species);
   for (auto &frequency: frequencies) {
     std::string label1;

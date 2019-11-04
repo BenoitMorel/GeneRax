@@ -11,125 +11,32 @@
 
 
 SpeciesTree::SpeciesTree(const std::string &newick, bool fromFile):
-  _speciesTree(0)
+  _speciesTree(newick, fromFile)
 {
-  if (fromFile) {
-    _speciesTree = LibpllParsers::readRootedFromFile(newick);
-  } else {
-    _speciesTree = LibpllParsers::readRootedFromStr(newick);
-  }
-  // make sure all nodes have labels
-  LibpllParsers::labelRootedTree(_speciesTree);
-  assert(_speciesTree);
 }
 
-void setSon(pll_rnode_t *parent, pll_rnode_t *newSon, bool left)
-{
-  newSon->parent = parent;
-  if (left) {
-    parent->left = newSon;
-  } else {
-    parent->right = newSon;
-  }
-}
 
-pll_rnode_t *createNode(const std::string &label, std::vector<pll_rnode_t *> &allNodes) {
-  pll_rnode_t *node = static_cast<pll_rnode_t *>(malloc(sizeof(pll_rnode_t)));
-  node->label = 0;
-  if (label.size()) {
-    node->label = static_cast<char *>(calloc(label.size() + 1, sizeof(char)));
-    assert(node->label);
-    strcpy(node->label, label.c_str());
-  }
-  node->node_index = allNodes.size();
-  node->length = 0.1;
-  node->parent = 0;
-  node->left = 0;
-  node->right = 0;
-  node->data = 0;
-  allNodes.push_back(node);
-  return node;
-}
-
-SpeciesTree::SpeciesTree(const std::unordered_set<std::string> &leafLabels)
+SpeciesTree::SpeciesTree(const std::unordered_set<std::string> &leafLabels):
+  _speciesTree(leafLabels)
 {
-  buildFromLabels(leafLabels);
 }
   
 std::unique_ptr<SpeciesTree> SpeciesTree::buildRandomTree() const
 {
-   std::unordered_set<std::string> labels;
-   getLabels(labels);
-   return std::make_unique<SpeciesTree>(labels);
+   return std::make_unique<SpeciesTree>(_speciesTree.getLabels(true));
 }
 
-void SpeciesTree::buildFromLabels(const std::unordered_set<std::string> &leafLabels)
-{
-  std::set<std::string> leaves;
-  for (auto &leaf: leafLabels) {
-    leaves.insert(leaf);
-  }
-  std::vector<pll_rnode_t *> allNodes;
-  pll_rnode_t *root = 0;
-  for (auto &label: leaves) {
-    if (allNodes.size() == 0) {
-      root = createNode(label, allNodes);
-      continue;
-    }
-    auto r = rand();
-    auto brother = allNodes[r % allNodes.size()];
-    auto parent = createNode("", allNodes);
-    auto node = createNode(label, allNodes);
-    auto grandpa = brother->parent;
-    if (grandpa) {
-      setSon(grandpa, parent, grandpa->left == brother); 
-    } else {
-      root = parent;
-    }
-    bool randBool = static_cast<bool>(rand() % 2);
-    setSon(parent, brother, randBool);
-    setSon(parent, node, !randBool);
-  }
-  _speciesTree = static_cast<pll_rtree_t *>(malloc(sizeof(pll_rtree_t)));
-  _speciesTree->root = root;
-  _speciesTree->nodes = static_cast<pll_rnode_t**>(malloc(sizeof(pll_rnode_t*) * allNodes.size()));
-  for (unsigned int i = 0; i < allNodes.size(); ++i) {
-    _speciesTree->nodes[i] = allNodes[i];
-  }
-  _speciesTree->tip_count = allNodes.size() / 2 + 1;
-  _speciesTree->inner_count = allNodes.size() / 2;
-  _speciesTree->edge_count = allNodes.size() - 1;
   
-  assert(_speciesTree->tip_count == getTaxaNumber());
-  LibpllParsers::labelRootedTree(_speciesTree);
-}
-  
-SpeciesTree::SpeciesTree(const Families &families)
+SpeciesTree::SpeciesTree(const Families &families):
+  _speciesTree(getLabelsFromFamilies(families))
 {
-  GeneSpeciesMapping mappings;
-  for (const auto &family: families) {
-    std::string geneTreeStr;
-    FileSystem::getFileContent(family.startingGeneTree, geneTreeStr);
-    mappings.fill(family.mappingFile, geneTreeStr);
-  }
-  std::unordered_set<std::string> leaves;
-  for (auto &mapping: mappings.getMap()) {
-    leaves.insert(mapping.second);
-  }
-  buildFromLabels(leaves);
 }
 
-SpeciesTree::~SpeciesTree()
-{
-  if (_speciesTree) {
-    pll_rtree_destroy(_speciesTree, free);
-  }
-}
 
 void SpeciesTree::setGlobalRates(const Parameters &globalRates) 
 {
   assert(globalRates.dimensions() <= 3);
-  _rates = Parameters(getMaxNodeIndex(), globalRates);
+  _rates = Parameters(getTree().getNodesNumber(), globalRates);
 }
 void SpeciesTree::setRatesVector(const Parameters &rates) 
 {
@@ -146,7 +53,7 @@ double SpeciesTree::computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees,
 {
   double ll = 0.0;
   for (auto &tree: geneTrees.getTrees()) {
-    ReconciliationEvaluation evaluation(_speciesTree, tree.mapping, model, false);
+    ReconciliationEvaluation evaluation(_speciesTree.getRawPtr(), tree.mapping, model, false);
     evaluation.setRates(_rates);
     ll += evaluation.evaluate(*tree.geneTree);
   }
@@ -157,21 +64,8 @@ double SpeciesTree::computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees,
 std::string SpeciesTree::toString() const
 {
   std::string newick;
-  LibpllParsers::getRtreeHierarchicalString(_speciesTree, newick);
+  LibpllParsers::getRtreeHierarchicalString(_speciesTree.getRawPtr(), newick);
   return newick;
-}
-
-unsigned int getTaxaNumberAux(const pll_rnode_t *node) 
-{
-  if (!node) {
-    return 0;
-  }
-  return getTaxaNumberAux(node->left) + getTaxaNumberAux(node->right) + 1;
-}
-
-unsigned int SpeciesTree::getTaxaNumber() const
-{
-  return getTaxaNumberAux(getRoot()) / 2 + 1;
 }
 
 
@@ -180,28 +74,24 @@ void SpeciesTree::saveToFile(const std::string &newick, bool masterRankOnly)
   if (masterRankOnly && ParallelContext::getRank()) {
     return;
   }
-  LibpllParsers::saveRtree(_speciesTree->root, newick);  
+  _speciesTree.save(newick);
 }
-  
+/*  
 pll_rnode_t *SpeciesTree::getRandomNode() 
 {
   return getNode(rand() % (_speciesTree->tip_count + _speciesTree->inner_count)); 
 }
-
-void SpeciesTree::getLabels(std::unordered_set<std::string> &leafLabels, bool labelsOnly) const
-{
-  for (unsigned int i = 0; i < _speciesTree->tip_count + _speciesTree->inner_count; ++i) {
-    auto node = getNode(i);
-    if (!labelsOnly || (!node->left && !node->right)) {
-      leafLabels.insert(std::string(node->label));
-    }
-  }
+*/
+  
+static void setRootAux(SpeciesTree &speciesTree, pll_rnode_t *root) {
+  speciesTree.getTree().getRawPtr()->root = root; 
+  root->parent = 0;
 }
 
 bool SpeciesTreeOperator::canChangeRoot(const SpeciesTree &speciesTree, int direction)
 {
   bool left1 = direction % 2;
-  auto root = speciesTree.getRoot();
+  auto root = speciesTree.getTree().getRoot();
   assert(root);
   auto newRoot = left1 ? root->left : root->right;
   return newRoot->left && newRoot->right;
@@ -221,32 +111,32 @@ void SpeciesTreeOperator::changeRoot(SpeciesTree &speciesTree, int direction)
   bool left1 = direction % 2;
   bool left2 = direction / 2;
   assert(canChangeRoot(speciesTree, left1));
-  auto root = speciesTree.getRoot();
+  auto root = speciesTree.getTree().getRoot();
   auto rootLeft = root->left;
   auto rootRight = root->right;
   auto A = rootLeft->left;
   auto B = rootLeft->right;
   auto C = rootRight->left;
   auto D = rootRight->right;
-  speciesTree.setRoot(left1 ? rootLeft : rootRight);
+  setRootAux(speciesTree, left1 ? rootLeft : rootRight);
   if (left1 && left2) {
-    setSon(rootLeft, root, false);
-    setSon(root, B, true);
-    setSon(root, rootRight, false);
+    PLLRootedTree::setSon(rootLeft, root, false);
+    PLLRootedTree::setSon(root, B, true);
+    PLLRootedTree::setSon(root, rootRight, false);
   } else if (!left1 && !left2) {
-    setSon(rootRight, root, true);
-    setSon(root, C, false);
-    setSon(root, rootLeft, true);
+    PLLRootedTree::setSon(rootRight, root, true);
+    PLLRootedTree::setSon(root, C, false);
+    PLLRootedTree::setSon(root, rootLeft, true);
   } else if (left1 && !left2) {
-    setSon(rootLeft, rootLeft->right, true);
-    setSon(rootLeft, root, false);
-    setSon(root, A, false);
-    setSon(root, rootRight, true);
+    PLLRootedTree::setSon(rootLeft, rootLeft->right, true);
+    PLLRootedTree::setSon(rootLeft, root, false);
+    PLLRootedTree::setSon(root, A, false);
+    PLLRootedTree::setSon(root, rootRight, true);
   } else { // !left1 && left2
-    setSon(rootRight, root, true);
-    setSon(rootRight, C, false);
-    setSon(root, D, true);
-    setSon(root, rootLeft, false);
+    PLLRootedTree::setSon(rootRight, root, true);
+    PLLRootedTree::setSon(rootRight, C, false);
+    PLLRootedTree::setSon(root, D, true);
+    PLLRootedTree::setSon(root, rootLeft, false);
   }
 }
 
@@ -271,20 +161,20 @@ unsigned int SpeciesTreeOperator::applySPRMove(SpeciesTree &speciesTree, unsigne
   unsigned int res = pruneBrotherNode->node_index;
   // prune
   if (pruneGrandFatherNode) {
-    setSon(pruneGrandFatherNode, pruneBrotherNode, pruneGrandFatherNode->left == pruneFatherNode);
+    PLLRootedTree::setSon(pruneGrandFatherNode, pruneBrotherNode, pruneGrandFatherNode->left == pruneFatherNode);
   } else {
-    speciesTree.setRoot(pruneBrotherNode);
+    setRootAux(speciesTree, pruneBrotherNode);
   }
   // regraft
   auto regraftNode = speciesTree.getNode(regraft);
   auto regraftParentNode = regraftNode->parent;
   if (!regraftParentNode) {
     // regraft is the root
-    speciesTree.setRoot(pruneFatherNode);
-    setSon(pruneFatherNode, regraftNode, pruneFatherNode->left != pruneNode);
+    setRootAux(speciesTree, pruneFatherNode);
+    PLLRootedTree::setSon(pruneFatherNode, regraftNode, pruneFatherNode->left != pruneNode);
   } else {
-    setSon(regraftParentNode, pruneFatherNode, regraftParentNode->left == regraftNode);
-    setSon(pruneFatherNode, regraftNode, pruneFatherNode->left != pruneNode);
+    PLLRootedTree::setSon(regraftParentNode, pruneFatherNode, regraftParentNode->left == regraftNode);
+    PLLRootedTree::setSon(pruneFatherNode, regraftNode, pruneFatherNode->left != pruneNode);
   }
   return res;
 }
@@ -323,9 +213,8 @@ static void recursiveGetNodes(pll_rnode_t *node, unsigned int direction, unsigne
   
 void SpeciesTreeOperator::getPossiblePrunes(SpeciesTree &speciesTree, std::vector<unsigned int> &prunes)
 {
-  for (unsigned int i = 0; i < speciesTree.getMaxNodeIndex(); ++i) {
-    auto pruneNode = speciesTree.getNode(i);
-    if (pruneNode == speciesTree.getRoot()) {
+  for (auto pruneNode: speciesTree.getTree().getNodes()) {
+    if (pruneNode == speciesTree.getTree().getRoot()) {
       continue;
     }
     prunes.push_back(pruneNode->node_index); 
@@ -375,19 +264,30 @@ static size_t getTreeHashRec(const pll_rnode_t *node, size_t i) {
   
 size_t SpeciesTree::getHash() const
 {
-  auto res = getTreeHashRec(getRoot(), 0);
+  auto res = getTreeHashRec(getTree().getRoot(), 0);
   return res % 100000;
   
 }
 void SpeciesTree::getLabelsToId(std::unordered_map<std::string, unsigned int> &map) const
 {
   map.clear();
-  for (unsigned int i = 0; i < getMaxNodeIndex(); ++i) {
-    auto node = getNode(i);
+  for (auto node: getTree().getNodes()) {
     map.insert(std::pair<std::string, unsigned int>(node->label, node->node_index));
   }
 }
 
-
-
+std::unordered_set<std::string> SpeciesTree::getLabelsFromFamilies(const Families &families)
+{
+  GeneSpeciesMapping mappings;
+  for (const auto &family: families) {
+    std::string geneTreeStr;
+    FileSystem::getFileContent(family.startingGeneTree, geneTreeStr);
+    mappings.fill(family.mappingFile, geneTreeStr);
+  }
+  std::unordered_set<std::string> leaves;
+  for (auto &mapping: mappings.getMap()) {
+    leaves.insert(mapping.second);
+  }
+  return leaves;
+}
   

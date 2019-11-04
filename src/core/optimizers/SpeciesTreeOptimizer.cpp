@@ -71,7 +71,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearch(bool doOptimizeGeneTrees)
   rootExhaustiveSearchAux(*_speciesTree, *_geneTrees, _model, doOptimizeGeneTrees, movesHistory, bestMovesHistory, bestLL, visits); 
   movesHistory[0] = 1;
   rootExhaustiveSearchAux(*_speciesTree, *_geneTrees, _model, doOptimizeGeneTrees, movesHistory, bestMovesHistory, bestLL, visits); 
-  assert (visits == 2 * _speciesTree->getTaxaNumber() - 3);
+  assert (visits == 2 * _speciesTree->getTree().getLeavesNumber() - 3);
   for (unsigned int i = 1; i < bestMovesHistory.size(); ++i) {
     SpeciesTreeOperator::changeRoot(*_speciesTree, bestMovesHistory[i]);
   }
@@ -200,14 +200,14 @@ void SpeciesTreeOptimizer::ratesOptimization()
     return;
   }
   Logger::timed << "[species tree opt] Starting DTL rates optimization" << std::endl;
-  auto rates = DTLOptimizer::optimizeParametersGlobalDTL(*_geneTrees, _speciesTree->getTree(), _model);
+  auto rates = DTLOptimizer::optimizeParametersGlobalDTL(*_geneTrees, _speciesTree->getTree().getRawPtr(), _model);
   _speciesTree->setGlobalRates(rates);
 }
   
 void SpeciesTreeOptimizer::perSpeciesRatesOptimization()
 {
   Logger::timed << "[species tree opt] Starting DTL rates vector optimization" << std::endl;
-  Parameters rates = DTLOptimizer::optimizeParametersPerSpecies(*_geneTrees, _speciesTree->getTree(), _model);
+  Parameters rates = DTLOptimizer::optimizeParametersPerSpecies(*_geneTrees, _speciesTree->getTree().getRawPtr(), _model);
   _speciesTree->setRatesVector(rates);
 }
 

@@ -4,23 +4,23 @@
 void checkRootMove(SpeciesTree &speciesTree, unsigned int direction) 
 {
   std::string initialStr = speciesTree.toString();
-  auto initialTaxa = speciesTree.getTaxaNumber();
+  auto initialTaxa = speciesTree.getTree().getLeavesNumber();
   
   SpeciesTreeOperator::changeRoot(speciesTree, direction);
-  assert(initialTaxa == speciesTree.getTaxaNumber());
+  assert(initialTaxa == speciesTree.getTree().getLeavesNumber());
   SpeciesTreeOperator::revertChangeRoot(speciesTree, direction);
-  assert(initialTaxa == speciesTree.getTaxaNumber());
+  assert(initialTaxa == speciesTree.getTree().getLeavesNumber());
   assert(initialStr == speciesTree.toString());
 }
 
 void checkSPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int regraft) 
 {
   std::string initialStr = speciesTree.toString();
-  auto initialTaxa = speciesTree.getTaxaNumber();
+  auto initialTaxa = speciesTree.getTree().getLeavesNumber();
   unsigned int rollback = SpeciesTreeOperator::applySPRMove(speciesTree, prune, regraft);
-  assert(initialTaxa == speciesTree.getTaxaNumber());
+  assert(initialTaxa == speciesTree.getTree().getLeavesNumber());
   SpeciesTreeOperator::reverseSPRMove(speciesTree, prune, rollback);
-  assert(initialTaxa == speciesTree.getTaxaNumber());
+  assert(initialTaxa == speciesTree.getTree().getLeavesNumber());
   assert(initialStr == speciesTree.toString());
 }
 

@@ -76,7 +76,7 @@ public:
         auto hours  = seconds / 3600;
         auto minutes = (seconds % 3600) / 60;
         seconds = seconds % 60;
-        char s[25];
+        char s[30];
         sprintf(s, "%02ld:%02ld:%02ld", hours, minutes, seconds);
         *_os << "[" << s << "] " << t;
         if (logFile) 

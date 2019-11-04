@@ -7,6 +7,7 @@
 #include <maths/Parameters.hpp>
 #include <util/enums.hpp>
 #include <memory>
+#include <trees/PLLRootedTree.hpp>
 
 class PerCoreGeneTrees;
 
@@ -16,7 +17,6 @@ public:
   SpeciesTree(const std::string &newick, bool isFile = true);
   SpeciesTree(const std::unordered_set<std::string> &leafLabels);
   SpeciesTree(const Families &families);
-  ~SpeciesTree();
   // forbid copy
   SpeciesTree(const SpeciesTree &) = delete;
   SpeciesTree & operator = (const SpeciesTree &) = delete;
@@ -34,29 +34,24 @@ public:
   double computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees, RecModel model);
 
   std::string toString() const;
-  void setRoot(pll_rnode_t *root) {_speciesTree->root = root; root->parent = 0;}
-  const pll_rnode_t *getRoot() const {return _speciesTree->root;}
-  pll_rnode_t *getRoot() {return _speciesTree->root;}
-  unsigned int getTaxaNumber() const;
-  unsigned int getNodesNumber() const {return _speciesTree->tip_count + _speciesTree->inner_count;}
-  pll_rtree_t *getTree() {return _speciesTree;}
   pll_rnode_t *getRandomNode();
-  pll_rnode_t *getNode(unsigned int nodeIndex) {return _speciesTree->nodes[nodeIndex];}
-  const pll_rnode_t *getNode(unsigned int nodeIndex) const {return _speciesTree->nodes[nodeIndex];}
-  unsigned int getMaxNodeIndex() const { return _speciesTree->tip_count + _speciesTree->inner_count;}
-  friend std::ostream& operator<<(std::ostream& os, const SpeciesTree &speciesTree) {
-    os << speciesTree.toString() << "(" << speciesTree.getTaxaNumber() << " taxa)" << std::endl;
+  pll_rnode_t *getNode(unsigned int nodeIndex) {return _speciesTree.getNode(nodeIndex);}
+  friend std::ostream& operator<<(std::ostream& os, SpeciesTree &speciesTree) {
+    os << speciesTree.toString() << "(" << speciesTree.getTree().getLeavesNumber() << " taxa)" << std::endl;
     return os;
   }
 
+  const PLLRootedTree &getTree() const {return _speciesTree;}
+  PLLRootedTree &getTree() {return _speciesTree;}
+
   void saveToFile(const std::string &newick, bool masterRankOnly);
   size_t getHash() const;
-  void getLabels(std::unordered_set<std::string> &leafLabels, bool leafOnly = true) const;
   void getLabelsToId(std::unordered_map<std::string, unsigned int> &map) const;
 private:
-  pll_rtree_t *_speciesTree;
+  PLLRootedTree _speciesTree;
   Parameters _rates;
   void buildFromLabels(const std::unordered_set<std::string> &leafLabels);
+  static std::unordered_set<std::string> getLabelsFromFamilies(const Families &families);
 };
 
 
@@ -73,6 +68,7 @@ public:
   static void reverseSPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int applySPRMoveReturnValue);
   static void getPossiblePrunes(SpeciesTree &speciesTree, std::vector<unsigned int> &prunes);
   static void getPossibleRegrafts(SpeciesTree &speciesTree, unsigned int prune, unsigned int radius, std::vector<unsigned int> &regrafts);
+
 };
 
 

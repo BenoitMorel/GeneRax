@@ -17,6 +17,10 @@ extern "C" {
 #include <util/CArrayRange.hpp>
 
 
+/**
+ *  C++ wrapper around the libpll pll_utree_t structure
+ *  to represent an unrooted tree
+ */
 class PLLUnrootedTree {
 public:
   /**
@@ -52,6 +56,8 @@ public:
   pll_unode_t *getAnyInnerNode();
   pll_unode_t *getNode(unsigned int node_index);
 
+ 
+  
   /**
    * labels
    */

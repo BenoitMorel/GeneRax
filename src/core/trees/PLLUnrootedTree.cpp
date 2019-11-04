@@ -3,7 +3,7 @@
 #include <IO/LibpllParsers.hpp>
 #include <IO/Logger.hpp>
 
-void destroyNodeData(void *)
+static void destroyNodeData(void *)
 {
 
 }
