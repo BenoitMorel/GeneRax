@@ -8,6 +8,7 @@
 #include <maths/DTLRates.hpp>
 #include <maths/Parameters.hpp>
 #include <trees/PLLUnrootedTree.hpp>
+#include <trees/PLLRootedTree.hpp>
 
 double log(ScaledValue v) ;
   
@@ -24,7 +25,7 @@ public:
    *  @param reconciliationModelStr the reconciliation model to use
    *  @param rootedGeneTree should we compute the likelihood of a rooted or unrooted gene tree?
    */
-  ReconciliationEvaluation(pll_rtree_t *speciesTree,
+  ReconciliationEvaluation(PLLRootedTree &speciesTree,
     const GeneSpeciesMapping& geneSpeciesMapping,
     RecModel recModel,
     bool rootedGeneTree);
@@ -70,8 +71,7 @@ public:
 
   RecModel getRecModel() const {return _model;}
 private:
-  pll_rtree_t *_speciesTree; // I do not own this one
-  unsigned int _speciesCount;
+  PLLRootedTree &_speciesTree;
   GeneSpeciesMapping _geneSpeciesMapping;
   bool _rootedGeneTree;
   RecModel _model; 

@@ -16,7 +16,8 @@ static const int TRANSFER_FREQUENCIES_EPSILON = 0.01;
 template <class REAL>
 class UndatedDTLModelAdvanced: public AbstractReconciliationModel<REAL> {
 public:
-  UndatedDTLModelAdvanced();
+  UndatedDTLModelAdvanced(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree):
+    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree) {}
   UndatedDTLModelAdvanced(const UndatedDTLModelAdvanced &) = delete;
   UndatedDTLModelAdvanced & operator = (const UndatedDTLModelAdvanced &) = delete;
   UndatedDTLModelAdvanced(UndatedDTLModelAdvanced &&) = delete;
@@ -81,17 +82,10 @@ private:
 const unsigned int IT_ADVANCED = 5;
 
 template <class REAL>
-UndatedDTLModelAdvanced<REAL>::UndatedDTLModelAdvanced()
-{
-  this->_maxGeneId = 1;
-}
-
-
-template <class REAL>
 void UndatedDTLModelAdvanced<REAL>::setInitialGeneTree(pll_utree_t *tree)
 {
   AbstractReconciliationModel<REAL>::setInitialGeneTree(tree);
-  std::vector<REAL> zeros(this->speciesNodesCount_);
+  std::vector<REAL> zeros(this->_speciesNodesCount);
   _uq = std::vector<std::vector<REAL> >(2 * (this->_maxGeneId + 1),zeros);
 }
 
@@ -101,32 +95,32 @@ void UndatedDTLModelAdvanced<REAL>::setRates(const std::vector<double> &dupRates
       const std::vector<double> &transferRates,
       const std::vector< std::vector <double > > &transferFrequencies)
 {
-  this->geneRoot_ = 0;
-  assert(this->speciesNodesCount_ == dupRates.size());
-  assert(this->speciesNodesCount_ == lossRates.size());
-  assert(this->speciesNodesCount_ == transferRates.size());
-  assert(this->speciesNodesCount_ == transferFrequencies.size());
+  this->_geneRoot = 0;
+  assert(this->_speciesNodesCount == dupRates.size());
+  assert(this->_speciesNodesCount == lossRates.size());
+  assert(this->_speciesNodesCount == transferRates.size());
+  assert(this->_speciesNodesCount == transferFrequencies.size());
   _PD = dupRates;
   _PL = lossRates;
-  _PT = std::vector<std::vector<double> >(this->speciesNodesCount_, transferRates);
-  _PS = std::vector<double>(this->speciesNodesCount_, 1.0);
+  _PT = std::vector<std::vector<double> >(this->_speciesNodesCount, transferRates);
+  _PS = std::vector<double>(this->_speciesNodesCount, 1.0);
   auto normalizedTransferFrequencies = transferFrequencies;
-  for (unsigned int e = 0; e < this->speciesNodesCount_; ++e) {
+  for (unsigned int e = 0; e < this->_speciesNodesCount; ++e) {
     double sum = 0.0;
-    assert(normalizedTransferFrequencies[e].size() == this->speciesNodesCount_);
-    for (unsigned int f = 0; f < this->speciesNodesCount_; ++f) {
+    assert(normalizedTransferFrequencies[e].size() == this->_speciesNodesCount);
+    for (unsigned int f = 0; f < this->_speciesNodesCount; ++f) {
       normalizedTransferFrequencies[e][f] += TRANSFER_FREQUENCIES_EPSILON;
       sum += normalizedTransferFrequencies[e][f];
     }
     if (sum > 0.0) {
-      for (unsigned int f = 0; f < this->speciesNodesCount_; ++f) {
+      for (unsigned int f = 0; f < this->_speciesNodesCount; ++f) {
         normalizedTransferFrequencies[e][f] /= sum;
       }
     }
   }
-  for (unsigned int e = 0; e < this->speciesNodesCount_; ++e) {
+  for (unsigned int e = 0; e < this->_speciesNodesCount; ++e) {
     auto sum = _PD[e] + _PL[e] + _PS[e];
-    for (unsigned int f = 0; f < this->speciesNodesCount_; ++f) {
+    for (unsigned int f = 0; f < this->_speciesNodesCount; ++f) {
       _PT[e][f] *= normalizedTransferFrequencies[e][f];
       sum += _PT[e][f];
     }
@@ -137,14 +131,14 @@ void UndatedDTLModelAdvanced<REAL>::setRates(const std::vector<double> &dupRates
       PT /= sum;
     }
   } 
-  _uE = std::vector<REAL>(this->speciesNodesCount_);
+  _uE = std::vector<REAL>(this->_speciesNodesCount);
   for (unsigned int it = 0; it < IT_ADVANCED; ++it) {
-    for (auto speciesNode: this->speciesNodes_) {
+    for (auto speciesNode: this->_speciesNodes) {
       auto e = speciesNode->node_index;
       REAL proba(_PL[e]);
       proba += _uE[e] * _uE[e] * _PD[e];
       auto transferTerm = REAL();
-      for (auto recievingSpeciesNode: this->speciesNodes_) {
+      for (auto recievingSpeciesNode: this->_speciesNodes) {
         auto h = recievingSpeciesNode->node_index;
         if (h!= e) {
           transferTerm += _uE[h] * _PT[e][h];
@@ -171,11 +165,11 @@ template <class REAL>
 void UndatedDTLModelAdvanced<REAL>::updateCLV(pll_unode_t *geneNode)
 {
   auto gid = geneNode->node_index;
-  for (auto speciesNode: this->speciesNodes_) {
+  for (auto speciesNode: this->_speciesNodes) {
     _uq[gid][speciesNode->node_index] = REAL();
   }
   for (unsigned int it = 0; it < IT_ADVANCED; ++it) {
-    for (auto speciesNode: this->speciesNodes_) {
+    for (auto speciesNode: this->_speciesNodes) {
       computeProbability(geneNode, 
           speciesNode, 
           _uq[gid][speciesNode->node_index]);
@@ -204,7 +198,7 @@ void UndatedDTLModelAdvanced<REAL>::computeProbability(pll_unode_t *geneNode, pl
   bool isGeneLeaf = !geneNode->next;
   bool isSpeciesLeaf = !speciesNode->left;
   
-  if (isSpeciesLeaf and isGeneLeaf and e == this->geneToSpecies_[gid]) {
+  if (isSpeciesLeaf and isGeneLeaf and e == this->_geneToSpecies[gid]) {
     proba = REAL(_PS[e]);
     return;
   }
@@ -238,7 +232,7 @@ void UndatedDTLModelAdvanced<REAL>::computeProbability(pll_unode_t *geneNode, pl
     proba += temp;
     // T event
     REAL transferTerm = REAL();
-    for (auto *recievingSpeciesNode: this->speciesNodes_) {
+    for (auto *recievingSpeciesNode: this->_speciesNodes) {
       auto h = recievingSpeciesNode->node_index;
       transferTerm += (_uq[u_left][h] * _uq[u_right][e] + _uq[u_left][e] * _uq[u_right][h]) * (_PT[e][h]); 
     }
@@ -250,7 +244,7 @@ void UndatedDTLModelAdvanced<REAL>::computeProbability(pll_unode_t *geneNode, pl
   }
   // TL event
   REAL transferLossTerm = REAL();
-  for (auto *recievingSpeciesNode: this->speciesNodes_) {
+  for (auto *recievingSpeciesNode: this->_speciesNodes) {
     auto h = recievingSpeciesNode->node_index;
     transferLossTerm += (oldProba * _uE[h] + _uE[e] * _uq[gid][h]) * _PT[e][h];
   }
@@ -265,12 +259,12 @@ template <class REAL>
 void UndatedDTLModelAdvanced<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;;
-  for (auto speciesNode: this->speciesNodes_) {
+  for (auto speciesNode: this->_speciesNodes) {
     auto e = speciesNode->node_index;
     _uq[u][e] = REAL();
   }
   for (unsigned int it = 0; it < IT_ADVANCED; ++it) {
-    for (auto speciesNode: this->speciesNodes_) {
+    for (auto speciesNode: this->_speciesNodes) {
       unsigned int e = speciesNode->node_index;
       computeProbability(virtualRoot, speciesNode, _uq[u][e], true);
     }
@@ -283,7 +277,7 @@ REAL UndatedDTLModelAdvanced<REAL>::getRootLikelihood(pll_unode_t *root) const
 {
   REAL sum = REAL();
   auto u = root->node_index + this->_maxGeneId + 1;;
-  for (auto speciesNode: this->speciesNodes_) {
+  for (auto speciesNode: this->_speciesNodes) {
     auto e = speciesNode->node_index;
     sum += _uq[u][e];
   }
@@ -294,7 +288,7 @@ template <class REAL>
 REAL UndatedDTLModelAdvanced<REAL>::getLikelihoodFactor() const
 {
   REAL factor(0.0);
-  for (auto speciesNode: this->speciesNodes_) {
+  for (auto speciesNode: this->_speciesNodes) {
     auto e = speciesNode->node_index;
     if (!(_uE[e] < REAL(1.0))) {
       std::cerr << "error : " <<  _uE[e] << std::endl;

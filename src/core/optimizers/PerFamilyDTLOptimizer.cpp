@@ -270,7 +270,7 @@ void PerFamilyDTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool trans
   
 void PerFamilyDTLOptimizer::optimizeDTLRatesGradient(JointTree &jointTree)
 {
-  auto speciesTree = jointTree.getSpeciesTree();
+  auto &speciesTree = jointTree.getSpeciesTree();
   PerCoreGeneTrees geneTrees(jointTree.getMappings(), jointTree.getGeneTree());
   RecModel recModel = jointTree.getReconciliationEvaluation().getRecModel();
   Parameters rates = DTLOptimizer::optimizeParameters(geneTrees, speciesTree, recModel, jointTree.getRatesVector());

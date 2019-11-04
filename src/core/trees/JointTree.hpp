@@ -9,7 +9,7 @@
 #include <util/enums.hpp>
 #include <sstream>
 #include <stack>
-
+#include <trees/PLLRootedTree.hpp>
 
 
 void printLibpllNode(pll_unode_s *node, std::ostream &os, bool isRoot);
@@ -25,7 +25,6 @@ public:
               RecModel reconciliationModel,
               RecOpt reconciliationOpt,
               bool rootedGeneTree,
-              bool pruneSpeciesTree,
               double recWeight,
               bool safeMode,
               bool optimizeDTLRates,
@@ -53,7 +52,7 @@ public:
     void save(const std::string &fileName, bool append);
     pllmod_treeinfo_t *getTreeInfo();
     void setRates(const Parameters &ratesVector);
-    pll_rtree_t *getSpeciesTree() {return _pllSpeciesTree;}
+    PLLRootedTree &getSpeciesTree() {return _speciesTree;}
     size_t getUnrootedTreeHash();
     ReconciliationEvaluation &getReconciliationEvaluation() {return *reconciliationEvaluation_;}
     
@@ -72,7 +71,7 @@ public:
 private:
     LibpllEvaluation _libpllEvaluation;
     std::unique_ptr<ReconciliationEvaluation> reconciliationEvaluation_;
-    pll_rtree_t *_pllSpeciesTree;
+    PLLRootedTree _speciesTree;
     GeneSpeciesMapping _geneSpeciesMap;
     Parameters _ratesVector;
     std::stack<std::unique_ptr<Rollback> > _rollbacks;

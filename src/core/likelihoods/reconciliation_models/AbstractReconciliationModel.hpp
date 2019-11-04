@@ -9,6 +9,8 @@
 #include <cmath>
 #include <unordered_set>
 #include <maths/ScaledValue.hpp>
+#include <trees/PLLRootedTree.hpp>
+
 class SubtreeRepeatsCache;
 
 
@@ -28,12 +30,6 @@ class ReconciliationModelInterface {
 public:
   virtual ~ReconciliationModelInterface() {};
   
-  /**
-   *  Has to be called just after the constructor before anything else
-   *  We do not call it in the constructor because it is virtual and
-   *  calls virtual functions
-   */
-  virtual void init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree) = 0;
   
   /*
    * Set the per-species lineage rates
@@ -85,7 +81,6 @@ public:
 template <class REAL>
 class AbstractReconciliationModel: public ReconciliationModelInterface {
 public:
-  AbstractReconciliationModel();
   AbstractReconciliationModel(const AbstractReconciliationModel &) = delete;
   AbstractReconciliationModel & operator = (const AbstractReconciliationModel &) = delete;
   AbstractReconciliationModel(AbstractReconciliationModel &&) = delete;
@@ -93,8 +88,7 @@ public:
   
   
   // overload from parent
-  virtual void init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree);
-  // overload from parent
+  AbstractReconciliationModel(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree);
   virtual ~AbstractReconciliationModel() {};
   // overload from parent
   virtual void setRates(const std::vector<double> &dupRates,
@@ -104,9 +98,9 @@ public:
   // overload from parent
   virtual double computeLogLikelihood(pll_utree_t *tree);
   // overload from parent
-  virtual void setRoot(pll_unode_t * root) {geneRoot_ = root;}
+  virtual void setRoot(pll_unode_t * root) {_geneRoot = root;}
   // overload from parent
-  virtual pll_unode_t *getRoot() {return geneRoot_;}
+  virtual pll_unode_t *getRoot() {return _geneRoot;}
   // overload from parent
   virtual void invalidateAllCLVs();
   // overload from parent
@@ -115,7 +109,7 @@ public:
   virtual void inferMLScenario(Scenario &scenario);
 protected:
   // called by the constructor
-  virtual void setSpeciesTree(pll_rtree_t *speciesTree);
+  virtual void setSpeciesTree(PLLRootedTree &speciesTree);
   // Called when computeLogLikelihood is called for the first time
   virtual void setInitialGeneTree(pll_utree_t *tree);
   // Called by computeLogLikelihood
@@ -157,13 +151,10 @@ protected:
   void updateCLVs();
   virtual pll_unode_t *computeMLRoot();
 protected:
-  bool rootedGeneTree_;
-  pll_unode_t *geneRoot_;
-  unsigned int speciesNodesCount_;
-  std::vector <pll_rnode_t *> speciesNodes_;
-  pll_rtree_t *speciesTree_;
-  std::vector<unsigned int> geneToSpecies_;
-  bool firstCall_;
+  pll_unode_t *_geneRoot;
+  unsigned int _speciesNodesCount;
+  std::vector <pll_rnode_t *> _speciesNodes;
+  std::vector<unsigned int> _geneToSpecies;
   // gene ids in postorder 
   std::vector<unsigned int> _geneIds;
   unsigned int _maxGeneId;
@@ -177,6 +168,11 @@ private:
   void markInvalidatedNodes();
   void markInvalidatedNodesRec(pll_unode_t *node);
   void fillNodesPostOrder(pll_rnode_t *node, std::vector<pll_rnode_t *> &nodes) ;
+  
+  
+  
+  bool _rootedGeneTree;
+  PLLRootedTree &_speciesTree;
   std::map<std::string, std::string> geneNameToSpeciesName_;
   std::map<std::string, unsigned int> speciesNameToId_;
   
@@ -188,25 +184,21 @@ private:
   std::vector<bool> _isCLVUpdated;
   std::vector<pll_unode_t *> _allNodes;
   SubtreeRepeatsCache *_cache;
+  bool _firstCall;
 };
 
 
   
 template <class REAL>
-AbstractReconciliationModel<REAL>::AbstractReconciliationModel():
-  rootedGeneTree_(false),
-  geneRoot_(0),
-  firstCall_(true),
-  _maxGeneId(1)
+AbstractReconciliationModel<REAL>::AbstractReconciliationModel(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMapping, bool rootedGeneTree):
+  _geneRoot(0),
+  _maxGeneId(1),
+  _rootedGeneTree(rootedGeneTree),
+  _speciesTree(speciesTree),
+  geneNameToSpeciesName_(geneSpeciesMapping.getMap()),
+  _firstCall(true)
 {
-}
-
-template <class REAL>
-void AbstractReconciliationModel<REAL>::init(pll_rtree_t *speciesTree, const GeneSpeciesMapping &geneSpeciesMapping, bool rootedGeneTree)
-{
-  rootedGeneTree_ = rootedGeneTree;
   setSpeciesTree(speciesTree);
-  geneNameToSpeciesName_ = geneSpeciesMapping.getMap();
 }
 
 template <class REAL>
@@ -235,11 +227,11 @@ void AbstractReconciliationModel<REAL>::initFromUtree(pll_utree_t *tree) {
 template <class REAL>
 void AbstractReconciliationModel<REAL>::mapGenesToSpecies()
 {
-  geneToSpecies_.resize(_allNodes.size());
+  _geneToSpecies.resize(_allNodes.size());
   for (auto node: _allNodes) {
     if (!node->next) {
       std::string speciesName = geneNameToSpeciesName_[std::string(node->label)]; 
-      geneToSpecies_[node->node_index] = speciesNameToId_[speciesName];
+      _geneToSpecies[node->node_index] = speciesNameToId_[speciesName];
     }
   }
 }
@@ -266,14 +258,13 @@ void AbstractReconciliationModel<REAL>::fillNodesPostOrder(pll_rnode_t *node, st
 
 
 template <class REAL>
-void AbstractReconciliationModel<REAL>::setSpeciesTree(pll_rtree_t *speciesTree)
+void AbstractReconciliationModel<REAL>::setSpeciesTree(PLLRootedTree &speciesTree)
 {
-  speciesTree_ = speciesTree;
-  speciesNodesCount_ = speciesTree->tip_count + speciesTree->inner_count;
-  speciesNodes_.clear();
-  fillNodesPostOrder(speciesTree->root, speciesNodes_);
+  _speciesNodesCount = speciesTree.getNodesNumber();
+  _speciesNodes.clear();
+  fillNodesPostOrder(speciesTree.getRoot(), _speciesNodes);
   speciesNameToId_.clear();
-  for (auto node: speciesNodes_) {
+  for (auto node: _speciesNodes) {
     if (!node->left) {
       speciesNameToId_[node->label] = node->node_index;
     }
@@ -285,15 +276,15 @@ void AbstractReconciliationModel<REAL>::getRoots(std::vector<pll_unode_t *> &roo
     const std::vector<unsigned int> &geneIds)
 {
   roots.clear();
-  if (rootedGeneTree_ && geneRoot_) {
-    roots.push_back(geneRoot_);
-    if (geneRoot_->next) {
-      roots.push_back(geneRoot_->next);
-      roots.push_back(geneRoot_->next->next);
+  if (_rootedGeneTree && _geneRoot) {
+    roots.push_back(_geneRoot);
+    if (_geneRoot->next) {
+      roots.push_back(_geneRoot->next);
+      roots.push_back(_geneRoot->next->next);
     }
-    if (geneRoot_->back->next) {
-      roots.push_back(geneRoot_->back->next);
-      roots.push_back(geneRoot_->back->next->next);
+    if (_geneRoot->back->next) {
+      roots.push_back(_geneRoot->back->next);
+      roots.push_back(_geneRoot->back->next->next);
     }
     return;
   }
@@ -311,14 +302,14 @@ void AbstractReconciliationModel<REAL>::getRoots(std::vector<pll_unode_t *> &roo
 template <class REAL>
 double AbstractReconciliationModel<REAL>::computeLogLikelihood(pll_utree_t *tree)
 {
-  if (firstCall_) {
+  if (_firstCall) {
     setInitialGeneTree(tree);
-    firstCall_ = false;
+    _firstCall = false;
   }
   auto root = getRoot();
   updateCLVs();
   computeLikelihoods();
-  if (rootedGeneTree_) {
+  if (_rootedGeneTree) {
     setRoot(computeMLRoot());
     while (root != getRoot()) {
       updateCLVs();
@@ -439,7 +430,7 @@ void AbstractReconciliationModel<REAL>::computeMLRoot(pll_unode_t *&bestGeneRoot
   getRoots(roots, _geneIds);
   REAL max = REAL();
   for (auto root: roots) {
-    for (auto speciesNode: speciesNodes_) {
+    for (auto speciesNode: _speciesNodes) {
       REAL ll = getRootLikelihood(root, speciesNode);
       if (max < ll) {
         max = ll;
@@ -483,7 +474,7 @@ double AbstractReconciliationModel<REAL>::getSumLikelihood()
 template <class REAL>
 void AbstractReconciliationModel<REAL>::computeLikelihoods()
 {
-  std::vector<REAL> zeros(speciesNodesCount_); 
+  std::vector<REAL> zeros(_speciesNodesCount); 
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
   for (auto root: roots) {
@@ -510,7 +501,7 @@ void AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario)
   assert(geneRoot);
   assert(speciesRoot);
   scenario.setGeneRoot(geneRoot);
-  scenario.setSpeciesTree(speciesTree_);
+  scenario.setSpeciesTree(_speciesTree.getRawPtr());
   pll_unode_t virtualRoot;
   virtualRoot.next = geneRoot;
   virtualRoot.node_index = geneRoot->node_index + _maxGeneId + 1;

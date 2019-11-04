@@ -12,30 +12,29 @@ double log(ScaledValue v)
   return v.getLogValue();
 }
 
-ReconciliationEvaluation::ReconciliationEvaluation(pll_rtree_t *speciesTree,
+
+ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
   const GeneSpeciesMapping& geneSpeciesMapping,
   RecModel recModel,
   bool rootedGeneTree):
     _speciesTree(speciesTree),
-    _speciesCount(speciesTree->inner_count + speciesTree->tip_count),
     _geneSpeciesMapping(geneSpeciesMapping),
     _rootedGeneTree(rootedGeneTree),
     _model(recModel),
     _infinitePrecision(false)
 {
   _reconciliationModel = buildRecModelObject(_model, _infinitePrecision);
-  _reconciliationModel->init(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
 }
 
 
 void ReconciliationEvaluation::setTransferFrequencies(const Parameters &parameters)
 {
-  assert(parameters.dimensions() == _speciesCount * _speciesCount);
-  _transferFrequencies.resize(_speciesCount);
+  assert(parameters.dimensions() == _speciesTree.getNodesNumber() * _speciesTree.getNodesNumber());
+  _transferFrequencies.resize(_speciesTree.getNodesNumber());
   unsigned int index = 0;
-  for (unsigned int e = 0; e < _speciesCount; ++e) {
-    _transferFrequencies[e].resize(_speciesCount);
-    for (unsigned int h = 0; h < _speciesCount; ++h) {
+  for (unsigned int e = 0; e < _speciesTree.getNodesNumber(); ++e) {
+    _transferFrequencies[e].resize(_speciesTree.getNodesNumber());
+    for (unsigned int h = 0; h < _speciesTree.getNodesNumber(); ++h) {
       _transferFrequencies[e][h] = parameters[index++];
       assert(std::isfinite(_transferFrequencies[e][h]));
     }
@@ -53,11 +52,11 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
     rates.push_back(&_transferRates);
   }
   for (auto r: rates) {
-    r->resize(_speciesCount);
+    r->resize(_speciesTree.getNodesNumber());
   }
   // this handles both per-species and global rates
   for (unsigned int d = 0; d < rates.size(); ++d) {
-    for (unsigned int e = 0; e < _speciesCount; ++e) {
+    for (unsigned int e = 0; e < _speciesTree.getNodesNumber(); ++e) {
       (*rates[d])[e] = parameters[(e * rates.size() + d) % parameters.dimensions()];
     }
   }
@@ -68,9 +67,9 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
       parameters.load(transferFrequenciesFile);
       setTransferFrequencies(parameters);
     } else {
-      _transferFrequencies.resize(_speciesCount);
-      for (unsigned int e = 0; e < _speciesCount; ++e) {
-        _transferFrequencies[e] = std::vector<double>(_speciesCount, 1.0 / _speciesCount);
+      _transferFrequencies.resize(_speciesTree.getNodesNumber());
+      for (unsigned int e = 0; e < _speciesTree.getNodesNumber(); ++e) {
+        _transferFrequencies[e] = std::vector<double>(_speciesTree.getNodesNumber(), 1.0 / _speciesTree.getNodesNumber());
       }
     }
   }
@@ -103,21 +102,21 @@ std::unique_ptr<ReconciliationModelInterface> ReconciliationEvaluation::buildRec
   switch(recModel) {
   case RecModel::UndatedDL:
     if (infinitePrecision) {
-      return  std::make_unique<UndatedDLModel<ScaledValue> >();
+      return  std::make_unique<UndatedDLModel<ScaledValue> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     } else {
-      return  std::make_unique<UndatedDLModel<double> >();
+      return  std::make_unique<UndatedDLModel<double> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     }
   case RecModel::UndatedDTL:
     if (infinitePrecision) {
-      return  std::make_unique<UndatedDTLModel<ScaledValue> >();
+      return  std::make_unique<UndatedDTLModel<ScaledValue> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     } else {
-      return  std::make_unique<UndatedDTLModel<double> >();
+      return  std::make_unique<UndatedDTLModel<double> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     }
   case RecModel::UndatedDTLAdvanced:
     if (infinitePrecision) {
-      return  std::make_unique<UndatedDTLModelAdvanced<ScaledValue> >();
+      return  std::make_unique<UndatedDTLModelAdvanced<ScaledValue> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     } else {
-      return  std::make_unique<UndatedDTLModelAdvanced<double> >();
+      return  std::make_unique<UndatedDTLModelAdvanced<double> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     }
   }
   assert(false);
@@ -129,7 +128,6 @@ void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
   if (infinitePrecision != _infinitePrecision) {
     _infinitePrecision = infinitePrecision;
     _reconciliationModel = buildRecModelObject(_model, _infinitePrecision);
-    _reconciliationModel->init(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates, _transferFrequencies);
  }
 }

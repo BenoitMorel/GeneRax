@@ -111,44 +111,6 @@ void printLibpllTreeRooted(pll_unode_t *root, Logger &os){
   os << ");" << std::endl;
 }
 
-static pll_rtree_t *clone(pll_rnode_t *root) {
-  std::string newStr;
-  LibpllParsers::getRnodeNewickString(root, newStr);
-  return LibpllParsers::readRootedFromStr(newStr);
-}
-
-static pll_rtree_t *getPrunedTree(pll_rtree_t *inputSpeciesTree,
-    std::unordered_set<std::string> &geneLeaves,
-    GeneSpeciesMapping &mapping)
-{
-  std::unordered_set<std::string> representedSpecies;
-  for (auto &geneLeaf: geneLeaves) {
-    representedSpecies.insert(mapping.getSpecies(geneLeaf));
-  }
-  unsigned int speciesNumber = inputSpeciesTree->inner_count + inputSpeciesTree->tip_count;
-  std::vector<bool> inThePath(speciesNumber, false);
-  for (unsigned int e = 0; e < speciesNumber; ++e) {
-    auto node = inputSpeciesTree->nodes[e];
-    if (!node->left) { // leaf
-      inThePath[e] = (representedSpecies.find(std::string(node->label)) != representedSpecies.end());
-    } else { // internal node
-      inThePath[e] = inThePath[node->left->node_index] || inThePath[node->right->node_index];
-    }
-  }
-  auto root = inputSpeciesTree->root;
-  while (root->left && root->right) {
-    if (!inThePath[root->left->node_index]) {
-      root = root->right;
-    } else if (!inThePath[root->right->node_index]) {
-      root = root->left;
-    } else {
-      break;
-    }
-  }
-  return clone(root);
-}
-
-
 JointTree::JointTree(const std::string &newickString,
     const std::string &alignmentFilename,
     const std::string &speciestree_file,
@@ -157,12 +119,12 @@ JointTree::JointTree(const std::string &newickString,
     RecModel reconciliationModel,
     RecOpt reconciliationOpt,
     bool rootedGeneTree,
-    bool pruneSpeciesTree,
     double recWeight,
     bool safeMode,
     bool optimizeDTLRates,
     const Parameters &ratesVector):
   _libpllEvaluation(newickString, false, alignmentFilename, substitutionModel),
+  _speciesTree(speciestree_file, true),
   _optimizeDTLRates(optimizeDTLRates),
   _safeMode(safeMode),
   _enableReconciliation(true),
@@ -170,22 +132,9 @@ JointTree::JointTree(const std::string &newickString,
   _recOpt(reconciliationOpt),
   _recWeight(recWeight)
 {
-  _pllSpeciesTree = pll_rtree_parse_newick(speciestree_file.c_str());
-  if (!_pllSpeciesTree) {
-    Logger::perrank << "Cannot read tree " << speciestree_file << " !" << std::endl;
-  }
-  assert(_pllSpeciesTree);
+
   _geneSpeciesMap.fill(_geneSpeciesMapfile, newickString);
-  if (pruneSpeciesTree) {
-    std::unordered_set<std::string> geneLeaves = _libpllEvaluation.getGeneTree().getLeavesLabels();
-    auto clone = getPrunedTree(_pllSpeciesTree, geneLeaves, _geneSpeciesMap);
-    pll_rtree_destroy(_pllSpeciesTree, 0);
-    _pllSpeciesTree = clone;
-    std::string newStr;
-    LibpllParsers::getRnodeNewickString(_pllSpeciesTree->root, newStr);
-    Logger::info << "species tree: " << newStr << std::endl;
-  }
-  reconciliationEvaluation_ = std::make_unique<ReconciliationEvaluation>(_pllSpeciesTree,  
+  reconciliationEvaluation_ = std::make_unique<ReconciliationEvaluation>(_speciesTree,  
       _geneSpeciesMap, 
       reconciliationModel,
       rootedGeneTree);
@@ -195,8 +144,6 @@ JointTree::JointTree(const std::string &newickString,
 
 JointTree::~JointTree()
 {
-  pll_rtree_destroy(_pllSpeciesTree, 0);
-  _pllSpeciesTree = 0;
 }
 
 
@@ -304,8 +251,8 @@ void JointTree::setRates(const Parameters &ratesVector)
 void JointTree::printInfo() 
 {
   auto treeInfo = getTreeInfo();
-  auto speciesLeaves = getSpeciesTree()->tip_count;
-  auto geneLeaves = treeInfo->tip_count;;
+  auto speciesLeaves = getSpeciesTree().getLeavesNumber();
+  auto geneLeaves = treeInfo->tip_count;
   auto sites = treeInfo->partitions[0]->sites;
   Logger::info << "Species leaves: " << speciesLeaves << std::endl;
   Logger::info << "Gene leaves: " << geneLeaves << std::endl;

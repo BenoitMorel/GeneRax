@@ -200,14 +200,14 @@ void SpeciesTreeOptimizer::ratesOptimization()
     return;
   }
   Logger::timed << "[species tree opt] Starting DTL rates optimization" << std::endl;
-  auto rates = DTLOptimizer::optimizeParametersGlobalDTL(*_geneTrees, _speciesTree->getTree().getRawPtr(), _model);
+  auto rates = DTLOptimizer::optimizeParametersGlobalDTL(*_geneTrees, _speciesTree->getTree(), _model);
   _speciesTree->setGlobalRates(rates);
 }
   
 void SpeciesTreeOptimizer::perSpeciesRatesOptimization()
 {
   Logger::timed << "[species tree opt] Starting DTL rates vector optimization" << std::endl;
-  Parameters rates = DTLOptimizer::optimizeParametersPerSpecies(*_geneTrees, _speciesTree->getTree().getRawPtr(), _model);
+  Parameters rates = DTLOptimizer::optimizeParametersPerSpecies(*_geneTrees, _speciesTree->getTree(), _model);
   _speciesTree->setRatesVector(rates);
 }
 
@@ -231,14 +231,13 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
   double recWeight = 1.0;
   bool useSplitImplem = true;
   long int sumElapsedSPR = 0;
-  bool pruneSpeciesTree = false;
   auto rates = _speciesTree->getRatesVector();
   Logger::mute();
   std::string resultName = "proposals";
   Families families = _currentFamilies;
   GeneRaxMaster::optimizeGeneTrees(families, 
       _model, rates, _outputDir, resultName, 
-      _execPath, speciesTree, recOpt, perFamilyDTLRates, rootedGeneTree, pruneSpeciesTree, 
+      _execPath, speciesTree, recOpt, perFamilyDTLRates, rootedGeneTree, 
       recWeight, true, true, radius, _geneTreeIteration, 
         useSplitImplem, sumElapsedSPR, inPlace);
   _geneTreeIteration++;

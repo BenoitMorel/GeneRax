@@ -241,7 +241,7 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
   Logger::timed << "Optimizing gene trees with radius=" << sprRadius << "... " << std::endl; 
   GeneRaxMaster::optimizeGeneTrees(instance.currentFamilies, instance.recModel, instance.rates, instance.args.output, "results",
       instance.args.execPath, instance.speciesTree, instance.args.reconciliationOpt, instance.args.perFamilyDTLRates, instance.args.rootedGeneTree, 
-     instance.args.pruneSpeciesTree, instance.args.recWeight, true, enableLibpll, sprRadius, instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), elapsed);
+      instance.args.recWeight, true, enableLibpll, sprRadius, instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), elapsed);
   instance.elapsedSPR += elapsed;
   Routines::gatherLikelihoods(instance.currentFamilies, instance.totalLibpllLL, instance.totalRecLL);
   Logger::info << "\tJointLL=" << instance.totalLibpllLL + instance.totalRecLL << " RecLL=" << instance.totalRecLL << " LibpllLL=" << instance.totalLibpllLL << std::endl;

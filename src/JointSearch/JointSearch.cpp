@@ -79,7 +79,6 @@ int internal_main(int argc, char** argv, void* comm)
         arguments.reconciliationModel,
         arguments.reconciliationOpt,
         arguments.rootedGeneTree,
-        false, // prune species tree
         1.0,
         arguments.check,
         true, // optimize DTL rates?

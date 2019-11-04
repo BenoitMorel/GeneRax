@@ -24,7 +24,6 @@ void GeneRaxMaster::optimizeGeneTrees(Families &families,
     RecOpt recOpt,
     bool perFamilyDTLRates,
     bool rootedGeneTree,
-    bool pruneSpeciesTree,
     double recWeight,
     bool enableRec,
     bool enableLibpll,
@@ -83,7 +82,6 @@ void GeneRaxMaster::optimizeGeneTrees(Families &families,
     os << static_cast<int>(recOpt)  << " ";
     os << static_cast<int>(perFamilyDTLRates)  << " ";
     os << static_cast<int>(rootedGeneTree)  << " ";
-    os << static_cast<int>(pruneSpeciesTree)  << " ";
     os << recWeight  << " ";
     os << static_cast<int>(enableRec)  << " ";
     os << static_cast<int>(enableLibpll)  << " ";

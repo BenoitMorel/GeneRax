@@ -9,6 +9,8 @@
 #include <parallelization/ParallelContext.hpp>
 #include <IO/FileSystem.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
+#include <trees/PLLRootedTree.hpp>
+
 
 void Routines::optimizeRates(bool userDTLRates, 
     const std::string &speciesTreeFile,
@@ -28,7 +30,7 @@ void Routines::optimizeRates(bool userDTLRates,
     Logger::info << "INVALID MAPPINGS" << std::endl;
     ParallelContext::abort(42);
   }
-  pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
+  PLLRootedTree speciesTree(speciesTreeFile);
   if (perSpeciesRates) {
     //auto ratesGlobal = DTLOptimizer::optimizeParametersGlobalDTL(geneTrees, speciesTree, recModel);
     //auto ratesEmpirical = ratesGlobal;
@@ -43,7 +45,6 @@ void Routines::optimizeRates(bool userDTLRates,
   } else {
     rates = DTLOptimizer::optimizeParametersGlobalDTL(geneTrees, speciesTree, recModel);
   }
-  pll_rtree_destroy(speciesTree, 0);
   ParallelContext::barrier(); 
   auto elapsed = (Logger::getElapsedSec() - start);
   sumElapsed += elapsed;
@@ -69,12 +70,11 @@ void Routines::inferReconciliation(
     )
 {
   ParallelContext::barrier();
-  pll_rtree_t *speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile); 
+  PLLRootedTree speciesTree(speciesTreeFile);
   PerCoreGeneTrees geneTrees(families);
   std::string reconciliationsDir = FileSystem::joinPaths(outputDir, "reconciliations");
   FileSystem::mkdir(reconciliationsDir, true);
-  auto speciesNodesCount = speciesTree->tip_count + speciesTree->inner_count;
-  std::vector<double> dup_count(speciesNodesCount, 0.0);
+  std::vector<double> dup_count(speciesTree.getNodesNumber(), 0.0);
   ParallelContext::barrier();
   for (auto &tree: geneTrees.getTrees()) {
     std::string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
@@ -93,7 +93,6 @@ void Routines::inferReconciliation(
     scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, ReconciliationFormat::RecPhyloXML, false);
     scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
   }
-  pll_rtree_destroy(speciesTree, 0);
   ParallelContext::barrier();
 }
 
