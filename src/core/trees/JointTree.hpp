@@ -20,7 +20,7 @@ public:
     JointTree(const std::string &newickString,
               const std::string &alignment_file,
               const std::string &speciestree_file,
-              const std::string &geneSpeciesMap_file,
+              const std::string &_geneSpeciesMapfile,
               const std::string &substitutionModel,
               RecModel reconciliationModel,
               RecOpt reconciliationOpt,
@@ -53,7 +53,7 @@ public:
     void save(const std::string &fileName, bool append);
     pllmod_treeinfo_t *getTreeInfo();
     void setRates(const Parameters &ratesVector);
-    pll_rtree_t *getSpeciesTree() {return pllSpeciesTree_;}
+    pll_rtree_t *getSpeciesTree() {return _pllSpeciesTree;}
     size_t getUnrootedTreeHash();
     ReconciliationEvaluation &getReconciliationEvaluation() {return *reconciliationEvaluation_;}
     
@@ -63,25 +63,24 @@ public:
     void inferMLScenario(Scenario &scenario) {
       reconciliationEvaluation_->inferMLScenario(getGeneTree(), scenario);
     }
-    bool isSafeMode() {return safeMode_;}
-    void enableReconciliation(bool enable) {enableReconciliation_ = enable;}
-    void enableLibpll(bool enable) {enableLibpll_ = enable;}
+    bool isSafeMode() {return _safeMode;}
+    void enableReconciliation(bool enable) {_enableReconciliation = enable;}
+    void enableLibpll(bool enable) {_enableLibpll = enable;}
     unsigned int getGeneTaxaNumber() {return getTreeInfo()->tip_count;}
-    PLLUnrootedTree &getGeneTree() {return libpllEvaluation_.getGeneTree();}
-    const GeneSpeciesMapping &getMappings() const {return geneSpeciesMap_;}
+    PLLUnrootedTree &getGeneTree() {return _libpllEvaluation.getGeneTree();}
+    const GeneSpeciesMapping &getMappings() const {return _geneSpeciesMap;}
 private:
-    LibpllEvaluation libpllEvaluation_;
+    LibpllEvaluation _libpllEvaluation;
     std::unique_ptr<ReconciliationEvaluation> reconciliationEvaluation_;
-    pll_rtree_t *pllSpeciesTree_;
-    GeneSpeciesMapping geneSpeciesMap_;
+    pll_rtree_t *_pllSpeciesTree;
+    GeneSpeciesMapping _geneSpeciesMap;
     Parameters _ratesVector;
-    std::stack<std::unique_ptr<Rollback> > rollbacks_;
-    double reconciliationLL_;
-    bool optimizeDTLRates_;
-    bool safeMode_;
-    bool enableReconciliation_;
-    bool enableLibpll_;
-    RecOpt recOpt_;
+    std::stack<std::unique_ptr<Rollback> > _rollbacks;
+    bool _optimizeDTLRates;
+    bool _safeMode;
+    bool _enableReconciliation;
+    bool _enableLibpll;
+    RecOpt _recOpt;
     double _recWeight;
 };
 
