@@ -8,7 +8,11 @@ It accounts for sequence substitutions, gene duplication, gene loss and horizont
 
 Preprint: https://www.biorxiv.org/content/biorxiv/early/2019/09/26/779066.full.pdf
 
+GeneRax is also available on [`bioconda`](https://anaconda.org/bioconda/generax) 
+
 ## Requirement
+
+(If you are not installing with bioconda)
 
 * A Linux or MacOS environnement
 * gcc 5.0 or > 
@@ -16,7 +20,10 @@ Preprint: https://www.biorxiv.org/content/biorxiv/early/2019/09/26/779066.full.p
 * MPI
 * bison and flex parsers
 
-## Installation
+
+## Installation 
+
+(Please note that you can also install through [`bioconda`](https://anaconda.org/bioconda/generax))
 
 Installing the dependencies on Ubuntu and other Debian-based systems:
 ```
