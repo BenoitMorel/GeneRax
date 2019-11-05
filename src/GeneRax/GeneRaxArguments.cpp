@@ -16,6 +16,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   duplicates(1),
   initStrategies(3),
   rootedGeneTree(true),
+  supportThreshold(-1.0),
   recRadius(0),
   perSpeciesDTLRates(false),
   useTransferFrequencies(false),
@@ -23,6 +24,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   dupRate(1.0),
   lossRate(1.0),
   transferRate(0.0),
+  optimizeGeneTrees(true),
   maxSPRRadius(5),
   recWeight(1.0), 
   seed(123),
@@ -63,6 +65,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       duplicates = atoi(argv[++i]);
     } else if (arg == "--unrooted-gene-tree") {
       rootedGeneTree = false;
+    } else if (arg == "--support-threshold") {
+      supportThreshold = static_cast<double>(atof(argv[++i]));
     } else if (arg == "--rec-radius") {
       recRadius = atoi(argv[++i]);
     } else if (arg == "--per-species-rates") {
@@ -90,6 +94,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       speciesSlowRadius = atoi(argv[++i]);
     } else if (arg == "--optimize-species-tree") {
       optimizeSpeciesTree = true;
+    } else if (arg == "--do-not-optimize-gene-trees") {
+      optimizeGeneTrees = false;
     } else {
       Logger::error << "Unrecognized argument " << arg << std::endl;
       Logger::error << "Aborting" << std::endl;
@@ -155,6 +161,7 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "--duplicates <DUPLICATES_NUMBER>" << std::endl;
   Logger::info << "--init-strategies <1 or 4>" << std::endl;
   Logger::info << "--unrooted-gene-tree" << std::endl;
+  Logger::info << "--support-threshold <threshold>" << std::endl;
   Logger::info << "--per-family-rates" << std::endl;
   Logger::info << "--per-species-rates" << std::endl;
   Logger::info << "--dup-rate <duplication rate>" << std::endl;
@@ -205,6 +212,7 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "You are running GeneRax without MPI (no parallelization)" << std::endl;
 #endif
   Logger::info << "Max SPR radius: " << maxSPRRadius << std::endl;
+  Logger::info << "Support threshold: " << supportThreshold << std::endl;
   Logger::info << "Reconciliation likelihood weight: " << recWeight << std::endl;
   Logger::info << "Random seed: " << seed << std::endl;
   Logger::info << std::endl;

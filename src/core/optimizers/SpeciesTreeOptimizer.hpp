@@ -12,7 +12,8 @@ class SpeciesTreeOptimizer {
 public:
   SpeciesTreeOptimizer(const std::string speciesTreeFile, 
       const Families &initialFamilies, 
-      RecModel model, 
+      RecModel model,
+      double supportThreshold,
       const std::string &outputDir,
       const std::string &execPath);
   
@@ -32,9 +33,6 @@ public:
   void ratesOptimization();
   double optimizeGeneTrees(int radius, bool inPlace = false);
 
-  void inferSpeciesTreeFromSamples(unsigned int sampleSize, const std::string &outputSpeciesId);
-  void optimizeGeneTreesFromSamples(const std::unordered_set<std::string> &speciesIds, const std::string &stepId);
-
   double getReconciliationLikelihood() {return computeLikelihood(false);}
   double computeLikelihood(bool doOptimizeGeneTrees, int geneSPRRadius = 1);
   void saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
@@ -50,6 +48,7 @@ private:
   unsigned int _geneTreeIteration;
   bool _perSpeciesRatesOptimization;
   Parameters _hack;
+  double _supportThreshold;
 private:
   void perSpeciesRatesOptimization();
   void rootExhaustiveSearchAux(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, bool doOptimizeGeneTrees, std::vector<unsigned int> &movesHistory, std::vector<unsigned int> &bestMovesHistory, double &bestLL, unsigned int &visits);

@@ -21,6 +21,7 @@ public:
     RecOpt reconciliationOpt,
     bool perFamilyDTLRates,
     bool rootedGeneTree,
+    double supportThreshold,
     double recWeight,
     bool enableRec,
     bool enableLibpll,

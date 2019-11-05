@@ -71,6 +71,7 @@ int internal_main(int argc, char** argv, void* comm)
       lossRate = arguments.lossRate;
       transferRate = arguments.transferRate;
     }
+    double supportThreshold = -1.0; // no constraint search
     auto jointTree = std::make_unique<JointTree>(geneTreeString,
         arguments.alignment,
         arguments.speciesTree,
@@ -79,6 +80,7 @@ int internal_main(int argc, char** argv, void* comm)
         arguments.reconciliationModel,
         arguments.reconciliationOpt,
         arguments.rootedGeneTree,
+        supportThreshold,
         1.0,
         arguments.check,
         true, // optimize DTL rates?

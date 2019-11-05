@@ -28,6 +28,7 @@ public:
    unsigned int duplicates;
    unsigned int initStrategies;
    bool rootedGeneTree;
+   double supportThreshold;
    unsigned int recRadius;
    bool perSpeciesDTLRates;
    bool useTransferFrequencies;
@@ -35,6 +36,7 @@ public:
    double dupRate;
    double lossRate;
    double transferRate;
+   bool optimizeGeneTrees;
    int maxSPRRadius;
    double recWeight;
    unsigned int seed;

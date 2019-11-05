@@ -44,6 +44,7 @@ static void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
     RecOpt recOpt,
     bool perFamilyDTLRates,
     bool rootedGeneTree,
+    double supportThreshold,
     double recWeight,
     bool enableRec,
     bool enableLibpll,
@@ -65,6 +66,7 @@ static void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
       recModel,
       recOpt,
       rootedGeneTree,
+      supportThreshold,
       recWeight,
       false, //check
       perFamilyDTLRates, // optimize DTL
@@ -105,7 +107,7 @@ static std::string getArg(const std::string &str)
 
 int GeneRaxSlave::optimizeGeneTreesMain(int argc, char** argv, void* comm)
 {
-  assert(argc == 18);
+  assert(argc == 19);
   ParallelContext::init(comm);
   Logger::timed << "Starting optimizeGeneTreesSlave" << std::endl;
   int i = 2;
@@ -120,6 +122,7 @@ int GeneRaxSlave::optimizeGeneTreesMain(int argc, char** argv, void* comm)
   RecOpt recOpt = RecOpt(atoi(argv[i++])); 
   bool perFamilyDTLRates = bool(atoi(argv[i++]));
   bool rootedGeneTree = bool(atoi(argv[i++]));
+  double supportThreshold = double(atof(argv[i++]));
   double recWeight = double(atof(argv[i++]));
   bool enableRec = bool(atoi(argv[i++]));
   bool enableLibpll = bool(atoi(argv[i++]));
@@ -136,6 +139,7 @@ int GeneRaxSlave::optimizeGeneTreesMain(int argc, char** argv, void* comm)
       recOpt,
       perFamilyDTLRates,
       rootedGeneTree,
+      supportThreshold,
       recWeight,
       enableRec,
       enableLibpll,

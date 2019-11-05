@@ -45,10 +45,11 @@ void generateRandomFamilies(const std::string &outputDirectory,
 void bench(const std::string &speciesTree, 
     Families &families, 
     RecModel recModel,
+    double supportThreshold,
     unsigned int fastRadius,
     const std::string &outputDirectory) 
 {
-  SpeciesTreeOptimizer speciesTreeOptimizer(speciesTree, families, recModel, outputDirectory, "");
+  SpeciesTreeOptimizer speciesTreeOptimizer(speciesTree, families, recModel, supportThreshold, outputDirectory, "");
   for (unsigned int radius = 1; radius <= fastRadius; ++radius) {
     speciesTreeOptimizer.ratesOptimization();
     speciesTreeOptimizer.sprSearch(radius, false);
@@ -71,6 +72,7 @@ int main(int, char**)
   unsigned int familiesNumber = 20;
   unsigned int geneTaxaNumber = 20;
   unsigned int fastRadius = 3;
+  double supportThreshold = -1;
   RecModel recModel = RecModel::UndatedDTL;
   
   
@@ -96,7 +98,7 @@ int main(int, char**)
       familiesNumber,
       geneTaxaNumber,
       families);      
-  bench(speciesTreeFile, families, recModel, fastRadius, runDirectory);
+  bench(speciesTreeFile, families, recModel, supportThreshold, fastRadius, runDirectory);
 
   return 0;
 }

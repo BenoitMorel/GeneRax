@@ -114,11 +114,12 @@ void printLibpllTreeRooted(pll_unode_t *root, Logger &os){
 JointTree::JointTree(const std::string &newickString,
     const std::string &alignmentFilename,
     const std::string &speciestree_file,
-    const std::string &_geneSpeciesMapfile,
+    const std::string &geneSpeciesMapfile,
     const std::string &substitutionModel,
     RecModel reconciliationModel,
     RecOpt reconciliationOpt,
     bool rootedGeneTree,
+    double supportThreshold,
     double recWeight,
     bool safeMode,
     bool optimizeDTLRates,
@@ -130,10 +131,11 @@ JointTree::JointTree(const std::string &newickString,
   _enableReconciliation(true),
   _enableLibpll(true),
   _recOpt(reconciliationOpt),
-  _recWeight(recWeight)
+  _recWeight(recWeight),
+  _supportThreshold(supportThreshold)
 {
 
-  _geneSpeciesMap.fill(_geneSpeciesMapfile, newickString);
+  _geneSpeciesMap.fill(geneSpeciesMapfile, newickString);
   reconciliationEvaluation_ = std::make_unique<ReconciliationEvaluation>(_speciesTree,  
       _geneSpeciesMap, 
       reconciliationModel,

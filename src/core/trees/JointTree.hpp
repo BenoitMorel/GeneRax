@@ -20,11 +20,12 @@ public:
     JointTree(const std::string &newickString,
               const std::string &alignment_file,
               const std::string &speciestree_file,
-              const std::string &_geneSpeciesMapfile,
+              const std::string &geneSpeciesMapfile,
               const std::string &substitutionModel,
               RecModel reconciliationModel,
               RecOpt reconciliationOpt,
               bool rootedGeneTree,
+              double supportThreshold,
               double recWeight,
               bool safeMode,
               bool optimizeDTLRates,
@@ -68,6 +69,7 @@ public:
     unsigned int getGeneTaxaNumber() {return getTreeInfo()->tip_count;}
     PLLUnrootedTree &getGeneTree() {return _libpllEvaluation.getGeneTree();}
     const GeneSpeciesMapping &getMappings() const {return _geneSpeciesMap;}
+    double getSupportThreshold() const {return _supportThreshold;}
 private:
     LibpllEvaluation _libpllEvaluation;
     std::unique_ptr<ReconciliationEvaluation> reconciliationEvaluation_;
@@ -81,6 +83,7 @@ private:
     bool _enableLibpll;
     RecOpt _recOpt;
     double _recWeight;
+    double _supportThreshold;
 };
 
 

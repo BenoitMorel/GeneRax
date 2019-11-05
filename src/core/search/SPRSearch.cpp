@@ -56,12 +56,11 @@ bool isValidSPRMove(pll_unode_s *prune, pll_unode_s *regraft) {
 
 
 
-void getRegraftsRec(unsigned int pruneIndex, pll_unode_t *regraft, int maxRadius, std::vector<unsigned int> &path, std::vector<SPRMoveDesc> &moves)
+void getRegraftsRec(unsigned int pruneIndex, pll_unode_t *regraft, int maxRadius, double supportThreshold, std::vector<unsigned int> &path, std::vector<SPRMoveDesc> &moves)
 {
   assert(regraft);
-  double threshold = 1000.0;
   double bootstrapValue = (nullptr == regraft->label) ? 0.0 : std::atof(regraft->label);
-  if (bootstrapValue > threshold) {
+  if (supportThreshold >= 0.0 && bootstrapValue > supportThreshold) {
     return;
   }
   if (path.size()) {
@@ -69,8 +68,8 @@ void getRegraftsRec(unsigned int pruneIndex, pll_unode_t *regraft, int maxRadius
   }
   if (static_cast<int>(path.size()) < maxRadius && regraft->next) {
     path.push_back(regraft->node_index);
-    getRegraftsRec(pruneIndex, regraft->next->back, maxRadius, path, moves);
-    getRegraftsRec(pruneIndex, regraft->next->next->back, maxRadius, path, moves);
+    getRegraftsRec(pruneIndex, regraft->next->back, maxRadius, supportThreshold, path, moves);
+    getRegraftsRec(pruneIndex, regraft->next->next->back, maxRadius, supportThreshold, path, moves);
     path.pop_back();
   }
 }
@@ -79,8 +78,9 @@ void getRegrafts(JointTree &jointTree, unsigned int pruneIndex, int maxRadius, s
 {
   pll_unode_t *pruneNode = jointTree.getNode(pruneIndex);
   std::vector<unsigned int> path;
-  getRegraftsRec(pruneIndex, pruneNode->next->back, maxRadius, path, moves);
-  getRegraftsRec(pruneIndex, pruneNode->next->next->back, maxRadius, path, moves);
+  auto supportThreshold = jointTree.getSupportThreshold();
+  getRegraftsRec(pruneIndex, pruneNode->next->back, maxRadius, supportThreshold, path, moves);
+  getRegraftsRec(pruneIndex, pruneNode->next->next->back, maxRadius, supportThreshold, path, moves);
 }
 
 bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLoglk, bool blo) {

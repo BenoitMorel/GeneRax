@@ -78,7 +78,7 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     return;
   }
   ParallelContext::barrier();
-  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, RecModel::UndatedDL, instance.args.output, instance.args.exec);
+  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, RecModel::UndatedDL, instance.args.supportThreshold, instance.args.output, instance.args.exec);
   speciesTreeOptimizer.setPerSpeciesRatesOptimization(instance.args.perSpeciesDTLRates); 
   for (unsigned int radius = 1; radius <= instance.args.speciesFastRadius; ++radius) {
     if (radius == instance.args.speciesFastRadius) {
@@ -99,6 +99,9 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
 
 void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
 {
+  if (!instance.args.optimizeGeneTrees) {
+    return;
+  }
   for (unsigned int i = 1; i <= instance.args.recRadius; ++i) { 
     bool enableLibpll = false;
     bool perSpeciesDTLRates = false;
@@ -240,7 +243,7 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
   Logger::info << std::endl;
   Logger::timed << "Optimizing gene trees with radius=" << sprRadius << "... " << std::endl; 
   GeneRaxMaster::optimizeGeneTrees(instance.currentFamilies, instance.recModel, instance.rates, instance.args.output, "results",
-      instance.args.execPath, instance.speciesTree, instance.args.reconciliationOpt, instance.args.perFamilyDTLRates, instance.args.rootedGeneTree, 
+      instance.args.execPath, instance.speciesTree, instance.args.reconciliationOpt, instance.args.perFamilyDTLRates, instance.args.rootedGeneTree, instance.args.supportThreshold, 
       instance.args.recWeight, true, enableLibpll, sprRadius, instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), elapsed);
   instance.elapsedSPR += elapsed;
   Routines::gatherLikelihoods(instance.currentFamilies, instance.totalLibpllLL, instance.totalRecLL);

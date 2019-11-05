@@ -8,7 +8,8 @@
 
 SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile, 
     const Families &initialFamilies, 
-    RecModel model, 
+    RecModel model,
+    double supportThreshold,
     const std::string &outputDir,
     const std::string &execPath):
   _speciesTree(nullptr),
@@ -18,7 +19,8 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _outputDir(outputDir),
   _execPath(execPath),
   _geneTreeIteration(1000000000),
-  _perSpeciesRatesOptimization(false)
+  _perSpeciesRatesOptimization(false),
+  _supportThreshold(supportThreshold)
 {
   if (speciesTreeFile == "random") {
     _speciesTree = std::make_unique<SpeciesTree>(initialFamilies);
@@ -238,7 +240,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(int radius, bool inPlace)
   GeneRaxMaster::optimizeGeneTrees(families, 
       _model, rates, _outputDir, resultName, 
       _execPath, speciesTree, recOpt, perFamilyDTLRates, rootedGeneTree, 
-      recWeight, true, true, radius, _geneTreeIteration, 
+      _supportThreshold, recWeight, true, true, radius, _geneTreeIteration, 
         useSplitImplem, sumElapsedSPR, inPlace);
   _geneTreeIteration++;
   Logger::unmute();
@@ -275,57 +277,3 @@ double SpeciesTreeOptimizer::computeLikelihood(bool doOptimizeGeneTrees, int gen
 }
 
 
-void SpeciesTreeOptimizer::inferSpeciesTreeFromSamples(unsigned int sampleSize, const std::string &outputSpeciesId)
-{
-  Logger::info << "Infer species tree from gene tree samples " << outputSpeciesId << std::endl;
-  std::string subsamplesPath = FileSystem::joinPaths(_outputDir, "subsamples");
-  std::string subOutputDir = FileSystem::joinPaths(subsamplesPath, outputSpeciesId);
-  FileSystem::mkdir(subOutputDir, true);
-  auto speciesTree = _speciesTree->buildRandomTree();
-  std::string speciesTreePath = getSpeciesTreePath(outputSpeciesId);
-  ParallelContext::barrier();
-  speciesTree->saveToFile(speciesTreePath, true);
-  ParallelContext::barrier();
-  Families subFamilies;
-  for (unsigned int i = 0; i < sampleSize; ++i) {
-    subFamilies.push_back(_currentFamilies[rand() % _currentFamilies.size()]);
-  }
-  SpeciesTreeOptimizer subOptimizer(speciesTreePath, subFamilies, _model, subOutputDir, _execPath);
-  for (unsigned int radius = 0; radius < 7; ++radius) {
-    subOptimizer.ratesOptimization();
-    subOptimizer.sprSearch(radius, false);
-    subOptimizer.rootExhaustiveSearch(false);
-  }
-  subOptimizer.saveCurrentSpeciesTreeId();
-}
-
-std::string SpeciesTreeOptimizer::getSpeciesTreePath(const std::string &speciesId)
-{
-  std::string subsamplesPath = FileSystem::joinPaths(_outputDir, "subsamples");
-  std::string subOutputDir = FileSystem::joinPaths(subsamplesPath, speciesId);
-  return FileSystem::joinPaths(subOutputDir, "inferred_species_tree.newick");
-}
-
-void SpeciesTreeOptimizer::optimizeGeneTreesFromSamples(const std::unordered_set<std::string> &speciesIds, const std::string &stepId)
-{
-  Logger::info << "Optimize gene trees from sample species trees " << stepId << std::endl;
-  std::string geneOptPath = FileSystem::joinPaths(_outputDir, "sub_genes_opt");
-  std::string stepPath = FileSystem::joinPaths(geneOptPath, stepId);
-  FileSystem::mkdir(stepPath, true);
-  auto families = _currentFamilies;
-  std::random_shuffle(families.begin(), families.end());
-  unsigned int i = 0;
-  unsigned int step = families.size() / speciesIds.size();
-  for (auto &speciesId: speciesIds) {
-    std::string subStepPath = FileSystem::joinPaths(stepPath, std::string("substep_" + std::to_string(i)));
-    FileSystem::mkdir(subStepPath, true);
-    unsigned int begin = step * i;
-    unsigned int end = std::min<unsigned int>(begin + step, families.size());
-    auto subFamilies = Families(families.begin() + begin, families.begin() + end);
-    auto speciesTreePath = getSpeciesTreePath(speciesId);
-    SpeciesTreeOptimizer subOptimizer(speciesTreePath, subFamilies, _model, subStepPath, _execPath);
-    subOptimizer.optimizeGeneTrees(1, true);
-    ++i;
-  }
-  _geneTrees = std::make_unique<PerCoreGeneTrees>(_currentFamilies);
-}
