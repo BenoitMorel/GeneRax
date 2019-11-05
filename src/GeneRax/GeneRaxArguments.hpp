@@ -46,6 +46,6 @@ public:
    bool optimizeSpeciesTree;
    unsigned int speciesFastRadius;
    unsigned int speciesSlowRadius;
-
+  
 };
 
