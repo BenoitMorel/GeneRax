@@ -24,7 +24,6 @@ public:
   SpeciesTreeOptimizer & operator = (SpeciesTreeOptimizer &&) = delete;
   
   void setModel(RecModel model) {_model = model;}
-  void setPerSpeciesRatesOptimization(bool perSpecies) {_perSpeciesRatesOptimization = perSpecies;}
 
   void rootExhaustiveSearch(bool doOptimizeGeneTrees);
   double sprRound(int radius);
@@ -46,11 +45,9 @@ private:
   std::string _outputDir;
   std::string _execPath;
   unsigned int _geneTreeIteration;
-  bool _perSpeciesRatesOptimization;
   Parameters _hack;
   double _supportThreshold;
 private:
-  void perSpeciesRatesOptimization();
   void rootExhaustiveSearchAux(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, bool doOptimizeGeneTrees, std::vector<unsigned int> &movesHistory, std::vector<unsigned int> &bestMovesHistory, double &bestLL, unsigned int &visits);
   std::string getSpeciesTreePath(const std::string &speciesId);
 };
