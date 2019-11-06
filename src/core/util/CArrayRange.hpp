@@ -14,20 +14,20 @@ class CArrayRange {
 public:
  class iterator {
  public:
-   iterator(DataType * ptr): ptr(ptr){}
-   iterator operator++() { ++ptr; return *this; }
-   bool operator!=(const iterator & other) const { return ptr != other.ptr; }
-   const DataType& operator*() const { return *ptr; }
+   iterator(DataType * ptr): _ptr(ptr){}
+   iterator operator++() { ++_ptr; return *this; }
+   bool operator!=(const iterator & other) const { return _ptr != other._ptr; }
+   const DataType& operator*() const { return *_ptr; }
  private:
-   DataType* ptr;
+   DataType* _ptr;
  };
 private:
- DataType *val;
- unsigned len;
+ DataType *_val;
+ size_t _len;
 public:
- CArrayRange(DataType *ptr, size_t len): val(ptr), len(len) {}
- iterator begin() const { return iterator(val); }
- iterator end() const { return iterator(val + len); }
- unsigned int size() const { return len; }
+ CArrayRange(DataType *ptr, size_t len): _val(ptr), _len(len) {}
+ iterator begin() const { return iterator(_val); }
+ iterator end() const { return iterator(_val + _len); }
+ size_t size() const { return _len; }
 };
 

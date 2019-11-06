@@ -7,9 +7,9 @@ Logger Logger::timed;
 Logger Logger::perrank;
 TimePoint Logger::start;
 std::string Logger::outputdir;
-std::ofstream *Logger::logFile = 0;
-std::ofstream *Logger::rankLogFile = 0;
-std::ofstream *Logger::saveLogFile = 0;
+std::ofstream *Logger::logFile = nullptr;
+std::ofstream *Logger::rankLogFile = nullptr;
+std::ofstream *Logger::saveLogFile = nullptr;
 bool Logger::inited = false;
 
 Logger::Logger(): _os(&std::cout), _silent(false) {
@@ -57,6 +57,6 @@ void Logger::initFileOutput(const std::string &output)
 
 void Logger::close() {
   delete(logFile);
-  logFile = saveLogFile = 0;
+  logFile = saveLogFile = nullptr;
 }
 

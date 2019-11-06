@@ -42,7 +42,9 @@ protected:
   virtual void updateCLV(pll_unode_t *geneNode);
   // overload from parent
   virtual REAL getRootLikelihood(pll_unode_t *root) const;
-  virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {return _uq[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];}
+  virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {
+    return _uq[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];
+  }
   virtual REAL getLikelihoodFactor() const;
   // overload from parent
   virtual void computeRootLikelihood(pll_unode_t *virtualRoot);
@@ -152,7 +154,7 @@ void UndatedDLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *species
   auto e = speciesNode->node_index;
   unsigned int f = 0;
   unsigned int g = 0;
-  assert(!(_uq[gid][e] == REAL())); // check that this scenario is possible
+  assert(!(_uq[gid][e] <= REAL())); // check that this scenario is possible
   if (!isSpeciesLeaf) {
     f = speciesNode->left->node_index;
     g = speciesNode->right->node_index;
@@ -181,14 +183,11 @@ void UndatedDLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *species
     values[4] = _uq[gid][g] * (_uE[f] * _PS[e]);
   }
 
-  unsigned int maxValueIndex = static_cast<unsigned int>(distance(values.begin(), max_element(values.begin(), values.end())));
+  unsigned int maxValueIndex = static_cast<unsigned int>(distance(values.begin(), 
+        max_element(values.begin(), values.end())
+        ));
   // safety check
-  if (values[maxValueIndex] == REAL()) {
-    REAL proba;
-    computeProbability(geneNode, speciesNode, proba, isVirtualRoot);
-    std::cerr << "warning: null ll scenario " << _uq[gid][e] << " " << proba  << std::endl;
-    assert(false);
-  }
+  assert(!(values[maxValueIndex] <= REAL()));
   switch(maxValueIndex) {
     case 0:
       scenario.addEvent(ReconciliationEventType::EVENT_S, gid, e);
@@ -278,7 +277,7 @@ template <class REAL>
 REAL UndatedDLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
 {
   REAL sum = REAL();
-  auto u = root->node_index + this->_maxGeneId + 1;;
+  auto u = root->node_index + this->_maxGeneId + 1;
   for (auto speciesNode: this->_speciesNodes) {
     auto e = speciesNode->node_index;
     sum += _uq[u][e];

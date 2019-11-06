@@ -1,6 +1,5 @@
 #include <optimizers/DTLOptimizer.hpp>
 
-#include <likelihoods/SubtreeRepeatsCache.hpp>
 #include <parallelization/ParallelContext.hpp>
 #include <IO/Logger.hpp>
 #include <trees/PerCoreGeneTrees.hpp>
@@ -15,7 +14,7 @@ static bool isValidLikelihood(double ll) {
 }
 
 
-void updateLL(Parameters &rates, PerCoreGeneTrees &trees, PLLRootedTree &speciesTree, RecModel model) {
+static void updateLL(Parameters &rates, PerCoreGeneTrees &trees, PLLRootedTree &speciesTree, RecModel model) {
   rates.ensurePositivity();
   double ll = 0.0;
   for (auto &tree: trees.getTrees()) {
@@ -30,7 +29,12 @@ void updateLL(Parameters &rates, PerCoreGeneTrees &trees, PLLRootedTree &species
   rates.setScore(ll);
 }
 
-static bool lineSearchParameters(PerCoreGeneTrees &geneTrees, PLLRootedTree &speciesTree, RecModel model, Parameters &currentRates, const Parameters &gradient, unsigned int &llComputationsLine)
+static bool lineSearchParameters(PerCoreGeneTrees &geneTrees, 
+    PLLRootedTree &speciesTree, 
+    RecModel model, 
+    Parameters &currentRates, 
+    const Parameters &gradient, 
+    unsigned int &llComputationsLine)
 {
   double alpha = 0.1; 
   double epsilon = 0.0000001;
@@ -57,7 +61,9 @@ static bool lineSearchParameters(PerCoreGeneTrees &geneTrees, PLLRootedTree &spe
   return !stop;
 }
 
-Parameters DTLOptimizer::optimizeParameters(PerCoreGeneTrees &geneTrees, PLLRootedTree &speciesTree, RecModel model, const Parameters &startingParameters)
+Parameters DTLOptimizer::optimizeParameters(PerCoreGeneTrees &geneTrees,
+    PLLRootedTree &speciesTree, 
+    RecModel model, const Parameters &startingParameters)
 {
   double epsilon = 0.0000001;
   Parameters currentRates = startingParameters;
@@ -79,7 +85,9 @@ Parameters DTLOptimizer::optimizeParameters(PerCoreGeneTrees &geneTrees, PLLRoot
   return currentRates;
 }
 
-Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreGeneTrees &geneTrees, PLLRootedTree &speciesTree, RecModel model)
+Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreGeneTrees &geneTrees, 
+    PLLRootedTree &speciesTree, 
+    RecModel model)
 {
   std::vector<Parameters> startingRates;
   if (Enums::freeParameters(model) == 2) {
@@ -110,7 +118,9 @@ Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreGeneTrees &geneTrees
 }
 
 
-Parameters DTLOptimizer::optimizeParametersPerSpecies(PerCoreGeneTrees &geneTrees, PLLRootedTree &speciesTree, RecModel model)
+Parameters DTLOptimizer::optimizeParametersPerSpecies(PerCoreGeneTrees &geneTrees, 
+    PLLRootedTree &speciesTree, 
+    RecModel model)
 {
   Parameters globalRates = optimizeParametersGlobalDTL(geneTrees, speciesTree, model);
   Parameters startingSpeciesRates(speciesTree.getNodesNumber(), globalRates);

@@ -21,7 +21,13 @@ public:
   
 
   struct Event {
-    Event(): type(ReconciliationEventType::EVENT_S), geneNode(INVALID), speciesNode(INVALID), transferedGeneNode(INVALID), destSpeciesNode(INVALID) {}
+    Event(): 
+      type(ReconciliationEventType::EVENT_S), 
+      geneNode(INVALID), 
+      speciesNode(INVALID), 
+      transferedGeneNode(INVALID), 
+      destSpeciesNode(INVALID) 
+    {}
     ReconciliationEventType type;
     unsigned int geneNode;
     unsigned int speciesNode;
@@ -31,7 +37,11 @@ public:
   };
 
 
-  Scenario(): _eventsCount(static_cast<unsigned int>(ReconciliationEventType::EVENT_Invalid), 0), _geneRoot(0), _virtualRootIndex(-1) {}
+  Scenario(): 
+    _eventsCount(static_cast<unsigned int>(ReconciliationEventType::EVENT_Invalid), 0), 
+    _geneRoot(nullptr), 
+    _virtualRootIndex(INVALID) 
+  {}
   
   // forbid copy
   Scenario(const Scenario &) = delete;
@@ -44,7 +54,10 @@ public:
   void setSpeciesTree(pll_rtree_t *speciesTree) {_speciesTree = speciesTree;}
   void setVirtualRootIndex(unsigned int virtualRootIndex) {_virtualRootIndex = virtualRootIndex;}
 
-  void addEvent(ReconciliationEventType type, unsigned int geneNode, unsigned int speciesNode, unsigned int destSpeciesNode = INVALID);
+  void addEvent(ReconciliationEventType type, 
+      unsigned int geneNode, 
+      unsigned int speciesNode, 
+      unsigned int destSpeciesNode = INVALID);
   void addTransfer(ReconciliationEventType type, 
     unsigned int geneNode, 
     unsigned int speciesNode, 

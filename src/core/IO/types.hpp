@@ -137,7 +137,10 @@ public:
   { return message().c_str(); }
 
   virtual const std::string& message() const
-  { update_message(); return _message; };
+  { 
+    update_message(); 
+    return _message; 
+  };
 
 protected:
   mutable std::string _message;

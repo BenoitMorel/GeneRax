@@ -5,7 +5,10 @@
 #include <parallelization/ParallelContext.hpp>
 #include <IO/FileSystem.hpp>
 
-void Scheduler::schedule(const std::string &outputDir, const std::string &commandFile, bool splitImplem, const std::string &execPath)
+void Scheduler::schedule(const std::string &outputDir, 
+    const std::string &commandFile, 
+    bool splitImplem, 
+    const std::string &execPath)
 {
   std::vector<char *> argv;
   std::string exec = "mpi-scheduler";
@@ -29,9 +32,9 @@ void Scheduler::schedule(const std::string &outputDir, const std::string &comman
   if (splitImplem || ParallelContext::getRank() == 0) {
     void *comm = splitImplem ? static_cast<void *>(&ParallelContext::getComm()) : 0;
     // this is a terrible hack
-    std::cout.setstate(std::ios::failbit) ;
+    std::cout.setstate(std::ios::failbit);
     mpi_scheduler_main(static_cast<int>(argv.size()), &argv[0], comm);
-    std::cout.clear() ;
+    std::cout.clear();
   }
   ParallelContext::barrier(); 
 }

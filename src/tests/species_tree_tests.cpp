@@ -1,7 +1,7 @@
 #include <trees/SpeciesTree.hpp>
 #include <cassert>
 
-void checkRootMove(SpeciesTree &speciesTree, unsigned int direction) 
+static void checkRootMove(SpeciesTree &speciesTree, unsigned int direction) 
 {
   std::string initialStr = speciesTree.toString();
   auto initialTaxa = speciesTree.getTree().getLeavesNumber();
@@ -13,7 +13,7 @@ void checkRootMove(SpeciesTree &speciesTree, unsigned int direction)
   assert(initialStr == speciesTree.toString());
 }
 
-void checkSPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int regraft) 
+static void checkSPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int regraft) 
 {
   std::string initialStr = speciesTree.toString();
   auto initialTaxa = speciesTree.getTree().getLeavesNumber();
@@ -24,7 +24,7 @@ void checkSPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int reg
   assert(initialStr == speciesTree.toString());
 }
 
-void testRootMoves() 
+static void testRootMoves() 
 {
   std::string initialTreeStr = "((A,B),(C,D));";
   SpeciesTree speciesTree(initialTreeStr, false);
@@ -33,7 +33,7 @@ void testRootMoves()
   }
 }
 
-void testSPRMoves()
+static void testSPRMoves()
 {
   std::string initialTreeStr = "((A, (B, C)),((D, E), (F, G)));";
   SpeciesTree speciesTree(initialTreeStr, false);
@@ -49,7 +49,7 @@ void testSPRMoves()
   }
 }
 
-void testBuildRandomTree()
+static void testBuildRandomTree()
 {
   std::unordered_set<std::string> labels;
   for (unsigned int i = 0; i < 20; ++i) {

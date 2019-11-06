@@ -37,7 +37,9 @@ protected:
   virtual REAL getRootLikelihood(pll_unode_t *root) const;
   // overload from parent
   virtual void computeRootLikelihood(pll_unode_t *virtualRoot);
-  virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {return _uq[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];}
+  virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {
+    return _uq[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];
+  }
   virtual REAL getLikelihoodFactor() const;
   virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       Scenario &scenario,
@@ -340,14 +342,11 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
   }
   getBestTransferLoss(geneNode, speciesNode, tlRecievingSpecies, values[6]);
 
-  unsigned int maxValueIndex = static_cast<unsigned int>(distance(values.begin(), max_element(values.begin(), values.end())));
+  unsigned int maxValueIndex = static_cast<unsigned int>(distance(values.begin(), 
+        max_element(values.begin(), values.end())
+        ));
   // safety check
-  if (values[maxValueIndex] == REAL()) {
-    REAL proba;
-    computeProbability(geneNode, speciesNode, proba, isVirtualRoot);
-    std::cerr << "warning: null ll scenario " << _uq[gid][e] << " " << proba  << std::endl;
-    assert(false);
-  }
+  assert(!(values[maxValueIndex] <= REAL()));
   switch(maxValueIndex) {
     case 0: 
       scenario.addEvent(ReconciliationEventType::EVENT_S, gid, e);
@@ -375,7 +374,9 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
     case 5:
       assert(transferedGene);
       assert(recievingSpecies);
-      scenario.addTransfer(ReconciliationEventType::EVENT_T, gid, e, transferedGene->node_index, recievingSpecies->node_index);
+      scenario.addTransfer(ReconciliationEventType::EVENT_T, gid, e, 
+          transferedGene->node_index, 
+          recievingSpecies->node_index);
       backtrace(transferedGene, recievingSpecies, scenario);
       backtrace(stayingGene, speciesNode, scenario);
       break;
@@ -457,7 +458,7 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
 template <class REAL>
 void UndatedDTLModel<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
-  auto u = virtualRoot->node_index;;
+  auto u = virtualRoot->node_index;
   for (auto speciesNode: this->_speciesNodes) {
     auto e = speciesNode->node_index;
     _uq[u][e] = REAL();
@@ -477,7 +478,7 @@ template <class REAL>
 REAL UndatedDTLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
 {
   REAL sum = REAL();
-  auto u = root->node_index + this->_maxGeneId + 1;;
+  auto u = root->node_index + this->_maxGeneId + 1;
   for (auto speciesNode: this->_speciesNodes) {
     auto e = speciesNode->node_index;
     sum += _uq[u][e];

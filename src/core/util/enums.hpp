@@ -27,7 +27,7 @@ class Enums {
 public:
   Enums() = delete;
 
-  static int freeParameters(RecModel m, unsigned int speciesCount = 1)  {
+  static unsigned int freeParameters(RecModel m, unsigned int speciesCount = 1)  {
     switch (m) {
       case RecModel::UndatedDL:
         return 2;

@@ -69,7 +69,7 @@ JSArguments::JSArguments(int iargc, char * iargv[]):
   checkInputs();
 }
 
-void assertFileExists(const std::string &file) 
+static void assertFileExists(const std::string &file) 
 {
   std::ifstream f(file);
   if (!f) {
@@ -78,7 +78,7 @@ void assertFileExists(const std::string &file)
   }
 }
 
-bool isIn(const std::string &elem, const std::vector<std::string> &v) {
+static bool isIn(const std::string &elem, const std::vector<std::string> &v) {
   return find(v.begin(), v.end(), elem) != v.end();
 }
 

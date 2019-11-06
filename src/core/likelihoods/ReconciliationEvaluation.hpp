@@ -22,7 +22,7 @@ public:
    *  Constructor 
    *  @param speciesTree rooted species tree (std::fixed)
    *  @param geneSpeciesMapping gene-to-species geneSpeciesMappingping
-   *  @param reconciliationModelStr the reconciliation model to use
+   *  @param recModel the reconciliation model to use
    *  @param rootedGeneTree should we compute the likelihood of a rooted or unrooted gene tree?
    */
   ReconciliationEvaluation(PLLRootedTree &speciesTree,
@@ -52,7 +52,7 @@ public:
   void setRoot(pll_unode_t * root) {_reconciliationModel->setRoot(root);}
 
   /**
-   *  @param input utree
+   *  @param input geneTree
    *  @return the reconciliation likelihood of this tree
    */
   double evaluate(PLLUnrootedTree &geneTree);

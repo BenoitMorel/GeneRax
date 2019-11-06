@@ -13,7 +13,9 @@ static void printEvent(const Scenario::Event &event, pll_rtree_t *speciesTree, p
       os << ":S=" << speciesTree->nodes[event.speciesNode]->label;
     }
     os << ":D=" << (event.type == ReconciliationEventType::EVENT_D ? "Y" : "N" );
-    os << ":H=" << (event.type == ReconciliationEventType::EVENT_T || event.type == ReconciliationEventType::EVENT_TL ? "Y" : "N" );
+    os << ":H=" << 
+      (event.type == ReconciliationEventType::EVENT_T || event.type == ReconciliationEventType::EVENT_TL ?
+       "Y" : "N" );
     if (event.type == ReconciliationEventType::EVENT_T || event.type == ReconciliationEventType::EVENT_TL) {
       assert(speciesTree->nodes[event.speciesNode]->label);
       assert(speciesTree->nodes[event.destSpeciesNode]->label);
@@ -25,7 +27,11 @@ static void printEvent(const Scenario::Event &event, pll_rtree_t *speciesTree, p
   }
 }
 
-static void recursivelySaveReconciliationsNHX(pll_rtree_t *speciesTree,  pll_unode_t *node, bool isVirtualRoot, std::vector<std::vector<Scenario::Event> > &geneToEvents, ParallelOfstream &os)
+static void recursivelySaveReconciliationsNHX(pll_rtree_t *speciesTree, 
+    pll_unode_t *node, 
+    bool isVirtualRoot, 
+    std::vector<std::vector<Scenario::Event> > &geneToEvents, 
+    ParallelOfstream &os)
 {
   
   if(node->next) {
@@ -105,8 +111,10 @@ static void writeEventRecPhyloXML(pll_unode_t *geneTree,
   auto species = speciesTree->nodes[event.speciesNode];
   pll_rnode_t *speciesOut = 0;
   os << indent << "<eventsRec>" << std::endl;
-  bool previousWasTransfer = previousEvent->type == ReconciliationEventType::EVENT_T || previousEvent->type == ReconciliationEventType::EVENT_TL;
-  if (previousWasTransfer && geneTree->node_index == previousEvent->transferedGeneNode && event.type != ReconciliationEventType::EVENT_L) {
+  bool previousWasTransfer = previousEvent->type 
+    == ReconciliationEventType::EVENT_T || previousEvent->type == ReconciliationEventType::EVENT_TL;
+  if (previousWasTransfer && geneTree->node_index == previousEvent->transferedGeneNode && event.type 
+      != ReconciliationEventType::EVENT_L) {
     auto previousEventSpeciesOut = speciesTree->nodes[previousEvent->destSpeciesNode];
     os << indent << "\t<transferBack destinationSpecies=\"" << previousEventSpeciesOut->label << "\"/>" << std::endl;
   }
@@ -161,7 +169,8 @@ static void recursivelySaveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
       loss.type = ReconciliationEventType::EVENT_L;
       if (event.type == ReconciliationEventType::EVENT_SL) {
         auto parentSpecies = speciesTree->nodes[event.speciesNode];
-        auto lostSpecies = (parentSpecies->left->node_index == event.destSpeciesNode) ? parentSpecies->right : parentSpecies->left;
+        auto lostSpecies = (parentSpecies->left->node_index == event.destSpeciesNode) 
+          ? parentSpecies->right : parentSpecies->left;
         loss.speciesNode = lostSpecies->node_index;
       } else if (event.type == ReconciliationEventType::EVENT_TL) {
         loss.speciesNode = event.speciesNode;

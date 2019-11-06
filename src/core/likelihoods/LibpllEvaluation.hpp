@@ -68,7 +68,11 @@ public:
   double optimizeAllParameters(double tolerance = TOLERANCE);
   double optimizeBranches(double tolerance = TOLERANCE);
 
-  double raxmlSPRRounds(int minRadius, int maxRadius, int thorough, unsigned int toKeep, double cutoff);
+  double raxmlSPRRounds(unsigned int minRadius, 
+      unsigned int maxRadius, 
+      unsigned int thorough, 
+      unsigned int toKeep, 
+      double cutoff);
 
   /**
    *  Accessor to the wrapped treeinfo structure

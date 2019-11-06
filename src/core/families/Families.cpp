@@ -17,9 +17,11 @@ enum FamilyErrorCode {
   ERROR_MAPPING_MISMATCH
 };
 
-std::string getErrorMessage(FamilyErrorCode error) {
+static std::string getErrorMessage(FamilyErrorCode error) {
   switch(error) {
-  case ERROR_OK: assert(0); return ""; 
+  case ERROR_OK: 
+    assert(0); 
+    return ""; 
   case ERROR_READ_ALIGNMENT: return "Cannot read alignment file (file exists but is invalid)";
   case ERROR_READ_GENE_TREE: return "Cannot read starting gene tree file (file exists but is invalid)";
   case ERROR_NOT_ENOUGH_GENES : return "The gene family should contain at least 3 sequences";
@@ -100,6 +102,7 @@ void filterFamilies(Families &families, const std::string &speciesTreeFile)
 {
   ParallelContext::barrier();
   Families copy = families;
+  unsigned int initialFamilySize = static_cast<unsigned int>(copy.size());
   families.clear();
   std::unordered_set<std::string> speciesTreeLabels;
   unsigned int invalid = 0;
@@ -117,28 +120,30 @@ void filterFamilies(Families &families, const std::string &speciesTreeFile)
   }
   LibpllParsers::fillLeavesFromRtree(speciesTree, speciesTreeLabels);
   
-  std::vector<unsigned int> localErrors((copy.size() - 1 ) / ParallelContext::getSize() + 1, 99999999);
+  std::vector<unsigned int> localErrors((initialFamilySize - 1 ) / ParallelContext::getSize() + 1, 99999999);
   std::vector<unsigned int> errors;
-  for (auto i = ParallelContext::getBegin(copy.size()); i < ParallelContext::getEnd(copy.size()); i ++) {
+  for (auto i = ParallelContext::getBegin(initialFamilySize); i < ParallelContext::getEnd(initialFamilySize); i ++) {
     auto &family = copy[i];
-    localErrors[i - ParallelContext::getBegin(copy.size())]  = filterFamily(family, speciesTreeLabels); 
+    localErrors[i - ParallelContext::getBegin(initialFamilySize)]  = filterFamily(family, speciesTreeLabels); 
   }
   ParallelContext::concatenateUIntVectors(localErrors, errors);
   errors.erase(remove(errors.begin(), errors.end(), 99999999), errors.end());
   Logger::info << std::endl;
   ParallelContext::barrier();
-  for (unsigned int i = 0; i < copy.size(); ++i) {
+  for (unsigned int i = 0; i < initialFamilySize; ++i) {
     auto error = errors[i];
     auto &family = copy[i];
     if (ERROR_OK == error) {
       families.push_back(family);
     } else {
-      Logger::info << "Error in family " << family.name << ": "  << getErrorMessage(static_cast<FamilyErrorCode>(error)) << std::endl;
+      Logger::info << "Error in family " << family.name 
+        << ": "  << getErrorMessage(static_cast<FamilyErrorCode>(error)) << std::endl;
       invalid++;
     }
   }
   if (invalid) {
-    Logger::info << "WARNING!!! Found " << invalid << " invalid families (they will be discarded from the analysis)" << std::endl;
+    Logger::info << "WARNING!!! Found " << invalid 
+      << " invalid families (they will be discarded from the analysis)" << std::endl;
   }  
   pll_rtree_destroy(speciesTree, 0);
 }
@@ -155,7 +160,7 @@ void duplicatesFamilies(const Families &families, Families &duplicatedFamilies, 
   }
 }
 
-double getLL(const FamilyInfo &family)
+static double getLL(const FamilyInfo &family)
 {
     std::ifstream is(family.statsFile);
     double libpllLL = 0.0;
@@ -164,9 +169,10 @@ double getLL(const FamilyInfo &family)
     is >> recLL;
     return libpllLL + recLL;
 }
+
 void contractFamilies(const Families &duplicatedFamilies, Families &families)
 {
-  unsigned int factor = duplicatedFamilies.size() / families.size();
+  unsigned int factor = static_cast<unsigned int>(duplicatedFamilies.size() / families.size());
   for (unsigned int f = 0; f < families.size(); ++f) {
     double bestLL = -999999999;
     unsigned int bestIndex = 0;
@@ -209,3 +215,5 @@ void mergeSplitFamilies(const std::vector<Families> &splitFamilies, Families &fa
     families[i]  = splitFamilies[i % splitsNumber][i / splitsNumber];
   }
 }
+
+

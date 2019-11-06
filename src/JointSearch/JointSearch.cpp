@@ -86,7 +86,7 @@ int internal_main(int argc, char** argv, void* comm)
         true, // optimize DTL rates?
         Parameters(dupRate, lossRate, transferRate)
         );
-    jointTree->printInfo();;
+    jointTree->printInfo();
     jointTree->optimizeParameters();
     double initialRecLL = jointTree->computeReconciliationLoglk();
     double initialLibpllLL = jointTree->computeLibpllLoglk();
@@ -150,7 +150,7 @@ extern "C" int dll_main(int argc, char** argv, void* comm)
 
 int main(int argc, char** argv)
 {
-  return internal_main(argc, argv, 0);
+  return internal_main(argc, argv, nullptr);
 }
 
 #endif

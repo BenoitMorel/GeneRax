@@ -42,7 +42,7 @@ public:
   Parameters(const std::string &src): _score(0.0) {load(src);} 
   
   inline unsigned int dimensions() const {
-    return _parameters.size();
+    return static_cast<unsigned int>(_parameters.size());
   }
 
   void ensurePositivity() {

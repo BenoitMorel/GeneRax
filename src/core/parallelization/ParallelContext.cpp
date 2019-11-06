@@ -37,6 +37,9 @@ void ParallelContext::init(void *commPtr)
 
 }
   
+ParallelException::~ParallelException() 
+{
+}
 
 
 void ParallelContext::finalize()
@@ -132,9 +135,9 @@ void ParallelContext::sumVectorDouble(std::vector<double> &value)
   if (!_mpiEnabled) {
     return;
   }
-  std::vector<double> sum(value.size());;
+  std::vector<double> sum(value.size());
   barrier();
-  MPI_Allreduce(&(value[0]), &(sum[0]), value.size(), MPI_DOUBLE, MPI_SUM, getComm());
+  MPI_Allreduce(&(value[0]), &(sum[0]), static_cast<int>(value.size()), MPI_DOUBLE, MPI_SUM, getComm());
   value = sum;
 #endif
 }

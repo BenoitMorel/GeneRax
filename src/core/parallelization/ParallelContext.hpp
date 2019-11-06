@@ -13,17 +13,18 @@
 class ParallelException: public std::exception
 {
 public:
-  ParallelException(int errorCode):errorCode_(errorCode) 
+  ParallelException(int errorCode) 
   {
     msg_ = "Program failed with error " + std::to_string(errorCode);
   }
+  
+  virtual ~ParallelException();
 
-  virtual const char* what() const throw()
+  virtual const char* what() const noexcept
   {
     return msg_.c_str();
   }
 private:
-  int errorCode_;
   std::string msg_;
 };
 

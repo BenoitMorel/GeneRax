@@ -4,14 +4,12 @@
 #include <IO/GeneSpeciesMapping.hpp>
 #include <util/Scenario.hpp>
 #include <IO/Logger.hpp>
-#include <likelihoods/SubtreeRepeatsCache.hpp>
 #include <util/enums.hpp>
 #include <cmath>
 #include <unordered_set>
 #include <maths/ScaledValue.hpp>
 #include <trees/PLLRootedTree.hpp>
 
-class SubtreeRepeatsCache;
 
 
 //#define IS_PROBA(x) ((x) >= REAL(0) && (x) <= REAL(1))
@@ -28,7 +26,7 @@ class SubtreeRepeatsCache;
  */
 class ReconciliationModelInterface {
 public:
-  virtual ~ReconciliationModelInterface() {};
+  virtual ~ReconciliationModelInterface() {}
   
   
   /*
@@ -88,8 +86,10 @@ public:
   
   
   // overload from parent
-  AbstractReconciliationModel(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree);
-  virtual ~AbstractReconciliationModel() {};
+  AbstractReconciliationModel(PLLRootedTree &speciesTree, 
+      const GeneSpeciesMapping &geneSpeciesMapping, 
+      bool rootedGeneTree);
+  virtual ~AbstractReconciliationModel() {}
   // overload from parent
   virtual void setRates(const std::vector<double> &dupRates,
       const std::vector<double> &lossRates,
@@ -145,7 +145,7 @@ protected:
   pll_unode_t *getLeft(pll_unode_t *node, bool virtualRoot) const;  
   pll_unode_t *getRight(pll_unode_t *node, bool virtualRoot) const; 
   pll_unode_t *getLeftRepeats(pll_unode_t *node, bool virtualRoot);  
-  pll_unode_t *getRightRepeats(pll_unode_t *node, bool virtualRoot) ; 
+  pll_unode_t *getRightRepeats(pll_unode_t *node, bool virtualRoot); 
 
   
   void updateCLVs();
@@ -167,7 +167,7 @@ private:
   void updateCLVsRec(pll_unode_t *node);
   void markInvalidatedNodes();
   void markInvalidatedNodesRec(pll_unode_t *node);
-  void fillNodesPostOrder(pll_rnode_t *node, std::vector<pll_rnode_t *> &nodes) ;
+  void fillNodesPostOrder(pll_rnode_t *node, std::vector<pll_rnode_t *> &nodes);
   
   
   
@@ -183,14 +183,15 @@ private:
   // is the CLV up to date?
   std::vector<bool> _isCLVUpdated;
   std::vector<pll_unode_t *> _allNodes;
-  SubtreeRepeatsCache *_cache;
   bool _firstCall;
 };
 
 
   
 template <class REAL>
-AbstractReconciliationModel<REAL>::AbstractReconciliationModel(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMapping, bool rootedGeneTree):
+AbstractReconciliationModel<REAL>::AbstractReconciliationModel(PLLRootedTree &speciesTree, 
+    const GeneSpeciesMapping &geneSpeciesMapping, 
+    bool rootedGeneTree):
   _geneRoot(0),
   _maxGeneId(1),
   _rootedGeneTree(rootedGeneTree),
@@ -336,15 +337,13 @@ pll_unode_t *AbstractReconciliationModel<REAL>::getRight(pll_unode_t *node, bool
 template <class REAL>
 pll_unode_t *AbstractReconciliationModel<REAL>::getLeftRepeats(pll_unode_t *node, bool virtualRoot)
 {
-  auto res = getLeft(node, virtualRoot);
-  return _cache ? _cache->getRepeat(res) : res;
+  return getLeft(node, virtualRoot);
 }
 
 template <class REAL>
 pll_unode_t *AbstractReconciliationModel<REAL>::getRightRepeats(pll_unode_t *node, bool virtualRoot)
 {
-  auto res = getRight(node, virtualRoot);
-  return _cache ? _cache->getRepeat(res) : res;
+  return getRight(node, virtualRoot);
 }
 
 template <class REAL>

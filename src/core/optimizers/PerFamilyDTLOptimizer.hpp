@@ -33,7 +33,7 @@ private:
       double minLoss, double maxLoss, unsigned int steps,
       double &bestDup,
       double &bestLoss,
-      double &bestLL) ;
+      double &bestLL);
   static void optimizeRateSimplex(JointTree &jointTree, bool transfers);
   static void optimizeDLRatesWindow(JointTree &jointTree);
   static void optimizeDTLRatesWindow(JointTree &jointTree);

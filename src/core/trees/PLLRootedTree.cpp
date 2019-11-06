@@ -24,7 +24,7 @@ static pll_rnode_t *createNode(const std::string &label, std::vector<pll_rnode_t
     assert(node->label);
     strcpy(node->label, label.c_str());
   }
-  node->node_index = allNodes.size();
+  node->node_index = static_cast<unsigned int>(allNodes.size());
   node->length = 0.1;
   node->parent = 0;
   node->left = 0;
@@ -147,8 +147,7 @@ pll_rtree_t *PLLRootedTree::buildRandomTree(const std::unordered_set<std::string
       root = createNode(label, allNodes);
       continue;
     }
-    auto r = rand();
-    auto brother = allNodes[r % allNodes.size()];
+    auto brother = allNodes[static_cast<size_t>(rand()) % allNodes.size()];
     auto parent = createNode("", allNodes);
     auto node = createNode(label, allNodes);
     auto grandpa = brother->parent;
@@ -167,9 +166,9 @@ pll_rtree_t *PLLRootedTree::buildRandomTree(const std::unordered_set<std::string
   for (unsigned int i = 0; i < allNodes.size(); ++i) {
     res->nodes[i] = allNodes[i];
   }
-  res->tip_count = allNodes.size() / 2 + 1;
-  res->inner_count = allNodes.size() / 2;
-  res->edge_count = allNodes.size() - 1;
+  res->tip_count = static_cast<unsigned int>(allNodes.size()) / 2 + 1;
+  res->inner_count = static_cast<unsigned int>(allNodes.size()) / 2;
+  res->edge_count = static_cast<unsigned int>(allNodes.size()) - 1;
   
   LibpllParsers::labelRootedTree(res);
   return res;

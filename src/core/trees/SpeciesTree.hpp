@@ -57,17 +57,20 @@ private:
 
 class SpeciesTreeOperator {
 public:
-  static bool canChangeRoot(const SpeciesTree &speciesTree, int direction);
+  static bool canChangeRoot(const SpeciesTree &speciesTree, unsigned int direction);
 
   /**
    * Change the root to the neighboring branch described by direction where direction is in [0:4[
    */
-  static void changeRoot(SpeciesTree &speciesTree, int direction);
-  static void revertChangeRoot(SpeciesTree &speciesTree, int direction);
+  static void changeRoot(SpeciesTree &speciesTree, unsigned int direction);
+  static void revertChangeRoot(SpeciesTree &speciesTree, unsigned int direction);
   static unsigned int applySPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int regraft);
   static void reverseSPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int applySPRMoveReturnValue);
   static void getPossiblePrunes(SpeciesTree &speciesTree, std::vector<unsigned int> &prunes);
-  static void getPossibleRegrafts(SpeciesTree &speciesTree, unsigned int prune, unsigned int radius, std::vector<unsigned int> &regrafts);
+  static void getPossibleRegrafts(SpeciesTree &speciesTree, 
+      unsigned int prune, 
+      unsigned int radius, 
+      std::vector<unsigned int> &regrafts);
 
 };
 

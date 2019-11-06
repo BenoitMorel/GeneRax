@@ -10,17 +10,17 @@ enum FFPStep {
 };
 
 
-bool update_family(const std::string &line, 
+static bool update_family(const std::string &line, 
     FamilyInfo &currentFamily,
     Families &families)
 {
   if (line[0] == '-') {
-      if (currentFamily.name.size()) {
-        families.push_back(currentFamily);
-        currentFamily.reset();
-      }
-      currentFamily.name = line.substr(1, line.size() - 1);
-    return true ;
+    if (currentFamily.name.size()) {
+      families.push_back(currentFamily);
+      currentFamily.reset();
+    }
+    currentFamily.name = line.substr(1, line.size() - 1);
+    return true;
   }
   size_t delim_pos = line.find_first_of("=");
   std::string key = line.substr(0, delim_pos);

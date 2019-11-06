@@ -9,7 +9,7 @@
 #include <sstream>
 
 
-std::string toArg(const std::string &str) {
+static std::string toArg(const std::string &str) {
   return str.size() ? str : "NONE";
 }
 
@@ -28,8 +28,8 @@ void GeneRaxMaster::optimizeGeneTrees(Families &families,
     double recWeight,
     bool enableRec,
     bool enableLibpll,
-    int sprRadius,
-    int iteration,
+    unsigned int sprRadius,
+    unsigned int iteration,
     bool schedulerSplitImplem,
     long &elapsed,
     bool inPlace) 
@@ -57,7 +57,7 @@ void GeneRaxMaster::optimizeGeneTrees(Families &families,
     auto taxa = geneTreeSizes[i];
     unsigned int cores = 1;
     if (sprRadius == 1) {
-      cores = taxa / 2;;
+      cores = taxa / 2;
     } else if (sprRadius == 2) {
       cores = taxa / 2;
     } else if (sprRadius >= 3) {
@@ -71,7 +71,7 @@ void GeneRaxMaster::optimizeGeneTrees(Families &families,
     }
     os << family.name << " ";
     os << cores << " "; // cores
-    os << taxa << " " ; // cost
+    os << taxa << " "; // cost
     os << "optimizeGeneTrees" << " ";
     os << family.startingGeneTree << " ";
     os << toArg(family.mappingFile) << " ";
