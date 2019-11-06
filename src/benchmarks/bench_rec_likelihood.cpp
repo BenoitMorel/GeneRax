@@ -7,7 +7,7 @@
 #include <optimizers/SpeciesTreeOptimizer.hpp>
 #include <routines/SlavesMain.hpp>
 
-void generateFakeAlignment(const std::vector<std::string> &taxa, const std::string &outputFile)
+static void generateFakeAlignment(const std::vector<std::string> &taxa, const std::string &outputFile)
 {
   std::ofstream os(outputFile);
   for (auto &taxon: taxa) { 
@@ -15,7 +15,7 @@ void generateFakeAlignment(const std::vector<std::string> &taxa, const std::stri
   }
 }
 
-void generateRandomFamilies(const std::string &outputDirectory,
+static void generateRandomFamilies(const std::string &outputDirectory,
     std::unordered_set<std::string> &speciesLabels,
     unsigned int familiesNumber,
     unsigned int geneTaxaNumber,
@@ -32,7 +32,7 @@ void generateRandomFamilies(const std::string &outputDirectory,
     family.alignmentFile = FileSystem::joinPaths(outputDirectory, family.name + ".fasta");
     std::vector<std::string> geneTaxa;
     for (unsigned int j = 0; j < geneTaxaNumber; ++j) {
-      std::string taxa = vectorSpeciesLabels[rand() % vectorSpeciesLabels.size()];
+      std::string taxa = vectorSpeciesLabels[static_cast<size_t>(rand()) % vectorSpeciesLabels.size()];
       taxa += "_gene" + std::to_string(j);
       geneTaxa.push_back(taxa);
     }
@@ -42,7 +42,7 @@ void generateRandomFamilies(const std::string &outputDirectory,
   }
 }
 
-void bench(const std::string &speciesTree, 
+static void bench(const std::string &speciesTree, 
     Families &families, 
     RecModel recModel,
     double supportThreshold,

@@ -8,13 +8,13 @@
 #include <functional>
 
 
-size_t leafHash(pll_unode_t *leaf) {
+static size_t leafHash(pll_unode_t *leaf) {
   assert(leaf);
   std::hash<std::string> hash_fn;
   return hash_fn(std::string(leaf->label));
 }
 
-size_t getTreeHashRec(pll_unode_t *node, size_t i) {
+static size_t getTreeHashRec(pll_unode_t *node, size_t i) {
   assert(node);
   if (i == 0) 
     i = 1;
@@ -31,7 +31,7 @@ size_t getTreeHashRec(pll_unode_t *node, size_t i) {
 
 }
 
-pll_unode_t *findMinimumHashLeafRec(pll_unode_t * root, size_t &hashValue)
+static pll_unode_t *findMinimumHashLeafRec(pll_unode_t * root, size_t &hashValue)
 {
   assert(root);
   if (!root->next) {
@@ -52,7 +52,7 @@ pll_unode_t *findMinimumHashLeafRec(pll_unode_t * root, size_t &hashValue)
   }
 }
 
-pll_unode_t *findMinimumHashLeaf(pll_unode_t * root) 
+static pll_unode_t *findMinimumHashLeaf(pll_unode_t * root) 
 {
   assert(root);
   auto n1 = root;
@@ -89,7 +89,7 @@ size_t JointTree::getUnrootedTreeHash()
   return res % 100000;
 }
 
-void printLibpllNode(pll_unode_s *node, Logger &os, bool isRoot)
+static void printLibpllNode(pll_unode_s *node, Logger &os, bool isRoot)
 {
   if (node->next) {
     os << "(";
@@ -103,7 +103,7 @@ void printLibpllNode(pll_unode_s *node, Logger &os, bool isRoot)
   os << ":" << (isRoot ? node->length / 2.0 : node->length);
 }
 
-void printLibpllTreeRooted(pll_unode_t *root, Logger &os){
+static void printLibpllTreeRooted(pll_unode_t *root, Logger &os){
   os << "(";
   printLibpllNode(root, os, true);
   os << ",";

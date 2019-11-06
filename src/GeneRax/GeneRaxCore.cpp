@@ -24,7 +24,7 @@
 
 void GeneRaxCore::initInstance(GeneRaxInstance &instance) 
 {
-  srand(instance.args.seed);
+  srand(static_cast<unsigned int>(instance.args.seed));
   FileSystem::mkdir(instance.args.output, true);
   Logger::initFileOutput(FileSystem::joinPaths(instance.args.output, "generax"));
   instance.args.printCommand();
@@ -78,7 +78,8 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     return;
   }
   ParallelContext::barrier();
-  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, RecModel::UndatedDL, instance.args.supportThreshold, instance.args.output, instance.args.exec);
+  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, 
+      RecModel::UndatedDL, instance.args.supportThreshold, instance.args.output, instance.args.exec);
   if (instance.args.speciesFastRadius > 0) {
     Logger::info << std::endl;
     Logger::timed << "Start optimizing the species tree with fixed gene trees" << std::endl;
@@ -117,7 +118,7 @@ void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
     bool perSpeciesDTLRates = false;
     optimizeRatesAndGeneTrees(instance, perSpeciesDTLRates, enableLibpll, i);
   }
-  for (int i = 0; i <= instance.args.maxSPRRadius; ++i) {
+  for (unsigned int i = 0; i <= instance.args.maxSPRRadius; ++i) {
     bool enableLibpll = true;
     bool perSpeciesDTLRates = instance.args.perSpeciesDTLRates && (i >= instance.args.maxSPRRadius - 1); // only apply per-species optimization at the two last rounds
     optimizeRatesAndGeneTrees(instance, perSpeciesDTLRates, enableLibpll, i);
@@ -140,7 +141,8 @@ void GeneRaxCore::postProcessGeneTrees(GeneRaxInstance &instance)
 void GeneRaxCore::reconcile(GeneRaxInstance &instance)
 {
   Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
-  Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, instance.recModel, instance.rates, instance.args.output);
+  Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, 
+      instance.recModel, instance.rates, instance.args.output);
 }
   
 void GeneRaxCore::terminate(GeneRaxInstance &instance)
@@ -182,7 +184,9 @@ void GeneRaxCore::initialGeneTreeSearch(GeneRaxInstance &instance)
   if (duplicates == 1 || instance.args.initStrategies == 1) {
     Logger::timed << "[Initialization] All the families will first be optimized with sequences only" << std::endl;
     Logger::mute();
-    RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, instance.args.execPath, instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
+    RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, 
+        instance.args.execPath, instance.currentIteration++, 
+        ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
     Logger::unmute();
     Routines::gatherLikelihoods(instance.currentFamilies, instance.totalLibpllLL, instance.totalRecLL);
   } else {
@@ -198,14 +202,17 @@ void GeneRaxCore::initialGeneTreeSearch(GeneRaxInstance &instance)
     Logger::timed << "[Initialization] Optimizing some of the duplicated families with sequences only" << std::endl;
     Logger::mute();
     instance.currentFamilies = splitFamilies[0];
-    RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, instance.args.execPath, instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
+    RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, instance.args.execPath, 
+        instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
     Logger::unmute();
     if (splits > 1) {
       // raxml and rec
-      Logger::timed << "[Initialization] Optimizing some of the duplicated families with sequences only and then species tree only" << std::endl;
+      Logger::timed << "[Initialization] Optimizing some of the duplicated families with sequences only "
+        << "and then species tree only" << std::endl;
       Logger::mute();
       instance.currentFamilies = splitFamilies[1];
-      RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, instance.args.execPath, instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
+      RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, instance.args.execPath, 
+          instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
       for (unsigned int i = 1; i <= recRadius; ++i) {
         bool enableLibpll = false;
         bool perSpeciesDTLRates = false;
@@ -215,7 +222,8 @@ void GeneRaxCore::initialGeneTreeSearch(GeneRaxInstance &instance)
     }
     if (splits > 2) {
       // rec and raxml
-      Logger::timed << "[Initialization] Optimizing some of the duplicated families with species only and then sequences tree only" << std::endl;
+      Logger::timed << "[Initialization] Optimizing some of the duplicated families with species "
+        << "only and then sequences tree only" << std::endl;
       for (unsigned int i = 1; i <= recRadius; ++i) {
         Logger::mute();
         bool enableLibpll = false;
@@ -223,7 +231,8 @@ void GeneRaxCore::initialGeneTreeSearch(GeneRaxInstance &instance)
         instance.currentFamilies = splitFamilies[2];
         optimizeRatesAndGeneTrees(instance, perSpeciesDTLRates, enableLibpll, i);
       }
-      RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, instance.args.execPath, instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
+      RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, instance.args.execPath, 
+          instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
       Logger::unmute();
     }
     instance.currentFamilies = initialCurrentFamilies;
@@ -244,7 +253,8 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
   } else {
     Logger::timed << "Optimizing global DTL rates... " << std::endl;
   }
-  Routines::optimizeRates(instance.args.userDTLRates, instance.speciesTree, instance.recModel, instance.currentFamilies, perSpeciesDTLRates, instance.rates, instance.elapsedRates);
+  Routines::optimizeRates(instance.args.userDTLRates, instance.speciesTree, instance.recModel, 
+      instance.currentFamilies, perSpeciesDTLRates, instance.rates, instance.elapsedRates);
   if (instance.rates.dimensions() <= 3) {
     Logger::info << instance.rates << std::endl;
   } else {
@@ -252,12 +262,16 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
   }
   Logger::info << std::endl;
   Logger::timed << "Optimizing gene trees with radius=" << sprRadius << "... " << std::endl; 
-  GeneRaxMaster::optimizeGeneTrees(instance.currentFamilies, instance.recModel, instance.rates, instance.args.output, "results",
-      instance.args.execPath, instance.speciesTree, instance.args.reconciliationOpt, instance.args.perFamilyDTLRates, instance.args.rootedGeneTree, instance.args.supportThreshold, 
-      instance.args.recWeight, true, enableLibpll, sprRadius, instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), elapsed);
+  GeneRaxMaster::optimizeGeneTrees(instance.currentFamilies, instance.recModel, instance.rates, 
+      instance.args.output, "results", instance.args.execPath, instance.speciesTree, 
+      instance.args.reconciliationOpt, instance.args.perFamilyDTLRates, 
+      instance.args.rootedGeneTree, instance.args.supportThreshold, 
+      instance.args.recWeight, true, enableLibpll, sprRadius, 
+      instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), elapsed);
   instance.elapsedSPR += elapsed;
   Routines::gatherLikelihoods(instance.currentFamilies, instance.totalLibpllLL, instance.totalRecLL);
-  Logger::info << "\tJointLL=" << instance.totalLibpllLL + instance.totalRecLL << " RecLL=" << instance.totalRecLL << " LibpllLL=" << instance.totalLibpllLL << std::endl;
+  Logger::info << "\tJointLL=" << instance.totalLibpllLL + instance.totalRecLL 
+    << " RecLL=" << instance.totalRecLL << " LibpllLL=" << instance.totalLibpllLL << std::endl;
   Logger::info << std::endl;
 }
 

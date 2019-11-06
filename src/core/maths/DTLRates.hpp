@@ -106,7 +106,7 @@ public:
   
   inline void setLL(double ll) { _ll = ll;}
 
-  inline unsigned int size() const {return _rates.size();}
+  inline unsigned int size() const {return static_cast<unsigned int>(_rates.size());}
 
   inline const DTLRates &getRates(unsigned int index) const {return _rates[index];}
   
@@ -199,7 +199,7 @@ public:
   }
   
   void normalize(double norm = 1.0) {
-    double av = distance(DTLRatesVector(_rates.size()));
+    double av = distance(DTLRatesVector(static_cast<unsigned int>(_rates.size())));
     *this = *this * (norm / av);
   }
 

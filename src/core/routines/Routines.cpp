@@ -53,7 +53,8 @@ void Routines::optimizeRates(bool userDTLRates,
 
 static std::string getSpeciesEventCountFile(const std::string &outputDir, const std::string &familyName)
 {
-  return FileSystem::joinPaths(outputDir, FileSystem::joinPaths("reconciliations", familyName + "_speciesEventCounts.txt"));
+  return FileSystem::joinPaths(outputDir, 
+      FileSystem::joinPaths("reconciliations", familyName + "_speciesEventCounts.txt"));
 }
 
 static std::string getTransfersFile(const std::string &outputDir, const std::string &familyName)
@@ -81,7 +82,8 @@ void Routines::inferReconciliation(
     std::string speciesEventCountsFile = getSpeciesEventCountFile(outputDir, tree.name);
     std::string transfersFile = getTransfersFile(outputDir, tree.name);
     std::string treeWithEventsFileNHX = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
-    std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.xml");
+    std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, 
+        tree.name + "_reconciliated.xml");
     Scenario scenario;
     ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
     evaluation.setRates(rates);
@@ -191,17 +193,18 @@ void Routines::optimizeSpeciesRatesEmpirical(const std::string &speciesTreeFile,
 
 static const std::string keyDelimiter("-_-");
 
-std::string getTransferKey(const std::string &label1, const std::string &label2)
+static std::string getTransferKey(const std::string &label1, const std::string &label2)
 {
   return label1 + keyDelimiter + label2; 
 }
 
-void getLabelsFromTransferKey(const std::string &key, std::string &label1, std::string &label2)
+static void getLabelsFromTransferKey(const std::string &key, std::string &label1, std::string &label2)
 {
-  int pos = key.find(keyDelimiter);
+  auto pos = key.find(keyDelimiter);
   label1 = key.substr(0, pos);
   label2 = key.substr(pos + keyDelimiter.size());
 }
+
 void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     RecModel recModel,
     Families &families,

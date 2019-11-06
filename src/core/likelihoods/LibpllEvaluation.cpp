@@ -18,16 +18,11 @@ extern "C" {
 const double DEFAULT_BL = 0.1;
 
 
-// constants taken from RAXML
-#define DEF_LH_EPSILON            0.1
-#define OPT_LH_EPSILON            0.1
 //#define RAXML_PARAM_EPSILON       0.001  //0.01
 #define RAXML_BFGS_FACTOR         1e7
 #define RAXML_BRLEN_SMOOTHINGS    32
-#define RAXML_BRLEN_DEFAULT       0.1
 #define RAXML_BRLEN_MIN           1.0e-6
 #define RAXML_BRLEN_MAX           100.
-#define RAXML_BRLEN_TOLERANCE     1.0e-7
 #define RAXML_FREERATE_MIN        0.001
 #define RAXML_FREERATE_MAX        100.
 #define RAXML_BRLEN_SCALER_MIN    0.01
@@ -35,40 +30,6 @@ const double DEFAULT_BL = 0.1;
 
 
 
-
-
-unsigned int getBestLibpllAttribute() {
-  pll_hardware_probe();
-  unsigned int arch = PLL_ATTRIB_ARCH_CPU;
-  if (pll_hardware.avx2_present) {
-    arch = PLL_ATTRIB_ARCH_AVX2;
-  } else if (pll_hardware.avx_present) {
-    arch = PLL_ATTRIB_ARCH_AVX;
-  } else if (pll_hardware.sse_present) {
-    arch = PLL_ATTRIB_ARCH_SSE;
-  }
-  arch |= PLL_ATTRIB_SITE_REPEATS;
-  return  arch;
-}
-
-
-bool getNextLine(std::ifstream &is, std::string &os)
-{
-  while (getline(is, os)) {
-    #if defined _WIN32 || defined __CYGWIN__
-    os.erase(remove(os.begin(), os.end(), '\r'), os.end());
-    #endif
-    auto end = os.find("#");
-    if (std::string::npos != end)
-      os = os.substr(0, end);
-    end = os.find(" ");
-    if (std::string::npos != end)
-      os = os.substr(0, end);
-    if (os.size()) 
-      return true;
-  }
-  return false;
-}
 
 std::string LibpllEvaluation::getModelStr()
 {
@@ -93,7 +54,11 @@ LibpllEvaluation::LibpllEvaluation(const std::string &newickStrOrFile,
 {
 }
 
-double LibpllEvaluation::raxmlSPRRounds(int minRadius, int maxRadius, int thorough, unsigned toKeep, double cutoff)
+double LibpllEvaluation::raxmlSPRRounds(unsigned int minRadius, 
+    unsigned int maxRadius, 
+    unsigned int thorough, 
+    unsigned int toKeep, 
+    double cutoff)
 {
   cutoff_info_t cutoff_info;
   if (cutoff != 0.0) {
@@ -102,16 +67,16 @@ double LibpllEvaluation::raxmlSPRRounds(int minRadius, int maxRadius, int thorou
     cutoff_info.lh_cutoff = computeLikelihood(false) / -1000.0;
   }
   return pllmod_algo_spr_round(getTreeInfo(),
-      minRadius,
-      maxRadius,
-      toKeep, // params.ntopol_keep
-      thorough, // THOROUGH
+      static_cast<int>(minRadius),
+      static_cast<int>(maxRadius),
+      static_cast<int>(toKeep), // params.ntopol_keep
+      static_cast<int>(thorough), // THOROUGH
       0, //int brlen_opt_method,
       RAXML_BRLEN_MIN,
       RAXML_BRLEN_MAX,
       RAXML_BRLEN_SMOOTHINGS,
       0.1,
-      cutoff == 0 ? 0 : &cutoff_info, //cutoff_info_t * cutoff_info,
+      (fabs(cutoff) < std::numeric_limits<double>::epsilon()) ? 0 : &cutoff_info, //cutoff_info_t * cutoff_info,
       cutoff); //double subtree_cutoff);
 }
 
@@ -123,7 +88,7 @@ double LibpllEvaluation::computeLikelihood(bool incremental)
 
 double LibpllEvaluation::optimizeBranches(double tolerance)
 {
-  unsigned int toOptimize = _treeInfo->getTreeInfo()->params_to_optimize[0];
+  auto toOptimize = _treeInfo->getTreeInfo()->params_to_optimize[0];
   _treeInfo->getTreeInfo()->params_to_optimize[0] = PLLMOD_OPT_PARAM_BRANCHES_ITERATIVE;
   double res = optimizeAllParameters(tolerance);
   _treeInfo->getTreeInfo()->params_to_optimize[0] = toOptimize;

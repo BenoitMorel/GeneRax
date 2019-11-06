@@ -25,8 +25,8 @@ public:
     double recWeight,
     bool enableRec,
     bool enableLibpll,
-    int sprRadius,
-    int iteration,
+    unsigned int sprRadius,
+    unsigned int iteration,
     bool schedulerSplitImplem,
     long &elapsed,
     bool inPlace = false); 

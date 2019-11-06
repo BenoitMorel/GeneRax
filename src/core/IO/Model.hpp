@@ -34,7 +34,7 @@ public:
       _rate_sym.assign(sm.rate_sym, sm.rate_sym + sm.states*(sm.states-1)/2);
     if (sm.freq_sym)
       _freq_sym.assign(sm.freq_sym, sm.freq_sym + sm.states);
-  };
+  }
 
   // getters
   unsigned int states() const;
@@ -64,7 +64,7 @@ public:
     }
     else
       return _subst_rates;
-  };
+  }
 
 
   // setters
@@ -75,7 +75,7 @@ public:
       throw std::invalid_argument("Invalid size of base_freqs std::vector!");
 
     _base_freqs = v;
-  };
+  }
 
   void subst_rates(const doubleVector& v)
   {
@@ -83,7 +83,7 @@ public:
       throw std::invalid_argument("Invalid size of subst_rates std::vector!");
 
     _subst_rates = v;
-  };
+  }
 
   void uniq_subst_rates(const doubleVector& v)
   {
@@ -98,7 +98,7 @@ public:
     }
     else
       subst_rates(v);
-  };
+  }
 
 private:
   unsigned int _states;
@@ -115,37 +115,37 @@ public:
   typedef std::unordered_map<int,ParamValue> ParamModeMap;
 
   Model (DataType data_type = DataType::autodetect, const std::string &model_string = "GTR");
-  Model (const std::string &model_string) : Model(DataType::autodetect, model_string) {};
+  Model (const std::string &model_string) : Model(DataType::autodetect, model_string) {}
 
   Model(const Model&) = default;
 
   /* getters */
-  DataType data_type() const { return _data_type; };
+  DataType data_type() const { return _data_type; }
   std::string data_type_name() const;
-  unsigned int num_states() const { return _num_states; };
-  std::string name() const { return _name; };
+  unsigned int num_states() const { return _num_states; }
+  std::string name() const { return _name; }
 
   const pll_state_t* charmap() const;
-  const SubstitutionModel submodel(size_t i) const { return _submodels.at(i); };
+  const SubstitutionModel submodel(size_t i) const { return _submodels.at(i); }
 
-  unsigned int ratehet_mode() const { return _rate_het; };
-  unsigned int num_ratecats() const { return _num_ratecats; };
-  unsigned int num_submodels() const { return _num_submodels; };
-  const doubleVector& ratecat_rates() const { return _ratecat_rates; };
-  const doubleVector& ratecat_weights() const { return _ratecat_weights; };
-  const std::vector<unsigned int>& ratecat_submodels() const { return _ratecat_submodels; };
-  int gamma_mode() const { return _gamma_mode; };
+  unsigned int ratehet_mode() const { return _rate_het; }
+  unsigned int num_ratecats() const { return _num_ratecats; }
+  unsigned int num_submodels() const { return _num_submodels; }
+  const doubleVector& ratecat_rates() const { return _ratecat_rates; }
+  const doubleVector& ratecat_weights() const { return _ratecat_weights; }
+  const std::vector<unsigned int>& ratecat_submodels() const { return _ratecat_submodels; }
+  int gamma_mode() const { return _gamma_mode; }
 
-  double alpha() const { return _alpha; };
-  double pinv() const { return _pinv; };
-  double brlen_scaler() const { return _brlen_scaler; };
-  const doubleVector& base_freqs(unsigned int i) const { return _submodels.at(i).base_freqs(); };
-  const doubleVector& subst_rates(unsigned int i) const { return _submodels.at(i).subst_rates(); };
+  double alpha() const { return _alpha; }
+  double pinv() const { return _pinv; }
+  double brlen_scaler() const { return _brlen_scaler; }
+  const doubleVector& base_freqs(unsigned int i) const { return _submodels.at(i).base_freqs(); }
+  const doubleVector& subst_rates(unsigned int i) const { return _submodels.at(i).subst_rates(); }
 
   std::string to_string(bool print_params = false, unsigned int precision = 0) const;
   int params_to_optimize() const;
   const ParamModeMap& param_mode() const { return _param_mode; }
-  ParamValue param_mode(int param) const { return _param_mode.at(param); };
+  ParamValue param_mode(int param) const { return _param_mode.at(param); }
 
   AscBiasCorrection ascbias_type() const { return _ascbias_type; }
   const WeightVector& ascbias_weights() const { return _ascbias_weights; }
@@ -154,22 +154,22 @@ public:
   size_t clv_entry_size() const { return _num_states * _num_ratecats; }
 
   /* setters */
-  void alpha(double value) { _alpha = value; };
-  void pinv(double value) { _pinv = value; };
-  void brlen_scaler(double value) { _brlen_scaler = value; };
-  void base_freqs(size_t i, const doubleVector& value) { _submodels.at(i).base_freqs(value); };
-  void subst_rates(size_t i, const doubleVector& value) { _submodels.at(i).subst_rates(value); };
-  void base_freqs(const doubleVector& value) { for (SubstitutionModel& s: _submodels) s.base_freqs(value); };
-  void subst_rates(const doubleVector& value) { for (SubstitutionModel& s: _submodels) s.subst_rates(value); };
-  void ratecat_rates(doubleVector const& value) { _ratecat_rates = value; };
-  void ratecat_weights(doubleVector const& value) { _ratecat_weights = value; };
+  void alpha(double value) { _alpha = value; }
+  void pinv(double value) { _pinv = value; }
+  void brlen_scaler(double value) { _brlen_scaler = value; }
+  void base_freqs(size_t i, const doubleVector& value) { _submodels.at(i).base_freqs(value); }
+  void subst_rates(size_t i, const doubleVector& value) { _submodels.at(i).subst_rates(value); }
+  void base_freqs(const doubleVector& value) { for (SubstitutionModel& s: _submodels) s.base_freqs(value); }
+  void subst_rates(const doubleVector& value) { for (SubstitutionModel& s: _submodels) s.subst_rates(value); }
+  void ratecat_rates(doubleVector const& value) { _ratecat_rates = value; }
+  void ratecat_weights(doubleVector const& value) { _ratecat_weights = value; }
 
-  void param_mode(int param, ParamValue mode) { _param_mode[param] = mode; };
+  void param_mode(int param, ParamValue mode) { _param_mode[param] = mode; }
   void set_param_mode_default(int param, ParamValue mode)
   {
     if (param_mode(param) == ParamValue::undefined)
       _param_mode[param] = mode;
-  };
+  }
 
   /* initialization */
   void init_from_string(const std::string& model_string);

@@ -4,7 +4,8 @@
 #include <climits>
 #include <iostream>
 
-#define JS_SCALE_FACTOR 115792089237316195423570985008687907853269984665640564039457584007913129639936.0  /*  2**256 (exactly)  */
+#define JS_SCALE_FACTOR \
+  115792089237316195423570985008687907853269984665640564039457584007913129639936.0  /*  2**256 (exactly)  */
 #define JS_SCALE_THRESHOLD (1.0/JS_SCALE_FACTOR)
 
 const int NULL_SCALER = INT_MAX / 2 - 1;
@@ -163,7 +164,7 @@ public:
   
   inline bool operator ==(const ScaledValue& v) const
   {
-    return scaler == v.scaler && value == v.value;
+    return scaler == v.scaler && (std::fabs(v.value-value) <= std::numeric_limits<double>::epsilon());
   }
 
   inline bool operator <=(const ScaledValue& v) const

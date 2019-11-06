@@ -35,9 +35,9 @@ public:
   LibpllException(const std::string &s): msg_(s) {}
   LibpllException(const std::string &s1, 
       const std::string s2): msg_(s1 + s2) {}
-  virtual const char* what() const throw() { return msg_.c_str(); }
+  virtual const char* what() const noexcept { return msg_.c_str(); }
   void append(const std::string &str) {msg_ += str;}
-
+  virtual ~LibpllException();
 private:
   std::string msg_;
 };
@@ -63,7 +63,9 @@ public:
   /**
    *  return false if could not open the alignment
    */
-  static bool fillLabelsFromAlignment(const std::string &alignmentFilename, const std::string& modelStrOrFilename,  std::unordered_set<std::string> &leaves);
+  static bool fillLabelsFromAlignment(const std::string &alignmentFilename, 
+      const std::string& modelStrOrFilename,  
+      std::unordered_set<std::string> &leaves);
 
   
   static std::vector<unsigned int> parallelGetTreeSizes(const Families &families);
@@ -80,7 +82,7 @@ private:
   /**
    *  parse sequences and pattern weights from fasta file
    *  @param fasta_file Input file
-   *  @param stdmap state std::map
+   *  @param stateMap state std::map
    *  @param sequences Compressed (each site appears only once) sequences
    *  @param weights Pattern weights
    */
@@ -92,7 +94,7 @@ private:
   /**
    *  parse sequences and pattern weights from phylip file
    *  @param phylip_file Input file
-   *  @param stdmap state std::map
+   *  @param stateMap state std::map
    *  @param sequences Compressed (each site appears only once) sequences
    *  @param weights Pattern weights
    */

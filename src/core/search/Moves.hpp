@@ -13,7 +13,9 @@ class Move {
 public:
   virtual ~Move() {}
   
-  static std::unique_ptr<Move> createSPRMove(unsigned int pruneIndex, unsigned int regraftIndex, const std::vector<unsigned int> &path);
+  static std::unique_ptr<Move> createSPRMove(unsigned int pruneIndex, 
+      unsigned int regraftIndex, 
+      const std::vector<unsigned int> &path);
   
   virtual std::unique_ptr<Rollback> applyMove(JointTree &tree) = 0;
   

@@ -23,11 +23,12 @@ struct FamilyInfo {
     mappingFile = "";
     libpllModel = "GTR";
     statsFile = "";
-    color = -1;
+    color = 0;
   }
 };
 
 typedef std::vector<FamilyInfo> Families;
+
 void filterFamilies(Families &families, const std::string &speciesTreeFile);
 void duplicatesFamilies(const Families &families, Families &duplicatedFamilies, unsigned int factor);
 void contractFamilies(const Families &duplicatedFamilies, Families &families);

@@ -1,6 +1,5 @@
 #include <optimizers/PerFamilyDTLOptimizer.hpp>
 
-#include <likelihoods/SubtreeRepeatsCache.hpp>
 #include <parallelization/ParallelContext.hpp>
 #include <trees/JointTree.hpp>
 #include <trees/PerCoreGeneTrees.hpp>
@@ -16,7 +15,7 @@ static bool isValidLikelihood(double ll) {
   return std::isnormal(ll) && ll < -0.0000001;
 }
 
-void updateLL(Parameters &rates, JointTree &jointTree) {
+static void updateLL(Parameters &rates, JointTree &jointTree) {
   rates.ensurePositivity();
   jointTree.setRates(rates);
   rates.setScore(jointTree.computeReconciliationLoglk());

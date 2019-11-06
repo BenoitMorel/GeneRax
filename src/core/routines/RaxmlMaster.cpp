@@ -13,7 +13,7 @@
 void RaxmlMaster::runRaxmlOptimization(Families &families,
     const std::string &output,
     const std::string &execPath,
-    int iteration,
+    unsigned int iteration,
     bool splitImplem,
     long &sumElapsed)
 
@@ -37,7 +37,7 @@ void RaxmlMaster::runRaxmlOptimization(Families &families,
     auto taxa = geneTreeSizes[i];
     os << family.name << " ";
     os << 1 << " "; // cores
-    os << taxa << " " ; // cost
+    os << taxa << " "; // cost
     os << "raxmlLight" << " ";
     os << family.startingGeneTree << " ";
     os << family.alignmentFile << " ";

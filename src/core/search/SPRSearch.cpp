@@ -16,7 +16,7 @@ struct SPRMoveDesc {
   std::vector<unsigned int> path;
 };
 
-void queryPruneIndicesRec(pll_unode_t * node,
+static void queryPruneIndicesRec(pll_unode_t * node,
                                std::vector<unsigned int> &buffer)
 {
   assert(node);
@@ -30,7 +30,7 @@ void queryPruneIndicesRec(pll_unode_t * node,
   }
 }
 
-void getAllPruneIndices(JointTree &tree, std::vector<unsigned int> &allNodeIndices) {
+static void getAllPruneIndices(JointTree &tree, std::vector<unsigned int> &allNodeIndices) {
   auto treeinfo = tree.getTreeInfo();
   for (unsigned int i = 0; i < treeinfo->subnode_count; ++i) {
     if (treeinfo->subnodes[i]->next) {
@@ -40,7 +40,7 @@ void getAllPruneIndices(JointTree &tree, std::vector<unsigned int> &allNodeIndic
 }
 
 
-bool sprYeldsSameTree(pll_unode_t *p, pll_unode_t *r)
+static bool sprYeldsSameTree(pll_unode_t *p, pll_unode_t *r)
 {
   assert(p);
   assert(r);
@@ -48,7 +48,7 @@ bool sprYeldsSameTree(pll_unode_t *p, pll_unode_t *r)
     || (r == p->back) || (r == p->next->back) || (r == p->next->next->back);
 }
 
-bool isValidSPRMove(pll_unode_s *prune, pll_unode_s *regraft) {
+static bool isValidSPRMove(pll_unode_s *prune, pll_unode_s *regraft) {
   assert(prune);
   assert(regraft);
   return !sprYeldsSameTree(prune, regraft);
@@ -56,7 +56,12 @@ bool isValidSPRMove(pll_unode_s *prune, pll_unode_s *regraft) {
 
 
 
-void getRegraftsRec(unsigned int pruneIndex, pll_unode_t *regraft, int maxRadius, double supportThreshold, std::vector<unsigned int> &path, std::vector<SPRMoveDesc> &moves)
+static void getRegraftsRec(unsigned int pruneIndex, 
+    pll_unode_t *regraft, 
+    int maxRadius, 
+    double supportThreshold, 
+    std::vector<unsigned int> &path, 
+    std::vector<SPRMoveDesc> &moves)
 {
   assert(regraft);
   double bootstrapValue = (nullptr == regraft->label) ? 0.0 : std::atof(regraft->label);
@@ -74,7 +79,7 @@ void getRegraftsRec(unsigned int pruneIndex, pll_unode_t *regraft, int maxRadius
   }
 }
 
-void getRegrafts(JointTree &jointTree, unsigned int pruneIndex, int maxRadius, std::vector<SPRMoveDesc> &moves) 
+static void getRegrafts(JointTree &jointTree, unsigned int pruneIndex, int maxRadius, std::vector<SPRMoveDesc> &moves) 
 {
   pll_unode_t *pruneNode = jointTree.getNode(pruneIndex);
   std::vector<unsigned int> path;
@@ -92,7 +97,9 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
       auto pruneIndex = allNodes[i];
       getRegrafts(jointTree, pruneIndex, radius, potentialMoves);
   }
-  std::vector<std::array<bool, 2> > redundantNNIMoves(jointTree.getTreeInfo()->subnode_count, std::array<bool, 2>{{false,false}});
+  std::vector<std::array<bool, 2> > redundantNNIMoves(
+      jointTree.getTreeInfo()->subnode_count, 
+      std::array<bool, 2>{{false,false}});
   for (auto &move: potentialMoves) {
     auto pruneIndex = move.pruneIndex;
     auto regraftIndex = move.regraftIndex;
@@ -118,10 +125,16 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
   }
   
   Logger::info << "Start SPR round " 
-    << "(std::hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
+    << "(std::hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" 
+    << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
     << std::endl;
   unsigned int bestMoveIndex = static_cast<unsigned int>(-1);
-  auto foundBetterMove = SearchUtils::findBestMove(jointTree, allMoves, bestLoglk, bestMoveIndex, blo, jointTree.isSafeMode()); 
+  auto foundBetterMove = SearchUtils::findBestMove(jointTree, 
+      allMoves, 
+      bestLoglk, 
+      bestMoveIndex, 
+      blo, 
+      jointTree.isSafeMode()); 
   if (foundBetterMove) {
     jointTree.applyMove(*allMoves[bestMoveIndex]);
     if (blo) {

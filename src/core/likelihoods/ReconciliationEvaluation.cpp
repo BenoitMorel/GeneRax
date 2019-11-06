@@ -63,13 +63,14 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
   if (_model == RecModel::UndatedDTLAdvanced) {
     std::string transferFrequenciesFile = "/tmp/transferFrequencies.txt";
     if (FileSystem::exists(transferFrequenciesFile)) {
-      Parameters parameters;
-      parameters.load(transferFrequenciesFile);
-      setTransferFrequencies(parameters);
+      Parameters hackParameters;
+      hackParameters.load(transferFrequenciesFile);
+      setTransferFrequencies(hackParameters);
     } else {
       _transferFrequencies.resize(_speciesTree.getNodesNumber());
       for (unsigned int e = 0; e < _speciesTree.getNodesNumber(); ++e) {
-        _transferFrequencies[e] = std::vector<double>(_speciesTree.getNodesNumber(), 1.0 / _speciesTree.getNodesNumber());
+        _transferFrequencies[e] = std::vector<double>(_speciesTree.getNodesNumber(), 
+            1.0 / _speciesTree.getNodesNumber());
       }
     }
   }
@@ -97,7 +98,8 @@ void ReconciliationEvaluation::invalidateCLV(unsigned int nodeIndex)
   _reconciliationModel->invalidateCLV(nodeIndex);
 }
 
-std::unique_ptr<ReconciliationModelInterface> ReconciliationEvaluation::buildRecModelObject(RecModel recModel, bool infinitePrecision)
+std::unique_ptr<ReconciliationModelInterface> ReconciliationEvaluation::buildRecModelObject(RecModel recModel, 
+    bool infinitePrecision)
 {
   switch(recModel) {
   case RecModel::UndatedDL:
@@ -114,7 +116,9 @@ std::unique_ptr<ReconciliationModelInterface> ReconciliationEvaluation::buildRec
     }
   case RecModel::UndatedDTLAdvanced:
     if (infinitePrecision) {
-      return  std::make_unique<UndatedDTLModelAdvanced<ScaledValue> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
+      return  std::make_unique<UndatedDTLModelAdvanced<ScaledValue> >(_speciesTree, 
+          _geneSpeciesMapping, 
+          _rootedGeneTree);
     } else {
       return  std::make_unique<UndatedDTLModelAdvanced<double> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     }
@@ -131,6 +135,7 @@ void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
     _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates, _transferFrequencies);
  }
 }
+
 void ReconciliationEvaluation::inferMLScenario(PLLUnrootedTree &geneTree, Scenario &scenario) {
   auto infinitePrecision = _infinitePrecision;
   updatePrecision(true);

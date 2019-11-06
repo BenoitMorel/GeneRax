@@ -37,6 +37,10 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
     printHelp();
     ParallelContext::abort(0);
   }
+  init();
+}
+
+void GeneRaxArguments::init() {
   for (int i = 1; i < argc; ++i) {
     std::string arg(argv[i]);
     if (arg == "-h" || arg == "--help") {
@@ -60,15 +64,15 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
     } else if (arg == "--per-family-rates") {
       perFamilyDTLRates = true;
     } else if (arg == "--init-strategies") {
-      initStrategies = atoi(argv[++i]);
+      initStrategies = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--duplicates") {
-      duplicates = atoi(argv[++i]);
+      duplicates = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--unrooted-gene-tree") {
       rootedGeneTree = false;
     } else if (arg == "--support-threshold") {
       supportThreshold = static_cast<double>(atof(argv[++i]));
     } else if (arg == "--rec-radius") {
-      recRadius = atoi(argv[++i]);
+      recRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--per-species-rates") {
       perSpeciesDTLRates = true;
     } else if (arg == "--use-transfer-frequencies") {
@@ -83,15 +87,15 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
       transferRate = atof(argv[++i]);
       userDTLRates = true;
     } else if (arg == "--max-spr-radius") {
-      maxSPRRadius = atoi(argv[++i]);
+      maxSPRRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--rec-weight") {
       recWeight = atof(argv[++i]);
     } else if (arg == "--seed") {
       seed = atoi(argv[++i]);
     } else if (arg == "--species-fast-radius") {
-      speciesFastRadius = atoi(argv[++i]);
+      speciesFastRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--species-slow-radius") {
-      speciesSlowRadius = atoi(argv[++i]);
+      speciesSlowRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--optimize-species-tree") {
       optimizeSpeciesTree = true;
     } else if (arg == "--do-not-optimize-gene-trees") {
@@ -106,7 +110,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   checkInputs();
 }
 
-void assertFileExists(const std::string &file) 
+static void assertFileExists(const std::string &file) 
 {
   std::ifstream f(file);
   if (!f) {
@@ -115,9 +119,6 @@ void assertFileExists(const std::string &file)
   }
 }
 
-bool isIn(const std::string &elem, const std::vector<std::string> &v) {
-  return find(v.begin(), v.end(), elem) != v.end();
-}
 
 void GeneRaxArguments::checkInputs() {
   bool ok = true;

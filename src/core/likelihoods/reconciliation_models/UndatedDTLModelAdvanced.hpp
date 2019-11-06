@@ -6,7 +6,7 @@
 #include <IO/Logger.hpp>
 #include <algorithm>
 
-static const int TRANSFER_FREQUENCIES_EPSILON = 0.01;
+static const double TRANSFER_FREQUENCIES_EPSILON = 0.01;
 
 /*
 * Implement the undated model described here:
@@ -16,7 +16,9 @@ static const int TRANSFER_FREQUENCIES_EPSILON = 0.01;
 template <class REAL>
 class UndatedDTLModelAdvanced: public AbstractReconciliationModel<REAL> {
 public:
-  UndatedDTLModelAdvanced(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree):
+  UndatedDTLModelAdvanced(PLLRootedTree &speciesTree, 
+      const GeneSpeciesMapping &geneSpeciesMappingp, 
+      bool rootedGeneTree):
     AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree) {}
   UndatedDTLModelAdvanced(const UndatedDTLModelAdvanced &) = delete;
   UndatedDTLModelAdvanced & operator = (const UndatedDTLModelAdvanced &) = delete;
@@ -38,7 +40,9 @@ protected:
   virtual REAL getRootLikelihood(pll_unode_t *root) const;
   // overload from parent
   virtual void computeRootLikelihood(pll_unode_t *virtualRoot);
-  virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {return _uq[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];}
+  virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {
+    return _uq[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];
+  }
   virtual REAL getLikelihoodFactor() const;
   virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       Scenario &scenario,
@@ -258,7 +262,7 @@ void UndatedDTLModelAdvanced<REAL>::computeProbability(pll_unode_t *geneNode, pl
 template <class REAL>
 void UndatedDTLModelAdvanced<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
-  auto u = virtualRoot->node_index;;
+  auto u = virtualRoot->node_index;
   for (auto speciesNode: this->_speciesNodes) {
     auto e = speciesNode->node_index;
     _uq[u][e] = REAL();
@@ -276,7 +280,7 @@ template <class REAL>
 REAL UndatedDTLModelAdvanced<REAL>::getRootLikelihood(pll_unode_t *root) const
 {
   REAL sum = REAL();
-  auto u = root->node_index + this->_maxGeneId + 1;;
+  auto u = root->node_index + this->_maxGeneId + 1;
   for (auto speciesNode: this->_speciesNodes) {
     auto e = speciesNode->node_index;
     sum += _uq[u][e];

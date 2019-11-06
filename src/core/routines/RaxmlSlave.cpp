@@ -11,23 +11,29 @@
 #include <parallelization/ParallelContext.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 
-void optimizeParameters(LibpllEvaluation &evaluation, double radius) 
+static void optimizeParameters(LibpllEvaluation &evaluation, double radius) 
 {
   double initialLL = evaluation.computeLikelihood(false);
   Logger::timed << "[" << initialLL << "]" << " Optimize parametres (" << radius << ")" << std::endl;
   evaluation.optimizeAllParameters(10.0);
 }
 
-void optimizeBranches(LibpllEvaluation &evaluation, double radius) 
+static void optimizeBranches(LibpllEvaluation &evaluation, double radius) 
 {
   evaluation.optimizeBranches(radius);
 }
 
-bool optimizeTopology(LibpllEvaluation &evaluation, unsigned int radiusMin, unsigned int radiusMax, unsigned int thorough, unsigned int toKeep, double cutoff) 
+static bool optimizeTopology(LibpllEvaluation &evaluation, 
+    unsigned int radiusMin, 
+    unsigned int radiusMax, 
+    unsigned int thorough, 
+    unsigned int toKeep, 
+    double cutoff) 
 {
   
   double initialLL = evaluation.computeLikelihood(false);
-  Logger::timed << "["  << initialLL << "] " << (thorough ? "SLOW" : "FAST") << " SPR Round (radius=" << radiusMax << ")" << std::endl;
+  Logger::timed << "["  << initialLL << "] " 
+    << (thorough ? "SLOW" : "FAST") << " SPR Round (radius=" << radiusMax << ")" << std::endl;
   double ll = evaluation.raxmlSPRRounds(radiusMin, radiusMax, thorough, toKeep, cutoff);
   optimizeBranches(evaluation, 1.0);
   return ll > initialLL + 0.1;
@@ -52,7 +58,8 @@ int RaxmlSlave::runRaxmlOptimization(int argc, char** argv, void* comm)
   optimizeParameters(evaluation, 10.0);
   unsigned int radiusMin = 1;
   unsigned int radiusMax = 5;
-  unsigned int radiusLimit = std::min(22, (int) evaluation.getTreeInfo()->tip_count - 3 );
+  unsigned int radiusLimit = std::min(22u, 
+      static_cast<unsigned int>(evaluation.getTreeInfo()->tip_count - 3) );
   unsigned int toKeep = 0;
   unsigned int thorough = 0;
   double cutoff = 0.0;

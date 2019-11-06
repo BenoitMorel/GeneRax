@@ -26,14 +26,14 @@ public:
   void setModel(RecModel model) {_model = model;}
 
   void rootExhaustiveSearch(bool doOptimizeGeneTrees);
-  double sprRound(int radius);
-  double sortedSprRound(int radius, double bestLL);
-  double sprSearch(int radius, bool doOptimizeGeneTrees);
+  double sprRound(unsigned int radius);
+  double sortedSprRound(unsigned int radius, double bestLL);
+  double sprSearch(unsigned int radius, bool doOptimizeGeneTrees);
   void ratesOptimization();
-  double optimizeGeneTrees(int radius, bool inPlace = false);
+  double optimizeGeneTrees(unsigned int radius, bool inPlace = false);
 
   double getReconciliationLikelihood() {return computeLikelihood(false);}
-  double computeLikelihood(bool doOptimizeGeneTrees, int geneSPRRadius = 1);
+  double computeLikelihood(bool doOptimizeGeneTrees, unsigned int geneSPRRadius = 1);
   void saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
   
@@ -48,7 +48,14 @@ private:
   Parameters _hack;
   double _supportThreshold;
 private:
-  void rootExhaustiveSearchAux(SpeciesTree &speciesTree, PerCoreGeneTrees &geneTrees, RecModel model, bool doOptimizeGeneTrees, std::vector<unsigned int> &movesHistory, std::vector<unsigned int> &bestMovesHistory, double &bestLL, unsigned int &visits);
+  void rootExhaustiveSearchAux(SpeciesTree &speciesTree, 
+      PerCoreGeneTrees &geneTrees, 
+      RecModel model, 
+      bool doOptimizeGeneTrees, 
+      std::vector<unsigned int> &movesHistory, 
+      std::vector<unsigned int> &bestMovesHistory, 
+      double &bestLL, 
+      unsigned int &visits);
   std::string getSpeciesTreePath(const std::string &speciesId);
 };
 

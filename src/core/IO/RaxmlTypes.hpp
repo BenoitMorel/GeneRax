@@ -137,15 +137,22 @@ public:
   }
 
   virtual const char* what() const noexcept
-  { return message().c_str(); }
+  { 
+    return message().c_str(); 
+  }
 
   virtual const std::string& message() const
-  { update_message(); return _message; };
+  { 
+    update_message(); 
+    return _message; 
+  }
+
+  virtual ~RaxmlException() {}
 
 protected:
   mutable std::string _message;
 
-  virtual void update_message() const { };
+  virtual void update_message() const { }
 
   template<typename ... Args>
   std::string format_message(const std::string& fmt, Args ... args) const

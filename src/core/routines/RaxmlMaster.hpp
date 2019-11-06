@@ -10,7 +10,7 @@ public:
   static void runRaxmlOptimization(Families &families,
     const std::string &output,
     const std::string &execPath,
-    int iteration,
+    unsigned int iteration,
     bool splitImplem,
     long &sumElapsed);
 

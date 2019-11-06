@@ -37,15 +37,17 @@ public:
    double lossRate;
    double transferRate;
    bool optimizeGeneTrees;
-   int maxSPRRadius;
+   unsigned int maxSPRRadius;
    double recWeight;
-   unsigned int seed;
+   int seed;
    std::string exec;
    
    // species tree search
    bool optimizeSpeciesTree;
    unsigned int speciesFastRadius;
    unsigned int speciesSlowRadius;
-  
+private:
+
+  void init();
 };
 

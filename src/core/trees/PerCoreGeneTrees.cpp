@@ -17,7 +17,7 @@ std::vector<size_t> sort_indexes_descending(const std::vector<T> &v) {
 }
 
 
-std::vector<size_t> getMyIndices(const std::vector<unsigned int> &treeSizes) 
+static std::vector<size_t> getMyIndices(const std::vector<unsigned int> &treeSizes) 
 {
   std::vector<size_t> sortedIndices = sort_indexes_descending<unsigned int>(treeSizes);
   std::vector<size_t> myIndices;

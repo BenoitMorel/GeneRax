@@ -12,9 +12,19 @@ class RootedTree;
 class DTLOptimizer {
 public:
   DTLOptimizer() = delete;
-  static Parameters optimizeParameters(PerCoreGeneTrees &geneTrees, PLLRootedTree &speciesTree, RecModel model, const Parameters &startingParameters);
-  static Parameters optimizeParametersGlobalDTL(PerCoreGeneTrees &geneTrees, PLLRootedTree &speciesTree, RecModel model);
-  static Parameters optimizeParametersPerSpecies(PerCoreGeneTrees &geneTrees, PLLRootedTree &speciesTree, RecModel model);
+
+  static Parameters optimizeParameters(PerCoreGeneTrees &geneTrees, 
+      PLLRootedTree &speciesTree, 
+      RecModel model, 
+      const Parameters &startingParameters);
+
+  static Parameters optimizeParametersGlobalDTL(PerCoreGeneTrees &geneTrees, 
+      PLLRootedTree &speciesTree, 
+      RecModel model);
+
+  static Parameters optimizeParametersPerSpecies(PerCoreGeneTrees &geneTrees, 
+      PLLRootedTree &speciesTree, 
+      RecModel model);
 };
 
 

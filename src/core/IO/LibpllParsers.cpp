@@ -11,7 +11,12 @@
 extern "C" {
 #include <pll.h>
 }
-  
+
+LibpllException::~LibpllException()
+{
+
+}
+
 void LibpllParsers::labelRootedTree(pll_rtree_t *tree)
 {
   assert(tree);
@@ -51,7 +56,7 @@ pll_utree_t *LibpllParsers::readNewickFromFile(const std::string &newickFilename
     }
   }
   
-  pll_utree_t *res = 0;
+  pll_utree_t *res = nullptr;
   try {
     res = readNewickFromStr(line);
   } catch (...) {
@@ -260,7 +265,8 @@ void LibpllParsers::parsePhylip(const char *phylipFile,
       throw LibpllException("failed to parse ", phylipFile);
     }
   } catch (...) {
-    std::unique_ptr<pll_phylip_t, void(*)(pll_phylip_t*)> reader2(pll_phylip_open(phylipFile, pll_map_phylip), pll_phylip_close);
+    std::unique_ptr<pll_phylip_t, void(*)(pll_phylip_t*)> 
+      reader2(pll_phylip_open(phylipFile, pll_map_phylip), pll_phylip_close);
     msa = pll_phylip_parse_sequential(reader2.get());
     if (!msa) {
       throw LibpllException("failed to parse ", phylipFile);
@@ -279,7 +285,9 @@ void LibpllParsers::parsePhylip(const char *phylipFile,
   pll_msa_destroy(msa);
 }
 
-bool LibpllParsers::fillLabelsFromAlignment(const std::string &alignmentFilename, const std::string& modelStrOrFilename,  std::unordered_set<std::string> &leaves)
+bool LibpllParsers::fillLabelsFromAlignment(const std::string &alignmentFilename, 
+    const std::string& modelStrOrFilename,  
+    std::unordered_set<std::string> &leaves)
 {
   std::string modelStr = modelStrOrFilename;
   std::ifstream f(modelStr);

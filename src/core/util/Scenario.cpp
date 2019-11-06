@@ -10,7 +10,10 @@
 const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "Leaf", "Invalid"};
 
 
-void Scenario::addEvent(ReconciliationEventType type, unsigned int geneNode, unsigned int speciesNode, unsigned int destSpeciesNode) 
+void Scenario::addEvent(ReconciliationEventType type, 
+    unsigned int geneNode, 
+    unsigned int speciesNode, 
+    unsigned int destSpeciesNode) 
 {
   
   addTransfer(type, geneNode, speciesNode, INVALID, destSpeciesNode);
@@ -51,7 +54,7 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
   std::vector<unsigned int> defaultCount(static_cast<unsigned int>(4), 0);
   for (unsigned int e = 0; e < _speciesTree->tip_count + _speciesTree->inner_count; ++e) {
     assert(_speciesTree->nodes[e]->label);
-    speciesToEventCount.insert(std::pair<std::string, std::vector<unsigned int> > (std::string(_speciesTree->nodes[e]->label), defaultCount));
+    speciesToEventCount.insert({std::string(_speciesTree->nodes[e]->label), defaultCount});
   }
   for (auto &event: _events) {
     auto &eventCount = speciesToEventCount[_speciesTree->nodes[event.speciesNode]->label];
@@ -63,6 +66,7 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
       case ReconciliationEventType::EVENT_SL: 
         eventCount[0]++;
         eventCount[2]++;
+        break;
       case ReconciliationEventType::EVENT_D:
         eventCount[1]++;
         break;
@@ -73,7 +77,7 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
         eventCount[2]++;
         eventCount[3]++;
         break;
-      default:
+      case ReconciliationEventType::EVENT_L: case ReconciliationEventType::EVENT_Invalid:
         break;
     }
   }
@@ -90,10 +94,20 @@ void Scenario::saveReconciliation(const std::string &filename, ReconciliationFor
 {
   switch (format) {
   case ReconciliationFormat::NHX:
-    ReconciliationWriter::saveReconciliationNHX(_speciesTree, _geneRoot, _virtualRootIndex, _geneIdToEvents, filename, masterRankOnly);
+    ReconciliationWriter::saveReconciliationNHX(_speciesTree, 
+        _geneRoot, 
+        _virtualRootIndex, 
+        _geneIdToEvents, 
+        filename, 
+        masterRankOnly);
     break;
   case ReconciliationFormat::RecPhyloXML:
-    ReconciliationWriter::saveReconciliationRecPhyloXML(_speciesTree, _geneRoot, _virtualRootIndex, _geneIdToEvents, filename, masterRankOnly);
+    ReconciliationWriter::saveReconciliationRecPhyloXML(_speciesTree, 
+        _geneRoot, 
+        _virtualRootIndex, 
+        _geneIdToEvents, 
+        filename, 
+        masterRankOnly);
     break;
   }
 }
@@ -103,7 +117,8 @@ void Scenario::saveTransfers(const std::string &filename, bool masterRankOnly)
   ParallelOfstream os(filename, masterRankOnly);
   for (auto &event: _events) {
     if (event.type == ReconciliationEventType::EVENT_T || event.type == ReconciliationEventType::EVENT_TL) {
-      os << _speciesTree->nodes[event.speciesNode]->label << " " << _speciesTree->nodes[event.destSpeciesNode]->label << std::endl;
+      os << _speciesTree->nodes[event.speciesNode]->label << " " 
+        << _speciesTree->nodes[event.destSpeciesNode]->label << std::endl;
     }
   }
 }
