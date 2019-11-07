@@ -91,9 +91,10 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     speciesTreeOptimizer.ratesOptimization();
     speciesTreeOptimizer.sprSearch(radius, false);
     speciesTreeOptimizer.rootExhaustiveSearch(false);
+    instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
   }
   speciesTreeOptimizer.saveCurrentSpeciesTreePath(instance.speciesTree, true);
-  if (instance.args.speciesFastRadius > 0) {
+  if (instance.args.speciesSlowRadius > 0) {
     Logger::info << std::endl;
     Logger::timed << "Start optimizing the species tree and gene trees together" << std::endl;
   }
@@ -101,8 +102,9 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     speciesTreeOptimizer.setModel(instance.recModel);
     speciesTreeOptimizer.sprSearch(instance.args.speciesSlowRadius, true);
   }
-
-  Logger::info << std::endl;
+  instance.totalLibpllLL = speciesTreeOptimizer.getLibpllLikeliohood();
+  instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
+  instance.rates = speciesTreeOptimizer.getSpeciesTree().getRates();
   Logger::timed << "End of optimizing the species tree" << std::endl;
   speciesTreeOptimizer.saveCurrentSpeciesTreePath(instance.speciesTree, true);
   ParallelContext::barrier();
@@ -151,11 +153,24 @@ void GeneRaxCore::terminate(GeneRaxInstance &instance)
   os << "JointLL: " << instance.totalLibpllLL + instance.totalRecLL << std::endl;
   os << "LibpllLL: " << instance.totalLibpllLL << std::endl;
   os << "RecLL: " << instance.totalRecLL;
-  if (instance.elapsedRaxml) {
-    Logger::info << "Initial time spent on optimizing random trees: " << instance.elapsedRaxml << "s" << std::endl;
+  Logger::info << std::endl;
+  auto &rates = instance.rates;
+  if (rates.dimensions() == 2) {
+    Logger::timed << "Global DT rates: D=" << rates[0] << " L= " << rates[1] << std::endl;
+  } else if (instance.rates.dimensions() == 3) {
+    Logger::timed<< "Global DTL rates: D=" << rates[0] << " L= " << rates[1] << " T=" << rates[2] << std::endl;
   }
-  Logger::info << "Time spent on optimizing rates: " << instance.elapsedRates << "s" << std::endl;
-  Logger::info << "Time spent on optimizing gene trees: " << instance.elapsedSPR << "s" << std::endl;
+  Logger::timed << "Reconciliation likelihood: " << instance.totalRecLL << std::endl;
+  if (instance.totalLibpllLL) {
+    Logger::timed << "Phylogenetic likelihood: " << instance.totalLibpllLL << std::endl;
+    Logger::timed << "Joint likelihood: " << instance.totalLibpllLL + instance.totalRecLL << std::endl;
+  }
+  if (instance.elapsedRaxml) {
+    Logger::timed << "Initial time spent on optimizing random trees: " << instance.elapsedRaxml << "s" << std::endl;
+  }
+  Logger::timed << "Time spent on optimizing rates: " << instance.elapsedRates << "s" << std::endl;
+  Logger::timed << "Time spent on optimizing gene trees: " << instance.elapsedSPR << "s" << std::endl;
+  Logger::timed << "Results directory: " << instance.args.output << std::endl;
   Logger::timed << "End of GeneRax execution" << std::endl;
 }
 

@@ -36,25 +36,21 @@ SpeciesTree::SpeciesTree(const Families &families):
 void SpeciesTree::setGlobalRates(const Parameters &globalRates) 
 {
   assert(globalRates.dimensions() <= 3);
-  _rates = Parameters(getTree().getNodesNumber(), globalRates);
+  _ratesVector = Parameters(getTree().getNodesNumber(), globalRates);
+  _rates = globalRates;
 }
 void SpeciesTree::setRatesVector(const Parameters &rates) 
 {
+  _ratesVector = rates;
   _rates = rates;
 }
-
-const Parameters &SpeciesTree::getRatesVector() const
-{
-  return _rates;
-}
-  
 
 double SpeciesTree::computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees, RecModel model)
 {
   double ll = 0.0;
   for (auto &tree: geneTrees.getTrees()) {
     ReconciliationEvaluation evaluation(_speciesTree, tree.mapping, model, false);
-    evaluation.setRates(_rates);
+    evaluation.setRates(_ratesVector);
     ll += evaluation.evaluate(*tree.geneTree);
   }
   ParallelContext::sumDouble(ll);

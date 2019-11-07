@@ -30,7 +30,8 @@ public:
 
   void setGlobalRates(const Parameters &rates);
   void setRatesVector(const Parameters &rates);
-  const Parameters &getRatesVector() const;
+  const Parameters &getRatesVector() const {return _ratesVector;}
+  const Parameters &getRates() const {return _rates;}
   double computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees, RecModel model);
 
   std::string toString() const;
@@ -50,6 +51,7 @@ public:
 private:
   PLLRootedTree _speciesTree;
   Parameters _rates;
+  Parameters _ratesVector;
   void buildFromLabels(const std::unordered_set<std::string> &leafLabels);
   static std::unordered_set<std::string> getLabelsFromFamilies(const Families &families);
 };

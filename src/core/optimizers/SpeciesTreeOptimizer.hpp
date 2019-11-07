@@ -7,6 +7,12 @@
 #include <util/enums.hpp>
 #include <families/Families.hpp>
 #include <memory>
+  
+struct EvaluatedMove {
+  unsigned int prune;
+  unsigned int regraft;
+  double ll;
+};
 
 class SpeciesTreeOptimizer {
 public:
@@ -26,8 +32,8 @@ public:
   void setModel(RecModel model) {_model = model;}
 
   void rootExhaustiveSearch(bool doOptimizeGeneTrees);
-  double sprRound(unsigned int radius);
-  double sortedSprRound(unsigned int radius, double bestLL);
+  double fastSPRRound(unsigned int radius);
+  double slowSPRRound(unsigned int radius, double bestLL);
   double sprSearch(unsigned int radius, bool doOptimizeGeneTrees);
   void ratesOptimization();
   double optimizeGeneTrees(unsigned int radius, bool inPlace = false);
@@ -36,7 +42,11 @@ public:
   double computeLikelihood(bool doOptimizeGeneTrees, unsigned int geneSPRRadius = 1);
   void saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
-  
+  const SpeciesTree &getSpeciesTree() const {return *_speciesTree;} 
+
+  double getReconciliationLikelihood() const {return _bestRecLL;}
+  double getLibpllLikeliohood() const {return _bestLibpllLL;}
+  double getJointLikelihood() const {return getReconciliationLikelihood() + getLibpllLikeliohood();}
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
@@ -47,6 +57,10 @@ private:
   unsigned int _geneTreeIteration;
   Parameters _hack;
   double _supportThreshold;
+  double _lastRecLL;
+  double _lastLibpllLL;
+  double _bestRecLL;
+  double _bestLibpllLL;
 private:
   void rootExhaustiveSearchAux(SpeciesTree &speciesTree, 
       PerCoreGeneTrees &geneTrees, 
@@ -56,7 +70,7 @@ private:
       std::vector<unsigned int> &bestMovesHistory, 
       double &bestLL, 
       unsigned int &visits);
+  void newBestTreeCallback();
   std::string getSpeciesTreePath(const std::string &speciesId);
+  std::vector<EvaluatedMove> getSortedCandidateMoves(unsigned int speciesRadius);
 };
-
-
