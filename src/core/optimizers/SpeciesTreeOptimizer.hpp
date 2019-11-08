@@ -35,11 +35,15 @@ public:
   double fastSPRRound(unsigned int radius);
   double slowSPRRound(unsigned int radius, double bestLL);
   double sprSearch(unsigned int radius, bool doOptimizeGeneTrees);
-  void ratesOptimization();
-  double optimizeGeneTrees(unsigned int radius, bool inPlace = false);
+  void optimizeDTLRates();
+ 
+  Parameters computeOptimizedRates() const; 
 
-  double getReconciliationLikelihood() {return computeLikelihood(false);}
-  double computeLikelihood(bool doOptimizeGeneTrees, unsigned int geneSPRRadius = 1);
+  double optimizeGeneTrees(unsigned int radius);
+  void revertGeneTreeOptimization();
+
+  double getReconciliationLikelihood() {return computeLikelihood(0);}
+  double computeLikelihood(unsigned int geneSPRRadius);
   void saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
   const SpeciesTree &getSpeciesTree() const {return *_speciesTree;} 
@@ -50,6 +54,7 @@ public:
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
+  Families _initialFamilies;
   Families _currentFamilies;
   RecModel _model;
   std::string _outputDir;

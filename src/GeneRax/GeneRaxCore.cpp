@@ -88,7 +88,7 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     if (radius == instance.args.speciesFastRadius) {
       speciesTreeOptimizer.setModel(instance.recModel);
     }
-    speciesTreeOptimizer.ratesOptimization();
+    speciesTreeOptimizer.optimizeDTLRates();
     speciesTreeOptimizer.sprSearch(radius, false);
     speciesTreeOptimizer.rootExhaustiveSearch(false);
     instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
@@ -106,6 +106,7 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
   instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
   instance.rates = speciesTreeOptimizer.getSpeciesTree().getRates();
   Logger::timed << "End of optimizing the species tree" << std::endl;
+  Logger::info << "joint ll = " << instance.totalLibpllLL + instance.totalRecLL << std::endl;
   speciesTreeOptimizer.saveCurrentSpeciesTreePath(instance.speciesTree, true);
   ParallelContext::barrier();
 }
