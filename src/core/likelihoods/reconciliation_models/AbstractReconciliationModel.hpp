@@ -34,12 +34,10 @@ public:
    *  @param dupRate
    *  @param lossRate
    *  @param transferRate
-   *  @param transferFrequencies
    */
   virtual void setRates(const std::vector<double> &dupRates,
       const std::vector<double> &lossRates,
-      const std::vector<double> &transferRates,
-      const std::vector< std::vector <double > > &transferFrequencies) = 0;
+      const std::vector<double> &transferRates) = 0;
   
   /**
    * (incrementally) compute and return the likelihood of the input gene tree 
@@ -93,8 +91,7 @@ public:
   // overload from parent
   virtual void setRates(const std::vector<double> &dupRates,
       const std::vector<double> &lossRates,
-      const std::vector<double> &transferRates,
-      const std::vector< std::vector <double > > &transferFrequencies) = 0;
+      const std::vector<double> &transferRates) = 0;
   // overload from parent
   virtual double computeLogLikelihood(pll_utree_t *tree);
   // overload from parent

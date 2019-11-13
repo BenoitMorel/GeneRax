@@ -3,7 +3,6 @@
 #include <IO/Logger.hpp>
 #include <likelihoods/reconciliation_models/UndatedDLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
-#include <likelihoods/reconciliation_models/UndatedDTLModelAdvanced.hpp>
 #include <cmath>
 #include <IO/FileSystem.hpp>
 
@@ -27,21 +26,6 @@ ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
 }
 
 
-void ReconciliationEvaluation::setTransferFrequencies(const Parameters &parameters)
-{
-  assert(parameters.dimensions() == _speciesTree.getNodesNumber() * _speciesTree.getNodesNumber());
-  _transferFrequencies.resize(_speciesTree.getNodesNumber());
-  unsigned int index = 0;
-  for (unsigned int e = 0; e < _speciesTree.getNodesNumber(); ++e) {
-    _transferFrequencies[e].resize(_speciesTree.getNodesNumber());
-    for (unsigned int h = 0; h < _speciesTree.getNodesNumber(); ++h) {
-      _transferFrequencies[e][h] = parameters[index++];
-      assert(std::isfinite(_transferFrequencies[e][h]));
-    }
-  }
-}
-
-
 void ReconciliationEvaluation::setRates(const Parameters &parameters)
 {
   assert(parameters.dimensions());
@@ -60,21 +44,7 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
       (*rates[d])[e] = parameters[(e * rates.size() + d) % parameters.dimensions()];
     }
   }
-  if (_model == RecModel::UndatedDTLAdvanced) {
-    std::string transferFrequenciesFile = "/tmp/transferFrequencies.txt";
-    if (FileSystem::exists(transferFrequenciesFile)) {
-      Parameters hackParameters;
-      hackParameters.load(transferFrequenciesFile);
-      setTransferFrequencies(hackParameters);
-    } else {
-      _transferFrequencies.resize(_speciesTree.getNodesNumber());
-      for (unsigned int e = 0; e < _speciesTree.getNodesNumber(); ++e) {
-        _transferFrequencies[e] = std::vector<double>(_speciesTree.getNodesNumber(), 
-            1.0 / _speciesTree.getNodesNumber());
-      }
-    }
-  }
-  _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates, _transferFrequencies);
+  _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates);
 }
 
 double ReconciliationEvaluation::evaluate(PLLUnrootedTree &geneTree)
@@ -114,14 +84,6 @@ std::unique_ptr<ReconciliationModelInterface> ReconciliationEvaluation::buildRec
     } else {
       return  std::make_unique<UndatedDTLModel<double> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     }
-  case RecModel::UndatedDTLAdvanced:
-    if (infinitePrecision) {
-      return  std::make_unique<UndatedDTLModelAdvanced<ScaledValue> >(_speciesTree, 
-          _geneSpeciesMapping, 
-          _rootedGeneTree);
-    } else {
-      return  std::make_unique<UndatedDTLModelAdvanced<double> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
-    }
   }
   assert(false);
   return 0;
@@ -132,7 +94,7 @@ void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
   if (infinitePrecision != _infinitePrecision) {
     _infinitePrecision = infinitePrecision;
     _reconciliationModel = buildRecModelObject(_model, _infinitePrecision);
-    _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates, _transferFrequencies);
+    _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates);
  }
 }
 

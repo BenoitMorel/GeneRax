@@ -37,7 +37,7 @@ struct GeneRaxInstance {
       rates[0] = args.dupRate;
       rates[1] = args.lossRate;
       break;
-      case RecModel::UndatedDTL: case RecModel::UndatedDTLAdvanced:
+      case RecModel::UndatedDTL:
       rates = Parameters(3);
       rates[0] = args.dupRate;
       rates[1] = args.lossRate;

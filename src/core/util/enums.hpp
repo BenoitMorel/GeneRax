@@ -3,7 +3,7 @@
 #include <cassert>
 
 enum class RecModel {
-  UndatedDL, UndatedDTL, UndatedDTLAdvanced
+  UndatedDL, UndatedDTL
 };
 
 enum class RecOpt {
@@ -27,14 +27,12 @@ class Enums {
 public:
   Enums() = delete;
 
-  static unsigned int freeParameters(RecModel m, unsigned int speciesCount = 1)  {
+  static unsigned int freeParameters(RecModel m)  {
     switch (m) {
       case RecModel::UndatedDL:
         return 2;
       case RecModel::UndatedDTL:
         return 3;
-      case RecModel::UndatedDTLAdvanced:
-        return 2 + speciesCount;
     }
     assert(false);
   }
@@ -45,8 +43,6 @@ public:
     case RecModel::UndatedDL:
       return false;
     case RecModel::UndatedDTL:
-      return true;
-    case RecModel::UndatedDTLAdvanced:
       return true;
     }
     assert(false);

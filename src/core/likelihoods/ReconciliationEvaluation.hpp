@@ -38,7 +38,6 @@ public:
   ReconciliationEvaluation(ReconciliationEvaluation &&) = delete;
   ReconciliationEvaluation & operator = (ReconciliationEvaluation &&) = delete;
 
-  void setTransferFrequencies(const Parameters &parameters);
   void setRates(const Parameters &parameters);
 
 
@@ -79,7 +78,6 @@ private:
   std::vector<double> _dupRates;
   std::vector<double> _lossRates;
   std::vector<double> _transferRates;
-  std::vector< std::vector<double> > _transferFrequencies;
   std::unique_ptr<ReconciliationModelInterface> _reconciliationModel;
 private:
   
