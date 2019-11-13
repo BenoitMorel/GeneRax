@@ -28,6 +28,7 @@ class ReconciliationModelInterface {
 public:
   virtual ~ReconciliationModelInterface() {}
   
+  virtual void setInitialGeneTree(pll_utree_t *tree) = 0;
   
   /*
    * Set the per-species lineage rates
@@ -40,9 +41,9 @@ public:
       const std::vector<double> &transferRates) = 0;
   
   /**
-   * (incrementally) compute and return the likelihood of the input gene tree 
+   * (incrementally) compute and return the likelihood of the gene tree 
    */
-  virtual double computeLogLikelihood(pll_utree_t *tree) = 0;
+  virtual double computeLogLikelihood() = 0;
   
   /**
    *  Get/set the root of the gene tree (only relevant in rooted gene tree mode)
@@ -87,13 +88,14 @@ public:
   AbstractReconciliationModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
       bool rootedGeneTree);
+  virtual void setInitialGeneTree(pll_utree_t *tree);
   virtual ~AbstractReconciliationModel() {}
   // overload from parent
   virtual void setRates(const std::vector<double> &dupRates,
       const std::vector<double> &lossRates,
       const std::vector<double> &transferRates) = 0;
   // overload from parent
-  virtual double computeLogLikelihood(pll_utree_t *tree);
+  virtual double computeLogLikelihood();
   // overload from parent
   virtual void setRoot(pll_unode_t * root) {_geneRoot = root;}
   // overload from parent
@@ -108,7 +110,6 @@ protected:
   // called by the constructor
   virtual void setSpeciesTree(PLLRootedTree &speciesTree);
   // Called when computeLogLikelihood is called for the first time
-  virtual void setInitialGeneTree(pll_utree_t *tree);
   // Called by computeLogLikelihood
   virtual void updateCLV(pll_unode_t *geneNode) = 0;
   // Called by computeLogLikelihood
@@ -180,7 +181,6 @@ private:
   // is the CLV up to date?
   std::vector<bool> _isCLVUpdated;
   std::vector<pll_unode_t *> _allNodes;
-  bool _firstCall;
 };
 
 
@@ -193,8 +193,7 @@ AbstractReconciliationModel<REAL>::AbstractReconciliationModel(PLLRootedTree &sp
   _maxGeneId(1),
   _rootedGeneTree(rootedGeneTree),
   _speciesTree(speciesTree),
-  geneNameToSpeciesName_(geneSpeciesMapping.getMap()),
-  _firstCall(true)
+  geneNameToSpeciesName_(geneSpeciesMapping.getMap())
 {
   setSpeciesTree(speciesTree);
 }
@@ -298,12 +297,8 @@ void AbstractReconciliationModel<REAL>::getRoots(std::vector<pll_unode_t *> &roo
 }
   
 template <class REAL>
-double AbstractReconciliationModel<REAL>::computeLogLikelihood(pll_utree_t *tree)
+double AbstractReconciliationModel<REAL>::computeLogLikelihood()
 {
-  if (_firstCall) {
-    setInitialGeneTree(tree);
-    _firstCall = false;
-  }
   auto root = getRoot();
   updateCLVs();
   computeLikelihoods();

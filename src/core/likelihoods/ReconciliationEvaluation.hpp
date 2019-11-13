@@ -21,11 +21,13 @@ public:
   /**
    *  Constructor 
    *  @param speciesTree rooted species tree (std::fixed)
+   *  @param initialGeneTree initial gene tree
    *  @param geneSpeciesMapping gene-to-species geneSpeciesMappingping
    *  @param recModel the reconciliation model to use
    *  @param rootedGeneTree should we compute the likelihood of a rooted or unrooted gene tree?
    */
   ReconciliationEvaluation(PLLRootedTree &speciesTree,
+    PLLUnrootedTree &initialGeneTree,
     const GeneSpeciesMapping& geneSpeciesMapping,
     RecModel recModel,
     bool rootedGeneTree);
@@ -52,9 +54,8 @@ public:
 
   /**
    *  @param input geneTree
-   *  @return the reconciliation likelihood of this tree
    */
-  double evaluate(PLLUnrootedTree &geneTree);
+  double evaluate();
 
   bool implementsTransfers() {return Enums::accountsForTransfers(_model);} 
 
@@ -64,13 +65,14 @@ public:
    */
   void invalidateCLV(unsigned int nodeIndex);
  
-  pll_unode_t *inferMLRoot(PLLUnrootedTree &geneTree);
+  pll_unode_t *inferMLRoot();
   
-  void inferMLScenario(PLLUnrootedTree &tree, Scenario &scenario);
+  void inferMLScenario(Scenario &scenario);
 
   RecModel getRecModel() const {return _model;}
 private:
   PLLRootedTree &_speciesTree;
+  PLLUnrootedTree &_initialGeneTree;
   GeneSpeciesMapping _geneSpeciesMapping;
   bool _rootedGeneTree;
   RecModel _model; 

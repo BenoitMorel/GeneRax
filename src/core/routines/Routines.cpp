@@ -85,10 +85,10 @@ void Routines::inferReconciliation(
     std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, 
         tree.name + "_reconciliated.xml");
     Scenario scenario;
-    ReconciliationEvaluation evaluation(speciesTree, tree.mapping, model, true);
+    ReconciliationEvaluation evaluation(speciesTree, *tree.geneTree, tree.mapping, model, true);
     evaluation.setRates(rates);
-    evaluation.evaluate(*tree.geneTree);
-    evaluation.inferMLScenario(*tree.geneTree, scenario);
+    evaluation.evaluate();
+    evaluation.inferMLScenario(scenario);
     scenario.saveEventsCounts(eventCountsFile, false);
     scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
     scenario.saveTransfers(transfersFile, false);

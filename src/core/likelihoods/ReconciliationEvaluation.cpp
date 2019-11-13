@@ -13,10 +13,12 @@ double log(ScaledValue v)
 
 
 ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
+  PLLUnrootedTree &initialGeneTree,
   const GeneSpeciesMapping& geneSpeciesMapping,
   RecModel recModel,
   bool rootedGeneTree):
     _speciesTree(speciesTree),
+    _initialGeneTree(initialGeneTree),
     _geneSpeciesMapping(geneSpeciesMapping),
     _rootedGeneTree(rootedGeneTree),
     _model(recModel),
@@ -47,13 +49,12 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
   _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates);
 }
 
-double ReconciliationEvaluation::evaluate(PLLUnrootedTree &geneTree)
+double ReconciliationEvaluation::evaluate()
 {
-  auto utree = geneTree.getRawPtr();
-  double res = _reconciliationModel->computeLogLikelihood(utree);
+  double res = _reconciliationModel->computeLogLikelihood();
   if (!_infinitePrecision && !std::isnormal(res)) {
     updatePrecision(true);  
-    res = _reconciliationModel->computeLogLikelihood(utree);
+    res = _reconciliationModel->computeLogLikelihood();
     updatePrecision(false);  
   }
   if (!std::isnormal(res)) {
@@ -71,22 +72,25 @@ void ReconciliationEvaluation::invalidateCLV(unsigned int nodeIndex)
 std::unique_ptr<ReconciliationModelInterface> ReconciliationEvaluation::buildRecModelObject(RecModel recModel, 
     bool infinitePrecision)
 {
+  std::unique_ptr<ReconciliationModelInterface> res(nullptr);
   switch(recModel) {
   case RecModel::UndatedDL:
     if (infinitePrecision) {
-      return  std::make_unique<UndatedDLModel<ScaledValue> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
+      res = std::make_unique<UndatedDLModel<ScaledValue> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     } else {
-      return  std::make_unique<UndatedDLModel<double> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
+      res = std::make_unique<UndatedDLModel<double> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     }
+    break;
   case RecModel::UndatedDTL:
     if (infinitePrecision) {
-      return  std::make_unique<UndatedDTLModel<ScaledValue> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
+      res = std::make_unique<UndatedDTLModel<ScaledValue> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     } else {
-      return  std::make_unique<UndatedDTLModel<double> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
+      res = std::make_unique<UndatedDTLModel<double> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     }
+    break;
   }
-  assert(false);
-  return 0;
+  res->setInitialGeneTree(_initialGeneTree.getRawPtr());
+  return res;
 }
   
 void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
@@ -98,10 +102,10 @@ void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
  }
 }
 
-void ReconciliationEvaluation::inferMLScenario(PLLUnrootedTree &geneTree, Scenario &scenario) {
+void ReconciliationEvaluation::inferMLScenario(Scenario &scenario) {
   auto infinitePrecision = _infinitePrecision;
   updatePrecision(true);
-  auto ll = evaluate(geneTree);
+  auto ll = evaluate();
   assert(std::isfinite(ll) && ll < 0.0);
   _reconciliationModel->inferMLScenario(scenario);
   updatePrecision(infinitePrecision);
@@ -112,11 +116,11 @@ pll_unode_t *ReconciliationEvaluation::computeMLRoot()
   return  _reconciliationModel->computeMLRoot();
 }
   
-pll_unode_t *ReconciliationEvaluation::inferMLRoot(PLLUnrootedTree &geneTree)
+pll_unode_t *ReconciliationEvaluation::inferMLRoot()
 {
   auto infinitePrecision = _infinitePrecision;
   updatePrecision(true);
-  auto ll = evaluate(geneTree); 
+  auto ll = evaluate(); 
   assert(std::isfinite(ll) && ll < 0.0);
   auto res = computeMLRoot();
   updatePrecision(infinitePrecision);

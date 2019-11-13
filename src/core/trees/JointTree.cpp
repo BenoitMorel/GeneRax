@@ -137,6 +137,7 @@ JointTree::JointTree(const std::string &newickString,
 
   _geneSpeciesMap.fill(geneSpeciesMapfile, newickString);
   reconciliationEvaluation_ = std::make_unique<ReconciliationEvaluation>(_speciesTree,  
+      getGeneTree(),
       _geneSpeciesMap, 
       reconciliationModel,
       rootedGeneTree);
@@ -180,7 +181,7 @@ double JointTree::computeReconciliationLoglk () {
   if (!_enableReconciliation) {
     return 1.0;
   }
-  return reconciliationEvaluation_->evaluate(getGeneTree()) * _recWeight;
+  return reconciliationEvaluation_->evaluate() * _recWeight;
 }
 
 double JointTree::computeJointLoglk() {
@@ -223,7 +224,7 @@ void JointTree::rollbackLastMove() {
 void JointTree::save(const std::string &fileName, bool append) {
   auto root = reconciliationEvaluation_->getRoot();
   if (!root) {
-    root = reconciliationEvaluation_->inferMLRoot(getGeneTree());
+    root = reconciliationEvaluation_->inferMLRoot();
   }
   assert(root);
   LibpllParsers::saveUtree(root, fileName, append);

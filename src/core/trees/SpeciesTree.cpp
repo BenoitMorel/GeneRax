@@ -49,9 +49,9 @@ double SpeciesTree::computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees,
 {
   double ll = 0.0;
   for (auto &tree: geneTrees.getTrees()) {
-    ReconciliationEvaluation evaluation(_speciesTree, tree.mapping, model, false);
+    ReconciliationEvaluation evaluation(_speciesTree, *tree.geneTree, tree.mapping, model, false);
     evaluation.setRates(_ratesVector);
-    ll += evaluation.evaluate(*tree.geneTree);
+    ll += evaluation.evaluate();
   }
   ParallelContext::sumDouble(ll);
   return ll;

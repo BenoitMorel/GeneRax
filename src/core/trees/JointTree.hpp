@@ -61,7 +61,7 @@ public:
     void setRoot(pll_unode_t * root) {reconciliationEvaluation_->setRoot(root);}
     const Parameters &getRatesVector() const {return _ratesVector;}
     void inferMLScenario(Scenario &scenario) {
-      reconciliationEvaluation_->inferMLScenario(getGeneTree(), scenario);
+      reconciliationEvaluation_->inferMLScenario(scenario);
     }
     bool isSafeMode() {return _safeMode;}
     void enableReconciliation(bool enable) {_enableReconciliation = enable;}

@@ -105,6 +105,8 @@ template <class REAL>
 void UndatedDTLModel<REAL>::setInitialGeneTree(pll_utree_t *tree)
 {
   AbstractReconciliationModel<REAL>::setInitialGeneTree(tree);
+  assert(this->_speciesNodesCount);
+  assert(this->_maxGeneId);
   std::vector<REAL> zeros(this->_speciesNodesCount);
   _uq = std::vector<std::vector<REAL> >(2 * (this->_maxGeneId + 1),zeros);
   _survivingTransferSums = std::vector<REAL>(2 * (this->_maxGeneId + 1));
