@@ -71,6 +71,8 @@ public:
    */
   void setMissingBranchLengths(double minBL = 0.1); 
 
+  void setMissingLabels();
+
   /**
    *  Direct access to the libpll structure
    */
@@ -82,6 +84,7 @@ public:
   CArrayRange<pll_rnode_t*> getNodes() const;
   
   static void setSon(pll_rnode_t *parent, pll_rnode_t *newSon, bool left);
+
 
 private:
   std::unique_ptr<pll_rtree_t, void(*)(pll_rtree_t*)> _tree;

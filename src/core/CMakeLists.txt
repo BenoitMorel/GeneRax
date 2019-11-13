@@ -10,6 +10,7 @@ set(jointsearch-core_SOURCES
   IO/ReconciliationWriter.cpp
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ReconciliationEvaluation.cpp
+  NJ/NeighborJoining.cpp
   optimizers/DTLOptimizer.cpp
   optimizers/PerFamilyDTLOptimizer.cpp
   optimizers/SpeciesTreeOptimizer.cpp

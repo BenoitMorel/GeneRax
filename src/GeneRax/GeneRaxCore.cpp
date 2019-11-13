@@ -12,6 +12,7 @@
 #include <maths/Parameters.hpp>
 #include <IO/FileSystem.hpp>
 #include <IO/ParallelOfstream.hpp>
+#include <NJ/NeighborJoining.hpp>
 #include <routines/GeneRaxSlave.hpp>
 #include <parallelization/Scheduler.hpp>
 #include <routines/RaxmlMaster.hpp>
@@ -30,17 +31,20 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   instance.args.printCommand();
   instance.args.printSummary();
   instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
+  instance.speciesTree = FileSystem::joinPaths(instance.args.output, "startingSpeciesTree.newick");
   if (instance.args.speciesTree == "random") {
     Logger::info << "Generating random starting species tree" << std::endl;
     SpeciesTree speciesTree(instance.initialFamilies);
-    instance.speciesTree = FileSystem::joinPaths(instance.args.output, "randomSpeciesTree.newick");
     speciesTree.saveToFile(instance.speciesTree, true);
-    ParallelContext::barrier();
+  } else if (instance.args.speciesTree == "NJ") {
+    if (ParallelContext::getRank() == 0) {
+      auto startingNJTree = NeighborJoining::countProfileNJ(instance.initialFamilies); 
+      startingNJTree->save(instance.speciesTree);
+    }
   } else {
-    instance.speciesTree = FileSystem::joinPaths(instance.args.output, "labelled_species_tree.newick");
     LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
-    ParallelContext::barrier();
   }
+  ParallelContext::barrier();
   Logger::info << "Filtering invalid families..." << std::endl;
   filterFamilies(instance.initialFamilies, instance.speciesTree);
   if (!instance.initialFamilies.size()) {
@@ -78,6 +82,8 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     return;
   }
   ParallelContext::barrier();
+
+  Logger::info << "Saving tree to " << instance.speciesTree << std::endl;
   SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, 
       RecModel::UndatedDL, instance.args.supportThreshold, instance.args.output, instance.args.exec);
   if (instance.args.speciesFastRadius > 0) {
@@ -85,9 +91,9 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     Logger::timed << "Start optimizing the species tree with fixed gene trees" << std::endl;
   }
   for (unsigned int radius = 1; radius <= instance.args.speciesFastRadius; ++radius) {
-    if (radius == instance.args.speciesFastRadius) {
+    //if (radius == instance.args.speciesFastRadius) {
       speciesTreeOptimizer.setModel(instance.recModel);
-    }
+    //}
     speciesTreeOptimizer.optimizeDTLRates();
     speciesTreeOptimizer.sprSearch(radius, false);
     speciesTreeOptimizer.rootExhaustiveSearch(false);

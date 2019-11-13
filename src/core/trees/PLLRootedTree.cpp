@@ -3,6 +3,7 @@
 #include <IO/LibpllParsers.hpp>
 #include <IO/Logger.hpp>
 #include <set>
+#include <cstring>
 
 
 void PLLRootedTree::setSon(pll_rnode_t *parent, pll_rnode_t *newSon, bool left)
@@ -57,11 +58,13 @@ static pll_rtree_t *buildUtree(const std::string &str, bool isFile)
 PLLRootedTree::PLLRootedTree(const std::string &str, bool isFile):
   _tree(buildUtree(str, isFile), rtreeDestroy)
 {
+  setMissingLabels();
 }
 
 PLLRootedTree::PLLRootedTree(const std::unordered_set<std::string> &labels):
   _tree(buildRandomTree(labels), rtreeDestroy)
 {
+  setMissingLabels();
 }
 
 void PLLRootedTree::save(const std::string &fileName) const
@@ -75,6 +78,24 @@ void PLLRootedTree::setMissingBranchLengths(double minBL)
     if (0.0 == node->length) {
       node->length = minBL;
     } 
+  }
+}
+
+void PLLRootedTree::setMissingLabels() 
+{
+  auto labels = getLabels(false);
+  unsigned int i = 0;
+  std::string prefix("s");
+  for (auto node: getNodes()) {
+    if (!node->label) {
+      std::string newLabel;
+      do {
+        newLabel = prefix + std::to_string(i++);
+      }
+      while (labels.find(newLabel) != labels.end());
+      node->label = static_cast<char*>(malloc(sizeof(char) * (newLabel.size() + 1)));
+      std::strcpy(node->label, newLabel.c_str());
+    }
   }
 }
   
