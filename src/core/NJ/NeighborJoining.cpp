@@ -10,27 +10,6 @@ typedef std::vector<double> Count;
 typedef std::vector< std::vector<double> > DistanceMatrix;
 static const double invalidDouble = std::numeric_limits<double>::infinity();
 
-// for debugging
-static void printDistanceMatrix(const DistanceMatrix &distanceMatrix) {
-  unsigned int speciesNumber = distanceMatrix.size();
-  for (unsigned int i = 0; i < speciesNumber; ++i) {
-    for (unsigned int j = 0; j < speciesNumber; ++j) {
-      Logger::info << distanceMatrix[i][j] << "\t";
-    }
-    Logger::info << std::endl;
-  }
-}
-
-// for debugging
-static void printCount(const Count &count) {
-  Logger::info << "[";
-  for (auto c: count) {
-    Logger::info << c << ", ";
-  }
-  
-  Logger::info << "]" << std::endl;
-}
-
 static double l1(const Count &c1, const Count &c2) {
   double res = 0.0;
   assert(c1.size() == c2.size());
@@ -38,15 +17,6 @@ static double l1(const Count &c1, const Count &c2) {
     res += fabs(c1[i] - c2[i]);
   }
   return res;
-}
-
-static double l2(const Count &c1, const Count &c2) {
-  double res = 0.0;
-  assert(c1.size() == c2.size());
-  for (unsigned int i = 0; i < c1.size(); ++i) {
-    res += (c1[i] - c2[i]) * (c1[i] - c2[i]);
-  }
-  return sqrt(res);
 }
 
 static double distance(const Count &c1, const Count &c2) {
@@ -126,11 +96,7 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::countProfileNJ(const Families &f
   std::vector<double> nullDistances(speciesNumber, 0.0);
   DistanceMatrix distanceMatrix(speciesNumber, nullDistances);
   for (unsigned int i = 0; i < speciesNumber; ++i) {
-    //Logger::info << "species " << speciesIdToSpeciesString[i] << ": ";
-    //printCount(speciesToCountVector[i]);
     for (unsigned int j = 0; j < speciesNumber; ++j) {
-      //Logger::info << "species " << speciesIdToSpeciesString[j] << ": ";
-      //printCount(speciesToCountVector[i]);
       distanceMatrix[i][j] = distance(speciesToCountVector[i],
           speciesToCountVector[j]);
     }
@@ -139,19 +105,7 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::countProfileNJ(const Families &f
   std::string subtree;
   for (unsigned int step = 0; step < speciesNumber - 1; ++step) {
     auto Q = getQ(distanceMatrix);    
-    /*
-    for (unsigned int i = 0; i < speciesNumber; ++i) {
-      Logger::info << speciesIdToSpeciesString[i] << "\t";
-    }
-    Logger::info << std::endl;
-    Logger::info << "DistanceMatrix: " << std::endl;
-    printDistanceMatrix(distanceMatrix);
-    Logger::info << "Q:" << std::endl;
-    printDistanceMatrix(Q);
-    */
     auto minPosition = findMinPosition(Q);
-    auto minDistance = Q[minPosition.first][minPosition.second];
-    //Logger::info << "Min position: " << minPosition.first << " " << minPosition.second << " " << minDistance << std::endl;
     auto p1 = minPosition.first;
     auto p2 = minPosition.second;
     auto speciesEntryToUpdate = p1;
@@ -168,11 +122,9 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::countProfileNJ(const Families &f
     }
     subtree = "(" + speciesIdToSpeciesString[minPosition.first] + ","
       + speciesIdToSpeciesString[minPosition.second] + ")";
-    //Logger::info << subtree << std::endl;
     speciesIdToSpeciesString[speciesEntryToUpdate] = subtree;
     speciesIdToSpeciesString[speciesEntryToRemove] = std::string("NULL");
     speciesStringToSpeciesId[subtree] = speciesEntryToUpdate;
-    
   }
   std::string newick = subtree + ";";
   return std::make_unique<PLLRootedTree>(newick, false); 

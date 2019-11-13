@@ -78,10 +78,6 @@ static void assertFileExists(const std::string &file)
   }
 }
 
-static bool isIn(const std::string &elem, const std::vector<std::string> &v) {
-  return find(v.begin(), v.end(), elem) != v.end();
-}
-
 void JSArguments::checkInputs() {
   bool ok = true;
   if (!alignment.size()) {
