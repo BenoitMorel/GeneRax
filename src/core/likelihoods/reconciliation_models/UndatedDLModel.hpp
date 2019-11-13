@@ -73,9 +73,9 @@ template <class REAL>
 void UndatedDLModel<REAL>::setInitialGeneTree(pll_utree_t *tree)
 {
   AbstractReconciliationModel<REAL>::setInitialGeneTree(tree);
-  assert(this->_speciesNodesCount);
+  assert(this->_allSpeciesNodesCount);
   assert(this->_maxGeneId);
-  std::vector<REAL> zeros(this->_speciesNodesCount);
+  std::vector<REAL> zeros(this->_allSpeciesNodesCount);
   _uq = std::vector<std::vector<REAL> >(2 * (this->_maxGeneId + 1),zeros);
 }
 
@@ -89,22 +89,22 @@ void UndatedDLModel<REAL>::setRates(const std::vector<double> &dupRates,
       const std::vector<double> &lossRates,
       const std::vector<double> &transferRates)
 {
-  assert(this->_speciesNodesCount == dupRates.size());
-  assert(this->_speciesNodesCount == lossRates.size());
+  assert(this->_allSpeciesNodesCount == dupRates.size());
+  assert(this->_allSpeciesNodesCount == lossRates.size());
   (void)transferRates;  
   _PD = dupRates;
   _PL = lossRates;
-  _PS = std::vector<double>(this->_speciesNodesCount, 1.0);
+  _PS = std::vector<double>(this->_allSpeciesNodesCount, 1.0);
   this->_geneRoot = 0;
-  for (auto speciesNode: this->_speciesNodes) {
+  for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
     double sum = _PD[e] + _PL[e] + _PS[e];
     _PD[e] /= sum;
     _PL[e] /= sum;
     _PS[e] /= sum;
   }
-  _uE = std::vector<double>(this->_speciesNodesCount, 0.0);
-  for (auto speciesNode: this->_speciesNodes) {
+  _uE = std::vector<double>(this->_allSpeciesNodesCount, 0.0);
+  for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
     double a = _PD[e];
     double b = -1.0;
@@ -126,7 +126,7 @@ template <class REAL>
 void UndatedDLModel<REAL>::updateCLV(pll_unode_t *geneNode)
 {
   assert(geneNode);
-  for (auto speciesNode: this->_speciesNodes) {
+  for (auto speciesNode: this->_speciesNodesToUpdate) {
     computeProbability(geneNode, 
         speciesNode, 
         _uq[geneNode->node_index][speciesNode->node_index]);
@@ -278,7 +278,7 @@ REAL UndatedDLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
 {
   REAL sum = REAL();
   auto u = root->node_index + this->_maxGeneId + 1;
-  for (auto speciesNode: this->_speciesNodes) {
+  for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
     sum += _uq[u][e];
   }
@@ -292,7 +292,7 @@ void UndatedDLModel<REAL>::accountForSpeciesRoot(pll_unode_t *virtualRoot)
   std::vector<REAL> save_uq(_uq[u]);
   auto leftGeneNode = this->getLeft(virtualRoot, true);
   auto rightGeneNode = this->getRight(virtualRoot, true);
-  for (auto speciesNode: this->_speciesNodes) {
+  for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
     REAL proba;
     // D
@@ -315,7 +315,7 @@ template <class REAL>
 void UndatedDLModel<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
-  for (auto speciesNode: this->_speciesNodes) {
+  for (auto speciesNode: this->_speciesNodesToUpdate) {
     auto e = speciesNode->node_index;
     computeProbability(virtualRoot, speciesNode, _uq[u][e], true);
   }
@@ -326,7 +326,7 @@ template <class REAL>
 REAL UndatedDLModel<REAL>::getLikelihoodFactor() const
 {
   REAL factor(0.0);
-  for (auto speciesNode: this->_speciesNodes) {
+  for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
     factor += (REAL(1.0) - REAL(_uE[e]));
   }

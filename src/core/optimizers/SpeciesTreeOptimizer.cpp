@@ -40,6 +40,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     setGeneTreesFromFamilies(initialFamilies);
   } else {
     _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
+    _speciesTree->setGlobalRates(Parameters(0.1, 0.2, 0.1));
     setGeneTreesFromFamilies(initialFamilies);
     optimizeDTLRates();
   }
@@ -258,6 +259,9 @@ Parameters SpeciesTreeOptimizer::computeOptimizedRates() const
 void SpeciesTreeOptimizer::optimizeDTLRates()
 {
   _speciesTree->setGlobalRates(computeOptimizedRates());
+  for (auto &evaluation: _evaluations) {
+    evaluation->setRates(_speciesTree->getRatesVector());
+  }
 }
   
 void SpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
@@ -327,7 +331,7 @@ double SpeciesTreeOptimizer::computeReconciliationLikelihood()
 {
   double ll = 0.0;
   for (auto &evaluation: _evaluations) {
-    evaluation->setRates(_speciesTree->getRatesVector());
+    evaluation->invalidateAllCLVs();
     ll += evaluation->evaluate();
   }
   ParallelContext::sumDouble(ll);
@@ -354,6 +358,7 @@ void SpeciesTreeOptimizer::updateEvaluations()
   for (unsigned int i = 0; i < trees.size(); ++i) {
     auto &tree = trees[i];
     _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _model, false);
+      _evaluations[i]->setRates(_speciesTree->getRatesVector());
   }
 }
 

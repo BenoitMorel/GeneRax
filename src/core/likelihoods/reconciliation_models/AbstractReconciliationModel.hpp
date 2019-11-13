@@ -61,7 +61,7 @@ public:
    */
   virtual void invalidateAllCLVs() = 0;
   virtual void invalidateCLV(unsigned int geneNodeIndex) = 0;
-  
+
   /**
    *  Fill scenario with the maximum likelihood set of 
    *  events that would lead to the  current tree
@@ -152,8 +152,9 @@ protected:
   virtual pll_unode_t *computeMLRoot();
 protected:
   pll_unode_t *_geneRoot;
-  unsigned int _speciesNodesCount;
-  std::vector <pll_rnode_t *> _speciesNodes;
+  unsigned int _allSpeciesNodesCount;
+  std::vector <pll_rnode_t *> _speciesNodesToUpdate;
+  std::vector <pll_rnode_t *> _allSpeciesNodes;
   std::vector<unsigned int> _geneToSpecies;
   // gene ids in postorder 
   std::vector<unsigned int> _geneIds;
@@ -259,10 +260,10 @@ void AbstractReconciliationModel<REAL>::fillNodesPostOrder(pll_rnode_t *node, st
 template <class REAL>
 void AbstractReconciliationModel<REAL>::initSpeciesTree()
 {
-  _speciesNodesCount = _speciesTree.getNodesNumber();
+  _allSpeciesNodesCount = _speciesTree.getNodesNumber();
   onSpeciesTreeChange();
   speciesNameToId_.clear();
-  for (auto node: _speciesNodes) {
+  for (auto node: _allSpeciesNodes) {
     if (!node->left) {
       speciesNameToId_[node->label] = node->node_index;
     }
@@ -272,8 +273,9 @@ void AbstractReconciliationModel<REAL>::initSpeciesTree()
 template <class REAL>
 void AbstractReconciliationModel<REAL>::onSpeciesTreeChange()
 {
-  _speciesNodes.clear();
-  fillNodesPostOrder(_speciesTree.getRoot(), _speciesNodes);
+  _allSpeciesNodes.clear();
+  fillNodesPostOrder(_speciesTree.getRoot(), _allSpeciesNodes);
+  _speciesNodesToUpdate = _allSpeciesNodes;
 }
 
 template <class REAL>
@@ -429,7 +431,7 @@ void AbstractReconciliationModel<REAL>::computeMLRoot(pll_unode_t *&bestGeneRoot
   getRoots(roots, _geneIds);
   REAL max = REAL();
   for (auto root: roots) {
-    for (auto speciesNode: _speciesNodes) {
+    for (auto speciesNode: _allSpeciesNodes) {
       REAL ll = getRootLikelihood(root, speciesNode);
       if (max < ll) {
         max = ll;
@@ -473,7 +475,6 @@ double AbstractReconciliationModel<REAL>::getSumLikelihood()
 template <class REAL>
 void AbstractReconciliationModel<REAL>::computeLikelihoods()
 {
-  std::vector<REAL> zeros(_speciesNodesCount); 
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
   for (auto root: roots) {

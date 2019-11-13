@@ -70,6 +70,8 @@ public:
    */
   void invalidateCLV(unsigned int nodeIndex);
  
+  void invalidateAllCLVs();
+ 
   pll_unode_t *inferMLRoot();
   
   void inferMLScenario(Scenario &scenario);

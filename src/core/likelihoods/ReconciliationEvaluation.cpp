@@ -69,6 +69,11 @@ void ReconciliationEvaluation::invalidateCLV(unsigned int nodeIndex)
   _reconciliationModel->invalidateCLV(nodeIndex);
 }
 
+void ReconciliationEvaluation::invalidateAllCLVs()
+{
+  _reconciliationModel->invalidateAllCLVs();
+}
+
 std::unique_ptr<ReconciliationModelInterface> ReconciliationEvaluation::buildRecModelObject(RecModel recModel, 
     bool infinitePrecision)
 {
