@@ -20,7 +20,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     const std::string &outputDir,
     const std::string &execPath):
   _speciesTree(nullptr),
-  _geneTrees(std::make_unique<PerCoreGeneTrees>(initialFamilies)),
+  _geneTrees(nullptr),
   _initialFamilies(initialFamilies),
   _currentFamilies(initialFamilies),
   _model(model),
@@ -37,11 +37,14 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   if (speciesTreeFile == "random") {
     _speciesTree = std::make_unique<SpeciesTree>(initialFamilies);
     _speciesTree->setGlobalRates(Parameters(0.1, 0.2, 0.1));
+    setGeneTreesFromFamilies(initialFamilies);
   } else {
     _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
+    setGeneTreesFromFamilies(initialFamilies);
     optimizeDTLRates();
   }
   _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"), true);
+  _speciesTree->addListener(this);
   std::string subsamplesPath = FileSystem::joinPaths(_outputDir, "subsamples");
   FileSystem::mkdir(FileSystem::joinPaths(_outputDir, "sub_genes_opt"), true);
   FileSystem::mkdir(subsamplesPath, true);
@@ -50,7 +53,10 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
 
 
 
-
+SpeciesTreeOptimizer::~SpeciesTreeOptimizer()
+{
+  _speciesTree->removeListener(this);
+}
   
 void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree, 
     PerCoreGeneTrees &geneTrees, 
@@ -126,13 +132,13 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
 {
   std::vector<unsigned int> prunes;
   SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, prunes);
-  double bestLL = getReconciliationLikelihood();
+  double bestLL = computeReconciliationLikelihood();
   for (auto prune: prunes) {
     std::vector<unsigned int> regrafts;
     SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
     for (auto regraft: regrafts) {
       unsigned int rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
-      _lastRecLL = getReconciliationLikelihood();
+      _lastRecLL = computeReconciliationLikelihood();
       if (_lastRecLL > bestLL) {
         newBestTreeCallback();
         return _lastRecLL;
@@ -165,7 +171,7 @@ std::vector<EvaluatedMove> SpeciesTreeOptimizer::getSortedCandidateMoves(unsigne
       EvaluatedMove em;
       em.prune = prune;
       em.regraft = regraft;
-      em.ll = getReconciliationLikelihood();
+      em.ll = computeReconciliationLikelihood();
       evaluatedMoves.push_back(em);
       SpeciesTreeOperator::reverseSPRMove(*_speciesTree, em.prune, rollback);
     }
@@ -290,7 +296,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(unsigned int radius)
         useSplitImplem, sumElapsedSPR, inPlace);
     _geneTreeIteration++;
     Logger::unmute();
-    _geneTrees = std::make_unique<PerCoreGeneTrees>(_currentFamilies);
+    setGeneTreesFromFamilies(_currentFamilies);
     if (i < iterationsNumber - 1) {
       rates = computeOptimizedRates();
     }
@@ -302,7 +308,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(unsigned int radius)
 void SpeciesTreeOptimizer::revertGeneTreeOptimization()
 {
   _currentFamilies = _initialFamilies;
-  _geneTrees = std::make_unique<PerCoreGeneTrees>(_currentFamilies);
+  setGeneTreesFromFamilies(_currentFamilies);
 }
 
 double SpeciesTreeOptimizer::computeLikelihood(unsigned int geneSPRRadius)
@@ -312,9 +318,20 @@ double SpeciesTreeOptimizer::computeLikelihood(unsigned int geneSPRRadius)
     revertGeneTreeOptimization();
     return res;
   } else {
-    _lastRecLL = _speciesTree->computeReconciliationLikelihood(*_geneTrees, _model);
+    _lastRecLL = computeReconciliationLikelihood();
     return _lastRecLL;
   }
+}
+
+double SpeciesTreeOptimizer::computeReconciliationLikelihood()
+{
+  double ll = 0.0;
+  for (auto &evaluation: _evaluations) {
+    evaluation->setRates(_speciesTree->getRatesVector());
+    ll += evaluation->evaluate();
+  }
+  ParallelContext::sumDouble(ll);
+  return ll;
 }
 
 void SpeciesTreeOptimizer::newBestTreeCallback()
@@ -322,4 +339,30 @@ void SpeciesTreeOptimizer::newBestTreeCallback()
   _bestLibpllLL = _lastLibpllLL;
   _bestRecLL = _lastRecLL;
 }
+  
+void SpeciesTreeOptimizer::setGeneTreesFromFamilies(const Families &families)
+{
+  _geneTrees = std::make_unique<PerCoreGeneTrees>(families);
+  updateEvaluations();
+}
+  
+void SpeciesTreeOptimizer::updateEvaluations()
+{
+  assert(_geneTrees);
+  auto &trees = _geneTrees->getTrees();
+  _evaluations.resize(trees.size());
+  for (unsigned int i = 0; i < trees.size(); ++i) {
+    auto &tree = trees[i];
+    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _model, false);
+  }
+}
+
+void SpeciesTreeOptimizer::onSpeciesTreeChange()
+{
+  for (auto &evaluation: _evaluations) {
+    evaluation->onSpeciesTreeChange();
+  }
+}
+
+
 

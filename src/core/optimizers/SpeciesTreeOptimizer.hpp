@@ -14,7 +14,7 @@ struct EvaluatedMove {
   double ll;
 };
 
-class SpeciesTreeOptimizer {
+class SpeciesTreeOptimizer: public SpeciesTree::Listener {
 public:
   SpeciesTreeOptimizer(const std::string speciesTreeFile, 
       const Families &initialFamilies, 
@@ -28,8 +28,9 @@ public:
   SpeciesTreeOptimizer & operator = (const SpeciesTreeOptimizer &) = delete;
   SpeciesTreeOptimizer(SpeciesTreeOptimizer &&) = delete;
   SpeciesTreeOptimizer & operator = (SpeciesTreeOptimizer &&) = delete;
-  
-  void setModel(RecModel model) {_model = model;}
+  virtual ~SpeciesTreeOptimizer(); 
+    
+  virtual void onSpeciesTreeChange();
 
   void rootExhaustiveSearch(bool doOptimizeGeneTrees);
   double fastSPRRound(unsigned int radius);
@@ -42,7 +43,6 @@ public:
   double optimizeGeneTrees(unsigned int radius);
   void revertGeneTreeOptimization();
 
-  double getReconciliationLikelihood() {return computeLikelihood(0);}
   double computeLikelihood(unsigned int geneSPRRadius);
   void saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
@@ -51,9 +51,12 @@ public:
   double getReconciliationLikelihood() const {return _bestRecLL;}
   double getLibpllLikeliohood() const {return _bestLibpllLL;}
   double getJointLikelihood() const {return getReconciliationLikelihood() + getLibpllLikeliohood();}
+
+  double computeReconciliationLikelihood();
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
+  std::vector<std::shared_ptr<ReconciliationEvaluation> > _evaluations; // one per geneTree
   Families _initialFamilies;
   Families _currentFamilies;
   RecModel _model;
@@ -67,6 +70,7 @@ private:
   double _bestRecLL;
   double _bestLibpllLL;
 private:
+  void updateEvaluations();
   void rootExhaustiveSearchAux(SpeciesTree &speciesTree, 
       PerCoreGeneTrees &geneTrees, 
       RecModel model, 
@@ -78,4 +82,6 @@ private:
   void newBestTreeCallback();
   std::string getSpeciesTreePath(const std::string &speciesId);
   std::vector<EvaluatedMove> getSortedCandidateMoves(unsigned int speciesRadius);
+  void setGeneTreesFromFamilies(const Families &families);
+  void reGenerateEvaluations();
 };

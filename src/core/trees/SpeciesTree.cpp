@@ -44,19 +44,7 @@ void SpeciesTree::setRatesVector(const Parameters &rates)
   _ratesVector = rates;
   _rates = rates;
 }
-
-double SpeciesTree::computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees, RecModel model)
-{
-  double ll = 0.0;
-  for (auto &tree: geneTrees.getTrees()) {
-    ReconciliationEvaluation evaluation(_speciesTree, *tree.geneTree, tree.mapping, model, false);
-    evaluation.setRates(_ratesVector);
-    ll += evaluation.evaluate();
-  }
-  ParallelContext::sumDouble(ll);
-  return ll;
-}
-
+  
 std::string SpeciesTree::toString() const
 {
   std::string newick;
@@ -72,12 +60,23 @@ void SpeciesTree::saveToFile(const std::string &newick, bool masterRankOnly)
   }
   _speciesTree.save(newick);
 }
-/*  
-pll_rnode_t *SpeciesTree::getRandomNode() 
+  
+void SpeciesTree::addListener(Listener *listener)
 {
-  return getNode(rand() % (_speciesTree->tip_count + _speciesTree->inner_count)); 
+  _listeners.push_back(listener);
 }
-*/
+
+void SpeciesTree::removeListener(Listener *listener)
+{
+  _listeners.erase(std::remove(_listeners.begin(), _listeners.end(), listener), _listeners.end());      
+}
+
+void SpeciesTree::onSpeciesTreeChange()
+{
+  for (auto listener: _listeners) {
+    listener->onSpeciesTreeChange();
+  }
+}
   
 static void setRootAux(SpeciesTree &speciesTree, pll_rnode_t *root) {
   speciesTree.getTree().getRawPtr()->root = root; 
@@ -134,11 +133,13 @@ void SpeciesTreeOperator::changeRoot(SpeciesTree &speciesTree, unsigned int dire
     PLLRootedTree::setSon(root, D, true);
     PLLRootedTree::setSon(root, rootLeft, false);
   }
+  speciesTree.onSpeciesTreeChange();
 }
 
 void SpeciesTreeOperator::revertChangeRoot(SpeciesTree &speciesTree, unsigned int direction)
 {
   changeRoot(speciesTree, 3 - direction);
+  speciesTree.onSpeciesTreeChange();
 }
 
 pll_rnode_t *getBrother(pll_rnode_t *node) {
@@ -174,6 +175,7 @@ unsigned int SpeciesTreeOperator::applySPRMove(SpeciesTree &speciesTree,
     PLLRootedTree::setSon(regraftParentNode, pruneFatherNode, regraftParentNode->left == regraftNode);
     PLLRootedTree::setSon(pruneFatherNode, regraftNode, pruneFatherNode->left != pruneNode);
   }
+  speciesTree.onSpeciesTreeChange();
   return res;
 }
   
@@ -182,6 +184,7 @@ void SpeciesTreeOperator::reverseSPRMove(SpeciesTree &speciesTree,
     unsigned int applySPRMoveReturnValue)
 {
   applySPRMove(speciesTree, prune, applySPRMoveReturnValue);
+  speciesTree.onSpeciesTreeChange();
 }
 
 
@@ -297,4 +300,6 @@ std::unordered_set<std::string> SpeciesTree::getLabelsFromFamilies(const Familie
   }
   return leaves;
 }
+  
+
   

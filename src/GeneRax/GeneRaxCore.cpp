@@ -85,15 +85,12 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
 
   Logger::info << "Saving tree to " << instance.speciesTree << std::endl;
   SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, 
-      RecModel::UndatedDL, instance.args.supportThreshold, instance.args.output, instance.args.exec);
+      instance.recModel, instance.args.supportThreshold, instance.args.output, instance.args.exec);
   if (instance.args.speciesFastRadius > 0) {
     Logger::info << std::endl;
     Logger::timed << "Start optimizing the species tree with fixed gene trees" << std::endl;
   }
   for (unsigned int radius = 1; radius <= instance.args.speciesFastRadius; ++radius) {
-    //if (radius == instance.args.speciesFastRadius) {
-      speciesTreeOptimizer.setModel(instance.recModel);
-    //}
     speciesTreeOptimizer.optimizeDTLRates();
     speciesTreeOptimizer.sprSearch(radius, false);
     speciesTreeOptimizer.rootExhaustiveSearch(false);
@@ -105,7 +102,6 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     Logger::timed << "Start optimizing the species tree and gene trees together" << std::endl;
   }
   if (instance.args.speciesSlowRadius) {
-    speciesTreeOptimizer.setModel(instance.recModel);
     speciesTreeOptimizer.sprSearch(instance.args.speciesSlowRadius, true);
   }
   instance.totalLibpllLL = speciesTreeOptimizer.getLibpllLikeliohood();

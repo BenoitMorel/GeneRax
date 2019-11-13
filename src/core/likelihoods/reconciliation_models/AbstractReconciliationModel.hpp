@@ -68,6 +68,7 @@ public:
    **/
   virtual void inferMLScenario(Scenario &scenario) = 0;
 
+  virtual void onSpeciesTreeChange() = 0;
 };
 
 
@@ -108,7 +109,7 @@ public:
   virtual void inferMLScenario(Scenario &scenario);
 protected:
   // called by the constructor
-  virtual void setSpeciesTree(PLLRootedTree &speciesTree);
+  virtual void initSpeciesTree();
   // Called when computeLogLikelihood is called for the first time
   // Called by computeLogLikelihood
   virtual void updateCLV(pll_unode_t *geneNode) = 0;
@@ -145,6 +146,7 @@ protected:
   pll_unode_t *getLeftRepeats(pll_unode_t *node, bool virtualRoot);  
   pll_unode_t *getRightRepeats(pll_unode_t *node, bool virtualRoot); 
 
+  virtual void onSpeciesTreeChange();
   
   void updateCLVs();
   virtual pll_unode_t *computeMLRoot();
@@ -195,7 +197,7 @@ AbstractReconciliationModel<REAL>::AbstractReconciliationModel(PLLRootedTree &sp
   _speciesTree(speciesTree),
   geneNameToSpeciesName_(geneSpeciesMapping.getMap())
 {
-  setSpeciesTree(speciesTree);
+  initSpeciesTree();
 }
 
 template <class REAL>
@@ -255,17 +257,23 @@ void AbstractReconciliationModel<REAL>::fillNodesPostOrder(pll_rnode_t *node, st
 
 
 template <class REAL>
-void AbstractReconciliationModel<REAL>::setSpeciesTree(PLLRootedTree &speciesTree)
+void AbstractReconciliationModel<REAL>::initSpeciesTree()
 {
-  _speciesNodesCount = speciesTree.getNodesNumber();
-  _speciesNodes.clear();
-  fillNodesPostOrder(speciesTree.getRoot(), _speciesNodes);
+  _speciesNodesCount = _speciesTree.getNodesNumber();
+  onSpeciesTreeChange();
   speciesNameToId_.clear();
   for (auto node: _speciesNodes) {
     if (!node->left) {
       speciesNameToId_[node->label] = node->node_index;
     }
   }
+}
+
+template <class REAL>
+void AbstractReconciliationModel<REAL>::onSpeciesTreeChange()
+{
+  _speciesNodes.clear();
+  fillNodesPostOrder(_speciesTree.getRoot(), _speciesNodes);
 }
 
 template <class REAL>

@@ -128,3 +128,8 @@ pll_unode_t *ReconciliationEvaluation::inferMLRoot()
   return res;
 }
 
+void ReconciliationEvaluation::onSpeciesTreeChange()
+{
+  assert(_reconciliationModel);
+  _reconciliationModel->onSpeciesTreeChange();
+}

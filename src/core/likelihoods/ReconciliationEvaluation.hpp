@@ -59,6 +59,11 @@ public:
 
   bool implementsTransfers() {return Enums::accountsForTransfers(_model);} 
 
+  /*
+   *  Call this everytime that the species tree changes
+   */
+  void onSpeciesTreeChange();
+
   /**
    *  Invalidate the CLV at a given node index
    *  Must be called on the nodes affected by a move 

@@ -11,7 +11,6 @@
 
 class PerCoreGeneTrees;
 
-
 class SpeciesTree {
 public:
   SpeciesTree(const std::string &newick, bool isFile = true);
@@ -22,17 +21,16 @@ public:
   SpeciesTree & operator = (const SpeciesTree &) = delete;
   SpeciesTree(SpeciesTree &&) = delete;
   SpeciesTree & operator = (SpeciesTree &&) = delete;
-
-  
-  
   
   std::unique_ptr<SpeciesTree> buildRandomTree() const;
 
   void setGlobalRates(const Parameters &rates);
   void setRatesVector(const Parameters &rates);
+  
   const Parameters &getRatesVector() const {return _ratesVector;}
   const Parameters &getRates() const {return _rates;}
-  double computeReconciliationLikelihood(PerCoreGeneTrees &geneTrees, RecModel model);
+
+  // set rates and gene trees before calling this
 
   std::string toString() const;
   pll_rnode_t *getRandomNode();
@@ -48,10 +46,22 @@ public:
   void saveToFile(const std::string &newick, bool masterRankOnly);
   size_t getHash() const;
   void getLabelsToId(std::unordered_map<std::string, unsigned int> &map) const;
+
+  class Listener {
+  public:
+    virtual ~Listener() {}
+    virtual void onSpeciesTreeChange() = 0;
+  };
+  void addListener(Listener *listener);
+  void removeListener(Listener *listener);
+  void onSpeciesTreeChange(); // should be called when changing the species tree
+
+
 private:
   PLLRootedTree _speciesTree;
   Parameters _rates;
   Parameters _ratesVector;
+  std::vector<Listener *> _listeners;
   void buildFromLabels(const std::unordered_set<std::string> &leafLabels);
   static std::unordered_set<std::string> getLabelsFromFamilies(const Families &families);
 };
