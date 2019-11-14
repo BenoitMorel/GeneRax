@@ -135,7 +135,7 @@ void SpeciesTreeOperator::changeRoot(SpeciesTree &speciesTree, unsigned int dire
     PLLRootedTree::setSon(root, D, true);
     PLLRootedTree::setSon(root, rootLeft, false);
   }
-  speciesTree.onSpeciesTreeChange(nullptr); //nodesToInvalidate);
+  speciesTree.onSpeciesTreeChange(&nodesToInvalidate);
 }
 
 void SpeciesTreeOperator::revertChangeRoot(SpeciesTree &speciesTree, unsigned int direction)
@@ -161,9 +161,10 @@ unsigned int SpeciesTreeOperator::applySPRMove(SpeciesTree &speciesTree,
   unsigned int res = pruneBrotherNode->node_index;
   std::unordered_set<pll_rnode_t *> nodesToInvalidate;
   // prune
+  nodesToInvalidate.insert(pruneFatherNode);
   if (pruneGrandFatherNode) {
-    PLLRootedTree::setSon(pruneGrandFatherNode, pruneBrotherNode, pruneGrandFatherNode->left == pruneFatherNode);
     nodesToInvalidate.insert(pruneGrandFatherNode);
+    PLLRootedTree::setSon(pruneGrandFatherNode, pruneBrotherNode, pruneGrandFatherNode->left == pruneFatherNode);
   } else {
     setRootAux(speciesTree, pruneBrotherNode);
   }

@@ -282,7 +282,7 @@ template <class REAL>
 void AbstractReconciliationModel<REAL>::initSpeciesTree()
 {
   _allSpeciesNodesCount = _speciesTree.getNodesNumber();
-  beforeComputeLogLikelihood(); // todobenoit rename this function
+  onSpeciesTreeChange(nullptr);
   speciesNameToId_.clear();
   for (auto node: _allSpeciesNodes) {
     if (!node->left) {
@@ -297,8 +297,12 @@ void AbstractReconciliationModel<REAL>::onSpeciesTreeChange(const std::unordered
   if (!nodesToInvalidate) {
     _allSpeciesNodesInvalid = true;
   } else {
+    assert(nodesToInvalidate->size());
     _invalidatedSpeciesNodes.insert(nodesToInvalidate->begin(), nodesToInvalidate->end());
   }
+  _allSpeciesNodes.clear();
+  fillNodesPostOrder(_speciesTree.getRoot(), _allSpeciesNodes);
+  assert(_allSpeciesNodes.size() && _allSpeciesNodes.back() == _speciesTree.getRoot());
 }
 
 
@@ -307,23 +311,18 @@ void AbstractReconciliationModel<REAL>::beforeComputeLogLikelihood()
 {
   if (_allSpeciesNodesInvalid) { // update everything
     //Logger::info << "All nodes invalid " << std::endl;
-    _allSpeciesNodes.clear();
-    fillNodesPostOrder(_speciesTree.getRoot(), _allSpeciesNodes);
     _speciesNodesToUpdate = _allSpeciesNodes;
   } else if (_invalidatedSpeciesNodes.size()) { // partial update
     // here, fill _speciesNodesToUpdate with the invalid nodes
     //Logger::info << "Some nodes invalid " << std::endl;
-    _allSpeciesNodes.clear();
-    fillNodesPostOrder(_speciesTree.getRoot(), _allSpeciesNodes);
+    _speciesNodesToUpdate.clear();
     fillNodesPostOrder(_speciesTree.getRoot(), _speciesNodesToUpdate, &_invalidatedSpeciesNodes);
-    _speciesNodesToUpdate = _allSpeciesNodes; // TO REMOVE todobenoit
+    //Logger::info << "species to invalidate and to update: " << _invalidatedSpeciesNodes.size() << " " << _speciesNodesToUpdate.size() << std::endl;
   } // else: nothing to update
   _allSpeciesNodesInvalid = false;
   _invalidatedSpeciesNodes.clear();
-  assert(_allSpeciesNodes.size() && _allSpeciesNodes.back() == _speciesTree.getRoot());
   assert(!_speciesNodesToUpdate.size() || _speciesNodesToUpdate.back() == _speciesTree.getRoot());
   //Logger::info << "all species: " << _allSpeciesNodes.size() << std::endl;
-  //Logger::info << "species to update: " << _speciesNodesToUpdate.size() << std::endl;
 }
 
 template <class REAL>
