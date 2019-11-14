@@ -62,7 +62,11 @@ public:
   /*
    *  Call this everytime that the species tree changes
    */
-  void onSpeciesTreeChange();
+  void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
+
+  void setPartialLikelihoodMode(PartialLikelihoodMode mode) { 
+    _reconciliationModel->setPartialLikelihoodMode(mode);
+  }
 
   /**
    *  Invalidate the CLV at a given node index
@@ -71,6 +75,7 @@ public:
   void invalidateCLV(unsigned int nodeIndex);
  
   void invalidateAllCLVs();
+  void invalidateAllSpeciesCLVs();
  
   pll_unode_t *inferMLRoot();
   

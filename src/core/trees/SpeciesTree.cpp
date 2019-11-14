@@ -71,10 +71,10 @@ void SpeciesTree::removeListener(Listener *listener)
   _listeners.erase(std::remove(_listeners.begin(), _listeners.end(), listener), _listeners.end());      
 }
 
-void SpeciesTree::onSpeciesTreeChange()
+void SpeciesTree::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
 {
   for (auto listener: _listeners) {
-    listener->onSpeciesTreeChange();
+    listener->onSpeciesTreeChange(nodesToInvalidate);
   }
 }
   
@@ -113,6 +113,8 @@ void SpeciesTreeOperator::changeRoot(SpeciesTree &speciesTree, unsigned int dire
   auto B = rootLeft->right;
   auto C = rootRight->left;
   auto D = rootRight->right;
+  std::unordered_set<pll_rnode_t *> nodesToInvalidate;
+  nodesToInvalidate.insert(root);
   setRootAux(speciesTree, left1 ? rootLeft : rootRight);
   if (left1 && left2) {
     PLLRootedTree::setSon(rootLeft, root, false);
@@ -133,13 +135,12 @@ void SpeciesTreeOperator::changeRoot(SpeciesTree &speciesTree, unsigned int dire
     PLLRootedTree::setSon(root, D, true);
     PLLRootedTree::setSon(root, rootLeft, false);
   }
-  speciesTree.onSpeciesTreeChange();
+  speciesTree.onSpeciesTreeChange(nullptr); //nodesToInvalidate);
 }
 
 void SpeciesTreeOperator::revertChangeRoot(SpeciesTree &speciesTree, unsigned int direction)
 {
   changeRoot(speciesTree, 3 - direction);
-  speciesTree.onSpeciesTreeChange();
 }
 
 pll_rnode_t *getBrother(pll_rnode_t *node) {
@@ -158,9 +159,11 @@ unsigned int SpeciesTreeOperator::applySPRMove(SpeciesTree &speciesTree,
   auto pruneGrandFatherNode = pruneFatherNode->parent;
   auto pruneBrotherNode = getBrother(pruneNode);
   unsigned int res = pruneBrotherNode->node_index;
+  std::unordered_set<pll_rnode_t *> nodesToInvalidate;
   // prune
   if (pruneGrandFatherNode) {
     PLLRootedTree::setSon(pruneGrandFatherNode, pruneBrotherNode, pruneGrandFatherNode->left == pruneFatherNode);
+    nodesToInvalidate.insert(pruneGrandFatherNode);
   } else {
     setRootAux(speciesTree, pruneBrotherNode);
   }
@@ -174,8 +177,9 @@ unsigned int SpeciesTreeOperator::applySPRMove(SpeciesTree &speciesTree,
   } else {
     PLLRootedTree::setSon(regraftParentNode, pruneFatherNode, regraftParentNode->left == regraftNode);
     PLLRootedTree::setSon(pruneFatherNode, regraftNode, pruneFatherNode->left != pruneNode);
+    nodesToInvalidate.insert(regraftParentNode);
   }
-  speciesTree.onSpeciesTreeChange();
+  speciesTree.onSpeciesTreeChange(&nodesToInvalidate);
   return res;
 }
   
@@ -184,7 +188,6 @@ void SpeciesTreeOperator::reverseSPRMove(SpeciesTree &speciesTree,
     unsigned int applySPRMoveReturnValue)
 {
   applySPRMove(speciesTree, prune, applySPRMoveReturnValue);
-  speciesTree.onSpeciesTreeChange();
 }
 
 

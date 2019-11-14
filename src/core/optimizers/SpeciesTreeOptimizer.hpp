@@ -30,7 +30,7 @@ public:
   SpeciesTreeOptimizer & operator = (SpeciesTreeOptimizer &&) = delete;
   virtual ~SpeciesTreeOptimizer(); 
     
-  virtual void onSpeciesTreeChange();
+  virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
   void rootExhaustiveSearch(bool doOptimizeGeneTrees);
   double fastSPRRound(unsigned int radius);

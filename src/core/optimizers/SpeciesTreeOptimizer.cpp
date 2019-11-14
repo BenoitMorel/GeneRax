@@ -331,7 +331,6 @@ double SpeciesTreeOptimizer::computeReconciliationLikelihood()
 {
   double ll = 0.0;
   for (auto &evaluation: _evaluations) {
-    evaluation->invalidateAllCLVs();
     ll += evaluation->evaluate();
   }
   ParallelContext::sumDouble(ll);
@@ -358,14 +357,15 @@ void SpeciesTreeOptimizer::updateEvaluations()
   for (unsigned int i = 0; i < trees.size(); ++i) {
     auto &tree = trees[i];
     _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _model, false);
-      _evaluations[i]->setRates(_speciesTree->getRatesVector());
+    _evaluations[i]->setRates(_speciesTree->getRatesVector());
+    _evaluations[i]->setPartialLikelihoodMode(PartialLikelihoodMode::PartialSpecies);
   }
 }
 
-void SpeciesTreeOptimizer::onSpeciesTreeChange()
+void SpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
 {
   for (auto &evaluation: _evaluations) {
-    evaluation->onSpeciesTreeChange();
+    evaluation->onSpeciesTreeChange(nodesToInvalidate);
   }
 }
 

@@ -8,6 +8,7 @@
 #include <util/enums.hpp>
 #include <memory>
 #include <trees/PLLRootedTree.hpp>
+#include <unordered_set>
 
 class PerCoreGeneTrees;
 
@@ -50,11 +51,11 @@ public:
   class Listener {
   public:
     virtual ~Listener() {}
-    virtual void onSpeciesTreeChange() = 0;
+    virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate) = 0;
   };
   void addListener(Listener *listener);
   void removeListener(Listener *listener);
-  void onSpeciesTreeChange(); // should be called when changing the species tree
+  void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate); // should be called when changing the species tree
 
 
 private:

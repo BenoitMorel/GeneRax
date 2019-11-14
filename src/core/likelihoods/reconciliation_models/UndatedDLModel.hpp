@@ -117,6 +117,7 @@ void UndatedDLModel<REAL>::setRates(const std::vector<double> &dupRates,
     _uE[speciesNode->node_index] = proba;
   }
   this->invalidateAllCLVs();
+  this->invalidateAllSpeciesCLVs();
 }
 
 template <class REAL>

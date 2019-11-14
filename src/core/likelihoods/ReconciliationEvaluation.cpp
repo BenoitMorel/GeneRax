@@ -74,6 +74,11 @@ void ReconciliationEvaluation::invalidateAllCLVs()
   _reconciliationModel->invalidateAllCLVs();
 }
 
+void ReconciliationEvaluation::invalidateAllSpeciesCLVs()
+{
+  _reconciliationModel->invalidateAllSpeciesCLVs();
+}
+
 std::unique_ptr<ReconciliationModelInterface> ReconciliationEvaluation::buildRecModelObject(RecModel recModel, 
     bool infinitePrecision)
 {
@@ -133,8 +138,8 @@ pll_unode_t *ReconciliationEvaluation::inferMLRoot()
   return res;
 }
 
-void ReconciliationEvaluation::onSpeciesTreeChange()
+void ReconciliationEvaluation::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
 {
   assert(_reconciliationModel);
-  _reconciliationModel->onSpeciesTreeChange();
+  _reconciliationModel->onSpeciesTreeChange(nodesToInvalidate);
 }

@@ -56,19 +56,22 @@ public:
    */
   virtual pll_unode_t *computeMLRoot() = 0;
   
+
+  virtual void setPartialLikelihoodMode(PartialLikelihoodMode mode) = 0;
+  
   /**
-   * invalidate one or all the gene CLVs
+   * CLV invalidation for partial likelihood computation
    */
   virtual void invalidateAllCLVs() = 0;
   virtual void invalidateCLV(unsigned int geneNodeIndex) = 0;
-
+  virtual void invalidateAllSpeciesCLVs() = 0;
   /**
    *  Fill scenario with the maximum likelihood set of 
    *  events that would lead to the  current tree
    **/
   virtual void inferMLScenario(Scenario &scenario) = 0;
 
-  virtual void onSpeciesTreeChange() = 0;
+  virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate) = 0;
 };
 
 
@@ -106,7 +109,11 @@ public:
   // overload from parent
   virtual void invalidateCLV(unsigned int geneNodeIndex);
   // overload from parent
+  virtual void invalidateAllSpeciesCLVs() {_allSpeciesNodesInvalid = true;}
+  // overload from parent
   virtual void inferMLScenario(Scenario &scenario);
+  // overload from parent
+  virtual void setPartialLikelihoodMode(PartialLikelihoodMode mode) {_likelihoodMode = mode;};
 protected:
   // called by the constructor
   virtual void initSpeciesTree();
@@ -146,7 +153,7 @@ protected:
   pll_unode_t *getLeftRepeats(pll_unode_t *node, bool virtualRoot);  
   pll_unode_t *getRightRepeats(pll_unode_t *node, bool virtualRoot); 
 
-  virtual void onSpeciesTreeChange();
+  virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
   
   void updateCLVs();
   virtual pll_unode_t *computeMLRoot();
@@ -159,7 +166,6 @@ protected:
   // gene ids in postorder 
   std::vector<unsigned int> _geneIds;
   unsigned int _maxGeneId;
-
 private:
   void mapGenesToSpecies();
   void computeMLRoot(pll_unode_t *&bestGeneRoot, pll_rnode_t *&bestSpeciesRoot);
@@ -168,8 +174,7 @@ private:
   void updateCLVsRec(pll_unode_t *node);
   void markInvalidatedNodes();
   void markInvalidatedNodesRec(pll_unode_t *node);
-  void fillNodesPostOrder(pll_rnode_t *node, std::vector<pll_rnode_t *> &nodes);
-  
+  void beforeComputeLogLikelihood(); 
   
   
   bool _rootedGeneTree;
@@ -177,13 +182,18 @@ private:
   std::map<std::string, std::string> geneNameToSpeciesName_;
   std::map<std::string, unsigned int> speciesNameToId_;
   
+  PartialLikelihoodMode _likelihoodMode;
   // set of invalid CLVs. All the CLVs from these CLVs to
   // the root(s) need to be recomputed
   std::unordered_set<unsigned int> _invalidatedNodes;
+  
+  std::unordered_set<pll_rnode_t *> _invalidatedSpeciesNodes;
+  bool _allSpeciesNodesInvalid;
 
   // is the CLV up to date?
   std::vector<bool> _isCLVUpdated;
   std::vector<pll_unode_t *> _allNodes;
+  
 };
 
 
@@ -196,7 +206,9 @@ AbstractReconciliationModel<REAL>::AbstractReconciliationModel(PLLRootedTree &sp
   _maxGeneId(1),
   _rootedGeneTree(rootedGeneTree),
   _speciesTree(speciesTree),
-  geneNameToSpeciesName_(geneSpeciesMapping.getMap())
+  geneNameToSpeciesName_(geneSpeciesMapping.getMap()),
+  _likelihoodMode(PartialLikelihoodMode::PartialGenes),
+  _allSpeciesNodesInvalid(true)
 {
   initSpeciesTree();
 }
@@ -245,15 +257,24 @@ void AbstractReconciliationModel<REAL>::setInitialGeneTree(pll_utree_t *tree)
   invalidateAllCLVs();
 }
 
-template <class REAL>
-void AbstractReconciliationModel<REAL>::fillNodesPostOrder(pll_rnode_t *node, std::vector<pll_rnode_t *> &nodes) 
+
+static bool fillNodesPostOrder(pll_rnode_t *node, 
+    std::vector<pll_rnode_t *> &nodes, 
+    std::unordered_set<pll_rnode_t *> *nodesToAdd = nullptr)  
 {
+  bool addMyself = true;
+  if (nodesToAdd) {
+    addMyself = (nodesToAdd->find(node) != nodesToAdd->end());
+  }
   if (node->left) {
     assert(node->right);
-    fillNodesPostOrder(node->left, nodes);
-    fillNodesPostOrder(node->right, nodes);
+    addMyself |= fillNodesPostOrder(node->left, nodes, nodesToAdd);
+    addMyself |= fillNodesPostOrder(node->right, nodes, nodesToAdd);
   }
-  nodes.push_back(node);
+  if (addMyself) {
+    nodes.push_back(node);
+  }
+  return addMyself;
 }
 
 
@@ -261,7 +282,7 @@ template <class REAL>
 void AbstractReconciliationModel<REAL>::initSpeciesTree()
 {
   _allSpeciesNodesCount = _speciesTree.getNodesNumber();
-  onSpeciesTreeChange();
+  beforeComputeLogLikelihood(); // todobenoit rename this function
   speciesNameToId_.clear();
   for (auto node: _allSpeciesNodes) {
     if (!node->left) {
@@ -271,11 +292,38 @@ void AbstractReconciliationModel<REAL>::initSpeciesTree()
 }
 
 template <class REAL>
-void AbstractReconciliationModel<REAL>::onSpeciesTreeChange()
+void AbstractReconciliationModel<REAL>::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
 {
-  _allSpeciesNodes.clear();
-  fillNodesPostOrder(_speciesTree.getRoot(), _allSpeciesNodes);
-  _speciesNodesToUpdate = _allSpeciesNodes;
+  if (!nodesToInvalidate) {
+    _allSpeciesNodesInvalid = true;
+  } else {
+    _invalidatedSpeciesNodes.insert(nodesToInvalidate->begin(), nodesToInvalidate->end());
+  }
+}
+
+
+template <class REAL>
+void AbstractReconciliationModel<REAL>::beforeComputeLogLikelihood()
+{
+  if (_allSpeciesNodesInvalid) { // update everything
+    //Logger::info << "All nodes invalid " << std::endl;
+    _allSpeciesNodes.clear();
+    fillNodesPostOrder(_speciesTree.getRoot(), _allSpeciesNodes);
+    _speciesNodesToUpdate = _allSpeciesNodes;
+  } else if (_invalidatedSpeciesNodes.size()) { // partial update
+    // here, fill _speciesNodesToUpdate with the invalid nodes
+    //Logger::info << "Some nodes invalid " << std::endl;
+    _allSpeciesNodes.clear();
+    fillNodesPostOrder(_speciesTree.getRoot(), _allSpeciesNodes);
+    fillNodesPostOrder(_speciesTree.getRoot(), _speciesNodesToUpdate, &_invalidatedSpeciesNodes);
+    _speciesNodesToUpdate = _allSpeciesNodes; // TO REMOVE todobenoit
+  } // else: nothing to update
+  _allSpeciesNodesInvalid = false;
+  _invalidatedSpeciesNodes.clear();
+  assert(_allSpeciesNodes.size() && _allSpeciesNodes.back() == _speciesTree.getRoot());
+  assert(!_speciesNodesToUpdate.size() || _speciesNodesToUpdate.back() == _speciesTree.getRoot());
+  //Logger::info << "all species: " << _allSpeciesNodes.size() << std::endl;
+  //Logger::info << "species to update: " << _speciesNodesToUpdate.size() << std::endl;
 }
 
 template <class REAL>
@@ -309,6 +357,7 @@ void AbstractReconciliationModel<REAL>::getRoots(std::vector<pll_unode_t *> &roo
 template <class REAL>
 double AbstractReconciliationModel<REAL>::computeLogLikelihood()
 {
+  beforeComputeLogLikelihood();
   auto root = getRoot();
   updateCLVs();
   computeLikelihoods();
@@ -403,6 +452,18 @@ void AbstractReconciliationModel<REAL>::updateCLVsRec(pll_unode_t *node)
 template <class REAL>
 void AbstractReconciliationModel<REAL>::updateCLVs()
 {
+  switch (_likelihoodMode) {
+    case PartialLikelihoodMode::PartialGenes:
+      invalidateAllSpeciesCLVs();
+    break;
+    case PartialLikelihoodMode::PartialSpecies:
+      invalidateAllCLVs();
+    break;
+    case PartialLikelihoodMode::NoPartial:
+      invalidateAllSpeciesCLVs();
+      invalidateAllCLVs();
+    break;
+  }
   markInvalidatedNodes();
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);

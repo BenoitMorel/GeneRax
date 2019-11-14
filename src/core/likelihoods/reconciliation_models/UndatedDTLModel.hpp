@@ -174,6 +174,7 @@ void UndatedDTLModel<REAL>::setRates(const std::vector<double> &dupRates,
     updateTransferSums(_transferExtinctionSum, _ancestralExctinctionCorrection, _uE);
   }
   this->invalidateAllCLVs();
+  this->invalidateAllSpeciesCLVs();
 }
 
 template <class REAL>
