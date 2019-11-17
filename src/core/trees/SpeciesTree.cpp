@@ -260,28 +260,43 @@ static size_t leafHash(const pll_rnode_t *leaf) {
   return hash_fn(std::string(leaf->label));
 }
 
-static size_t getTreeHashRec(const pll_rnode_t *node, size_t i) {
+static size_t getTreeHashRec(const pll_rnode_t *node, size_t i, bool useLeafHash) {
   assert(node);
+  std::hash<size_t> hash_fn;
   if (i == 0) 
     i = 1;
   if (!node->left) {
-    return leafHash(node);
+    if (useLeafHash) {
+      return leafHash(node);
+    } else {
+      return hash_fn(node->node_index);
+    }
   }
-  auto hash1 = getTreeHashRec(node->left, i + 1);
-  auto hash2 = getTreeHashRec(node->right, i + 1);
+  auto hash1 = getTreeHashRec(node->left, i + 1, useLeafHash);
+  auto hash2 = getTreeHashRec(node->right, i + 1, useLeafHash);
   //Logger::info << "(" << hash1 << "," << hash2 << ") ";
-  std::hash<size_t> hash_fn;
   auto m = std::min(hash1, hash2);
   auto M = std::max(hash1, hash2);
-  return hash_fn(m * i + M);
+  auto res = hash_fn(m * i + M);
+  if (!useLeafHash) {
+    res = hash_fn(res * i + node->node_index);
+  }
+  return res;
 }
   
 size_t SpeciesTree::getHash() const
 {
-  auto res = getTreeHashRec(getTree().getRoot(), 0);
-  return res % 100000;
-  
+  auto res = getTreeHashRec(getTree().getRoot(), 0, true);
+  return res % 100000;  
 }
+
+size_t SpeciesTree::getNodeIndexHash() const
+{
+  auto res = getTreeHashRec(getTree().getRoot(), 0, false);
+  return res % 100000;  
+}
+
+
 void SpeciesTree::getLabelsToId(std::unordered_map<std::string, unsigned int> &map) const
 {
   map.clear();

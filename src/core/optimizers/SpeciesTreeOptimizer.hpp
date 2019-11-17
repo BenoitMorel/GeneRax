@@ -52,7 +52,7 @@ public:
   double getLibpllLikeliohood() const {return _bestLibpllLL;}
   double getJointLikelihood() const {return getReconciliationLikelihood() + getLibpllLikeliohood();}
 
-  double computeReconciliationLikelihood();
+  double computeReconciliationLikelihood(bool fastMode = false);
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;

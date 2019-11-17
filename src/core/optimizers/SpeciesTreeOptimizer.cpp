@@ -6,6 +6,7 @@
 #include <routines/Routines.hpp>
 #include <algorithm>
 
+
 static std::string getStepTag(bool fastMove)
 {
   static std::string fastMoveString("[Species tree search - Fast moves]");
@@ -133,21 +134,44 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
 {
   std::vector<unsigned int> prunes;
   SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, prunes);
-  double bestLL = computeReconciliationLikelihood();
+  //Logger::info << "Starting fastSPRROund" << std::endl;
+  //Logger::info << "previous bestrecll=" << _bestRecLL << std::endl;
+  _bestRecLL = computeReconciliationLikelihood(false);
+  double refLL = _bestRecLL;
+  auto hash1 = _speciesTree->getNodeIndexHash(); 
+  //Logger::info << "new bestrecll=" << _bestRecLL << std::endl;
   for (auto prune: prunes) {
     std::vector<unsigned int> regrafts;
     SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
     for (auto regraft: regrafts) {
       unsigned int rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
-      _lastRecLL = computeReconciliationLikelihood();
-      if (_lastRecLL > bestLL) {
-        newBestTreeCallback();
-        return _lastRecLL;
+      _lastRecLL = computeReconciliationLikelihood(true);
+      bool fastRollback = true;
+      if (_lastRecLL > _bestRecLL) {
+        _lastRecLL = computeReconciliationLikelihood(false);
+        if (_lastRecLL > _bestRecLL) {
+          Logger::info << "new best tree " << _bestRecLL << " -> " << _lastRecLL << std::endl;
+          newBestTreeCallback();
+          return _lastRecLL;
+        } else {
+          fastRollback = false;
+        }
       }
       SpeciesTreeOperator::reverseSPRMove(*_speciesTree, prune, rollback);
+      if (!fastRollback) {
+        computeReconciliationLikelihood(false);
+      }
+      auto hash2 = _speciesTree->getNodeIndexHash(); 
+      assert(hash1 == hash2);
+      auto revertedLL = computeReconciliationLikelihood(false);
+      if (fabs(computeReconciliationLikelihood(false) - _bestRecLL)  > 0.1) {
+        std::cerr << "wrong rollback " << refLL << " " << _bestRecLL << " " << revertedLL << " " << computeReconciliationLikelihood(true) << std::endl;
+      }
+      assert(fabs(revertedLL - _bestRecLL) < 0.1);
+      //Logger::info << "refll=" << _bestRecLL << " after rb: " << computeReconciliationLikelihood(false) << std::endl;
     }
   }
-  return bestLL;
+  return _bestRecLL;
 }
 
 
@@ -235,7 +259,7 @@ double SpeciesTreeOptimizer::slowSPRRound(unsigned int speciesRadius, double bes
 double SpeciesTreeOptimizer::sprSearch(unsigned int radius, bool doOptimizeGeneTrees)
 {
   unsigned int geneRadius = doOptimizeGeneTrees ? 1 : 0;
-  double bestLL = computeLikelihood(geneRadius);
+  double bestLL = doOptimizeGeneTrees ? computeLikelihood(geneRadius) : computeReconciliationLikelihood(false);
   Logger::timed << getStepTag(!doOptimizeGeneTrees) << " Starting species SPR search, radius=" 
     << radius << ", bestLL=" << bestLL << ")" <<std::endl;
   double newLL = bestLL;
@@ -245,6 +269,7 @@ double SpeciesTreeOptimizer::sprSearch(unsigned int radius, bool doOptimizeGeneT
       newLL = slowSPRRound(radius, bestLL); 
     } else {
       newLL = fastSPRRound(radius);
+      //Logger::info << "newLL=" << newLL << " " << computeReconciliationLikelihood(false) <<  std::endl;
     }
   } while (newLL - bestLL > 0.001);
   saveCurrentSpeciesTreeId();
@@ -322,16 +347,16 @@ double SpeciesTreeOptimizer::computeLikelihood(unsigned int geneSPRRadius)
     revertGeneTreeOptimization();
     return res;
   } else {
-    _lastRecLL = computeReconciliationLikelihood();
+    _lastRecLL = computeReconciliationLikelihood(false);
     return _lastRecLL;
   }
 }
 
-double SpeciesTreeOptimizer::computeReconciliationLikelihood()
+double SpeciesTreeOptimizer::computeReconciliationLikelihood(bool fastMode)
 {
   double ll = 0.0;
   for (auto &evaluation: _evaluations) {
-    ll += evaluation->evaluate();
+    ll += evaluation->evaluate(fastMode);
   }
   ParallelContext::sumDouble(ll);
   return ll;

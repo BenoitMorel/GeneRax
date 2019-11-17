@@ -6,6 +6,11 @@
 #include <IO/Logger.hpp>
 #include <algorithm>
 
+#define IS_PROBA(x) (REAL(0.0) <= (x) && (x) <= REAL(1.0))
+  
+#define PRINT_ERROR_PROBA(x)  if (!IS_PROBA(proba)) {std::cerr << "error " << proba << std::endl;} assert(IS_PROBA(x));  
+
+
 
 /*
 * Implement the undated model described here:
@@ -16,7 +21,11 @@ template <class REAL>
 class UndatedDTLModel: public AbstractReconciliationModel<REAL> {
 public:
   UndatedDTLModel(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree):
-    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree) {}
+    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree),
+    _allowAncestralCorrection(false)
+  {
+    _ancestralExctinctionCorrection = std::vector<REAL>(this->_allSpeciesNodesCount); 
+  } 
   UndatedDTLModel(const UndatedDTLModel &) = delete;
   UndatedDTLModel & operator = (const UndatedDTLModel &) = delete;
   UndatedDTLModel(UndatedDTLModel &&) = delete;
@@ -61,8 +70,7 @@ private:
   std::vector<std::vector<REAL> > _uq;
   std::vector<REAL> _survivingTransferSums;
   std::vector<std::vector<REAL> > _ancestralCorrection;
-
-
+  bool _allowAncestralCorrection;
 
 private:
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
@@ -84,7 +92,7 @@ private:
     pll_rnode_t *originSpeciesNode,
     pll_rnode_t *&recievingSpecies,
     REAL &proba);
-    
+  bool getIterationsNumber() const { return this->_fastMode ? 1 : 5;}    
   REAL getCorrectedTransferExtinctionSum(unsigned int speciesId) const {
     return (_transferExtinctionSum - _ancestralExctinctionCorrection[speciesId]) * _PT[speciesId];
   }
@@ -93,12 +101,13 @@ private:
   {
     return (_survivingTransferSums[geneId] - _ancestralCorrection[geneId][speciesId]) * _PT[speciesId];
   }
-
+  std::vector<pll_rnode_s *> &getSpeciesNodesToUpdate() {
+    return (this->_fastMode ? this->_speciesNodesToUpdate : this->_allSpeciesNodes);
+  }
 };
 
 
 const unsigned int CACHE_SIZE = 100000;
-const unsigned int IT = 5;
 
 
 template <class REAL>
@@ -118,19 +127,27 @@ void UndatedDTLModel<REAL>::updateTransferSums(REAL &transferSum,
     std::vector<REAL> &ancestralCorrection,
     const std::vector<REAL> &probabilities)
 {
-  transferSum = REAL();
-  for (int i = static_cast<int>(this->_allSpeciesNodes.size()) - 1; i >= 0; --i) {
-    auto speciesNode = this->_allSpeciesNodes[static_cast<unsigned int>(i)];
-    auto e = speciesNode->node_index;
-    ancestralCorrection[e] = probabilities[e];
-    if (speciesNode->parent) {
-      auto p = speciesNode->parent->node_index;
-      ancestralCorrection[e] += ancestralCorrection[p];
+  if (this->_fastMode) {
+    return;
+  }
+  if (_allowAncestralCorrection) {
+    for (int i = static_cast<int>(this->_allSpeciesNodes.size()) - 1; i >= 0; --i) {
+      auto speciesNode = this->_allSpeciesNodes[static_cast<unsigned int>(i)];
+      auto e = speciesNode->node_index;
+      ancestralCorrection[e] = probabilities[e];
+      if (speciesNode->parent) {
+        auto p = speciesNode->parent->node_index;
+        ancestralCorrection[e] += ancestralCorrection[p];
+      }
+    }
+    for (auto speciesNode: this->_allSpeciesNodes) {
+      auto e = speciesNode->node_index;
+      ancestralCorrection[e] /= double(this->_allSpeciesNodes.size());
     }
   }
+  transferSum = REAL();
   for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
-    ancestralCorrection[e] /= double(this->_allSpeciesNodes.size());
     transferSum += probabilities[e];
   }
   transferSum /= this->_allSpeciesNodes.size();
@@ -160,7 +177,7 @@ void UndatedDTLModel<REAL>::setRates(const std::vector<double> &dupRates,
   } 
   _uE = std::vector<REAL>(this->_allSpeciesNodesCount);
   resetTransferSums(_transferExtinctionSum, _ancestralExctinctionCorrection);
-  for (unsigned int it = 0; it < IT; ++it) {
+  for (unsigned int it = 0; it < getIterationsNumber(); ++it) {
     for (auto speciesNode: this->_allSpeciesNodes) {
       auto e = speciesNode->node_index;
       REAL proba(_PL[e]);
@@ -168,7 +185,7 @@ void UndatedDTLModel<REAL>::setRates(const std::vector<double> &dupRates,
       if (speciesNode->left) {
         proba += _uE[speciesNode->left->node_index]  * _uE[speciesNode->right->node_index] * _PS[e];
       }
-      ASSERT_PROBA(proba)
+      PRINT_ERROR_PROBA(proba)
       _uE[speciesNode->node_index] = proba;
     }
     updateTransferSums(_transferExtinctionSum, _ancestralExctinctionCorrection, _uE);
@@ -185,10 +202,15 @@ template <class REAL>
 void UndatedDTLModel<REAL>::resetTransferSums(REAL &transferSum,
     std::vector<REAL> &ancestralCorrection)
 {
+  if (this->_fastMode) {
+    return;
+  }
   transferSum = REAL();
   if (ancestralCorrection.size()) {
-    for (auto &e: ancestralCorrection) {
-      e = REAL();
+    if (_allowAncestralCorrection) {
+      for (auto &e: ancestralCorrection) {
+        e = REAL();
+      }
     }
   } else {
     ancestralCorrection = std::vector<REAL>(this->_allSpeciesNodesCount);
@@ -200,12 +222,13 @@ template <class REAL>
 void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
 {
   auto gid = geneNode->node_index;
-  for (auto speciesNode: this->_allSpeciesNodes) {
+  for (auto speciesNode: this->getSpeciesNodesToUpdate()) {
     _uq[gid][speciesNode->node_index] = REAL();
   }
+
   resetTransferSums(_survivingTransferSums[gid], _ancestralCorrection[gid]);
-  for (unsigned int it = 0; it < IT; ++it) {
-    for (auto speciesNode: this->_allSpeciesNodes) {
+  for (unsigned int it = 0; it < getIterationsNumber(); ++it) {
+    for (auto speciesNode: getSpeciesNodesToUpdate()) { 
       computeProbability(geneNode, 
           speciesNode, 
           _uq[gid][speciesNode->node_index]);
@@ -452,7 +475,7 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
 
   // DL event
   proba += oldProba * _uE[e] * (2.0 * _PD[e]); 
-  //assert(proba.isProba());
+  assert(IS_PROBA(proba));
 }
 
 
@@ -460,17 +483,19 @@ template <class REAL>
 void UndatedDTLModel<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
-  for (auto speciesNode: this->_allSpeciesNodes) {
+  for (auto speciesNode: getSpeciesNodesToUpdate()) {
     auto e = speciesNode->node_index;
     _uq[u][e] = REAL();
   }
   resetTransferSums(_survivingTransferSums[u], _ancestralCorrection[u]);
-  for (unsigned int it = 0; it < IT; ++it) {
-    for (auto speciesNode: this->_allSpeciesNodes) {
+  for (unsigned int it = 0; it < getIterationsNumber(); ++it) {
+    for (auto speciesNode: this-> getSpeciesNodesToUpdate()) {
       unsigned int e = speciesNode->node_index;
       computeProbability(virtualRoot, speciesNode, _uq[u][e], true);
     }
-    updateTransferSums(_survivingTransferSums[u], _ancestralCorrection[u], _uq[u]);
+    if (it != getIterationsNumber() - 1) {
+      updateTransferSums(_survivingTransferSums[u], _ancestralCorrection[u], _uq[u]);
+    }
   }
 }
 

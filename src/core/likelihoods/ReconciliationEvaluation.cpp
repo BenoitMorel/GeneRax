@@ -49,12 +49,12 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
   _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates);
 }
 
-double ReconciliationEvaluation::evaluate()
+double ReconciliationEvaluation::evaluate(bool fastMode)
 {
-  double res = _reconciliationModel->computeLogLikelihood();
+  double res = _reconciliationModel->computeLogLikelihood(fastMode);
   if (!_infinitePrecision && !std::isnormal(res)) {
     updatePrecision(true);  
-    res = _reconciliationModel->computeLogLikelihood();
+    res = _reconciliationModel->computeLogLikelihood(fastMode);
     updatePrecision(false);  
   }
   if (!std::isnormal(res)) {

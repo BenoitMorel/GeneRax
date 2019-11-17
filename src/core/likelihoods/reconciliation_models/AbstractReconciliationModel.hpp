@@ -43,7 +43,7 @@ public:
   /**
    * (incrementally) compute and return the likelihood of the gene tree 
    */
-  virtual double computeLogLikelihood() = 0;
+  virtual double computeLogLikelihood(bool fastMode = false) = 0;
   
   /**
    *  Get/set the root of the gene tree (only relevant in rooted gene tree mode)
@@ -99,7 +99,7 @@ public:
       const std::vector<double> &lossRates,
       const std::vector<double> &transferRates) = 0;
   // overload from parent
-  virtual double computeLogLikelihood();
+  virtual double computeLogLikelihood(bool fastMode = false);
   // overload from parent
   virtual void setRoot(pll_unode_t * root) {_geneRoot = root;}
   // overload from parent
@@ -166,6 +166,7 @@ protected:
   // gene ids in postorder 
   std::vector<unsigned int> _geneIds;
   unsigned int _maxGeneId;
+  bool _fastMode;
 private:
   void mapGenesToSpecies();
   void computeMLRoot(pll_unode_t *&bestGeneRoot, pll_rnode_t *&bestSpeciesRoot);
@@ -193,7 +194,7 @@ private:
   // is the CLV up to date?
   std::vector<bool> _isCLVUpdated;
   std::vector<pll_unode_t *> _allNodes;
-  
+ 
 };
 
 
@@ -204,6 +205,7 @@ AbstractReconciliationModel<REAL>::AbstractReconciliationModel(PLLRootedTree &sp
     bool rootedGeneTree):
   _geneRoot(0),
   _maxGeneId(1),
+  _fastMode(false),
   _rootedGeneTree(rootedGeneTree),
   _speciesTree(speciesTree),
   geneNameToSpeciesName_(geneSpeciesMapping.getMap()),
@@ -354,9 +356,12 @@ void AbstractReconciliationModel<REAL>::getRoots(std::vector<pll_unode_t *> &roo
 }
   
 template <class REAL>
-double AbstractReconciliationModel<REAL>::computeLogLikelihood()
+double AbstractReconciliationModel<REAL>::computeLogLikelihood(bool fastMode)
 {
+  
+  _fastMode = fastMode;
   beforeComputeLogLikelihood();
+  //Logger::info << "computeLikelihoods " << _fastMode << " " << _speciesNodesToUpdate.size() << std::endl;
   auto root = getRoot();
   updateCLVs();
   computeLikelihoods();
@@ -369,7 +374,11 @@ double AbstractReconciliationModel<REAL>::computeLogLikelihood()
       setRoot(computeMLRoot());
     }
   }
-  return getSumLikelihood();
+  
+  auto res = getSumLikelihood();
+  //Logger::info << _fastMode << "->" << res << std::endl;
+  _fastMode = false;
+  return res;
 }
 
 template <class REAL>

@@ -279,8 +279,9 @@ REAL UndatedDLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
 {
   REAL sum = REAL();
   auto u = root->node_index + this->_maxGeneId + 1;
-  for (auto speciesNode: this->_allSpeciesNodes) {
-    auto e = speciesNode->node_index;
+  for (unsigned int e = 0; e < this->_allSpeciesNodesCount; ++e) {
+  //for (auto speciesNode: this->_allSpeciesNodes) {
+    //auto e = speciesNode->node_index;
     sum += _uq[u][e];
   }
   return sum;

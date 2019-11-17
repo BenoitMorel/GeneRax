@@ -46,6 +46,7 @@ public:
 
   void saveToFile(const std::string &newick, bool masterRankOnly);
   size_t getHash() const;
+  size_t getNodeIndexHash() const;
   void getLabelsToId(std::unordered_map<std::string, unsigned int> &map) const;
 
   class Listener {
