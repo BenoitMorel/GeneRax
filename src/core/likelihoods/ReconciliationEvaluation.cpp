@@ -22,7 +22,7 @@ ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
     _geneSpeciesMapping(geneSpeciesMapping),
     _rootedGeneTree(rootedGeneTree),
     _model(recModel),
-    _infinitePrecision(true)
+    _infinitePrecision(false)
 {
   _reconciliationModel = buildRecModelObject(_model, _infinitePrecision);
 }
@@ -53,7 +53,6 @@ double ReconciliationEvaluation::evaluate(bool fastMode)
 {
   double res = _reconciliationModel->computeLogLikelihood(fastMode);
   if (!_infinitePrecision && !std::isnormal(res)) {
-    Logger::info << "not normal ll: " << res << std::endl;
     updatePrecision(true);  
     res = _reconciliationModel->computeLogLikelihood(fastMode);
     updatePrecision(false);  
@@ -107,7 +106,6 @@ std::unique_ptr<ReconciliationModelInterface> ReconciliationEvaluation::buildRec
 void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
 {
   if (infinitePrecision != _infinitePrecision) {
-    Logger::info << "UPDATE PRECISION " << infinitePrecision << std::endl;
     _infinitePrecision = infinitePrecision;
     _reconciliationModel = buildRecModelObject(_model, _infinitePrecision);
     _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates);
@@ -130,7 +128,6 @@ pll_unode_t *ReconciliationEvaluation::computeMLRoot()
   
 pll_unode_t *ReconciliationEvaluation::inferMLRoot()
 {
-  Logger::info << "infer ML root" << std::endl;
   auto infinitePrecision = _infinitePrecision;
   updatePrecision(true);
   auto ll = evaluate(); 

@@ -321,6 +321,7 @@ void UndatedDLModel<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
     auto e = speciesNode->node_index;
     computeProbability(virtualRoot, speciesNode, _uq[u][e], true);
   }
+//  accountForSpeciesRoot(virtualRoot);
 }
 
 template <class REAL>
