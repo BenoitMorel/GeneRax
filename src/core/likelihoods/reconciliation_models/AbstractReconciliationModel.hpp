@@ -17,8 +17,6 @@
 #define ASSERT_PROBA(x) assert(true);
 
 
-
-
 /**
  *  Interface and common implementations for 
  *  all the reconciliation likelihood computation
@@ -167,6 +165,8 @@ protected:
   std::vector<unsigned int> _geneIds;
   unsigned int _maxGeneId;
   bool _fastMode;
+  virtual void beforeComputeLogLikelihood(); 
+  virtual void afterComputeLogLikelihood() {};
 private:
   void mapGenesToSpecies();
   void computeMLRoot(pll_unode_t *&bestGeneRoot, pll_rnode_t *&bestSpeciesRoot);
@@ -175,7 +175,6 @@ private:
   void updateCLVsRec(pll_unode_t *node);
   void markInvalidatedNodes();
   void markInvalidatedNodesRec(pll_unode_t *node);
-  void beforeComputeLogLikelihood(); 
   
   
   bool _rootedGeneTree;
@@ -319,8 +318,11 @@ void AbstractReconciliationModel<REAL>::beforeComputeLogLikelihood()
     //Logger::info << "Some nodes invalid " << std::endl;
     _speciesNodesToUpdate.clear();
     fillNodesPostOrder(_speciesTree.getRoot(), _speciesNodesToUpdate, &_invalidatedSpeciesNodes);
+    
     //Logger::info << "species to invalidate and to update: " << _invalidatedSpeciesNodes.size() << " " << _speciesNodesToUpdate.size() << std::endl;
-  } // else: nothing to update
+  } else {
+    _speciesNodesToUpdate.clear();
+  } 
   _allSpeciesNodesInvalid = false;
   _invalidatedSpeciesNodes.clear();
   assert(!_speciesNodesToUpdate.size() || _speciesNodesToUpdate.back() == _speciesTree.getRoot());
@@ -358,8 +360,8 @@ void AbstractReconciliationModel<REAL>::getRoots(std::vector<pll_unode_t *> &roo
 template <class REAL>
 double AbstractReconciliationModel<REAL>::computeLogLikelihood(bool fastMode)
 {
-  
   _fastMode = fastMode;
+
   beforeComputeLogLikelihood();
   //Logger::info << "computeLikelihoods " << _fastMode << " " << _speciesNodesToUpdate.size() << std::endl;
   auto root = getRoot();
@@ -377,6 +379,7 @@ double AbstractReconciliationModel<REAL>::computeLogLikelihood(bool fastMode)
   
   auto res = getSumLikelihood();
   //Logger::info << _fastMode << "->" << res << std::endl;
+  afterComputeLogLikelihood();
   _fastMode = false;
   return res;
 }
