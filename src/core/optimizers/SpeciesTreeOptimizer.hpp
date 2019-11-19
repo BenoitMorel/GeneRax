@@ -52,14 +52,15 @@ public:
   double getLibpllLikeliohood() const {return _bestLibpllLL;}
   double getJointLikelihood() const {return getReconciliationLikelihood() + getLibpllLikeliohood();}
 
-  double computeReconciliationLikelihood(bool fastMode = false);
+  double computeRecLikelihood();
+  double computeApproxRecLikelihood();
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
   std::vector<std::shared_ptr<ReconciliationEvaluation> > _evaluations; // one per geneTree
   Families _initialFamilies;
   Families _currentFamilies;
-  RecModel _model;
+  RecModel _recModel;
   std::string _outputDir;
   std::string _execPath;
   unsigned int _geneTreeIteration;

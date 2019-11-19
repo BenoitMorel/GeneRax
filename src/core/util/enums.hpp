@@ -74,6 +74,18 @@ public:
     assert(false);
     return false;
   }
+
+  static bool implementsApproxLikelihood(RecModel m)
+  {
+    switch (m) {
+    case RecModel::UndatedDL:
+      return false;
+    case RecModel::UndatedDTL:
+      return true;
+    }
+    assert(false);
+    return false;
+  }
 };
 
 
