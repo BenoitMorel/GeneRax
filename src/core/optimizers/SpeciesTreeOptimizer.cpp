@@ -140,7 +140,6 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
   bool tryApproxFirst = Enums::implementsApproxLikelihood(_recModel);
   std::vector<unsigned int> prunes;
   SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, prunes);
-  Logger::info << "Begin of fast spr rounds" << std::endl;
   _bestRecLL = computeRecLikelihood();
   auto refApproxLL = computeApproxRecLikelihood();
   assert (fabs(_bestRecLL - refApproxLL) < 0.01);
@@ -164,7 +163,6 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
       }
       if (canTestMove) {
         // we really test the move
-        Logger::info << "really test move" << std::endl;
         _lastRecLL = computeRecLikelihood();
         //Logger::info << "approx=" << approxRecLL << " real=" << _lastRecLL << std::endl;
         if (_lastRecLL > _bestRecLL) {
@@ -178,7 +176,6 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
       // we do not keep the tree
       SpeciesTreeOperator::reverseSPRMove(*_speciesTree, prune, rollback);
       if (needFullRollback) {
-        Logger::info << "Full rollback" << std::endl;
         computeRecLikelihood();
       }
       // ensure that we correctly reverted
@@ -382,8 +379,6 @@ double SpeciesTreeOptimizer::computeRecLikelihood()
     ll += evaluation->evaluate(false);
   }
   ParallelContext::sumDouble(ll);
-  std::cout.precision(15);
-  Logger::info << "exact " << ll << std::endl;
   return ll;
 }
 
@@ -394,8 +389,6 @@ double SpeciesTreeOptimizer::computeApproxRecLikelihood()
     ll += evaluation->evaluate(true);
   }
   ParallelContext::sumDouble(ll);
-  std::cout.precision(15);
-  Logger::info << "approx " << ll << std::endl;
   return ll;
 }
 

@@ -10,6 +10,7 @@
   
 #define PRINT_ERROR_PROBA(x)  if (!IS_PROBA(proba)) {std::cerr << "error " << proba << std::endl;} assert(IS_PROBA(x));  
 #define ONEMORE
+#define MYINVARIANT
 
 /*
 * Implement the undated model described here:
@@ -57,7 +58,6 @@ private:
   std::vector<double> _PL; // Loss probability, per branch
   std::vector<double> _PT; // Transfer probability, per branch
   std::vector<double> _PS; // Speciation probability, per branch
-
   // SPECIES
   std::vector<REAL> _uE; // Probability for a gene to become extinct on each brance
   REAL _transferExtinctionSum;
@@ -66,6 +66,7 @@ private:
   // _uq[geneId][speciesId] = probability of a gene node rooted at a species node
   // to produce the subtree of this gene node
   std::vector<std::vector<REAL> > _uq;
+  std::vector<std::vector<REAL> > _uqBackup;
   std::vector<REAL> _survivingTransferSums;
   
   // fast mode 
@@ -95,7 +96,7 @@ private:
     pll_rnode_t *originSpeciesNode,
     pll_rnode_t *&recievingSpecies,
     REAL &proba);
-  unsigned int getIterationsNumber() const { return this->_fastMode ? 5 : 5;}    
+  unsigned int getIterationsNumber() const { return this->_fastMode ? 1 : 5;}    
   REAL getCorrectedTransferExtinctionSum(unsigned int speciesId) const {
     return _transferExtinctionSum * _PT[speciesId];
   }
@@ -121,6 +122,7 @@ void UndatedDTLModel<REAL>::setInitialGeneTree(pll_utree_t *tree)
   assert(this->_maxGeneId);
   std::vector<REAL> zeros(this->_allSpeciesNodesCount);
   _uq = std::vector<std::vector<REAL> >(2 * (this->_maxGeneId + 1),zeros);
+  _uqBackup = std::vector<std::vector<REAL> >(2 * (this->_maxGeneId + 1),zeros);
   _survivingTransferSums = std::vector<REAL>(2 * (this->_maxGeneId + 1));
   _survivingTransferSumsOneMore = std::vector<REAL>(2 * (this->_maxGeneId + 1));
   _survivingTransferSumsBackup = std::vector<REAL>(2 * (this->_maxGeneId + 1));
@@ -132,6 +134,7 @@ void UndatedDTLModel<REAL>::resetTransferSums(const REAL &transferSum,
     REAL &transferSumInvariant,
     const std::vector<REAL> &probabilities)
 {
+#ifdef MYINVARIANT
   if (this->_fastMode) {
     REAL diff = REAL();
     for (auto speciesNode: getSpeciesNodesToUpdate()) {
@@ -139,14 +142,8 @@ void UndatedDTLModel<REAL>::resetTransferSums(const REAL &transferSum,
     }
     diff /= this->_allSpeciesNodes.size();
     transferSumInvariant = transferSum - diff;
-    if (transferSumInvariant < REAL()) {
-      Logger::info << transferSumInvariant << " + " << transferSum << " - " << diff << std::endl;
-      assert(false);
-    }
-  } else {
- //   transferSumInvariant = REAL();
- //   transferSum = REAL();
   }
+#endif
 }
 
 template <class REAL>
@@ -154,15 +151,21 @@ void UndatedDTLModel<REAL>::updateTransferSums(REAL &transferSum,
     const REAL &transferSumInvariant,
     const std::vector<REAL> &probabilities)
 {
-  transferSum = REAL(); //this->_fastMode ? transferSumInvariant : REAL();
+  transferSum = REAL();
+#ifdef MYINVARIANT
   for (auto speciesNode:  getSpeciesNodesToUpdate()) {
+#else 
+  for (auto speciesNode: this->_allSpeciesNodes) {
+#endif
     auto e = speciesNode->node_index;
     transferSum += probabilities[e];
   }
   transferSum /= this->_allSpeciesNodes.size();
+#ifdef MYINVARIANT 
   if (this->_fastMode) {
     transferSum += transferSumInvariant;
   }
+#endif
 }
 
 
@@ -363,6 +366,12 @@ void UndatedDTLModel<REAL>::beforeComputeLogLikelihood()
   if (this->_fastMode) {
     _transferExtinctionSumBackup = _transferExtinctionSum;
     _survivingTransferSumsBackup = _survivingTransferSums;
+    for (unsigned int gid = 0; gid < _uq.size(); ++gid) {
+      for (auto speciesNode: getSpeciesNodesToUpdate()) {
+        auto e = speciesNode->node_index;
+        _uqBackup[gid][e] = _uq[gid][e];
+      }
+    }
   }
 }
 
@@ -373,6 +382,12 @@ void UndatedDTLModel<REAL>::afterComputeLogLikelihood()
   if (this->_fastMode) {
     _transferExtinctionSum = _transferExtinctionSumBackup;
     _survivingTransferSums = _survivingTransferSumsBackup;
+    for (unsigned int gid = 0; gid < _uq.size(); ++gid) {
+      for (auto speciesNode: getSpeciesNodesToUpdate()) {
+        auto e = speciesNode->node_index;
+        _uq[gid][e] = _uqBackup[gid][e];
+      }
+    }
   }
 }
 
