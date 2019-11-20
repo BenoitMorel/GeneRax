@@ -22,7 +22,7 @@ ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
     _geneSpeciesMapping(geneSpeciesMapping),
     _rootedGeneTree(rootedGeneTree),
     _model(recModel),
-    _infinitePrecision(false)
+    _infinitePrecision(true)
 {
   _reconciliationModel = buildRecModelObject(_model, _infinitePrecision);
 }

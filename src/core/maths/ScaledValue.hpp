@@ -85,6 +85,7 @@ public:
       assert(value - v.value >= 0);
       return ScaledValue(value - v.value, scaler);
     } else if (v.scaler < scaler) {
+      std::cerr << *this << " - " << v << std::endl;
       assert(false); // we do not allow negative values for now
       return v;
     } else {
