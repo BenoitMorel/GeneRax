@@ -32,6 +32,7 @@ set(jointsearch-core_SOURCES
   trees/JointTree.cpp
   trees/PerCoreGeneTrees.cpp
   trees/SpeciesTree.cpp
+  trees/TreeDuplicatesFinder.cpp
   util/Scenario.cpp
   )
 

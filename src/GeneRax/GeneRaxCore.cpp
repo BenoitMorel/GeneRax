@@ -152,6 +152,7 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
   
 void GeneRaxCore::terminate(GeneRaxInstance &instance)
 {
+  Logger::timed << "Terminating the instance.." << std::endl;
   ParallelOfstream os(FileSystem::joinPaths(instance.args.output, "stats.txt"));
   os << "JointLL: " << instance.totalLibpllLL + instance.totalRecLL << std::endl;
   os << "LibpllLL: " << instance.totalLibpllLL << std::endl;
