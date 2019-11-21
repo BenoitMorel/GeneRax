@@ -28,6 +28,7 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   srand(static_cast<unsigned int>(instance.args.seed));
   FileSystem::mkdir(instance.args.output, true);
   Logger::initFileOutput(FileSystem::joinPaths(instance.args.output, "generax"));
+  assert(ParallelContext::isRandConsistent());
   instance.args.printCommand();
   instance.args.printSummary();
   instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
@@ -58,6 +59,7 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
 
 void GeneRaxCore::initRandomGeneTrees(GeneRaxInstance &instance)
 {
+  assert(ParallelContext::isRandConsistent());
   unsigned int duplicates = instance.args.duplicates;
   if (duplicates > 1) {
     duplicatesFamilies(instance.initialFamilies, instance.currentFamilies, duplicates);
@@ -78,6 +80,7 @@ void GeneRaxCore::initRandomGeneTrees(GeneRaxInstance &instance)
 
 void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
 {
+  assert(ParallelContext::isRandConsistent());
   if (!instance.args.optimizeSpeciesTree) {
     return;
   }
@@ -115,6 +118,7 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
 
 void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
 {
+  assert(ParallelContext::isRandConsistent());
   if (!instance.args.optimizeGeneTrees) {
     return;
   }
@@ -133,6 +137,7 @@ void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
 
 void GeneRaxCore::postProcessGeneTrees(GeneRaxInstance &instance)
 {
+  assert(ParallelContext::isRandConsistent());
   if (instance.args.duplicates > 1) {
     Families contracted = instance.initialFamilies;
     contractFamilies(instance.currentFamilies, contracted);
@@ -145,6 +150,7 @@ void GeneRaxCore::postProcessGeneTrees(GeneRaxInstance &instance)
 
 void GeneRaxCore::reconcile(GeneRaxInstance &instance)
 {
+  assert(ParallelContext::isRandConsistent());
   if (instance.args.reconcile) {
     Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
     Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, 
@@ -154,6 +160,7 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
   
 void GeneRaxCore::terminate(GeneRaxInstance &instance)
 {
+  assert(ParallelContext::isRandConsistent());
   Logger::timed << "Terminating the instance.." << std::endl;
   ParallelOfstream os(FileSystem::joinPaths(instance.args.output, "stats.txt"));
   os << "JointLL: " << instance.totalLibpllLL + instance.totalRecLL << std::endl;
@@ -183,6 +190,7 @@ void GeneRaxCore::terminate(GeneRaxInstance &instance)
 
 void GeneRaxCore::initFolders(GeneRaxInstance &instance) 
 {
+  assert(ParallelContext::isRandConsistent());
   std::string results = FileSystem::joinPaths(instance.args.output, "results");
   std::string proposals = FileSystem::joinPaths(instance.args.output, "proposals");
   FileSystem::mkdir(results, true);
@@ -199,6 +207,7 @@ void GeneRaxCore::initFolders(GeneRaxInstance &instance)
 
 void GeneRaxCore::initialGeneTreeSearch(GeneRaxInstance &instance)
 {
+  assert(ParallelContext::isRandConsistent());
   unsigned int duplicates = instance.args.duplicates;
   Logger::info << std::endl;
   Logger::timed << "[Initialization] Initial optimization of the starting random gene trees" << std::endl;
@@ -268,6 +277,7 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
     bool enableLibpll,
     unsigned int sprRadius)
 {
+  assert(ParallelContext::isRandConsistent());
   long elapsed = 0;
   if (perSpeciesDTLRates) {
     Logger::timed << "Optimizing per species DTL rates... " << std::endl;

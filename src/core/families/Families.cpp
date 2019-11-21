@@ -101,6 +101,9 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
 void filterFamilies(Families &families, const std::string &speciesTreeFile)
 {
   ParallelContext::barrier();
+  // at the end of this function, different ranks will have
+  // a different rand state, so we save a seed
+  auto consistentSeed = rand(); 
   Families copy = families;
   unsigned int initialFamilySize = static_cast<unsigned int>(copy.size());
   families.clear();
@@ -146,6 +149,7 @@ void filterFamilies(Families &families, const std::string &speciesTreeFile)
       << " invalid families (they will be discarded from the analysis)" << std::endl;
   }  
   pll_rtree_destroy(speciesTree, 0);
+  srand(consistentSeed);
 }
 
 void duplicatesFamilies(const Families &families, Families &duplicatedFamilies, unsigned int factor)

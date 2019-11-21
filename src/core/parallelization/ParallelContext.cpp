@@ -177,6 +177,29 @@ void ParallelContext::allGatherDouble(double localValue, std::vector<double> &al
 #endif
 }
 
+void ParallelContext::allGatherInt(int localValue, std::vector<int> &allValues)
+{
+  if (!_mpiEnabled) {
+    allValues.clear();
+    allValues.push_back(localValue);
+    return;
+  }
+#ifdef WITH_MPI
+  allValues.resize(getSize());
+  MPI_Allgather(
+    &localValue,
+    1,
+    MPI_INT,
+    &(allValues[0]),
+    1,
+    MPI_INT,
+    getComm());
+#else
+  assert(false);
+#endif
+
+}
+
 void ParallelContext::concatenateIntVectors(const std::vector<int> &localVector, std::vector<int> &globalVector)
 {
   if (!_mpiEnabled) {
@@ -317,3 +340,17 @@ bool ParallelContext::allowSchedulerSplitImplementation()
   return getSize() > 4;
 }
 
+bool ParallelContext::isRandConsistent()
+{
+#ifdef WITH_MPI
+  std::vector<int> rands(getSize());
+  int localValue = rand();
+  allGatherInt(localValue, rands);
+  for (auto value: rands) {
+    if (value != rands[0]) {
+      return false;
+    }
+  }
+#endif
+  return true;
+}

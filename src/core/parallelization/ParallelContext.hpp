@@ -59,6 +59,9 @@ public:
    *  @param allValues output values for all rank (indexed with the rank index)
    */
   static void allGatherDouble(double localValue, std::vector<double> &allValues);
+  static void allGatherInt(int localValue, std::vector<int> &allValues);
+
+  static bool isRandConsistent();
 
   static void concatenateIntVectors(const std::vector<int> &localVector, std::vector<int> &globalVector);
   static void concatenateUIntVectors(const std::vector<unsigned int> &localVector, 
