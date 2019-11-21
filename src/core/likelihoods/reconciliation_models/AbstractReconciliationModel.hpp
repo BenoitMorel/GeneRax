@@ -42,7 +42,13 @@ public:
    * (incrementally) compute and return the likelihood of the gene tree 
    */
   virtual double computeLogLikelihood(bool fastMode = false) = 0;
-  
+
+  /**
+   * If implemented, rollback to the state before the
+   * last "computeLogLikelihood(false)" call
+   */
+  virtual void rollbackToLastState() = 0;
+
   /**
    *  Get/set the root of the gene tree (only relevant in rooted gene tree mode)
    */ 
@@ -98,6 +104,8 @@ public:
       const std::vector<double> &transferRates) = 0;
   // overload from parent
   virtual double computeLogLikelihood(bool fastMode = false);
+  // overload from parent 
+  virtual void rollbackToLastState() {assert(false);}
   // overload from parent
   virtual void setRoot(pll_unode_t * root) {_geneRoot = root;}
   // overload from parent

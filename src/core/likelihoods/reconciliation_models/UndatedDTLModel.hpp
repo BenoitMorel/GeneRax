@@ -34,6 +34,8 @@ public:
   virtual void setRates(const std::vector<double> &dupRates,
       const std::vector<double> &lossRates,
       const std::vector<double> &transferRates);
+  
+  virtual void rollbackToLastState();
 protected:
   // overloaded from parent
   virtual void setInitialGeneTree(pll_utree_t *tree);
@@ -74,6 +76,7 @@ private:
   std::vector<REAL> _survivingTransferSumsBackup;
   std::vector<REAL> _survivingTransferSumsInvariant;
   std::vector<REAL> _survivingTransferSumsOneMore;
+  std::vector<REAL> _survivingTransferSumsOneMoreBackup;
 
 private:
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
@@ -125,6 +128,7 @@ void UndatedDTLModel<REAL>::setInitialGeneTree(pll_utree_t *tree)
   _uqBackup = std::vector<std::vector<REAL> >(2 * (this->_maxGeneId + 1),zeros);
   _survivingTransferSums = std::vector<REAL>(2 * (this->_maxGeneId + 1));
   _survivingTransferSumsOneMore = std::vector<REAL>(2 * (this->_maxGeneId + 1));
+  _survivingTransferSumsOneMoreBackup = std::vector<REAL>(2 * (this->_maxGeneId + 1));
   _survivingTransferSumsBackup = std::vector<REAL>(2 * (this->_maxGeneId + 1));
   _survivingTransferSumsInvariant = std::vector<REAL>(2 * (this->_maxGeneId + 1));
 }
@@ -372,10 +376,15 @@ void UndatedDTLModel<REAL>::beforeComputeLogLikelihood()
         _uqBackup[gid][e] = _uq[gid][e];
       }
     }
+  } else { 
+    std::swap(_uq, _uqBackup);
+    std::swap(_transferExtinctionSum, _transferExtinctionSumBackup);
+    std::swap(_survivingTransferSums, _survivingTransferSumsBackup);
+    std::swap(_survivingTransferSumsOneMore, _survivingTransferSumsOneMoreBackup);
   }
 }
 
-  template <class REAL>
+template <class REAL>
 void UndatedDTLModel<REAL>::afterComputeLogLikelihood()
 {
   AbstractReconciliationModel<REAL>::afterComputeLogLikelihood();
@@ -391,7 +400,14 @@ void UndatedDTLModel<REAL>::afterComputeLogLikelihood()
   }
 }
 
-
+template <class REAL>
+void UndatedDTLModel<REAL>::rollbackToLastState()
+{
+  std::swap(_uq, _uqBackup);
+  std::swap(_transferExtinctionSum, _transferExtinctionSumBackup);
+  std::swap(_survivingTransferSums, _survivingTransferSumsBackup);
+  std::swap(_survivingTransferSumsOneMore, _survivingTransferSumsOneMoreBackup);
+}
 
 template <class REAL>
 void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode, 

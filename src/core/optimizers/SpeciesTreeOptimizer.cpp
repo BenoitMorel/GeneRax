@@ -157,26 +157,28 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
       if (tryApproxFirst) {
         approxRecLL = computeApproxRecLikelihood();
         //Logger::info << approxRecLL << std::endl;
-        if (approxRecLL - _bestRecLL < -1.0) {
+        if (approxRecLL - _bestRecLL < 0.0) {
           canTestMove = false;
+        } else {
+          needFullRollback = true;
         }
       }
       if (canTestMove) {
         // we really test the move
         _lastRecLL = computeRecLikelihood();
-        //Logger::info << "approx=" << approxRecLL << " real=" << _lastRecLL << std::endl;
         if (_lastRecLL > _bestRecLL) {
           // Better tree found! keep it and return
           Logger::info << "new best tree " << _bestRecLL << " -> " << _lastRecLL << std::endl;
           newBestTreeCallback();
           return _lastRecLL;
         }
-        needFullRollback = true;
       }
       // we do not keep the tree
       SpeciesTreeOperator::reverseSPRMove(*_speciesTree, prune, rollback);
       if (needFullRollback) {
-        computeRecLikelihood();
+        for (auto &evaluation: _evaluations) {
+          evaluation->rollbackToLastState();
+        }
       }
       // ensure that we correctly reverted
       if (check) {

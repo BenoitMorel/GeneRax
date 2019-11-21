@@ -82,6 +82,8 @@ public:
   void inferMLScenario(Scenario &scenario);
 
   RecModel getRecModel() const {return _model;}
+  
+  void rollbackToLastState() {_reconciliationModel->rollbackToLastState();}
 private:
   PLLRootedTree &_speciesTree;
   PLLUnrootedTree &_initialGeneTree;

@@ -145,9 +145,11 @@ void GeneRaxCore::postProcessGeneTrees(GeneRaxInstance &instance)
 
 void GeneRaxCore::reconcile(GeneRaxInstance &instance)
 {
-  Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
-  Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, 
+  if (instance.args.reconcile) {
+    Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
+    Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, 
       instance.recModel, instance.rates, instance.args.output);
+  }
 }
   
 void GeneRaxCore::terminate(GeneRaxInstance &instance)

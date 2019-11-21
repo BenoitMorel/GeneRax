@@ -25,6 +25,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   lossRate(1.0),
   transferRate(0.0),
   optimizeGeneTrees(true),
+  reconcile(false),
   maxSPRRadius(5),
   recWeight(1.0), 
   seed(123),
@@ -100,6 +101,8 @@ void GeneRaxArguments::init() {
       optimizeSpeciesTree = true;
     } else if (arg == "--do-not-optimize-gene-trees") {
       optimizeGeneTrees = false;
+    } else if (arg == "--reconcile") {
+      reconcile = true;
     } else {
       Logger::error << "Unrecognized argument " << arg << std::endl;
       Logger::error << "Aborting" << std::endl;
@@ -170,6 +173,7 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "--transfer-rate <transfer rate>" << std::endl;
   Logger::info << "--max-spr-radius <max SPR radius>" << std::endl;
   Logger::info << "--rec-weight <reconciliation likelihood weight>" << std::endl;
+  Logger::info << "--reconcile" << std::endl;
   Logger::info << "--seed <seed>" << std::endl;
   Logger::info << "Please find more information on the GeneRax github wiki" << std::endl;
   Logger::info << std::endl;
