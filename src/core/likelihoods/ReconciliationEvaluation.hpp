@@ -101,4 +101,6 @@ private:
   pll_unode_t *computeMLRoot();
   void updatePrecision(bool infinitePrecision);
 };
+  
+typedef std::vector<std::shared_ptr<ReconciliationEvaluation> > Evaluations;
 

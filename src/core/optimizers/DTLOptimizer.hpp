@@ -6,6 +6,7 @@ class PerCoreGeneTrees;
 #include <string>
 #include <util/enums.hpp>
 #include <maths/Parameters.hpp>
+#include <memory>
 
 class RootedTree;
 
@@ -25,6 +26,9 @@ public:
   static Parameters optimizeParametersPerSpecies(PerCoreGeneTrees &geneTrees, 
       PLLRootedTree &speciesTree, 
       RecModel model);
+
+private:
+  static void buildEvaluations(PerCoreGeneTrees &geneTrees, PLLRootedTree &speciesTree, RecModel model, Evaluations &evaluations);
 };
 
 

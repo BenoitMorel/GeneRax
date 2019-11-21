@@ -44,7 +44,6 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
     _speciesTree->setGlobalRates(Parameters(0.1, 0.2, 0.1));
     setGeneTreesFromFamilies(initialFamilies);
-    optimizeDTLRates();
   }
   _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"), true);
   _speciesTree->addListener(this);

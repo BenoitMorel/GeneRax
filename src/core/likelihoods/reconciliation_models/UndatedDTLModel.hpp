@@ -185,16 +185,16 @@ void UndatedDTLModel<REAL>::setRates(const std::vector<double> &dupRates,
   _PD = dupRates;
   _PL = lossRates;
   _PT = transferRates;
-  _PS = std::vector<double>(this->_allSpeciesNodesCount, 1.0);
+  _PS.resize(this->_allSpeciesNodesCount);
   for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
-    auto sum = _PD[e] + _PL[e] + _PT[e] + _PS[e];
+    auto sum = _PD[e] + _PL[e] + _PT[e] + 1.0;
     _PD[e] /= sum;
     _PL[e] /= sum;
     _PT[e] /= sum;
-    _PS[e] /= sum;
+    _PS[e] = 1.0 / sum;
   } 
-  _uE = std::vector<REAL>(this->_allSpeciesNodesCount);
+  _uE.resize(this->_allSpeciesNodesCount);
   REAL unused = REAL(1.0);
   resetTransferSums(_transferExtinctionSum, unused, _uE);
   for (unsigned int it = 0; it < getIterationsNumber(); ++it) {

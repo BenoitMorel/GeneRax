@@ -14,13 +14,12 @@ static bool isValidLikelihood(double ll) {
 }
 
 
-static void updateLL(Parameters &rates, PerCoreGeneTrees &trees, PLLRootedTree &speciesTree, RecModel model) {
+static void updateLL(Parameters &rates, Evaluations &evaluations) {
   rates.ensurePositivity();
   double ll = 0.0;
-  for (auto &tree: trees.getTrees()) {
-    ReconciliationEvaluation evaluation(speciesTree, *tree.geneTree, tree.mapping, model, true);
-    evaluation.setRates(rates);
-    ll += evaluation.evaluate();
+  for (auto evaluation: evaluations) {
+    evaluation->setRates(rates);
+    ll += evaluation->evaluate();
   }
   ParallelContext::sumDouble(ll);
   if (!isValidLikelihood(ll)) {
@@ -29,9 +28,7 @@ static void updateLL(Parameters &rates, PerCoreGeneTrees &trees, PLLRootedTree &
   rates.setScore(ll);
 }
 
-static bool lineSearchParameters(PerCoreGeneTrees &geneTrees, 
-    PLLRootedTree &speciesTree, 
-    RecModel model, 
+static bool lineSearchParameters(Evaluations &evaluations, 
     Parameters &currentRates, 
     const Parameters &gradient, 
     unsigned int &llComputationsLine)
@@ -45,7 +42,7 @@ static bool lineSearchParameters(PerCoreGeneTrees &geneTrees,
   while (alpha > minAlpha) {
     currentGradient.normalize(alpha);
     Parameters proposal = currentRates + (currentGradient * alpha);
-    updateLL(proposal, geneTrees, speciesTree, model);
+    updateLL(proposal, evaluations);
     llComputationsLine++;
     if (currentRates.getScore() + minImprovement < proposal.getScore()) {
       currentRates = proposal;
@@ -65,9 +62,11 @@ Parameters DTLOptimizer::optimizeParameters(PerCoreGeneTrees &geneTrees,
     PLLRootedTree &speciesTree, 
     RecModel model, const Parameters &startingParameters)
 {
+  Evaluations evaluations;
+  buildEvaluations(geneTrees, speciesTree, model, evaluations); 
   double epsilon = 0.0000001;
   Parameters currentRates = startingParameters;
-  updateLL(currentRates, geneTrees, speciesTree, model);
+  updateLL(currentRates, evaluations);
   unsigned int llComputationsGrad = 0;
   unsigned int llComputationsLine = 0;
   unsigned int dimensions = startingParameters.dimensions();
@@ -77,11 +76,11 @@ Parameters DTLOptimizer::optimizeParameters(PerCoreGeneTrees &geneTrees,
     for (unsigned int i = 0; i < dimensions; ++i) {
       Parameters closeRates = currentRates;
       closeRates[i] += epsilon;
-      updateLL(closeRates, geneTrees, speciesTree, model);
+      updateLL(closeRates, evaluations);
       llComputationsGrad++;
       gradient[i] = (currentRates.getScore() - closeRates.getScore()) / (-epsilon);
     }
-  } while (lineSearchParameters(geneTrees, speciesTree, model, currentRates, gradient, llComputationsLine));
+  } while (lineSearchParameters(evaluations, currentRates, gradient, llComputationsLine));
   return currentRates;
 }
 
@@ -129,5 +128,16 @@ Parameters DTLOptimizer::optimizeParametersPerSpecies(PerCoreGeneTrees &geneTree
 }
 
 
+
+
+void DTLOptimizer::buildEvaluations(PerCoreGeneTrees &geneTrees, PLLRootedTree &speciesTree, RecModel recModel, Evaluations &evaluations)
+{
+  auto &trees = geneTrees.getTrees();
+  evaluations.resize(trees.size());
+  for (unsigned int i = 0; i < trees.size(); ++i) {
+    auto &tree = trees[i];
+    evaluations[i] = std::make_shared<ReconciliationEvaluation>(speciesTree, *tree.geneTree, tree.mapping, recModel, false);
+  }
+}
 
 
