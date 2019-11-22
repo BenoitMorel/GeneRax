@@ -143,6 +143,7 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
   auto refApproxLL = computeApproxRecLikelihood();
   assert (fabs(_bestRecLL - refApproxLL) < 0.01);
   auto hash1 = _speciesTree->getNodeIndexHash(); 
+  std::random_shuffle(prunes.begin(), prunes.end());
   for (auto prune: prunes) {
     std::vector<unsigned int> regrafts;
     SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
