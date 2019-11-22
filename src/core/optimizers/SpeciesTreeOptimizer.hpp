@@ -80,6 +80,10 @@ private:
       std::vector<unsigned int> &bestMovesHistory, 
       double &bestLL, 
       unsigned int &visits);
+  bool testPruning(unsigned int prune,
+    unsigned int radius,
+    double refApproxLL, 
+    unsigned int hash1);
   void newBestTreeCallback();
   std::string getSpeciesTreePath(const std::string &speciesId);
   std::vector<EvaluatedMove> getSortedCandidateMoves(unsigned int speciesRadius);

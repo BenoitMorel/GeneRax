@@ -131,67 +131,76 @@ void SpeciesTreeOptimizer::rootExhaustiveSearch(bool doOptimizeGeneTrees)
 }
  
 
-
+bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
+    unsigned int radius,
+    double refApproxLL, 
+    unsigned int hash1)
+{
+  bool tryApproxFirst = Enums::implementsApproxLikelihood(_recModel);
+  bool check = false;
+  std::vector<unsigned int> regrafts;
+  SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
+  for (auto regraft: regrafts) {
+    // Apply the move
+    auto rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
+    bool canTestMove = true;
+    // Discard bad moves with an approximation of the likelihood function
+    double approxRecLL;
+    bool needFullRollback = false;
+    if (tryApproxFirst) {
+      approxRecLL = computeApproxRecLikelihood();
+      //Logger::info << approxRecLL << std::endl;
+      if (approxRecLL - _bestRecLL < 0.0) {
+        canTestMove = false;
+      } else {
+        needFullRollback = true;
+      }
+    }
+    if (canTestMove) {
+      // we really test the move
+      _lastRecLL = computeRecLikelihood();
+      if (_lastRecLL > _bestRecLL) {
+        // Better tree found! keep it and return
+        Logger::info << "new best tree " << _bestRecLL << " -> " << _lastRecLL << std::endl;
+        newBestTreeCallback();
+        return true;
+      }
+    }
+    // we do not keep the tree
+    SpeciesTreeOperator::reverseSPRMove(*_speciesTree, prune, rollback);
+    if (needFullRollback) {
+      for (auto &evaluation: _evaluations) {
+        evaluation->rollbackToLastState();
+      }
+    }
+    // ensure that we correctly reverted
+    if (check) {
+      auto hash2 = _speciesTree->getNodeIndexHash(); 
+      assert(hash1 == hash2);
+      if (tryApproxFirst && !canTestMove) {
+        auto approxRevertedLL = computeApproxRecLikelihood();
+        assert(fabs(refApproxLL - approxRevertedLL) < 0.1);
+      } else {
+        auto revertedLL = computeRecLikelihood();
+        assert(fabs(revertedLL - _bestRecLL) < 0.1);
+      }
+    }
+  }
+  return false;
+}
 
 double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
 {
-  bool check = false;
-  bool tryApproxFirst = Enums::implementsApproxLikelihood(_recModel);
   std::vector<unsigned int> prunes;
   SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, prunes);
   _bestRecLL = computeRecLikelihood();
+  auto hash1 = _speciesTree->getNodeIndexHash(); 
   auto refApproxLL = computeApproxRecLikelihood();
   assert (fabs(_bestRecLL - refApproxLL) < 0.01);
-  auto hash1 = _speciesTree->getNodeIndexHash(); 
-  std::random_shuffle(prunes.begin(), prunes.end());
   for (auto prune: prunes) {
-    std::vector<unsigned int> regrafts;
-    SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
-    for (auto regraft: regrafts) {
-      // Apply the move
-      auto rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
-      bool canTestMove = true;
-      // Discard bad moves with an approximation of the likelihood function
-      double approxRecLL;
-      bool needFullRollback = false;
-      if (tryApproxFirst) {
-        approxRecLL = computeApproxRecLikelihood();
-        //Logger::info << approxRecLL << std::endl;
-        if (approxRecLL - _bestRecLL < 0.0) {
-          canTestMove = false;
-        } else {
-          needFullRollback = true;
-        }
-      }
-      if (canTestMove) {
-        // we really test the move
-        _lastRecLL = computeRecLikelihood();
-        if (_lastRecLL > _bestRecLL) {
-          // Better tree found! keep it and return
-          Logger::info << "new best tree " << _bestRecLL << " -> " << _lastRecLL << std::endl;
-          newBestTreeCallback();
-          return _lastRecLL;
-        }
-      }
-      // we do not keep the tree
-      SpeciesTreeOperator::reverseSPRMove(*_speciesTree, prune, rollback);
-      if (needFullRollback) {
-        for (auto &evaluation: _evaluations) {
-          evaluation->rollbackToLastState();
-        }
-      }
-      // ensure that we correctly reverted
-      if (check) {
-        auto hash2 = _speciesTree->getNodeIndexHash(); 
-        assert(hash1 == hash2);
-        if (tryApproxFirst && !canTestMove) {
-          auto approxRevertedLL = computeApproxRecLikelihood();
-          assert(fabs(refApproxLL - approxRevertedLL) < 0.1);
-        } else {
-          auto revertedLL = computeRecLikelihood();
-          assert(fabs(revertedLL - _bestRecLL) < 0.1);
-        }
-      }
+    if (testPruning(prune, radius, refApproxLL, hash1)) {
+      hash1 = _speciesTree->getNodeIndexHash(); 
+      refApproxLL = computeApproxRecLikelihood();
     }
   }
   return _bestRecLL;
