@@ -81,7 +81,7 @@ SubtreeCache<Value>::SubtreeCache(const TreeDuplicates &duplicates):
 }
 
 template<typename Value>
-void SubtreeCache<Value>::reset()
+void SubtreeCache<Value>::resetAll()
 {
   std::fill(_isValid.begin(), _isValid.end(), false);
 }

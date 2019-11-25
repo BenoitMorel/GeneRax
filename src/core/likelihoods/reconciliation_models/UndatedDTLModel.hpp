@@ -45,7 +45,7 @@ protected:
   // overload from parent
   virtual void computeRootLikelihood(pll_unode_t *virtualRoot);
   virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {
-    return _uq[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];
+    return _dtlclvs[root->node_index + this->_maxGeneId + 1]._uq[speciesRoot->node_index];
   }
   virtual REAL getLikelihoodFactor() const;
   virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
@@ -62,21 +62,35 @@ private:
   // SPECIES
   std::vector<REAL> _uE; // Probability for a gene to become extinct on each brance
   REAL _transferExtinctionSum;
+  REAL _transferExtinctionSumBackup;
 
   // CLVs
-  // _uq[geneId][speciesId] = probability of a gene node rooted at a species node
+  // _dtlclvs[geneId]._uq[speciesId] = probability of a gene node rooted at a species node
   // to produce the subtree of this gene node
-  std::vector<std::vector<REAL> > _uq;
-  std::vector<std::vector<REAL> > _uqBackup;
-  std::vector<REAL> _survivingTransferSums;
   
-  // fast mode 
-  REAL _transferExtinctionSumBackup;
-  std::vector<REAL> _survivingTransferSumsBackup;
-  std::vector<REAL> _survivingTransferSumsInvariant;
-  std::vector<REAL> _survivingTransferSumsOneMore;
-  std::vector<REAL> _survivingTransferSumsOneMoreBackup;
 
+struct DTLCLV {
+  DTLCLV():
+    _survivingTransferSums(REAL()),
+    _survivingTransferSumsInvariant(REAL()),
+    _survivingTransferSumsOneMore(REAL())
+  {}
+
+  DTLCLV(unsigned int speciesNumber):
+    _uq(speciesNumber, REAL()),
+    _survivingTransferSums(REAL()),
+    _survivingTransferSumsInvariant(REAL()),
+    _survivingTransferSumsOneMore(REAL())
+  {}
+  std::vector<REAL> _uq;
+  REAL _survivingTransferSums;
+  // fast mode
+  REAL _survivingTransferSumsInvariant;
+  REAL _survivingTransferSumsOneMore;
+};
+
+  std::vector<DTLCLV> _dtlclvs;
+  std::vector<DTLCLV> _dtlclvsBackup;
 private:
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       REAL &proba,
@@ -105,7 +119,7 @@ private:
 
   REAL getCorrectedTransferSum(unsigned int geneId, unsigned int speciesId) const
   {
-    return _survivingTransferSums[geneId] * _PT[speciesId];
+    return _dtlclvs[geneId]._survivingTransferSums * _PT[speciesId];
   }
   std::vector<pll_rnode_s *> &getSpeciesNodesToUpdate() {
     return (this->_fastMode ? this->_speciesNodesToUpdate : this->_allSpeciesNodes);
@@ -123,13 +137,9 @@ void UndatedDTLModel<REAL>::setInitialGeneTree(pll_utree_t *tree)
   assert(this->_allSpeciesNodesCount);
   assert(this->_maxGeneId);
   std::vector<REAL> zeros(this->_allSpeciesNodesCount);
-  _uq = std::vector<std::vector<REAL> >(2 * (this->_maxGeneId + 1),zeros);
-  _uqBackup = std::vector<std::vector<REAL> >(2 * (this->_maxGeneId + 1),zeros);
-  _survivingTransferSums = std::vector<REAL>(2 * (this->_maxGeneId + 1));
-  _survivingTransferSumsOneMore = std::vector<REAL>(2 * (this->_maxGeneId + 1));
-  _survivingTransferSumsOneMoreBackup = std::vector<REAL>(2 * (this->_maxGeneId + 1));
-  _survivingTransferSumsBackup = std::vector<REAL>(2 * (this->_maxGeneId + 1));
-  _survivingTransferSumsInvariant = std::vector<REAL>(2 * (this->_maxGeneId + 1));
+  DTLCLV nullCLV(this->_allSpeciesNodesCount);
+  _dtlclvs = std::vector<DTLCLV>(2 * (this->_maxGeneId + 1), nullCLV);
+  _dtlclvsBackup = std::vector<DTLCLV>(2 * (this->_maxGeneId + 1), nullCLV);
 }
 
   template <class REAL>
@@ -215,23 +225,23 @@ template <class REAL>
 void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
 {
   auto gid = geneNode->node_index;
-  resetTransferSums(this->_fastMode ? _survivingTransferSumsOneMore[gid] : _survivingTransferSums[gid], _survivingTransferSumsInvariant[gid], _uq[gid]);
+  resetTransferSums(this->_fastMode ? _dtlclvs[gid]._survivingTransferSumsOneMore : _dtlclvs[gid]._survivingTransferSums, _dtlclvs[gid]._survivingTransferSumsInvariant, _dtlclvs[gid]._uq);
   
   if (!this->_fastMode) {
     for (auto speciesNode: getSpeciesNodesToUpdate()) {
-      _uq[gid][speciesNode->node_index] = REAL();
+      _dtlclvs[gid]._uq[speciesNode->node_index] = REAL();
     }
   }
   for (unsigned int it = 0; it < getIterationsNumber(); ++it) {
-    updateTransferSums(_survivingTransferSums[gid], _survivingTransferSumsInvariant[gid], _uq[gid]);
+    updateTransferSums(_dtlclvs[gid]._survivingTransferSums, _dtlclvs[gid]._survivingTransferSumsInvariant, _dtlclvs[gid]._uq);
     for (auto speciesNode: getSpeciesNodesToUpdate()) { 
       computeProbability(geneNode, 
           speciesNode, 
-          _uq[gid][speciesNode->node_index]);
+          _dtlclvs[gid]._uq[speciesNode->node_index]);
     }
   }
   if (!this->_fastMode) {
-    updateTransferSums(_survivingTransferSumsOneMore[gid], _survivingTransferSumsInvariant[gid], _uq[gid]);
+    updateTransferSums(_dtlclvs[gid]._survivingTransferSumsOneMore, _dtlclvs[gid]._survivingTransferSumsInvariant, _dtlclvs[gid]._uq);
   }
 }
 
@@ -273,20 +283,20 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     auto u_left = leftGeneNode->node_index;
     auto u_right = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
-      proba += (_uq[u_left][f] * _uq[u_right][g] + _uq[u_left][g] * _uq[u_right][f]) * _PS[e];
+      proba += (_dtlclvs[u_left]._uq[f] * _dtlclvs[u_right]._uq[g] + _dtlclvs[u_left]._uq[g] * _dtlclvs[u_right]._uq[f]) * _PS[e];
     }
     // D event
-    REAL temp = _uq[u_left][e];
-    temp *= _uq[u_right][e];
+    REAL temp = _dtlclvs[u_left]._uq[e];
+    temp *= _dtlclvs[u_right]._uq[e];
     temp *= _PD[e];
     proba += temp;
     // T event
-    proba += getCorrectedTransferSum(u_left, e) * _uq[u_right][e]; 
-    proba += getCorrectedTransferSum(u_right, e) * _uq[u_left][e]; 
+    proba += getCorrectedTransferSum(u_left, e) * _dtlclvs[u_right]._uq[e]; 
+    proba += getCorrectedTransferSum(u_right, e) * _dtlclvs[u_left]._uq[e]; 
   }
   if (not isSpeciesLeaf) {
     // SL event
-    proba += (_uq[gid][f] * _uE[g] + _uq[gid][g] * _uE[f]) *_PS[e];
+    proba += (_dtlclvs[gid]._uq[f] * _uE[g] + _dtlclvs[gid]._uq[g] * _uE[f]) *_PS[e];
   }
   // TL event
   //proba += oldProba * getCorrectedTransferExtinctionSum(e);
@@ -302,22 +312,22 @@ template <class REAL>
 void UndatedDTLModel<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
-  resetTransferSums(this->_fastMode ? _survivingTransferSumsOneMore[u] : _survivingTransferSums[u], _survivingTransferSumsInvariant[u], _uq[u]);
+  resetTransferSums(this->_fastMode ? _dtlclvs[u]._survivingTransferSumsOneMore : _dtlclvs[u]._survivingTransferSums, _dtlclvs[u]._survivingTransferSumsInvariant, _dtlclvs[u]._uq);
   if (!this->_fastMode) {
     for (auto speciesNode: getSpeciesNodesToUpdate()) {
       auto e = speciesNode->node_index;
-      _uq[u][e] = REAL();
+      _dtlclvs[u]._uq[e] = REAL();
     }
   }
   for (unsigned int it = 0; it < getIterationsNumber(); ++it) {
-    updateTransferSums(_survivingTransferSums[u], _survivingTransferSumsInvariant[u], _uq[u]);
+    updateTransferSums(_dtlclvs[u]._survivingTransferSums, _dtlclvs[u]._survivingTransferSumsInvariant, _dtlclvs[u]._uq);
     for (auto speciesNode: getSpeciesNodesToUpdate()) {
       unsigned int e = speciesNode->node_index;
-      computeProbability(virtualRoot, speciesNode, _uq[u][e], true);
+      computeProbability(virtualRoot, speciesNode, _dtlclvs[u]._uq[e], true);
     }
   }
   if (!this->_fastMode) {
-    updateTransferSums(_survivingTransferSumsOneMore[u], _survivingTransferSumsInvariant[u], _uq[u]);
+    updateTransferSums(_dtlclvs[u]._survivingTransferSumsOneMore, _dtlclvs[u]._survivingTransferSumsInvariant, _dtlclvs[u]._uq);
   }
 }
 
@@ -329,7 +339,7 @@ REAL UndatedDTLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
   auto u = root->node_index + this->_maxGeneId + 1;
   for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
-    sum += _uq[u][e];
+    sum += _dtlclvs[u]._uq[e];
   }
   return sum;
 }
@@ -352,18 +362,15 @@ void UndatedDTLModel<REAL>::beforeComputeLogLikelihood()
   AbstractReconciliationModel<REAL>::beforeComputeLogLikelihood();
   if (this->_fastMode) {
     _transferExtinctionSumBackup = _transferExtinctionSum;
-    _survivingTransferSumsBackup = _survivingTransferSums;
-    for (unsigned int gid = 0; gid < _uq.size(); ++gid) {
+    for (unsigned int gid = 0; gid < _dtlclvs.size(); ++gid) {
+      _dtlclvsBackup[gid]._survivingTransferSums = _dtlclvs[gid]._survivingTransferSums;
       for (auto speciesNode: getSpeciesNodesToUpdate()) {
         auto e = speciesNode->node_index;
-        _uqBackup[gid][e] = _uq[gid][e];
+        _dtlclvsBackup[gid]._uq[e] = _dtlclvs[gid]._uq[e];
       }
     }
   } else { 
-    std::swap(_uq, _uqBackup);
-    std::swap(_transferExtinctionSum, _transferExtinctionSumBackup);
-    std::swap(_survivingTransferSums, _survivingTransferSumsBackup);
-    std::swap(_survivingTransferSumsOneMore, _survivingTransferSumsOneMoreBackup);
+    std::swap(_dtlclvs, _dtlclvsBackup);
   }
 }
 
@@ -373,11 +380,11 @@ void UndatedDTLModel<REAL>::afterComputeLogLikelihood()
   AbstractReconciliationModel<REAL>::afterComputeLogLikelihood();
   if (this->_fastMode) {
     _transferExtinctionSum = _transferExtinctionSumBackup;
-    _survivingTransferSums = _survivingTransferSumsBackup;
-    for (unsigned int gid = 0; gid < _uq.size(); ++gid) {
+    for (unsigned int gid = 0; gid < _dtlclvs.size(); ++gid) {
+      _dtlclvs[gid]._survivingTransferSums = _dtlclvsBackup[gid]._survivingTransferSums;
       for (auto speciesNode: getSpeciesNodesToUpdate()) {
         auto e = speciesNode->node_index;
-        _uq[gid][e] = _uqBackup[gid][e];
+        _dtlclvs[gid]._uq[e] = _dtlclvsBackup[gid]._uq[e];
       }
     }
   }
@@ -386,10 +393,7 @@ void UndatedDTLModel<REAL>::afterComputeLogLikelihood()
 template <class REAL>
 void UndatedDTLModel<REAL>::rollbackToLastState()
 {
-  std::swap(_uq, _uqBackup);
-  std::swap(_transferExtinctionSum, _transferExtinctionSumBackup);
-  std::swap(_survivingTransferSums, _survivingTransferSumsBackup);
-  std::swap(_survivingTransferSumsOneMore, _survivingTransferSumsOneMoreBackup);
+  std::swap(_dtlclvs, _dtlclvsBackup);
 }
 
 template <class REAL>
@@ -416,8 +420,8 @@ void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode,
       continue;
     }
     double factor = _PT[e] / static_cast<double>(this->_allSpeciesNodes.size());
-    REAL probaLeftTransfered = (_uq[u_left->node_index][h] * _uq[u_right->node_index][e]) * factor;
-    REAL probaRightTransfered = (_uq[u_right->node_index][h] * _uq[u_left->node_index][e]) * factor;
+    REAL probaLeftTransfered = (_dtlclvs[u_left->node_index]._uq[h] * _dtlclvs[u_right->node_index]._uq[e]) * factor;
+    REAL probaRightTransfered = (_dtlclvs[u_right->node_index]._uq[h] * _dtlclvs[u_left->node_index]._uq[e]) * factor;
     if (proba < probaLeftTransfered) {
       proba = probaLeftTransfered;
       transferedGene = u_left;
@@ -452,7 +456,7 @@ void UndatedDTLModel<REAL>::getBestTransferLoss(pll_unode_t *parentGeneNode,
       continue;
     }
     REAL factor = _uE[e] * (_PT[e] / static_cast<double>(this->_allSpeciesNodes.size()));
-    REAL newProba = _uq[parentGeneNode->node_index][h] * factor;  
+    REAL newProba = _dtlclvs[parentGeneNode->node_index]._uq[h] * factor;  
     if (proba < newProba) {
       proba = newProba;
       recievingSpecies = species;
@@ -501,22 +505,22 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
     u_left = leftGeneNode->node_index;
     u_right = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
-      values[0] = _uq[u_left][f] * _uq[u_right][g] * _PS[e];
-      values[1] = _uq[u_left][g] * _uq[u_right][f] * _PS[e];
+      values[0] = _dtlclvs[u_left]._uq[f] * _dtlclvs[u_right]._uq[g] * _PS[e];
+      values[1] = _dtlclvs[u_left]._uq[g] * _dtlclvs[u_right]._uq[f] * _PS[e];
     }
     // D event
-    values[2] = _uq[u_left][e];
-    values[2] *= _uq[u_right][e];
+    values[2] = _dtlclvs[u_left]._uq[e];
+    values[2] *= _dtlclvs[u_right]._uq[e];
     values[2] *= _PD[e];
     // T event
     getBestTransfer(geneNode, speciesNode, isVirtualRoot, transferedGene, stayingGene, recievingSpecies, values[5]);
-    //values[5] = getCorrectedTransferSum(u_left, e) * _uq[u_right][e]; 
-    //values[6] = getCorrectedTransferSum(u_right, e) * _uq[u_left][e]; 
+    //values[5] = getCorrectedTransferSum(u_left, e) * _dtlclvs[u_right]._uq[e]; 
+    //values[6] = getCorrectedTransferSum(u_right, e) * _dtlclvs[u_left]._uq[e]; 
   }
   if (not isSpeciesLeaf) {
     // SL event
-    values[3] = _uq[gid][f] * _uE[g] * _PS[e];
-    values[4] = _uq[gid][g] * _uE[f] * _PS[e];
+    values[3] = _dtlclvs[gid]._uq[f] * _uE[g] * _PS[e];
+    values[4] = _dtlclvs[gid]._uq[g] * _uE[f] * _PS[e];
   }
   getBestTransferLoss(geneNode, speciesNode, tlRecievingSpecies, values[6]);
 
