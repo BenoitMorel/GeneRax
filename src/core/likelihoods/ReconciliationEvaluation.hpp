@@ -49,8 +49,8 @@ public:
    * This method is mostly used for rollbacking to a previous state. In most of the
    * cases you should call inferMLRoot instead.
    */
-  pll_unode_t *getRoot() {return _reconciliationModel->getRoot();}
-  void setRoot(pll_unode_t * root) {_reconciliationModel->setRoot(root);}
+  pll_unode_t *getRoot() {return _evaluators->getRoot();}
+  void setRoot(pll_unode_t * root) {_evaluators->setRoot(root);}
 
   /**
    *  @param input geneTree
@@ -65,7 +65,7 @@ public:
   void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
   void setPartialLikelihoodMode(PartialLikelihoodMode mode) { 
-    _reconciliationModel->setPartialLikelihoodMode(mode);
+    _evaluators->setPartialLikelihoodMode(mode);
   }
 
   /**
@@ -83,7 +83,7 @@ public:
 
   RecModel getRecModel() const {return _model;}
   
-  void rollbackToLastState() {_reconciliationModel->rollbackToLastState();}
+  void rollbackToLastState() {_evaluators->rollbackToLastState();}
 private:
   PLLRootedTree &_speciesTree;
   PLLUnrootedTree &_initialGeneTree;
@@ -94,7 +94,7 @@ private:
   std::vector<double> _dupRates;
   std::vector<double> _lossRates;
   std::vector<double> _transferRates;
-  std::unique_ptr<ReconciliationModelInterface> _reconciliationModel;
+  std::unique_ptr<ReconciliationModelInterface> _evaluators;
 private:
   
   std::unique_ptr<ReconciliationModelInterface> buildRecModelObject(RecModel recModel, bool infinitePrecision);

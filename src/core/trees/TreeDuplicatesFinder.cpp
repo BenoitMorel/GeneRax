@@ -17,10 +17,8 @@ static pll_unode_t *getParentRight(pll_unode_t *node)
   return node->back->next->next;
 }
   
-void TreeDuplicatesFinder::findDuplicates(PerCoreGeneTrees &perCoreGeneTrees)
+void TreeDuplicatesFinder::findDuplicates(PerCoreGeneTrees &perCoreGeneTrees, TreeDuplicates &duplicates)
 {
-
-  std::unordered_map<pll_unode_t *, unsigned int> nodeClassIdentifiers; 
   std::vector<pll_unode_t *> currentDepthNodes;
   std::vector <std::string> leafToSpecies;
   unsigned int newClassIdentifier = 1;
@@ -40,7 +38,7 @@ void TreeDuplicatesFinder::findDuplicates(PerCoreGeneTrees &perCoreGeneTrees)
     // compute their identifiers
     for (unsigned int i = 0; i < currentDepthNodes.size(); ++i) {
       auto node = currentDepthNodes[i];
-      if (nodeClassIdentifiers.find(node) != nodeClassIdentifiers.end()) {
+      if (duplicates.find(node) != duplicates.end()) {
         // we already processed this node
         continue;
       }
@@ -50,8 +48,8 @@ void TreeDuplicatesFinder::findDuplicates(PerCoreGeneTrees &perCoreGeneTrees)
       } else {
         auto sonLeft = node->next->back;
         auto sonRight = node->next->next->back;
-        unsigned int sonLeftId = nodeClassIdentifiers[sonLeft];
-        unsigned int sonRightId = nodeClassIdentifiers[sonRight];
+        unsigned int sonLeftId = duplicates[sonLeft];
+        unsigned int sonRightId = duplicates[sonRight];
         // ordering does not matter for equality
         if (sonLeftId > sonRightId) {
           std::swap(sonLeftId, sonRightId);
@@ -61,17 +59,30 @@ void TreeDuplicatesFinder::findDuplicates(PerCoreGeneTrees &perCoreGeneTrees)
       if (stringToIdentifier.find(nodeClassString) == stringToIdentifier.end()) {
         stringToIdentifier[nodeClassString] = newClassIdentifier++;
       }
-      nodeClassIdentifiers[node] = stringToIdentifier[nodeClassString];
+      duplicates[node] = stringToIdentifier[nodeClassString];
       if (hasParent(node)) {
         nextDepthNodes.push_back(getParentLeft(node));
         nextDepthNodes.push_back(getParentRight(node));
       }
     }
-    // compute next depth nodes
     std::swap(currentDepthNodes, nextDepthNodes);
   }
-  Logger::info << "Subtrees: " << nodeClassIdentifiers.size() << std::endl;
+  Logger::info << "Subtrees: " << duplicates.size() << std::endl;
   Logger::info << "Unique subtrees: " << newClassIdentifier << std::endl;
 }
 
+template<typename Value>
+SubtreeCache<Value>::SubtreeCache(const TreeDuplicates &duplicates):
+  _duplicates(duplicates),
+  _values(duplicates.size()),
+  _isValid(duplicates.size(), false)
+{
+
+}
+
+template<typename Value>
+void SubtreeCache<Value>::reset()
+{
+  std::fill(_isValid.begin(), _isValid.end(), false);
+}
 

@@ -9,8 +9,7 @@
 #define IS_PROBA(x) (REAL(0.0) <= (x) && (x) <= REAL(1.0))
   
 #define PRINT_ERROR_PROBA(x)  if (!IS_PROBA(proba)) {std::cerr << "error " << proba << std::endl;} assert(IS_PROBA(x));  
-#define ONEMORE
-#define MYINVARIANT
+
 
 /*
 * Implement the undated model described here:
@@ -138,7 +137,6 @@ void UndatedDTLModel<REAL>::resetTransferSums(const REAL &transferSum,
     REAL &transferSumInvariant,
     const std::vector<REAL> &probabilities)
 {
-#ifdef MYINVARIANT
   if (this->_fastMode) {
     REAL diff = REAL();
     for (auto speciesNode: getSpeciesNodesToUpdate()) {
@@ -147,7 +145,6 @@ void UndatedDTLModel<REAL>::resetTransferSums(const REAL &transferSum,
     diff /= this->_allSpeciesNodes.size();
     transferSumInvariant = transferSum - diff;
   }
-#endif
 }
 
 template <class REAL>
@@ -156,20 +153,14 @@ void UndatedDTLModel<REAL>::updateTransferSums(REAL &transferSum,
     const std::vector<REAL> &probabilities)
 {
   transferSum = REAL();
-#ifdef MYINVARIANT
   for (auto speciesNode:  getSpeciesNodesToUpdate()) {
-#else 
-  for (auto speciesNode: this->_allSpeciesNodes) {
-#endif
     auto e = speciesNode->node_index;
     transferSum += probabilities[e];
   }
   transferSum /= this->_allSpeciesNodes.size();
-#ifdef MYINVARIANT 
   if (this->_fastMode) {
     transferSum += transferSumInvariant;
   }
-#endif
 }
 
 
@@ -224,11 +215,7 @@ template <class REAL>
 void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
 {
   auto gid = geneNode->node_index;
-#ifdef ONEMORE
   resetTransferSums(this->_fastMode ? _survivingTransferSumsOneMore[gid] : _survivingTransferSums[gid], _survivingTransferSumsInvariant[gid], _uq[gid]);
-#else
-  resetTransferSums(_survivingTransferSums[gid], _survivingTransferSumsInvariant[gid], _uq[gid]);
-#endif
   
   if (!this->_fastMode) {
     for (auto speciesNode: getSpeciesNodesToUpdate()) {
@@ -315,11 +302,7 @@ template <class REAL>
 void UndatedDTLModel<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
-#ifdef ONEMORE
   resetTransferSums(this->_fastMode ? _survivingTransferSumsOneMore[u] : _survivingTransferSums[u], _survivingTransferSumsInvariant[u], _uq[u]);
-#else
-  resetTransferSums(_survivingTransferSums[u], _survivingTransferSumsInvariant[u], _uq[u]);
-#endif
   if (!this->_fastMode) {
     for (auto speciesNode: getSpeciesNodesToUpdate()) {
       auto e = speciesNode->node_index;

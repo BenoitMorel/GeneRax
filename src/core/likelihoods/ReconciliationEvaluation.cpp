@@ -24,7 +24,7 @@ ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
     _model(recModel),
     _infinitePrecision(true)
 {
-  _reconciliationModel = buildRecModelObject(_model, _infinitePrecision);
+  _evaluators = buildRecModelObject(_model, _infinitePrecision);
 }
 
 
@@ -46,15 +46,15 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
       (*rates[d])[e] = parameters[(e * rates.size() + d) % parameters.dimensions()];
     }
   }
-  _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates);
+  _evaluators->setRates(_dupRates, _lossRates, _transferRates);
 }
 
 double ReconciliationEvaluation::evaluate(bool fastMode)
 {
-  double res = _reconciliationModel->computeLogLikelihood(fastMode);
+  double res = _evaluators->computeLogLikelihood(fastMode);
   if (!_infinitePrecision && !std::isnormal(res)) {
     updatePrecision(true);  
-    res = _reconciliationModel->computeLogLikelihood(fastMode);
+    res = _evaluators->computeLogLikelihood(fastMode);
     updatePrecision(false);  
   }
   if (!std::isnormal(res)) {
@@ -66,17 +66,17 @@ double ReconciliationEvaluation::evaluate(bool fastMode)
 
 void ReconciliationEvaluation::invalidateCLV(unsigned int nodeIndex)
 {
-  _reconciliationModel->invalidateCLV(nodeIndex);
+  _evaluators->invalidateCLV(nodeIndex);
 }
 
 void ReconciliationEvaluation::invalidateAllCLVs()
 {
-  _reconciliationModel->invalidateAllCLVs();
+  _evaluators->invalidateAllCLVs();
 }
 
 void ReconciliationEvaluation::invalidateAllSpeciesCLVs()
 {
-  _reconciliationModel->invalidateAllSpeciesCLVs();
+  _evaluators->invalidateAllSpeciesCLVs();
 }
 
 std::unique_ptr<ReconciliationModelInterface> ReconciliationEvaluation::buildRecModelObject(RecModel recModel, 
@@ -107,8 +107,8 @@ void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
 {
   if (infinitePrecision != _infinitePrecision) {
     _infinitePrecision = infinitePrecision;
-    _reconciliationModel = buildRecModelObject(_model, _infinitePrecision);
-    _reconciliationModel->setRates(_dupRates, _lossRates, _transferRates);
+    _evaluators = buildRecModelObject(_model, _infinitePrecision);
+    _evaluators->setRates(_dupRates, _lossRates, _transferRates);
  }
 }
 
@@ -117,13 +117,13 @@ void ReconciliationEvaluation::inferMLScenario(Scenario &scenario) {
   updatePrecision(true);
   auto ll = evaluate();
   assert(std::isfinite(ll) && ll < 0.0);
-  _reconciliationModel->inferMLScenario(scenario);
+  _evaluators->inferMLScenario(scenario);
   updatePrecision(infinitePrecision);
 }
   
 pll_unode_t *ReconciliationEvaluation::computeMLRoot() 
 {
-  return  _reconciliationModel->computeMLRoot();
+  return  _evaluators->computeMLRoot();
 }
   
 pll_unode_t *ReconciliationEvaluation::inferMLRoot()
@@ -140,6 +140,8 @@ pll_unode_t *ReconciliationEvaluation::inferMLRoot()
 
 void ReconciliationEvaluation::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
 {
-  assert(_reconciliationModel);
-  _reconciliationModel->onSpeciesTreeChange(nodesToInvalidate);
+  assert(_evaluators);
+  _evaluators->onSpeciesTreeChange(nodesToInvalidate);
 }
+
+
