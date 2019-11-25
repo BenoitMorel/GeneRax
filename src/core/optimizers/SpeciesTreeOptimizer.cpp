@@ -5,7 +5,7 @@
 #include <routines/GeneRaxMaster.hpp>
 #include <routines/Routines.hpp>
 #include <algorithm>
-
+#include <trees/TreeDuplicatesFinder.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 
 static std::string getStepTag(bool fastMove)
@@ -412,6 +412,7 @@ void SpeciesTreeOptimizer::newBestTreeCallback()
 void SpeciesTreeOptimizer::setGeneTreesFromFamilies(const Families &families)
 {
   _geneTrees = std::make_unique<PerCoreGeneTrees>(families);
+  //TreeDuplicatesFinder::findDuplicates(*_geneTrees);
   updateEvaluations();
 }
   

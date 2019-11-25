@@ -8,6 +8,7 @@
 class PerCoreGeneTrees {
 public:
   struct GeneTree {
+    
     std::string name;
     GeneSpeciesMapping mapping;
     PLLUnrootedTree *geneTree;
