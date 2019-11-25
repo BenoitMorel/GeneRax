@@ -132,6 +132,7 @@ protected:
   virtual REAL getRootLikelihood(pll_unode_t *root) const = 0;
   virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) = 0;
   virtual REAL getLikelihoodFactor() const = 0;
+  virtual void recomputeSpeciesProbabilities() = 0;
   // Called by inferMLScenario
   // fills scenario with the best likelihood set of events that 
   // would lead to the subtree of geneNode under speciesNode
@@ -321,12 +322,13 @@ void AbstractReconciliationModel<REAL>::beforeComputeLogLikelihood()
   if (_allSpeciesNodesInvalid) { // update everything
     //Logger::info << "All nodes invalid " << std::endl;
     _speciesNodesToUpdate = _allSpeciesNodes;
+    recomputeSpeciesProbabilities();
   } else if (_invalidatedSpeciesNodes.size()) { // partial update
     // here, fill _speciesNodesToUpdate with the invalid nodes
     //Logger::info << "Some nodes invalid " << std::endl;
     _speciesNodesToUpdate.clear();
     fillNodesPostOrder(_speciesTree.getRoot(), _speciesNodesToUpdate, &_invalidatedSpeciesNodes);
-    
+    recomputeSpeciesProbabilities();
     //Logger::info << "species to invalidate and to update: " << _invalidatedSpeciesNodes.size() << " " << _speciesNodesToUpdate.size() << std::endl;
   } else {
     _speciesNodesToUpdate.clear();

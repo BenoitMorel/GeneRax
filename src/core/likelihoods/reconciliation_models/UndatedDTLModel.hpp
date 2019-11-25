@@ -40,6 +40,8 @@ protected:
   virtual void setInitialGeneTree(pll_utree_t *tree);
   // overloaded from parent
   virtual void updateCLV(pll_unode_t *geneNode);
+  // overload from parent
+  virtual void recomputeSpeciesProbabilities();
   // overloaded from parent
   virtual REAL getRootLikelihood(pll_unode_t *root) const;
   // overload from parent
@@ -124,7 +126,6 @@ private:
   std::vector<pll_rnode_s *> &getSpeciesNodesToUpdate() {
     return (this->_fastMode ? this->_speciesNodesToUpdate : this->_allSpeciesNodes);
   }
-  void recomputeSpeciesProbabilities();
 };
 
 
@@ -365,7 +366,6 @@ template <class REAL>
 void UndatedDTLModel<REAL>::beforeComputeLogLikelihood()
 {
   AbstractReconciliationModel<REAL>::beforeComputeLogLikelihood();
-  recomputeSpeciesProbabilities();
   if (this->_fastMode) {
     _transferExtinctionSumBackup = _transferExtinctionSum;
     for (unsigned int gid = 0; gid < _dtlclvs.size(); ++gid) {

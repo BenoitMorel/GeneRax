@@ -44,6 +44,9 @@ protected:
   virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {
     return _uq[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];
   }
+
+  // overload from parent
+  virtual void recomputeSpeciesProbabilities();
   virtual REAL getLikelihoodFactor() const;
   // overload from parent
   virtual void computeRootLikelihood(pll_unode_t *virtualRoot);
@@ -103,6 +106,14 @@ void UndatedDLModel<REAL>::setRates(const std::vector<double> &dupRates,
     _PL[e] /= sum;
     _PS[e] /= sum;
   }
+  recomputeSpeciesProbabilities();
+  this->invalidateAllCLVs();
+  this->invalidateAllSpeciesCLVs();
+}
+
+template <class REAL>
+void UndatedDLModel<REAL>::recomputeSpeciesProbabilities()
+{
   _uE = std::vector<double>(this->_allSpeciesNodesCount, 0.0);
   for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
@@ -116,8 +127,6 @@ void UndatedDLModel<REAL>::setRates(const std::vector<double> &dupRates,
     ASSERT_PROBA(proba)
     _uE[speciesNode->node_index] = proba;
   }
-  this->invalidateAllCLVs();
-  this->invalidateAllSpeciesCLVs();
 }
 
 template <class REAL>
