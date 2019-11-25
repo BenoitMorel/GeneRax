@@ -5,8 +5,9 @@
 #include <stack>
 #ifdef WITH_MPI
   #include <mpi.h>
+  typedef MPI_Comm Communicator;
 #else
-  typedef int MPI_Comm;
+  typedef int Communicator;
 #endif
 
 
@@ -89,6 +90,7 @@ public:
    */
   static unsigned int getMax(double &value, unsigned int &bestRank);
   
+  
 
   /**
    *  When having a given number of independant tasks, subdivide
@@ -107,14 +109,24 @@ public:
    *  in the scheduler?
    */
   static bool allowSchedulerSplitImplementation();
-  static MPI_Comm &getComm() {return _commStack.top();}
+  static Communicator &getComm();
+
+  /**
+   *  Split the current communicator in splitClasses different communicators
+   *  Updates the current communicator with the newly created local communicator
+   *  Can be reverted with popContext
+   */
+  static void splitCommunicators(unsigned int splitClasses, unsigned int &myClass);
+  static void popContext();
+  static void temporaryPopContext();
+  static void rollbackTemporaryPopContext();
 private:
-  static void setComm(MPI_Comm newComm);
+  static void setComm(Communicator newComm);
   static void setOwnMPIContext(bool own);
   static std::ofstream sink;
-  static bool ownMPIContext;
-  static std::stack<MPI_Comm> _commStack;
-  static std::stack<bool> _ownsMPIContextStack;
+  static std::stack<Communicator> _commsStack;
+  static std::stack<Communicator> _commsToRollback;
+  static bool  _ownsMPIContext;
   static bool _mpiEnabled;
 };
 

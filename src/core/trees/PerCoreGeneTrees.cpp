@@ -17,7 +17,7 @@ std::vector<size_t> sort_indexes_descending(const std::vector<T> &v) {
 }
 
 
-static std::vector<size_t> getMyIndices(const std::vector<unsigned int> &treeSizes) 
+static std::vector<size_t> getMyIndices(const std::vector<unsigned int> &treeSizes, double &loadBalanceRatio) 
 {
   std::vector<size_t> sortedIndices = sort_indexes_descending<unsigned int>(treeSizes);
   std::vector<size_t> myIndices;
@@ -36,13 +36,16 @@ static std::vector<size_t> getMyIndices(const std::vector<unsigned int> &treeSiz
     currentRank = (currentRank + 1) % ParallelContext::getSize();
     for (; perRankLoad[currentRank] > averageLoad;(currentRank = (currentRank + 1) % ParallelContext::getSize())) {}
   }
+  double worstLoad = static_cast<double>(*std::max_element(perRankLoad.begin(), perRankLoad.end()));
+  loadBalanceRatio = static_cast<double>(averageLoad) / worstLoad;
   return myIndices;
 }
 
-PerCoreGeneTrees::PerCoreGeneTrees(const Families &families)
+PerCoreGeneTrees::PerCoreGeneTrees(const Families &families):
+  _loadBalanceRatio(0.0)
 {
   auto treeSizes = LibpllParsers::parallelGetTreeSizes(families);
-  auto myIndices = getMyIndices(treeSizes);
+  auto myIndices = getMyIndices(treeSizes, _loadBalanceRatio);
 
   _geneTrees.resize(myIndices.size());
   unsigned int index = 0;
