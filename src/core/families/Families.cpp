@@ -151,7 +151,9 @@ void filterFamilies(Families &families, const std::string &speciesTreeFile, bool
     Logger::info << "WARNING!!! Found " << invalid 
       << " invalid families (they will be discarded from the analysis)" << std::endl;
   }  
-  pll_rtree_destroy(speciesTree, 0);
+  if (speciesTree) {
+    pll_rtree_destroy(speciesTree, 0);
+  }
   srand(consistentSeed);
 }
 
