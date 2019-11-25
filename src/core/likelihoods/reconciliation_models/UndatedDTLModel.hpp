@@ -124,6 +124,7 @@ private:
   std::vector<pll_rnode_s *> &getSpeciesNodesToUpdate() {
     return (this->_fastMode ? this->_speciesNodesToUpdate : this->_allSpeciesNodes);
   }
+  void recomputeSpeciesProbabilities();
 };
 
 
@@ -195,6 +196,17 @@ void UndatedDTLModel<REAL>::setRates(const std::vector<double> &dupRates,
     _PT[e] /= sum;
     _PS[e] = 1.0 / sum;
   } 
+  recomputeSpeciesProbabilities();
+  this->invalidateAllCLVs();
+  this->invalidateAllSpeciesCLVs();
+}
+
+template <class REAL>
+UndatedDTLModel<REAL>::~UndatedDTLModel() { }
+
+template <class REAL>
+void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
+{
   _uE.resize(this->_allSpeciesNodesCount);
   REAL unused = REAL(1.0);
   resetTransferSums(_transferExtinctionSum, unused, _uE);
@@ -211,14 +223,7 @@ void UndatedDTLModel<REAL>::setRates(const std::vector<double> &dupRates,
     }
     updateTransferSums(_transferExtinctionSum, unused, _uE);
   }
-  this->invalidateAllCLVs();
-  this->invalidateAllSpeciesCLVs();
 }
-
-template <class REAL>
-UndatedDTLModel<REAL>::~UndatedDTLModel() { }
-
-
 
 
 template <class REAL>
@@ -360,6 +365,7 @@ template <class REAL>
 void UndatedDTLModel<REAL>::beforeComputeLogLikelihood()
 {
   AbstractReconciliationModel<REAL>::beforeComputeLogLikelihood();
+  recomputeSpeciesProbabilities();
   if (this->_fastMode) {
     _transferExtinctionSumBackup = _transferExtinctionSum;
     for (unsigned int gid = 0; gid < _dtlclvs.size(); ++gid) {
