@@ -29,7 +29,7 @@ struct FamilyInfo {
 
 typedef std::vector<FamilyInfo> Families;
 
-void filterFamilies(Families &families, const std::string &speciesTreeFile);
+void filterFamilies(Families &families, const std::string &speciesTreeFile, bool checkSpeciesTree);
 void duplicatesFamilies(const Families &families, Families &duplicatedFamilies, unsigned int factor);
 void contractFamilies(const Families &duplicatedFamilies, Families &families);
 

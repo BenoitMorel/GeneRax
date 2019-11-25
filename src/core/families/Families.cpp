@@ -91,14 +91,16 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
     }
     GeneSpeciesMapping mapping;
     mapping.fill(family.mappingFile, family.startingGeneTree);
-    if (!mapping.check(alignmentLabels, speciesTreeLabels)) {
-      return ERROR_MAPPING_MISMATCH;
+    if (speciesTreeLabels.size()) {
+      if (!mapping.check(alignmentLabels, speciesTreeLabels)) {
+        return ERROR_MAPPING_MISMATCH;
+      }
     }
   }
   return ERROR_OK;
 }
 
-void filterFamilies(Families &families, const std::string &speciesTreeFile)
+void filterFamilies(Families &families, const std::string &speciesTreeFile, bool checkSpeciesTree)
 {
   ParallelContext::barrier();
   // at the end of this function, different ranks will have
@@ -109,20 +111,21 @@ void filterFamilies(Families &families, const std::string &speciesTreeFile)
   families.clear();
   std::unordered_set<std::string> speciesTreeLabels;
   unsigned int invalid = 0;
-  if (!FileSystem::exists(speciesTreeFile)) {
-    Logger::info << "[Error] Species tree file does not exist (" << speciesTreeFile << ")" << std::endl;
-    ParallelContext::abort(10);
-  }
   pll_rtree_t *speciesTree = 0;
-  try {
-    speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile);
-  } catch (...) {}
-  if (!speciesTree) {
-    Logger::info << "[Error] Cannot parse species tree file (" << speciesTreeFile << ")" << std::endl;
-    ParallelContext::abort(10);
-  }
-  LibpllParsers::fillLeavesFromRtree(speciesTree, speciesTreeLabels);
-  
+  if (checkSpeciesTree) {
+    if (!FileSystem::exists(speciesTreeFile)) {
+      Logger::info << "[Error] Species tree file does not exist (" << speciesTreeFile << ")" << std::endl;
+      ParallelContext::abort(10);
+    }
+    try {
+      speciesTree = LibpllParsers::readRootedFromFile(speciesTreeFile);
+    } catch (...) {}
+    if (!speciesTree) {
+      Logger::info << "[Error] Cannot parse species tree file (" << speciesTreeFile << ")" << std::endl;
+      ParallelContext::abort(10);
+    }
+    LibpllParsers::fillLeavesFromRtree(speciesTree, speciesTreeLabels);
+  } 
   std::vector<unsigned int> localErrors((initialFamilySize - 1 ) / ParallelContext::getSize() + 1, 99999999);
   std::vector<unsigned int> errors;
   for (auto i = ParallelContext::getBegin(initialFamilySize); i < ParallelContext::getEnd(initialFamilySize); i ++) {
