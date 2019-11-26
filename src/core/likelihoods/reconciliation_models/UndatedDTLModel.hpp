@@ -66,32 +66,43 @@ private:
   REAL _transferExtinctionSum;
   REAL _transferExtinctionSumBackup;
 
-  // CLVs
-  // _dtlclvs[geneId]._uq[speciesId] = probability of a gene node rooted at a species node
-  // to produce the subtree of this gene node
   
+  /**
+   *  All intermediate results needed to compute the reconciliation likelihood
+   *  each gene node has one DTLCLV object
+   *  Each DTLCLV gene  object is a function of the DTLCLVs of the direct children genes
+   */
+  struct DTLCLV {
+    DTLCLV():
+      _survivingTransferSums(REAL()),
+      _survivingTransferSumsInvariant(REAL()),
+      _survivingTransferSumsOneMore(REAL())
+    {}
 
-struct DTLCLV {
-  DTLCLV():
-    _survivingTransferSums(REAL()),
-    _survivingTransferSumsInvariant(REAL()),
-    _survivingTransferSumsOneMore(REAL())
-  {}
+    DTLCLV(unsigned int speciesNumber):
+      _uq(speciesNumber, REAL()),
+      _survivingTransferSums(REAL()),
+      _survivingTransferSumsInvariant(REAL()),
+      _survivingTransferSumsOneMore(REAL())
+    {}
+    // probability of a gene node rooted at a species node
+    std::vector<REAL> _uq;
+    // sum of transfer probabilities. Can be computed only once
+    // for all species, to reduce computation complexity
+    REAL _survivingTransferSums;
+    // subsum of transfer probbabilities that did not change
+    // in case of partial likelihood recomputation
+    REAL _survivingTransferSumsInvariant;
+    // when computing the likelihood in slow mode, we update this value,
+    // because we need it to compute _survivingTransferSumsInvariant
+    // consistently in fast mode
+    REAL _survivingTransferSumsOneMore;
+  };
 
-  DTLCLV(unsigned int speciesNumber):
-    _uq(speciesNumber, REAL()),
-    _survivingTransferSums(REAL()),
-    _survivingTransferSumsInvariant(REAL()),
-    _survivingTransferSumsOneMore(REAL())
-  {}
-  std::vector<REAL> _uq;
-  REAL _survivingTransferSums;
-  // fast mode
-  REAL _survivingTransferSumsInvariant;
-  REAL _survivingTransferSumsOneMore;
-};
-
+  // Current DTLCLV values
   std::vector<DTLCLV> _dtlclvs;
+  // Previous DTLCVL values, to rollback to a consistent state
+  // after a fast likelihood computation
   std::vector<DTLCLV> _dtlclvsBackup;
 private:
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
@@ -212,7 +223,7 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
   REAL unused = REAL(1.0);
   resetTransferSums(_transferExtinctionSum, unused, _uE);
   for (unsigned int it = 0; it < getIterationsNumber(); ++it) {
-    for (auto speciesNode: this->_allSpeciesNodes) {
+    for (auto speciesNode: getSpeciesNodesToUpdate()) {
       auto e = speciesNode->node_index;
       REAL proba(_PL[e]);
       proba += _uE[e] * _uE[e] * _PD[e] + getCorrectedTransferExtinctionSum(e) * _uE[e];

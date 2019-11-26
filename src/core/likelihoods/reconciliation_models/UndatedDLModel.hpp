@@ -42,7 +42,7 @@ protected:
   // overload from parent
   virtual REAL getRootLikelihood(pll_unode_t *root) const;
   virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {
-    return _uq[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];
+    return _dlclvs[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];
   }
 
   // overload from parent
@@ -62,9 +62,14 @@ private:
   
   // uq[geneId][speciesId] = probability of a gene node rooted at a species node
   // to produce the subtree of this gene node
-  std::vector<std::vector<REAL> > _uq;
-
+  typedef std::vector<REAL> DLCLV;
+  std::vector<DLCLV> _dlclvs;
+ 
 private:
+  std::vector<pll_rnode_s *> &getSpeciesNodesToUpdate() {
+    return this->_speciesNodesToUpdate;
+  }
+
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       REAL &proba,
       bool isVirtualRoot = false) const;
@@ -79,7 +84,7 @@ void UndatedDLModel<REAL>::setInitialGeneTree(pll_utree_t *tree)
   assert(this->_allSpeciesNodesCount);
   assert(this->_maxGeneId);
   std::vector<REAL> zeros(this->_allSpeciesNodesCount);
-  _uq = std::vector<std::vector<REAL> >(2 * (this->_maxGeneId + 1),zeros);
+  _dlclvs = std::vector<std::vector<REAL> >(2 * (this->_maxGeneId + 1),zeros);
 }
 
 static double solveSecondDegreePolynome(double a, double b, double c) 
@@ -115,7 +120,7 @@ template <class REAL>
 void UndatedDLModel<REAL>::recomputeSpeciesProbabilities()
 {
   _uE = std::vector<double>(this->_allSpeciesNodesCount, 0.0);
-  for (auto speciesNode: this->_allSpeciesNodes) {
+  for (auto speciesNode: getSpeciesNodesToUpdate()) {
     auto e = speciesNode->node_index;
     double a = _PD[e];
     double b = -1.0;
@@ -139,7 +144,7 @@ void UndatedDLModel<REAL>::updateCLV(pll_unode_t *geneNode)
   for (auto speciesNode: this->_speciesNodesToUpdate) {
     computeProbability(geneNode, 
         speciesNode, 
-        _uq[geneNode->node_index][speciesNode->node_index]);
+        _dlclvs[geneNode->node_index][speciesNode->node_index]);
   }
 }
 
@@ -164,7 +169,7 @@ void UndatedDLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *species
   auto e = speciesNode->node_index;
   unsigned int f = 0;
   unsigned int g = 0;
-  assert(!(_uq[gid][e] <= REAL())); // check that this scenario is possible
+  assert(!(_dlclvs[gid][e] <= REAL())); // check that this scenario is possible
   if (!isSpeciesLeaf) {
     f = speciesNode->left->node_index;
     g = speciesNode->right->node_index;
@@ -179,18 +184,18 @@ void UndatedDLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *species
     auto gpp_i = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
       // S event
-      values[0] = _uq[gp_i][f] * _uq[gpp_i][g] * _PS[e];
-      values[1] = _uq[gp_i][g] * _uq[gpp_i][f] * _PS[e];
+      values[0] = _dlclvs[gp_i][f] * _dlclvs[gpp_i][g] * _PS[e];
+      values[1] = _dlclvs[gp_i][g] * _dlclvs[gpp_i][f] * _PS[e];
     }
     // D event
-    values[2] = _uq[gp_i][e];
-    values[2] *= _uq[gpp_i][e];
+    values[2] = _dlclvs[gp_i][e];
+    values[2] *= _dlclvs[gpp_i][e];
     values[2] *= _PD[e];
   }
   if (not isSpeciesLeaf) {
     // SL event
-    values[3] = _uq[gid][f] * (_uE[g] * _PS[e]);
-    values[4] = _uq[gid][g] * (_uE[f] * _PS[e]);
+    values[3] = _dlclvs[gid][f] * (_uE[g] * _PS[e]);
+    values[4] = _dlclvs[gid][g] * (_uE[f] * _PS[e]);
   }
 
   unsigned int maxValueIndex = static_cast<unsigned int>(distance(values.begin(), 
@@ -266,17 +271,17 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
     auto gpp_i = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
       // S event
-      proba += (_uq[gp_i][f] * _uq[gpp_i][g] + _uq[gp_i][g] * _uq[gpp_i][f]) *_PS[e];
+      proba += (_dlclvs[gp_i][f] * _dlclvs[gpp_i][g] + _dlclvs[gp_i][g] * _dlclvs[gpp_i][f]) *_PS[e];
     }
     // D event
-    REAL temp = _uq[gp_i][e];
-    temp *= _uq[gpp_i][e];
+    REAL temp = _dlclvs[gp_i][e];
+    temp *= _dlclvs[gpp_i][e];
     temp *= _PD[e];
     proba += temp;
   }
   if (not isSpeciesLeaf) {
     // SL event
-    proba += (_uq[gid][f] * _uE[g] + _uq[gid][g] * _uE[f]) * _PS[e];
+    proba += (_dlclvs[gid][f] * _uE[g] + _dlclvs[gid][g] * _uE[f]) * _PS[e];
   }
   // DL event
   proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
@@ -291,7 +296,7 @@ REAL UndatedDLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
   for (unsigned int e = 0; e < this->_allSpeciesNodesCount; ++e) {
   //for (auto speciesNode: this->_allSpeciesNodes) {
     //auto e = speciesNode->node_index;
-    sum += _uq[u][e];
+    sum += _dlclvs[u][e];
   }
   return sum;
 }
@@ -300,7 +305,7 @@ template <class REAL>
 void UndatedDLModel<REAL>::accountForSpeciesRoot(pll_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
-  std::vector<REAL> save_uq(_uq[u]);
+  std::vector<REAL> save_dlclvs(_dlclvs[u]);
   auto leftGeneNode = this->getLeft(virtualRoot, true);
   auto rightGeneNode = this->getRight(virtualRoot, true);
   for (auto speciesNode: this->_allSpeciesNodes) {
@@ -309,16 +314,16 @@ void UndatedDLModel<REAL>::accountForSpeciesRoot(pll_unode_t *virtualRoot)
     // D
       auto gp_i = leftGeneNode->node_index;
       auto gpp_i = rightGeneNode->node_index;
-      REAL temp = _uq[gp_i][e];
-      temp *= _uq[gpp_i][e];
+      REAL temp = _dlclvs[gp_i][e];
+      temp *= _dlclvs[gpp_i][e];
       temp *= _PD[e];
       proba += temp;
     // no event
-    proba += save_uq[e] * (1.0 - _PD[e]);
+    proba += save_dlclvs[e] * (1.0 - _PD[e]);
     // DL
     proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
     
-    _uq[u][e] = proba;
+    _dlclvs[u][e] = proba;
   }
 }
 
@@ -328,7 +333,7 @@ void UndatedDLModel<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
   auto u = virtualRoot->node_index;
   for (auto speciesNode: this->_speciesNodesToUpdate) {
     auto e = speciesNode->node_index;
-    computeProbability(virtualRoot, speciesNode, _uq[u][e], true);
+    computeProbability(virtualRoot, speciesNode, _dlclvs[u][e], true);
   }
 }
 
