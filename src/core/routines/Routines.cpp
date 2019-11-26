@@ -102,6 +102,7 @@ bool Routines::createRandomTrees(const std::string &geneRaxOutputDir, Families &
 {
   std::string startingTreesDir = FileSystem::joinPaths(geneRaxOutputDir, "startingTrees");
   bool startingTreesDirCreated = false;
+  auto consistentSeed = rand();
   for (auto &family: families) {
     if (family.startingGeneTree == "__random__") {
         if (!startingTreesDirCreated) {
@@ -115,6 +116,7 @@ bool Routines::createRandomTrees(const std::string &geneRaxOutputDir, Families &
         }
     }
   }
+  srand(consistentSeed);
   ParallelContext::barrier();
   return startingTreesDirCreated;
 }

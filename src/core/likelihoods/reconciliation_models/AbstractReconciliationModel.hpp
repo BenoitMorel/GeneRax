@@ -174,6 +174,7 @@ protected:
   std::vector<unsigned int> _geneIds;
   unsigned int _maxGeneId;
   bool _fastMode;
+  PartialLikelihoodMode _likelihoodMode;
   virtual void beforeComputeLogLikelihood(); 
   virtual void afterComputeLogLikelihood() {};
 private:
@@ -191,7 +192,6 @@ private:
   std::map<std::string, std::string> geneNameToSpeciesName_;
   std::map<std::string, unsigned int> speciesNameToId_;
   
-  PartialLikelihoodMode _likelihoodMode;
   // set of invalid CLVs. All the CLVs from these CLVs to
   // the root(s) need to be recomputed
   std::unordered_set<unsigned int> _invalidatedNodes;
@@ -214,10 +214,10 @@ AbstractReconciliationModel<REAL>::AbstractReconciliationModel(PLLRootedTree &sp
   _geneRoot(0),
   _maxGeneId(1),
   _fastMode(false),
+  _likelihoodMode(PartialLikelihoodMode::PartialGenes),
   _rootedGeneTree(rootedGeneTree),
   _speciesTree(speciesTree),
   geneNameToSpeciesName_(geneSpeciesMapping.getMap()),
-  _likelihoodMode(PartialLikelihoodMode::PartialGenes),
   _allSpeciesNodesInvalid(true)
 {
   initSpeciesTree();

@@ -8,7 +8,7 @@
 
 #define IS_PROBA(x) (REAL(0.0) <= (x) && (x) <= REAL(1.0))
   
-#define PRINT_ERROR_PROBA(x)  if (!IS_PROBA(proba)) {std::cerr << "error " << proba << std::endl;} assert(IS_PROBA(x));  
+#define PRINT_ERROR_PROBA(x)  if (!IS_PROBA(x)) {std::cerr << "error " << x << std::endl;} assert(IS_PROBA(x));  
 
 
 /*
@@ -257,7 +257,7 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
           _dtlclvs[gid]._uq[speciesNode->node_index]);
     }
   }
-  if (!this->_fastMode) {
+  if (this->_likelihoodMode == PartialLikelihoodMode::PartialSpecies && !this->_fastMode) {
     updateTransferSums(_dtlclvs[gid]._survivingTransferSumsOneMore, _dtlclvs[gid]._survivingTransferSumsInvariant, _dtlclvs[gid]._uq);
   }
 }
@@ -321,7 +321,8 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
 
   // DL event
   //proba += oldProba * _uE[e] * (2.0 * _PD[e]); 
-  //assert(IS_PROBA(proba));
+  PRINT_ERROR_PROBA(proba);
+  assert(IS_PROBA(proba));
 }
 
 
@@ -358,6 +359,8 @@ REAL UndatedDTLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
     auto e = speciesNode->node_index;
     sum += _dtlclvs[u]._uq[e];
   }
+  PRINT_ERROR_PROBA(sum);
+  assert(IS_PROBA(sum));
   return sum;
 }
 
@@ -377,17 +380,19 @@ template <class REAL>
 void UndatedDTLModel<REAL>::beforeComputeLogLikelihood()
 {
   AbstractReconciliationModel<REAL>::beforeComputeLogLikelihood();
-  if (this->_fastMode) {
-    _transferExtinctionSumBackup = _transferExtinctionSum;
-    for (unsigned int gid = 0; gid < _dtlclvs.size(); ++gid) {
-      _dtlclvsBackup[gid]._survivingTransferSums = _dtlclvs[gid]._survivingTransferSums;
-      for (auto speciesNode: getSpeciesNodesToUpdate()) {
-        auto e = speciesNode->node_index;
-        _dtlclvsBackup[gid]._uq[e] = _dtlclvs[gid]._uq[e];
+  if (this->_likelihoodMode == PartialLikelihoodMode::PartialSpecies) {
+    if (this->_fastMode) {
+      _transferExtinctionSumBackup = _transferExtinctionSum;
+      for (unsigned int gid = 0; gid < _dtlclvs.size(); ++gid) {
+        _dtlclvsBackup[gid]._survivingTransferSums = _dtlclvs[gid]._survivingTransferSums;
+        for (auto speciesNode: getSpeciesNodesToUpdate()) {
+          auto e = speciesNode->node_index;
+          _dtlclvsBackup[gid]._uq[e] = _dtlclvs[gid]._uq[e];
+        }
       }
+    } else { 
+      std::swap(_dtlclvs, _dtlclvsBackup);
     }
-  } else { 
-    std::swap(_dtlclvs, _dtlclvsBackup);
   }
 }
 
@@ -395,13 +400,15 @@ template <class REAL>
 void UndatedDTLModel<REAL>::afterComputeLogLikelihood()
 {
   AbstractReconciliationModel<REAL>::afterComputeLogLikelihood();
-  if (this->_fastMode) {
-    _transferExtinctionSum = _transferExtinctionSumBackup;
-    for (unsigned int gid = 0; gid < _dtlclvs.size(); ++gid) {
-      _dtlclvs[gid]._survivingTransferSums = _dtlclvsBackup[gid]._survivingTransferSums;
-      for (auto speciesNode: getSpeciesNodesToUpdate()) {
-        auto e = speciesNode->node_index;
-        _dtlclvs[gid]._uq[e] = _dtlclvsBackup[gid]._uq[e];
+  if (this->_likelihoodMode == PartialLikelihoodMode::PartialSpecies) {
+    if (this->_fastMode) {
+      _transferExtinctionSum = _transferExtinctionSumBackup;
+      for (unsigned int gid = 0; gid < _dtlclvs.size(); ++gid) {
+        _dtlclvs[gid]._survivingTransferSums = _dtlclvsBackup[gid]._survivingTransferSums;
+        for (auto speciesNode: getSpeciesNodesToUpdate()) {
+          auto e = speciesNode->node_index;
+          _dtlclvs[gid]._uq[e] = _dtlclvsBackup[gid]._uq[e];
+        }
       }
     }
   }

@@ -4,12 +4,15 @@
 #include <vector>
 #include <parallelization/ParallelContext.hpp>
 #include <IO/FileSystem.hpp>
+#include <cassert>
 
 void Scheduler::schedule(const std::string &outputDir, 
     const std::string &commandFile, 
     bool splitImplem, 
     const std::string &execPath)
 {
+  assert(ParallelContext::isRandConsistent());
+  auto consistentSeed = rand();
   std::vector<char *> argv;
   std::string exec = "mpi-scheduler";
   std::string implem = splitImplem ? "--split-scheduler" : "--fork-scheduler";
@@ -36,6 +39,8 @@ void Scheduler::schedule(const std::string &outputDir,
     mpi_scheduler_main(static_cast<int>(argv.size()), &argv[0], comm);
     std::cout.clear();
   }
+  // seed accross ranks might not be consistent anymore
+  srand(consistentSeed);
   ParallelContext::barrier(); 
 }
 

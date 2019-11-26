@@ -128,7 +128,7 @@ void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
     bool perSpeciesDTLRates = false;
     optimizeRatesAndGeneTrees(instance, perSpeciesDTLRates, enableLibpll, i);
   }
-  for (unsigned int i = 0; i <= instance.args.maxSPRRadius; ++i) {
+  for (unsigned int i = 1; i <= instance.args.maxSPRRadius; ++i) {
     bool enableLibpll = true;
     bool perSpeciesDTLRates = instance.args.perSpeciesDTLRates && (i >= instance.args.maxSPRRadius - 1); // only apply per-species optimization at the two last rounds
     optimizeRatesAndGeneTrees(instance, perSpeciesDTLRates, enableLibpll, i);
