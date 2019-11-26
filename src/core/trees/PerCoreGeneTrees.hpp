@@ -31,9 +31,8 @@ public:
   
   std::vector<GeneTree> &getTrees() {return _geneTrees;}
   bool checkMappings(const std::string &speciesTreeFile);
-  double getLoadBalanceRatio() const {return _loadBalanceRatio;}
 private:
   std::vector<GeneTree> _geneTrees;
   std::vector<unsigned int> _treeSizes;
-  double _loadBalanceRatio;
+
 };

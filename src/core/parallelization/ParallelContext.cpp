@@ -3,9 +3,9 @@
 #include <cassert>
 
 std::ofstream ParallelContext::sink("/dev/null");
-std::stack<MPI_Comm> ParallelContext::_commsStack;
-std::stack<MPI_Comm> ParallelContext::_commsToRollback;
-bool ParallelContext::_ownsMPIContext = false;
+bool ParallelContext::ownMPIContext(true);
+std::stack<MPI_Comm> ParallelContext::_commStack;
+std::stack<bool> ParallelContext::_ownsMPIContextStack;
 bool ParallelContext::_mpiEnabled = false;
 
 void ParallelContext::init(void *commPtr)
@@ -48,10 +48,11 @@ void ParallelContext::finalize()
     return;
   }
 #ifdef WITH_MPI
-  if (_ownsMPIContext) {
+  if (_ownsMPIContextStack.top()) {
     MPI_Finalize();
   }
-  popContext();
+  _commStack.pop();
+  _ownsMPIContextStack.pop();
 #else
   assert(false);
 #endif
@@ -90,17 +91,17 @@ void ParallelContext::setOwnMPIContext(bool own)
   if (!_mpiEnabled) {
     return;
   }
-  _ownsMPIContext = own;
+  _ownsMPIContextStack.push(own);
+  ownMPIContext = own;
   
 }
 
-void ParallelContext::setComm(Communicator newComm)
+void ParallelContext::setComm(MPI_Comm newComm)
 {
   if (!_mpiEnabled) {
     return;
   }
-  assert(!_commsToRollback.size());
-  _commsStack.push(newComm);
+  _commStack.push(newComm);
 }
 
 
@@ -306,7 +307,6 @@ unsigned int ParallelContext::getMax(double &value, unsigned int &bestRank)
   value = allValues[bestRank];
   return bestRank;
 }
-  
 
 void ParallelContext::barrier()
 {
@@ -324,7 +324,7 @@ void ParallelContext::abort(int errorCode)
     exit(errorCode);
   }
 #ifdef WITH_MPI
-  if (_ownsMPIContext) {
+  if (_ownsMPIContextStack.top()) {
     MPI_Finalize();
     exit(errorCode);
   } else {
@@ -338,11 +338,6 @@ void ParallelContext::abort(int errorCode)
 bool ParallelContext::allowSchedulerSplitImplementation()
 {
   return getSize() > 4;
-}
-  
-Communicator &ParallelContext::getComm() {
-  assert(_commsStack.size()); 
-  return _commsStack.top();
 }
 
 bool ParallelContext::isRandConsistent()
@@ -359,47 +354,3 @@ bool ParallelContext::isRandConsistent()
 #endif
   return true;
 }
-
-void ParallelContext::splitCommunicators(unsigned int splitClasses, unsigned int &myClass)
-{
-#ifdef WITH_MPI
-  Communicator newComm;
-  // todobenoit make ranks in the same communicator contiguous
-  int color = getRank() % splitClasses;
-  int key = getRank() / splitClasses;
-  MPI_Comm_split(getComm(), color, key, &newComm);
-  _commsStack.push(newComm);
-  myClass = color;
-#endif
-}
-
-void ParallelContext::popContext()
-{
-#ifdef WITH_MPI
-  assert(!_commsToRollback.size());
-  // todobenoit free the communicator if not WORLD
-  if (getComm() != MPI_COMM_WORLD) {
-    MPI_Comm_free(&getComm());
-  }
-  _commsStack.pop();
-#endif
-}
-
-void ParallelContext::temporaryPopContext()
-{
-#ifdef WITH_MPI
-  _commsToRollback.push(getComm());
-  _commsStack.pop();
-#endif
-}
-void ParallelContext::rollbackTemporaryPopContext()
-{
-#ifdef WITH_MPI
-  assert(_commsToRollback.size());
-  _commsStack.push(_commsToRollback.top());
-  _commsToRollback.pop();
-#endif
-}
-
-
-
