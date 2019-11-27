@@ -35,6 +35,33 @@ public:
       exit(41);
     }
   }
+  
+  static std::string speciesStrategyToStr(SpeciesStrategy s)
+  {
+    switch(s) {
+    case SpeciesStrategy::SPR:
+      return "SPR";
+    case SpeciesStrategy::TRANSFERS:
+      return "EVAL";
+    case SpeciesStrategy::HYBRID:
+      return "HYBRID";
+    }
+    exit(41);
+  }
+
+  static SpeciesStrategy strToSpeciesStrategy(const std::string &str) 
+  {
+    if (str == "SPR") {
+      return SpeciesStrategy::SPR;
+    }  else if (str == "TRANSFERS") {
+      return SpeciesStrategy::TRANSFERS;
+    }  else if (str == "HYBRID") {
+      return SpeciesStrategy::HYBRID;
+    } else {
+      Logger::info << "Invalid species strategy " << str << std::endl;
+      exit(41);
+    }
+  }
  
   static std::string recModelToStr(RecModel recModel)
   {

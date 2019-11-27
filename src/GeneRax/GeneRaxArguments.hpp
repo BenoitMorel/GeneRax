@@ -21,6 +21,7 @@ public:
    std::string families;
    std::string speciesTree;
    Strategy strategy;
+   SpeciesStrategy speciesStrategy;
    std::string reconciliationModelStr;
    RecOpt reconciliationOpt;
    std::string output;

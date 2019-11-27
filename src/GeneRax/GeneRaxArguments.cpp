@@ -9,6 +9,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
   strategy(Strategy::SPR),
+  speciesStrategy(SpeciesStrategy::SPR),
   reconciliationModelStr("UndatedDL"),
   reconciliationOpt(RecOpt::Grid),
   output("GeneRax"),
@@ -56,6 +57,8 @@ void GeneRaxArguments::init() {
       if (strategy == Strategy::EVAL) {
         recRadius = maxSPRRadius = 0;
       }
+    } else if (arg == "--species-strategy") {
+      speciesStrategy = ArgumentsHelper::strToSpeciesStrategy(std::string(argv[++i]));
     } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModelStr = std::string(argv[++i]);
     } else if (arg == "--rec-opt") {
@@ -193,6 +196,7 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "Parameters summary: " << std::endl;
   Logger::info << "Families information: " << families << std::endl;
   Logger::info << "Species tree: " << speciesTree << std::endl;
+  Logger::info << "Species Strategy: " << ArgumentsHelper::speciesStrategyToStr(speciesStrategy) << std::endl;
   Logger::info << "Strategy: " << ArgumentsHelper::strategyToStr(strategy) << std::endl;
   Logger::info << "Reconciliation model: " << reconciliationModelStr << std::endl;
   Logger::info << "Reconciliation opt: " << ArgumentsHelper::recOptToStr(reconciliationOpt) << std::endl;

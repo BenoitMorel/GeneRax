@@ -26,6 +26,11 @@ enum class Strategy {
   SPR, EVAL
 };
 
+
+enum class SpeciesStrategy {
+  SPR, TRANSFERS, HYBRID
+};
+
 /*
  *  Output formats for reconciled gene trees
  */

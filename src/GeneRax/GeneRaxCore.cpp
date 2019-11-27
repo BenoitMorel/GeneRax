@@ -95,8 +95,21 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     Logger::timed << "Start optimizing the species tree with fixed gene trees" << std::endl;
   }
   for (unsigned int radius = 1; radius <= instance.args.speciesFastRadius; ++radius) {
+    unsigned int minTransfers = instance.args.speciesFastRadius + 1 - radius;
     speciesTreeOptimizer.optimizeDTLRates();
-    speciesTreeOptimizer.sprSearch(radius, false);
+    minTransfers = 1;
+    switch (instance.args.speciesStrategy) {
+    case SpeciesStrategy::SPR:
+      speciesTreeOptimizer.sprSearch(radius);
+      break;
+    case SpeciesStrategy::TRANSFERS:
+      speciesTreeOptimizer.transferSearch(minTransfers);
+      break;
+    case SpeciesStrategy::HYBRID:
+      speciesTreeOptimizer.transferSearch(minTransfers);
+      speciesTreeOptimizer.sprSearch(radius);
+      break;
+    }
     //speciesTreeOptimizer.rootExhaustiveSearch(false);
     instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
   }

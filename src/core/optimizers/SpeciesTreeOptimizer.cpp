@@ -360,8 +360,24 @@ double SpeciesTreeOptimizer::slowSPRRound(unsigned int speciesRadius, double bes
   return bestLL;
 }
 
-#define NORMALSEARCH
-//#define TRANSFERS
+double SpeciesTreeOptimizer::transferSearch(unsigned int minTransfers)
+{
+  _stats.reset();
+  auto bestLL = computeRecLikelihood();
+  Logger::timed << getStepTag(true) << " Starting species transfer search, minTransfers=" 
+    << minTransfers << ", bestLL=" << bestLL << ")" <<std::endl;
+  double newLL = bestLL;
+  do {
+    bestLL = newLL;
+    newLL = fastTransfersRound(minTransfers);
+  } while (newLL - bestLL > 0.001);
+  Logger::timed << "After transfer search: " << bestLL << std::endl;
+  Logger::info << _stats << std::endl; 
+  saveCurrentSpeciesTreeId();
+  _stats.reset();
+  return newLL;
+}
+
 double SpeciesTreeOptimizer::sprSearch(unsigned int radius, bool doOptimizeGeneTrees)
 {
   _stats.reset();
@@ -370,32 +386,16 @@ double SpeciesTreeOptimizer::sprSearch(unsigned int radius, bool doOptimizeGeneT
   Logger::timed << getStepTag(!doOptimizeGeneTrees) << " Starting species SPR search, radius=" 
     << radius << ", bestLL=" << bestLL << ")" <<std::endl;
   double newLL = bestLL;
-#ifdef TRANSFERS
-    do {
-      bestLL = newLL;
-      newLL = fastTransfersRound(1);
-      newLL = fastSPRRound(1);
-    } while (newLL - bestLL > 0.001);
-  Logger::timed << "After transfer search: " << bestLL << std::endl;
-  Logger::info << _stats << std::endl; 
-  _stats.reset();
-#endif
-#ifdef NORMALSEARCH
   do {
     bestLL = newLL;
     if (doOptimizeGeneTrees) {
       newLL = slowSPRRound(radius, bestLL); 
     } else {
-#ifdef TRANSFERS
-      newLL = fastSPRRound(1);
-#else
       newLL = fastSPRRound(radius);
-#endif
     }
   } while (newLL - bestLL > 0.001);
   Logger::timed << "After normal search: " << bestLL << std::endl;
   Logger::info << _stats << std::endl;
-#endif
   saveCurrentSpeciesTreeId();
   return newLL;
 }

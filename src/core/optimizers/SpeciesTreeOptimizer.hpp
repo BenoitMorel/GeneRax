@@ -65,7 +65,8 @@ public:
   double fastTransfersRound(unsigned int minTransfers);
   double fastSPRRound(unsigned int radius);
   double slowSPRRound(unsigned int radius, double bestLL);
-  double sprSearch(unsigned int radius, bool doOptimizeGeneTrees);
+  double sprSearch(unsigned int radius, bool doOptimizeGeneTrees = false);
+  double transferSearch(unsigned int minTransfer);
   void optimizeDTLRates();
  
   Parameters computeOptimizedRates(); 
