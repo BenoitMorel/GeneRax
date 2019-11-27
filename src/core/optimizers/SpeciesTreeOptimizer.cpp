@@ -33,7 +33,8 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _lastRecLL(-std::numeric_limits<double>::infinity()),
   _lastLibpllLL(-std::numeric_limits<double>::infinity()),
   _bestRecLL(-std::numeric_limits<double>::infinity()),
-  _bestLibpllLL(-std::numeric_limits<double>::infinity())
+  _bestLibpllLL(-std::numeric_limits<double>::infinity()),
+  _firstOptimizeRatesCall(true)
   
 {
   if (speciesTreeFile == "random") {
@@ -129,78 +130,149 @@ void SpeciesTreeOptimizer::rootExhaustiveSearch(bool doOptimizeGeneTrees)
     SpeciesTreeOperator::changeRoot(*_speciesTree, bestMovesHistory[i]);
   }
 }
- 
+
+
 
 bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
-    unsigned int radius,
+    unsigned int regraft,
     double refApproxLL, 
     unsigned int hash1)
 {
   bool tryApproxFirst = Enums::implementsApproxLikelihood(_recModel);
   bool check = false;
-  std::vector<unsigned int> regrafts;
-  SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
-  for (auto regraft: regrafts) {
-    // Apply the move
-    auto rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
-    bool canTestMove = true;
-    // Discard bad moves with an approximation of the likelihood function
-    double approxRecLL;
-    bool needFullRollback = false;
-    if (tryApproxFirst) {
-      approxRecLL = computeApproxRecLikelihood();
-      //Logger::info << approxRecLL << std::endl;
-      if (approxRecLL - _bestRecLL < 0.0) {
-        canTestMove = false;
-      } else {
-        needFullRollback = true;
-      }
+  // Apply the move
+  //Logger::info << "Before move " << *_speciesTree << std::endl;
+  auto rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
+ // Logger::info << "After move " << *_speciesTree << std::endl;
+  _stats.testedTrees++;
+  bool canTestMove = true;
+  // Discard bad moves with an approximation of the likelihood function
+  double approxRecLL;
+  bool needFullRollback = false;
+  if (tryApproxFirst) {
+    approxRecLL = computeApproxRecLikelihood();
+    //Logger::info << approxRecLL << std::endl;
+    if (approxRecLL - _bestRecLL < 0.0) {
+      canTestMove = false;
+    } else {
+      needFullRollback = true;
     }
-    if (canTestMove) {
-      // we really test the move
-      _lastRecLL = computeRecLikelihood();
-      if (_lastRecLL > _bestRecLL) {
-        // Better tree found! keep it and return
-        Logger::info << "new best tree " << _bestRecLL << " -> " << _lastRecLL << std::endl;
-        newBestTreeCallback();
-        return true;
-      }
+  }
+  if (canTestMove) {
+    // we really test the move
+    _lastRecLL = computeRecLikelihood();
+    if (_lastRecLL > _bestRecLL) {
+      // Better tree found! keep it and return
+      Logger::info << "new best tree " << _bestRecLL << " -> " << _lastRecLL << std::endl;
+      newBestTreeCallback();
+      return true;
     }
-    // we do not keep the tree
-    SpeciesTreeOperator::reverseSPRMove(*_speciesTree, prune, rollback);
-    if (needFullRollback) {
-      for (auto &evaluation: _evaluations) {
-        evaluation->rollbackToLastState();
-      }
+  }
+  // we do not keep the tree
+  SpeciesTreeOperator::reverseSPRMove(*_speciesTree, prune, rollback);
+  if (needFullRollback) {
+    for (auto &evaluation: _evaluations) {
+      evaluation->rollbackToLastState();
     }
-    // ensure that we correctly reverted
-    if (check) {
-      auto hash2 = _speciesTree->getNodeIndexHash(); 
-      assert(hash1 == hash2);
-      if (tryApproxFirst && !canTestMove) {
-        auto approxRevertedLL = computeApproxRecLikelihood();
-        assert(fabs(refApproxLL - approxRevertedLL) < 0.1);
-      } else {
-        auto revertedLL = computeRecLikelihood();
-        assert(fabs(revertedLL - _bestRecLL) < 0.1);
-      }
+  }
+  // ensure that we correctly reverted
+  if (check) {
+    auto hash2 = _speciesTree->getNodeIndexHash(); 
+    assert(hash1 == hash2);
+    if (tryApproxFirst && !canTestMove) {
+      auto approxRevertedLL = computeApproxRecLikelihood();
+      assert(fabs(refApproxLL - approxRevertedLL) < 0.1);
+    } else {
+      auto revertedLL = computeRecLikelihood();
+      assert(fabs(revertedLL - _bestRecLL) < 0.1);
     }
   }
   return false;
 }
 
-double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
+struct TransferMove {
+  unsigned int prune;
+  unsigned int regraft;
+  unsigned int transfers;
+  TransferMove(): prune(0), regraft(0), transfers(0) {
+  }
+  TransferMove(unsigned int p, unsigned int r, unsigned int t): prune(p), regraft(r), transfers(t) {
+  }
+  bool operator < (const TransferMove& tm) const
+  {
+    return transfers > tm.transfers;
+  }
+};
+
+double SpeciesTreeOptimizer::fastTransfersRound(unsigned int minTransfers)
 {
-  std::vector<unsigned int> prunes;
-  SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, prunes);
   _bestRecLL = computeRecLikelihood();
   auto hash1 = _speciesTree->getNodeIndexHash(); 
   auto refApproxLL = computeApproxRecLikelihood();
-  assert (fabs(_bestRecLL - refApproxLL) < 0.01);
-  for (auto prune: prunes) {
-    if (testPruning(prune, radius, refApproxLL, hash1)) {
+  TransferFrequencies frequencies;
+  std::string speciesTreeFile(FileSystem::joinPaths(_outputDir, "speciesTreeTemp.newick"));
+  saveCurrentSpeciesTreePath(speciesTreeFile, true);
+  ParallelContext::barrier();
+  Routines::getTransfersFrequencies(speciesTreeFile,
+    _recModel,
+    _currentFamilies,
+    _speciesTree->getRatesVector(),
+    frequencies,
+    _outputDir);
+  unsigned int transfers = 0;
+  ParallelContext::barrier();
+  std::unordered_map<std::string, unsigned int> labelsToIds;
+  _speciesTree->getLabelsToId(labelsToIds);
+  std::vector<TransferMove> transferMoves;
+  for (auto entry: frequencies) {
+    transfers += entry.second;
+    if (entry.second > minTransfers) {
+      std::string key1, key2;
+      Routines::getLabelsFromTransferKey(entry.first, key1, key2);
+      unsigned int prune = labelsToIds[key1];
+      unsigned int regraft = labelsToIds[key2];
+      if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, prune, regraft)) {
+        transferMoves.push_back(TransferMove(prune, regraft, entry.second)); 
+      }
+    }
+  }
+  std::sort(transferMoves.begin(), transferMoves.end());
+  for (auto &transferMove: transferMoves) {
+    _stats.testedTransfers++;
+    /*
+    Logger::info << _speciesTree->getNode(transferMove.prune)->label 
+                 << " " 
+                 <<_speciesTree->getNode(transferMove.regraft)->label 
+                 << std::endl;
+                 */
+    if (testPruning(transferMove.prune, transferMove.regraft, refApproxLL, hash1)) {
+      _stats.acceptedTransfers++;
+      Logger::info << "better from heuristic" << std::endl;
+      return _bestRecLL;
       hash1 = _speciesTree->getNodeIndexHash(); 
       refApproxLL = computeApproxRecLikelihood();
+    }
+  }
+  return _bestRecLL;
+}
+
+double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
+{
+  _bestRecLL = computeRecLikelihood();
+  auto hash1 = _speciesTree->getNodeIndexHash(); 
+  auto refApproxLL = computeApproxRecLikelihood();
+
+  std::vector<unsigned int> prunes;
+  SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, prunes);
+  assert (fabs(_bestRecLL - refApproxLL) < 0.01);
+  for (auto prune: prunes) {
+    std::vector<unsigned int> regrafts;
+    SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
+    for (auto regraft: regrafts) {
+      if (testPruning(prune, regraft, refApproxLL, hash1)) {
+        hash1 = _speciesTree->getNodeIndexHash(); 
+        refApproxLL = computeApproxRecLikelihood();
+      }
     }
   }
   return _bestRecLL;
@@ -288,28 +360,59 @@ double SpeciesTreeOptimizer::slowSPRRound(unsigned int speciesRadius, double bes
   return bestLL;
 }
 
+#define NORMALSEARCH
+//#define TRANSFERS
 double SpeciesTreeOptimizer::sprSearch(unsigned int radius, bool doOptimizeGeneTrees)
 {
+  _stats.reset();
   unsigned int geneRadius = doOptimizeGeneTrees ? 1 : 0;
   double bestLL = doOptimizeGeneTrees ? computeLikelihood(geneRadius) : computeRecLikelihood();
   Logger::timed << getStepTag(!doOptimizeGeneTrees) << " Starting species SPR search, radius=" 
     << radius << ", bestLL=" << bestLL << ")" <<std::endl;
   double newLL = bestLL;
+#ifdef TRANSFERS
+    do {
+      bestLL = newLL;
+      newLL = fastTransfersRound(1);
+      newLL = fastSPRRound(1);
+    } while (newLL - bestLL > 0.001);
+  Logger::timed << "After transfer search: " << bestLL << std::endl;
+  Logger::info << _stats << std::endl; 
+  _stats.reset();
+#endif
+#ifdef NORMALSEARCH
   do {
     bestLL = newLL;
     if (doOptimizeGeneTrees) {
       newLL = slowSPRRound(radius, bestLL); 
     } else {
+#ifdef TRANSFERS
+      newLL = fastSPRRound(1);
+#else
       newLL = fastSPRRound(radius);
+#endif
     }
   } while (newLL - bestLL > 0.001);
+  Logger::timed << "After normal search: " << bestLL << std::endl;
+  Logger::info << _stats << std::endl;
+#endif
   saveCurrentSpeciesTreeId();
   return newLL;
 }
   
-Parameters SpeciesTreeOptimizer::computeOptimizedRates() const
+Parameters SpeciesTreeOptimizer::computeOptimizedRates() 
 {
-  return DTLOptimizer::optimizeParametersGlobalDTL(*_geneTrees, _speciesTree->getTree(), _recModel);
+  Logger::timed << "optimize rates " << std::endl;
+  Parameters *startingRates = nullptr;
+  Parameters rates(_speciesTree->getRates());
+  if (_firstOptimizeRatesCall) {
+    _firstOptimizeRatesCall = false;
+  } else {
+    startingRates = &rates;
+  }
+  auto res =  DTLOptimizer::optimizeParametersGlobalDTL(*_geneTrees, _speciesTree->getTree(), _recModel, startingRates);
+  Logger::timed << "optimize rates done" << std::endl;
+  return res;
 }
   
 void SpeciesTreeOptimizer::optimizeDTLRates()
@@ -390,6 +493,7 @@ double SpeciesTreeOptimizer::computeRecLikelihood()
     ll += evaluation->evaluate(false);
   }
   ParallelContext::sumDouble(ll);
+  _stats.exactLikelihoodCalls++;
   return ll;
 }
 
@@ -400,11 +504,13 @@ double SpeciesTreeOptimizer::computeApproxRecLikelihood()
     ll += evaluation->evaluate(true);
   }
   ParallelContext::sumDouble(ll);
+  _stats.approxLikelihoodCalls++;
   return ll;
 }
 
 void SpeciesTreeOptimizer::newBestTreeCallback()
 {
+  _stats.acceptedTrees++;
   _bestLibpllLL = _lastLibpllLL;
   _bestRecLL = _lastRecLL;
 }

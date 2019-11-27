@@ -84,6 +84,16 @@ public:
   CArrayRange<pll_rnode_t*> getNodes() const;
   
   static void setSon(pll_rnode_t *parent, pll_rnode_t *newSon, bool left);
+  
+  friend std::ostream& operator<<(std::ostream& os, const PLLRootedTree &tree)
+  {
+    char *newick = pll_rtree_export_newick(tree.getRawPtr()->root, 0);
+    std::string str(newick);
+    os << str;
+    free(newick);
+    return os;
+  }
+
 
 
 private:

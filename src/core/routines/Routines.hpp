@@ -43,6 +43,9 @@ public:
     const Parameters &rates,
     TransferFrequencies &frequencies,
     const std::string &outputDir);
+  static void getLabelsFromTransferKey(const std::string &key, 
+      std::string &label1, 
+      std::string &label2);
   
   static void getParametersFromTransferFrequencies(const std::string &speciesTreeFile,
       const TransferFrequencies &frequencies, 
@@ -75,6 +78,7 @@ public:
   static void gatherLikelihoods(Families &families,
     double &totalLibpllLL,
     double &totalRecLL);
+
 
 
 

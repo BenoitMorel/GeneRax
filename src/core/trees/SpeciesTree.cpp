@@ -149,6 +149,25 @@ pll_rnode_t *getBrother(pll_rnode_t *node) {
   return father->left == node ? father->right : father->left;
 }
   
+bool SpeciesTreeOperator::canApplySPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int regraft)
+{
+  auto pruneNode = speciesTree.getNode(prune);
+  auto regraftNode = speciesTree.getNode(regraft);
+  if (pruneNode->parent == regraftNode) {
+    return false;
+  }
+  if (pruneNode == getBrother(pruneNode)) {
+    return false;
+  }
+  while (regraftNode != speciesTree.getRoot()) {
+    if (pruneNode == regraftNode) {
+        return false;
+    }
+    regraftNode = regraftNode->parent;
+  }
+  return true;
+}
+  
 unsigned int SpeciesTreeOperator::applySPRMove(SpeciesTree &speciesTree, 
     unsigned int prune, 
     unsigned int regraft)

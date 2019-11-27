@@ -14,6 +14,35 @@ struct EvaluatedMove {
   double ll;
 };
 
+struct SpeciesSearchStats {
+  unsigned int exactLikelihoodCalls;
+  unsigned int approxLikelihoodCalls;
+  unsigned int testedTrees;
+  unsigned int testedTransfers;
+  unsigned int acceptedTrees;
+  unsigned int acceptedTransfers;
+  SpeciesSearchStats() { reset(); }
+  friend std::ostream& operator<<(std::ostream& os, const SpeciesSearchStats &stats) {
+    /*
+    os << "Tested trees: " << stats.testedTrees << std::endl;
+    os << "Accepted trees: " << stats.acceptedTrees << std::endl;
+    os << "Tested transfers: " << stats.testedTransfers << std::endl;
+    os << "Accepted transfers trees: " << stats.acceptedTransfers << std::endl;
+    */
+    os << "Approx likelihood calls: " << stats.approxLikelihoodCalls << std::endl;
+    os << "Exact likelihood calls: " << stats.exactLikelihoodCalls << std::endl;
+    return os;
+  }
+  void reset() {
+    exactLikelihoodCalls = 0;
+    approxLikelihoodCalls = 0;
+    testedTrees = 0;
+    testedTransfers = 0;
+    acceptedTrees = 0;
+    acceptedTransfers = 0;
+  }
+};
+
 class SpeciesTreeOptimizer: public SpeciesTree::Listener {
 public:
   SpeciesTreeOptimizer(const std::string speciesTreeFile, 
@@ -33,12 +62,13 @@ public:
   virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
   void rootExhaustiveSearch(bool doOptimizeGeneTrees);
+  double fastTransfersRound(unsigned int minTransfers);
   double fastSPRRound(unsigned int radius);
   double slowSPRRound(unsigned int radius, double bestLL);
   double sprSearch(unsigned int radius, bool doOptimizeGeneTrees);
   void optimizeDTLRates();
  
-  Parameters computeOptimizedRates() const; 
+  Parameters computeOptimizedRates(); 
 
   double optimizeGeneTrees(unsigned int radius);
   void revertGeneTreeOptimization();
@@ -70,6 +100,8 @@ private:
   double _lastLibpllLL;
   double _bestRecLL;
   double _bestLibpllLL;
+  SpeciesSearchStats _stats;
+  bool _firstOptimizeRatesCall;
 private:
   void updateEvaluations();
   void rootExhaustiveSearchAux(SpeciesTree &speciesTree, 
@@ -81,7 +113,7 @@ private:
       double &bestLL, 
       unsigned int &visits);
   bool testPruning(unsigned int prune,
-    unsigned int radius,
+    unsigned int regraft,
     double refApproxLL, 
     unsigned int hash1);
   void newBestTreeCallback();

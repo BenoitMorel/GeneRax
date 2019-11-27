@@ -71,7 +71,7 @@ void PLLRootedTree::save(const std::string &fileName) const
 {
   LibpllParsers::saveRtree(_tree->root, fileName);
 }
-
+  
 void PLLRootedTree::setMissingBranchLengths(double minBL)
 {
   for (auto node: getNodes()) {

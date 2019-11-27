@@ -200,7 +200,7 @@ static std::string getTransferKey(const std::string &label1, const std::string &
   return label1 + keyDelimiter + label2; 
 }
 
-static void getLabelsFromTransferKey(const std::string &key, std::string &label1, std::string &label2)
+void Routines::getLabelsFromTransferKey(const std::string &key, std::string &label1, std::string &label2)
 {
   auto pos = key.find(keyDelimiter);
   label1 = key.substr(0, pos);
@@ -215,6 +215,7 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     const std::string &outputDir)
 {
   inferReconciliation(speciesTreeFile, families, recModel, rates, outputDir);
+  
   SpeciesTree speciesTree(speciesTreeFile);
   
   for (auto &family: families) {
@@ -240,6 +241,7 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
   for (auto &freq: transferFrequencies) {
     os << freq.first << " " << freq.second << std::endl;
   }
+  ParallelContext::barrier();
 }
 
 

@@ -21,7 +21,8 @@ public:
 
   static Parameters optimizeParametersGlobalDTL(PerCoreGeneTrees &geneTrees, 
       PLLRootedTree &speciesTree, 
-      RecModel model);
+      RecModel model,
+      Parameters *startingParameters = nullptr);
 
   static Parameters optimizeParametersPerSpecies(PerCoreGeneTrees &geneTrees, 
       PLLRootedTree &speciesTree, 

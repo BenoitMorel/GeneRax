@@ -36,6 +36,7 @@ public:
   std::string toString() const;
   pll_rnode_t *getRandomNode();
   pll_rnode_t *getNode(unsigned int nodeIndex) {return _speciesTree.getNode(nodeIndex);}
+  pll_rnode_t *getRoot() { return getTree().getRawPtr()->root; } 
   friend std::ostream& operator<<(std::ostream& os, SpeciesTree &speciesTree) {
     os << speciesTree.toString() << "(" << speciesTree.getTree().getLeavesNumber() << " taxa)" << std::endl;
     return os;
@@ -78,6 +79,7 @@ public:
    */
   static void changeRoot(SpeciesTree &speciesTree, unsigned int direction);
   static void revertChangeRoot(SpeciesTree &speciesTree, unsigned int direction);
+  static bool canApplySPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int regraft);
   static unsigned int applySPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int regraft);
   static void reverseSPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int applySPRMoveReturnValue);
   static void getPossiblePrunes(SpeciesTree &speciesTree, std::vector<unsigned int> &prunes);
