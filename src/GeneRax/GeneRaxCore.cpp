@@ -101,6 +101,7 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
       speciesTreeOptimizer.sprSearch(radius);
       instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
     }
+    break;
   case SpeciesStrategy::TRANSFERS:
     for (unsigned int minTransfers = 3; minTransfers > 0; --minTransfers) {
       speciesTreeOptimizer.optimizeDTLRates();

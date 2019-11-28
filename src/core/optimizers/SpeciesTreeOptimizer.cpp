@@ -163,7 +163,6 @@ bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
     _lastRecLL = computeRecLikelihood();
     if (_lastRecLL > _bestRecLL) {
       // Better tree found! keep it and return
-      Logger::info << "new best tree " << _bestRecLL << " -> " << _lastRecLL << std::endl;
       newBestTreeCallback();
       return true;
     }
@@ -202,9 +201,39 @@ struct TransferMove {
   {
     return transfers > tm.transfers;
   }
+  bool operator ==(const TransferMove& obj) const
+  {
+    return (obj.prune == prune) && (obj.regraft == regraft) && (obj.transfers == transfers); 
+  }
 };
 
-double SpeciesTreeOptimizer::fastTransfersRound(unsigned int minTransfers)
+static unsigned int hashints(unsigned int a, unsigned int b)
+{
+  return (a + b) * (a + b + 1) / 2  + b;
+}
+
+namespace std {
+template<>
+struct hash<TransferMove>
+{
+  size_t
+    operator()(const TransferMove & obj) const
+    {
+      return hash<int>()(static_cast<int>(
+            hashints(hashints(obj.prune, obj.regraft), obj.transfers)));
+    }
+};
+}
+
+
+
+struct MovesBlackList {
+  std::unordered_set<TransferMove> _blacklist;
+  bool isBlackListed(const TransferMove &move) { return _blacklist.find(move) != _blacklist.end();}
+  void blacklist(const TransferMove &move) { _blacklist.insert(move); }
+};
+
+double SpeciesTreeOptimizer::fastTransfersRound(unsigned int minTransfers, MovesBlackList &blacklist)
 {
   _bestRecLL = computeRecLikelihood();
   auto hash1 = _speciesTree->getNodeIndexHash(); 
@@ -224,7 +253,6 @@ double SpeciesTreeOptimizer::fastTransfersRound(unsigned int minTransfers)
   std::unordered_map<std::string, unsigned int> labelsToIds;
   _speciesTree->getLabelsToId(labelsToIds);
   std::vector<TransferMove> transferMoves;
-  
   for (auto entry: frequencies) {
     transfers += entry.second;
     if (entry.second > minTransfers) {
@@ -234,7 +262,11 @@ double SpeciesTreeOptimizer::fastTransfersRound(unsigned int minTransfers)
       unsigned int regraft = labelsToIds[key1];
       // HERE
       if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, prune, regraft)) {
-        transferMoves.push_back(TransferMove(prune, regraft, entry.second)); 
+        TransferMove move(prune, regraft, entry.second);
+        if (!blacklist.isBlackListed(move)) {
+          blacklist.blacklist(move);
+          transferMoves.push_back(TransferMove(prune, regraft, entry.second)); 
+        }
       }
     }
   }
@@ -258,18 +290,16 @@ double SpeciesTreeOptimizer::fastTransfersRound(unsigned int minTransfers)
       if (testPruning(transferMove.prune, transferMove.regraft, refApproxLL, hash1)) {
         _stats.acceptedTransfers++;
         improvements++;
-        Logger::info << "better from heuristic (transfers:" << transferMove.transfers << ", trial: " << index << ")"  << std::endl;
+        Logger::info << "better from heuristic (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ")"   << std::endl;
         // we enough improvements to recompute the new transfers
         if (improvements > restartAfter) {
           return _bestRecLL;
         }
-      //  return _bestRecLL;
         hash1 = _speciesTree->getNodeIndexHash(); 
         refApproxLL = computeApproxRecLikelihood();
       }
     }  
   }
-  Logger::timed << "End of fastTransfersRound " << std::endl;
   return _bestRecLL;
 }
 
@@ -287,6 +317,7 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
     SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
     for (auto regraft: regrafts) {
       if (testPruning(prune, regraft, refApproxLL, hash1)) {
+        Logger::info << "new best tree " << _bestRecLL << " -> " << _lastRecLL << std::endl;
         hash1 = _speciesTree->getNodeIndexHash(); 
         refApproxLL = computeApproxRecLikelihood();
       }
@@ -384,9 +415,10 @@ double SpeciesTreeOptimizer::transferSearch(unsigned int minTransfers)
   Logger::timed << getStepTag(true) << " Starting species transfer search, minTransfers=" 
     << minTransfers << ", bestLL=" << bestLL << ")" <<std::endl;
   double newLL = bestLL;
+  MovesBlackList blacklist;
   do {
     bestLL = newLL;
-    newLL = fastTransfersRound(minTransfers);
+    newLL = fastTransfersRound(minTransfers, blacklist);
   } while (newLL - bestLL > 0.001);
   Logger::timed << "After transfer search: " << bestLL << std::endl;
   Logger::info << _stats << std::endl; 

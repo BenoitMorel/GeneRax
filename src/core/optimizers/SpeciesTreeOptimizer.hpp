@@ -14,6 +14,8 @@ struct EvaluatedMove {
   double ll;
 };
 
+struct MovesBlackList;
+
 struct SpeciesSearchStats {
   unsigned int exactLikelihoodCalls;
   unsigned int approxLikelihoodCalls;
@@ -62,7 +64,7 @@ public:
   virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
   void rootExhaustiveSearch(bool doOptimizeGeneTrees);
-  double fastTransfersRound(unsigned int minTransfers);
+  double fastTransfersRound(unsigned int minTransfers, MovesBlackList &blacklist);
   double fastSPRRound(unsigned int radius);
   double slowSPRRound(unsigned int radius, double bestLL);
   double sprSearch(unsigned int radius, bool doOptimizeGeneTrees = false);
