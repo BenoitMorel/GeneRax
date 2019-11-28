@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <util/enums.hpp>
+#include <memory>
 extern "C" {
 #include <pll.h>
 }
@@ -42,7 +43,7 @@ public:
     _geneRoot(nullptr), 
     _virtualRootIndex(INVALID) 
   {}
-  
+
   // forbid copy
   Scenario(const Scenario &) = delete;
   Scenario & operator = (const Scenario &) = delete;
@@ -70,6 +71,9 @@ public:
 
   void saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly = true);
 
+  void initBlackList(unsigned int genesNumber, unsigned int speciesNumber);
+  void blackList(unsigned int geneNode, unsigned int speciesNode);
+  bool isBlacklisted(unsigned int geneNode, unsigned int speciesNode);
 private:
   static const char *eventNames[];
   std::vector<Event> _events;
@@ -78,6 +82,15 @@ private:
   pll_unode_t *_geneRoot;
   pll_rtree_t *_speciesTree;
   unsigned int _virtualRootIndex;
+     
+  /**
+   *  This blacklist will be used to avoid cyclic reconciliations 
+   *  (transfer and transfer back for instance).
+   *  This can happen because of the approximations in the reconcilation
+   *  function
+   */
+  typedef std::vector< std::vector <bool> > ScenarioBlackList;
+  std::unique_ptr<ScenarioBlackList> _blacklist;
 };
 
 

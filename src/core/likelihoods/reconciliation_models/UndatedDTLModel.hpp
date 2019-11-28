@@ -121,7 +121,8 @@ private:
     pll_unode_t *&stayingGene,
     pll_rnode_t *&recievingSpecies,
     REAL &proba);
-  void getBestTransferLoss(pll_unode_t *parentGeneNode, 
+  void getBestTransferLoss(Scenario &scenario,
+      pll_unode_t *parentGeneNode, 
     pll_rnode_t *originSpeciesNode,
     pll_rnode_t *&recievingSpecies,
     REAL &proba);
@@ -462,13 +463,15 @@ void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode,
 }
 
 template <class REAL>
-void UndatedDTLModel<REAL>::getBestTransferLoss(pll_unode_t *parentGeneNode, 
+void UndatedDTLModel<REAL>::getBestTransferLoss(Scenario &scenario,
+   pll_unode_t *parentGeneNode, 
   pll_rnode_t *originSpeciesNode,
   pll_rnode_t *&recievingSpecies,
   REAL &proba)
 {
   proba = REAL();
   auto e = originSpeciesNode->node_index;
+  auto u = parentGeneNode->node_index;
   std::unordered_set<unsigned int> parents;
   parents.insert(originSpeciesNode->node_index);
   for (auto parent = originSpeciesNode; parent->parent != 0; parent = parent->parent) {
@@ -480,10 +483,13 @@ void UndatedDTLModel<REAL>::getBestTransferLoss(pll_unode_t *parentGeneNode,
       continue;
     }
     REAL factor = _uE[e] * (_PT[e] / static_cast<double>(this->_allSpeciesNodes.size()));
-    REAL newProba = _dtlclvs[parentGeneNode->node_index]._uq[h] * factor;  
+    REAL newProba = _dtlclvs[u]._uq[h] * factor;  
     if (proba < newProba) {
-      proba = newProba;
-      recievingSpecies = species;
+      if (!scenario.isBlacklisted(u, h)) {
+        scenario.blackList(u, h);
+        proba = newProba;
+        recievingSpecies = species;
+      }
     }
   }
 }
@@ -546,7 +552,7 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
     values[3] = _dtlclvs[gid]._uq[f] * _uE[g] * _PS[e];
     values[4] = _dtlclvs[gid]._uq[g] * _uE[f] * _PS[e];
   }
-  getBestTransferLoss(geneNode, speciesNode, tlRecievingSpecies, values[6]);
+  getBestTransferLoss(scenario, geneNode, speciesNode, tlRecievingSpecies, values[6]);
 
   unsigned int maxValueIndex = static_cast<unsigned int>(distance(values.begin(), 
         max_element(values.begin(), values.end())

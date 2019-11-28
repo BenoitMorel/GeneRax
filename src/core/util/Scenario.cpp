@@ -122,8 +122,23 @@ void Scenario::saveTransfers(const std::string &filename, bool masterRankOnly)
     }
   }
 }
+void Scenario::initBlackList(unsigned int genesNumber, unsigned int speciesNumber)
+{
+  std::vector<bool>  blackListAux(speciesNumber, false);
+  _blacklist = std::make_unique<ScenarioBlackList>(genesNumber, blackListAux);
+  
+}
 
-
-
-
-
+void Scenario::blackList(unsigned int geneNode, unsigned int speciesNode)
+{
+  if (_blacklist && _blacklist->size() > geneNode) { // not true for virtual nodes
+    (*_blacklist)[geneNode][speciesNode] = true;
+  }
+}
+bool Scenario::isBlacklisted(unsigned int geneNode, unsigned int speciesNode)
+{
+  if (_blacklist && _blacklist->size() > geneNode) { // not true for virtual nodes
+    return (*_blacklist)[geneNode][speciesNode];
+  }
+  return false;
+}

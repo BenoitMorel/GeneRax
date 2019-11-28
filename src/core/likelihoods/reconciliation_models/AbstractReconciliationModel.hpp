@@ -565,6 +565,7 @@ void AbstractReconciliationModel<REAL>::computeLikelihoods()
     computeRootLikelihood(&virtualRoot);
   }
 }
+
   
 template <class REAL>
 void AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario)
@@ -587,6 +588,7 @@ void AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario)
   virtualRoot.next = geneRoot;
   virtualRoot.node_index = geneRoot->node_index + _maxGeneId + 1;
   scenario.setVirtualRootIndex(virtualRoot.node_index);
+  scenario.initBlackList(_maxGeneId, _speciesTree.getNodesNumber());
   backtrace(&virtualRoot, speciesRoot, scenario, true);
 
 }
