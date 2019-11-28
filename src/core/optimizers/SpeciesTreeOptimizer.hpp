@@ -29,8 +29,8 @@ struct SpeciesSearchStats {
     os << "Tested transfers: " << stats.testedTransfers << std::endl;
     os << "Accepted transfers trees: " << stats.acceptedTransfers << std::endl;
     */
-    os << "Approx likelihood calls: " << stats.approxLikelihoodCalls << std::endl;
-    os << "Exact likelihood calls: " << stats.exactLikelihoodCalls << std::endl;
+    //os << "Approx likelihood calls: " << stats.approxLikelihoodCalls << std::endl;
+    //os << "Exact likelihood calls: " << stats.exactLikelihoodCalls << std::endl;
     return os;
   }
   void reset() {

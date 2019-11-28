@@ -94,24 +94,28 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     Logger::info << std::endl;
     Logger::timed << "Start optimizing the species tree with fixed gene trees" << std::endl;
   }
-  for (unsigned int radius = 1; radius <= instance.args.speciesFastRadius; ++radius) {
-    unsigned int minTransfers = instance.args.speciesFastRadius + 1 - radius;
-    speciesTreeOptimizer.optimizeDTLRates();
-    minTransfers = 1;
-    switch (instance.args.speciesStrategy) {
-    case SpeciesStrategy::SPR:
+  switch (instance.args.speciesStrategy) {
+  case SpeciesStrategy::SPR:
+    for (unsigned int radius = 1; radius <= instance.args.speciesFastRadius; ++radius) {
+      speciesTreeOptimizer.optimizeDTLRates();
       speciesTreeOptimizer.sprSearch(radius);
-      break;
-    case SpeciesStrategy::TRANSFERS:
-      speciesTreeOptimizer.transferSearch(minTransfers);
-      break;
-    case SpeciesStrategy::HYBRID:
-      speciesTreeOptimizer.transferSearch(minTransfers);
-      speciesTreeOptimizer.sprSearch(radius);
-      break;
+      instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
     }
-    //speciesTreeOptimizer.rootExhaustiveSearch(false);
-    instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
+  case SpeciesStrategy::TRANSFERS:
+    for (unsigned int minTransfers = 3; minTransfers > 0; --minTransfers) {
+      speciesTreeOptimizer.optimizeDTLRates();
+      speciesTreeOptimizer.transferSearch(minTransfers);
+      instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
+    }
+    break;
+  case SpeciesStrategy::HYBRID:
+    for (unsigned int minTransfers = 3; minTransfers > 0; --minTransfers) {
+      speciesTreeOptimizer.optimizeDTLRates();
+      speciesTreeOptimizer.transferSearch(minTransfers);
+      speciesTreeOptimizer.sprSearch(1);
+      instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
+    }
+    break;
   }
   speciesTreeOptimizer.saveCurrentSpeciesTreePath(instance.speciesTree, true);
   if (instance.args.speciesSlowRadius > 0) {

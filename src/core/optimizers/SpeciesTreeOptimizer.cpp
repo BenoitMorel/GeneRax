@@ -224,20 +224,29 @@ double SpeciesTreeOptimizer::fastTransfersRound(unsigned int minTransfers)
   std::unordered_map<std::string, unsigned int> labelsToIds;
   _speciesTree->getLabelsToId(labelsToIds);
   std::vector<TransferMove> transferMoves;
+  
   for (auto entry: frequencies) {
     transfers += entry.second;
     if (entry.second > minTransfers) {
       std::string key1, key2;
       Routines::getLabelsFromTransferKey(entry.first, key1, key2);
-      unsigned int prune = labelsToIds[key1];
-      unsigned int regraft = labelsToIds[key2];
+      unsigned int prune = labelsToIds[key2];
+      unsigned int regraft = labelsToIds[key1];
+      // HERE
       if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, prune, regraft)) {
         transferMoves.push_back(TransferMove(prune, regraft, entry.second)); 
       }
     }
   }
+  Logger::info << "Total number of transfers: " << transfers << std::endl;
+  Logger::info << "Number of species pairs: " << pow(_speciesTree->getTree().getNodesNumber(), 2) << std::endl;
+  Logger::info << "Number of moves to try: " << transferMoves.size() << std::endl;
   std::sort(transferMoves.begin(), transferMoves.end());
+  unsigned int index = 0;
+  const unsigned int restartAfter = 1000;
+  unsigned int improvements = 0;
   for (auto &transferMove: transferMoves) {
+    index++;
     _stats.testedTransfers++;
     /*
     Logger::info << _speciesTree->getNode(transferMove.prune)->label 
@@ -245,14 +254,22 @@ double SpeciesTreeOptimizer::fastTransfersRound(unsigned int minTransfers)
                  <<_speciesTree->getNode(transferMove.regraft)->label 
                  << std::endl;
                  */
-    if (testPruning(transferMove.prune, transferMove.regraft, refApproxLL, hash1)) {
-      _stats.acceptedTransfers++;
-      Logger::info << "better from heuristic" << std::endl;
-      return _bestRecLL;
-      hash1 = _speciesTree->getNodeIndexHash(); 
-      refApproxLL = computeApproxRecLikelihood();
-    }
+    if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, transferMove.prune, transferMove.regraft)) {
+      if (testPruning(transferMove.prune, transferMove.regraft, refApproxLL, hash1)) {
+        _stats.acceptedTransfers++;
+        improvements++;
+        Logger::info << "better from heuristic (transfers:" << transferMove.transfers << ", trial: " << index << ")"  << std::endl;
+        // we enough improvements to recompute the new transfers
+        if (improvements > restartAfter) {
+          return _bestRecLL;
+        }
+      //  return _bestRecLL;
+        hash1 = _speciesTree->getNodeIndexHash(); 
+        refApproxLL = computeApproxRecLikelihood();
+      }
+    }  
   }
+  Logger::timed << "End of fastTransfersRound " << std::endl;
   return _bestRecLL;
 }
 
@@ -417,7 +434,9 @@ Parameters SpeciesTreeOptimizer::computeOptimizedRates()
   
 void SpeciesTreeOptimizer::optimizeDTLRates()
 {
-  _speciesTree->setGlobalRates(computeOptimizedRates());
+  _speciesTree->setGlobalRates(Parameters(0.0508132, 0.16325, 0.202409));
+
+  //_speciesTree->setGlobalRates(computeOptimizedRates());
   for (auto &evaluation: _evaluations) {
     evaluation->setRates(_speciesTree->getRatesVector());
   }

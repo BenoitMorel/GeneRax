@@ -77,6 +77,7 @@ void Routines::inferReconciliation(
   FileSystem::mkdir(reconciliationsDir, true);
   std::vector<double> dup_count(speciesTree.getNodesNumber(), 0.0);
   ParallelContext::barrier();
+  ParallelContext::barrier();
   for (auto &tree: geneTrees.getTrees()) {
     std::string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
     std::string speciesEventCountsFile = getSpeciesEventCountFile(outputDir, tree.name);
@@ -241,6 +242,7 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
   for (auto &freq: transferFrequencies) {
     os << freq.first << " " << freq.second << std::endl;
   }
+  Logger::info << "the end" << std::endl;
   ParallelContext::barrier();
 }
 
