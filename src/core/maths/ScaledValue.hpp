@@ -35,7 +35,7 @@ public:
       value = 0.0;
     }
     else {
-      while (value < JS_SCALE_THRESHOLD) {
+      if (value < JS_SCALE_THRESHOLD) {
         scaler += 1;
         value *= JS_SCALE_FACTOR;
       }
