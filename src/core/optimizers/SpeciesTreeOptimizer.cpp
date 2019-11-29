@@ -275,7 +275,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(unsigned int minTransfers, Moves
   Logger::info << "Number of moves to try: " << transferMoves.size() << std::endl;
   std::sort(transferMoves.begin(), transferMoves.end());
   unsigned int index = 0;
-  const unsigned int restartAfter = 1000;
+  const unsigned int restartAfter = 5;
   unsigned int improvements = 0;
   for (auto &transferMove: transferMoves) {
     index++;
