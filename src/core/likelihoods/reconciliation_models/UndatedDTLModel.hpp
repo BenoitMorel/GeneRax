@@ -6,9 +6,9 @@
 #include <IO/Logger.hpp>
 #include <algorithm>
 
-#define IS_PROBA(x) (REAL(0.0) <= (x) && (x) <= REAL(1.0))
+#define IS_PROBA(x) true //(REAL(0.0) <= (x) && (x) <= REAL(1.0))
   
-#define PRINT_ERROR_PROBA(x)  if (!IS_PROBA(x)) {std::cerr << "error " << x << std::endl;} assert(IS_PROBA(x));  
+#define PRINT_ERROR_PROBA(x) // if (!IS_PROBA(x)) {std::cerr << "error " << x << std::endl;} assert(IS_PROBA(x));  
 
 
 /*
