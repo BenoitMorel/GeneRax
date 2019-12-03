@@ -84,7 +84,6 @@ public:
   RecModel getRecModel() const {return _model;}
   
   void rollbackToLastState() {_evaluators->rollbackToLastState();}
-  void validateLastState() {_evaluators->validateLastState();}
 private:
   PLLRootedTree &_speciesTree;
   PLLUnrootedTree &_initialGeneTree;
