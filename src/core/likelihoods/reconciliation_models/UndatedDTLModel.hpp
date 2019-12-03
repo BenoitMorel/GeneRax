@@ -301,7 +301,15 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     auto u_left = leftGeneNode->node_index;
     auto u_right = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
-      proba += (_dtlclvs[u_left]._uq[f] * _dtlclvs[u_right]._uq[g] + _dtlclvs[u_left]._uq[g] * _dtlclvs[u_right]._uq[f]) * _PS[e];
+      // can be read as:
+      //  proba += (_dtlclvs[u_left]._uq[f] * _dtlclvs[u_right]._uq[g] + _dtlclvs[u_left]._uq[g] * _dtlclvs[u_right]._uq[f]) * _PS[e];
+      REAL temp1 = _dtlclvs[u_left]._uq[f];
+      temp1 *= _dtlclvs[u_right]._uq[g];
+      REAL temp2 = _dtlclvs[u_left]._uq[g];
+      temp2 *= _dtlclvs[u_right]._uq[f];
+      temp1 += temp2;
+      temp1 *= _PS[e];
+      proba += temp1;
     }
     // D event
     REAL temp = _dtlclvs[u_left]._uq[e];
