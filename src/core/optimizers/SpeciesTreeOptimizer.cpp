@@ -164,6 +164,9 @@ bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
     if (_lastRecLL > _bestRecLL) {
       // Better tree found! keep it and return
       newBestTreeCallback();
+      for (auto &evaluation: _evaluations) {
+        evaluation->validateLastState();
+      }
       return true;
     }
   }
@@ -306,6 +309,9 @@ double SpeciesTreeOptimizer::fastTransfersRound(unsigned int minTransfers, Moves
 double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
 {
   _bestRecLL = computeRecLikelihood();
+  for (auto &evaluation: _evaluations) {
+    evaluation->validateLastState();
+  }
   auto hash1 = _speciesTree->getNodeIndexHash(); 
   auto refApproxLL = computeApproxRecLikelihood();
 

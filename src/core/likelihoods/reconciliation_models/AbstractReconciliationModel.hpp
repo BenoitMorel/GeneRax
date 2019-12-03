@@ -49,6 +49,8 @@ public:
    */
   virtual void rollbackToLastState() = 0;
 
+  virtual void validateLastState() = 0;
+
   /**
    *  Get/set the root of the gene tree (only relevant in rooted gene tree mode)
    */ 
@@ -106,6 +108,7 @@ public:
   virtual double computeLogLikelihood(bool fastMode = false);
   // overload from parent 
   virtual void rollbackToLastState() {assert(false);}
+  virtual void validateLastState() {assert(false);};
   // overload from parent
   virtual void setRoot(pll_unode_t * root) {_geneRoot = root;}
   // overload from parent
