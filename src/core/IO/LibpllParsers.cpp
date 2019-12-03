@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stack>
 #include <IO/Model.hpp>
+#include <array>
 
 extern "C" {
 #include <pll.h>
@@ -309,5 +310,26 @@ bool LibpllParsers::fillLabelsFromAlignment(const std::string &alignmentFilename
     leaves.insert(sequence->label);
   }
   return res;
+}
+  
+bool LibpllParsers::areLabelsValid(std::unordered_set<std::string> &leaves)
+{
+  std::array<bool, 256> forbiddenCharacter{}; // all set to false
+  forbiddenCharacter[';'] = true;
+  forbiddenCharacter[')'] = true;
+  forbiddenCharacter['('] = true;
+  forbiddenCharacter['['] = true;
+  forbiddenCharacter[']'] = true;
+  forbiddenCharacter[','] = true;
+  forbiddenCharacter[':'] = true;
+  forbiddenCharacter[';'] = true;
+  for (auto &label: leaves) {
+    for (auto c: label) {
+      if (forbiddenCharacter[c]) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
   

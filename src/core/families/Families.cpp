@@ -8,6 +8,7 @@
 enum FamilyErrorCode {
   ERROR_OK = 0,
   ERROR_READ_ALIGNMENT,
+  ERROR_INVALID_LABEL,
   ERROR_READ_GENE_TREE,
   ERROR_NOT_ENOUGH_GENES,
   ERROR_GENE_TREE_SEQUENCES_MISMATCH,
@@ -23,6 +24,7 @@ static std::string getErrorMessage(FamilyErrorCode error) {
     assert(0); 
     return ""; 
   case ERROR_READ_ALIGNMENT: return "Cannot read alignment file (file exists but is invalid)";
+  case ERROR_INVALID_LABEL: return "Some labels in the MSAs contain invalid characters";
   case ERROR_READ_GENE_TREE: return "Cannot read starting gene tree file (file exists but is invalid)";
   case ERROR_NOT_ENOUGH_GENES : return "The gene family should contain at least 3 sequences";
   case ERROR_GENE_TREE_SEQUENCES_MISMATCH : return "Mismatch between gene tree leaves and sequence labels";
@@ -44,6 +46,9 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
     }
     if (!LibpllParsers::fillLabelsFromAlignment(family.alignmentFile, family.libpllModel, alignmentLabels)) {
       return ERROR_READ_ALIGNMENT;
+    }
+    if (!LibpllParsers::areLabelsValid(alignmentLabels)) {
+      return ERROR_INVALID_LABEL;
     }
   } catch (LibpllException e) {
     std::cerr << e.what() << std::endl;

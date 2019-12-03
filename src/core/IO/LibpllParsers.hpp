@@ -67,6 +67,7 @@ public:
       const std::string& modelStrOrFilename,  
       std::unordered_set<std::string> &leaves);
 
+  static bool areLabelsValid(std::unordered_set<std::string> &leaves);
   
   static std::vector<unsigned int> parallelGetTreeSizes(const Families &families);
   static void saveUtree(const pll_unode_t *utree, 
