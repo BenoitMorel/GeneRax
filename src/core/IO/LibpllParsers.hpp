@@ -64,7 +64,7 @@ public:
    *  return false if could not open the alignment
    */
   static bool fillLabelsFromAlignment(const std::string &alignmentFilename, const std::string& modelStrOrFilename,  std::unordered_set<std::string> &leaves);
-
+  static bool areLabelsValid(std::unordered_set<std::string> &leaves);
   
   static std::vector<unsigned int> parallelGetTreeSizes(const Families &families);
   static void saveUtree(const pll_unode_t *utree, 
