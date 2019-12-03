@@ -5,6 +5,7 @@
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <cmath>
 #include <IO/FileSystem.hpp>
+#include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 
 double log(ScaledValue v) 
 {
@@ -25,6 +26,11 @@ ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
     _infinitePrecision(true)
 {
   _evaluators = buildRecModelObject(_model, _infinitePrecision);
+}
+  
+ReconciliationEvaluation::~ReconciliationEvaluation()
+{
+  delete _evaluators;
 }
 
 
@@ -47,6 +53,16 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
     }
   }
   _evaluators->setRates(_dupRates, _lossRates, _transferRates);
+}
+  
+pll_unode_t *ReconciliationEvaluation::getRoot() 
+{
+  return _evaluators->getRoot();
+}
+
+void ReconciliationEvaluation::setRoot(pll_unode_t * root) 
+{
+  _evaluators->setRoot(root);
 }
 
 double ReconciliationEvaluation::evaluate(bool fastMode)
@@ -79,23 +95,23 @@ void ReconciliationEvaluation::invalidateAllSpeciesCLVs()
   _evaluators->invalidateAllSpeciesCLVs();
 }
 
-std::unique_ptr<ReconciliationModelInterface> ReconciliationEvaluation::buildRecModelObject(RecModel recModel, 
+ReconciliationModelInterface *ReconciliationEvaluation::buildRecModelObject(RecModel recModel, 
     bool infinitePrecision)
 {
-  std::unique_ptr<ReconciliationModelInterface> res(nullptr);
+  ReconciliationModelInterface *res(nullptr);
   switch(recModel) {
   case RecModel::UndatedDL:
     if (infinitePrecision) {
-      res = std::make_unique<UndatedDLModel<ScaledValue> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
+      res = new UndatedDLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     } else {
-      res = std::make_unique<UndatedDLModel<double> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
+      res = new UndatedDLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     }
     break;
   case RecModel::UndatedDTL:
     if (infinitePrecision) {
-      res = std::make_unique<UndatedDTLModel<ScaledValue> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
+      res = new UndatedDTLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     } else {
-      res = std::make_unique<UndatedDTLModel<double> >(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
+      res = new UndatedDTLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
     }
     break;
   }
@@ -107,6 +123,7 @@ void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
 {
   if (infinitePrecision != _infinitePrecision) {
     _infinitePrecision = infinitePrecision;
+    delete _evaluators;
     _evaluators = buildRecModelObject(_model, _infinitePrecision);
     _evaluators->setRates(_dupRates, _lossRates, _transferRates);
  }
@@ -144,4 +161,13 @@ void ReconciliationEvaluation::onSpeciesTreeChange(const std::unordered_set<pll_
   _evaluators->onSpeciesTreeChange(nodesToInvalidate);
 }
 
+void ReconciliationEvaluation::setPartialLikelihoodMode(PartialLikelihoodMode mode) 
+{ 
+  _evaluators->setPartialLikelihoodMode(mode);
+}
+  
+void ReconciliationEvaluation::rollbackToLastState() 
+{
+  _evaluators->rollbackToLastState();
+}
 

@@ -16,6 +16,8 @@
 //#define ASSERT_PROBA(x) assert(IS_PROBA(x));
 #define ASSERT_PROBA(x) assert(true);
 
+double log(ScaledValue v);
+
 
 /**
  *  Interface and common implementations for 

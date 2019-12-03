@@ -2,7 +2,6 @@
 
 #include <util/enums.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
-#include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 #include <vector>
 #include <memory>
 #include <maths/DTLRates.hpp>
@@ -10,8 +9,9 @@
 #include <trees/PLLUnrootedTree.hpp>
 #include <trees/PLLRootedTree.hpp>
 
-double log(ScaledValue v) ;
-  
+class ReconciliationModelInterface;
+class Scenario;
+
 /**
  *  Wrapper around the reconciliation likelihood classes
  */
@@ -39,7 +39,7 @@ public:
   ReconciliationEvaluation & operator = (const ReconciliationEvaluation &) = delete;
   ReconciliationEvaluation(ReconciliationEvaluation &&) = delete;
   ReconciliationEvaluation & operator = (ReconciliationEvaluation &&) = delete;
-
+  ~ReconciliationEvaluation();
   void setRates(const Parameters &parameters);
 
 
@@ -49,8 +49,8 @@ public:
    * This method is mostly used for rollbacking to a previous state. In most of the
    * cases you should call inferMLRoot instead.
    */
-  pll_unode_t *getRoot() {return _evaluators->getRoot();}
-  void setRoot(pll_unode_t * root) {_evaluators->setRoot(root);}
+  pll_unode_t *getRoot();
+  void setRoot(pll_unode_t * root);
 
   /**
    *  @param input geneTree
@@ -64,9 +64,7 @@ public:
    */
   void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
-  void setPartialLikelihoodMode(PartialLikelihoodMode mode) { 
-    _evaluators->setPartialLikelihoodMode(mode);
-  }
+  void setPartialLikelihoodMode(PartialLikelihoodMode mode);
 
   /**
    *  Invalidate the CLV at a given node index
@@ -83,7 +81,7 @@ public:
 
   RecModel getRecModel() const {return _model;}
   
-  void rollbackToLastState() {_evaluators->rollbackToLastState();}
+  void rollbackToLastState();
 private:
   PLLRootedTree &_speciesTree;
   PLLUnrootedTree &_initialGeneTree;
@@ -94,10 +92,11 @@ private:
   std::vector<double> _dupRates;
   std::vector<double> _lossRates;
   std::vector<double> _transferRates;
-  std::unique_ptr<ReconciliationModelInterface> _evaluators;
+  // we actually own this pointer, but we do not 
+  // wrap it into a unique_ptr to allow forward definition
+  ReconciliationModelInterface *_evaluators;
 private:
-  
-  std::unique_ptr<ReconciliationModelInterface> buildRecModelObject(RecModel recModel, bool infinitePrecision);
+  ReconciliationModelInterface *buildRecModelObject(RecModel recModel, bool infinitePrecision);
   pll_unode_t *computeMLRoot();
   void updatePrecision(bool infinitePrecision);
 };

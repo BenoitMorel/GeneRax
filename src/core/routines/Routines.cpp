@@ -10,7 +10,7 @@
 #include <IO/FileSystem.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <trees/PLLRootedTree.hpp>
-
+#include <util/Scenario.hpp>
 
 void Routines::optimizeRates(bool userDTLRates, 
     const std::string &speciesTreeFile,

@@ -9,6 +9,7 @@
 #include <memory>
 #include <trees/PLLRootedTree.hpp>
 #include <unordered_set>
+#include <unordered_map>
 
 class PerCoreGeneTrees;
 
