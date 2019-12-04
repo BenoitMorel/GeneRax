@@ -399,7 +399,6 @@ double SpeciesTreeOptimizer::slowSPRRound(unsigned int speciesRadius, double bes
     if (isBetter) {
       Logger::timed << getStepTag(false) << "   Found better tree hash=" << _speciesTree->getHash() 
         << " ll=" << newBestLL << " (previous ll = " << referenceLikelihoods.back().refLikelihood << ")" << std::endl;
-      saveCurrentSpeciesTreeId();
       newBestTreeCallback();
       return newBestLL;
     }
@@ -561,6 +560,7 @@ double SpeciesTreeOptimizer::computeApproxRecLikelihood()
 
 void SpeciesTreeOptimizer::newBestTreeCallback()
 {
+  saveCurrentSpeciesTreeId();
   _stats.acceptedTrees++;
   _bestLibpllLL = _lastLibpllLL;
   _bestRecLL = _lastRecLL;
