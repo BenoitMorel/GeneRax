@@ -73,7 +73,6 @@ private:
   void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       REAL &proba,
       bool isVirtualRoot = false) const;
-  void accountForSpeciesRoot(pll_unode_t *virtualRoot);
 };
 
 
@@ -119,7 +118,9 @@ void UndatedDLModel<REAL>::setRates(const std::vector<double> &dupRates,
 template <class REAL>
 void UndatedDLModel<REAL>::recomputeSpeciesProbabilities()
 {
-  _uE = std::vector<double>(this->_allSpeciesNodesCount, 0.0);
+  if (!_uE.size()) {
+    _uE = std::vector<double>(this->_allSpeciesNodesCount, 0.0);
+  }
   for (auto speciesNode: getSpeciesNodesToUpdate()) {
     auto e = speciesNode->node_index;
     double a = _PD[e];
@@ -141,7 +142,7 @@ template <class REAL>
 void UndatedDLModel<REAL>::updateCLV(pll_unode_t *geneNode)
 {
   assert(geneNode);
-  for (auto speciesNode: this->_speciesNodesToUpdate) {
+  for (auto speciesNode: getSpeciesNodesToUpdate()) {
     computeProbability(geneNode, 
         speciesNode, 
         _dlclvs[geneNode->node_index][speciesNode->node_index]);
@@ -302,36 +303,10 @@ REAL UndatedDLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
 }
 
 template <class REAL>
-void UndatedDLModel<REAL>::accountForSpeciesRoot(pll_unode_t *virtualRoot)
-{
-  auto u = virtualRoot->node_index;
-  std::vector<REAL> save_dlclvs(_dlclvs[u]);
-  auto leftGeneNode = this->getLeft(virtualRoot, true);
-  auto rightGeneNode = this->getRight(virtualRoot, true);
-  for (auto speciesNode: this->_allSpeciesNodes) {
-    auto e = speciesNode->node_index;
-    REAL proba;
-    // D
-      auto gp_i = leftGeneNode->node_index;
-      auto gpp_i = rightGeneNode->node_index;
-      REAL temp = _dlclvs[gp_i][e];
-      temp *= _dlclvs[gpp_i][e];
-      temp *= _PD[e];
-      proba += temp;
-    // no event
-    proba += save_dlclvs[e] * (1.0 - _PD[e]);
-    // DL
-    proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
-    
-    _dlclvs[u][e] = proba;
-  }
-}
-
-template <class REAL>
 void UndatedDLModel<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
-  for (auto speciesNode: this->_speciesNodesToUpdate) {
+  for (auto speciesNode: getSpeciesNodesToUpdate()) {
     auto e = speciesNode->node_index;
     computeProbability(virtualRoot, speciesNode, _dlclvs[u][e], true);
   }
