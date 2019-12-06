@@ -258,6 +258,7 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
     g = speciesNode->right->node_index;
   }
   proba = REAL();
+  REAL temp, temp1, temp2;
   if (isSpeciesLeaf and isGeneLeaf) {
     // present
     if (e == this->_geneToSpecies[gid]) {
@@ -272,21 +273,40 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
     auto gpp_i = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
       // S event
-      proba += (_dlclvs[gp_i][f] * _dlclvs[gpp_i][g] + _dlclvs[gp_i][g] * _dlclvs[gpp_i][f]) *_PS[e];
+      temp1 = _dlclvs[gp_i][f];
+      temp1 *=  _dlclvs[gpp_i][g];
+      scale(temp1);
+      temp2 =  _dlclvs[gp_i][g];
+      temp2 *= _dlclvs[gpp_i][f];
+      scale(temp2);
+      temp1 += temp2;
+      temp1 *= _PS[e];
+      scale(temp1);
+      proba += temp1;
     }
     // D event
-    REAL temp = _dlclvs[gp_i][e];
+    temp = _dlclvs[gp_i][e];
     temp *= _dlclvs[gpp_i][e];
     temp *= _PD[e];
+    scale(temp);
     proba += temp;
   }
   if (not isSpeciesLeaf) {
     // SL event
-    proba += (_dlclvs[gid][f] * _uE[g] + _dlclvs[gid][g] * _uE[f]) * _PS[e];
+    temp1 = _dlclvs[gid][f];
+    temp1 *= _uE[g];
+    scale(temp1);
+    temp2 = _dlclvs[gid][g];
+    temp2 *=  _uE[f];
+    scale(temp2);
+    temp1 += temp2;
+    temp1 *= _PS[e];
+    scale(temp1);
+    proba += temp1;
   }
   // DL event
   proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
-  ASSERT_PROBA(proba);
+  //ASSERT_PROBA(proba);
 }
   
 template <class REAL>
