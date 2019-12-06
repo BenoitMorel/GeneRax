@@ -59,9 +59,8 @@ public:
    * ScaledValue sum operator
    */
   inline ScaledValue& operator+=(const ScaledValue& v) {
-    if (v.scaler == scaler) {
-      value += v.value;
-    } else if (v.scaler < scaler) {
+    value += (v.scaler == scaler) * v.value;
+    if (v.scaler < scaler) {
       value = v.value;
       scaler = v.scaler;
     }
