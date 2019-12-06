@@ -24,7 +24,8 @@ struct SpeciesSearchStats {
   unsigned int acceptedTrees;
   unsigned int acceptedTransfers;
   SpeciesSearchStats() { reset(); }
-  friend std::ostream& operator<<(std::ostream& os, const SpeciesSearchStats &stats) {
+
+  friend std::ostream& operator<<(std::ostream& os , const SpeciesSearchStats &) {
     /*
     os << "Tested trees: " << stats.testedTrees << std::endl;
     os << "Accepted trees: " << stats.acceptedTrees << std::endl;

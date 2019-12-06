@@ -317,7 +317,7 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
     SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
     for (auto regraft: regrafts) {
       if (testPruning(prune, regraft, refApproxLL, hash1)) {
-        Logger::info << "new best tree " << _bestRecLL << " -> " << _lastRecLL << std::endl;
+        Logger::timed << "\tnew best tree " << _bestRecLL << " -> " << _lastRecLL << std::endl;
         hash1 = _speciesTree->getNodeIndexHash(); 
         refApproxLL = computeApproxRecLikelihood();
       }

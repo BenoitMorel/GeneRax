@@ -11,6 +11,7 @@
 #define PRINT_ERROR_PROBA(x) // if (!IS_PROBA(x)) {std::cerr << "error " << x << std::endl;} assert(IS_PROBA(x));  
 
 
+
 /*
 * Implement the undated model described here:
 * https://github.com/ssolo/ALE/blob/master/misc/undated.pdf
@@ -227,9 +228,16 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
     for (auto speciesNode: getSpeciesNodesToUpdate()) {
       auto e = speciesNode->node_index;
       REAL proba(_PL[e]);
-      proba += _uE[e] * _uE[e] * _PD[e] + getCorrectedTransferExtinctionSum(e) * _uE[e];
+      REAL temp = _uE[e] * _uE[e] * _PD[e];
+      scale(temp);
+      proba += temp;
+      temp = getCorrectedTransferExtinctionSum(e) * _uE[e];
+      scale(temp);
+      proba += temp;
       if (speciesNode->left) {
-        proba += _uE[speciesNode->left->node_index]  * _uE[speciesNode->right->node_index] * _PS[e];
+        temp = _uE[speciesNode->left->node_index]  * _uE[speciesNode->right->node_index] * _PS[e];
+        scale(temp);
+        proba += temp;
       }
       //PRINT_ERROR_PROBA(proba)
       _uE[speciesNode->node_index] = proba;
@@ -276,6 +284,8 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
   bool isGeneLeaf = !geneNode->next;
   bool isSpeciesLeaf = !speciesNode->left;
   
+  REAL temp, temp1, temp2;
+
   if (isSpeciesLeaf and isGeneLeaf and e == this->_geneToSpecies[gid]) {
     proba = REAL(_PS[e]);
     return;
@@ -303,30 +313,52 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     if (not isSpeciesLeaf) {
       // can be read as:
       //  proba += (_dtlclvs[u_left]._uq[f] * _dtlclvs[u_right]._uq[g] + _dtlclvs[u_left]._uq[g] * _dtlclvs[u_right]._uq[f]) * _PS[e];
-      REAL temp1 = _dtlclvs[u_left]._uq[f];
+      temp1 = _dtlclvs[u_left]._uq[f];
+      temp2 = _dtlclvs[u_left]._uq[g];
       temp1 *= _dtlclvs[u_right]._uq[g];
-      REAL temp2 = _dtlclvs[u_left]._uq[g];
       temp2 *= _dtlclvs[u_right]._uq[f];
+      scale(temp1);
+      scale(temp2);
       temp1 += temp2;
       temp1 *= _PS[e];
+      scale(temp1);
       proba += temp1;
     }
     // D event
-    REAL temp = _dtlclvs[u_left]._uq[e];
+    temp = _dtlclvs[u_left]._uq[e];
     temp *= _dtlclvs[u_right]._uq[e];
     temp *= _PD[e];
+    scale(temp);
     proba += temp;
     // T event
-    proba += getCorrectedTransferSum(u_left, e) * _dtlclvs[u_right]._uq[e]; 
-    proba += getCorrectedTransferSum(u_right, e) * _dtlclvs[u_left]._uq[e]; 
+    temp1 = getCorrectedTransferSum(u_left, e);
+    temp1 *= _dtlclvs[u_right]._uq[e];
+    scale(temp1);
+    temp2 = getCorrectedTransferSum(u_right, e);
+    temp2 *= _dtlclvs[u_left]._uq[e];
+    scale(temp2);
+    proba += temp1;
+    proba += temp2;
   }
   if (not isSpeciesLeaf) {
     // SL event
-    proba += (_dtlclvs[gid]._uq[f] * _uE[g] + _dtlclvs[gid]._uq[g] * _uE[f]) *_PS[e];
+    temp1 = _dtlclvs[gid]._uq[f];
+    temp1 *= _uE[g];
+    scale(temp1);
+    temp2 = _dtlclvs[gid]._uq[g];
+    temp2 *= _uE[f];
+    scale(temp2);
+    temp1 += temp2;
+    temp1 *= _PS[e];
+    scale(temp1);
+    proba += temp1;
   }
   // TL event
   //proba += oldProba * getCorrectedTransferExtinctionSum(e);
-  proba += getCorrectedTransferSum(gid, e) * _uE[e];
+  temp = getCorrectedTransferSum(gid, e);
+  temp *= _uE[e];
+  scale(temp);
+  proba += temp;
 
   // DL event
   //proba += oldProba * _uE[e] * (2.0 * _PD[e]); 

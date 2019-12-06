@@ -39,11 +39,11 @@ public:
     if (value < JS_SCALE_THRESHOLD) {
       scaler += 1;
       value *= JS_SCALE_FACTOR;
+      checkNull();
     }
   }
-  
+
   explicit ScaledValue(double v):value(v), scaler(0)  {
-    checkNull();
   } 
 
   /**
@@ -52,7 +52,6 @@ public:
    * @param s scaler
    */
   explicit ScaledValue(double v, int s):value(v), scaler(s)  {
-    checkNull();
   } 
 
 
@@ -66,7 +65,6 @@ public:
       value = v.value;
       scaler = v.scaler;
     }
-    scale();
     return *this;
   }
 
@@ -114,8 +112,6 @@ public:
    */
   inline ScaledValue operator*(const ScaledValue& v) const {
     auto res = ScaledValue (v.value * value, v.scaler + scaler);
-    res.scale();
-    res.checkNull();
     return res;
   }
   
@@ -124,12 +120,7 @@ public:
    */
   inline ScaledValue& operator*=(const ScaledValue& v) {
     value *= v.value;
-    if (scaler != NULL_SCALER && v.scaler != NULL_SCALER) {
-      scaler += v.scaler;   
-      scale();
-    } else {
-      setNull();
-    }
+    scaler += v.scaler;   
     return *this;
   }
 
@@ -138,8 +129,6 @@ public:
    */
   inline ScaledValue operator*(double v) const {
     auto res = ScaledValue(v * value, scaler);
-    res.checkNull();
-    res.scale();
     return res;
   }
 
@@ -148,8 +137,6 @@ public:
    */
   inline ScaledValue& operator*=(double v) {
     value *= v;
-    checkNull();
-    scale();
     return *this;
   }
   
@@ -227,4 +214,12 @@ public:
   int scaler;
 };
 
+
+template<class REAL> 
+void scale(REAL &value) {}
+
+template<>
+inline void scale<ScaledValue>(ScaledValue &v) {
+  v.scale();
+}
 
