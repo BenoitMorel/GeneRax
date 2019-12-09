@@ -95,6 +95,9 @@ def run_reconciliation(species_tree, families_file, model, test_output, cores):
 def is_string_in_file(string, file_name):
   return string in open(file_name).read()
 
+def count_string_in_file(string, file_name):
+  return open(file_name).read().count(string)
+
 def check_reconciliation(test_output):
   reconciliations_path = os.path.join(test_output, "generax", "reconciliations")
   nhx_dup_A = os.path.join(reconciliations_path, "gene_dup_A_reconciliated.nhx")
@@ -102,9 +105,15 @@ def check_reconciliation(test_output):
   if (not is_string_in_file("[&&NHX:S=A:D=Y:H=N:B=0]", nhx_dup_A)):
     print("Failed to infer a duplication in species A (" + nhx_dup_A + ")")
     return False
+  if (count_string_in_file("=Y", nhx_dup_A) != 1):
+    print("Inferred to many events in " + nhx_dup_A)
+    return False;
   if (not is_string_in_file("[&&NHX:S=A:D=N:H=Y@A@D:B=0]", nhx_transfer_A_D)):
     print("Failed to infer a transfer from A to D (" + nhx_transfer_A_D + ")")
     return False
+  if (count_string_in_file("=Y", nhx_transfer_A_D) != 1):
+    print("Inferred to many events in " + nhx_transfer_A_D)
+    return False;
   return True
 
 def run_generax(test_data, test_output, families_file, strategy, model, cores):
