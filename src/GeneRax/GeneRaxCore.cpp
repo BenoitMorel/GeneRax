@@ -34,7 +34,8 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
   instance.speciesTree = FileSystem::joinPaths(instance.args.output, "startingSpeciesTree.newick");
   Logger::info << "Filtering invalid families..." << std::endl;
-  filterFamilies(instance.initialFamilies, instance.speciesTree, false);
+  bool needAlignments = instance.args.optimizeGeneTrees;
+  filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, false);
   if (instance.args.speciesTree == "random") {
     Logger::info << "Generating random starting species tree" << std::endl;
     SpeciesTree speciesTree(instance.initialFamilies);
@@ -48,7 +49,7 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
     LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
   }
   ParallelContext::barrier();
-  filterFamilies(instance.initialFamilies, instance.speciesTree, true);
+  filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, true);
   if (!instance.initialFamilies.size()) {
     Logger::info << "[Error] No valid families! Aborting GeneRax" << std::endl;
     ParallelContext::abort(10);

@@ -15,7 +15,8 @@ enum FamilyErrorCode {
   ERROR_ALIGNEMENT_FILE_EXISTENCE,
   ERROR_GENE_TREE_FILE_EXISTENCE,
   ERROR_MAPPING_FILE_EXISTENCE,
-  ERROR_MAPPING_MISMATCH
+  ERROR_MAPPING_MISMATCH,
+  ERROR_NO_ALI_NO_TREE
 };
 
 static std::string getErrorMessage(FamilyErrorCode error) {
@@ -32,43 +33,46 @@ static std::string getErrorMessage(FamilyErrorCode error) {
   case ERROR_GENE_TREE_FILE_EXISTENCE : return "Input starting gene tree file does not exist";
   case ERROR_MAPPING_FILE_EXISTENCE : return "A mapping file was given but does not exist";
   case ERROR_MAPPING_MISMATCH : return "Failed to map genes and species";
+  case ERROR_NO_ALI_NO_TREE : return "This family does not have any starting gene tree nor alignment";
   }
   return "";
 }
 
-static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unordered_set<std::string> &speciesTreeLabels)
+static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unordered_set<std::string> &speciesTreeLabels, bool checkAlignments)
 {
   std::unordered_set<std::string> alignmentLabels;
+  std::unordered_set<std::string> geneTreeLabels;
   // sequences
-  try {
-    if (!FileSystem::exists(family.alignmentFile)) {
-      return ERROR_ALIGNEMENT_FILE_EXISTENCE;
+  if (checkAlignments) {
+    try {
+      if (!FileSystem::exists(family.alignmentFile)) {
+        return ERROR_ALIGNEMENT_FILE_EXISTENCE;
+      }
+      if (!LibpllParsers::fillLabelsFromAlignment(family.alignmentFile, family.libpllModel, alignmentLabels)) {
+        return ERROR_READ_ALIGNMENT;
+      }
+      if (!LibpllParsers::areLabelsValid(alignmentLabels)) {
+        return ERROR_INVALID_LABEL;
+      }
+    } catch (LibpllException e) {
+      std::cerr << e.what() << std::endl;
+    } catch(...) {
+      return  ERROR_READ_ALIGNMENT;
     }
-    if (!LibpllParsers::fillLabelsFromAlignment(family.alignmentFile, family.libpllModel, alignmentLabels)) {
-      return ERROR_READ_ALIGNMENT;
+    if (alignmentLabels.size() < 3) {
+      return ERROR_NOT_ENOUGH_GENES;
     }
-    if (!LibpllParsers::areLabelsValid(alignmentLabels)) {
-      return ERROR_INVALID_LABEL;
-    }
-  } catch (LibpllException e) {
-    std::cerr << e.what() << std::endl;
-  } catch(...) {
-    return  ERROR_READ_ALIGNMENT;
-  }
-  if (alignmentLabels.size() < 3) {
-    return ERROR_NOT_ENOUGH_GENES;
   }
   if (family.mappingFile.size()) {
     if (!FileSystem::exists(family.mappingFile)) {
       return ERROR_MAPPING_FILE_EXISTENCE;
     }
-  }
+    }
   // gene tree. Only check if one is given!
   if (family.startingGeneTree != "__random__" && family.startingGeneTree.size()) {
     if (!FileSystem::exists(family.startingGeneTree)) {
       return ERROR_GENE_TREE_FILE_EXISTENCE;
     }  
-    std::unordered_set<std::string> geneTreeLabels;
     pll_utree_t * utree = 0;
     try {
       utree = LibpllParsers::readNewickFromFile(family.startingGeneTree);
@@ -80,7 +84,10 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
     } else {
       LibpllParsers::fillLeavesFromUtree(utree, geneTreeLabels);
       pll_utree_destroy(utree, 0);
-      if (alignmentLabels != geneTreeLabels) {
+      if (geneTreeLabels.size() < 3) {
+        return ERROR_NOT_ENOUGH_GENES;
+      }
+      if (alignmentLabels.size() && alignmentLabels != geneTreeLabels) {
         for (auto &l: alignmentLabels) {
           std::cerr << l << " ";
         }
@@ -94,10 +101,14 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
         return ERROR_GENE_TREE_SEQUENCES_MISMATCH; 
       }
     }
+    if (alignmentLabels.size() == 0 && geneTreeLabels.size() == 0) {
+      return ERROR_NO_ALI_NO_TREE;
+    }
     GeneSpeciesMapping mapping;
     mapping.fill(family.mappingFile, family.startingGeneTree);
     if (speciesTreeLabels.size()) {
-      if (!mapping.check(alignmentLabels, speciesTreeLabels)) {
+      auto &labels = (alignmentLabels.size() ? alignmentLabels : geneTreeLabels);
+      if (!mapping.check(labels, speciesTreeLabels)) {
         return ERROR_MAPPING_MISMATCH;
       }
     }
@@ -105,7 +116,7 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
   return ERROR_OK;
 }
 
-void filterFamilies(Families &families, const std::string &speciesTreeFile, bool checkSpeciesTree)
+void filterFamilies(Families &families, const std::string &speciesTreeFile, bool checkAlignments, bool checkSpeciesTree)
 {
   ParallelContext::barrier();
   // at the end of this function, different ranks will have
@@ -135,7 +146,7 @@ void filterFamilies(Families &families, const std::string &speciesTreeFile, bool
   std::vector<unsigned int> errors;
   for (auto i = ParallelContext::getBegin(initialFamilySize); i < ParallelContext::getEnd(initialFamilySize); i ++) {
     auto &family = copy[i];
-    localErrors[i - ParallelContext::getBegin(initialFamilySize)]  = filterFamily(family, speciesTreeLabels); 
+    localErrors[i - ParallelContext::getBegin(initialFamilySize)]  = filterFamily(family, speciesTreeLabels, checkAlignments); 
   }
   ParallelContext::concatenateUIntVectors(localErrors, errors);
   errors.erase(remove(errors.begin(), errors.end(), 99999999), errors.end());
