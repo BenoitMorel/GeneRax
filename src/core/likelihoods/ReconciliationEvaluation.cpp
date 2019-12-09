@@ -23,7 +23,7 @@ ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
     _geneSpeciesMapping(geneSpeciesMapping),
     _rootedGeneTree(rootedGeneTree),
     _model(recModel),
-    _infinitePrecision(false)
+    _infinitePrecision(true)
 {
   _evaluators = buildRecModelObject(_model, _infinitePrecision);
 }
@@ -131,7 +131,7 @@ void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
 
 void ReconciliationEvaluation::inferMLScenario(Scenario &scenario) {
   auto infinitePrecision = _infinitePrecision;
-  //updatePrecision(true);
+  updatePrecision(true);
   auto ll = evaluate();
   assert(std::isfinite(ll) && ll < 0.0);
   _evaluators->inferMLScenario(scenario);

@@ -611,22 +611,45 @@ void UndatedDTLModel<REAL>::getBestTransferLoss(Scenario &scenario,
   auto u = parentGeneNode->node_index;
   std::unordered_set<unsigned int> parents;
   parents.insert(originSpeciesNode->node_index);
+  unsigned int speciesNumber = this->_allSpeciesNodes.size();
+  std::vector<REAL> transferProbas(speciesNumber, REAL());
   for (auto parent = originSpeciesNode; parent->parent != 0; parent = parent->parent) {
     parents.insert(parent->parent->node_index);
   }
+  REAL factor = _uE[e] * (_PT[e] / static_cast<double>(this->_allSpeciesNodes.size()));
   for (auto species: this->_allSpeciesNodes) {
     auto h = species->node_index;
     if (parents.count(h)) {
       continue;
     }
-    REAL factor = _uE[e] * (_PT[e] / static_cast<double>(this->_allSpeciesNodes.size()));
-    REAL newProba = _dtlclvs[u]._uq[h] * factor;  
-    if (proba < newProba) {
-      if (!scenario.isBlacklisted(u, h)) {
-        scenario.blackList(u, h);
-        proba = newProba;
-        recievingSpecies = species;
+    transferProbas[h] = _dtlclvs[u]._uq[h] * factor;
+  }
+  if (!stochastic) {
+    for (auto species: this->_allSpeciesNodes) {
+      auto h = species->node_index;
+      if (proba < transferProbas[h]) {
+        if (!scenario.isBlacklisted(u, h)) {
+          scenario.blackList(u, h);
+          proba = transferProbas[h];
+          recievingSpecies = species;
+        }
       }
+    } 
+  } else {
+    proba = REAL();
+    for (auto p: transferProbas) {
+      proba += p;
     }
+    unsigned int h = 0;
+    do {
+      unsigned int bestIndex = sampleIndex<std::vector<REAL>, REAL>(transferProbas);
+      for (auto species: this->_allSpeciesNodes) {
+        h = species->node_index;
+        if (bestIndex == h) {
+          recievingSpecies = species;
+        }
+      }
+    } while (scenario.isBlacklisted(u, h));
+    scenario.blackList(u, h);
   }
 }
