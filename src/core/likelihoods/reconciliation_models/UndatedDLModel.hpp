@@ -51,9 +51,11 @@ protected:
   // overload from parent
   virtual void computeRootLikelihood(pll_unode_t *virtualRoot);
   // overlead from parent
-  virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
-      Scenario &scenario,
-      bool isVirtualRoot = false); //todobenoit make it pure virtual
+  virtual void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+      REAL &proba,
+      bool isVirtualRoot = false,
+      Scenario *scenario = nullptr,
+      Scenario::Event *event = nullptr);
 private:
   std::vector<double> _PD; // Duplication probability, per species branch
   std::vector<double> _PL; // Loss probability, per species branch
@@ -70,9 +72,6 @@ private:
     return this->_speciesNodesToUpdate;
   }
 
-  void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
-      REAL &proba,
-      bool isVirtualRoot = false) const;
 };
 
 
@@ -151,95 +150,11 @@ void UndatedDLModel<REAL>::updateCLV(pll_unode_t *geneNode)
 
 
 template <class REAL>
-void UndatedDLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
-      Scenario &scenario,
-      bool isVirtualRoot) 
-{
-  assert(geneNode);
-  assert(speciesNode);
-  auto gid = geneNode->node_index;
-  pll_unode_t *leftGeneNode = 0;     
-  pll_unode_t *rightGeneNode = 0;   
-  std::vector<REAL> values(5, REAL());
-  bool isGeneLeaf = !geneNode->next;
-  if (!isGeneLeaf) {
-    leftGeneNode = this->getLeft(geneNode, isVirtualRoot);
-    rightGeneNode = this->getRight(geneNode, isVirtualRoot);
-  }
-  bool isSpeciesLeaf = !speciesNode->left;
-  auto e = speciesNode->node_index;
-  unsigned int f = 0;
-  unsigned int g = 0;
-  assert(!(_dlclvs[gid][e] <= REAL())); // check that this scenario is possible
-  if (!isSpeciesLeaf) {
-    f = speciesNode->left->node_index;
-    g = speciesNode->right->node_index;
-  }
-  if (isSpeciesLeaf and isGeneLeaf and e == this->_geneToSpecies[gid]) {
-    // present
-    scenario.addEvent(ReconciliationEventType::EVENT_None, gid, e);
-    return;
-  }
-  if (not isGeneLeaf) {
-    auto gp_i = leftGeneNode->node_index;
-    auto gpp_i = rightGeneNode->node_index;
-    if (not isSpeciesLeaf) {
-      // S event
-      values[0] = _dlclvs[gp_i][f] * _dlclvs[gpp_i][g] * _PS[e];
-      values[1] = _dlclvs[gp_i][g] * _dlclvs[gpp_i][f] * _PS[e];
-    }
-    // D event
-    values[2] = _dlclvs[gp_i][e];
-    values[2] *= _dlclvs[gpp_i][e];
-    values[2] *= _PD[e];
-  }
-  if (not isSpeciesLeaf) {
-    // SL event
-    values[3] = _dlclvs[gid][f] * (_uE[g] * _PS[e]);
-    values[4] = _dlclvs[gid][g] * (_uE[f] * _PS[e]);
-  }
-
-  unsigned int maxValueIndex = static_cast<unsigned int>(distance(values.begin(), 
-        max_element(values.begin(), values.end())
-        ));
-  // safety check
-  assert(!(values[maxValueIndex] <= REAL()));
-  switch(maxValueIndex) {
-    case 0:
-      scenario.addEvent(ReconciliationEventType::EVENT_S, gid, e);
-      backtrace(leftGeneNode, speciesNode->left, scenario); 
-      backtrace(rightGeneNode, speciesNode->right, scenario); 
-      break;
-    case 1:
-      scenario.addEvent(ReconciliationEventType::EVENT_S, gid, e);
-      backtrace(leftGeneNode, speciesNode->right, scenario); 
-      backtrace(rightGeneNode, speciesNode->left, scenario); 
-      break;
-    case 2:
-      scenario.addEvent(ReconciliationEventType::EVENT_D, gid, e);
-      backtrace(leftGeneNode, speciesNode, scenario); 
-      backtrace(rightGeneNode, speciesNode, scenario); 
-      break;
-    case 3: 
-      scenario.addEvent(ReconciliationEventType::EVENT_SL, gid, e, speciesNode->left->node_index);
-      backtrace(geneNode, speciesNode->left, scenario); 
-      break;
-    case 4:
-      scenario.addEvent(ReconciliationEventType::EVENT_SL, gid, e, speciesNode->right->node_index);
-      backtrace(geneNode, speciesNode->right, scenario); 
-      break;
-    default:
-      std::cerr << "event " << maxValueIndex << std::endl;
-      Logger::error << "Invalid event in UndatedDLModel<REAL>::backtrace" << std::endl;
-      assert(false);
-      break;
-  }
-}
-
-template <class REAL>
 void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       REAL &proba,
-      bool isVirtualRoot) const
+      bool isVirtualRoot,
+      Scenario *,
+      Scenario::Event *event)
 {
   auto gid = geneNode->node_index;
   pll_unode_t *leftGeneNode = 0;     
@@ -257,8 +172,15 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
     f = speciesNode->left->node_index;
     g = speciesNode->right->node_index;
   }
+
+  if (event) {
+    event->geneNode = gid; 
+    event->speciesNode = e;
+    event->type = ReconciliationEventType::EVENT_None; 
+  }
+
+
   proba = REAL();
-  REAL temp, temp1, temp2;
   if (isSpeciesLeaf and isGeneLeaf) {
     // present
     if (e == this->_geneToSpecies[gid]) {
@@ -268,45 +190,79 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
     }
     return;
   }
+  
+  std::array<REAL, 8> values;
+  values[0] = values[1] = values[2] = values[3] = REAL();
+  values[4] = values[5] = values[6] = values[7] = REAL();
+  
   if (not isGeneLeaf) {
-    auto gp_i = leftGeneNode->node_index;
-    auto gpp_i = rightGeneNode->node_index;
+    auto u_left = leftGeneNode->node_index;
+    auto u_right = rightGeneNode->node_index;
     if (not isSpeciesLeaf) {
       // S event
-      temp1 = _dlclvs[gp_i][f];
-      temp1 *=  _dlclvs[gpp_i][g];
-      scale(temp1);
-      temp2 =  _dlclvs[gp_i][g];
-      temp2 *= _dlclvs[gpp_i][f];
-      scale(temp2);
-      temp1 += temp2;
-      temp1 *= _PS[e];
-      scale(temp1);
-      proba += temp1;
+      values[0] = _dlclvs[u_left][f];
+      values[1] = _dlclvs[u_left][g];
+      values[0] *= _dlclvs[u_right][g];
+      values[1] *= _dlclvs[u_right][f];
+      values[0] *= _PS[e]; 
+      values[1] *= _PS[e]; 
+      scale(values[0]);
+      scale(values[1]);
+      proba += values[0];
+      proba += values[1];
     }
     // D event
-    temp = _dlclvs[gp_i][e];
-    temp *= _dlclvs[gpp_i][e];
-    temp *= _PD[e];
-    scale(temp);
-    proba += temp;
+    values[2] = _dlclvs[u_left][e];
+    values[2] *= _dlclvs[u_right][e];
+    values[2] *= _PD[e];
+    scale(values[2]);
+    proba += values[2];
   }
   if (not isSpeciesLeaf) {
     // SL event
-    temp1 = _dlclvs[gid][f];
-    temp1 *= _uE[g];
-    scale(temp1);
-    temp2 = _dlclvs[gid][g];
-    temp2 *=  _uE[f];
-    scale(temp2);
-    temp1 += temp2;
-    temp1 *= _PS[e];
-    scale(temp1);
-    proba += temp1;
+    values[3] = _dlclvs[gid][f];
+    values[3] *= (_uE[g] * _PS[e]);
+    scale(values[3]);
+    values[4] = _dlclvs[gid][g];
+    values[4] *=  (_uE[f] * _PS[e]);
+    scale(values[4]);
+    proba += values[3];
+    proba += values[4];
   }
   // DL event
   proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
   //ASSERT_PROBA(proba);
+  
+  if (event) {
+    unsigned int maxValueIndex = static_cast<unsigned int>(std::distance(values.begin(),
+          std::max_element(values.begin(), values.end())
+          ));
+    switch(maxValueIndex) {
+    case 0:
+      event->type = ReconciliationEventType::EVENT_S;
+      event->cross = false;
+      break;
+    case 1:
+      event->type = ReconciliationEventType::EVENT_S;
+      event->cross = true;
+      break;
+    case 2:
+      event->type = ReconciliationEventType::EVENT_D;
+      break;
+    case 3:
+      event->type = ReconciliationEventType::EVENT_SL;
+      event->destSpeciesNode = f;
+      event->pllDestSpeciesNode = speciesNode->left;
+      break;
+    case 4:
+      event->type = ReconciliationEventType::EVENT_SL;
+      event->destSpeciesNode = g;
+      event->pllDestSpeciesNode = speciesNode->right;
+      break;
+    default:
+      assert(false);
+    };
+  }
 }
   
 template <class REAL>

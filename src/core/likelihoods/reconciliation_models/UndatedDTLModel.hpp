@@ -51,11 +51,13 @@ protected:
     return _dtlclvs[root->node_index + this->_maxGeneId + 1]._uq[speciesRoot->node_index];
   }
   virtual REAL getLikelihoodFactor() const;
-  virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
-      Scenario &scenario,
-      bool isVirtualRoot = false);
   virtual void beforeComputeLogLikelihood(); 
   virtual void afterComputeLogLikelihood(); 
+  virtual void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+      REAL &proba,
+      bool isVirtualRoot = false,
+      Scenario *scenario = nullptr,
+      Scenario::Event *event = nullptr);
 private:
   // model
   std::vector<double> _PD; // Duplication probability, per branch
@@ -106,11 +108,6 @@ private:
   // after a fast likelihood computation
   std::vector<DTLCLV> _dtlclvsBackup;
 private:
-  void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
-      REAL &proba,
-      bool isVirtualRoot = false,
-      Scenario *scenario = nullptr,
-      Scenario::Event *event = nullptr);
   void updateTransferSums(REAL &transferExtinctionSum,
     const REAL &transferSumBackup,
     const std::vector<REAL> &probabilities);
@@ -343,25 +340,25 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     proba += values[2];
     
     // T event
-    values[3] = getCorrectedTransferSum(u_left, e);
-    values[3] *= _dtlclvs[u_right]._uq[e];
-    scale(values[3]);
-    values[4] = getCorrectedTransferSum(u_right, e);
-    values[4] *= _dtlclvs[u_left]._uq[e];
-    scale(values[4]);
-    proba += values[3];
-    proba += values[4];
-  }
-  if (not isSpeciesLeaf) {
-    // SL event
-    values[5] = _dtlclvs[gid]._uq[f];
-    values[5] *= (_uE[g] * _PS[e]);
+    values[5] = getCorrectedTransferSum(u_left, e);
+    values[5] *= _dtlclvs[u_right]._uq[e];
     scale(values[5]);
-    values[6] = _dtlclvs[gid]._uq[g];
-    values[6]*= _uE[f] * _PS[e];
+    values[6] = getCorrectedTransferSum(u_right, e);
+    values[6] *= _dtlclvs[u_left]._uq[e];
     scale(values[6]);
     proba += values[5];
     proba += values[6];
+  }
+  if (not isSpeciesLeaf) {
+    // SL event
+    values[3] = _dtlclvs[gid]._uq[f];
+    values[3] *= (_uE[g] * _PS[e]);
+    scale(values[3]);
+    values[4] = _dtlclvs[gid]._uq[g];
+    values[4]*= _uE[f] * _PS[e];
+    scale(values[4]);
+    proba += values[3];
+    proba += values[4];
   }
   // TL event
   values[7] = getCorrectedTransferSum(gid, e);
@@ -375,10 +372,10 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     pll_unode_t *stayingGene = 0;
     pll_rnode_t *recievingSpecies = 0;
     pll_rnode_t *tlRecievingSpecies = 0;
-    values[3] = values[4] = values[7] = REAL(); // invalidate these ones
+    values[5] = values[6] = values[7] = REAL(); // invalidate these ones
     if (!isGeneLeaf) {
       getBestTransfer(geneNode, speciesNode, isVirtualRoot, 
-          transferedGene, stayingGene, recievingSpecies, values[3]);
+          transferedGene, stayingGene, recievingSpecies, values[5]);
     }
     getBestTransferLoss(*scenario, geneNode, speciesNode, tlRecievingSpecies, values[7]);
     unsigned int maxValueIndex = static_cast<unsigned int>(std::distance(values.begin(),
@@ -397,24 +394,24 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
       event->type = ReconciliationEventType::EVENT_D;
       break;
     case 3:
+      event->type = ReconciliationEventType::EVENT_SL;
+      event->destSpeciesNode = f;
+      event->pllDestSpeciesNode = speciesNode->left;
+      break;
+    case 4:
+      event->type = ReconciliationEventType::EVENT_SL;
+      event->destSpeciesNode = g;
+      event->pllDestSpeciesNode = speciesNode->right;
+      break;
+    case 5:
       event->type = ReconciliationEventType::EVENT_T;
       event->transferedGeneNode = transferedGene->node_index;
       event->destSpeciesNode = recievingSpecies->node_index;
       event->pllTransferedGeneNode = transferedGene;
       event->pllDestSpeciesNode = recievingSpecies;
       break;
-    case 4:
-      assert(false);
-      break;
-    case 5:
-      event->type = ReconciliationEventType::EVENT_SL;
-      event->destSpeciesNode = f;
-      event->pllDestSpeciesNode = speciesNode->left;
-      break;
     case 6:
-      event->type = ReconciliationEventType::EVENT_SL;
-      event->destSpeciesNode = g;
-      event->pllDestSpeciesNode = speciesNode->right;
+      assert(false);
       break;
     case 7:
       event->type = ReconciliationEventType::EVENT_TL;
@@ -596,60 +593,3 @@ void UndatedDTLModel<REAL>::getBestTransferLoss(Scenario &scenario,
     }
   }
 }
-
-static pll_unode_t *getOther(pll_unode_t *ref, pll_unode_t *n1, pll_unode_t *n2)
-{
-  return (ref == n1) ? n2 : n1;
-}
-
-template <class REAL>
-void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
-      Scenario &scenario,
-      bool isVirtualRoot) 
-{
-  pll_unode_t *leftGeneNode = 0;     
-  pll_unode_t *rightGeneNode = 0;     
-  bool isGeneLeaf = !geneNode->next;
-  if (!isGeneLeaf) {
-    leftGeneNode = this->getLeft(geneNode, isVirtualRoot);
-    rightGeneNode = this->getRight(geneNode, isVirtualRoot);
-  }
-  REAL temp;
-  Scenario::Event event;
-  computeProbability(geneNode, speciesNode, temp, isVirtualRoot, &scenario, &event);
-  scenario.addEvent(event);
-  // safety check
-  switch(event.type) {
-  case ReconciliationEventType::EVENT_S:
-    if (!event.cross) {
-      backtrace(leftGeneNode, speciesNode->left, scenario); 
-      backtrace(rightGeneNode, speciesNode->right, scenario); 
-    } else {
-      backtrace(leftGeneNode, speciesNode->right, scenario); 
-      backtrace(rightGeneNode, speciesNode->left, scenario); 
-    }
-    break;
-  case ReconciliationEventType::EVENT_D:
-    backtrace(leftGeneNode, speciesNode, scenario); 
-    backtrace(rightGeneNode, speciesNode, scenario); 
-    break;
-  case ReconciliationEventType::EVENT_SL:
-    backtrace(geneNode, event.pllDestSpeciesNode, scenario); 
-    break;
-  case ReconciliationEventType::EVENT_T:
-    backtrace(event.pllTransferedGeneNode, event.pllDestSpeciesNode, scenario);
-    backtrace(getOther(event.pllTransferedGeneNode, leftGeneNode, rightGeneNode),
-        speciesNode, scenario);
-    break;
-  case ReconciliationEventType::EVENT_TL:
-    backtrace(geneNode, event.pllDestSpeciesNode, scenario);
-    break;
-  case ReconciliationEventType::EVENT_None:
-    break;
-  default:
-    assert(false);
-    break;
-  }
-}
-
-

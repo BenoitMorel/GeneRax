@@ -141,8 +141,13 @@ protected:
   // Can assume that all the CLVs are filled
   virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       Scenario &scenario,
-      bool isVirtualRoot = false) = 0;
+      bool isVirtualRoot = false);
  
+  virtual void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+      REAL &proba,
+      bool isVirtualRoot = false,
+      Scenario *scenario = nullptr,
+      Scenario::Event *event = nullptr) = 0;
   
   void initFromUtree(pll_utree_t *tree);
   /**
@@ -596,4 +601,61 @@ void AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario)
 
 }
   
+
+static pll_unode_t *getOther(pll_unode_t *ref, pll_unode_t *n1, pll_unode_t *n2)
+{
+  return (ref == n1) ? n2 : n1;
+}
+
+template <class REAL>
+void AbstractReconciliationModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+      Scenario &scenario,
+      bool isVirtualRoot) 
+{
+  pll_unode_t *leftGeneNode = 0;     
+  pll_unode_t *rightGeneNode = 0;     
+  bool isGeneLeaf = !geneNode->next;
+  if (!isGeneLeaf) {
+    leftGeneNode = this->getLeft(geneNode, isVirtualRoot);
+    rightGeneNode = this->getRight(geneNode, isVirtualRoot);
+  }
+  REAL temp;
+  Scenario::Event event;
+  computeProbability(geneNode, speciesNode, temp, isVirtualRoot, &scenario, &event);
+  scenario.addEvent(event);
+  // safety check
+  switch(event.type) {
+  case ReconciliationEventType::EVENT_S:
+    if (!event.cross) {
+      backtrace(leftGeneNode, speciesNode->left, scenario); 
+      backtrace(rightGeneNode, speciesNode->right, scenario); 
+    } else {
+      backtrace(leftGeneNode, speciesNode->right, scenario); 
+      backtrace(rightGeneNode, speciesNode->left, scenario); 
+    }
+    break;
+  case ReconciliationEventType::EVENT_D:
+    backtrace(leftGeneNode, speciesNode, scenario); 
+    backtrace(rightGeneNode, speciesNode, scenario); 
+    break;
+  case ReconciliationEventType::EVENT_SL:
+    backtrace(geneNode, event.pllDestSpeciesNode, scenario); 
+    break;
+  case ReconciliationEventType::EVENT_T:
+    backtrace(event.pllTransferedGeneNode, event.pllDestSpeciesNode, scenario);
+    backtrace(getOther(event.pllTransferedGeneNode, leftGeneNode, rightGeneNode),
+        speciesNode, scenario);
+    break;
+  case ReconciliationEventType::EVENT_TL:
+    backtrace(geneNode, event.pllDestSpeciesNode, scenario);
+    break;
+  case ReconciliationEventType::EVENT_None:
+    break;
+  default:
+    assert(false);
+    break;
+  }
+}
+
+
 

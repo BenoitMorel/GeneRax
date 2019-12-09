@@ -98,7 +98,7 @@ def is_string_in_file(string, file_name):
 def count_string_in_file(string, file_name):
   return open(file_name).read().count(string)
 
-def check_reconciliation(test_output):
+def check_reconciliation(test_output, model):
   reconciliations_path = os.path.join(test_output, "generax", "reconciliations")
   nhx_dup_A = os.path.join(reconciliations_path, "gene_dup_A_reconciliated.nhx")
   nhx_transfer_A_D = os.path.join(reconciliations_path, "gene_transfer_A_D_reconciliated.nhx")
@@ -108,12 +108,13 @@ def check_reconciliation(test_output):
   if (count_string_in_file("=Y", nhx_dup_A) != 1):
     print("Inferred to many events in " + nhx_dup_A)
     return False;
-  if (not is_string_in_file("[&&NHX:S=A:D=N:H=Y@A@D:B=0]", nhx_transfer_A_D)):
-    print("Failed to infer a transfer from A to D (" + nhx_transfer_A_D + ")")
-    return False
-  if (count_string_in_file("=Y", nhx_transfer_A_D) != 1):
-    print("Inferred to many events in " + nhx_transfer_A_D)
-    return False;
+  if (model == "UndatedDTL"):
+    if (not is_string_in_file("[&&NHX:S=A:D=N:H=Y@A@D:B=0]", nhx_transfer_A_D)):
+      print("Failed to infer a transfer from A to D (" + nhx_transfer_A_D + ")")
+      return False
+    if (count_string_in_file("=Y", nhx_transfer_A_D) != 1):
+      print("Inferred to many events in " + nhx_transfer_A_D)
+      return False;
   return True
 
 def run_generax(test_data, test_output, families_file, strategy, model, cores):
@@ -152,8 +153,8 @@ def run_test(dataset, with_starting_tree, strategy, model, cores):
     return False
   return True
 
-def run_reconciliation_test(cores):
-  test_name = "reconciliation"
+def run_reconciliation_test(cores, model):
+  test_name = "reconciliation_" + model
   test_output = os.path.join(OUTPUT, test_name)
   reset_dir(test_output)
   reconciliation_dir = os.path.join(DATA_DIR, "reconciliation")
@@ -162,14 +163,14 @@ def run_reconciliation_test(cores):
   families_file = generate_families_file(test_output, starting_trees = gene_trees)
   ok = False
   try:
-    run_reconciliation(species_tree, families_file, "UndatedDTL", test_output, cores)
-    ok = check_reconciliation(test_output)
+    run_reconciliation(species_tree, families_file, model, test_output, cores)
+    ok = check_reconciliation(test_output, model)
   except:
     print("Exception in  run reconciliation test")
   if (ok):
-    print("Test reconciliation: ok")
+    print("Test " + test_name + ": ok")
   else:
-    print("Test reconciliation: FAILED")
+    print("Test " + test_name + ": FAILED")
   return ok
 
 dataset_set = ["simulated_2"]
@@ -181,7 +182,8 @@ if (is_mpi_installed()):
   cores_set.append(3)
 
 all_ok = True
-all_ok = all_ok and run_reconciliation_test(2)
+all_ok = all_ok and run_reconciliation_test(2, "UndatedDTL")
+all_ok = all_ok and run_reconciliation_test(2, "UndatedDL")
 for dataset in dataset_set:
   for with_starting_tree in with_starting_tree_set:
     for strategy in strategy_set:
