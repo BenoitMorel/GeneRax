@@ -35,12 +35,6 @@ public:
   static void geneTreeJointSearch(GeneRaxInstance &instance);
 
   /**
-   *  If we used several starting random trees, select the best result
-   *  and discard the other ones
-   */
-  static void postProcessGeneTrees(GeneRaxInstance &instance);
-
-  /**
    *  Reconcile the gene trees with the species tree and save results
    */
   static void reconcile(GeneRaxInstance &instance);

@@ -61,19 +61,8 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
 void GeneRaxCore::initRandomGeneTrees(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
-  unsigned int duplicates = instance.args.duplicates;
-  if (duplicates > 1) {
-    duplicatesFamilies(instance.initialFamilies, instance.currentFamilies, duplicates);
-    initFolders(instance);
-    ParallelContext::barrier();
-  } else {
-    instance.currentFamilies = instance.initialFamilies;
-  }
+  instance.currentFamilies = instance.initialFamilies;
   bool randoms = Routines::createRandomTrees(instance.args.output, instance.currentFamilies); 
-  if (!randoms && duplicates > 1) {
-    Logger::info << "Error: multiple starting trees (duplicates option) is only compatible with random starting trees" << std::endl;
-    ParallelContext::abort(42);
-  }
   if (randoms) {
     initialGeneTreeSearch(instance);
   }
@@ -154,18 +143,6 @@ void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
 }
 
 
-void GeneRaxCore::postProcessGeneTrees(GeneRaxInstance &instance)
-{
-  assert(ParallelContext::isRandConsistent());
-  if (instance.args.duplicates > 1) {
-    Families contracted = instance.initialFamilies;
-    contractFamilies(instance.currentFamilies, contracted);
-    instance.currentFamilies = contracted;
-    bool perSpeciesDTLRates = false;
-    bool enableLibpll = true;
-    optimizeRatesAndGeneTrees(instance, perSpeciesDTLRates, enableLibpll, 0);
-  }
-}
 
 void GeneRaxCore::reconcile(GeneRaxInstance &instance)
 {
@@ -227,66 +204,15 @@ void GeneRaxCore::initFolders(GeneRaxInstance &instance)
 void GeneRaxCore::initialGeneTreeSearch(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
-  unsigned int duplicates = instance.args.duplicates;
   Logger::info << std::endl;
   Logger::timed << "[Initialization] Initial optimization of the starting random gene trees" << std::endl;
-  if (duplicates == 1 || instance.args.initStrategies == 1) {
-    Logger::timed << "[Initialization] All the families will first be optimized with sequences only" << std::endl;
-    Logger::mute();
-    RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, 
-        instance.args.execPath, instance.currentIteration++, 
-        ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
-    Logger::unmute();
-    Routines::gatherLikelihoods(instance.currentFamilies, instance.totalLibpllLL, instance.totalRecLL);
-  } else {
-    std::vector<Families> splitFamilies;
-    
-    ParallelContext::barrier();
-    unsigned int splits = instance.args.initStrategies;
-    unsigned int recRadius = 5;
-    splitInitialFamilies(instance.currentFamilies, splitFamilies, splits);
-    Families initialCurrentFamilies = instance.currentFamilies;
-    ParallelContext::barrier();
-    // only raxml
-    Logger::timed << "[Initialization] Optimizing some of the duplicated families with sequences only" << std::endl;
-    Logger::mute();
-    instance.currentFamilies = splitFamilies[0];
-    RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, instance.args.execPath, 
-        instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
-    Logger::unmute();
-    if (splits > 1) {
-      // raxml and rec
-      Logger::timed << "[Initialization] Optimizing some of the duplicated families with sequences only "
-        << "and then species tree only" << std::endl;
-      Logger::mute();
-      instance.currentFamilies = splitFamilies[1];
-      RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, instance.args.execPath, 
-          instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
-      for (unsigned int i = 1; i <= recRadius; ++i) {
-        bool enableLibpll = false;
-        bool perSpeciesDTLRates = false;
-        optimizeRatesAndGeneTrees(instance, perSpeciesDTLRates, enableLibpll, i);
-      }
-      Logger::unmute();
-    }
-    if (splits > 2) {
-      // rec and raxml
-      Logger::timed << "[Initialization] Optimizing some of the duplicated families with species "
-        << "only and then sequences tree only" << std::endl;
-      for (unsigned int i = 1; i <= recRadius; ++i) {
-        Logger::mute();
-        bool enableLibpll = false;
-        bool perSpeciesDTLRates = false;
-        instance.currentFamilies = splitFamilies[2];
-        optimizeRatesAndGeneTrees(instance, perSpeciesDTLRates, enableLibpll, i);
-      }
-      RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, instance.args.execPath, 
-          instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
-      Logger::unmute();
-    }
-    instance.currentFamilies = initialCurrentFamilies;
-    mergeSplitFamilies(splitFamilies, instance.currentFamilies, splits);
-  }
+  Logger::timed << "[Initialization] All the families will first be optimized with sequences only" << std::endl;
+  Logger::mute();
+  RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, 
+      instance.args.execPath, instance.currentIteration++, 
+      ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
+  Logger::unmute();
+  Routines::gatherLikelihoods(instance.currentFamilies, instance.totalLibpllLL, instance.totalRecLL);
   Logger::timed << "[Initialization] Finished optimizing some of the gene trees" << std::endl;
   Logger::info << std::endl;
 }

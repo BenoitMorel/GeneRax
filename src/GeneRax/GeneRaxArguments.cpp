@@ -14,8 +14,6 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   reconciliationOpt(RecOpt::Grid),
   output("GeneRax"),
   perFamilyDTLRates(false),
-  duplicates(1),
-  initStrategies(3),
   rootedGeneTree(true),
   supportThreshold(-1.0),
   recRadius(0),
@@ -67,10 +65,6 @@ void GeneRaxArguments::init() {
       output = std::string(argv[++i]);
     } else if (arg == "--per-family-rates") {
       perFamilyDTLRates = true;
-    } else if (arg == "--init-strategies") {
-      initStrategies = static_cast<unsigned int>(atoi(argv[++i]));
-    } else if (arg == "--duplicates") {
-      duplicates = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--unrooted-gene-tree") {
       rootedGeneTree = false;
     } else if (arg == "--support-threshold") {
@@ -165,8 +159,6 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, Auto}" << std::endl;
   Logger::info << "--rec-opt <reconciliationOpt>  {window, simplex}" << std::endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << std::endl;
-  Logger::info << "--duplicates <DUPLICATES_NUMBER>" << std::endl;
-  Logger::info << "--init-strategies <1 or 4>" << std::endl;
   Logger::info << "--unrooted-gene-tree" << std::endl;
   Logger::info << "--support-threshold <threshold>" << std::endl;
   Logger::info << "--per-family-rates" << std::endl;
@@ -209,10 +201,6 @@ void GeneRaxArguments::printSummary() {
     Logger::info << "global rates" << std::endl;
   }
   Logger::info << "Prefix: " << output << std::endl;
-  Logger::info << "Duplicates: " << duplicates << std::endl;
-  if (duplicates > 1) {
-    Logger::info << "Init strategies: " << initStrategies << std::endl;
-  }
   Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << std::endl;
   Logger::info << "Reconciliation radius: " << recRadius << std::endl;
 #ifdef WITH_MPI

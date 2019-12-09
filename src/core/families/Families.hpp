@@ -30,10 +30,5 @@ struct FamilyInfo {
 typedef std::vector<FamilyInfo> Families;
 
 void filterFamilies(Families &families, const std::string &speciesTreeFile, bool checkSpeciesTree);
-void duplicatesFamilies(const Families &families, Families &duplicatedFamilies, unsigned int factor);
-void contractFamilies(const Families &duplicatedFamilies, Families &families);
-
-void splitInitialFamilies(const Families &families, std::vector<Families> &splitFamilies, unsigned int splitsNumber);
-void mergeSplitFamilies(const std::vector<Families> &splitFamilies, Families &families, unsigned int splitsNumber);
 
 
