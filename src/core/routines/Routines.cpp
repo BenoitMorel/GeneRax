@@ -70,6 +70,7 @@ void Routines::inferReconciliation(
     const std::string &outputDir
     )
 {
+  auto consistentSeed = rand();
   ParallelContext::barrier();
   PLLRootedTree speciesTree(speciesTreeFile);
   PerCoreGeneTrees geneTrees(families);
@@ -79,6 +80,7 @@ void Routines::inferReconciliation(
   ParallelContext::barrier();
   ParallelContext::barrier();
   for (auto &tree: geneTrees.getTrees()) {
+    Logger::info << "Treat reconcile " << tree.name << std::endl;
     std::string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
     std::string speciesEventCountsFile = getSpeciesEventCountFile(outputDir, tree.name);
     std::string transfersFile = getTransfersFile(outputDir, tree.name);
@@ -96,6 +98,7 @@ void Routines::inferReconciliation(
     scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, ReconciliationFormat::RecPhyloXML, false);
     scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
   }
+  srand(consistentSeed);
   ParallelContext::barrier();
 }
 

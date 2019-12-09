@@ -57,7 +57,8 @@ protected:
       REAL &proba,
       bool isVirtualRoot = false,
       Scenario *scenario = nullptr,
-      Scenario::Event *event = nullptr);
+      Scenario::Event *event = nullptr,
+      bool stochastic = false);
 private:
   // model
   std::vector<double> _PD; // Duplication probability, per branch
@@ -120,12 +121,14 @@ private:
     pll_unode_t *&transferedGene,
     pll_unode_t *&stayingGene,
     pll_rnode_t *&recievingSpecies,
-    REAL &proba);
+    REAL &proba, 
+    bool stochastic = false);
   void getBestTransferLoss(Scenario &scenario,
       pll_unode_t *parentGeneNode, 
     pll_rnode_t *originSpeciesNode,
     pll_rnode_t *&recievingSpecies,
-    REAL &proba);
+    REAL &proba,
+    bool stochastic = false);
   unsigned int getIterationsNumber() const { return this->_fastMode ? 1 : 5;}    
   REAL getCorrectedTransferExtinctionSum(unsigned int speciesId) const {
     return _transferExtinctionSum * _PT[speciesId];
@@ -271,13 +274,13 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
 }
 
 
-
 template <class REAL>
 void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       REAL &proba,
       bool isVirtualRoot,
       Scenario *scenario,
-      Scenario::Event *event)
+      Scenario::Event *event,
+      bool stochastic)
 {
   
   auto gid = geneNode->node_index;
@@ -296,8 +299,8 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     proba = REAL(_PS[e]);
     return;
   }
-  
-  std::array<REAL, 8> values;
+  typedef std::array<REAL, 8>  ValuesArray;
+  ValuesArray values;
   values[0] = values[1] = values[2] = values[3] = REAL();
   values[4] = values[5] = values[6] = values[7] = REAL();
   
@@ -375,12 +378,17 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     values[5] = values[6] = values[7] = REAL(); // invalidate these ones
     if (!isGeneLeaf) {
       getBestTransfer(geneNode, speciesNode, isVirtualRoot, 
-          transferedGene, stayingGene, recievingSpecies, values[5]);
+          transferedGene, stayingGene, recievingSpecies, values[5], stochastic);
     }
-    getBestTransferLoss(*scenario, geneNode, speciesNode, tlRecievingSpecies, values[7]);
-    unsigned int maxValueIndex = static_cast<unsigned int>(std::distance(values.begin(),
+    getBestTransferLoss(*scenario, geneNode, speciesNode, tlRecievingSpecies, values[7], stochastic);
+    unsigned int maxValueIndex = 0;
+    if (!stochastic) {
+      maxValueIndex =static_cast<unsigned int>(std::distance(values.begin(),
           std::max_element(values.begin(), values.end())
           ));
+    } else {
+      maxValueIndex = sampleIndex<ValuesArray, REAL>(values);
+    }
     switch(maxValueIndex) {
     case 0:
       event->type = ReconciliationEventType::EVENT_S;
@@ -528,8 +536,10 @@ void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode,
   pll_unode_t *&transferedGene,
   pll_unode_t *&stayingGene,
   pll_rnode_t *&recievingSpecies,
-  REAL &proba)
+  REAL &proba, 
+  bool stochastic)
 {
+  unsigned int speciesNumber = this->_allSpeciesNodes.size();
   proba = REAL();
   auto e = originSpeciesNode->node_index;
   auto u_left = this->getLeft(parentGeneNode, isVirtualRoot);
@@ -539,25 +549,51 @@ void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode,
   for (auto parent = originSpeciesNode; parent->parent != 0; parent = parent->parent) {
     parents.insert(parent->parent->node_index);
   }
+  std::vector<REAL> transferProbas(speciesNumber * 2, REAL());
+  double factor = _PT[e] / static_cast<double>(speciesNumber);
   for (auto species: this->_allSpeciesNodes) {
     auto h = species->node_index;
     if (parents.count(h)) {
       continue;
     }
-    double factor = _PT[e] / static_cast<double>(this->_allSpeciesNodes.size());
-    REAL probaLeftTransfered = (_dtlclvs[u_left->node_index]._uq[h] * _dtlclvs[u_right->node_index]._uq[e]) * factor;
-    REAL probaRightTransfered = (_dtlclvs[u_right->node_index]._uq[h] * _dtlclvs[u_left->node_index]._uq[e]) * factor;
-    if (proba < probaLeftTransfered) {
-      proba = probaLeftTransfered;
-      transferedGene = u_left;
-      stayingGene = u_right;
-      recievingSpecies = species;
+    transferProbas[h] = (_dtlclvs[u_left->node_index]._uq[h] 
+        * _dtlclvs[u_right->node_index]._uq[e]) * factor;
+    transferProbas[h + speciesNumber] = (_dtlclvs[u_right->node_index]._uq[h] 
+        * _dtlclvs[u_left->node_index]._uq[e]) * factor;
+  }
+  if (stochastic) {
+    // stochastic sample: proba will be set to the sum of probabilities
+    proba = REAL();
+    for (auto &value: transferProbas) {
+      proba += value;
     }
-    if (proba < probaRightTransfered) {
-      proba = probaRightTransfered;
-      transferedGene = u_right;
-      stayingGene = u_left;
-      recievingSpecies = species;
+    auto bestIndex = sampleIndex<std::vector<REAL>, REAL>(transferProbas);
+    bool left = bestIndex < speciesNumber;
+    transferedGene = left ? u_left : u_right;
+    stayingGene = !left ? u_left : u_right;
+    // I am not sure I can find the species from
+    // its index in the species array, so I keep it safe here
+    for (auto species: this->_allSpeciesNodes) {
+      if (species->node_index == bestIndex % speciesNumber) {
+        recievingSpecies = species;
+      }
+    }
+  } else {
+    // find the max
+    for (auto species: this->_allSpeciesNodes) {
+      auto h = species->node_index;
+      if (proba < transferProbas[h]) {
+        proba = transferProbas[h];
+        transferedGene = u_left;
+        stayingGene = u_right;
+        recievingSpecies = species;
+      }
+      if (proba < transferProbas[h + speciesNumber]) {
+        proba = transferProbas[h + speciesNumber];
+        transferedGene = u_right;
+        stayingGene = u_left;
+        recievingSpecies = species;
+      }
     }
   }
 }
@@ -567,7 +603,8 @@ void UndatedDTLModel<REAL>::getBestTransferLoss(Scenario &scenario,
    pll_unode_t *parentGeneNode, 
   pll_rnode_t *originSpeciesNode,
   pll_rnode_t *&recievingSpecies,
-  REAL &proba)
+  REAL &proba, 
+  bool stochastic)
 {
   proba = REAL();
   auto e = originSpeciesNode->node_index;

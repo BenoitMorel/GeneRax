@@ -55,7 +55,8 @@ protected:
       REAL &proba,
       bool isVirtualRoot = false,
       Scenario *scenario = nullptr,
-      Scenario::Event *event = nullptr);
+      Scenario::Event *event = nullptr,
+      bool stochastic = false);
 private:
   std::vector<double> _PD; // Duplication probability, per species branch
   std::vector<double> _PL; // Loss probability, per species branch
@@ -154,7 +155,9 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
       REAL &proba,
       bool isVirtualRoot,
       Scenario *,
-      Scenario::Event *event)
+      Scenario::Event *event,
+      bool stochastic)
+  
 {
   auto gid = geneNode->node_index;
   pll_unode_t *leftGeneNode = 0;     

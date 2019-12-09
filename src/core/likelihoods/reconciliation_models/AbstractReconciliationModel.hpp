@@ -75,7 +75,7 @@ public:
    *  Fill scenario with the maximum likelihood set of 
    *  events that would lead to the  current tree
    **/
-  virtual void inferMLScenario(Scenario &scenario) = 0;
+  virtual void inferMLScenario(Scenario &scenario, bool stochastic = false) = 0;
 
   virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate) = 0;
 };
@@ -119,7 +119,7 @@ public:
   // overload from parent
   virtual void invalidateAllSpeciesCLVs() {_allSpeciesNodesInvalid = true;}
   // overload from parent
-  virtual void inferMLScenario(Scenario &scenario);
+  virtual void inferMLScenario(Scenario &scenario, bool stochastic = false);
   // overload from parent
   virtual void setPartialLikelihoodMode(PartialLikelihoodMode mode) {_likelihoodMode = mode;};
 protected:
@@ -141,13 +141,15 @@ protected:
   // Can assume that all the CLVs are filled
   virtual void backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       Scenario &scenario,
-      bool isVirtualRoot = false);
+      bool isVirtualRoot = false,
+      bool stochastic = false);
  
   virtual void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       REAL &proba,
       bool isVirtualRoot = false,
       Scenario *scenario = nullptr,
-      Scenario::Event *event = nullptr) = 0;
+      Scenario::Event *event = nullptr,
+      bool stochastic = false) = 0;
   
   void initFromUtree(pll_utree_t *tree);
   /**
@@ -575,7 +577,7 @@ void AbstractReconciliationModel<REAL>::computeLikelihoods()
 
   
 template <class REAL>
-void AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario)
+void AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario, bool stochastic)
 {
   // make sure the CLVs are filled
   invalidateAllCLVs();
@@ -596,9 +598,7 @@ void AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario)
   virtualRoot.node_index = geneRoot->node_index + _maxGeneId + 1;
   scenario.setVirtualRootIndex(virtualRoot.node_index);
   scenario.initBlackList(_maxGeneId, _speciesTree.getNodesNumber());
-  Logger::info << std::endl;
-  backtrace(&virtualRoot, speciesRoot, scenario, true);
-
+  backtrace(&virtualRoot, speciesRoot, scenario, true, stochastic);
 }
   
 
@@ -610,7 +610,8 @@ static pll_unode_t *getOther(pll_unode_t *ref, pll_unode_t *n1, pll_unode_t *n2)
 template <class REAL>
 void AbstractReconciliationModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       Scenario &scenario,
-      bool isVirtualRoot) 
+      bool isVirtualRoot, 
+      bool stochastic) 
 {
   pll_unode_t *leftGeneNode = 0;     
   pll_unode_t *rightGeneNode = 0;     
@@ -621,33 +622,33 @@ void AbstractReconciliationModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rno
   }
   REAL temp;
   Scenario::Event event;
-  computeProbability(geneNode, speciesNode, temp, isVirtualRoot, &scenario, &event);
+  computeProbability(geneNode, speciesNode, temp, isVirtualRoot, &scenario, &event, stochastic);
   scenario.addEvent(event);
   // safety check
   switch(event.type) {
   case ReconciliationEventType::EVENT_S:
     if (!event.cross) {
-      backtrace(leftGeneNode, speciesNode->left, scenario); 
-      backtrace(rightGeneNode, speciesNode->right, scenario); 
+      backtrace(leftGeneNode, speciesNode->left, scenario, false, stochastic); 
+      backtrace(rightGeneNode, speciesNode->right, scenario, false, stochastic); 
     } else {
-      backtrace(leftGeneNode, speciesNode->right, scenario); 
-      backtrace(rightGeneNode, speciesNode->left, scenario); 
+      backtrace(leftGeneNode, speciesNode->right, scenario, false, stochastic); 
+      backtrace(rightGeneNode, speciesNode->left, scenario, false, stochastic); 
     }
     break;
   case ReconciliationEventType::EVENT_D:
-    backtrace(leftGeneNode, speciesNode, scenario); 
-    backtrace(rightGeneNode, speciesNode, scenario); 
+    backtrace(leftGeneNode, speciesNode, scenario, false, stochastic); 
+    backtrace(rightGeneNode, speciesNode, scenario, false, stochastic); 
     break;
   case ReconciliationEventType::EVENT_SL:
-    backtrace(geneNode, event.pllDestSpeciesNode, scenario); 
+    backtrace(geneNode, event.pllDestSpeciesNode, scenario, false, stochastic); 
     break;
   case ReconciliationEventType::EVENT_T:
-    backtrace(event.pllTransferedGeneNode, event.pllDestSpeciesNode, scenario);
+    backtrace(event.pllTransferedGeneNode, event.pllDestSpeciesNode, scenario, false, stochastic);
     backtrace(getOther(event.pllTransferedGeneNode, leftGeneNode, rightGeneNode),
-        speciesNode, scenario);
+        speciesNode, scenario, false, stochastic);
     break;
   case ReconciliationEventType::EVENT_TL:
-    backtrace(geneNode, event.pllDestSpeciesNode, scenario);
+    backtrace(geneNode, event.pllDestSpeciesNode, scenario, false, stochastic);
     break;
   case ReconciliationEventType::EVENT_None:
     break;
@@ -658,4 +659,30 @@ void AbstractReconciliationModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rno
 }
 
 
+template<class REAL> 
+REAL getRandom(REAL max)
+{
+  return max * (static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
+}
+template<class C, class REAL>
+unsigned int sampleIndex(const C &container)
+{
+  REAL sum = REAL();
+  for (auto value: container) {
+    //Logger::info << value << " ";
+    sum += value;
+  }
+  //Logger::info << std::endl;
+  REAL stopAt = getRandom(sum);
+  sum = REAL();
+  unsigned int index = 0;
+  for (auto value: container) {
+    sum += value;
+    if (stopAt < sum) {
+      return index;
+    }
+    index++;
+  }
+  assert(false);
+}
 
