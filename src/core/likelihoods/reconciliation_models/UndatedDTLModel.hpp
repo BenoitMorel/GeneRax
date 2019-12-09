@@ -376,7 +376,7 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     pll_rnode_t *recievingSpecies = 0;
     pll_rnode_t *tlRecievingSpecies = 0;
     values[3] = values[4] = values[7] = REAL(); // invalidate these ones
-    if (!isSpeciesLeaf && !isGeneLeaf) {
+    if (!isGeneLeaf) {
       getBestTransfer(geneNode, speciesNode, isVirtualRoot, 
           transferedGene, stayingGene, recievingSpecies, values[3]);
     }
@@ -621,7 +621,7 @@ void UndatedDTLModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode_t *specie
   // safety check
   switch(event.type) {
   case ReconciliationEventType::EVENT_S:
-    if (event.cross) {
+    if (!event.cross) {
       backtrace(leftGeneNode, speciesNode->left, scenario); 
       backtrace(rightGeneNode, speciesNode->right, scenario); 
     } else {
