@@ -7,7 +7,7 @@
 #include <map>
 
 
-const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "Leaf", "Invalid"};
+const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "L", "Leaf", "Invalid"};
 
 
 void Scenario::addEvent(ReconciliationEventType type, 
@@ -31,13 +31,20 @@ void Scenario::addTransfer(ReconciliationEventType type,
   event.speciesNode = speciesNode;
   event.transferedGeneNode = transferedGeneNode;
   event.destSpeciesNode = destSpeciesNode;
+  addEvent(event);
+}
+  
+void Scenario::addEvent(const Event &event)
+{
+  Logger::info << "new event " << eventNames[int(event.type)] << std::endl;
   _events.push_back(event);
-  assert(static_cast<int>(type) >= 0);
-  _eventsCount[static_cast<unsigned int>(type)] ++;
-  if (_geneIdToEvents.size() <= static_cast<size_t>(geneNode)) {
-    _geneIdToEvents.resize(geneNode + 1);
+  assert(static_cast<int>(event.type) >= 0);
+  _eventsCount[static_cast<unsigned int>(event.type)] ++;
+  if (_geneIdToEvents.size() <= static_cast<size_t>(event.geneNode)) {
+    _geneIdToEvents.resize(event.geneNode + 1);
   }
-  _geneIdToEvents[geneNode].push_back(event);
+  _geneIdToEvents[event.geneNode].push_back(event);
+
 }
 
 void Scenario::saveEventsCounts(const std::string &filename, bool masterRankOnly) {

@@ -591,6 +591,7 @@ void AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario)
   virtualRoot.node_index = geneRoot->node_index + _maxGeneId + 1;
   scenario.setVirtualRootIndex(virtualRoot.node_index);
   scenario.initBlackList(_maxGeneId, _speciesTree.getNodesNumber());
+  Logger::info << std::endl;
   backtrace(&virtualRoot, speciesRoot, scenario, true);
 
 }

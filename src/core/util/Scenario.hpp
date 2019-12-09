@@ -27,13 +27,23 @@ public:
       geneNode(INVALID), 
       speciesNode(INVALID), 
       transferedGeneNode(INVALID), 
-      destSpeciesNode(INVALID) 
+      destSpeciesNode(INVALID),
+      pllTransferedGeneNode(nullptr),
+      pllDestSpeciesNode(nullptr),
+      cross(false)
     {}
     ReconciliationEventType type;
     unsigned int geneNode;
     unsigned int speciesNode;
     unsigned int transferedGeneNode; 
     unsigned int destSpeciesNode; // for transfers
+    
+    // temporary variables for event inference
+    pll_unode_t *pllTransferedGeneNode;
+    pll_rnode_t *pllDestSpeciesNode;
+    bool cross; // used to decide which gene (left/right) goes to which species (left/right)
+    
+    
     bool isValid() const { return speciesNode != INVALID; }
   };
 
@@ -54,6 +64,8 @@ public:
   
   void setSpeciesTree(pll_rtree_t *speciesTree) {_speciesTree = speciesTree;}
   void setVirtualRootIndex(unsigned int virtualRootIndex) {_virtualRootIndex = virtualRootIndex;}
+
+  void addEvent(const Event &event);
 
   void addEvent(ReconciliationEventType type, 
       unsigned int geneNode, 
