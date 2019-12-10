@@ -62,15 +62,13 @@ void ReconciliationWriter::saveReconciliationNHX(pll_rtree_t *speciesTree,
     pll_unode_t *geneRoot, 
     unsigned int virtualRootIndex,
     std::vector<std::vector<Scenario::Event> > &geneToEvents, 
-    const std::string &filename, 
-    bool masterRankOnly) 
+    ParallelOfstream &os) 
 {
   pll_unode_t virtualRoot;
   virtualRoot.next = geneRoot;
   virtualRoot.node_index = virtualRootIndex;
   virtualRoot.label = nullptr;
   virtualRoot.length = 0.0;
-  ParallelOfstream os(filename, masterRankOnly);
   recursivelySaveReconciliationsNHX(speciesTree, &virtualRoot, true, geneToEvents, os);
   os << ");";
 }
@@ -234,10 +232,8 @@ void ReconciliationWriter::saveReconciliationRecPhyloXML(pll_rtree_t *speciesTre
     pll_unode_t *geneRoot, 
     unsigned int virtualRootIndex,
     std::vector<std::vector<Scenario::Event> > &geneToEvents, 
-    const std::string &filename, 
-    bool masterRankOnly) 
+    ParallelOfstream &os)
 {
-  ParallelOfstream os(filename, masterRankOnly);
   os << "<recPhylo " << std::endl;
   os << "\txmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" << std::endl;
   os << "\txsi:schemaLocation=\"http://www.recg.org ./recGeneTreeXML.xsd\"" << std::endl;

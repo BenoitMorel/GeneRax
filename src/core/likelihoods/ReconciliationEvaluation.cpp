@@ -129,12 +129,12 @@ void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
  }
 }
 
-void ReconciliationEvaluation::inferMLScenario(Scenario &scenario) {
+void ReconciliationEvaluation::inferMLScenario(Scenario &scenario, bool stochastic) {
   auto infinitePrecision = _infinitePrecision;
   updatePrecision(true);
   auto ll = evaluate();
   assert(std::isfinite(ll) && ll < 0.0);
-  _evaluators->inferMLScenario(scenario);
+  _evaluators->inferMLScenario(scenario, stochastic);
   updatePrecision(infinitePrecision);
 }
   

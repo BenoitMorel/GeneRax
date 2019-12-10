@@ -77,7 +77,7 @@ public:
  
   pll_unode_t *inferMLRoot();
   
-  void inferMLScenario(Scenario &scenario);
+  void inferMLScenario(Scenario &scenario, bool stochastic = false);
 
   RecModel getRecModel() const {return _model;}
   

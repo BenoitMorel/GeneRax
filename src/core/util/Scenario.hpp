@@ -12,6 +12,7 @@ typedef struct pll_utree_s pll_utree_t;
 typedef struct pll_unode_s pll_unode_t;
 typedef struct pll_rtree_s pll_rtree_t;
 typedef struct pll_rnode_s pll_rnode_t;
+class ParallelOfstream;
 
 /*
  * Store the set of events that reconciles a gene tree with a species tree
@@ -82,10 +83,12 @@ public:
   void saveTransfers(const std::string &filename, bool masterRankOnly = true); 
 
   void saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly = true);
+  void saveReconciliation(ParallelOfstream &os, ReconciliationFormat format);
 
   void initBlackList(unsigned int genesNumber, unsigned int speciesNumber);
   void blackList(unsigned int geneNode, unsigned int speciesNode);
   bool isBlacklisted(unsigned int geneNode, unsigned int speciesNode);
+  void resetBlackList();
 private:
   static const char *eventNames[];
   std::vector<Event> _events;
@@ -101,7 +104,7 @@ private:
    *  This can happen because of the approximations in the reconcilation
    *  function
    */
-  typedef std::vector< std::vector <bool> > ScenarioBlackList;
+  typedef std::vector< std::vector <int> > ScenarioBlackList;
   std::unique_ptr<ScenarioBlackList> _blacklist;
 };
 

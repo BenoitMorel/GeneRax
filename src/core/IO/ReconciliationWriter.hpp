@@ -6,7 +6,7 @@
 #include <string>
 typedef struct pll_unode_s pll_unode_t;
 typedef struct pll_rtree_s pll_rtree_t;
-
+class ParallelOfstream;
 
 class ReconciliationWriter {
 public:
@@ -16,15 +16,13 @@ public:
       pll_unode_t *geneRoot, 
       unsigned int virtualRootIndex,
       std::vector<std::vector<Scenario::Event> > &geneToEvent, 
-      const std::string &filename,
-      bool masterRankOnly); 
+      ParallelOfstream &os);
 
   static void saveReconciliationRecPhyloXML(pll_rtree_t *speciesTree,  
       pll_unode_t *geneRoot, 
       unsigned int virtualRootIndex,
       std::vector<std::vector<Scenario::Event> > &geneToEvent, 
-      const std::string &filename,
-      bool masterRankOnly); 
+      ParallelOfstream &os);
 };
 
 

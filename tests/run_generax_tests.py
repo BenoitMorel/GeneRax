@@ -86,6 +86,8 @@ def run_reconciliation(species_tree, families_file, model, test_output, cores):
   command.append("0.2")
   command.append("--transfer-rate")
   command.append("0.1")
+  command.append("--reconciliation-samples")
+  command.append("10")
   command.append("-p")
   command.append(os.path.join(test_output, "generax"))
   logs_file_path = os.path.join(test_output, "tests_logs.txt")

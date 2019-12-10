@@ -25,6 +25,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   transferRate(0.0),
   optimizeGeneTrees(true),
   reconcile(false),
+  reconciliationSamples(0),
   maxSPRRadius(5),
   recWeight(1.0), 
   seed(123),
@@ -100,6 +101,8 @@ void GeneRaxArguments::init() {
       optimizeGeneTrees = false;
     } else if (arg == "--reconcile") {
       reconcile = true;
+    } else if (arg == "--reconciliation-samples") {
+      reconciliationSamples = static_cast<unsigned int>(atoi(argv[++i]));
     } else {
       Logger::error << "Unrecognized argument " << arg << std::endl;
       Logger::error << "Aborting" << std::endl;
@@ -169,6 +172,7 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "--max-spr-radius <max SPR radius>" << std::endl;
   Logger::info << "--rec-weight <reconciliation likelihood weight>" << std::endl;
   Logger::info << "--reconcile" << std::endl;
+  Logger::info << "--reconciliation-samples <number of samples>" << std::endl;
   Logger::info << "--seed <seed>" << std::endl;
   Logger::info << "Please find more information on the GeneRax github wiki" << std::endl;
   Logger::info << std::endl;
@@ -212,5 +216,9 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "Support threshold: " << supportThreshold << std::endl;
   Logger::info << "Reconciliation likelihood weight: " << recWeight << std::endl;
   Logger::info << "Random seed: " << seed << std::endl;
+  Logger::info << "Infer ML reconciliation: " << boolStr[reconcile] << std::endl;
+  if (reconciliationSamples) {
+    Logger::info << "Reconciliation samples to infer: " << reconciliationSamples << std::endl;
+  }
   Logger::info << std::endl;
 }

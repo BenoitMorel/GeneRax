@@ -270,7 +270,7 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
       break;
     default:
       assert(false);
-    };
+    }
   }
 }
   

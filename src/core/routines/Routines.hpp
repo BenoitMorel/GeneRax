@@ -53,14 +53,17 @@ public:
 
   /**
    * Infer the reconciliation between the families gene trees and the 
-   * species tree, and output them in a file. 
+   * species tree, and output them in different files.
+   * In addition, perform a stochastich sample of the reconciliations
    */
   static void inferReconciliation(
     const std::string &speciesTreeFile,
     Families &families,
     RecModel model,
     const Parameters &rates,
-    const std::string &outputDir
+    const std::string &outputDir,
+    bool bestReconciliation,
+    unsigned int reconciliationSamples
     );
 
   /**

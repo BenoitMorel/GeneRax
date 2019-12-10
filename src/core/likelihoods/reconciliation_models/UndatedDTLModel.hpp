@@ -642,11 +642,14 @@ void UndatedDTLModel<REAL>::getBestTransferLoss(Scenario &scenario,
     }
     unsigned int h = 0;
     do {
+
       unsigned int bestIndex = sampleIndex<std::vector<REAL>, REAL>(transferProbas);
       for (auto species: this->_allSpeciesNodes) {
         h = species->node_index;
         if (bestIndex == h) {
           recievingSpecies = species;
+          transferProbas[h] = REAL(); // in case it's blacklisted, avoid infinite loop
+          break;
         }
       }
     } while (scenario.isBlacklisted(u, h));

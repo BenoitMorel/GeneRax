@@ -215,7 +215,7 @@ public:
 
 
 template<class REAL> 
-void scale(REAL &value) {}
+void scale(REAL &) {}
 
 template<>
 inline void scale<ScaledValue>(ScaledValue &v) {

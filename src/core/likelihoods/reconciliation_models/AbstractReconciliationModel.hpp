@@ -669,11 +669,9 @@ unsigned int sampleIndex(const C &container)
 {
   REAL sum = REAL();
   for (auto value: container) {
-    //Logger::info << value << " ";
     sum += value;
   }
   assert(!(sum == REAL()));
-  //Logger::info << std::endl;
   REAL stopAt = getRandom(sum);
   sum = REAL();
   unsigned int index = 0;

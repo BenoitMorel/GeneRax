@@ -148,10 +148,11 @@ void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
 void GeneRaxCore::reconcile(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
-  if (instance.args.reconcile) {
+  if (instance.args.reconcile || instance.args.reconciliationSamples > 0) {
     Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
     Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, 
-      instance.recModel, instance.rates, instance.args.output);
+      instance.recModel, instance.rates, instance.args.output, instance.args.reconcile,
+      instance.args.reconciliationSamples);
   }
 }
   

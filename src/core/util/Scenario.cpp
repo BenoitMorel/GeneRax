@@ -36,7 +36,6 @@ void Scenario::addTransfer(ReconciliationEventType type,
   
 void Scenario::addEvent(const Event &event)
 {
-  Logger::info << "new event " << eventNames[int(event.type)] << std::endl;
   _events.push_back(event);
   assert(static_cast<int>(event.type) >= 0);
   _eventsCount[static_cast<unsigned int>(event.type)] ++;
@@ -99,22 +98,26 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
 
 void Scenario::saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly)
 {
+  ParallelOfstream os(filename, masterRankOnly);
+  saveReconciliation(os, format);
+}
+
+void Scenario::saveReconciliation(ParallelOfstream &os, ReconciliationFormat format)
+{
   switch (format) {
   case ReconciliationFormat::NHX:
     ReconciliationWriter::saveReconciliationNHX(_speciesTree, 
         _geneRoot, 
         _virtualRootIndex, 
         _geneIdToEvents, 
-        filename, 
-        masterRankOnly);
+        os);
     break;
   case ReconciliationFormat::RecPhyloXML:
     ReconciliationWriter::saveReconciliationRecPhyloXML(_speciesTree, 
         _geneRoot, 
         _virtualRootIndex, 
         _geneIdToEvents, 
-        filename, 
-        masterRankOnly);
+        os);
     break;
   }
 }
@@ -131,7 +134,7 @@ void Scenario::saveTransfers(const std::string &filename, bool masterRankOnly)
 }
 void Scenario::initBlackList(unsigned int genesNumber, unsigned int speciesNumber)
 {
-  std::vector<bool>  blackListAux(speciesNumber, false);
+  std::vector<int>  blackListAux(speciesNumber, false);
   _blacklist = std::make_unique<ScenarioBlackList>(genesNumber, blackListAux);
   
 }
@@ -148,4 +151,13 @@ bool Scenario::isBlacklisted(unsigned int geneNode, unsigned int speciesNode)
     return (*_blacklist)[geneNode][speciesNode];
   }
   return false;
+}
+
+void Scenario::resetBlackList()
+{
+  for (auto &aux: *_blacklist) {
+    for (unsigned int i = 0; i < aux.size(); ++i) {
+      aux[i] = false;
+    }
+  }
 }
