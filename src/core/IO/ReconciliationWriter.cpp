@@ -70,7 +70,7 @@ void ReconciliationWriter::saveReconciliationNHX(pll_rtree_t *speciesTree,
   virtualRoot.label = nullptr;
   virtualRoot.length = 0.0;
   recursivelySaveReconciliationsNHX(speciesTree, &virtualRoot, true, geneToEvents, os);
-  os << ");";
+  os << ";";
 }
 
 
