@@ -66,7 +66,7 @@ void ReconciliationWriter::saveReconciliationNHX(pll_rtree_t *speciesTree,
   virtualRoot.length = 0.0;
   ParallelOfstream os(filename, masterRankOnly);
   recursivelySaveReconciliationsNHX(speciesTree, &virtualRoot, true, geneToEvents, os);
-  os << ");";
+  os << ";";
 }
 
 
