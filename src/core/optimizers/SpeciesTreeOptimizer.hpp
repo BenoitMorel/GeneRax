@@ -51,6 +51,8 @@ public:
   SpeciesTreeOptimizer(const std::string speciesTreeFile, 
       const Families &initialFamilies, 
       RecModel model,
+      const Parameters &startingRates,
+      bool userDTLRates,
       double supportThreshold,
       const std::string &outputDir,
       const std::string &execPath);
@@ -106,6 +108,7 @@ private:
   double _bestLibpllLL;
   SpeciesSearchStats _stats;
   bool _firstOptimizeRatesCall;
+  bool _userDTLRates;
 private:
   void updateEvaluations();
   void rootExhaustiveSearchAux(SpeciesTree &speciesTree, 

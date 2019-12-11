@@ -18,6 +18,8 @@ static std::string getStepTag(bool fastMove)
 SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile, 
     const Families &initialFamilies, 
     RecModel model,
+    const Parameters &startingRates,
+    bool userDTLRates,
     double supportThreshold,
     const std::string &outputDir,
     const std::string &execPath):
@@ -34,16 +36,17 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _lastLibpllLL(-std::numeric_limits<double>::infinity()),
   _bestRecLL(-std::numeric_limits<double>::infinity()),
   _bestLibpllLL(-std::numeric_limits<double>::infinity()),
-  _firstOptimizeRatesCall(true)
+  _firstOptimizeRatesCall(true),
+  _userDTLRates(userDTLRates)
   
 {
   if (speciesTreeFile == "random") {
     _speciesTree = std::make_unique<SpeciesTree>(initialFamilies);
-    _speciesTree->setGlobalRates(Parameters(0.1, 0.2, 0.1));
+    _speciesTree->setGlobalRates(startingRates);
     setGeneTreesFromFamilies(initialFamilies);
   } else {
     _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
-    _speciesTree->setGlobalRates(Parameters(0.1, 0.2, 0.1));
+    _speciesTree->setGlobalRates(startingRates);
     setGeneTreesFromFamilies(initialFamilies);
   }
   _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"), true);
@@ -450,6 +453,9 @@ double SpeciesTreeOptimizer::sprSearch(unsigned int radius, bool doOptimizeGeneT
   
 Parameters SpeciesTreeOptimizer::computeOptimizedRates() 
 {
+  if (_userDTLRates) {
+    return _speciesTree->getRates();
+  }
   Logger::timed << "optimize rates " << std::endl;
   Parameters *startingRates = nullptr;
   Parameters rates(_speciesTree->getRates());
@@ -465,7 +471,9 @@ Parameters SpeciesTreeOptimizer::computeOptimizedRates()
   
 void SpeciesTreeOptimizer::optimizeDTLRates()
 {
-  _speciesTree->setGlobalRates(Parameters(0.0508132, 0.16325, 0.202409));
+  if (_userDTLRates) {
+    return;
+  }
 
   //_speciesTree->setGlobalRates(computeOptimizedRates());
   for (auto &evaluation: _evaluations) {

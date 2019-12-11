@@ -49,7 +49,8 @@ static void bench(const std::string &speciesTree,
     unsigned int fastRadius,
     const std::string &outputDirectory) 
 {
-  SpeciesTreeOptimizer speciesTreeOptimizer(speciesTree, families, recModel, supportThreshold, outputDirectory, "");
+  Parameters startingRates(1.0, 1.0, 1.0);
+  SpeciesTreeOptimizer speciesTreeOptimizer(speciesTree, families, recModel, startingRates, false, supportThreshold, outputDirectory, "");
   for (unsigned int radius = 1; radius <= fastRadius; ++radius) {
     speciesTreeOptimizer.optimizeDTLRates();
     speciesTreeOptimizer.sprSearch(radius, false);
