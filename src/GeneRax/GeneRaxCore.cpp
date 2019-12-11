@@ -91,6 +91,7 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     for (unsigned int radius = 1; radius <= instance.args.speciesFastRadius; ++radius) {
       speciesTreeOptimizer.optimizeDTLRates();
       speciesTreeOptimizer.sprSearch(radius);
+      speciesTreeOptimizer.rootExhaustiveSearch(false);
       instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
     }
     break;

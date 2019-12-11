@@ -86,6 +86,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree,
       if (ll > bestLL) {
         bestLL = ll;
         bestMovesHistory = movesHistory;
+        Logger::info << "Found better root " << ll << std::endl;
       }
       rootExhaustiveSearchAux(speciesTree, 
           geneTrees, 
@@ -475,7 +476,7 @@ void SpeciesTreeOptimizer::optimizeDTLRates()
     return;
   }
 
-  //_speciesTree->setGlobalRates(computeOptimizedRates());
+  _speciesTree->setGlobalRates(computeOptimizedRates());
   for (auto &evaluation: _evaluations) {
     evaluation->setRates(_speciesTree->getRatesVector());
   }
