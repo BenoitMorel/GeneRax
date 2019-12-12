@@ -279,7 +279,8 @@ double SpeciesTreeOptimizer::fastTransfersRound(unsigned int minTransfers, Moves
   Logger::info << "Number of moves to try: " << transferMoves.size() << std::endl;
   std::sort(transferMoves.begin(), transferMoves.end());
   unsigned int index = 0;
-  const unsigned int restartAfter = 5;
+  unsigned int stopAfterFailures = 2 * _speciesTree->getTree().getNodesNumber();
+  unsigned int failures = 0;
   unsigned int improvements = 0;
   for (auto &transferMove: transferMoves) {
     index++;
@@ -293,14 +294,17 @@ double SpeciesTreeOptimizer::fastTransfersRound(unsigned int minTransfers, Moves
     if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, transferMove.prune, transferMove.regraft)) {
       if (testPruning(transferMove.prune, transferMove.regraft, refApproxLL, hash1)) {
         _stats.acceptedTransfers++;
+        failures = 0;
         improvements++;
         Logger::info << "better from heuristic (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ")"   << std::endl;
         // we enough improvements to recompute the new transfers
-        if (improvements > restartAfter) {
-          return _bestRecLL;
-        }
         hash1 = _speciesTree->getNodeIndexHash(); 
         refApproxLL = computeApproxRecLikelihood();
+      } else {
+        failures++;
+      }
+      if (failures > stopAfterFailures) {
+        return _bestRecLL;
       }
     }  
   }

@@ -99,6 +99,7 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     for (unsigned int minTransfers = 3; minTransfers > 0; --minTransfers) {
       speciesTreeOptimizer.optimizeDTLRates();
       speciesTreeOptimizer.transferSearch(minTransfers);
+      speciesTreeOptimizer.rootExhaustiveSearch(false);
       instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
     }
     break;
@@ -107,6 +108,7 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
       speciesTreeOptimizer.optimizeDTLRates();
       speciesTreeOptimizer.transferSearch(minTransfers);
       speciesTreeOptimizer.sprSearch(1);
+      speciesTreeOptimizer.rootExhaustiveSearch(false);
       instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
     }
     break;

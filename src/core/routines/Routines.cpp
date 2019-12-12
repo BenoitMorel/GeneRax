@@ -57,9 +57,14 @@ static std::string getSpeciesEventCountFile(const std::string &outputDir, const 
       FileSystem::joinPaths("reconciliations", familyName + "_speciesEventCounts.txt"));
 }
 
-static std::string getTransfersFile(const std::string &outputDir, const std::string &familyName)
+static std::string getTransfersFile(const std::string &outputDir, const std::string &familyName, int sample = -1)
 {
-  return FileSystem::joinPaths(outputDir, FileSystem::joinPaths("reconciliations", familyName + "_transfers.txt"));
+  auto res = FileSystem::joinPaths(outputDir, FileSystem::joinPaths("reconciliations", familyName));
+  if (sample >= 0) {
+    res += std::string("_") + std::to_string(sample);
+  }
+  res += std::string("_transfers.txt");
+  return res;
 }
 
 void Routines::inferReconciliation(
@@ -108,7 +113,9 @@ void Routines::inferReconciliation(
       for (unsigned int i = 0; i < reconciliationSamples; ++i) {
         bool stochastic = true;
         evaluation.inferMLScenario(scenario, stochastic);
+        std::string transfersFile = getTransfersFile(outputDir, tree.name, i);
         scenario.saveReconciliation(nhxOs, ReconciliationFormat::NHX);
+        scenario.saveTransfers(transfersFile, false);
         scenario.resetBlackList();
         nhxOs << "\n";
       }
@@ -235,26 +242,32 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     TransferFrequencies &transferFrequencies,
     const std::string &outputDir)
 {
-  inferReconciliation(speciesTreeFile, families, recModel, rates, outputDir, true, 0);
+  int samples = 10;
+  inferReconciliation(speciesTreeFile, families, recModel, rates, outputDir, true, samples);
   
   SpeciesTree speciesTree(speciesTreeFile);
   
-  for (auto &family: families) {
-    std::string transfersFile = getTransfersFile(outputDir, family.name);
-    std::string line;
-    std::ifstream is(transfersFile);
-    assert(is.good());
-    while (std::getline(is, line))
-    {
-      std::istringstream iss(line);
-      std::string label1;
-      std::string label2;
-      iss >> label1 >> label2;
-      std::string key = getTransferKey(label1, label2);
-      if (transferFrequencies.end() == transferFrequencies.find(key)) {
-        transferFrequencies.insert(std::pair<std::string, unsigned int>(key, 1));
-      } else {
-        transferFrequencies[key]++;
+  for (int i = -1; i < samples; ++i) {
+    for (auto &family: families) {
+      std::string transfersFile = getTransfersFile(outputDir, family.name, i);
+      std::string line;
+      std::ifstream is(transfersFile);
+      if (!is.good()) {
+        Logger::info << "ERROR " << transfersFile << std::endl;
+      }
+      assert(is.good());
+      while (std::getline(is, line))
+      {
+        std::istringstream iss(line);
+        std::string label1;
+        std::string label2;
+        iss >> label1 >> label2;
+        std::string key = getTransferKey(label1, label2);
+        if (transferFrequencies.end() == transferFrequencies.find(key)) {
+          transferFrequencies.insert(std::pair<std::string, unsigned int>(key, 1));
+        } else {
+          transferFrequencies[key]++;
+        }
       }
     }
   }
