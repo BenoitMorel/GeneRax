@@ -133,4 +133,12 @@ void GeneSpeciesMapping::buildFromTrees(const std::string &geneTreeStrOrFile)
     _map[gene] = species;
   }   
 }
-
+  
+std::unordered_set<std::string> GeneSpeciesMapping::getCoveredSpecies() const
+{
+  std::unordered_set<std::string> res;
+  for (auto &geneSpecies: _map) {
+    res.insert(geneSpecies.second);
+  }
+  return res;
+}

@@ -41,6 +41,7 @@ public:
    */
   const std::string &getSpecies(const std::string &gene) const {return _map.find(gene)->second;}
 
+  std::unordered_set<std::string> getCoveredSpecies() const;
 private:
   std::map<std::string, std::string> _map; // <gene,species>
   void buildFromPhyldogMapping(std::ifstream &f);
