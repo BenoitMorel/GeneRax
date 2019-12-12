@@ -29,6 +29,11 @@ struct FamilyInfo {
 
 typedef std::vector<FamilyInfo> Families;
 
-void filterFamilies(Families &families, const std::string &speciesTreeFile, bool checkAlignments, bool checkSpeciesTree);
+class Family {
+public:
+  Family() = delete;
+  static void filterFamilies(Families &families, const std::string &speciesTreeFile, bool checkAlignments, bool checkSpeciesTree);
+  static void printStats(Families &families, const std::string &speciesTreeFile);
+};
 
 

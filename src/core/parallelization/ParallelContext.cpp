@@ -129,6 +129,19 @@ void ParallelContext::sumDouble(double &value)
 #endif
 }
 
+void ParallelContext::sumUInt(unsigned int &value)
+{
+#ifdef WITH_MPI
+  if (!_mpiEnabled) {
+    return;
+  }
+  unsigned int sum = 0;
+  barrier();
+  MPI_Allreduce(&value, &sum, 1, MPI_UNSIGNED, MPI_SUM, getComm());
+  value = sum;
+#endif
+}
+
 void ParallelContext::sumVectorDouble(std::vector<double> &value)
 {
 #ifdef WITH_MPI
@@ -287,6 +300,19 @@ void ParallelContext::broadcastDouble(unsigned int fromRank, double &value)
     MPI_DOUBLE,
     static_cast<int>(fromRank),
     getComm());
+#endif
+}
+
+void ParallelContext::maxUInt(unsigned int &value)
+{
+#ifdef WITH_MPI
+  if (!_mpiEnabled) {
+    return;
+  }
+  unsigned int sum = 0;
+  barrier();
+  MPI_Allreduce(&value, &sum, 1, MPI_UNSIGNED, MPI_MAX, getComm());
+  value = sum;
 #endif
 }
 

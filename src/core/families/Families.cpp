@@ -4,6 +4,8 @@
 #include <IO/FileSystem.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <algorithm>
+#include <trees/PLLRootedTree.hpp>
+#include <trees/PerCoreGeneTrees.hpp>
 
 enum FamilyErrorCode {
   ERROR_OK = 0,
@@ -116,7 +118,7 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
   return ERROR_OK;
 }
 
-void filterFamilies(Families &families, const std::string &speciesTreeFile, bool checkAlignments, bool checkSpeciesTree)
+void Family::filterFamilies(Families &families, const std::string &speciesTreeFile, bool checkAlignments, bool checkSpeciesTree)
 {
   ParallelContext::barrier();
   // at the end of this function, different ranks will have
@@ -172,4 +174,66 @@ void filterFamilies(Families &families, const std::string &speciesTreeFile, bool
   }
   srand(consistentSeed);
 }
+
+
+
+  
+void Family::printStats(Families &families, const std::string &speciesTreeFile)
+{
+ 
+  PLLRootedTree speciesTree(speciesTreeFile);
+
+  std::unordered_map<std::string, unsigned int> perSpeciesGenes;
+  std::unordered_map<std::string, unsigned int> perSpeciesCoveringFamilies;
+  unsigned int totalGeneNumber = 0;
+  unsigned int maxGeneNumber = 0;
+  unsigned int totalSpeciesCoverage = 0;
+  unsigned int minSpeciesCoverage = 999999999;
+  std::string minCoveredSpecies;
+
+  auto speciesLabels = speciesTree.getLabels(true);
+
+  for (const auto &species: speciesLabels) {
+    perSpeciesGenes.insert({species, 0});
+    perSpeciesCoveringFamilies.insert({species, 0});
+  }
+
+  PerCoreGeneTrees geneTrees(families);
+  for (auto &tree: geneTrees.getTrees()) {
+    for (auto species: tree.mapping.getCoveredSpecies()) {
+      perSpeciesCoveringFamilies[species]++;
+    }
+    for (auto geneSpecies: tree.mapping.getMap()) {
+      perSpeciesGenes[geneSpecies.second]++;
+    }
+    unsigned int geneNumber = tree.mapping.getMap().size();
+    totalGeneNumber += geneNumber;
+    maxGeneNumber = std::max(geneNumber, maxGeneNumber);
+  }
+
+
+  // gather parallel values
+  ParallelContext::sumUInt(totalGeneNumber);
+  ParallelContext::maxUInt(maxGeneNumber);
+  for (const auto &species: speciesLabels) {
+    ParallelContext::sumUInt(perSpeciesCoveringFamilies[species]);
+    ParallelContext::sumUInt(perSpeciesGenes[species]);
+    totalSpeciesCoverage += perSpeciesCoveringFamilies[species];
+    if (minSpeciesCoverage > perSpeciesCoveringFamilies[species]) {
+      minSpeciesCoverage = perSpeciesCoveringFamilies[species];
+      minCoveredSpecies = species;
+    }
+  }
+
+  Logger::timed << "Input data information:" << std::endl;
+  Logger::info << "- Number of gene families: " << families.size() << std::endl;
+  Logger::info << "- Number of species: " << speciesTree.getLeavesNumber() << std::endl;
+  Logger::info << "- Total number of genes: " << totalGeneNumber << std::endl;
+  Logger::info << "- Average number of genes per family: " << totalGeneNumber / families.size() << std::endl;
+  Logger::info << "- Maximum number of genes per family: " << maxGeneNumber << std::endl;
+  Logger::info << "- Species covered with the smallest family coverage: \"" << minCoveredSpecies << "\" (covered by " << minSpeciesCoverage << "/" << families.size() << " families)" << std::endl;
+  Logger::info << "- Average (over species) species family coverage: " << totalSpeciesCoverage / speciesLabels.size() << std::endl;
+  Logger::info << std::endl;
+}
+
 

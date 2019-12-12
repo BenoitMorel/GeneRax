@@ -68,7 +68,9 @@ public:
     std::vector<unsigned int> &globalVector);
 
   static void sumDouble(double &value);
+  static void sumUInt(unsigned int &value);
   static void sumVectorDouble(std::vector<double> &value);
+  static void maxUInt(unsigned int &value);
   
   static void parallelAnd(bool &value);
 
@@ -88,6 +90,7 @@ public:
    *  @param bestRank the rank that has the highest value
    */
   static unsigned int getMax(double &value, unsigned int &bestRank);
+  
   
 
   /**
