@@ -33,7 +33,8 @@ before_install:
   - if [ -n "${CXX_COMPILER}" ]; then export CXX="${CXX_COMPILER}"; fi
 
 install:
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then  brew install mpich        ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then  brew update; brew install mpich        ; fi
+  
 
 script: 
   - ./install.sh
