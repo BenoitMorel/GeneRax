@@ -447,7 +447,6 @@ double SpeciesTreeOptimizer::sprSearch(unsigned int radius, bool doOptimizeGeneT
     if (doOptimizeGeneTrees) {
       newLL = slowSPRRound(radius, bestLL); 
     } else {
-      optimizeDTLRates();
       newLL = fastSPRRound(radius);
     }
   } while (newLL - bestLL > 0.001);
