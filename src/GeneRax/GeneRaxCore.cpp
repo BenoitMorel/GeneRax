@@ -54,7 +54,6 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
     Logger::info << "[Error] No valid families! Aborting GeneRax" << std::endl;
     ParallelContext::abort(10);
   }
-  Family::printStats(instance.initialFamilies, instance.speciesTree);
   instance.currentFamilies = instance.initialFamilies;
   initFolders(instance);
 }
@@ -67,6 +66,11 @@ void GeneRaxCore::initRandomGeneTrees(GeneRaxInstance &instance)
   if (randoms) {
     initialGeneTreeSearch(instance);
   }
+}
+  
+void GeneRaxCore::printStats(GeneRaxInstance &instance)
+{
+  Family::printStats(instance.currentFamilies, instance.speciesTree);
 }
 
 void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)

@@ -180,7 +180,7 @@ def run_reconciliation_test(cores, model):
   return ok
 
 dataset_set = ["simulated_2"]
-with_starting_tree_set = [True, False]
+with_starting_tree_set = [False, True]
 strategy_set = ["SPR", "EVAL"]
 model_set = ["UndatedDL", "UndatedDTL"]
 cores_set = [1]

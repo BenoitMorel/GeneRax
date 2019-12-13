@@ -22,6 +22,9 @@ public:
    *  Does nothing is the user provides input gene trees.
    */
   static void initRandomGeneTrees(GeneRaxInstance &instance);
+  
+  
+  static void printStats(GeneRaxInstance &instance);
 
   /**
    * Infer a species tree if species tree inference is enabled
