@@ -70,7 +70,11 @@ void GeneRaxCore::initRandomGeneTrees(GeneRaxInstance &instance)
   
 void GeneRaxCore::printStats(GeneRaxInstance &instance)
 {
-  Family::printStats(instance.currentFamilies, instance.speciesTree);
+  std::string coverageFile = FileSystem::joinPaths(instance.args.output,
+      std::string("perSpeciesCoverage.txt"));
+  Family::printStats(instance.currentFamilies, 
+      instance.speciesTree,
+      coverageFile);
 }
 
 void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)

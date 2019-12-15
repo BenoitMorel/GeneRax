@@ -1,6 +1,7 @@
 #include "Families.hpp"
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <IO/Logger.hpp>
+#include <IO/ParallelOfstream.hpp>
 #include <IO/FileSystem.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <algorithm>
@@ -178,7 +179,7 @@ void Family::filterFamilies(Families &families, const std::string &speciesTreeFi
 
 
   
-void Family::printStats(Families &families, const std::string &speciesTreeFile)
+void Family::printStats(Families &families, const std::string &speciesTreeFile, const std::string &coverageFile)
 {
  
   PLLRootedTree speciesTree(speciesTreeFile);
@@ -223,6 +224,20 @@ void Family::printStats(Families &families, const std::string &speciesTreeFile)
       minSpeciesCoverage = perSpeciesCoveringFamilies[species];
       minCoveredSpecies = species;
     }
+  }
+
+  ParallelOfstream os(coverageFile, true);
+  typedef std::pair<double, std::string> Coverage;
+  std::vector<Coverage> coverageVector;
+  for (const auto &species: speciesLabels) {
+    double d = static_cast<double>(perSpeciesCoveringFamilies[species]);
+    d /= static_cast<double>(families.size());
+    coverageVector.push_back({d, species});
+  }
+  std::sort(coverageVector.begin(), coverageVector.end());
+  os << "SPECIES: FAMILY_COVERAGE" << std::endl;
+  for (auto &coverage: coverageVector) {
+    os << coverage.second << ": " << coverage.first << std::endl;
   }
 
   Logger::timed << "Input data information:" << std::endl;
