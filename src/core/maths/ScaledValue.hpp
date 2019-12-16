@@ -85,9 +85,6 @@ public:
    * ScaledValue minux operator
    */
   inline ScaledValue operator-(const ScaledValue& v) const {
-    if (v.isNull()) {
-      return *this;
-    }
     if (v.scaler == scaler) {
       if (value - v.value < 0.0) {
         if (fabs(value - v.value) < 0.0000000001) {
