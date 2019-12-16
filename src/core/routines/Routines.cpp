@@ -242,7 +242,7 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     TransferFrequencies &transferFrequencies,
     const std::string &outputDir)
 {
-  int samples = 10;
+  int samples = 0;
   inferReconciliation(speciesTreeFile, families, recModel, rates, outputDir, true, samples);
   
   SpeciesTree speciesTree(speciesTreeFile);
