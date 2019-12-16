@@ -640,7 +640,7 @@ void AbstractReconciliationModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rno
     backtrace(rightGeneNode, speciesNode, scenario, false, stochastic); 
     break;
   case ReconciliationEventType::EVENT_SL:
-    backtrace(geneNode, event.pllDestSpeciesNode, scenario, false, stochastic); 
+    backtrace(geneNode, event.pllDestSpeciesNode, scenario, true, stochastic); 
     break;
   case ReconciliationEventType::EVENT_T:
     backtrace(event.pllTransferedGeneNode, event.pllDestSpeciesNode, scenario, false, stochastic);
@@ -648,7 +648,7 @@ void AbstractReconciliationModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rno
         speciesNode, scenario, false, stochastic);
     break;
   case ReconciliationEventType::EVENT_TL:
-    backtrace(geneNode, event.pllDestSpeciesNode, scenario, false, stochastic);
+    backtrace(geneNode, event.pllDestSpeciesNode, scenario, true, stochastic);
     break;
   case ReconciliationEventType::EVENT_None:
     break;
