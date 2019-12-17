@@ -15,6 +15,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   output("GeneRax"),
   perFamilyDTLRates(false),
   rootedGeneTree(true),
+  pruneSpeciesTree(false),
   supportThreshold(-1.0),
   recRadius(0),
   perSpeciesDTLRates(false),
@@ -68,6 +69,8 @@ void GeneRaxArguments::init() {
       perFamilyDTLRates = true;
     } else if (arg == "--unrooted-gene-tree") {
       rootedGeneTree = false;
+    } else if (arg == "--prune-species-tree") {
+      pruneSpeciesTree = true;
     } else if (arg == "--support-threshold") {
       supportThreshold = static_cast<double>(atof(argv[++i]));
     } else if (arg == "--rec-radius") {
@@ -206,6 +209,7 @@ void GeneRaxArguments::printSummary() {
   }
   Logger::info << "Prefix: " << output << std::endl;
   Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << std::endl;
+  Logger::info << "Prune species tree: " << boolStr[!pruneSpeciesTree] << std::endl;
   Logger::info << "Reconciliation radius: " << recRadius << std::endl;
 #ifdef WITH_MPI
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << std::endl;

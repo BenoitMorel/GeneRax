@@ -88,7 +88,7 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
   Logger::info << "Saving tree to " << instance.speciesTree << std::endl;
   Parameters startingRates(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate);
   SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, 
-      instance.recModel, startingRates, instance.args.userDTLRates, instance.args.supportThreshold, 
+      instance.recModel, startingRates, instance.args.userDTLRates, instance.args.pruneSpeciesTree, instance.args.supportThreshold, 
       instance.args.output, instance.args.exec);
   if (instance.args.speciesFastRadius > 0) {
     Logger::info << std::endl;

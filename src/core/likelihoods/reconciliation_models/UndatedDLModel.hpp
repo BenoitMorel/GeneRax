@@ -21,8 +21,11 @@
 template <class REAL>
 class UndatedDLModel: public AbstractReconciliationModel<REAL> {
 public:
-  UndatedDLModel(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree):
-    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree) {}
+  UndatedDLModel(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, 
+      bool rootedGeneTree,
+      bool pruneSpeciesTree):
+    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree, pruneSpeciesTree) {}
+  
   
   UndatedDLModel(const UndatedDLModel &) = delete;
   UndatedDLModel & operator = (const UndatedDLModel &) = delete;

@@ -30,7 +30,8 @@ public:
     PLLUnrootedTree &initialGeneTree,
     const GeneSpeciesMapping& geneSpeciesMapping,
     RecModel recModel,
-    bool rootedGeneTree);
+    bool rootedGeneTree,
+    bool pruneSpeciesTree = false);
   
   /**
    * Forbid copy
@@ -87,6 +88,7 @@ private:
   PLLUnrootedTree &_initialGeneTree;
   GeneSpeciesMapping _geneSpeciesMapping;
   bool _rootedGeneTree;
+  bool _pruneSpeciesTree;
   RecModel _model; 
   bool _infinitePrecision;
   std::vector<double> _dupRates;

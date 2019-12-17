@@ -97,7 +97,8 @@ public:
   // overload from parent
   AbstractReconciliationModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
-      bool rootedGeneTree);
+      bool rootedGeneTree,
+      bool pruneSpeciesTree);
   virtual void setInitialGeneTree(pll_utree_t *tree);
   virtual ~AbstractReconciliationModel() {}
   // overload from parent
@@ -186,6 +187,10 @@ protected:
   PartialLikelihoodMode _likelihoodMode;
   virtual void beforeComputeLogLikelihood(); 
   virtual void afterComputeLogLikelihood() {};
+  pll_rnode_t *getSpeciesLeft(pll_rnode_t *node) {return _speciesLeft[node->node_index];}
+  pll_rnode_t *getSpeciesRight(pll_rnode_t *node) {return _speciesRight[node->node_index];}
+  pll_rnode_t *getSpeciesParent(pll_rnode_t *node) {return _speciesParent[node->node_index];}
+  pll_rnode_t *getPrunedRoot() {return _prunedRoot;}
 private:
   void mapGenesToSpecies();
   void computeMLRoot(pll_unode_t *&bestGeneRoot, pll_rnode_t *&bestSpeciesRoot);
@@ -194,13 +199,16 @@ private:
   void updateCLVsRec(pll_unode_t *node);
   void markInvalidatedNodes();
   void markInvalidatedNodesRec(pll_unode_t *node);
+  bool fillPrunedNodesPostOrder(pll_rnode_t *node, 
+    std::vector<pll_rnode_t *> &nodes, 
+    std::unordered_set<pll_rnode_t *> *nodesToAdd = nullptr);  
   
   
   bool _rootedGeneTree;
   PLLRootedTree &_speciesTree;
-  std::map<std::string, std::string> geneNameToSpeciesName_;
-  std::map<std::string, unsigned int> speciesNameToId_;
-  
+  std::map<std::string, std::string> _geneNameToSpeciesName;
+  std::map<std::string, unsigned int> _speciesNameToId;
+  std::vector<unsigned int> _speciesCoverage;
   // set of invalid CLVs. All the CLVs from these CLVs to
   // the root(s) need to be recomputed
   std::unordered_set<unsigned int> _invalidatedNodes;
@@ -212,6 +220,13 @@ private:
   std::vector<bool> _isCLVUpdated;
   std::vector<pll_unode_t *> _allNodes;
  
+  // left, right and parent species vectors, 
+  // index with the species nodex_index
+  std::vector<pll_rnode_t *> _speciesLeft;
+  std::vector<pll_rnode_t *> _speciesRight;
+  std::vector<pll_rnode_t *> _speciesParent;
+  pll_rnode_t *_prunedRoot;
+  bool _pruneSpeciesTree;
 };
 
 
@@ -219,15 +234,17 @@ private:
 template <class REAL>
 AbstractReconciliationModel<REAL>::AbstractReconciliationModel(PLLRootedTree &speciesTree, 
     const GeneSpeciesMapping &geneSpeciesMapping, 
-    bool rootedGeneTree):
+    bool rootedGeneTree,
+    bool pruneSpeciesTree):
   _geneRoot(0),
   _maxGeneId(1),
   _fastMode(false),
   _likelihoodMode(PartialLikelihoodMode::PartialGenes),
   _rootedGeneTree(rootedGeneTree),
   _speciesTree(speciesTree),
-  geneNameToSpeciesName_(geneSpeciesMapping.getMap()),
-  _allSpeciesNodesInvalid(true)
+  _geneNameToSpeciesName(geneSpeciesMapping.getMap()),
+  _allSpeciesNodesInvalid(true),
+  _pruneSpeciesTree(pruneSpeciesTree)
 {
   initSpeciesTree();
 }
@@ -252,6 +269,7 @@ void AbstractReconciliationModel<REAL>::initFromUtree(pll_utree_t *tree) {
       _geneIds.push_back(node->node_index);
     }
   }
+
 }
 
 
@@ -261,10 +279,16 @@ void AbstractReconciliationModel<REAL>::mapGenesToSpecies()
   _geneToSpecies.resize(_allNodes.size());
   for (auto node: _allNodes) {
     if (!node->next) {
-      std::string speciesName = geneNameToSpeciesName_[std::string(node->label)]; 
-      _geneToSpecies[node->node_index] = speciesNameToId_[speciesName];
+      std::string speciesName = _geneNameToSpeciesName[std::string(node->label)]; 
+      _geneToSpecies[node->node_index] = _speciesNameToId[speciesName];
     }
   }
+  _speciesCoverage = std::vector<unsigned int>(_allSpeciesNodesCount, false);
+  for (auto node: _allNodes) {
+    _speciesCoverage[_geneToSpecies[node->node_index]]++;
+  }
+
+  onSpeciesTreeChange(nullptr);
 }
 
 template <class REAL>
@@ -274,6 +298,26 @@ void AbstractReconciliationModel<REAL>::setInitialGeneTree(pll_utree_t *tree)
   mapGenesToSpecies();
   _maxGeneId = static_cast<unsigned int>(_allNodes.size() - 1);
   invalidateAllCLVs();
+}
+  
+template <class REAL>
+bool AbstractReconciliationModel<REAL>::fillPrunedNodesPostOrder(pll_rnode_t *node, 
+    std::vector<pll_rnode_t *> &nodes, 
+    std::unordered_set<pll_rnode_t *> *nodesToAdd)
+{
+  bool addMyself = true;
+  if (nodesToAdd) {
+    addMyself = (nodesToAdd->find(node) != nodesToAdd->end());
+  }
+  if (getSpeciesLeft(node)) {
+    assert(getSpeciesRight(node));
+    addMyself |= fillPrunedNodesPostOrder(getSpeciesLeft(node), nodes, nodesToAdd);
+    addMyself |= fillPrunedNodesPostOrder(getSpeciesRight(node), nodes, nodesToAdd);
+  }
+  if (addMyself) {
+    nodes.push_back(node);
+  }
+  return addMyself;
 }
 
 
@@ -301,11 +345,14 @@ template <class REAL>
 void AbstractReconciliationModel<REAL>::initSpeciesTree()
 {
   _allSpeciesNodesCount = _speciesTree.getNodesNumber();
+  _speciesLeft = std::vector<pll_rnode_t *>(_allSpeciesNodesCount, nullptr);
+  _speciesRight = std::vector<pll_rnode_t *>(_allSpeciesNodesCount, nullptr);
+  _speciesParent = std::vector<pll_rnode_t *>(_allSpeciesNodesCount, nullptr);
+  _speciesNameToId.clear();
   onSpeciesTreeChange(nullptr);
-  speciesNameToId_.clear();
   for (auto node: _allSpeciesNodes) {
     if (!node->left) {
-      speciesNameToId_[node->label] = node->node_index;
+      _speciesNameToId[node->label] = node->node_index;
     }
   }
 }
@@ -321,7 +368,42 @@ void AbstractReconciliationModel<REAL>::onSpeciesTreeChange(const std::unordered
   }
   _allSpeciesNodes.clear();
   fillNodesPostOrder(_speciesTree.getRoot(), _allSpeciesNodes);
-  assert(_allSpeciesNodes.size() && _allSpeciesNodes.back() == _speciesTree.getRoot());
+  for (auto speciesNode: _allSpeciesNodes) {
+    auto e = speciesNode->node_index;
+    _speciesLeft[e] = speciesNode->left;
+    _speciesRight[e] = speciesNode->right;
+    _speciesParent[e] = speciesNode->parent;
+  }
+  bool pruneSpecies = false && _speciesCoverage.size();
+  _prunedRoot = _speciesTree.getRoot();
+  if (pruneSpecies) {
+    std::vector<pll_rnode_t *> pruned(_allSpeciesNodesCount, nullptr);
+    for (auto speciesNode: _allSpeciesNodes) {
+      auto e = speciesNode->node_index;
+      if (!speciesNode->left) {
+        pruned[e] = (_speciesCoverage[e] ? speciesNode : nullptr);   
+      } else {
+        auto left = _speciesLeft[e];
+        auto right = _speciesRight[e];
+        auto prunedLeft = pruned[left->node_index];
+        auto prunedRight = pruned[right->node_index];
+        if (prunedLeft && prunedRight) {
+          _speciesLeft[e] = prunedLeft;
+          _speciesRight[e] = prunedRight;
+          pruned[e] = speciesNode;
+          _speciesParent[prunedLeft->node_index] = speciesNode;
+          _speciesParent[prunedRight->node_index] = speciesNode;
+          _prunedRoot = speciesNode;
+        } else if (!prunedLeft && prunedRight) {
+          pruned[e] = prunedRight;
+        } else if (prunedLeft && !prunedRight) {
+          pruned[e] = prunedLeft;
+        }
+      }
+    }
+    fillPrunedNodesPostOrder(getPrunedRoot(), _allSpeciesNodes);
+  }
+  assert(_allSpeciesNodes.size()); // && _allSpeciesNodes.back() == _speciesTree.getRoot());
 }
 
 
@@ -329,21 +411,17 @@ template <class REAL>
 void AbstractReconciliationModel<REAL>::beforeComputeLogLikelihood()
 {
   if (_allSpeciesNodesInvalid) { // update everything
-    //Logger::info << "All nodes invalid " << std::endl;
     _speciesNodesToUpdate = _allSpeciesNodes;
   } else if (_invalidatedSpeciesNodes.size()) { // partial update
     // here, fill _speciesNodesToUpdate with the invalid nodes
-    //Logger::info << "Some nodes invalid " << std::endl;
     _speciesNodesToUpdate.clear();
-    fillNodesPostOrder(_speciesTree.getRoot(), _speciesNodesToUpdate, &_invalidatedSpeciesNodes);
-    //Logger::info << "species to invalidate and to update: " << _invalidatedSpeciesNodes.size() << " " << _speciesNodesToUpdate.size() << std::endl;
+    fillPrunedNodesPostOrder(getPrunedRoot(), _speciesNodesToUpdate, &_invalidatedSpeciesNodes);
   } else {
     _speciesNodesToUpdate.clear();
   } 
   _allSpeciesNodesInvalid = false;
   _invalidatedSpeciesNodes.clear();
-  assert(!_speciesNodesToUpdate.size() || _speciesNodesToUpdate.back() == _speciesTree.getRoot());
-  //Logger::info << "all species: " << _allSpeciesNodes.size() << std::endl;
+  //assert(!_speciesNodesToUpdate.size() || _speciesNodesToUpdate.back() == getPrunedRoot());
   recomputeSpeciesProbabilities();
 }
 

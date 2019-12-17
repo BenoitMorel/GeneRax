@@ -17,11 +17,13 @@ ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
   PLLUnrootedTree &initialGeneTree,
   const GeneSpeciesMapping& geneSpeciesMapping,
   RecModel recModel,
-  bool rootedGeneTree):
+  bool rootedGeneTree, 
+  bool pruneSpeciesTree):
     _speciesTree(speciesTree),
     _initialGeneTree(initialGeneTree),
     _geneSpeciesMapping(geneSpeciesMapping),
     _rootedGeneTree(rootedGeneTree),
+    _pruneSpeciesTree(pruneSpeciesTree),
     _model(recModel),
     _infinitePrecision(true)
 {
@@ -102,16 +104,16 @@ ReconciliationModelInterface *ReconciliationEvaluation::buildRecModelObject(RecM
   switch(recModel) {
   case RecModel::UndatedDL:
     if (infinitePrecision) {
-      res = new UndatedDLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
+      res = new UndatedDLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _pruneSpeciesTree);
     } else {
-      res = new UndatedDLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
+      res = new UndatedDLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _pruneSpeciesTree);
     }
     break;
   case RecModel::UndatedDTL:
     if (infinitePrecision) {
-      res = new UndatedDTLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
+      res = new UndatedDTLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _pruneSpeciesTree);
     } else {
-      res = new UndatedDTLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree);
+      res = new UndatedDTLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _pruneSpeciesTree);
     }
     break;
   }

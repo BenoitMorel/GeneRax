@@ -20,8 +20,9 @@
 template <class REAL>
 class UndatedDTLModel: public AbstractReconciliationModel<REAL> {
 public:
-  UndatedDTLModel(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree):
-    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree)
+  UndatedDTLModel(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree, bool pruneSpeciesTree):
+    
+    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree, pruneSpeciesTree)
   {
   } 
   UndatedDTLModel(const UndatedDTLModel &) = delete;
@@ -236,8 +237,8 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
       temp = getCorrectedTransferExtinctionSum(e) * _uE[e];
       scale(temp);
       proba += temp;
-      if (speciesNode->left) {
-        temp = _uE[speciesNode->left->node_index]  * _uE[speciesNode->right->node_index] * _PS[e];
+      if (this->getSpeciesLeft(speciesNode)) {
+        temp = _uE[this->getSpeciesLeft(speciesNode)->node_index]  * _uE[speciesNode->right->node_index] * _PS[e];
         scale(temp);
         proba += temp;
       }
@@ -286,7 +287,7 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
   auto gid = geneNode->node_index;
   auto e = speciesNode->node_index;
   bool isGeneLeaf = !geneNode->next;
-  bool isSpeciesLeaf = !speciesNode->left;
+  bool isSpeciesLeaf = !this->getSpeciesLeft(speciesNode);
   
 
   if (event) {
@@ -315,8 +316,8 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
   unsigned int f = 0;
   unsigned int g = 0;
   if (!isSpeciesLeaf) {
-    f = speciesNode->left->node_index;
-    g = speciesNode->right->node_index;
+    f = this->getSpeciesLeft(speciesNode)->node_index;
+    g = this->getSpeciesRight(speciesNode)->node_index;
   }
   if (not isGeneLeaf) {
     // S event
@@ -404,12 +405,12 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     case 3:
       event->type = ReconciliationEventType::EVENT_SL;
       event->destSpeciesNode = f;
-      event->pllDestSpeciesNode = speciesNode->left;
+      event->pllDestSpeciesNode = this->getSpeciesLeft(speciesNode);
       break;
     case 4:
       event->type = ReconciliationEventType::EVENT_SL;
       event->destSpeciesNode = g;
-      event->pllDestSpeciesNode = speciesNode->right;
+      event->pllDestSpeciesNode = this->getSpeciesRight(speciesNode);
       break;
     case 5:
       event->type = ReconciliationEventType::EVENT_T;
@@ -546,8 +547,8 @@ void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode,
   auto u_right = this->getRight(parentGeneNode, isVirtualRoot);
   std::unordered_set<unsigned int> parents;
   parents.insert(originSpeciesNode->node_index);
-  for (auto parent = originSpeciesNode; parent->parent != 0; parent = parent->parent) {
-    parents.insert(parent->parent->node_index);
+  for (auto parent = originSpeciesNode; this->getSpeciesParent(parent) != 0; parent = this->getSpeciesParent(parent)) {
+    parents.insert(this->getSpeciesParent(parent)->node_index);
   }
   std::vector<REAL> transferProbas(speciesNumber * 2, REAL());
   double factor = _PT[e] / static_cast<double>(speciesNumber);
@@ -613,8 +614,8 @@ void UndatedDTLModel<REAL>::getBestTransferLoss(Scenario &scenario,
   parents.insert(originSpeciesNode->node_index);
   unsigned int speciesNumber = this->_allSpeciesNodes.size();
   std::vector<REAL> transferProbas(speciesNumber, REAL());
-  for (auto parent = originSpeciesNode; parent->parent != 0; parent = parent->parent) {
-    parents.insert(parent->parent->node_index);
+  for (auto parent = originSpeciesNode; this->getSpeciesParent(parent) != 0; parent = this->getSpeciesParent(parent)) {
+    parents.insert(this->getSpeciesParent(parent)->node_index);
   }
   REAL factor = _uE[e] * (_PT[e] / static_cast<double>(this->_allSpeciesNodes.size()));
   for (auto species: this->_allSpeciesNodes) {

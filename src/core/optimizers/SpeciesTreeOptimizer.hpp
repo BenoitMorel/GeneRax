@@ -53,6 +53,7 @@ public:
       RecModel model,
       const Parameters &startingRates,
       bool userDTLRates,
+      bool pruneSpeciesTree,
       double supportThreshold,
       const std::string &outputDir,
       const std::string &execPath);
@@ -109,6 +110,7 @@ private:
   SpeciesSearchStats _stats;
   bool _firstOptimizeRatesCall;
   bool _userDTLRates;
+  bool _pruneSpeciesTree;
 private:
   void updateEvaluations();
   void rootExhaustiveSearchAux(SpeciesTree &speciesTree, 
