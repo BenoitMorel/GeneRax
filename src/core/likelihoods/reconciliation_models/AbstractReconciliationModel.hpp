@@ -374,9 +374,8 @@ void AbstractReconciliationModel<REAL>::onSpeciesTreeChange(const std::unordered
     _speciesRight[e] = speciesNode->right;
     _speciesParent[e] = speciesNode->parent;
   }
-  bool pruneSpecies = false && _speciesCoverage.size();
   _prunedRoot = _speciesTree.getRoot();
-  if (pruneSpecies) {
+  if (_pruneSpeciesTree && _speciesCoverage.size()) {
     std::vector<pll_rnode_t *> pruned(_allSpeciesNodesCount, nullptr);
     for (auto speciesNode: _allSpeciesNodes) {
       auto e = speciesNode->node_index;
