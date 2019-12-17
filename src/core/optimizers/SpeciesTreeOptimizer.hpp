@@ -67,11 +67,11 @@ public:
   virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
   void rootExhaustiveSearch(bool doOptimizeGeneTrees);
-  double fastTransfersRound(unsigned int minTransfers, MovesBlackList &blacklist);
+  double fastTransfersRound(MovesBlackList &blacklist);
   double fastSPRRound(unsigned int radius);
   double slowSPRRound(unsigned int radius, double bestLL);
   double sprSearch(unsigned int radius, bool doOptimizeGeneTrees = false);
-  double transferSearch(unsigned int minTransfer);
+  double transferSearch();
   void optimizeDTLRates();
  
   Parameters computeOptimizedRates(); 

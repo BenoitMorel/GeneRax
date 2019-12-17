@@ -104,17 +104,17 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     }
     break;
   case SpeciesStrategy::TRANSFERS:
-    for (unsigned int minTransfers = 3; minTransfers > 0; --minTransfers) {
+    for (unsigned int i = 0; i < 3; ++i) {
       speciesTreeOptimizer.optimizeDTLRates();
-      speciesTreeOptimizer.transferSearch(minTransfers);
+      speciesTreeOptimizer.transferSearch();
       speciesTreeOptimizer.rootExhaustiveSearch(false);
       instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
     }
     break;
   case SpeciesStrategy::HYBRID:
-    for (unsigned int minTransfers = 3; minTransfers > 0; --minTransfers) {
+    for (unsigned int i = 0; i < 2; ++i) {
       speciesTreeOptimizer.optimizeDTLRates();
-      speciesTreeOptimizer.transferSearch(minTransfers);
+      speciesTreeOptimizer.transferSearch();
       speciesTreeOptimizer.sprSearch(1);
       speciesTreeOptimizer.rootExhaustiveSearch(false);
       instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
