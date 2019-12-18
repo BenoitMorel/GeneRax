@@ -94,7 +94,7 @@ public:
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
-  std::vector<std::shared_ptr<ReconciliationEvaluation> > _evaluations; // one per geneTree
+  PerCoreEvaluations _evaluations; 
   Families _initialFamilies;
   Families _currentFamilies;
   RecModel _recModel;

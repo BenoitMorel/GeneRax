@@ -136,7 +136,7 @@ JointTree::JointTree(const std::string &newickString,
 {
 
   _geneSpeciesMap.fill(geneSpeciesMapfile, newickString);
-  reconciliationEvaluation_ = std::make_unique<ReconciliationEvaluation>(_speciesTree,  
+  reconciliationEvaluation_ = std::make_shared<ReconciliationEvaluation>(_speciesTree,  
       getGeneTree(),
       _geneSpeciesMap, 
       reconciliationModel,

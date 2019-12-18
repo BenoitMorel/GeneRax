@@ -5,10 +5,12 @@
 #include <IO/FamiliesFileParser.hpp>
 #include <util/enums.hpp>
 #include <unordered_map>
+#include <trees/PerCoreGeneTrees.hpp>
+#include <likelihoods/ReconciliationEvaluation.hpp>
+
 
 class Parameters;
-
-
+class PLLRootedTree;
 typedef std::unordered_map<std::string, unsigned int> TransferFrequencies;
 
 
@@ -25,6 +27,8 @@ public:
   static void optimizeRates(bool userDTLRates, 
     const std::string &speciesTreeFile,
     RecModel recModel,
+    bool rootedGeneTree,
+    bool pruneSpeciesTree,
     Families &families,
     bool perSpeciesRates, 
     Parameters &rates,
@@ -82,6 +86,12 @@ public:
     double &totalLibpllLL,
     double &totalRecLL);
 
+  static void buildEvaluations(PerCoreGeneTrees &geneTrees, 
+    PLLRootedTree &speciesTree, 
+    RecModel recModel, 
+    bool rootedGeneTree, 
+    bool pruneSpeciesTree, 
+    Evaluations &evaluations);
 
 
 

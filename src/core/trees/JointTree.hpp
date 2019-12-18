@@ -56,6 +56,7 @@ public:
     PLLRootedTree &getSpeciesTree() {return _speciesTree;}
     size_t getUnrootedTreeHash();
     ReconciliationEvaluation &getReconciliationEvaluation() {return *reconciliationEvaluation_;}
+    std::shared_ptr<ReconciliationEvaluation> getReconciliationEvaluationPtr() {return reconciliationEvaluation_;}
     
     pll_unode_t *getRoot() {return reconciliationEvaluation_->getRoot();}
     void setRoot(pll_unode_t * root) {reconciliationEvaluation_->setRoot(root);}
@@ -72,7 +73,7 @@ public:
     double getSupportThreshold() const {return _supportThreshold;}
 private:
     LibpllEvaluation _libpllEvaluation;
-    std::unique_ptr<ReconciliationEvaluation> reconciliationEvaluation_;
+    std::shared_ptr<ReconciliationEvaluation> reconciliationEvaluation_;
     PLLRootedTree _speciesTree;
     GeneSpeciesMapping _geneSpeciesMap;
     Parameters _ratesVector;

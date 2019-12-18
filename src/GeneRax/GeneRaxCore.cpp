@@ -263,7 +263,8 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
   } else {
     Logger::timed << "Optimizing global DTL rates... " << std::endl;
   }
-  Routines::optimizeRates(instance.args.userDTLRates, instance.speciesTree, instance.recModel, 
+  Routines::optimizeRates(instance.args.userDTLRates, instance.speciesTree, instance.recModel,
+      instance.args.rootedGeneTree, instance.args.pruneSpeciesTree, 
       instance.currentFamilies, perSpeciesDTLRates, instance.rates, instance.elapsedRates);
   if (instance.rates.dimensions() <= 3) {
     Logger::info << instance.rates << std::endl;

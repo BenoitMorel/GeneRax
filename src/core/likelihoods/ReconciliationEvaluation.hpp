@@ -104,4 +104,5 @@ private:
 };
   
 typedef std::vector<std::shared_ptr<ReconciliationEvaluation> > Evaluations;
+typedef std::vector<std::shared_ptr<ReconciliationEvaluation> > PerCoreEvaluations;
 

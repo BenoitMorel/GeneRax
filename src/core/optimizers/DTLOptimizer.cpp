@@ -58,12 +58,10 @@ static bool lineSearchParameters(Evaluations &evaluations,
   return !stop;
 }
 
-Parameters DTLOptimizer::optimizeParameters(PerCoreGeneTrees &geneTrees,
-    PLLRootedTree &speciesTree, 
-    RecModel model, const Parameters &startingParameters)
+
+Parameters DTLOptimizer::optimizeParameters(PerCoreEvaluations &evaluations,
+    const Parameters &startingParameters)
 {
-  Evaluations evaluations;
-  buildEvaluations(geneTrees, speciesTree, model, evaluations); 
   double epsilon = 0.0000001;
   Parameters currentRates = startingParameters;
   updateLL(currentRates, evaluations);
@@ -84,15 +82,15 @@ Parameters DTLOptimizer::optimizeParameters(PerCoreGeneTrees &geneTrees,
   return currentRates;
 }
 
-Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreGeneTrees &geneTrees, 
-    PLLRootedTree &speciesTree, 
-    RecModel model,
+
+Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreEvaluations &evaluations, 
     Parameters *startingParameters)
 {
+  assert(evaluations.size());
   std::vector<Parameters> startingRates;
   if (startingParameters) {
     startingRates.push_back(*startingParameters);
-  } else if (Enums::freeParameters(model) == 2) {
+  } else if (Enums::freeParameters(evaluations[0]->getRecModel()) == 2) {
     startingRates.push_back(Parameters(0.1, 0.2));
     startingRates.push_back(Parameters(0.2, 0.2));
     startingRates.push_back(Parameters(0.5, 0.5));
@@ -107,7 +105,7 @@ Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreGeneTrees &geneTrees
   Parameters best;
   best.setScore(-10000000000);
   for (auto rates: startingRates) {
-    Parameters newRates = optimizeParameters(geneTrees, speciesTree, model, rates);
+    Parameters newRates = optimizeParameters(evaluations, rates);
     bool stop = (fabs(newRates.getScore() - best.getScore()) < 3.0);
     if (newRates.getScore() > best.getScore()) {
       best = newRates;
@@ -121,13 +119,12 @@ Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreGeneTrees &geneTrees
 }
 
 
-Parameters DTLOptimizer::optimizeParametersPerSpecies(PerCoreGeneTrees &geneTrees, 
-    PLLRootedTree &speciesTree, 
-    RecModel model)
+
+Parameters DTLOptimizer::optimizeParametersPerSpecies(PerCoreEvaluations &evaluations, unsigned int speciesNodesNumber) 
 {
-  Parameters globalRates = optimizeParametersGlobalDTL(geneTrees, speciesTree, model);
-  Parameters startingSpeciesRates(speciesTree.getNodesNumber(), globalRates);
-  Parameters rates = DTLOptimizer::optimizeParameters(geneTrees, speciesTree, model, startingSpeciesRates);
+  Parameters globalRates = optimizeParametersGlobalDTL(evaluations);
+  Parameters startingSpeciesRates(speciesNodesNumber, globalRates);
+  Parameters rates = DTLOptimizer::optimizeParameters(evaluations, startingSpeciesRates);
   return rates; 
 }
 

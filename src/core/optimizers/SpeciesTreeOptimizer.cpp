@@ -473,7 +473,7 @@ Parameters SpeciesTreeOptimizer::computeOptimizedRates()
   } else {
     startingRates = &rates;
   }
-  auto res =  DTLOptimizer::optimizeParametersGlobalDTL(*_geneTrees, _speciesTree->getTree(), _recModel, startingRates);
+  auto res =  DTLOptimizer::optimizeParametersGlobalDTL(_evaluations, startingRates);
   Logger::timed << "optimize rates done" << std::endl;
   return res;
 }

@@ -14,19 +14,13 @@ class DTLOptimizer {
 public:
   DTLOptimizer() = delete;
 
-  static Parameters optimizeParameters(PerCoreGeneTrees &geneTrees, 
-      PLLRootedTree &speciesTree, 
-      RecModel model, 
+  static Parameters optimizeParameters(PerCoreEvaluations &evaluations, 
       const Parameters &startingParameters);
-
-  static Parameters optimizeParametersGlobalDTL(PerCoreGeneTrees &geneTrees, 
-      PLLRootedTree &speciesTree, 
-      RecModel model,
+  
+  static Parameters optimizeParametersGlobalDTL(PerCoreEvaluations &evaluations, 
       Parameters *startingParameters = nullptr);
 
-  static Parameters optimizeParametersPerSpecies(PerCoreGeneTrees &geneTrees, 
-      PLLRootedTree &speciesTree, 
-      RecModel model);
+  static Parameters optimizeParametersPerSpecies(PerCoreEvaluations &evaluations, unsigned int speciesNodesNumber);
 
 private:
   static void buildEvaluations(PerCoreGeneTrees &geneTrees, PLLRootedTree &speciesTree, RecModel model, Evaluations &evaluations);

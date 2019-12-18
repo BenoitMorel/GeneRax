@@ -15,6 +15,8 @@
 void Routines::optimizeRates(bool userDTLRates, 
     const std::string &speciesTreeFile,
     RecModel recModel,
+    bool rootedGeneTree,
+    bool pruneSpeciesTree,
     Families &families,
     bool perSpeciesRates, 
     Parameters &rates,
@@ -31,19 +33,12 @@ void Routines::optimizeRates(bool userDTLRates,
     ParallelContext::abort(42);
   }
   PLLRootedTree speciesTree(speciesTreeFile);
+  PerCoreEvaluations evaluations;
+  buildEvaluations(geneTrees, speciesTree, recModel, rootedGeneTree, pruneSpeciesTree, evaluations);
   if (perSpeciesRates) {
-    //auto ratesGlobal = DTLOptimizer::optimizeParametersGlobalDTL(geneTrees, speciesTree, recModel);
-    //auto ratesEmpirical = ratesGlobal;
-    //optimizeSpeciesRatesEmpirical(speciesTreeFile, recModel, families, ratesEmpirical, outputDir, sumElapsed);
-    rates = DTLOptimizer::optimizeParametersPerSpecies(geneTrees, speciesTree, recModel);
-    /*
-    Logger::timed << " Per-species DTL rates optimization from global rates: RecLL=" << rates1.getScore() << std::endl;
-    auto rates2 = DTLOptimizer::optimizeParameters(geneTrees, speciesTree, recModel, ratesEmpirical);
-    Logger::timed << " Per-species DTL rates optimization from empitical rates: RecLL=" << rates2.getScore() << std::endl;
-    rates = (rates1.getScore() > rates2.getScore() ? rates1 : rates2);
-    */
+    rates = DTLOptimizer::optimizeParametersPerSpecies(evaluations, speciesTree.getNodesNumber());
   } else {
-    rates = DTLOptimizer::optimizeParametersGlobalDTL(geneTrees, speciesTree, recModel);
+    rates = DTLOptimizer::optimizeParametersGlobalDTL(evaluations);
   }
   ParallelContext::barrier(); 
   auto elapsed = (Logger::getElapsedSec() - start);
@@ -299,15 +294,30 @@ void Routines::getParametersFromTransferFrequencies(const std::string &speciesTr
 
   }
   
-
-
-
 }
 
 
 
 
-
+void Routines::buildEvaluations(PerCoreGeneTrees &geneTrees, 
+    PLLRootedTree &speciesTree, 
+    RecModel recModel, 
+    bool rootedGeneTree, 
+    bool pruneSpeciesTree, 
+    Evaluations &evaluations)
+{
+  auto &trees = geneTrees.getTrees();
+  evaluations.resize(trees.size());
+  for (unsigned int i = 0; i < trees.size(); ++i) {
+    auto &tree = trees[i];
+    evaluations[i] = std::make_shared<ReconciliationEvaluation>(speciesTree, 
+        *tree.geneTree, 
+        tree.mapping, 
+        recModel, 
+        rootedGeneTree, 
+        pruneSpeciesTree);
+  }
+}
 
 
 
