@@ -283,7 +283,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
   std::sort(transferMoves.begin(), transferMoves.end());
   unsigned int index = 0;
   const unsigned int stopAfterFailures = 50;
-  const unsigned int stopAfterImprovements = 20;
+  const unsigned int stopAfterImprovements = 50;
   unsigned int failures = 0;
   unsigned int improvements = 0;
   for (auto &transferMove: transferMoves) {
