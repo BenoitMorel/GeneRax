@@ -283,6 +283,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
   std::sort(transferMoves.begin(), transferMoves.end());
   unsigned int index = 0;
   const unsigned int stopAfterFailures = 50;
+  const unsigned int stopAfterImprovements = 20;
   unsigned int failures = 0;
   unsigned int improvements = 0;
   for (auto &transferMove: transferMoves) {
@@ -306,7 +307,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
       } else {
         failures++;
       }
-      if (failures > stopAfterFailures) {
+      if (failures > stopAfterFailures || improvements > stopAfterImprovements) {
         return _bestRecLL;
       }
     }  
@@ -427,7 +428,7 @@ double SpeciesTreeOptimizer::transferSearch()
   double newLL = bestLL;
   MovesBlackList blacklist;
   do {
-    bestLL = newLL;
+    bestLL = optimizeDTLRates();
     newLL = fastTransfersRound(blacklist);
   } while (newLL - bestLL > 0.001);
   Logger::timed << "After transfer search: " << bestLL << std::endl;
@@ -477,16 +478,17 @@ Parameters SpeciesTreeOptimizer::computeOptimizedRates()
   return res;
 }
   
-void SpeciesTreeOptimizer::optimizeDTLRates()
+double SpeciesTreeOptimizer::optimizeDTLRates()
 {
   if (_userDTLRates) {
-    return;
+    return computeRecLikelihood();
   }
 
   _speciesTree->setGlobalRates(computeOptimizedRates());
   for (auto &evaluation: _evaluations) {
     evaluation->setRates(_speciesTree->getRatesVector());
   }
+  return computeRecLikelihood();
 }
   
 void SpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)

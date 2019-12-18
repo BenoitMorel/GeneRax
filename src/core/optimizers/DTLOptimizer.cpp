@@ -92,8 +92,7 @@ Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreGeneTrees &geneTrees
   std::vector<Parameters> startingRates;
   if (startingParameters) {
     startingRates.push_back(*startingParameters);
-  }
-  if (Enums::freeParameters(model) == 2) {
+  } else if (Enums::freeParameters(model) == 2) {
     startingRates.push_back(Parameters(0.1, 0.2));
     startingRates.push_back(Parameters(0.2, 0.2));
     startingRates.push_back(Parameters(0.5, 0.5));

@@ -73,7 +73,7 @@ public:
   double slowSPRRound(unsigned int radius, double bestLL);
   double sprSearch(unsigned int radius, bool doOptimizeGeneTrees = false);
   double transferSearch();
-  void optimizeDTLRates();
+  double optimizeDTLRates();
  
   Parameters computeOptimizedRates(); 
 
