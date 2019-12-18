@@ -112,7 +112,6 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
     for (unsigned int i = 0; i < 3; ++i) {
       speciesTreeOptimizer.optimizeDTLRates();
       speciesTreeOptimizer.transferSearch();
-      speciesTreeOptimizer.rootExhaustiveSearch(false);
       instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
     }
     break;
@@ -121,7 +120,6 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
       speciesTreeOptimizer.optimizeDTLRates();
       speciesTreeOptimizer.transferSearch();
       speciesTreeOptimizer.sprSearch(1);
-      speciesTreeOptimizer.rootExhaustiveSearch(false);
       instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
     }
     break;
