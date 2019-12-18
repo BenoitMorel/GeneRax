@@ -277,12 +277,12 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
       }
     }
   }
-  Logger::info << "Total number of transfers: " << transfers << std::endl;
-  Logger::info << "Number of species pairs: " << pow(_speciesTree->getTree().getNodesNumber(), 2) << std::endl;
-  Logger::info << "Number of moves to try: " << transferMoves.size() << std::endl;
+  Logger::timed << "Total number of transfers: " << transfers << std::endl;
+  Logger::timed << "Number of species pairs: " << pow(_speciesTree->getTree().getNodesNumber(), 2) << std::endl;
+  Logger::timed << "Maximum umber of moves to try: " << transferMoves.size() << std::endl;
   std::sort(transferMoves.begin(), transferMoves.end());
   unsigned int index = 0;
-  unsigned int stopAfterFailures = 2 * _speciesTree->getTree().getNodesNumber();
+  const unsigned int stopAfterFailures = 50;
   unsigned int failures = 0;
   unsigned int improvements = 0;
   for (auto &transferMove: transferMoves) {
