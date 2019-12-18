@@ -271,7 +271,6 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
       if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, prune, regraft)) {
         TransferMove move(prune, regraft, entry.second);
         if (!blacklist.isBlackListed(move)) {
-          blacklist.blacklist(move);
           transferMoves.push_back(TransferMove(prune, regraft, entry.second)); 
         }
       }
@@ -296,6 +295,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
                  << std::endl;
                  */
     if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, transferMove.prune, transferMove.regraft)) {
+      blacklist.blacklist(transferMove);
       if (testPruning(transferMove.prune, transferMove.regraft, refApproxLL, hash1)) {
         _stats.acceptedTransfers++;
         failures = 0;
