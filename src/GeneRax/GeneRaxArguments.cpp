@@ -33,7 +33,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   exec(iargv[0]),
   optimizeSpeciesTree(false),
   speciesFastRadius(5),
-  speciesSlowRadius(0)
+  speciesSlowRadius(0),
+  speciesInitialFamiliesSubsamples(-1)
 {
   if (argc == 1) {
     printHelp();
@@ -98,6 +99,8 @@ void GeneRaxArguments::init() {
       speciesFastRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--species-slow-radius") {
       speciesSlowRadius = static_cast<unsigned int>(atoi(argv[++i]));
+    } else if (arg == "--species-initial-samples") {
+      speciesInitialFamiliesSubsamples = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--optimize-species-tree") {
       optimizeSpeciesTree = true;
     } else if (arg == "--do-not-optimize-gene-trees") {

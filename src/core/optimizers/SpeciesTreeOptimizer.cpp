@@ -300,7 +300,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
         _stats.acceptedTransfers++;
         failures = 0;
         improvements++;
-        Logger::info << "better from heuristic (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ")"   << std::endl;
+        Logger::timed << "better from heuristic (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ")"   << std::endl;
         // we enough improvements to recompute the new transfers
         hash1 = _speciesTree->getNodeIndexHash(); 
         refApproxLL = computeApproxRecLikelihood();

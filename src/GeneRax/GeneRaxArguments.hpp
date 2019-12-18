@@ -48,6 +48,7 @@ public:
    bool optimizeSpeciesTree;
    unsigned int speciesFastRadius;
    unsigned int speciesSlowRadius;
+   int speciesInitialFamiliesSubsamples;
 private:
 
   void init();

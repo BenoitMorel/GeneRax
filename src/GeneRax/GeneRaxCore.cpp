@@ -6,6 +6,7 @@
 #include <IO/Logger.hpp>
 #include <IO/LibpllParsers.hpp>
 #include <algorithm>
+#include <random>
 #include <limits>
 #include <trees/PerCoreGeneTrees.hpp>
 #include <optimizers/DTLOptimizer.hpp>
@@ -77,22 +78,26 @@ void GeneRaxCore::printStats(GeneRaxInstance &instance)
       coverageFile);
 }
 
-void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
-{
-  assert(ParallelContext::isRandConsistent());
-  if (!instance.args.optimizeSpeciesTree) {
-    return;
-  }
-  ParallelContext::barrier();
 
-  Logger::info << "Saving tree to " << instance.speciesTree << std::endl;
+static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
+{
+  Families saveFamilies = instance.currentFamilies;
+
+  if (samples > 0) {
+    auto rng = std::default_random_engine {};
+    std::shuffle(instance.currentFamilies.begin(), instance.currentFamilies.end(), rng);
+    instance.currentFamilies.resize(samples);
+  }
+
+  ParallelContext::barrier();
   Parameters startingRates(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate);
   SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, 
       instance.recModel, startingRates, instance.args.userDTLRates, instance.args.pruneSpeciesTree, instance.args.supportThreshold, 
       instance.args.output, instance.args.exec);
   if (instance.args.speciesFastRadius > 0) {
     Logger::info << std::endl;
-    Logger::timed << "Start optimizing the species tree with fixed gene trees" << std::endl;
+    Logger::timed << "Start optimizing the species tree with fixed gene trees (on " 
+      << instance.currentFamilies.size() << " families " << std::endl;
   }
   switch (instance.args.speciesStrategy) {
   case SpeciesStrategy::SPR:
@@ -135,8 +140,24 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
   Logger::timed << "End of optimizing the species tree" << std::endl;
   Logger::info << "joint ll = " << instance.totalLibpllLL + instance.totalRecLL << std::endl;
   speciesTreeOptimizer.saveCurrentSpeciesTreePath(instance.speciesTree, true);
+
+  instance.currentFamilies = saveFamilies;
   ParallelContext::barrier();
 }
+
+void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
+{
+  assert(ParallelContext::isRandConsistent());
+  if (!instance.args.optimizeSpeciesTree) {
+    return;
+  }
+  Logger::info << "Saving tree to " << instance.speciesTree << std::endl;
+  if (instance.args.speciesInitialFamiliesSubsamples > 0) {
+    speciesTreeSearchAux(instance, instance.args.speciesInitialFamiliesSubsamples);
+  }
+  speciesTreeSearchAux(instance, -1);
+}
+
 
 void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
 {
