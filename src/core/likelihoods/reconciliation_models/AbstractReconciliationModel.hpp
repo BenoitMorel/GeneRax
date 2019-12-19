@@ -12,8 +12,9 @@
 
 
 
-//#define IS_PROBA(x) ((x) >= REAL(0) && (x) <= REAL(1))
+//#define IS_PROBA(x) ((REAL(0.0) <= REAL(x) && REAL(x) <= REAL(1.0)))
 //#define ASSERT_PROBA(x) assert(IS_PROBA(x));
+#define IS_PROBA(x) true
 #define ASSERT_PROBA(x) assert(true);
 
 double log(ScaledValue v);
@@ -364,6 +365,12 @@ void AbstractReconciliationModel<REAL>::onSpeciesTreeChange(const std::unordered
     _allSpeciesNodesInvalid = true;
   } else {
     assert(nodesToInvalidate->size());
+    for (auto node: *nodesToInvalidate) {
+      while (node) {
+        _invalidatedSpeciesNodes.insert(node);
+        node = getSpeciesParent(node);
+      }
+    }
     _invalidatedSpeciesNodes.insert(nodesToInvalidate->begin(), nodesToInvalidate->end());
   }
   _allSpeciesNodes.clear();
@@ -473,7 +480,6 @@ double AbstractReconciliationModel<REAL>::computeLogLikelihood(bool fastMode)
   }
   
   auto res = getSumLikelihood();
-  //Logger::info << _fastMode << "->" << res << std::endl;
   afterComputeLogLikelihood();
   _fastMode = false;
   return res;

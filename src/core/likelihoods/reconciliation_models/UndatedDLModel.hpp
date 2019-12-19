@@ -129,8 +129,8 @@ void UndatedDLModel<REAL>::recomputeSpeciesProbabilities()
     double a = _PD[e];
     double b = -1.0;
     double c = _PL[e];
-    if (speciesNode->left) {
-      c += _PS[e] * _uE[speciesNode->left->node_index]  * _uE[speciesNode->right->node_index];
+    if (this->getSpeciesLeft(speciesNode)) {
+      c += _PS[e] * _uE[this->getSpeciesLeft(speciesNode)->node_index]  * _uE[this->getSpeciesRight(speciesNode)->node_index];
     }
     double proba = solveSecondDegreePolynome(a, b, c);
     ASSERT_PROBA(proba)
@@ -170,13 +170,13 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
     leftGeneNode = this->getLeft(geneNode, isVirtualRoot);
     rightGeneNode = this->getRight(geneNode, isVirtualRoot);
   }
-  bool isSpeciesLeaf = !speciesNode->left;
+  bool isSpeciesLeaf = !this->getSpeciesLeft(speciesNode);
   auto e = speciesNode->node_index;
   unsigned int f = 0;
   unsigned int g = 0;
   if (!isSpeciesLeaf) {
-    f = speciesNode->left->node_index;
-    g = speciesNode->right->node_index;
+    f = this->getSpeciesLeft(speciesNode)->node_index;
+    g = this->getSpeciesRight(speciesNode)->node_index;
   }
 
   if (event) {
@@ -264,12 +264,12 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
     case 3:
       event->type = ReconciliationEventType::EVENT_SL;
       event->destSpeciesNode = f;
-      event->pllDestSpeciesNode = speciesNode->left;
+      event->pllDestSpeciesNode = this->getSpeciesLeft(speciesNode);
       break;
     case 4:
       event->type = ReconciliationEventType::EVENT_SL;
       event->destSpeciesNode = g;
-      event->pllDestSpeciesNode = speciesNode->right;
+      event->pllDestSpeciesNode = this->getSpeciesRight(speciesNode);
       break;
     default:
       assert(false);
@@ -282,9 +282,8 @@ REAL UndatedDLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
 {
   REAL sum = REAL();
   auto u = root->node_index + this->_maxGeneId + 1;
-  for (unsigned int e = 0; e < this->_allSpeciesNodesCount; ++e) {
-  //for (auto speciesNode: this->_allSpeciesNodes) {
-    //auto e = speciesNode->node_index;
+  for (auto speciesNode: this->_allSpeciesNodes) {
+    auto e = speciesNode->node_index;
     sum += _dlclvs[u][e];
   }
   return sum;

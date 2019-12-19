@@ -6,8 +6,6 @@
 #include <IO/Logger.hpp>
 #include <algorithm>
 
-#define IS_PROBA(x) true //(REAL(0.0) <= (x) && (x) <= REAL(1.0))
-  
 #define PRINT_ERROR_PROBA(x) // if (!IS_PROBA(x)) {std::cerr << "error " << x << std::endl;} assert(IS_PROBA(x));  
 
 
@@ -238,7 +236,7 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
       scale(temp);
       proba += temp;
       if (this->getSpeciesLeft(speciesNode)) {
-        temp = _uE[this->getSpeciesLeft(speciesNode)->node_index]  * _uE[speciesNode->right->node_index] * _PS[e];
+        temp = _uE[this->getSpeciesLeft(speciesNode)->node_index]  * _uE[this->getSpeciesRight(speciesNode)->node_index] * _PS[e];
         scale(temp);
         proba += temp;
       }
