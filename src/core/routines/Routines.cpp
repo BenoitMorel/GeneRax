@@ -69,7 +69,8 @@ void Routines::inferReconciliation(
     const Parameters &rates,
     const std::string &outputDir,
     bool bestReconciliation,
-    unsigned int reconciliationSamples
+    unsigned int reconciliationSamples,
+    bool saveTransfersOnly
     )
 {
   auto consistentSeed = rand();
@@ -93,11 +94,13 @@ void Routines::inferReconciliation(
       ReconciliationEvaluation evaluation(speciesTree, *tree.geneTree, tree.mapping, model, true);
       evaluation.setRates(rates);
       evaluation.inferMLScenario(scenario);
-      scenario.saveEventsCounts(eventCountsFile, false);
-      scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
+      if (!saveTransfersOnly) {
+        scenario.saveEventsCounts(eventCountsFile, false);
+        scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
+        scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, ReconciliationFormat::RecPhyloXML, false);
+        scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
+      }
       scenario.saveTransfers(transfersFile, false);
-      scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, ReconciliationFormat::RecPhyloXML, false);
-      scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
     }
     if (reconciliationSamples) {
       Scenario scenario;
@@ -109,7 +112,9 @@ void Routines::inferReconciliation(
         bool stochastic = true;
         evaluation.inferMLScenario(scenario, stochastic);
         std::string transfersFile = getTransfersFile(outputDir, tree.name, i);
-        scenario.saveReconciliation(nhxOs, ReconciliationFormat::NHX);
+        if (!saveTransfersOnly) {
+          scenario.saveReconciliation(nhxOs, ReconciliationFormat::NHX);
+        }
         scenario.saveTransfers(transfersFile, false);
         scenario.resetBlackList();
         nhxOs << "\n";
@@ -238,7 +243,7 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     const std::string &outputDir)
 {
   int samples = 5;
-  inferReconciliation(speciesTreeFile, families, recModel, rates, outputDir, false, samples);
+  inferReconciliation(speciesTreeFile, families, recModel, rates, outputDir, false, samples, true);
   
   SpeciesTree speciesTree(speciesTreeFile);
   
@@ -270,7 +275,7 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
   for (auto &freq: transferFrequencies) {
     os << freq.first << " " << freq.second << std::endl;
   }
-  Logger::info << "the end" << std::endl;
+  Logger::timed <<"Finished writing transfers frequencies" << std::endl;
   ParallelContext::barrier();
 }
 

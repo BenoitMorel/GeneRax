@@ -67,7 +67,8 @@ public:
     const Parameters &rates,
     const std::string &outputDir,
     bool bestReconciliation,
-    unsigned int reconciliationSamples
+    unsigned int reconciliationSamples,
+    bool saveTransfersOnly = false
     );
 
   /**
