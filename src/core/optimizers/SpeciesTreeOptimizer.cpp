@@ -283,6 +283,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
   unsigned int index = 0;
   const unsigned int stopAfterFailures = 50;
   const unsigned int stopAfterImprovements = 50;
+  const unsigned int minTrial = _speciesTree->getTree().getNodesNumber();
   unsigned int failures = 0;
   unsigned int improvements = 0;
   for (auto &transferMove: transferMoves) {
@@ -307,7 +308,9 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
       } else {
         failures++;
       }
-      if (failures > stopAfterFailures || improvements > stopAfterImprovements) {
+      bool stop = index > minTrial && failures > stopAfterFailures;
+      stop |= improvements > stopAfterImprovements;
+      if (stop) {
         return _bestRecLL;
       }
     }  
