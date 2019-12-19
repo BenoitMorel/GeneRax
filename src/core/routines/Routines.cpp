@@ -246,7 +246,6 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
   inferReconciliation(speciesTreeFile, families, recModel, rates, outputDir, false, samples, true);
   
   SpeciesTree speciesTree(speciesTreeFile);
-  
   for (int i = 0; i < samples; ++i) {
     for (auto &family: families) {
       std::string transfersFile = getTransfersFile(outputDir, family.name, i);
@@ -271,12 +270,8 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
       }
     }
   }
-  ParallelOfstream os(FileSystem::joinPaths(outputDir, "transfers.txt"));
-  for (auto &freq: transferFrequencies) {
-    os << freq.first << " " << freq.second << std::endl;
-  }
-  Logger::timed <<"Finished writing transfers frequencies" << std::endl;
   ParallelContext::barrier();
+  Logger::timed <<"Finished writing transfers frequencies" << std::endl;
 }
 
 
