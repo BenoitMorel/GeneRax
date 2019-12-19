@@ -249,6 +249,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
   std::string speciesTreeFile(FileSystem::joinPaths(_outputDir, "speciesTreeTemp.newick"));
   saveCurrentSpeciesTreePath(speciesTreeFile, true);
   ParallelContext::barrier();
+  Logger::timed << "Start inferring transfers..." << std::endl;
   Routines::getTransfersFrequencies(speciesTreeFile,
     _recModel,
     _currentFamilies,
@@ -257,6 +258,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
     _outputDir);
   unsigned int transfers = 0;
   ParallelContext::barrier();
+  Logger::timed << "Start computing the moves to perform......" << std::endl;
   std::unordered_map<std::string, unsigned int> labelsToIds;
   _speciesTree->getLabelsToId(labelsToIds);
   std::vector<TransferMove> transferMoves;

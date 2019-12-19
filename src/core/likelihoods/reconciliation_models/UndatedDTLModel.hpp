@@ -380,13 +380,17 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
           transferedGene, stayingGene, recievingSpecies, values[5], stochastic);
     }
     getBestTransferLoss(*scenario, geneNode, speciesNode, tlRecievingSpecies, values[7], stochastic);
-    unsigned int maxValueIndex = 0;
+    int maxValueIndex = 0;
     if (!stochastic) {
       maxValueIndex =static_cast<unsigned int>(std::distance(values.begin(),
           std::max_element(values.begin(), values.end())
           ));
     } else {
       maxValueIndex = sampleIndex<ValuesArray, REAL>(values);
+    }
+    if (-1 == maxValueIndex || values[maxValueIndex] == REAL()) {
+      event->type = ReconciliationEventType::EVENT_Invalid;
+      return;
     }
     switch(maxValueIndex) {
     case 0:
@@ -567,7 +571,11 @@ void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode,
       proba += value;
     }
     auto bestIndex = sampleIndex<std::vector<REAL>, REAL>(transferProbas);
-    bool left = bestIndex < speciesNumber;
+    if (bestIndex == -1) {
+      proba = REAL();
+      return;
+    }
+    bool left = static_cast<unsigned int>(bestIndex) < speciesNumber;
     transferedGene = left ? u_left : u_right;
     stayingGene = !left ? u_left : u_right;
     // I am not sure I can find the species from
@@ -642,10 +650,14 @@ void UndatedDTLModel<REAL>::getBestTransferLoss(Scenario &scenario,
     unsigned int h = 0;
     do {
 
-      unsigned int bestIndex = sampleIndex<std::vector<REAL>, REAL>(transferProbas);
+      int bestIndex = sampleIndex<std::vector<REAL>, REAL>(transferProbas);
+      if (bestIndex == -1) {
+        proba = REAL();
+        return;
+      }
       for (auto species: this->_allSpeciesNodes) {
         h = species->node_index;
-        if (bestIndex == h) {
+        if (static_cast<unsigned int>(bestIndex) == h) {
           recievingSpecies = species;
           transferProbas[h] = REAL(); // in case it's blacklisted, avoid infinite loop
           break;

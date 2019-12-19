@@ -241,13 +241,17 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
   //ASSERT_PROBA(proba);
   
   if (event) {
-    unsigned int maxValueIndex = 0;
+    int maxValueIndex = 0;
     if (!stochastic) {
-      maxValueIndex =static_cast<unsigned int>(std::distance(values.begin(),
+      maxValueIndex =static_cast<int>(std::distance(values.begin(),
           std::max_element(values.begin(), values.end())
           ));
     } else {
       maxValueIndex = sampleIndex<ValuesArray, REAL>(values);
+    }
+    if (maxValueIndex == -1 || values[maxValueIndex] == REAL()) {
+      event->type = ReconciliationEventType::EVENT_Invalid;
+      return;
     }
     switch(maxValueIndex) {
     case 0:
