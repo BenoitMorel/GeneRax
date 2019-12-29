@@ -59,12 +59,14 @@ PLLRootedTree::PLLRootedTree(const std::string &str, bool isFile):
   _tree(buildUtree(str, isFile), rtreeDestroy)
 {
   setMissingLabels();
+  setMissingBranchLengths();
 }
 
 PLLRootedTree::PLLRootedTree(const std::unordered_set<std::string> &labels):
   _tree(buildRandomTree(labels), rtreeDestroy)
 {
   setMissingLabels();
+  setMissingBranchLengths();
 }
 
 void PLLRootedTree::save(const std::string &fileName) const

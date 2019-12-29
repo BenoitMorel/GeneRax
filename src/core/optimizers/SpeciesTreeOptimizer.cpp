@@ -84,6 +84,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree,
       SpeciesTreeOperator::changeRoot(speciesTree, direction);
       unsigned int geneRadius = doOptimizeGeneTrees ? 1 : 0;
       double ll = computeLikelihood(geneRadius);
+      Logger::info << "Root ll= " << ll << std::endl; 
       visits++;
       if (ll > bestLL) {
         bestLL = ll;
