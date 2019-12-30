@@ -46,6 +46,11 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
       auto startingNJTree = NeighborJoining::countProfileNJ(instance.initialFamilies); 
       startingNJTree->save(instance.speciesTree);
     }
+  } else if (instance.args.speciesTree == "NJst") {
+    if (ParallelContext::getRank() == 0) {
+      auto startingNJTree = NeighborJoining::geneTreeNJ(instance.initialFamilies); 
+      startingNJTree->save(instance.speciesTree);
+    }
   } else {
     LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
   }

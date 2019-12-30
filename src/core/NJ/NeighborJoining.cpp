@@ -4,7 +4,7 @@
 #include <string>
 #include <IO/Logger.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
-
+#include <trees/PLLUnrootedTree.hpp>
 
 typedef std::vector<double> Count;
 typedef std::vector< std::vector<double> > DistanceMatrix;
@@ -69,39 +69,12 @@ Position findMinPosition(const DistanceMatrix &distanceMatrix)
   return minPosition;
 }
 
-std::unique_ptr<PLLRootedTree> NeighborJoining::countProfileNJ(const Families &families)
+
+static std::unique_ptr<PLLRootedTree> applyNJ(DistanceMatrix &distanceMatrix,
+    std::vector<std::string> &speciesIdToSpeciesString,
+    std::unordered_map<std::string, unsigned int> &speciesStringToSpeciesId)
 {
-  std::vector<Count> speciesToCountVector;
-  std::vector<std::string> speciesIdToSpeciesString;
-  std::unordered_map<std::string, unsigned int> speciesStringToSpeciesId;
-  unsigned int familiesNumber = families.size();
-
-  for (unsigned int i = 0; i < familiesNumber; ++i) {
-    GeneSpeciesMapping mappings;
-    mappings.fill(families[i].mappingFile, families[i].startingGeneTree);
-    for (auto &pairMapping: mappings.getMap()) {
-      auto &species = pairMapping.second;
-      if (speciesStringToSpeciesId.find(species) == speciesStringToSpeciesId.end()) {
-        speciesToCountVector.push_back(Count(familiesNumber, 0));
-        speciesStringToSpeciesId.insert({species, speciesIdToSpeciesString.size()});
-        speciesIdToSpeciesString.push_back(species);
-        
-      }
-      speciesToCountVector[speciesStringToSpeciesId[species]][i]++;
-    }
-  }
- 
-  unsigned int speciesNumber = speciesToCountVector.size();
-
-  std::vector<double> nullDistances(speciesNumber, 0.0);
-  DistanceMatrix distanceMatrix(speciesNumber, nullDistances);
-  for (unsigned int i = 0; i < speciesNumber; ++i) {
-    for (unsigned int j = 0; j < speciesNumber; ++j) {
-      distanceMatrix[i][j] = distance(speciesToCountVector[i],
-          speciesToCountVector[j]);
-    }
-  }
-
+  unsigned int speciesNumber = speciesIdToSpeciesString.size();
   std::string subtree;
   for (unsigned int step = 0; step < speciesNumber - 1; ++step) {
     auto Q = getQ(distanceMatrix);    
@@ -130,3 +103,128 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::countProfileNJ(const Families &f
   return std::make_unique<PLLRootedTree>(newick, false); 
 }
 
+std::unique_ptr<PLLRootedTree> NeighborJoining::countProfileNJ(const Families &families)
+{
+  std::vector<Count> speciesToCountVector;
+  std::vector<std::string> speciesIdToSpeciesString;
+  std::unordered_map<std::string, unsigned int> speciesStringToSpeciesId;
+  unsigned int familiesNumber = families.size();
+
+  for (unsigned int i = 0; i < familiesNumber; ++i) {
+    GeneSpeciesMapping mappings;
+    mappings.fill(families[i].mappingFile, families[i].startingGeneTree);
+    for (auto &pairMapping: mappings.getMap()) {
+      auto &species = pairMapping.second;
+      if (speciesStringToSpeciesId.find(species) == speciesStringToSpeciesId.end()) {
+        speciesToCountVector.push_back(Count(familiesNumber, 0));
+        speciesStringToSpeciesId.insert({species, speciesIdToSpeciesString.size()});
+        speciesIdToSpeciesString.push_back(species);
+        
+      }
+      speciesToCountVector[speciesStringToSpeciesId[species]][i]++;
+    }
+  }
+  
+  unsigned int speciesNumber = speciesToCountVector.size();
+  std::vector<double> nullDistances(speciesNumber, 0.0);
+  DistanceMatrix distanceMatrix(speciesNumber, nullDistances);
+  for (unsigned int i = 0; i < speciesNumber; ++i) {
+    for (unsigned int j = 0; j < speciesNumber; ++j) {
+      distanceMatrix[i][j] = distance(speciesToCountVector[i],
+          speciesToCountVector[j]);
+    }
+  }
+  return applyNJ(distanceMatrix, speciesIdToSpeciesString, speciesStringToSpeciesId);
+}
+ 
+
+void fillDistancesRec(pll_unode_t *currentNode, 
+    double currentDistance,
+    std::vector<double> &distances)
+{
+  if (!currentNode->next) {
+    // leaf
+    distances[currentNode->node_index] = currentDistance;
+    return;
+  }
+  fillDistancesRec(currentNode->next->back, currentDistance + 1.0, distances);
+  fillDistancesRec(currentNode->next->next->back, currentDistance + 1.0, distances);
+} 
+
+
+void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
+    GeneSpeciesMapping &mapping,
+    std::unordered_map<std::string, unsigned int> &speciesStringToSpeciesId,
+    DistanceMatrix &distances,
+    DistanceMatrix &distancesDenominator)
+{
+  auto leaves = geneTree.getLeaves();
+  // build geneId -> speciesId
+  std::vector<unsigned int> geneIdToSpeciesId(leaves.size());
+  for (auto leafNode: leaves) {
+    auto &species = mapping.getSpecies(leafNode->label);
+    auto speciesId = speciesStringToSpeciesId[species];
+    geneIdToSpeciesId[leafNode->node_index] = speciesId;
+  }
+  // build gene leaf distance matrix
+  std::vector<double> zeros(leaves.size(), 0.0);
+  std::vector<std::vector<double> > leafDistances(leaves.size(), zeros);
+  for (auto leafNode: leaves) {
+    fillDistancesRec(leafNode->back, 0.0, leafDistances[leafNode->node_index]);
+  }
+
+  // fill species distance matrices
+  for (auto gene1: leaves) {
+    auto gid1 = gene1->node_index;
+    auto spid1 = geneIdToSpeciesId[gid1];
+    for (auto gene2: leaves) {
+      auto gid2 = gene2->node_index;
+      auto spid2 = geneIdToSpeciesId[gid2];
+      distances[spid1][spid2] += leafDistances[gid1][gid2];
+      distancesDenominator[spid1][spid2]++;
+    }
+  }
+}
+
+std::unique_ptr<PLLRootedTree> NeighborJoining::geneTreeNJ(const Families &families)
+{
+  std::vector<std::string> speciesIdToSpeciesString;
+  std::unordered_map<std::string, unsigned int> speciesStringToSpeciesId;
+  for (auto &family: families) {
+    GeneSpeciesMapping mappings;
+    mappings.fill(family.mappingFile, family.startingGeneTree);
+    for (auto &pairMapping: mappings.getMap()) {
+      auto &species = pairMapping.second;
+      if (speciesStringToSpeciesId.find(species) == speciesStringToSpeciesId.end()) {
+        speciesStringToSpeciesId.insert({species, speciesIdToSpeciesString.size()});
+        speciesIdToSpeciesString.push_back(species);
+        
+      }
+    }
+  }
+  unsigned int speciesNumber = speciesIdToSpeciesString.size(); 
+  std::vector<double> nullDistances(speciesNumber, 0.0);
+  DistanceMatrix distanceMatrix(speciesNumber, nullDistances);
+  DistanceMatrix distanceDenominator(speciesNumber, nullDistances);
+  for (auto &family: families) {
+    GeneSpeciesMapping mappings;
+    mappings.fill(family.mappingFile, family.startingGeneTree);
+    PLLUnrootedTree geneTree(family.startingGeneTree);
+    geneDistancesFromGeneTree(geneTree, 
+        mappings,
+        speciesStringToSpeciesId,
+        distanceMatrix,
+        distanceDenominator);
+  }
+  for (unsigned int i = 0; i < speciesNumber; ++i) {
+    for (unsigned int j = 0; j < speciesNumber; ++j) {
+      if (0.0 != distanceDenominator[i][j]) {
+        distanceMatrix[i][j] /= distanceDenominator[i][j];
+      }
+      Logger::info << distanceMatrix[i][j] << " ";
+    }
+    Logger::info << std::endl;
+  }
+  
+  return applyNJ(distanceMatrix, speciesIdToSpeciesString, speciesStringToSpeciesId);
+}

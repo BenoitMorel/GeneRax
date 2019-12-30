@@ -10,4 +10,5 @@
 class NeighborJoining {
 public:
   static std::unique_ptr<PLLRootedTree> countProfileNJ(const Families &families);  
+  static std::unique_ptr<PLLRootedTree> geneTreeNJ(const Families &families);  
 };

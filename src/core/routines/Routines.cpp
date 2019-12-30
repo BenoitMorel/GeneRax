@@ -291,9 +291,7 @@ void Routines::getParametersFromTransferFrequencies(const std::string &speciesTr
     unsigned int id1 = labelsToIds[label1];
     unsigned int id2 = labelsToIds[label2];
     parameters[id1 * species + id2] = frequency.second;
-
   }
-  
 }
 
 
