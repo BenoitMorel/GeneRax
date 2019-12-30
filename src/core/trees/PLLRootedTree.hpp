@@ -69,7 +69,7 @@ public:
   /**
    * Replace null branch lengths with minBL
    */
-  void setMissingBranchLengths(double minBL = 0.1); 
+  void setMissingBranchLengths(double minBL = 1.0); 
 
   void setMissingLabels();
 
