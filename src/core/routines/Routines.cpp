@@ -235,6 +235,45 @@ void Routines::getLabelsFromTransferKey(const std::string &key, std::string &lab
   label2 = key.substr(pos + keyDelimiter.size());
 }
 
+
+static std::string getLocalTempFile(const std::string &outputDir,
+    unsigned int rank)
+{
+  std::string f = "temp_rank" + std::to_string(rank) + ".txt";
+  return FileSystem::joinPaths(outputDir, f); 
+}
+
+void mpiMergeTransferFrequencies(TransferFrequencies &frequencies,
+    const std::string &outputDir)
+{
+  std::string tempPath = getLocalTempFile(outputDir, ParallelContext::getRank());
+  std::ofstream os(tempPath);
+  for (auto &pair: frequencies) {
+    os << pair.first << " " << pair.second << std::endl;
+  }
+  os.close();
+  frequencies.clear();
+  ParallelContext::barrier();
+  for (unsigned int i = 0; i < ParallelContext::getSize(); ++i) {
+    std::ifstream is(getLocalTempFile(outputDir, i));
+    assert(is.good());
+    std::string line;
+    while (std::getline(is, line)) {
+      std::istringstream iss(line);
+      std::string key;
+      unsigned int freq;
+      iss >> key >> freq;
+      if (frequencies.end() == frequencies.find(key)) {
+        frequencies.insert({key, freq});
+      } else {
+        frequencies[key] += freq;
+      }
+    }
+  }
+  ParallelContext::barrier();
+  remove(tempPath.c_str());
+}
+
 void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     RecModel recModel,
     Families &families,
@@ -243,11 +282,16 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     const std::string &outputDir)
 {
   int samples = 5;
+  Logger::timed << "Coucou inferReconciliation" << std::endl;
   inferReconciliation(speciesTreeFile, families, recModel, rates, outputDir, false, samples, true);
   
   SpeciesTree speciesTree(speciesTreeFile);
+  Logger::timed << "Coucou gather transfers" << std::endl;
   for (int i = 0; i < samples; ++i) {
-    for (auto &family: families) {
+    auto begin = ParallelContext::getBegin(families.size());
+    auto end = ParallelContext::getEnd(families.size());
+    for (unsigned int j = begin; j < end; ++j) {
+      auto &family = families[j];
       std::string transfersFile = getTransfersFile(outputDir, family.name, i);
       std::string line;
       std::ifstream is(transfersFile);
@@ -270,8 +314,10 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
       }
     }
   }
+  mpiMergeTransferFrequencies(transferFrequencies, outputDir);
   ParallelContext::barrier();
   Logger::timed <<"Finished writing transfers frequencies" << std::endl;
+  assert(ParallelContext::isRandConsistent());
 }
 
 

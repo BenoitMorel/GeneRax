@@ -329,7 +329,7 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
 
   std::vector<unsigned int> prunes;
   SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, prunes);
-  assert (fabs(_bestRecLL - refApproxLL) < 0.01);
+  //assert (fabs(_bestRecLL - refApproxLL) < 0.01);
   for (auto prune: prunes) {
     std::vector<unsigned int> regrafts;
     SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
