@@ -139,6 +139,7 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::countProfileNJ(const Families &f
  
 
 void fillDistancesRec(pll_unode_t *currentNode, 
+    bool useBL,
     double currentDistance,
     std::vector<double> &distances)
 {
@@ -147,8 +148,13 @@ void fillDistancesRec(pll_unode_t *currentNode,
     distances[currentNode->node_index] = currentDistance;
     return;
   }
-  fillDistancesRec(currentNode->next->back, currentDistance + 1.0, distances);
-  fillDistancesRec(currentNode->next->next->back, currentDistance + 1.0, distances);
+  if (useBL) {
+    currentDistance += currentNode->length;
+  } else {
+    currentDistance += 1.0;
+  }
+  fillDistancesRec(currentNode->next->back, useBL, currentDistance, distances);
+  fillDistancesRec(currentNode->next->next->back, useBL, currentDistance, distances);
 } 
 
 
@@ -156,8 +162,16 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
     GeneSpeciesMapping &mapping,
     std::unordered_map<std::string, unsigned int> &speciesStringToSpeciesId,
     DistanceMatrix &distances,
-    DistanceMatrix &distancesDenominator)
+    DistanceMatrix &distancesDenominator,
+    bool minMode = true,
+    bool normalize = false,
+    bool useBL = false)
 {
+  unsigned int speciesNumber = distances.size();
+  std::vector<double>zeros(speciesNumber, 0.0);
+  DistanceMatrix distancesToAdd(speciesNumber, zeros);
+  DistanceMatrix distancesDenominatorToAdd(speciesNumber, zeros);
+
   auto leaves = geneTree.getLeaves();
   // build geneId -> speciesId
   std::vector<unsigned int> geneIdToSpeciesId(leaves.size());
@@ -167,10 +181,11 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
     geneIdToSpeciesId[leafNode->node_index] = speciesId;
   }
   // build gene leaf distance matrix
-  std::vector<double> zeros(leaves.size(), 0.0);
-  std::vector<std::vector<double> > leafDistances(leaves.size(), zeros);
+  std::vector<double>zerosLeaf(leaves.size(), 0.0);
+  std::vector<std::vector<double> > leafDistances(leaves.size(), zerosLeaf);
   for (auto leafNode: leaves) {
-    fillDistancesRec(leafNode->back, 0.0, leafDistances[leafNode->node_index]);
+    fillDistancesRec(leafNode->back, useBL, 0.0, leafDistances[leafNode->node_index]);
+    fillDistancesRec(leafNode, useBL, 0.0, leafDistances[leafNode->node_index]);
   }
 
   // fill species distance matrices
@@ -180,8 +195,30 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
     for (auto gene2: leaves) {
       auto gid2 = gene2->node_index;
       auto spid2 = geneIdToSpeciesId[gid2];
-      distances[spid1][spid2] += leafDistances[gid1][gid2];
-      distancesDenominator[spid1][spid2]++;
+      if (!minMode) {
+        distances[spid1][spid2] += leafDistances[gid1][gid2];
+        distancesDenominator[spid1][spid2]++;
+      } else {
+        if (distancesDenominatorToAdd[spid1][spid2]) {
+          distancesToAdd[spid1][spid2] =
+            std::min(distancesToAdd[spid1][spid2], 
+                   leafDistances[gid1][gid2]);
+        } else {
+          distancesToAdd[spid1][spid2] = leafDistances[gid1][gid2];
+          distancesDenominatorToAdd[spid1][spid2] = 1;
+        }
+      }
+    }
+  }
+  if (minMode) {
+    for (unsigned int i = 0; i < speciesNumber; ++i) {
+      for (unsigned int j = 0; j < speciesNumber; ++j) {
+        if (normalize) {
+          distancesToAdd[i][j] /= double(leaves.size());
+        }
+        distances[i][j] += distancesToAdd[i][j];
+        distancesDenominator[i][j] += distancesDenominatorToAdd[i][j];
+      }
     }
   }
 }
