@@ -62,6 +62,7 @@ public:
   static void allGatherInt(int localValue, std::vector<int> &allValues);
 
   static bool isRandConsistent();
+  static bool isIntEqual(int value);
 
   static void concatenateIntVectors(const std::vector<int> &localVector, std::vector<int> &globalVector);
   static void concatenateUIntVectors(const std::vector<unsigned int> &localVector, 

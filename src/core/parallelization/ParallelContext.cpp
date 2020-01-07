@@ -368,15 +368,20 @@ bool ParallelContext::allowSchedulerSplitImplementation()
 
 bool ParallelContext::isRandConsistent()
 {
+  return isIntEqual(rand());
+}
+
+bool ParallelContext::isIntEqual(int value)
+{
 #ifdef WITH_MPI
   std::vector<int> rands(getSize());
-  int localValue = rand();
-  allGatherInt(localValue, rands);
-  for (auto value: rands) {
-    if (value != rands[0]) {
+  allGatherInt(value, rands);
+  for (auto v: rands) {
+    if (v != rands[0]) {
       return false;
     }
   }
 #endif
   return true;
 }
+

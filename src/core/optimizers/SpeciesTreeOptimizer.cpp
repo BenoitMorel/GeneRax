@@ -206,7 +206,13 @@ struct TransferMove {
   }
   bool operator < (const TransferMove& tm) const
   {
-    return transfers > tm.transfers;
+    if (transfers != tm.transfers) {
+      return transfers > tm.transfers;
+    } else if (regraft != tm.regraft) {
+      return regraft > tm.regraft;
+    } else {
+      return prune > tm.prune;
+    }
   }
   bool operator ==(const TransferMove& obj) const
   {
