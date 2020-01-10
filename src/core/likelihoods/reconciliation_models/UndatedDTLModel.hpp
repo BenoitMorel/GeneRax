@@ -30,9 +30,7 @@ public:
   virtual ~UndatedDTLModel();
   
   // overloaded from parent
-  virtual void setRates(const std::vector<double> &dupRates,
-      const std::vector<double> &lossRates,
-      const std::vector<double> &transferRates);
+  virtual void setRates(const RatesVector &rates);
   
   virtual void rollbackToLastState();
 protected:
@@ -191,11 +189,13 @@ void UndatedDTLModel<REAL>::updateTransferSums(REAL &transferSum,
 
 
 template <class REAL>
-void UndatedDTLModel<REAL>::setRates(const std::vector<double> &dupRates,
-      const std::vector<double> &lossRates,
-      const std::vector<double> &transferRates)
+void UndatedDTLModel<REAL>::setRates(const RatesVector &rates)
 {
   this->_geneRoot = 0;
+  assert(rates.size() == 3);
+  auto &dupRates = rates[0];
+  auto &lossRates = rates[1];
+  auto &transferRates = rates[2];
   assert(this->_allSpeciesNodesCount == dupRates.size());
   assert(this->_allSpeciesNodesCount == lossRates.size());
   assert(this->_allSpeciesNodesCount == transferRates.size());

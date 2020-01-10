@@ -30,9 +30,7 @@ public:
   virtual ~UndatedIDTLModel();
   
   // overloaded from parent
-  virtual void setRates(const std::vector<double> &dupRates,
-      const std::vector<double> &lossRates,
-      const std::vector<double> &transferRates);
+  virtual void setRates(const RatesVector &rates);
   
   virtual void rollbackToLastState();
 protected:
@@ -191,10 +189,12 @@ void UndatedIDTLModel<REAL>::updateTransferSums(REAL &transferSum,
 
 
 template <class REAL>
-void UndatedIDTLModel<REAL>::setRates(const std::vector<double> &dupRates,
-      const std::vector<double> &lossRates,
-      const std::vector<double> &transferRates)
+void UndatedIDTLModel<REAL>::setRates(const RatesVector &rates)
 {
+  assert(rates.size() == 3);
+  auto &dupRates = rates[0];
+  auto &lossRates = rates[1];
+  auto &transferRates = rates[2];
   this->_geneRoot = 0;
   assert(this->_allSpeciesNodesCount == dupRates.size());
   assert(this->_allSpeciesNodesCount == lossRates.size());
@@ -207,7 +207,7 @@ void UndatedIDTLModel<REAL>::setRates(const std::vector<double> &dupRates,
   for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
     _PI[e] = 0.0;
-    if (speciesNode->length < 20000.0) {
+    if (speciesNode->length < 10000.0) {
       _PI[e] = 0.5;
     }
     _PS[e] = 1.0;

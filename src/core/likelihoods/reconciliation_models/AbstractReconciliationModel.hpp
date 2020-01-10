@@ -20,6 +20,8 @@
 double log(ScaledValue v);
 
 
+typedef std::vector< std::vector <double> > RatesVector;
+
 /**
  *  Interface and common implementations for 
  *  all the reconciliation likelihood computation
@@ -33,13 +35,8 @@ public:
   
   /*
    * Set the per-species lineage rates
-   *  @param dupRate
-   *  @param lossRate
-   *  @param transferRate
    */
-  virtual void setRates(const std::vector<double> &dupRates,
-      const std::vector<double> &lossRates,
-      const std::vector<double> &transferRates) = 0;
+  virtual void setRates(const RatesVector &rates) = 0;
   
   /**
    * (incrementally) compute and return the likelihood of the gene tree 
@@ -103,9 +100,7 @@ public:
   virtual void setInitialGeneTree(pll_utree_t *tree);
   virtual ~AbstractReconciliationModel() {}
   // overload from parent
-  virtual void setRates(const std::vector<double> &dupRates,
-      const std::vector<double> &lossRates,
-      const std::vector<double> &transferRates) = 0;
+  virtual void setRates(const RatesVector &rates) = 0;
   // overload from parent
   virtual double computeLogLikelihood(bool fastMode = false);
   // overload from parent 

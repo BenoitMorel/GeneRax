@@ -91,9 +91,7 @@ private:
   bool _pruneSpeciesTree;
   RecModel _model; 
   bool _infinitePrecision;
-  std::vector<double> _dupRates;
-  std::vector<double> _lossRates;
-  std::vector<double> _transferRates;
+  std::vector<std::vector<double> > _rates;
   // we actually own this pointer, but we do not 
   // wrap it into a unique_ptr to allow forward definition
   ReconciliationModelInterface *_evaluators;

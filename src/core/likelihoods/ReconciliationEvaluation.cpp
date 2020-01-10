@@ -40,22 +40,18 @@ ReconciliationEvaluation::~ReconciliationEvaluation()
 void ReconciliationEvaluation::setRates(const Parameters &parameters)
 {
   assert(parameters.dimensions());
-  std::vector<std::vector<double> *> rates;
-  rates.push_back(&_dupRates);
-  rates.push_back(&_lossRates);
-  if (implementsTransfers()) {
-    rates.push_back(&_transferRates);
-  }
-  for (auto r: rates) {
-    r->resize(_speciesTree.getNodesNumber());
+  unsigned int freeParameters = Enums::freeParameters(_model);
+  _rates.resize(freeParameters);
+  for (auto &r: _rates) {
+    r.resize(_speciesTree.getNodesNumber());
   }
   // this handles both per-species and global rates
-  for (unsigned int d = 0; d < rates.size(); ++d) {
+  for (unsigned int d = 0; d < _rates.size(); ++d) {
     for (unsigned int e = 0; e < _speciesTree.getNodesNumber(); ++e) {
-      (*rates[d])[e] = parameters[(e * rates.size() + d) % parameters.dimensions()];
+      (_rates[d])[e] = parameters[(e * _rates.size() + d) % parameters.dimensions()];
     }
   }
-  _evaluators->setRates(_dupRates, _lossRates, _transferRates);
+  _evaluators->setRates(_rates);
 }
   
 pll_unode_t *ReconciliationEvaluation::getRoot() 
@@ -135,7 +131,7 @@ void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
     _infinitePrecision = infinitePrecision;
     delete _evaluators;
     _evaluators = buildRecModelObject(_model, _infinitePrecision);
-    _evaluators->setRates(_dupRates, _lossRates, _transferRates);
+    _evaluators->setRates(_rates);
  }
 }
 

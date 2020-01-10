@@ -34,9 +34,7 @@ public:
   virtual ~UndatedDLModel();
   
   // overloaded from parent
-  virtual void setRates(const std::vector<double> &dupRates,
-      const std::vector<double> &lossRates,
-      const std::vector<double> &transferRates);
+  virtual void setRates(const RatesVector &rates);
 protected:
   // overload from parent
   virtual void setInitialGeneTree(pll_utree_t *tree);
@@ -95,13 +93,13 @@ static double solveSecondDegreePolynome(double a, double b, double c)
 }
 
 template <class REAL>
-void UndatedDLModel<REAL>::setRates(const std::vector<double> &dupRates,
-      const std::vector<double> &lossRates,
-      const std::vector<double> &transferRates)
+void UndatedDLModel<REAL>::setRates(const RatesVector &rates)
 {
+  assert(rates.size() == 2);
+  auto &dupRates = rates[0];
+  auto &lossRates = rates[1];
   assert(this->_allSpeciesNodesCount == dupRates.size());
   assert(this->_allSpeciesNodesCount == lossRates.size());
-  (void)transferRates;  
   _PD = dupRates;
   _PL = lossRates;
   _PS = std::vector<double>(this->_allSpeciesNodesCount, 1.0);
