@@ -7,7 +7,7 @@
  *  Reconciliation models 
  */
 enum class RecModel {
-  UndatedDL, UndatedDTL
+  UndatedDL, UndatedDTL, UndatedIDTL
 };
 
 
@@ -64,6 +64,8 @@ public:
         return 2;
       case RecModel::UndatedDTL:
         return 3;
+      case RecModel::UndatedIDTL:
+        return 3;
     }
     assert(false);
   }
@@ -74,6 +76,7 @@ public:
     case RecModel::UndatedDL:
       return false;
     case RecModel::UndatedDTL:
+    case RecModel::UndatedIDTL:
       return true;
     }
     assert(false);
@@ -86,6 +89,7 @@ public:
       case RecModel::UndatedDL:
         return false;
       case RecModel::UndatedDTL:
+      case RecModel::UndatedIDTL:
         return true;
     }
     assert(false);

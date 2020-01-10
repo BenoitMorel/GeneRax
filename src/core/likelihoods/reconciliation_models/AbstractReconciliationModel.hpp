@@ -12,7 +12,7 @@
 
 
 
-//#define IS_PROBA(x) ((REAL(0.0) <= REAL(x) && REAL(x) <= REAL(1.0)))
+//#define IS_PROBA(x) ((REAL(0.0) <= REAL(x) && REAL(x)  <= REAL(1.0)))
 //#define ASSERT_PROBA(x) assert(IS_PROBA(x));
 #define IS_PROBA(x) true
 #define ASSERT_PROBA(x) assert(true);
@@ -167,7 +167,8 @@ protected:
    *  root, the implementation is different
    */
   pll_unode_t *getLeft(pll_unode_t *node, bool virtualRoot) const;  
-  pll_unode_t *getRight(pll_unode_t *node, bool virtualRoot) const; 
+  pll_unode_t *getRight(pll_unode_t *node, bool virtualRoot) const;
+  pll_unode_t *getGeneSon(pll_unode_t *node, bool left, bool virtualRoot = false) const;
   pll_unode_t *getLeftRepeats(pll_unode_t *node, bool virtualRoot);  
   pll_unode_t *getRightRepeats(pll_unode_t *node, bool virtualRoot); 
 
@@ -188,6 +189,7 @@ protected:
   PartialLikelihoodMode _likelihoodMode;
   virtual void beforeComputeLogLikelihood(); 
   virtual void afterComputeLogLikelihood() {};
+  pll_rnode_t *getSpeciesSon(pll_rnode_t *node, bool left) {return left ? getSpeciesLeft(node) : getSpeciesRight(node);}
   pll_rnode_t *getSpeciesLeft(pll_rnode_t *node) {return _speciesLeft[node->node_index];}
   pll_rnode_t *getSpeciesRight(pll_rnode_t *node) {return _speciesRight[node->node_index];}
   pll_rnode_t *getSpeciesParent(pll_rnode_t *node) {return _speciesParent[node->node_index];}
@@ -486,6 +488,16 @@ double AbstractReconciliationModel<REAL>::computeLogLikelihood(bool fastMode)
 }
 
 template <class REAL>
+pll_unode_t *AbstractReconciliationModel<REAL>::getGeneSon(pll_unode_t *node, bool left, bool virtualRoot) const
+{
+  if (left) {
+    return getLeft(node, virtualRoot);
+  } else {
+    return getRight(node, virtualRoot);
+  }
+}
+
+template <class REAL>
 pll_unode_t *AbstractReconciliationModel<REAL>::getLeft(pll_unode_t *node, bool virtualRoot) const
 {
   return virtualRoot ? node->next : node->next->back;
@@ -629,6 +641,7 @@ pll_unode_t *AbstractReconciliationModel<REAL>::computeMLRoot()
       max = rootProba;
     }
   }
+  assert(bestRoot);
   return bestRoot;
 }
 

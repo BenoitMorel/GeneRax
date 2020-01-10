@@ -70,13 +70,15 @@ public:
       return "UndatedDL";
     case RecModel::UndatedDTL:
       return "UndatedDTL";
+    case RecModel::UndatedIDTL:
+      return "UndatedIDTL";
     };
     exit(41);
   }
 
   static bool isValidRecModel(const std::string &str)
   {
-    return (str == "UndatedDL") || (str == "UndatedDTL");
+    return (str == "UndatedDL") || (str == "UndatedDTL") || (str == "UndatedIDTL");
   }
 
   static RecModel strToRecModel(const std::string &str)
@@ -85,6 +87,8 @@ public:
       return RecModel::UndatedDL;
     } else if (str == "UndatedDTL") {
       return RecModel::UndatedDTL;
+    } else if (str == "UndatedIDTL") {
+      return RecModel::UndatedIDTL;
     } else {
       Logger::info << "Invalid reconciliation model " << str << std::endl;
       exit(41);

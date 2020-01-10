@@ -3,6 +3,7 @@
 #include <IO/Logger.hpp>
 #include <likelihoods/reconciliation_models/UndatedDLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
+#include <likelihoods/reconciliation_models/UndatedIDTLModel.hpp>
 #include <cmath>
 #include <IO/FileSystem.hpp>
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
@@ -114,6 +115,13 @@ ReconciliationModelInterface *ReconciliationEvaluation::buildRecModelObject(RecM
       res = new UndatedDTLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _pruneSpeciesTree);
     } else {
       res = new UndatedDTLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _pruneSpeciesTree);
+    }
+    break;
+  case RecModel::UndatedIDTL:
+    if (infinitePrecision) {
+      res = new UndatedIDTLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _pruneSpeciesTree);
+    } else {
+      res = new UndatedIDTLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _pruneSpeciesTree);
     }
     break;
   }
