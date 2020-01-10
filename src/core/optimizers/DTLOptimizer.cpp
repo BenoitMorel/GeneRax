@@ -96,11 +96,16 @@ Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreEvaluations &evaluat
     startingRates.push_back(Parameters(0.5, 0.5));
     startingRates.push_back(Parameters(0.5, 1.0));
     startingRates.push_back(Parameters(0.01, 0.01));
-  } else {
+  } else if (Enums::freeParameters(evaluations[0]->getRecModel()) == 3) {
     startingRates.push_back(Parameters(0.5, 0.5, 0.2));
     startingRates.push_back(Parameters(0.1, 0.2, 0.1));
     startingRates.push_back(Parameters(0.2, 0.2, 0.0));
     startingRates.push_back(Parameters(0.01, 0.01, 0.01));
+  } else {
+    startingRates.push_back(Parameters(0.5, 0.5, 0.2, 0.0));
+    startingRates.push_back(Parameters(0.1, 0.2, 0.1, 0.1));
+    startingRates.push_back(Parameters(0.2, 0.2, 0.0, 0.1));
+    startingRates.push_back(Parameters(0.01, 0.01, 0.01, 0.01));
   }
   Parameters best;
   best.setScore(-10000000000);

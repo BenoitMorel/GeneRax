@@ -41,6 +41,7 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
 {
   assert(parameters.dimensions());
   unsigned int freeParameters = Enums::freeParameters(_model);
+  assert(0 == parameters.dimensions() % freeParameters);
   _rates.resize(freeParameters);
   for (auto &r: _rates) {
     r.resize(_speciesTree.getNodesNumber());

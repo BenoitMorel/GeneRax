@@ -191,25 +191,23 @@ void UndatedIDTLModel<REAL>::updateTransferSums(REAL &transferSum,
 template <class REAL>
 void UndatedIDTLModel<REAL>::setRates(const RatesVector &rates)
 {
-  assert(rates.size() == 3);
+  assert(rates.size() == 4);
   auto &dupRates = rates[0];
   auto &lossRates = rates[1];
   auto &transferRates = rates[2];
+  auto &ilsRates = rates[3];
   this->_geneRoot = 0;
   assert(this->_allSpeciesNodesCount == dupRates.size());
   assert(this->_allSpeciesNodesCount == lossRates.size());
   assert(this->_allSpeciesNodesCount == transferRates.size());
+  assert(this->_allSpeciesNodesCount == ilsRates.size());
   _PD = dupRates;
   _PL = lossRates;
   _PT = transferRates;
+  _PI = ilsRates;
   _PS.resize(this->_allSpeciesNodesCount);
-  _PI.resize(this->_allSpeciesNodesCount);
   for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
-    _PI[e] = 0.0;
-    if (speciesNode->length < 10000.0) {
-      _PI[e] = 0.5;
-    }
     _PS[e] = 1.0;
     auto sum = _PD[e] + _PL[e] + _PT[e] + _PS[e] + _PI[e];
     _PD[e] /= sum;

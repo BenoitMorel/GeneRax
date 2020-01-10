@@ -38,6 +38,13 @@ public:
     _parameters.push_back(l);
     _parameters.push_back(t);
   }
+  
+  Parameters(double d, double l, double t, double i): _score(0.0) {
+    _parameters.push_back(d);
+    _parameters.push_back(l);
+    _parameters.push_back(t);
+    _parameters.push_back(i);
+  }
 
   Parameters(const std::string &src): _score(0.0) {load(src);} 
   

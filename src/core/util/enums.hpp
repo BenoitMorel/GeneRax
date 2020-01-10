@@ -65,7 +65,7 @@ public:
       case RecModel::UndatedDTL:
         return 3;
       case RecModel::UndatedIDTL:
-        return 3;
+        return 4;
     }
     assert(false);
   }
