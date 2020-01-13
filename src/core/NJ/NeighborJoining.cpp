@@ -27,8 +27,20 @@ static double getIfOk(double value) {
   return (value != invalidDouble) ? value : 0.0;
 }
 
+static void printDistanceMatrix(const DistanceMatrix &d) {
+  for (auto &l: d) {
+    for (auto elem: l) {
+      Logger::info << elem << "\t";
+    }
+    Logger::info << std::endl;
+  }
+  Logger::info << std::endl;
+}
+
 static DistanceMatrix getQ(DistanceMatrix &distanceMatrix)
 {
+  //Logger::info << "Distance matrix: " << std::endl;
+  //printDistanceMatrix(distanceMatrix);
   DistanceMatrix Q = distanceMatrix;
   unsigned int n = distanceMatrix.size();
   for (unsigned int i = 0; i < n; ++i) {
@@ -45,6 +57,8 @@ static DistanceMatrix getQ(DistanceMatrix &distanceMatrix)
       Q[i][j] = sum;
     }
   }
+  //Logger::info << "Q: " << std::endl;
+  //printDistanceMatrix(Q);
   return Q;
 }
 
@@ -84,8 +98,9 @@ static std::unique_ptr<PLLRootedTree> applyNJ(DistanceMatrix &distanceMatrix,
     auto speciesEntryToUpdate = p1;
     auto speciesEntryToRemove = p2;
     // update new values:
+    DistanceMatrix copy = distanceMatrix;
     for (unsigned int i = 0; i < speciesNumber; ++i) {
-      double newDistance = 0.5 * (distanceMatrix[i][p1] + distanceMatrix[i][p2] - distanceMatrix[p1][p2]);
+      double newDistance = 0.5 * (copy[i][p1] + copy[i][p2] - copy[p1][p2]);
       distanceMatrix[speciesEntryToUpdate][i] = newDistance;
       distanceMatrix[i][speciesEntryToUpdate] = newDistance;
     }
@@ -102,6 +117,7 @@ static std::unique_ptr<PLLRootedTree> applyNJ(DistanceMatrix &distanceMatrix,
   std::string newick = subtree + ";";
   return std::make_unique<PLLRootedTree>(newick, false); 
 }
+
 
 std::unique_ptr<PLLRootedTree> NeighborJoining::countProfileNJ(const Families &families)
 {
@@ -271,6 +287,33 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::geneTreeNJ(const Families &famil
     }
     Logger::info << std::endl;
   }
-  
+  /*
+  unsigned int speciesNumber = 5;
+  std::vector<double> nullDistances(speciesNumber, 0.0);
+  DistanceMatrix distanceMatrix(5, nullDistances);
+  distanceMatrix[0][1] = 5;
+  distanceMatrix[0][2] = 9;
+  distanceMatrix[0][3] = 9;
+  distanceMatrix[0][4] = 8;
+  distanceMatrix[1][2] = 10;
+  distanceMatrix[1][3] = 10;
+  distanceMatrix[1][4] = 9;
+  distanceMatrix[2][3] = 8;
+  distanceMatrix[2][4] = 7;
+  distanceMatrix[3][4] = 3;
+  for (unsigned int i = 0; i < 5; ++i) {
+    for (unsigned int j = 0; j < i; ++j) {
+      distanceMatrix[i][j] = distanceMatrix[j][i];
+    }
+  }
+  speciesIdToSpeciesString.resize(5);
+  speciesIdToSpeciesString[0] = "a";
+  speciesIdToSpeciesString[1] = "b";
+  speciesIdToSpeciesString[2] = "c";
+  speciesIdToSpeciesString[3] = "d";
+  speciesIdToSpeciesString[4] = "e";
+  speciesStringToSpeciesId.clear();
+  speciesStringToSpeciesId["a"] = 0;
+  */
   return applyNJ(distanceMatrix, speciesIdToSpeciesString, speciesStringToSpeciesId);
 }
