@@ -176,10 +176,10 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
     std::unordered_map<std::string, unsigned int> &speciesStringToSpeciesId,
     DistanceMatrix &distances,
     DistanceMatrix &distancesDenominator,
-    bool minMode = false,
+    bool minMode = true,
     bool normalize = false,
     bool useBL = false,
-    bool reweight = true)
+    bool reweight = false)
 {
   unsigned int speciesNumber = distances.size();
   std::vector<double>zeros(speciesNumber, 0.0);
@@ -272,7 +272,7 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::geneTreeNJ(const Families &famil
         distanceDenominator);
   }
   for (unsigned int i = 0; i < speciesNumber; ++i) {
-    Logger::info << speciesIdToSpeciesString[i] << "\t";
+    //Logger::info << speciesIdToSpeciesString[i] << "\t";
     for (unsigned int j = 0; j < speciesNumber; ++j) {
       if (i == j) {
         distanceMatrix[i][j] = 0.0;
@@ -280,9 +280,9 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::geneTreeNJ(const Families &famil
       if (0.0 != distanceDenominator[i][j]) {
         distanceMatrix[i][j] /= distanceDenominator[i][j];
       }
-      Logger::info << distanceMatrix[i][j] << "\t";
+      //Logger::info << distanceMatrix[i][j] << "\t";
     }
-    Logger::info << std::endl;
+   // Logger::info << std::endl;
   }
   return applyNJ(distanceMatrix, speciesIdToSpeciesString, speciesStringToSpeciesId);
 }
