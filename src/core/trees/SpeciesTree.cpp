@@ -35,7 +35,7 @@ SpeciesTree::SpeciesTree(const Families &families):
 
 void SpeciesTree::setGlobalRates(const Parameters &globalRates) 
 {
-  assert(globalRates.dimensions() <= 3);
+  assert(globalRates.dimensions() <= 4);
   _ratesVector = Parameters(getTree().getNodesNumber(), globalRates);
   _rates = globalRates;
 }

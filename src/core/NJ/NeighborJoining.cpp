@@ -163,9 +163,10 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
     std::unordered_map<std::string, unsigned int> &speciesStringToSpeciesId,
     DistanceMatrix &distances,
     DistanceMatrix &distancesDenominator,
-    bool minMode = true,
+    bool minMode = false,
     bool normalize = false,
-    bool useBL = false)
+    bool useBL = false,
+    bool reweight = true)
 {
   unsigned int speciesNumber = distances.size();
   std::vector<double>zeros(speciesNumber, 0.0);
@@ -196,8 +197,8 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
       auto gid2 = gene2->node_index;
       auto spid2 = geneIdToSpeciesId[gid2];
       if (!minMode) {
-        distances[spid1][spid2] += leafDistances[gid1][gid2];
-        distancesDenominator[spid1][spid2]++;
+        distancesToAdd[spid1][spid2] += leafDistances[gid1][gid2];
+        distancesDenominatorToAdd[spid1][spid2]++;
       } else {
         if (distancesDenominatorToAdd[spid1][spid2]) {
           distancesToAdd[spid1][spid2] =
@@ -210,15 +211,19 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
       }
     }
   }
-  if (minMode) {
-    for (unsigned int i = 0; i < speciesNumber; ++i) {
-      for (unsigned int j = 0; j < speciesNumber; ++j) {
-        if (normalize) {
-          distancesToAdd[i][j] /= double(leaves.size());
-        }
-        distances[i][j] += distancesToAdd[i][j];
-        distancesDenominator[i][j] += distancesDenominatorToAdd[i][j];
+  for (unsigned int i = 0; i < speciesNumber; ++i) {
+    for (unsigned int j = 0; j < speciesNumber; ++j) {
+      if (normalize) {
+        distancesToAdd[i][j] /= double(leaves.size());
       }
+      if (reweight) {
+        if (distancesDenominatorToAdd[i][j] > 0.0) {
+          distancesToAdd[i][j] /= distancesDenominatorToAdd[i][j];
+          distancesDenominatorToAdd[i][j] = 1.0;
+        }
+      }
+      distances[i][j] += distancesToAdd[i][j];
+      distancesDenominator[i][j] += distancesDenominatorToAdd[i][j];
     }
   }
 }
@@ -254,11 +259,15 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::geneTreeNJ(const Families &famil
         distanceDenominator);
   }
   for (unsigned int i = 0; i < speciesNumber; ++i) {
+    Logger::info << speciesIdToSpeciesString[i] << "\t";
     for (unsigned int j = 0; j < speciesNumber; ++j) {
+      if (i == j) {
+        distanceMatrix[i][j] = 0.0;
+      }
       if (0.0 != distanceDenominator[i][j]) {
         distanceMatrix[i][j] /= distanceDenominator[i][j];
       }
-      Logger::info << distanceMatrix[i][j] << " ";
+      Logger::info << distanceMatrix[i][j] << "\t";
     }
     Logger::info << std::endl;
   }

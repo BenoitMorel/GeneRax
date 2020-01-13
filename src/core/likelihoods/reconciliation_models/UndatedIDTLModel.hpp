@@ -209,12 +209,21 @@ void UndatedIDTLModel<REAL>::setRates(const RatesVector &rates)
   for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
     _PS[e] = 1.0;
-    auto sum = _PD[e] + _PL[e] + _PT[e] + _PS[e] + _PI[e];
+    if (!speciesNode->left || !speciesNode->parent) {
+      _PI[e] = 0.0;
+    }
+    auto sum = _PD[e] + _PL[e] + _PT[e] + _PS[e];
+    if (speciesNode->left) {
+      auto f = speciesNode->left->node_index;
+      auto g = speciesNode->right->node_index;
+      sum += _PI[f] + _PI[g];
+      _PI[f] /= sum;
+      _PI[g] /= sum;
+    }
     _PD[e] /= sum;
     _PL[e] /= sum;
     _PT[e] /= sum;
     _PS[e] /= sum;
-    _PI[e] /= sum;
   } 
 
   recomputeSpeciesProbabilities();

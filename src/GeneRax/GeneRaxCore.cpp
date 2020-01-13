@@ -95,7 +95,18 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
   }
 
   ParallelContext::barrier();
-  Parameters startingRates(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate);
+  Parameters startingRates;
+  switch (instance.recModel) {
+  case RecModel::UndatedDL:
+    startingRates = Parameters(instance.args.dupRate, instance.args.lossRate);
+  break;
+    case RecModel::UndatedDTL:
+    startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate);
+    break;
+  case RecModel::UndatedIDTL:
+    startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate, 0.1);
+    break;
+  }
   SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, 
       instance.recModel, startingRates, instance.args.userDTLRates, instance.args.pruneSpeciesTree, instance.args.supportThreshold, 
       instance.args.output, instance.args.exec);
