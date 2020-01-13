@@ -27,7 +27,7 @@ static double getIfOk(double value) {
   return (value != invalidDouble) ? value : 0.0;
 }
 
-static void printDistanceMatrix(const DistanceMatrix &d) {
+void printDistanceMatrix(const DistanceMatrix &d) {
   for (auto &l: d) {
     for (auto elem: l) {
       Logger::info << elem << "\t";
@@ -37,28 +37,24 @@ static void printDistanceMatrix(const DistanceMatrix &d) {
   Logger::info << std::endl;
 }
 
-static DistanceMatrix getQ(DistanceMatrix &distanceMatrix)
+static DistanceMatrix getQ(DistanceMatrix &distanceMatrix, unsigned int dmSize)
 {
-  //Logger::info << "Distance matrix: " << std::endl;
-  //printDistanceMatrix(distanceMatrix);
   DistanceMatrix Q = distanceMatrix;
-  unsigned int n = distanceMatrix.size();
-  for (unsigned int i = 0; i < n; ++i) {
-    for (unsigned int j = 0; j < n; ++j) {
+  unsigned int n = dmSize;
+  for (unsigned int i = 0; i < distanceMatrix.size(); ++i) {
+    for (unsigned int j = 0; j < distanceMatrix.size(); ++j) {
       double sum = 0.0;
       if (distanceMatrix[i][j] == invalidDouble) {
         sum = invalidDouble;
       } else {
         sum = (n - 2) * getIfOk(distanceMatrix[i][j]);
-        for (unsigned int k = 0; k < n; ++k) {
+        for (unsigned int k = 0; k < distanceMatrix.size(); ++k) {
           sum -= getIfOk(distanceMatrix[i][k]) + getIfOk(distanceMatrix[j][k]); 
         }
       }
       Q[i][j] = sum;
     }
   }
-  //Logger::info << "Q: " << std::endl;
-  //printDistanceMatrix(Q);
   return Q;
 }
 
@@ -91,7 +87,8 @@ static std::unique_ptr<PLLRootedTree> applyNJ(DistanceMatrix &distanceMatrix,
   unsigned int speciesNumber = speciesIdToSpeciesString.size();
   std::string subtree;
   for (unsigned int step = 0; step < speciesNumber - 1; ++step) {
-    auto Q = getQ(distanceMatrix);    
+    unsigned int dmSize = speciesNumber - step;
+    auto Q = getQ(distanceMatrix, dmSize);    
     auto minPosition = findMinPosition(Q);
     auto p1 = minPosition.first;
     auto p2 = minPosition.second;
@@ -287,33 +284,5 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::geneTreeNJ(const Families &famil
     }
     Logger::info << std::endl;
   }
-  /*
-  unsigned int speciesNumber = 5;
-  std::vector<double> nullDistances(speciesNumber, 0.0);
-  DistanceMatrix distanceMatrix(5, nullDistances);
-  distanceMatrix[0][1] = 5;
-  distanceMatrix[0][2] = 9;
-  distanceMatrix[0][3] = 9;
-  distanceMatrix[0][4] = 8;
-  distanceMatrix[1][2] = 10;
-  distanceMatrix[1][3] = 10;
-  distanceMatrix[1][4] = 9;
-  distanceMatrix[2][3] = 8;
-  distanceMatrix[2][4] = 7;
-  distanceMatrix[3][4] = 3;
-  for (unsigned int i = 0; i < 5; ++i) {
-    for (unsigned int j = 0; j < i; ++j) {
-      distanceMatrix[i][j] = distanceMatrix[j][i];
-    }
-  }
-  speciesIdToSpeciesString.resize(5);
-  speciesIdToSpeciesString[0] = "a";
-  speciesIdToSpeciesString[1] = "b";
-  speciesIdToSpeciesString[2] = "c";
-  speciesIdToSpeciesString[3] = "d";
-  speciesIdToSpeciesString[4] = "e";
-  speciesStringToSpeciesId.clear();
-  speciesStringToSpeciesId["a"] = 0;
-  */
   return applyNJ(distanceMatrix, speciesIdToSpeciesString, speciesStringToSpeciesId);
 }
