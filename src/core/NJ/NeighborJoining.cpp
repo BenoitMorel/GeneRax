@@ -153,21 +153,25 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::countProfileNJ(const Families &f
 
 void fillDistancesRec(pll_unode_t *currentNode, 
     bool useBL,
+    bool useBootstrap,
     double currentDistance,
     std::vector<double> &distances)
 {
+  if (useBL) {
+    currentDistance += currentNode->length;
+  } else if (useBootstrap) {
+    double bootstrapValue = (nullptr == currentNode->label) ? 0.0 : std::atof(currentNode->label);
+    currentDistance += bootstrapValue;
+  } else {
+    currentDistance += 1.0;
+  }
   if (!currentNode->next) {
     // leaf
     distances[currentNode->node_index] = currentDistance;
     return;
   }
-  if (useBL) {
-    currentDistance += currentNode->length;
-  } else {
-    currentDistance += 1.0;
-  }
-  fillDistancesRec(currentNode->next->back, useBL, currentDistance, distances);
-  fillDistancesRec(currentNode->next->next->back, useBL, currentDistance, distances);
+  fillDistancesRec(currentNode->next->back, useBL, useBootstrap, currentDistance, distances);
+  fillDistancesRec(currentNode->next->next->back, useBL, useBootstrap, currentDistance, distances);
 } 
 
 
@@ -179,6 +183,7 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
     bool minMode = true,
     bool normalize = false,
     bool useBL = false,
+    bool useBootstrap = false,
     bool reweight = false)
 {
   unsigned int speciesNumber = distances.size();
@@ -198,8 +203,8 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
   std::vector<double>zerosLeaf(leaves.size(), 0.0);
   std::vector<std::vector<double> > leafDistances(leaves.size(), zerosLeaf);
   for (auto leafNode: leaves) {
-    fillDistancesRec(leafNode->back, useBL, 0.0, leafDistances[leafNode->node_index]);
-    fillDistancesRec(leafNode, useBL, 0.0, leafDistances[leafNode->node_index]);
+    fillDistancesRec(leafNode->back, useBL, useBootstrap, 0.0, leafDistances[leafNode->node_index]);
+    fillDistancesRec(leafNode, useBL, useBootstrap, 0.0, leafDistances[leafNode->node_index]);
   }
 
   // fill species distance matrices
