@@ -86,17 +86,21 @@ Parameters DTLOptimizer::optimizeParameters(PerCoreEvaluations &evaluations,
 Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreEvaluations &evaluations, 
     Parameters *startingParameters)
 {
-  assert(evaluations.size());
+  unsigned int freeParameters = 0;
+  if (evaluations.size()) {
+    freeParameters = Enums::freeParameters(evaluations[0]->getRecModel());
+  }
+  ParallelContext::maxUInt(freeParameters);
   std::vector<Parameters> startingRates;
   if (startingParameters) {
     startingRates.push_back(*startingParameters);
-  } else if (Enums::freeParameters(evaluations[0]->getRecModel()) == 2) {
+  } else if (freeParameters == 2) {
     startingRates.push_back(Parameters(0.1, 0.2));
     startingRates.push_back(Parameters(0.2, 0.2));
     startingRates.push_back(Parameters(0.5, 0.5));
     startingRates.push_back(Parameters(0.5, 1.0));
     startingRates.push_back(Parameters(0.01, 0.01));
-  } else if (Enums::freeParameters(evaluations[0]->getRecModel()) == 3) {
+  } else if (freeParameters == 3) {
     startingRates.push_back(Parameters(0.5, 0.5, 0.2));
     startingRates.push_back(Parameters(0.1, 0.2, 0.1));
     startingRates.push_back(Parameters(0.2, 0.2, 0.0));
@@ -107,6 +111,9 @@ Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreEvaluations &evaluat
     startingRates.push_back(Parameters(0.2, 0.2, 0.0, 0.1));
     startingRates.push_back(Parameters(0.01, 0.01, 0.01, 0.01));
   }
+  ParallelContext::barrier();
+  Logger::info << "barrier " << std::endl;
+  ParallelContext::barrier();
   Parameters best;
   best.setScore(-10000000000);
   for (auto rates: startingRates) {
