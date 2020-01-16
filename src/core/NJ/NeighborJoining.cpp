@@ -5,9 +5,11 @@
 #include <IO/Logger.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <trees/PLLUnrootedTree.hpp>
+#include <algorithm>
 
 typedef std::vector<double> Count;
-typedef std::vector< std::vector<double> > DistanceMatrix;
+typedef std::vector<Count> DistanceMatrix;
+typedef std::vector<DistanceMatrix> DistanceMatrixVector;
 static const double invalidDouble = std::numeric_limits<double>::infinity();
 
 static double l1(const Count &c1, const Count &c2) {
@@ -246,8 +248,35 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
   }
 }
 
+void getMedianDistanceMatrix(const DistanceMatrixVector &v,
+    DistanceMatrix &d)
+{
+  unsigned int familiesNumber = v.size();
+  unsigned int speciesNumber = v[0].size();
+  assert(d.size() == speciesNumber);
+  for (unsigned int i = 0; i < speciesNumber; ++i) {
+    for (unsigned int j = 0; j < speciesNumber; ++j) {
+      // this is not cache efficient... might need some 
+      // more work
+      std::vector<double> familyElements;
+      for (unsigned int k = 0; k < familiesNumber; ++k) {
+        if (v[k][i][j] != 0.0) {
+          familyElements.push_back(v[k][i][j]);
+        }
+      }
+      size_t middle = familyElements.size() / 2;
+      // this is not EXACTLY the median for even vectors
+      std::nth_element(familyElements.begin(),
+          familyElements.begin() + middle,
+          familyElements.end());
+      d[i][j] = familyElements[middle];
+    }
+  }
+}
+
 std::unique_ptr<PLLRootedTree> NeighborJoining::geneTreeNJ(const Families &families)
 {
+  bool median = false;
   std::vector<std::string> speciesIdToSpeciesString;
   std::unordered_map<std::string, unsigned int> speciesStringToSpeciesId;
   for (auto &family: families) {
@@ -264,8 +293,13 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::geneTreeNJ(const Families &famil
   }
   unsigned int speciesNumber = speciesIdToSpeciesString.size(); 
   std::vector<double> nullDistances(speciesNumber, 0.0);
-  DistanceMatrix distanceMatrix(speciesNumber, nullDistances);
+  DistanceMatrix distanceMatrix(speciesNumber, nullDistances);  
+  DistanceMatrixVector distanceMatrixVector;
+  if (median) {
+    distanceMatrixVector = DistanceMatrixVector(families.size(), distanceMatrix);
+  }
   DistanceMatrix distanceDenominator(speciesNumber, nullDistances);
+  unsigned int i = 0;
   for (auto &family: families) {
     GeneSpeciesMapping mappings;
     mappings.fill(family.mappingFile, family.startingGeneTree);
@@ -273,8 +307,11 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::geneTreeNJ(const Families &famil
     geneDistancesFromGeneTree(geneTree, 
         mappings,
         speciesStringToSpeciesId,
-        distanceMatrix,
+        (median ? distanceMatrixVector[i++] : distanceMatrix),
         distanceDenominator);
+  }
+  if (median) {
+    getMedianDistanceMatrix(distanceMatrixVector, distanceMatrix);
   }
   for (unsigned int i = 0; i < speciesNumber; ++i) {
     //Logger::info << speciesIdToSpeciesString[i] << "\t";
@@ -282,7 +319,7 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::geneTreeNJ(const Families &famil
       if (i == j) {
         distanceMatrix[i][j] = 0.0;
       }
-      if (0.0 != distanceDenominator[i][j]) {
+      if (0.0 != distanceDenominator[i][j] && !median) {
         distanceMatrix[i][j] /= distanceDenominator[i][j];
       }
       //Logger::info << distanceMatrix[i][j] << "\t";
