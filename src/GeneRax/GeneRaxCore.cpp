@@ -34,19 +34,21 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   instance.args.printSummary();
   instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
   instance.speciesTree = FileSystem::joinPaths(instance.args.output, "startingSpeciesTree.newick");
-  Logger::info << "Filtering invalid families..." << std::endl;
+  Logger::timed << "Filtering invalid families..." << std::endl;
   bool needAlignments = instance.args.optimizeGeneTrees;
   Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, false);
   if (instance.args.speciesTree == "random") {
-    Logger::info << "Generating random starting species tree" << std::endl;
+    Logger::timed << "Generating random starting species tree" << std::endl;
     SpeciesTree speciesTree(instance.initialFamilies);
     speciesTree.saveToFile(instance.speciesTree, true);
   } else if (instance.args.speciesTree == "NJ") {
+    Logger::timed << "Generating NJ species tree" << std::endl;
     if (ParallelContext::getRank() == 0) {
       auto startingNJTree = NeighborJoining::countProfileNJ(instance.initialFamilies); 
       startingNJTree->save(instance.speciesTree);
     }
   } else if (instance.args.speciesTree == "NJst") {
+    Logger::timed << "Generating NJst species tree" << std::endl;
     if (ParallelContext::getRank() == 0) {
       auto startingNJTree = NeighborJoining::geneTreeNJ(instance.initialFamilies); 
       startingNJTree->save(instance.speciesTree);
@@ -55,6 +57,7 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
     LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
   }
   ParallelContext::barrier();
+  Logger::timed << "Filtering invalid families based on the starting species tree..." << std::endl;
   Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, true);
   if (!instance.initialFamilies.size()) {
     Logger::info << "[Error] No valid families! Aborting GeneRax" << std::endl;
@@ -78,6 +81,7 @@ void GeneRaxCore::printStats(GeneRaxInstance &instance)
 {
   std::string coverageFile = FileSystem::joinPaths(instance.args.output,
       std::string("perSpeciesCoverage.txt"));
+  Logger::timed << "Gathering statistics about the families..." << std::endl;
   Family::printStats(instance.currentFamilies, 
       instance.speciesTree,
       coverageFile);
