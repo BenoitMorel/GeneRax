@@ -131,7 +131,8 @@ void GeneSpeciesMapping::buildFromTrees(const std::string &geneTreeStrOrFile)
     species = label.substr(0, pos);
     gene = label; //label.substr(pos + 1);
     _map[gene] = species;
-  }   
+  } 
+  pll_utree_destroy(tree, nullptr);
 }
   
 std::unordered_set<std::string> GeneSpeciesMapping::getCoveredSpecies() const
