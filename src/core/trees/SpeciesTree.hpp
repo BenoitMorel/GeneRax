@@ -4,7 +4,6 @@
 #include <IO/LibpllParsers.hpp>
 #include <families/Families.hpp>
 #include <string>
-#include <maths/Parameters.hpp>
 #include <util/enums.hpp>
 #include <memory>
 #include <trees/PLLRootedTree.hpp>
@@ -25,12 +24,6 @@ public:
   SpeciesTree & operator = (SpeciesTree &&) = delete;
   
   std::unique_ptr<SpeciesTree> buildRandomTree() const;
-
-  void setGlobalRates(const Parameters &rates);
-  void setRatesVector(const Parameters &rates);
-  
-  const Parameters &getRatesVector() const {return _ratesVector;}
-  const Parameters &getRates() const {return _rates;}
 
   // set rates and gene trees before calling this
 
@@ -63,8 +56,6 @@ public:
 
 private:
   PLLRootedTree _speciesTree;
-  Parameters _rates;
-  Parameters _ratesVector;
   std::vector<Listener *> _listeners;
   void buildFromLabels(const std::unordered_set<std::string> &leafLabels);
   static std::unordered_set<std::string> getLabelsFromFamilies(const Families &families);

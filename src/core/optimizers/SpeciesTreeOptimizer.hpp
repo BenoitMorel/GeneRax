@@ -91,6 +91,9 @@ public:
 
   double computeRecLikelihood();
   double computeApproxRecLikelihood();
+
+  const Parameters getGlobalRates() {return _globalRates;}
+
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
@@ -101,7 +104,6 @@ private:
   std::string _outputDir;
   std::string _execPath;
   unsigned int _geneTreeIteration;
-  Parameters _hack;
   double _supportThreshold;
   double _lastRecLL;
   double _lastLibpllLL;
@@ -111,6 +113,7 @@ private:
   bool _firstOptimizeRatesCall;
   bool _userDTLRates;
   bool _pruneSpeciesTree;
+  Parameters _globalRates;
 private:
   void updateEvaluations();
   void rootExhaustiveSearchAux(SpeciesTree &speciesTree, 

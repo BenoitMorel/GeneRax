@@ -33,18 +33,6 @@ SpeciesTree::SpeciesTree(const Families &families):
 }
 
 
-void SpeciesTree::setGlobalRates(const Parameters &globalRates) 
-{
-  assert(globalRates.dimensions() <= 4);
-  _ratesVector = Parameters(getTree().getNodesNumber(), globalRates);
-  _rates = globalRates;
-}
-void SpeciesTree::setRatesVector(const Parameters &rates) 
-{
-  _ratesVector = rates;
-  _rates = rates;
-}
-  
 std::string SpeciesTree::toString() const
 {
   std::string newick;

@@ -39,16 +39,15 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _bestLibpllLL(-std::numeric_limits<double>::infinity()),
   _firstOptimizeRatesCall(true),
   _userDTLRates(userDTLRates),
-  _pruneSpeciesTree(pruneSpeciesTree)
+  _pruneSpeciesTree(pruneSpeciesTree),
+  _globalRates(startingRates)
   
 {
   if (speciesTreeFile == "random") {
     _speciesTree = std::make_unique<SpeciesTree>(initialFamilies);
-    _speciesTree->setGlobalRates(startingRates);
     setGeneTreesFromFamilies(initialFamilies);
   } else {
     _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
-    _speciesTree->setGlobalRates(startingRates);
     setGeneTreesFromFamilies(initialFamilies);
   }
   _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"), true);
@@ -259,7 +258,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
   Routines::getTransfersFrequencies(speciesTreeFile,
     _recModel,
     _currentFamilies,
-    _speciesTree->getRatesVector(),
+    _globalRates,
     frequencies,
     _outputDir);
   unsigned int transfers = 0;
@@ -474,19 +473,15 @@ double SpeciesTreeOptimizer::sprSearch(unsigned int radius, bool doOptimizeGeneT
 Parameters SpeciesTreeOptimizer::computeOptimizedRates() 
 {
   if (_userDTLRates) {
-    return _speciesTree->getRates();
+    return _globalRates;
   }
   Logger::timed << "optimize rates " << std::endl;
-  Parameters *startingRates = nullptr;
-  Parameters rates(_speciesTree->getRates());
-  if (_firstOptimizeRatesCall) {
-    _firstOptimizeRatesCall = false;
-  } else {
-    startingRates = &rates;
-  }
-  auto res =  DTLOptimizer::optimizeParametersGlobalDTL(_evaluations, startingRates);
+  auto rates = _globalRates;
+  Parameters *startingRates = _firstOptimizeRatesCall ? nullptr : &rates;
+  _firstOptimizeRatesCall = false;
+  rates =  DTLOptimizer::optimizeParametersGlobalDTL(_evaluations, startingRates);
   Logger::timed << "optimize rates done" << std::endl;
-  return res;
+  return rates;
 }
   
 double SpeciesTreeOptimizer::optimizeDTLRates()
@@ -494,10 +489,9 @@ double SpeciesTreeOptimizer::optimizeDTLRates()
   if (_userDTLRates) {
     return computeRecLikelihood();
   }
-
-  _speciesTree->setGlobalRates(computeOptimizedRates());
+  _globalRates = computeOptimizedRates();
   for (auto &evaluation: _evaluations) {
-    evaluation->setRates(_speciesTree->getRatesVector());
+    evaluation->setRates(_globalRates);
   }
   return computeRecLikelihood();
 }
@@ -521,7 +515,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(unsigned int radius)
   double recWeight = 1.0;
   bool useSplitImplem = true;
   long int sumElapsedSPR = 0;
-  auto rates = _speciesTree->getRatesVector();
+  auto rates = _globalRates;
   std::string resultName = "proposals";
   unsigned int iterationsNumber = 1;
   bool inPlace = false; 
@@ -610,7 +604,7 @@ void SpeciesTreeOptimizer::updateEvaluations()
   for (unsigned int i = 0; i < trees.size(); ++i) {
     auto &tree = trees[i];
     _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _recModel, false, _pruneSpeciesTree);
-    _evaluations[i]->setRates(_speciesTree->getRatesVector());
+    _evaluations[i]->setRates(_globalRates);
     _evaluations[i]->setPartialLikelihoodMode(PartialLikelihoodMode::PartialSpecies);
   }
 }

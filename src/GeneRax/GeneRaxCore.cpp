@@ -154,7 +154,7 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
   }
   instance.totalLibpllLL = speciesTreeOptimizer.getLibpllLikeliohood();
   instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
-  instance.rates = speciesTreeOptimizer.getSpeciesTree().getRates();
+  instance.rates = speciesTreeOptimizer.getGlobalRates();
   Logger::timed << "End of optimizing the species tree" << std::endl;
   Logger::info << "joint ll = " << instance.totalLibpllLL + instance.totalRecLL << std::endl;
   speciesTreeOptimizer.saveCurrentSpeciesTreePath(instance.speciesTree, true);
