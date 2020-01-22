@@ -57,6 +57,25 @@ void ParallelContext::finalize()
   assert(false);
 #endif
 }
+  
+void ParallelContext::pushSequentialContext()
+{
+#ifdef WITH_MPI
+  MPI_Comm newComm;
+  MPI_Comm_split(getComm(), getRank(), getRank(), &newComm);
+  _commStack.push(newComm);
+  _ownsMPIContextStack.push(_ownsMPIContextStack.top());
+#endif
+}
+
+void ParallelContext::popContext()
+{
+#ifdef WITH_MPI
+  MPI_Comm_free(&_commStack.top());
+ _commStack.pop();
+ _ownsMPIContextStack.pop();
+#endif
+}
 
 unsigned int ParallelContext::getRank() 
 {

@@ -46,10 +46,20 @@ public:
     _parameters.push_back(i);
   }
 
+  Parameters(const std::vector<double> &parameters): _parameters(parameters),
+    _score(0.0)
+  {
+  }
+
   Parameters(const std::string &src): _score(0.0) {load(src);} 
   
   inline unsigned int dimensions() const {
     return static_cast<unsigned int>(_parameters.size());
+  }
+
+  inline Parameters getSubParameters(unsigned int begin, unsigned int size) const {
+    return Parameters(std::vector<double>(_parameters.begin() + begin, 
+          _parameters.begin() + begin + size));
   }
 
   void ensurePositivity() {

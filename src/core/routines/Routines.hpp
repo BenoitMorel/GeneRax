@@ -10,6 +10,7 @@
 
 
 class Parameters;
+class ModelParameters;
 class PLLRootedTree;
 typedef std::unordered_map<std::string, unsigned int> TransferFrequencies;
 
@@ -34,17 +35,9 @@ public:
     Parameters &rates,
     long &sumElapsed);
 
-  static void optimizeSpeciesRatesEmpirical(const std::string &speciesTreeFile,
-    RecModel recModel,
-    Families &families,
-    Parameters &rates,
-    const std::string &outputDir,
-    long &sumElapsed);
-  
   static void getTransfersFrequencies(const std::string &speciesTreeFile,
-    RecModel recModel,
     Families &families,
-    const Parameters &rates,
+    const ModelParameters &modelRates,
     TransferFrequencies &frequencies,
     const std::string &outputDir);
   static void getLabelsFromTransferKey(const std::string &key, 
@@ -63,8 +56,7 @@ public:
   static void inferReconciliation(
     const std::string &speciesTreeFile,
     Families &families,
-    RecModel model,
-    const Parameters &rates,
+    const ModelParameters &modelRates,
     const std::string &outputDir,
     bool bestReconciliation,
     unsigned int reconciliationSamples,

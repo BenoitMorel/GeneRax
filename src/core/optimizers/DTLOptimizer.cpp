@@ -82,9 +82,33 @@ Parameters DTLOptimizer::optimizeParameters(PerCoreEvaluations &evaluations,
   return currentRates;
 }
 
+ModelParameters DTLOptimizer::optimizeModelParameters(PerCoreEvaluations &evaluations,
+    bool optimizeFromStartingParameters,
+    const ModelParameters &startingParameters)
+{
+
+  ModelParameters res = startingParameters;
+  if (!startingParameters.perFamilyRates) {
+    const Parameters *startingRates = optimizeFromStartingParameters ? &startingParameters.rates :  nullptr;
+    res.rates = DTLOptimizer::optimizeParametersGlobalDTL(evaluations, startingRates);
+  } else {
+    ParallelContext::pushSequentialContext(); // work locally
+    for (unsigned int i = 0; i < evaluations.size(); ++i) {
+      Parameters localRates = startingParameters.getRates(i);
+      const Parameters *startingRates = optimizeFromStartingParameters ? &localRates : nullptr;
+      PerCoreEvaluations localEvaluation;
+      localEvaluation.push_back(evaluations[i]);
+      localRates = DTLOptimizer::optimizeParametersGlobalDTL(localEvaluation, startingRates);
+      res.setRates(i, localRates);
+    }
+    ParallelContext::popContext();
+  }
+  return res;
+}
+
 
 Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreEvaluations &evaluations, 
-    Parameters *startingParameters)
+    const Parameters *startingParameters)
 {
   unsigned int freeParameters = 0;
   if (evaluations.size()) {
@@ -112,8 +136,6 @@ Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreEvaluations &evaluat
     startingRates.push_back(Parameters(0.01, 0.01, 0.01, 0.01));
   }
   ParallelContext::barrier();
-  Logger::info << "barrier " << std::endl;
-  ParallelContext::barrier();
   Parameters best;
   best.setScore(-10000000000);
   for (auto rates: startingRates) {
@@ -126,7 +148,7 @@ Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreEvaluations &evaluat
       break;
     }
   }
-  Logger::info << "best: " << best << std::endl;
+  //Logger::info << "best: " << best << std::endl;
   return best; 
 }
 

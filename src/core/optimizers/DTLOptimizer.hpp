@@ -6,6 +6,7 @@ class PerCoreGeneTrees;
 #include <string>
 #include <util/enums.hpp>
 #include <maths/Parameters.hpp>
+#include <maths/ModelParameters.hpp>
 #include <memory>
 
 class RootedTree;
@@ -18,7 +19,11 @@ public:
       const Parameters &startingParameters);
   
   static Parameters optimizeParametersGlobalDTL(PerCoreEvaluations &evaluations, 
-      Parameters *startingParameters = nullptr);
+      const Parameters *startingParameters = nullptr);
+
+  static ModelParameters optimizeModelParameters(PerCoreEvaluations &evaluations, 
+      bool optimizeFromStartingParameters,
+      const ModelParameters &startingParameters);
 
   static Parameters optimizeParametersPerSpecies(PerCoreEvaluations &evaluations, unsigned int speciesNodesNumber);
 

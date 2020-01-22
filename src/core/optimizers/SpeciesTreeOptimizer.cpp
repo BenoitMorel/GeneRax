@@ -8,6 +8,7 @@
 #include <trees/TreeDuplicatesFinder.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 
+
 static std::string getStepTag(bool fastMove)
 {
   static std::string fastMoveString("[Species tree search - Fast moves]");
@@ -19,6 +20,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     const Families &initialFamilies, 
     RecModel model,
     const Parameters &startingRates,
+    bool perFamilyRates,
     bool userDTLRates,
     bool pruneSpeciesTree,
     double supportThreshold,
@@ -28,7 +30,6 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _geneTrees(nullptr),
   _initialFamilies(initialFamilies),
   _currentFamilies(initialFamilies),
-  _recModel(model),
   _outputDir(outputDir),
   _execPath(execPath),
   _geneTreeIteration(1000000000), // we need to find a better way for avoiding directories collision
@@ -40,8 +41,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _firstOptimizeRatesCall(true),
   _userDTLRates(userDTLRates),
   _pruneSpeciesTree(pruneSpeciesTree),
-  _globalRates(startingRates)
-  
+  _modelRates(startingRates, model, false, 1)
 {
   if (speciesTreeFile == "random") {
     _speciesTree = std::make_unique<SpeciesTree>(initialFamilies);
@@ -50,6 +50,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
     setGeneTreesFromFamilies(initialFamilies);
   }
+  _modelRates = ModelParameters(startingRates, model, perFamilyRates, _geneTrees->getTrees().size());
   _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"), true);
   _speciesTree->addListener(this);
   std::string subsamplesPath = FileSystem::joinPaths(_outputDir, "subsamples");
@@ -115,7 +116,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearch(bool doOptimizeGeneTrees)
   movesHistory.push_back(0);
   rootExhaustiveSearchAux(*_speciesTree, 
       *_geneTrees, 
-      _recModel, 
+      _modelRates.model, 
       doOptimizeGeneTrees, 
       movesHistory, 
       bestMovesHistory, 
@@ -124,7 +125,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearch(bool doOptimizeGeneTrees)
   movesHistory[0] = 1;
   rootExhaustiveSearchAux(*_speciesTree, 
       *_geneTrees, 
-      _recModel, 
+      _modelRates.model, 
       doOptimizeGeneTrees, 
       movesHistory, 
       bestMovesHistory, 
@@ -143,7 +144,7 @@ bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
     double refApproxLL, 
     unsigned int hash1)
 {
-  bool tryApproxFirst = Enums::implementsApproxLikelihood(_recModel);
+  bool tryApproxFirst = Enums::implementsApproxLikelihood(_modelRates.model);
   bool check = false;
   // Apply the move
   //Logger::info << "Before move " << *_speciesTree << std::endl;
@@ -256,9 +257,8 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
   ParallelContext::barrier();
   Logger::timed << "Start inferring transfers..." << std::endl;
   Routines::getTransfersFrequencies(speciesTreeFile,
-    _recModel,
     _currentFamilies,
-    _globalRates,
+    _modelRates,
     frequencies,
     _outputDir);
   unsigned int transfers = 0;
@@ -470,16 +470,15 @@ double SpeciesTreeOptimizer::sprSearch(unsigned int radius, bool doOptimizeGeneT
   return newLL;
 }
   
-Parameters SpeciesTreeOptimizer::computeOptimizedRates() 
+ModelParameters SpeciesTreeOptimizer::computeOptimizedRates() 
 {
   if (_userDTLRates) {
-    return _globalRates;
+    return _modelRates;
   }
   Logger::timed << "optimize rates " << std::endl;
-  auto rates = _globalRates;
-  Parameters *startingRates = _firstOptimizeRatesCall ? nullptr : &rates;
+  auto rates = _modelRates;
+  rates =  DTLOptimizer::optimizeModelParameters(_evaluations, !_firstOptimizeRatesCall, rates);
   _firstOptimizeRatesCall = false;
-  rates =  DTLOptimizer::optimizeParametersGlobalDTL(_evaluations, startingRates);
   Logger::timed << "optimize rates done" << std::endl;
   return rates;
 }
@@ -489,9 +488,10 @@ double SpeciesTreeOptimizer::optimizeDTLRates()
   if (_userDTLRates) {
     return computeRecLikelihood();
   }
-  _globalRates = computeOptimizedRates();
+  _modelRates = computeOptimizedRates();
+  unsigned int i = 0;
   for (auto &evaluation: _evaluations) {
-    evaluation->setRates(_globalRates);
+    evaluation->setRates(_modelRates.getRates(i++));
   }
   return computeRecLikelihood();
 }
@@ -515,18 +515,19 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(unsigned int radius)
   double recWeight = 1.0;
   bool useSplitImplem = true;
   long int sumElapsedSPR = 0;
-  auto rates = _globalRates;
+  auto rates = _modelRates;
   std::string resultName = "proposals";
   unsigned int iterationsNumber = 1;
   bool inPlace = false; 
   bool perFamilyDTLRates = false;
+  assert(perFamilyDTLRates == false);
   if (radius == 1) {
     iterationsNumber = 2;
   }
   for (unsigned i = 0; i < iterationsNumber; ++i) {
     Logger::mute();
     GeneRaxMaster::optimizeGeneTrees(_currentFamilies, 
-      _recModel, rates, _outputDir, resultName, 
+      _modelRates.model, rates.rates, _outputDir, resultName, 
       _execPath, speciesTree, recOpt, perFamilyDTLRates, rootedGeneTree, 
       _supportThreshold, recWeight, true, true, radius, _geneTreeIteration, 
         useSplitImplem, sumElapsedSPR, inPlace);
@@ -603,8 +604,8 @@ void SpeciesTreeOptimizer::updateEvaluations()
   _evaluations.resize(trees.size());
   for (unsigned int i = 0; i < trees.size(); ++i) {
     auto &tree = trees[i];
-    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _recModel, false, _pruneSpeciesTree);
-    _evaluations[i]->setRates(_globalRates);
+    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _modelRates.model, false, _pruneSpeciesTree);
+    _evaluations[i]->setRates(_modelRates.getRates(i));
     _evaluations[i]->setPartialLikelihoodMode(PartialLikelihoodMode::PartialSpecies);
   }
 }

@@ -7,7 +7,8 @@
 #include <util/enums.hpp>
 #include <families/Families.hpp>
 #include <memory>
-  
+#include <maths/ModelParameters.hpp>
+
 struct EvaluatedMove {
   unsigned int prune;
   unsigned int regraft;
@@ -52,6 +53,7 @@ public:
       const Families &initialFamilies, 
       RecModel model,
       const Parameters &startingRates,
+      bool perFamilyRates,
       bool userDTLRates,
       bool pruneSpeciesTree,
       double supportThreshold,
@@ -75,7 +77,6 @@ public:
   double transferSearch();
   double optimizeDTLRates();
  
-  Parameters computeOptimizedRates(); 
 
   double optimizeGeneTrees(unsigned int radius);
   void revertGeneTreeOptimization();
@@ -114,7 +115,9 @@ private:
   bool _userDTLRates;
   bool _pruneSpeciesTree;
   Parameters _globalRates;
+  ModelParameters _modelRates;
 private:
+  ModelParameters computeOptimizedRates(); 
   void updateEvaluations();
   void rootExhaustiveSearchAux(SpeciesTree &speciesTree, 
       PerCoreGeneTrees &geneTrees, 

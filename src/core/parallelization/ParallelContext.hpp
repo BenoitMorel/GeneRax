@@ -112,6 +112,10 @@ public:
    */
   static bool allowSchedulerSplitImplementation();
   static MPI_Comm &getComm() {return _commStack.top();}
+
+  static void pushSequentialContext();
+  static void popContext();
+
 private:
   static void setComm(MPI_Comm newComm);
   static void setOwnMPIContext(bool own);
