@@ -39,14 +39,15 @@ void PerFamilyDTLOptimizer::findBestRatesDL(JointTree &jointTree,
     auto j = s % steps;
     double dup = minDup + (maxDup - minDup) * double(i) / double(steps);
     double loss = minLoss + (maxLoss - minLoss) * double(j) / double(steps);
-    jointTree.setRates(Parameters(dup, loss));
+    Parameters rates(dup, loss);
+    rates.ensurePositivity();
     double newLL = jointTree.computeReconciliationLoglk();
     if (!isValidLikelihood(newLL)) {
       continue;
     }
     if (newLL > bestLL) { 
-      bestDup = dup;
-      bestLoss = loss;
+      bestDup = rates[0];
+      bestLoss = rates[1];
       bestLL = newLL;
     }
   }
@@ -78,15 +79,17 @@ void PerFamilyDTLOptimizer::findBestRatesDTL(JointTree &jointTree,
     double dup = minDup + (maxDup - minDup) * double(i) / double(steps);
     double loss = minLoss + (maxLoss - minLoss) * double(j) / double(steps);
     double trans = minTrans + (maxTrans - minTrans) * double(k) / double(steps);
-    jointTree.setRates(Parameters(dup, loss, trans));
+    Parameters rates(dup, loss, trans);
+    rates.ensurePositivity();
+    jointTree.setRates(rates);
     double newLL = jointTree.computeReconciliationLoglk();
     if (!isValidLikelihood(newLL)) {
       continue;
     }
     if (newLL > bestLL) { 
-      bestDup = dup;
-      bestLoss = loss;
-      bestTrans = trans;
+      bestDup = rates[0];
+      bestLoss = rates[1];
+      bestTrans = rates[2];
       bestLL = newLL;
     }
   }
