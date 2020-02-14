@@ -284,17 +284,23 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
 {
   assert(ParallelContext::isRandConsistent());
   long elapsed = 0;
-  Logger::timed << "Reconciliation rates optimization... " << std::endl;
-  Routines::optimizeRates(instance.args.userDTLRates, instance.speciesTree, instance.recModel,
+  if (!instance.args.perFamilyDTLRates) {
+    Logger::timed << "Reconciliation rates optimization... " << std::endl;
+    Routines::optimizeRates(instance.args.userDTLRates, instance.speciesTree, instance.recModel,
       instance.args.rootedGeneTree, instance.args.pruneSpeciesTree, 
       instance.currentFamilies, perSpeciesDTLRates, instance.rates, instance.elapsedRates);
-  if (instance.rates.dimensions() <= 3 && !instance.args.perFamilyDTLRates) {
-    Logger::info << instance.rates << std::endl;
-  } else {
-    Logger::info << "\tRecLL=" << instance.rates.getScore() << std::endl;
+    if (instance.rates.dimensions() <= 3) {
+      Logger::info << instance.rates << std::endl;
+    } else {
+      Logger::info << "\tRecLL=" << instance.rates.getScore() << std::endl;
+    }
+    Logger::info << std::endl;
   }
-  Logger::info << std::endl;
-  Logger::timed << "Optimizing gene trees with radius=" << sprRadius << "... " << std::endl; 
+  std::string additionalMsg;
+  if (instance.args.perFamilyDTLRates) {
+    additionalMsg = std::string("reconciliation rates and ");
+  }
+  Logger::timed << "Optimizing " + additionalMsg + "gene trees with radius=" << sprRadius << "... " << std::endl; 
   GeneRaxMaster::optimizeGeneTrees(instance.currentFamilies, instance.recModel, instance.rates, 
       instance.args.output, "results", instance.args.execPath, instance.speciesTree, 
       instance.args.reconciliationOpt, instance.args.perFamilyDTLRates, 
