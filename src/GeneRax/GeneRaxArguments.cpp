@@ -211,16 +211,16 @@ void GeneRaxArguments::printSummary() {
     Logger::info << "global rates" << std::endl;
   }
   Logger::info << "Prefix: " << output << std::endl;
-  Logger::info << "Unrooted gene tree: " << boolStr[!rootedGeneTree] << std::endl;
-  Logger::info << "Prune species tree: " << boolStr[!pruneSpeciesTree] << std::endl;
+  Logger::info << "Unrooted reconciliation likelihood: " << boolStr[!rootedGeneTree] << std::endl;
+  Logger::info << "Prune species tree: " << boolStr[pruneSpeciesTree] << std::endl;
   Logger::info << "Reconciliation radius: " << recRadius << std::endl;
 #ifdef WITH_MPI
   Logger::info << "MPI Ranks: " << ParallelContext::getSize() << std::endl;
 #else
   Logger::info << "You are running GeneRax without MPI (no parallelization)" << std::endl;
 #endif
-  Logger::info << "Max SPR radius: " << maxSPRRadius << std::endl;
-  Logger::info << "Support threshold: " << supportThreshold << std::endl;
+  Logger::info << "Max gene SPR radius: " << maxSPRRadius << std::endl;
+  Logger::info << "Gene support threshold: " << supportThreshold << std::endl;
   Logger::info << "Reconciliation likelihood weight: " << recWeight << std::endl;
   Logger::info << "Random seed: " << seed << std::endl;
   Logger::info << "Infer ML reconciliation: " << boolStr[reconcile] << std::endl;

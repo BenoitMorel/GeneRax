@@ -220,21 +220,25 @@ void GeneRaxCore::terminate(GeneRaxInstance &instance)
   os << "RecLL: " << instance.totalRecLL;
   Logger::info << std::endl;
   auto &rates = instance.rates;
-  if (rates.dimensions() == 2) {
-    Logger::timed << "Global DT rates: D=" << rates[0] << " L= " << rates[1] << std::endl;
-  } else if (instance.rates.dimensions() == 3) {
-    Logger::timed<< "Global DTL rates: D=" << rates[0] << " L= " << rates[1] << " T=" << rates[2] << std::endl;
+  if (!instance.args.perFamilyDTLRates) {
+    if (rates.dimensions() == 2) {
+      Logger::timed << "DT rates: D=" << rates[0] << " L= " << rates[1] << std::endl;
+    } else if (instance.rates.dimensions() == 3) {
+      Logger::timed<< "DTL rates: D=" << rates[0] << " L= " << rates[1] << " T=" << rates[2] << std::endl;
+    }
   }
   Logger::timed << "Reconciliation likelihood: " << instance.totalRecLL << std::endl;
   if (instance.totalLibpllLL) {
     Logger::timed << "Phylogenetic likelihood: " << instance.totalLibpllLL << std::endl;
     Logger::timed << "Joint likelihood: " << instance.totalLibpllLL + instance.totalRecLL << std::endl;
   }
+#ifdef PRINT_TIMES
   if (instance.elapsedRaxml) {
     Logger::timed << "Initial time spent on optimizing random trees: " << instance.elapsedRaxml << "s" << std::endl;
   }
   Logger::timed << "Time spent on optimizing rates: " << instance.elapsedRates << "s" << std::endl;
   Logger::timed << "Time spent on optimizing gene trees: " << instance.elapsedSPR << "s" << std::endl;
+#endif
   Logger::timed << "Results directory: " << instance.args.output << std::endl;
   Logger::timed << "End of GeneRax execution" << std::endl;
 }
@@ -280,18 +284,14 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
 {
   assert(ParallelContext::isRandConsistent());
   long elapsed = 0;
-  if (perSpeciesDTLRates) {
-    Logger::timed << "Optimizing per species DTL rates... " << std::endl;
-  } else {
-    Logger::timed << "Optimizing global DTL rates... " << std::endl;
-  }
+  Logger::timed << "Reconciliation rates optimization... " << std::endl;
   Routines::optimizeRates(instance.args.userDTLRates, instance.speciesTree, instance.recModel,
       instance.args.rootedGeneTree, instance.args.pruneSpeciesTree, 
       instance.currentFamilies, perSpeciesDTLRates, instance.rates, instance.elapsedRates);
-  if (instance.rates.dimensions() <= 3) {
+  if (instance.rates.dimensions() <= 3 && !instance.args.perFamilyDTLRates) {
     Logger::info << instance.rates << std::endl;
   } else {
-    Logger::info << " RecLL=" << instance.rates.getScore();
+    Logger::info << "\tRecLL=" << instance.rates.getScore() << std::endl;
   }
   Logger::info << std::endl;
   Logger::timed << "Optimizing gene trees with radius=" << sprRadius << "... " << std::endl; 
