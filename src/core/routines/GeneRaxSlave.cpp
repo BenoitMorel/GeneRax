@@ -93,7 +93,11 @@ static void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
     ParallelOfstream stats(outputStats);
     double libpllLL = jointTree->computeLibpllLoglk ();
     double recLL = jointTree->computeReconciliationLoglk();
-    stats << libpllLL << " " << recLL;
+    stats << libpllLL << " " << recLL << std::endl;
+    stats << "Reconciliation rates = ";
+    for (auto rate: jointTree->getRatesVector().getVector()) {
+      stats << rate << " ";
+    }
     stats.close();
   }
   Logger::timed << "End of optimizing gene tree" << std::endl;

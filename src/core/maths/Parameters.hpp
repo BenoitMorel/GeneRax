@@ -164,6 +164,8 @@ public:
       _parameters.push_back(a);
     }
   }
+
+  const std::vector<double> &getVector() const {return _parameters;}
 private:
   std::vector<double> _parameters;
   double _score;
