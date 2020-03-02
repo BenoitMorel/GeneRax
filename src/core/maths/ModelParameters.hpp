@@ -3,10 +3,25 @@
 #include <maths/ModelParameters.hpp>
 #include <util/enums.hpp>
 
+/**
+ *  Hold the reconciliation rates and some information about them:
+ *  - The rate values
+ *  - Do the families have different rates?
+ *  - The reconciliation model (UndatedDL, UndatedDTL etc.)
+ *
+ *  The number of rates stored is: freeParameters * numberOfRateSets
+ *  where freeParameters is the number of free parameters in the 
+ *  reconciliation model (3 for UndatedDTL) and numberOfRateSets is
+ *  1 if perFamilyRates is false, and familyNumber else.
+ */
 class ModelParameters {
 public:
-
-
+  /**
+   *  @param rates Starting rates 
+   *  @param model Reconciliation model 
+   *  @param perFamilyRates Are the rates per family?
+   *  @param familyNumber Total number of families
+   */
   ModelParameters(const Parameters &rates, 
       RecModel model,
       bool perFamilyRates,

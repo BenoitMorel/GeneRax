@@ -148,7 +148,6 @@ Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreEvaluations &evaluat
       break;
     }
   }
-  //Logger::info << "best: " << best << std::endl;
   return best; 
 }
 

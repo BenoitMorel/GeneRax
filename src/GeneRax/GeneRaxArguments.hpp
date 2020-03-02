@@ -23,7 +23,6 @@ public:
    Strategy strategy;
    SpeciesStrategy speciesStrategy;
    std::string reconciliationModelStr;
-   RecOpt reconciliationOpt;
    std::string output;
    bool perFamilyDTLRates;
    bool rootedGeneTree;

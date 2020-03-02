@@ -11,7 +11,6 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   strategy(Strategy::SPR),
   speciesStrategy(SpeciesStrategy::SPR),
   reconciliationModelStr("UndatedDTL"),
-  reconciliationOpt(RecOpt::Grid),
   output("GeneRax"),
   perFamilyDTLRates(false),
   rootedGeneTree(true),
@@ -62,8 +61,6 @@ void GeneRaxArguments::init() {
       speciesStrategy = ArgumentsHelper::strToSpeciesStrategy(std::string(argv[++i]));
     } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModelStr = std::string(argv[++i]);
-    } else if (arg == "--rec-opt") {
-      reconciliationOpt = ArgumentsHelper::strToRecOpt(std::string(argv[++i]));
     } else if (arg == "-p" || arg == "--prefix") {
       output = std::string(argv[++i]);
     } else if (arg == "--per-family-rates") {
@@ -166,7 +163,6 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "-s, --species-tree <SPECIES TREE>" << std::endl;
   Logger::info << "--strategy <STRATEGY>  {EVAL, SPR}" << std::endl;
   Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, Auto}" << std::endl;
-  Logger::info << "--rec-opt <reconciliationOpt>  {window, simplex}" << std::endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << std::endl;
   Logger::info << "--unrooted-gene-tree" << std::endl;
   Logger::info << "--support-threshold <threshold>" << std::endl;
@@ -201,7 +197,6 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "Species Strategy: " << ArgumentsHelper::speciesStrategyToStr(speciesStrategy) << std::endl;
   Logger::info << "Strategy: " << ArgumentsHelper::strategyToStr(strategy) << std::endl;
   Logger::info << "Reconciliation model: " << reconciliationModelStr << std::endl;
-  Logger::info << "Reconciliation opt: " << ArgumentsHelper::recOptToStr(reconciliationOpt) << std::endl;
   Logger::info << "DTL rates: "; 
   if (perSpeciesDTLRates) {
     Logger::info << "per species rates" << std::endl;

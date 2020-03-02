@@ -303,7 +303,7 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
   Logger::timed << "Optimizing " + additionalMsg + "gene trees with radius=" << sprRadius << "... " << std::endl; 
   GeneRaxMaster::optimizeGeneTrees(instance.currentFamilies, instance.recModel, instance.rates, 
       instance.args.output, "results", instance.args.execPath, instance.speciesTree, 
-      instance.args.reconciliationOpt, instance.args.perFamilyDTLRates, 
+      RecOpt::Grid, instance.args.perFamilyDTLRates, 
       instance.args.rootedGeneTree, instance.args.supportThreshold, 
       instance.args.recWeight, true, enableLibpll, sprRadius, 
       instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), elapsed);

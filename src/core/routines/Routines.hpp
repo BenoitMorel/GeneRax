@@ -40,6 +40,7 @@ public:
     const ModelParameters &modelRates,
     TransferFrequencies &frequencies,
     const std::string &outputDir);
+  
   static void getLabelsFromTransferKey(const std::string &key, 
       std::string &label1, 
       std::string &label2);

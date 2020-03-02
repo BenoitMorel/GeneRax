@@ -232,11 +232,9 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     const std::string &outputDir)
 {
   int samples = 5;
-  Logger::timed << "Coucou inferReconciliation" << std::endl;
   inferReconciliation(speciesTreeFile, families, modelRates, outputDir, false, samples, true);
   
   SpeciesTree speciesTree(speciesTreeFile);
-  Logger::timed << "Coucou gather transfers" << std::endl;
   for (int i = 0; i < samples; ++i) {
     auto begin = ParallelContext::getBegin(families.size());
     auto end = ParallelContext::getEnd(families.size());

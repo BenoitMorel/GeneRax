@@ -15,7 +15,7 @@ void RaxmlMaster::runRaxmlOptimization(Families &families,
     const std::string &execPath,
     unsigned int iteration,
     bool splitImplem,
-    long &sumElapsed)
+    long &sumElapsedSec)
 
 {
   auto start = Logger::getElapsedSec();
@@ -52,7 +52,7 @@ void RaxmlMaster::runRaxmlOptimization(Families &families,
   os.close();
   Scheduler::schedule(outputDir, commandFile, splitImplem, execPath); 
   auto elapsed = (Logger::getElapsedSec() - start);
-  sumElapsed += elapsed;
+  sumElapsedSec += elapsed;
   Logger::timed << "End of raxml light step (after " << elapsed << "s)"  << std::endl;
 }
 
