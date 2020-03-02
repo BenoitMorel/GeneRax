@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <random>
 #include <limits>
-#include <trees/PerCoreGeneTrees.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
 #include <optimizers/DTLOptimizer.hpp>
 #include <maths/Parameters.hpp>
 #include <IO/FileSystem.hpp>

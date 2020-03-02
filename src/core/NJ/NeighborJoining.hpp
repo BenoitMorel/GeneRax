@@ -1,6 +1,6 @@
 #pragma once
 
-#include <families/Families.hpp>
+#include <IO/Families.hpp>
 #include <trees/PLLRootedTree.hpp>
 #include <memory>
 

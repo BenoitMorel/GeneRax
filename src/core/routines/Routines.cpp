@@ -3,10 +3,10 @@
 #include <sstream>
 #include <IO/Logger.hpp>
 #include <IO/LibpllParsers.hpp>
-#include <trees/PerCoreGeneTrees.hpp>
 #include <trees/SpeciesTree.hpp>
 #include <optimizers/DTLOptimizer.hpp>
 #include <parallelization/ParallelContext.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
 #include <IO/FileSystem.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <trees/PLLRootedTree.hpp>

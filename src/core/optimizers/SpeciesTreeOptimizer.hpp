@@ -1,11 +1,11 @@
 #pragma once
 
 #include <trees/SpeciesTree.hpp>
-#include <trees/PerCoreGeneTrees.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
 #include <string>
 #include <maths/Parameters.hpp>
 #include <util/enums.hpp>
-#include <families/Families.hpp>
+#include <IO/Families.hpp>
 #include <memory>
 #include <maths/ModelParameters.hpp>
 

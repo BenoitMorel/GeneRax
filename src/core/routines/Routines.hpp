@@ -5,13 +5,13 @@
 #include <IO/FamiliesFileParser.hpp>
 #include <util/enums.hpp>
 #include <unordered_map>
-#include <trees/PerCoreGeneTrees.hpp>
 #include <likelihoods/ReconciliationEvaluation.hpp>
 
 
 class Parameters;
 class ModelParameters;
 class PLLRootedTree;
+class PerCoreGeneTrees;
 typedef std::unordered_map<std::string, unsigned int> TransferFrequencies;
 
 

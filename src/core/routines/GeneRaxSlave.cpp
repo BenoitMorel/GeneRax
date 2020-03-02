@@ -5,7 +5,7 @@
 #include <IO/LibpllParsers.hpp>
 #include <algorithm>
 #include <limits>
-#include <trees/PerCoreGeneTrees.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
 #include <optimizers/DTLOptimizer.hpp>
 #include <maths/Parameters.hpp>
 #include <trees/JointTree.hpp>

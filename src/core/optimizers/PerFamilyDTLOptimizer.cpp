@@ -2,7 +2,7 @@
 
 #include <parallelization/ParallelContext.hpp>
 #include <trees/JointTree.hpp>
-#include <trees/PerCoreGeneTrees.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
 #include <IO/Logger.hpp>
 #include <limits>
 #include <algorithm>

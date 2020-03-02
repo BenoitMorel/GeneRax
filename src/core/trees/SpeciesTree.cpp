@@ -3,7 +3,7 @@
 
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <likelihoods/ReconciliationEvaluation.hpp>
-#include <trees/PerCoreGeneTrees.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
 #include <parallelization/ParallelContext.hpp>
 #include <IO/FileSystem.hpp>
 #include <set>

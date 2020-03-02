@@ -1,6 +1,6 @@
 
 set(jointsearch-core_SOURCES 
-  families/Families.cpp
+  IO/Families.cpp
   IO/Logger.cpp
   IO/GeneSpeciesMapping.cpp
   IO/FamiliesFileParser.cpp
@@ -15,6 +15,7 @@ set(jointsearch-core_SOURCES
   optimizers/PerFamilyDTLOptimizer.cpp
   optimizers/SpeciesTreeOptimizer.cpp
   parallelization/ParallelContext.cpp
+  parallelization/PerCoreGeneTrees.cpp
   parallelization/Scheduler.cpp
   routines/GeneRaxSlave.cpp
   routines/GeneRaxMaster.cpp
@@ -30,7 +31,6 @@ set(jointsearch-core_SOURCES
   trees/PLLRootedTree.cpp
   trees/PLLTreeInfo.cpp
   trees/JointTree.cpp
-  trees/PerCoreGeneTrees.cpp
   trees/SpeciesTree.cpp
   trees/TreeDuplicatesFinder.cpp
   util/Scenario.cpp

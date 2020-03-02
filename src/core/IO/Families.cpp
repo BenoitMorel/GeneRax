@@ -6,7 +6,7 @@
 #include <IO/GeneSpeciesMapping.hpp>
 #include <algorithm>
 #include <trees/PLLRootedTree.hpp>
-#include <trees/PerCoreGeneTrees.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
 
 enum FamilyErrorCode {
   ERROR_OK = 0,

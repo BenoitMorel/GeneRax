@@ -4,7 +4,7 @@
 #include <vector>
 
 
-#include <families/Families.hpp>
+#include <IO/Families.hpp>
 
 class FamiliesFileParser {
 public:

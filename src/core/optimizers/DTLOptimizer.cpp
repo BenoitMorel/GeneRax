@@ -2,7 +2,7 @@
 
 #include <parallelization/ParallelContext.hpp>
 #include <IO/Logger.hpp>
-#include <trees/PerCoreGeneTrees.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
 #include <limits>
 #include <algorithm>
 #include <likelihoods/ReconciliationEvaluation.hpp>

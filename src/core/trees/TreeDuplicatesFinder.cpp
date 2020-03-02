@@ -1,5 +1,5 @@
 #include "TreeDuplicatesFinder.hpp"
-#include <trees/PerCoreGeneTrees.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
 #include <IO/Logger.hpp>
 
 static bool hasParent(pll_unode_t *node) 
