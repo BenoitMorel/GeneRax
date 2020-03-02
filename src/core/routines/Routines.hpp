@@ -21,6 +21,46 @@ class Routines {
 public:
   Routines() = delete;
   
+  /*
+   *  Schedule gene tree inference using
+   *  sequences only, with raxml-ng algorithm.
+   *  @param families Families descriptions
+   *  @param output GeneRax run output directory
+   *  @param execPath GeneRax executable
+   *  @param iteration unique ID for this call
+   *                   will be used to create a directory
+   *  @param splitImpl use the MPIScheduler split implementation 
+   *                   (or the fork)
+   *  @param sumElapsedSec will be incremented by the number of
+   *                       seconds spent in this call
+   */
+  static void runRaxmlOptimization(Families &families,
+    const std::string &output,
+    const std::string &execPath,
+    unsigned int iteration,
+    bool splitImplem,
+    long &sumElapsedSec);
+  
+  
+  static void optimizeGeneTrees(Families &families,
+    RecModel recModel,
+    Parameters &rates,
+    const std::string &output, 
+    const std::string &resultName, 
+    const std::string &execPath, 
+    const std::string &speciesTreePath,
+    RecOpt reconciliationOpt,
+    bool perFamilyDTLRates,
+    bool rootedGeneTree,
+    double supportThreshold,
+    double recWeight,
+    bool enableRec,
+    bool enableLibpll,
+    unsigned int sprRadius,
+    unsigned int iteration,
+    bool schedulerSplitImplem,
+    long &elapsed,
+    bool inPlace = false); 
   /**
    * Optimize the DTL rates for the families families. 
    * The result is stored into rates

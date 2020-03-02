@@ -2,7 +2,6 @@
 
 #include <optimizers/DTLOptimizer.hpp>
 #include <IO/FileSystem.hpp>
-#include <routines/GeneRaxMaster.hpp>
 #include <routines/Routines.hpp>
 #include <algorithm>
 #include <trees/TreeDuplicatesFinder.hpp>
@@ -526,7 +525,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(unsigned int radius)
   }
   for (unsigned i = 0; i < iterationsNumber; ++i) {
     Logger::mute();
-    GeneRaxMaster::optimizeGeneTrees(_currentFamilies, 
+    Routines::optimizeGeneTrees(_currentFamilies, 
       _modelRates.model, rates.rates, _outputDir, resultName, 
       _execPath, speciesTree, recOpt, perFamilyDTLRates, rootedGeneTree, 
       _supportThreshold, recWeight, true, true, radius, _geneTreeIteration, 

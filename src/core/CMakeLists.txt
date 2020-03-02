@@ -17,10 +17,10 @@ set(jointsearch-core_SOURCES
   parallelization/ParallelContext.cpp
   parallelization/PerCoreGeneTrees.cpp
   parallelization/Scheduler.cpp
-  routines/GeneRaxSlave.cpp
-  routines/GeneRaxMaster.cpp
-  routines/RaxmlMaster.cpp
-  routines/RaxmlSlave.cpp
+  routines/scheduled_routines/GeneRaxSlave.cpp
+  routines/scheduled_routines/GeneRaxMaster.cpp
+  routines/scheduled_routines/RaxmlMaster.cpp
+  routines/scheduled_routines/RaxmlSlave.cpp
   routines/Routines.cpp
   routines/SlavesMain.cpp
   search/Moves.cpp

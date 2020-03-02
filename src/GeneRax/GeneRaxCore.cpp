@@ -14,10 +14,7 @@
 #include <IO/FileSystem.hpp>
 #include <IO/ParallelOfstream.hpp>
 #include <NJ/NeighborJoining.hpp>
-#include <routines/GeneRaxSlave.hpp>
 #include <parallelization/Scheduler.hpp>
-#include <routines/RaxmlMaster.hpp>
-#include <routines/GeneRaxMaster.hpp>
 #include <routines/Routines.hpp>
 #include <optimizers/SpeciesTreeOptimizer.hpp>
 #include <trees/SpeciesTree.hpp>
@@ -268,7 +265,7 @@ void GeneRaxCore::initialGeneTreeSearch(GeneRaxInstance &instance)
   Logger::timed << "[Initialization] Initial optimization of the starting random gene trees" << std::endl;
   Logger::timed << "[Initialization] All the families will first be optimized with sequences only" << std::endl;
   Logger::mute();
-  RaxmlMaster::runRaxmlOptimization(instance.currentFamilies, instance.args.output, 
+  Routines::runRaxmlOptimization(instance.currentFamilies, instance.args.output, 
       instance.args.execPath, instance.currentIteration++, 
       ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
   Logger::unmute();
@@ -301,7 +298,7 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
     additionalMsg = std::string("reconciliation rates and ");
   }
   Logger::timed << "Optimizing " + additionalMsg + "gene trees with radius=" << sprRadius << "... " << std::endl; 
-  GeneRaxMaster::optimizeGeneTrees(instance.currentFamilies, instance.recModel, instance.rates, 
+  Routines::optimizeGeneTrees(instance.currentFamilies, instance.recModel, instance.rates, 
       instance.args.output, "results", instance.args.execPath, instance.speciesTree, 
       RecOpt::Grid, instance.args.perFamilyDTLRates, 
       instance.args.rootedGeneTree, instance.args.supportThreshold, 

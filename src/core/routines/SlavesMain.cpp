@@ -4,8 +4,8 @@
 #include <string>
 #include <cassert>
 
-#include <routines/RaxmlSlave.hpp>
-#include <routines/GeneRaxSlave.hpp>
+#include <routines/scheduled_routines/RaxmlSlave.hpp>
+#include <routines/scheduled_routines/GeneRaxSlave.hpp>
 
 bool SlavesMain::isSlave(int argc, char** argv)
 {

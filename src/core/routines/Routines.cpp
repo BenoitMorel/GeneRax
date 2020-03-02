@@ -12,6 +12,64 @@
 #include <trees/PLLRootedTree.hpp>
 #include <util/Scenario.hpp>
 #include <maths/ModelParameters.hpp>
+#include <routines/scheduled_routines/RaxmlMaster.hpp>
+#include <routines/scheduled_routines/GeneRaxMaster.hpp>
+
+
+void Routines::runRaxmlOptimization(Families &families,
+    const std::string &output,
+    const std::string &execPath,
+    unsigned int iteration,
+    bool splitImplem,
+    long &sumElapsedSec)
+{
+  RaxmlMaster::runRaxmlOptimization(families, output,
+      execPath,
+      iteration,
+      splitImplem, 
+      sumElapsedSec);
+}
+  
+void Routines::optimizeGeneTrees(Families &families,
+    RecModel recModel,
+    Parameters &rates,
+    const std::string &output, 
+    const std::string &resultName, 
+    const std::string &execPath, 
+    const std::string &speciesTreePath,
+    RecOpt reconciliationOpt,
+    bool perFamilyDTLRates,
+    bool rootedGeneTree,
+    double supportThreshold,
+    double recWeight,
+    bool enableRec,
+    bool enableLibpll,
+    unsigned int sprRadius,
+    unsigned int iteration,
+    bool schedulerSplitImplem,
+    long &elapsed,
+    bool inPlace)
+{
+  GeneRaxMaster::optimizeGeneTrees(families,
+      recModel,
+      rates,
+      output,
+      resultName,
+      execPath,
+      speciesTreePath,
+      reconciliationOpt,
+      perFamilyDTLRates,
+      rootedGeneTree,
+      supportThreshold,
+      recWeight,
+      enableRec,
+      enableLibpll,
+      sprRadius,
+      iteration,
+      schedulerSplitImplem,
+      elapsed,
+      inPlace);
+}
 
 void Routines::optimizeRates(bool userDTLRates, 
     const std::string &speciesTreeFile,

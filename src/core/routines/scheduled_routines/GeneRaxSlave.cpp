@@ -14,7 +14,7 @@
 #include <IO/ParallelOfstream.hpp>
 #include <../../ext/MPIScheduler/src/mpischeduler.hpp>
 #include <sstream>
-#include <routines/RaxmlSlave.hpp>
+#include <routines/scheduled_routines/RaxmlSlave.hpp>
 
 static void getTreeStrings(const std::string &filename, std::vector<std::string> &treeStrings) 
 {
