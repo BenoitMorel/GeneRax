@@ -8,8 +8,8 @@
 GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
-  strategy(Strategy::SPR),
-  speciesStrategy(SpeciesStrategy::SPR),
+  strategy(GeneSearchStrategy::SPR),
+  speciesStrategy(SpeciesSearchStrategy::SPR),
   reconciliationModelStr("UndatedDTL"),
   output("GeneRax"),
   perFamilyDTLRates(false),
@@ -54,11 +54,11 @@ void GeneRaxArguments::init() {
       speciesTree = std::string(argv[++i]);
     } else if (arg == "--strategy") {
       strategy = ArgumentsHelper::strToStrategy(std::string(argv[++i]));
-      if (strategy == Strategy::EVAL) {
+      if (strategy == GeneSearchStrategy::EVAL) {
         recRadius = maxSPRRadius = 0;
       }
     } else if (arg == "--species-strategy") {
-      speciesStrategy = ArgumentsHelper::strToSpeciesStrategy(std::string(argv[++i]));
+      speciesStrategy = ArgumentsHelper::strToSpeciesSearchStrategy(std::string(argv[++i]));
     } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModelStr = std::string(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {

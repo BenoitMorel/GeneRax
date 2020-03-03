@@ -16,7 +16,7 @@ void Scenario::addEvent(ReconciliationEventType type,
     unsigned int destSpeciesNode) 
 {
   
-  addTransfer(type, geneNode, speciesNode, INVALID, destSpeciesNode);
+  addTransfer(type, geneNode, speciesNode, INVALID_NODE_ID, destSpeciesNode);
 }
   
 void Scenario::addTransfer(ReconciliationEventType type, 

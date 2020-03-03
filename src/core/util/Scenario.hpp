@@ -18,17 +18,21 @@ class ParallelOfstream;
  * Store the set of events that reconciles a gene tree with a species tree
  */
 class Scenario {
-public:
-  static const unsigned int INVALID = static_cast<unsigned int>(-1);
-  
-
+public: 
+  // value representing an invalid node ID (0 is a valid node ID)
+  static const unsigned int INVALID_NODE_ID = static_cast<unsigned int>(-1);
+ 
+  /**
+   *  Reconciliation event description: type of event, and
+   *  involved gene and species nodes
+   */
   struct Event {
     Event(): 
       type(ReconciliationEventType::EVENT_S), 
-      geneNode(INVALID), 
-      speciesNode(INVALID), 
-      transferedGeneNode(INVALID), 
-      destSpeciesNode(INVALID),
+      geneNode(INVALID_NODE_ID), 
+      speciesNode(INVALID_NODE_ID), 
+      transferedGeneNode(INVALID_NODE_ID), 
+      destSpeciesNode(INVALID_NODE_ID),
       pllTransferedGeneNode(nullptr),
       pllDestSpeciesNode(nullptr),
       cross(false)
@@ -36,23 +40,31 @@ public:
     ReconciliationEventType type;
     unsigned int geneNode;
     unsigned int speciesNode;
-    unsigned int transferedGeneNode; 
-    unsigned int destSpeciesNode; // for transfers
+    unsigned int transferedGeneNode;  // for transfers only 
+    unsigned int destSpeciesNode;     // for transfers only
     
     // temporary variables for event inference
     pll_unode_t *pllTransferedGeneNode;
     pll_rnode_t *pllDestSpeciesNode;
     bool cross; // used to decide which gene (left/right) goes to which species (left/right)
+                // if set to true, left goes to right and right goes to left
+                // if set to false, left goes to left and right goes to right
     
-    
-    bool isValid() const { return speciesNode != INVALID; }
+   
+    /**
+     *  Is this event valid? (if not, something went wrong)
+     */
+    bool isValid() const { return speciesNode != INVALID_NODE_ID; }
   };
 
 
+  /**
+   * Default constructor
+   */
   Scenario(): 
     _eventsCount(static_cast<unsigned int>(ReconciliationEventType::EVENT_Invalid), 0), 
     _geneRoot(nullptr), 
-    _virtualRootIndex(INVALID) 
+    _virtualRootIndex(INVALID_NODE_ID) 
   {}
 
   // forbid copy
@@ -62,29 +74,39 @@ public:
   Scenario & operator = (Scenario &&) = delete;
  
   void setGeneRoot(pll_unode_t *geneRoot) {_geneRoot = geneRoot;}
-  
   void setSpeciesTree(pll_rtree_t *speciesTree) {_speciesTree = speciesTree;}
   void setVirtualRootIndex(unsigned int virtualRootIndex) {_virtualRootIndex = virtualRootIndex;}
 
+  /**
+   * Various methods to add an event in the Scnenario
+   */
   void addEvent(const Event &event);
-
   void addEvent(ReconciliationEventType type, 
       unsigned int geneNode, 
       unsigned int speciesNode, 
-      unsigned int destSpeciesNode = INVALID);
+      unsigned int destSpeciesNode = INVALID_NODE_ID);
   void addTransfer(ReconciliationEventType type, 
     unsigned int geneNode, 
     unsigned int speciesNode, 
     unsigned int transferedGeneNode,
     unsigned int destSpeciesNode);
 
+  /**
+   * Various methods to save information from the Scenario
+   */
   void saveEventsCounts(const std::string &filename, bool masterRankOnly = true); 
   void savePerSpeciesEventsCounts(const std::string &filename, bool masterRankOnly = true); 
   void saveTransfers(const std::string &filename, bool masterRankOnly = true); 
-
   void saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly = true);
   void saveReconciliation(ParallelOfstream &os, ReconciliationFormat format);
 
+  /**
+   * The following methods help blacklisting couples of gene and species nodes.
+   * The motivation is that both ML and sampling reconciliation inference algorithm
+   * could get stuck in an infinite loop of transfers, because of some approximations
+   * in the likelihood computation. 
+   * The blacklist can be used by these algorithm to detect this infinite loop. 
+   */
   void initBlackList(unsigned int genesNumber, unsigned int speciesNumber);
   void blackList(unsigned int geneNode, unsigned int speciesNode);
   bool isBlacklisted(unsigned int geneNode, unsigned int speciesNode);
@@ -97,13 +119,6 @@ private:
   pll_unode_t *_geneRoot;
   pll_rtree_t *_speciesTree;
   unsigned int _virtualRootIndex;
-     
-  /**
-   *  This blacklist will be used to avoid cyclic reconciliations 
-   *  (transfer and transfer back for instance).
-   *  This can happen because of the approximations in the reconcilation
-   *  function
-   */
   typedef std::vector< std::vector <int> > ScenarioBlackList;
   std::unique_ptr<ScenarioBlackList> _blacklist;
 };

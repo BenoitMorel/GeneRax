@@ -117,7 +117,7 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
       << instance.currentFamilies.size() << " families " << std::endl;
   }
   switch (instance.args.speciesStrategy) {
-  case SpeciesStrategy::SPR:
+  case SpeciesSearchStrategy::SPR:
     for (unsigned int radius = 1; radius <= instance.args.speciesFastRadius; ++radius) {
       speciesTreeOptimizer.optimizeDTLRates();
       speciesTreeOptimizer.sprSearch(radius);
@@ -125,14 +125,14 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
       instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
     }
     break;
-  case SpeciesStrategy::TRANSFERS:
+  case SpeciesSearchStrategy::TRANSFERS:
     for (unsigned int i = 0; i < 3; ++i) {
       speciesTreeOptimizer.optimizeDTLRates();
       speciesTreeOptimizer.transferSearch();
       instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
     }
     break;
-  case SpeciesStrategy::HYBRID:
+  case SpeciesSearchStrategy::HYBRID:
     for (unsigned int i = 0; i < 2; ++i) {
       speciesTreeOptimizer.optimizeDTLRates();
       speciesTreeOptimizer.transferSearch();

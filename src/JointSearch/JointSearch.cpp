@@ -91,14 +91,14 @@ int internal_main(int argc, char** argv, void* comm)
     double initialRecLL = jointTree->computeReconciliationLoglk();
     double initialLibpllLL = jointTree->computeLibpllLoglk();
     Logger::timed << "Starting search..." << std::endl;
-    if (arguments.strategy == Strategy::SPR) {
+    if (arguments.strategy == GeneSearchStrategy::SPR) {
       if (!geneTreeString.size() or geneTreeString == "__random__") {
         jointTree->enableReconciliation(false);
         SPRSearch::applySPRSearch(*jointTree);
         jointTree->enableReconciliation(true);
       }
       SPRSearch::applySPRSearch(*jointTree);
-    } else if (arguments.strategy == Strategy::EVAL) {
+    } else if (arguments.strategy == GeneSearchStrategy::EVAL) {
     }
     Logger::timed << "End of search" << std::endl;
     jointTree->printLoglk();

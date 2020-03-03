@@ -10,24 +10,9 @@
 #endif
 
 
-class ParallelException: public std::exception
-{
-public:
-  ParallelException(int errorCode) 
-  {
-    msg_ = "Program failed with error " + std::to_string(errorCode);
-  }
-  
-  virtual ~ParallelException();
-
-  virtual const char* what() const noexcept
-  {
-    return msg_.c_str();
-  }
-private:
-  std::string msg_;
-};
-
+/**
+ * Singleton class that handles parallelization routines
+ */
 class ParallelContext {
 public:
   ParallelContext() = delete;
@@ -124,5 +109,22 @@ private:
   static std::stack<MPI_Comm> _commStack;
   static std::stack<bool> _ownsMPIContextStack;
   static bool _mpiEnabled;
+  class ParallelException: public std::exception
+  {
+  public:
+    ParallelException(int errorCode) 
+    {
+      msg_ = "Program failed with error " + std::to_string(errorCode);
+    }
+    
+    virtual ~ParallelException() {}
+
+    virtual const char* what() const noexcept
+    {
+      return msg_.c_str();
+    }
+  private:
+    std::string msg_;
+  };
 };
 

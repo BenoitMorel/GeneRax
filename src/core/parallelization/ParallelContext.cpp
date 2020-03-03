@@ -37,11 +37,6 @@ void ParallelContext::init(void *commPtr)
 
 }
   
-ParallelException::~ParallelException() 
-{
-}
-
-
 void ParallelContext::finalize()
 {
   if (!_mpiEnabled) {

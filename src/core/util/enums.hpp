@@ -20,14 +20,16 @@ enum class RecOpt {
 
 
 /*
- * GeneRax search modes
+ * Gene tree search mode
  */
-enum class Strategy {
+enum class GeneSearchStrategy {
   SPR, EVAL
 };
 
-
-enum class SpeciesStrategy {
+/**
+ * Species tree search mode
+ */
+enum class SpeciesSearchStrategy {
   SPR, TRANSFERS, HYBRID
 };
 
@@ -39,8 +41,18 @@ enum class ReconciliationFormat {
 };
 
 
+/**
+ * Nature of a reconciliation event
+ */ 
 enum class ReconciliationEventType {
-  EVENT_S = 0 , EVENT_SL, EVENT_D, EVENT_T, EVENT_TL, EVENT_L, EVENT_None, EVENT_Invalid
+  EVENT_S = 0,  // speciation
+  EVENT_SL,     // speciation and loss
+  EVENT_D,      // duplication
+  EVENT_T,      // horizontal gene transfer
+  EVENT_TL,     // horizontal gene transfer and loss
+  EVENT_L,      // loss
+  EVENT_None,   // no event
+  EVENT_Invalid // invalid event
 };
 
 
@@ -54,10 +66,17 @@ enum class PartialLikelihoodMode {
   NoPartial // always recompute all CLVs from scratch
 };
 
+/**
+ * Helper methods to work with the enums
+ */
 class Enums {
 public:
   Enums() = delete;
 
+  /**
+   * @param m reconciliation model
+   * @return the number of free parameters allowed by the model
+   */ 
   static unsigned int freeParameters(RecModel m)  {
     switch (m) {
       case RecModel::UndatedDL:
@@ -70,6 +89,10 @@ public:
     assert(false);
   }
 
+  /**
+   * @param m reconciliation model
+   * @return true if the model accounts for horizontal gene transfers
+   */
   static bool accountsForTransfers(RecModel m) 
   {
     switch (m) {
@@ -83,6 +106,12 @@ public:
     return false;
   }
 
+  /**
+   * @param m reconciliation model
+   * @return true if the corresponding likelihood evaluation
+   *         implementation implements a faster approximative
+   *         mode (useful to implement heuristics in the search)
+   */
   static bool implementsApproxLikelihood(RecModel m)
   {
     switch (m) {

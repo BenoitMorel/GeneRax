@@ -6,14 +6,10 @@
 #include <IO/Logger.hpp>
 #include <algorithm>
 
-#define PRINT_ERROR_PROBA(x)  if (!IS_PROBA(x)) {std::cerr << "error " << x << std::endl;} assert(IS_PROBA(x));  
-
-
 
 /*
-* Implement the undated model described here:
-* https://github.com/ssolo/ALE/blob/master/misc/undated.pdf
-* In addition, we forbid transfers to parent species
+* Undated reconciliation model, accouting for duplication, loss, transfers
+* and ILS with depth 1
 */
 template <class REAL>
 class UndatedIDTLModel: public AbstractReconciliationModel<REAL> {

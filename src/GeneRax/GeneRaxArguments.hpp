@@ -20,8 +20,8 @@ public:
    std::string execPath;
    std::string families;
    std::string speciesTree;
-   Strategy strategy;
-   SpeciesStrategy speciesStrategy;
+   GeneSearchStrategy strategy;
+   SpeciesSearchStrategy speciesStrategy;
    std::string reconciliationModelStr;
    std::string output;
    bool perFamilyDTLRates;
