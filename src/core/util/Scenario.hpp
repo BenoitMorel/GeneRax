@@ -4,6 +4,7 @@
 #include <string>
 #include <util/enums.hpp>
 #include <memory>
+#include <unordered_set>
 extern "C" {
 #include <pll.h>
 }
@@ -13,6 +14,7 @@ typedef struct pll_unode_s pll_unode_t;
 typedef struct pll_rtree_s pll_rtree_t;
 typedef struct pll_rnode_s pll_rnode_t;
 class ParallelOfstream;
+typedef std::unordered_set<std::string> OrthoGroup;
 
 /*
  * Store the set of events that reconciles a gene tree with a species tree
@@ -99,7 +101,8 @@ public:
   void saveTransfers(const std::string &filename, bool masterRankOnly = true); 
   void saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly = true);
   void saveReconciliation(ParallelOfstream &os, ReconciliationFormat format);
-
+ 
+  OrthoGroup getLargestOrthoGroup() const;
   /**
    * The following methods help blacklisting couples of gene and species nodes.
    * The motivation is that both ML and sampling reconciliation inference algorithm
@@ -121,6 +124,8 @@ private:
   unsigned int _virtualRootIndex;
   typedef std::vector< std::vector <int> > ScenarioBlackList;
   std::unique_ptr<ScenarioBlackList> _blacklist;
+  OrthoGroup *getLargestOrthoGroupRec(pll_unode_t *geneNode, bool isVirtualRoot) const;
+
 };
 
 
