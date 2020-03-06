@@ -145,6 +145,7 @@ void Routines::inferReconciliation(
       std::string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
       std::string speciesEventCountsFile = getSpeciesEventCountFile(outputDir, tree.name);
       std::string transfersFile = getTransfersFile(outputDir, tree.name);
+      std::string orthoGroupFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_orthogroups.txt");
       std::string treeWithEventsFileNHX = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
       std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, 
           tree.name + "_reconciliated.xml");
@@ -157,6 +158,7 @@ void Routines::inferReconciliation(
         scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
         scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, ReconciliationFormat::RecPhyloXML, false);
         scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
+        scenario.saveLargestOrthoGroup(orthoGroupFile, false);
       }
       scenario.saveTransfers(transfersFile, false);
     }

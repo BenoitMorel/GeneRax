@@ -101,8 +101,8 @@ public:
   void saveTransfers(const std::string &filename, bool masterRankOnly = true); 
   void saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly = true);
   void saveReconciliation(ParallelOfstream &os, ReconciliationFormat format);
- 
-  OrthoGroup getLargestOrthoGroup() const;
+
+  void saveLargestOrthoGroup(std::string &filename, bool masterRankOnly = true) const;
   /**
    * The following methods help blacklisting couples of gene and species nodes.
    * The motivation is that both ML and sampling reconciliation inference algorithm

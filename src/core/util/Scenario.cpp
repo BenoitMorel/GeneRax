@@ -132,6 +132,22 @@ void Scenario::saveTransfers(const std::string &filename, bool masterRankOnly)
     }
   }
 }
+  
+void Scenario::saveLargestOrthoGroup(std::string &filename, bool masterRankOnly) const
+{
+  ParallelOfstream os(filename, masterRankOnly);
+  pll_unode_t virtualRoot;
+  virtualRoot.next = _geneRoot;
+  virtualRoot.node_index = _virtualRootIndex;
+  virtualRoot.label = nullptr;
+  virtualRoot.length = 0.0;
+  std::unique_ptr<OrthoGroup> orthogroup(getLargestOrthoGroupRec(&virtualRoot, true));
+  for (auto value: *orthogroup) {
+    os << value << std::endl;
+  }
+
+}
+
 
 OrthoGroup *Scenario::getLargestOrthoGroupRec(pll_unode_t *geneNode, bool isVirtualRoot) const
 {
@@ -200,22 +216,6 @@ OrthoGroup *Scenario::getLargestOrthoGroupRec(pll_unode_t *geneNode, bool isVirt
   }
 }
 
-OrthoGroup Scenario::getLargestOrthoGroup() const
-{
-  pll_unode_t virtualRoot;
-  virtualRoot.next = _geneRoot;
-  virtualRoot.node_index = _virtualRootIndex;
-  virtualRoot.label = nullptr;
-  virtualRoot.length = 0.0;
-  auto ptr = getLargestOrthoGroupRec(&virtualRoot, true);
-  OrthoGroup res = *ptr;
-  delete ptr;
-  for (auto value: res) {
-    Logger::info << value << std::endl;
-  }
-  Logger::info << std::endl;
-  return res;
-}
 
 void Scenario::initBlackList(unsigned int genesNumber, unsigned int speciesNumber)
 {
