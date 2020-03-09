@@ -6,7 +6,6 @@
 #include <cstring>
 #include <sstream>
 #include <stack>
-#include <IO/Model.hpp>
 #include <array>
 
 extern "C" {
@@ -285,10 +284,8 @@ void LibpllParsers::parsePhylip(const char *phylipFile,
   }
   pll_msa_destroy(msa);
 }
-
-bool LibpllParsers::fillLabelsFromAlignment(const std::string &alignmentFilename, 
-    const std::string& modelStrOrFilename,  
-    std::unordered_set<std::string> &leaves)
+  
+std::unique_ptr<Model> LibpllParsers::getModel(const std::string &modelStrOrFilename)
 {
   std::string modelStr = modelStrOrFilename;
   std::ifstream f(modelStr);
@@ -296,12 +293,19 @@ bool LibpllParsers::fillLabelsFromAlignment(const std::string &alignmentFilename
     getline(f, modelStr);
     modelStr = modelStr.substr(0, modelStr.find(","));
   }
-  Model model(modelStr);
+  return std::make_unique<Model>(modelStr);
+}
+
+bool LibpllParsers::fillLabelsFromAlignment(const std::string &alignmentFilename, 
+    const std::string& modelStrOrFilename,  
+    std::unordered_set<std::string> &leaves)
+{
+  auto model = getModel(modelStrOrFilename);
   PLLSequencePtrs sequences;
   unsigned int *patternWeights = nullptr;
   bool res = true;
   try { 
-    LibpllParsers::parseMSA(alignmentFilename, model.charmap(), sequences, patternWeights);
+    LibpllParsers::parseMSA(alignmentFilename, model->charmap(), sequences, patternWeights);
   } catch (...) {
     res = false;
   }
@@ -331,5 +335,17 @@ bool LibpllParsers::areLabelsValid(std::unordered_set<std::string> &leaves)
     }
   }
   return true;
+}
+  
+void LibpllParsers::writeSuperMatrixFasta(const SuperMatrix &superMatrix,
+      const std::string &outputFile)
+{
+  std::ofstream os(outputFile);
+  for (auto &p: superMatrix) {
+    auto &label = p.first;
+    auto &sequence = p.second;
+    os << ">" << label << std::endl;
+    os << sequence << std::endl;
+  }
 }
   

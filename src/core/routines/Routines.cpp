@@ -10,7 +10,6 @@
 #include <IO/FileSystem.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <trees/PLLRootedTree.hpp>
-#include <util/Scenario.hpp>
 #include <maths/ModelParameters.hpp>
 #include <routines/scheduled_routines/RaxmlMaster.hpp>
 #include <routines/scheduled_routines/GeneRaxMaster.hpp>
@@ -183,6 +182,73 @@ void Routines::inferReconciliation(
   }
   srand(consistentSeed);
   ParallelContext::barrier();
+}
+  
+void Routines::computeSuperMatrixFromOrthoGroups(
+      const std::string &speciesTreeFile,
+      Families &families,
+      const std::string &outputDir,
+      const std::string &outputFasta,
+      bool masterOnly)
+{
+  auto savedSeed = rand(); // for some reason, parsing
+                          // the Model calls rand, so we
+                          // have so ensure seed consistency
+  srand(savedSeed);
+  if (masterOnly && ParallelContext::getRank() != 0) {
+    return;
+  }
+  PLLRootedTree speciesTree(speciesTreeFile);
+  const std::unordered_set<std::string> speciesSet(
+      speciesTree.getLabels(true));
+  std::string reconciliationsDir = FileSystem::joinPaths(outputDir, "reconciliations");
+  std::unordered_map<std::string, std::string> superMatrix;
+  for (auto &species: speciesSet) {
+    superMatrix.insert({species, std::string()});
+  }
+  unsigned int offset = 0;
+  unsigned int currentSize = 0;
+  std::ofstream partitionOs(outputFasta + ".part");
+  for (auto &family: families) {
+    std::string orthoGroupFile = FileSystem::joinPaths(reconciliationsDir, family.name + "_orthogroups.txt");
+    OrthoGroup orthoGroup;
+    parseOrthoGroup(orthoGroupFile, orthoGroup);
+    if (orthoGroup.size() < 4) {
+      continue;
+    }
+    auto model = LibpllParsers::getModel(family.libpllModel);
+    PLLSequencePtrs sequences;
+    unsigned int *weights = nullptr;
+    LibpllParsers::parseMSA(family.alignmentFile, 
+      model->charmap(),
+      sequences,
+      weights);
+    GeneSpeciesMapping mapping;
+    mapping.fill(family.mappingFile, family.startingGeneTree);
+    for (auto &sequence: sequences) {
+      std::string geneLabel(sequence->label);
+      if (orthoGroup.find(geneLabel) != orthoGroup.end()) {
+        // add the sequence to the supermatrix
+        superMatrix[mapping.getSpecies(geneLabel)] += std::string(sequence->seq);
+        offset = superMatrix[mapping.getSpecies(geneLabel)].size();
+        currentSize = sequence->len;
+      }
+    }
+    partitionOs << model->name() << ", " << family.name;
+    partitionOs << " = " << offset - currentSize + 1 << "-" << offset << std::endl;
+    std::string gaps(currentSize, '-');
+    for (auto &superPair: superMatrix) {
+      auto &superSequence = superPair.second;
+      if (superSequence.size() != offset) {
+        superSequence += gaps;
+        assert(superSequence.size() == offset);
+      }
+    }
+    
+    free(weights);
+  }
+  LibpllParsers::writeSuperMatrixFasta(superMatrix, outputFasta);
+  srand(savedSeed);
 }
 
 
@@ -372,4 +438,13 @@ void Routines::buildEvaluations(PerCoreGeneTrees &geneTrees,
 }
 
 
+void Routines::parseOrthoGroup(const std::string &familyName,
+      OrthoGroup &orthoGroup)
+{
+  std::ifstream is(familyName);
+  std::string tmp;
+  while (is >> tmp) {
+    orthoGroup.insert(tmp);
+  }
+}
 

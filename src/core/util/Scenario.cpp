@@ -151,6 +151,12 @@ void Scenario::saveLargestOrthoGroup(std::string &filename, bool masterRankOnly)
 
 OrthoGroup *Scenario::getLargestOrthoGroupRec(pll_unode_t *geneNode, bool isVirtualRoot) const
 {
+  auto &events = _geneIdToEvents[geneNode->node_index];
+  for (auto &event: events) {
+    if (event.type == ReconciliationEventType::EVENT_TL) {
+      return new OrthoGroup();
+    }
+  }
   if (geneNode->next == nullptr) {
     auto res = new OrthoGroup();
     res->insert(std::string(geneNode->label));
@@ -161,12 +167,6 @@ OrthoGroup *Scenario::getLargestOrthoGroupRec(pll_unode_t *geneNode, bool isVirt
     if (isVirtualRoot) {
       left = geneNode->next;
       right = geneNode->next->back;
-    }
-    auto &events = _geneIdToEvents[geneNode->node_index];
-    for (auto &event: events) {
-      if (event.type == ReconciliationEventType::EVENT_TL) {
-        return new OrthoGroup();
-      }
     }
     auto leftOrthoGroup = getLargestOrthoGroupRec(left, false);
     auto rightOrthoGroup = getLargestOrthoGroupRec(right, false);
@@ -190,7 +190,6 @@ OrthoGroup *Scenario::getLargestOrthoGroupRec(pll_unode_t *geneNode, bool isVirt
       } else {
         assert(false);
       }
-      break;
     case ReconciliationEventType::EVENT_TL:
     case ReconciliationEventType::EVENT_None:
     case ReconciliationEventType::EVENT_SL:

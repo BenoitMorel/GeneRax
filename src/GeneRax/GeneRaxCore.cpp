@@ -204,6 +204,13 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
     Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, 
        modelRates, instance.args.output, instance.args.reconcile,
       instance.args.reconciliationSamples);
+    std::string outputSuperMatrix = FileSystem::joinPaths(
+        instance.args.output, "superMatrix.fasta");
+  Routines::computeSuperMatrixFromOrthoGroups(instance.speciesTree,
+      instance.currentFamilies,
+      instance.args.output, 
+      outputSuperMatrix,
+      true);
   }
 }
   

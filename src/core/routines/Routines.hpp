@@ -6,6 +6,7 @@
 #include <util/enums.hpp>
 #include <unordered_map>
 #include <likelihoods/ReconciliationEvaluation.hpp>
+#include <util/Scenario.hpp>
 
 
 class Parameters;
@@ -105,6 +106,16 @@ public:
     );
 
   /**
+   *  todobenoit
+   */
+  static void computeSuperMatrixFromOrthoGroups(
+      const std::string &speciesTreeFile,
+      Families &families,
+      const std::string &outputDir,
+      const std::string &outputFasta,
+      bool masterOnly =  true);
+
+  /**
    * Create random trees for families that need one, write them to a file,
    * update the families current gene tree, and return true if there was at
    * least one random tree to generate
@@ -127,6 +138,8 @@ public:
     bool pruneSpeciesTree, 
     Evaluations &evaluations);
 
-
+private:
+  static void parseOrthoGroup(const std::string &familyName,
+      OrthoGroup &orthoGroup);
 
 };
