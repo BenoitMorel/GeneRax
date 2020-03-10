@@ -15,6 +15,8 @@ typedef struct pll_rtree_s pll_rtree_t;
 typedef struct pll_rnode_s pll_rnode_t;
 class ParallelOfstream;
 typedef std::unordered_set<std::string> OrthoGroup;
+typedef std::shared_ptr<OrthoGroup> OrthoGroupPtr;
+typedef std::vector<OrthoGroupPtr> OrthoGroups;
 
 /*
  * Store the set of events that reconciles a gene tree with a species tree
@@ -103,6 +105,7 @@ public:
   void saveReconciliation(ParallelOfstream &os, ReconciliationFormat format);
 
   void saveLargestOrthoGroup(std::string &filename, bool masterRankOnly = true) const;
+  void saveAllOrthoGroups(std::string &filename, bool masterRankOnly = true) const;
   /**
    * The following methods help blacklisting couples of gene and species nodes.
    * The motivation is that both ML and sampling reconciliation inference algorithm
@@ -125,6 +128,10 @@ private:
   typedef std::vector< std::vector <int> > ScenarioBlackList;
   std::unique_ptr<ScenarioBlackList> _blacklist;
   OrthoGroup *getLargestOrthoGroupRec(pll_unode_t *geneNode, bool isVirtualRoot) const;
+  void getAllOrthoGroupRec(pll_unode_t *geneNode,
+      OrthoGroups &orthogroups,
+      OrthoGroupPtr &currentOrthoGroup,
+      bool isVirtualRoot) const;
 
 };
 

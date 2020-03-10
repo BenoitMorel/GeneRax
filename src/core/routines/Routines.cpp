@@ -145,6 +145,7 @@ void Routines::inferReconciliation(
       std::string speciesEventCountsFile = getSpeciesEventCountFile(outputDir, tree.name);
       std::string transfersFile = getTransfersFile(outputDir, tree.name);
       std::string orthoGroupFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_orthogroups.txt");
+      std::string allOrthoGroupFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_orthogroups_all.txt");
       std::string treeWithEventsFileNHX = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
       std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, 
           tree.name + "_reconciliated.xml");
@@ -158,6 +159,7 @@ void Routines::inferReconciliation(
         scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, ReconciliationFormat::RecPhyloXML, false);
         scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
         scenario.saveLargestOrthoGroup(orthoGroupFile, false);
+        scenario.saveAllOrthoGroups(allOrthoGroupFile, false);
       }
       scenario.saveTransfers(transfersFile, false);
     }
@@ -189,6 +191,7 @@ void Routines::computeSuperMatrixFromOrthoGroups(
       Families &families,
       const std::string &outputDir,
       const std::string &outputFasta,
+      bool largestOnly,
       bool masterOnly)
 {
   auto savedSeed = rand(); // for some reason, parsing
@@ -210,42 +213,48 @@ void Routines::computeSuperMatrixFromOrthoGroups(
   unsigned int currentSize = 0;
   std::ofstream partitionOs(outputFasta + ".part");
   for (auto &family: families) {
-    std::string orthoGroupFile = FileSystem::joinPaths(reconciliationsDir, family.name + "_orthogroups.txt");
-    OrthoGroup orthoGroup;
-    parseOrthoGroup(orthoGroupFile, orthoGroup);
-    if (orthoGroup.size() < 4) {
-      continue;
+    std::string orthoGroupFile = FileSystem::joinPaths(reconciliationsDir, family.name);
+    if (largestOnly) {
+      orthoGroupFile +=  "_orthogroups.txt";
+    } else {
+      orthoGroupFile +=  "_orthogroups_all.txt";
     }
-    auto model = LibpllParsers::getModel(family.libpllModel);
-    PLLSequencePtrs sequences;
-    unsigned int *weights = nullptr;
-    LibpllParsers::parseMSA(family.alignmentFile, 
-      model->charmap(),
-      sequences,
-      weights);
-    GeneSpeciesMapping mapping;
-    mapping.fill(family.mappingFile, family.startingGeneTree);
-    for (auto &sequence: sequences) {
-      std::string geneLabel(sequence->label);
-      if (orthoGroup.find(geneLabel) != orthoGroup.end()) {
-        // add the sequence to the supermatrix
-        superMatrix[mapping.getSpecies(geneLabel)] += std::string(sequence->seq);
-        offset = superMatrix[mapping.getSpecies(geneLabel)].size();
-        currentSize = sequence->len;
+    OrthoGroups orthoGroups;
+    parseOrthoGroups(orthoGroupFile, orthoGroups);
+    for (auto &orthoGroup: orthoGroups) {
+      if (orthoGroup->size() < 4) {
+        continue;
       }
-    }
-    partitionOs << model->name() << ", " << family.name;
-    partitionOs << " = " << offset - currentSize + 1 << "-" << offset << std::endl;
-    std::string gaps(currentSize, '-');
-    for (auto &superPair: superMatrix) {
-      auto &superSequence = superPair.second;
-      if (superSequence.size() != offset) {
-        superSequence += gaps;
-        assert(superSequence.size() == offset);
+      auto model = LibpllParsers::getModel(family.libpllModel);
+      PLLSequencePtrs sequences;
+      unsigned int *weights = nullptr;
+      LibpllParsers::parseMSA(family.alignmentFile, 
+        model->charmap(),
+        sequences,
+        weights);
+      GeneSpeciesMapping mapping;
+      mapping.fill(family.mappingFile, family.startingGeneTree);
+      for (auto &sequence: sequences) {
+        std::string geneLabel(sequence->label);
+        if (orthoGroup->find(geneLabel) != orthoGroup->end()) {
+          // add the sequence to the supermatrix
+          superMatrix[mapping.getSpecies(geneLabel)] += std::string(sequence->seq);
+          offset = superMatrix[mapping.getSpecies(geneLabel)].size();
+          currentSize = sequence->len;
+        }
       }
+      partitionOs << model->name() << ", " << family.name;
+      partitionOs << " = " << offset - currentSize + 1 << "-" << offset << std::endl;
+      std::string gaps(currentSize, '-');
+      for (auto &superPair: superMatrix) {
+        auto &superSequence = superPair.second;
+        if (superSequence.size() != offset) {
+          superSequence += gaps;
+          assert(superSequence.size() == offset);
+        }
+      }
+      free(weights);
     }
-    
-    free(weights);
   }
   LibpllParsers::writeSuperMatrixFasta(superMatrix, outputFasta);
   srand(savedSeed);
@@ -438,13 +447,20 @@ void Routines::buildEvaluations(PerCoreGeneTrees &geneTrees,
 }
 
 
-void Routines::parseOrthoGroup(const std::string &familyName,
-      OrthoGroup &orthoGroup)
+void Routines::parseOrthoGroups(const std::string &familyName,
+      OrthoGroups &orthoGroups)
 {
   std::ifstream is(familyName);
   std::string tmp;
+  OrthoGroupPtr currentOrthoGroup = std::make_shared<OrthoGroup>();
   while (is >> tmp) {
-    orthoGroup.insert(tmp);
+    if (tmp == std::string("-")) {
+      orthoGroups.push_back(currentOrthoGroup);
+      currentOrthoGroup = std::make_shared<OrthoGroup>();
+    } else {
+      currentOrthoGroup->insert(tmp);
+    }
   }
+  //orthoGroups.push_back(currentOrthoGroup);
 }
 

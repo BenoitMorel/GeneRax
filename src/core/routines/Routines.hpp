@@ -113,6 +113,7 @@ public:
       Families &families,
       const std::string &outputDir,
       const std::string &outputFasta,
+      bool largestOnly,
       bool masterOnly =  true);
 
   /**
@@ -139,7 +140,7 @@ public:
     Evaluations &evaluations);
 
 private:
-  static void parseOrthoGroup(const std::string &familyName,
-      OrthoGroup &orthoGroup);
+  static void parseOrthoGroups(const std::string &familyName,
+      OrthoGroups &orthoGroup);
 
 };
