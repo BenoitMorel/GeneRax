@@ -1,6 +1,7 @@
 #include "parallelization/ParallelContext.hpp"
 #include <algorithm>
 #include <cassert>
+#include <IO/Logger.hpp>
 
 std::ofstream ParallelContext::sink("/dev/null");
 bool ParallelContext::ownMPIContext(true);
@@ -392,6 +393,23 @@ bool ParallelContext::isIntEqual(int value)
   allGatherInt(value, rands);
   for (auto v: rands) {
     if (v != rands[0]) {
+      return false;
+    }
+  }
+#endif
+  return true;
+}
+
+bool ParallelContext::isDoubleEqual(double value)
+{
+#ifdef WITH_MPI
+  std::vector<double> rands(getSize());
+  allGatherDouble(value, rands);
+  for (auto v: rands) {
+    if (v != rands[0]) {
+      for (auto v: rands) {
+        Logger::info << v << std::endl;
+      }
       return false;
     }
   }
