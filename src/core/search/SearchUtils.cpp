@@ -117,6 +117,7 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
   ParallelContext::getMax(bestLoglk, bestRank);
   ParallelContext::broadcastUInt(bestRank, bestMoveIndex);
   Logger::info << "best;; " << bestLoglk << " " << bestRank << std::endl;
+  jointTree.getReconciliationEvaluation().invalidateAllCLVs();
   return bestMoveIndex != static_cast<unsigned int>(-1);
 }
 

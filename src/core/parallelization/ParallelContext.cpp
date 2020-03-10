@@ -1,6 +1,7 @@
 #include "parallelization/ParallelContext.hpp"
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <IO/Logger.hpp>
 
 std::ofstream ParallelContext::sink("/dev/null");
@@ -406,10 +407,7 @@ bool ParallelContext::isDoubleEqual(double value)
   std::vector<double> rands(getSize());
   allGatherDouble(value, rands);
   for (auto v: rands) {
-    if (v != rands[0]) {
-      for (auto v: rands) {
-        Logger::info << v << std::endl;
-      }
+    if (fabs(v - rands[0]) > 0.00000001) {
       return false;
     }
   }
