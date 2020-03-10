@@ -106,6 +106,7 @@ void GeneRaxArguments::init() {
     } else if (arg == "--reconcile") {
       reconcile = true;
     } else if (arg == "--build-supermatrix") {
+      reconcile = true;
       buildSuperMatrix = true;
     } else if (arg == "--reconciliation-samples") {
       reconciliationSamples = static_cast<unsigned int>(atoi(argv[++i]));
