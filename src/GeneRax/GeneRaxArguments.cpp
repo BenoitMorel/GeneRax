@@ -25,6 +25,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   transferRate(0.0),
   optimizeGeneTrees(true),
   reconcile(false),
+  buildSuperMatrix(false),
   reconciliationSamples(0),
   maxSPRRadius(5),
   recWeight(1.0), 
@@ -104,6 +105,8 @@ void GeneRaxArguments::init() {
       optimizeGeneTrees = false;
     } else if (arg == "--reconcile") {
       reconcile = true;
+    } else if (arg == "--build-supermatrix") {
+      buildSuperMatrix = true;
     } else if (arg == "--reconciliation-samples") {
       reconciliationSamples = static_cast<unsigned int>(atoi(argv[++i]));
     } else {
@@ -219,6 +222,9 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "Reconciliation likelihood weight: " << recWeight << std::endl;
   Logger::info << "Random seed: " << seed << std::endl;
   Logger::info << "Infer ML reconciliation: " << boolStr[reconcile] << std::endl;
+  if (buildSuperMatrix) {
+    Logger::info << "Infer supermatrix: " << boolStr[buildSuperMatrix] << std::endl;
+  }
   if (reconciliationSamples) {
     Logger::info << "Reconciliation samples to infer: " << reconciliationSamples << std::endl;
   }

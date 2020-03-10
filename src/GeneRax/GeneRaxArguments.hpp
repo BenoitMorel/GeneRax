@@ -37,6 +37,7 @@ public:
    double transferRate;
    bool optimizeGeneTrees;
    bool reconcile;
+   bool buildSuperMatrix;
    unsigned int reconciliationSamples;
    unsigned int maxSPRRadius;
    double recWeight;
