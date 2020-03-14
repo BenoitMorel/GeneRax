@@ -75,7 +75,7 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
   double initialLibpllLoglk = jointTree.computeLibpllLoglk();
   double averageReconciliationDiff = 0;
   assert(fabs(initialLoglk 
-        - (initialReconciliationLoglk + initialLibpllLoglk)) < 0.000000001);
+        - (initialReconciliationLoglk + initialLibpllLoglk)) < 0.000001);
   auto begin = ParallelContext::getBegin(static_cast<unsigned int>(allMoves.size()));
   auto end = ParallelContext::getEnd(static_cast<unsigned int>(allMoves.size()));
   unsigned int bestRank = 0;
