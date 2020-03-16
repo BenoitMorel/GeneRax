@@ -82,7 +82,8 @@ public:
   void revertGeneTreeOptimization();
 
   double computeLikelihood(unsigned int geneSPRRadius);
-  void saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
+  // return the path to the saved species tree
+  std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
   const SpeciesTree &getSpeciesTree() const {return *_speciesTree;} 
 

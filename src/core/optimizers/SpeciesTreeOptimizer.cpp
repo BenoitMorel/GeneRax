@@ -495,9 +495,11 @@ double SpeciesTreeOptimizer::optimizeDTLRates()
   return computeRecLikelihood();
 }
   
-void SpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
+std::string SpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
 {
-  saveCurrentSpeciesTreePath(FileSystem::joinPaths(_outputDir, name), masterRankOnly);
+  std::string res = FileSystem::joinPaths(_outputDir, name);
+  saveCurrentSpeciesTreePath(res, masterRankOnly);
+  return res;
 }
 
 void SpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly)

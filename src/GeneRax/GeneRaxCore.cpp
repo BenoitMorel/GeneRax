@@ -86,10 +86,6 @@ void GeneRaxCore::printStats(GeneRaxInstance &instance)
 
 void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
 {
-  if (!instance.args.rerootSpeciesTree) {
-    return;
-  }
-  Logger::info << "Rerooting the species tree..." << std::endl;
   Parameters startingRates;
   switch (instance.recModel) {
   case RecModel::UndatedDL:
@@ -105,10 +101,12 @@ void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
   SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, 
       instance.recModel, startingRates, instance.args.perFamilyDTLRates, instance.args.userDTLRates, instance.args.pruneSpeciesTree, instance.args.supportThreshold, 
       instance.args.output, instance.args.exec);
-  speciesTreeOptimizer.optimizeDTLRates();
-  speciesTreeOptimizer.rootExhaustiveSearch(false);
-  speciesTreeOptimizer.saveCurrentSpeciesTreePath(instance.speciesTree, true);
-
+  if (instance.args.rerootSpeciesTree) {
+    Logger::info << "Rerooting the species tree..." << std::endl;
+    speciesTreeOptimizer.optimizeDTLRates();
+    speciesTreeOptimizer.rootExhaustiveSearch(false);
+  }
+  instance.speciesTree = speciesTreeOptimizer.saveCurrentSpeciesTreeId();
 }
 
 static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
@@ -167,7 +165,7 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
     }
     break;
   }
-  speciesTreeOptimizer.saveCurrentSpeciesTreePath(instance.speciesTree, true);
+  instance.speciesTree = speciesTreeOptimizer.saveCurrentSpeciesTreeId();
   if (instance.args.speciesSlowRadius > 0) {
     Logger::info << std::endl;
     Logger::timed << "Start optimizing the species tree and gene trees together" << std::endl;
@@ -180,7 +178,7 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
   instance.rates = speciesTreeOptimizer.getGlobalRates();
   Logger::timed << "End of optimizing the species tree" << std::endl;
   Logger::info << "joint ll = " << instance.totalLibpllLL + instance.totalRecLL << std::endl;
-  speciesTreeOptimizer.saveCurrentSpeciesTreePath(instance.speciesTree, true);
+  instance.speciesTree = speciesTreeOptimizer.saveCurrentSpeciesTreeId();
 
   instance.currentFamilies = saveFamilies;
   ParallelContext::barrier();
