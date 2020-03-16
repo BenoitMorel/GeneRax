@@ -45,6 +45,7 @@ public:
    std::string exec;
    
    // species tree search
+   bool rerootSpeciesTree;
    bool optimizeSpeciesTree;
    unsigned int speciesFastRadius;
    unsigned int speciesSlowRadius;

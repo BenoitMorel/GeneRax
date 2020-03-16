@@ -84,6 +84,32 @@ void GeneRaxCore::printStats(GeneRaxInstance &instance)
       coverageFile);
 }
 
+void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
+{
+  if (!instance.args.rerootSpeciesTree) {
+    return;
+  }
+  Logger::info << "Rerooting the species tree..." << std::endl;
+  Parameters startingRates;
+  switch (instance.recModel) {
+  case RecModel::UndatedDL:
+    startingRates = Parameters(instance.args.dupRate, instance.args.lossRate);
+  break;
+    case RecModel::UndatedDTL:
+    startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate);
+    break;
+  case RecModel::UndatedIDTL:
+    startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate, 0.1);
+    break;
+  }
+  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, 
+      instance.recModel, startingRates, instance.args.perFamilyDTLRates, instance.args.userDTLRates, instance.args.pruneSpeciesTree, instance.args.supportThreshold, 
+      instance.args.output, instance.args.exec);
+  speciesTreeOptimizer.optimizeDTLRates();
+  speciesTreeOptimizer.rootExhaustiveSearch(false);
+  speciesTreeOptimizer.saveCurrentSpeciesTreePath(instance.speciesTree, true);
+
+}
 
 static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
 {
