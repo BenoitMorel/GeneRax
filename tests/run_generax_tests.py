@@ -41,7 +41,11 @@ def generate_families_file_data(test_data, with_starting_tree, test_output):
     command.append(os.path.join(test_data, "raxml_trees"))
   else:
     command.append("NONE")
-  command.append(os.path.join(test_data, "mappings"))
+  mappings_dir = os.path.join(test_data, "mappings")
+  if (os.path.isdir(mappings_dir)):
+    command.append(mappings_dir)
+  else:
+    command.append("NONE")
   command.append("GTR")
   command.append(families_file)
   logs_file_path = os.path.join(test_data, "families_script_logs.txt")
@@ -179,7 +183,7 @@ def run_reconciliation_test(cores, model):
     print("Test " + test_name + ": FAILED")
   return ok
 
-dataset_set = ["simulated_2"]
+dataset_set = ["simulated_2_map_in_label", "simulated_2"]
 with_starting_tree_set = [False, True]
 strategy_set = ["SPR", "EVAL"]
 model_set = ["UndatedDL", "UndatedDTL"]
