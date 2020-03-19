@@ -141,11 +141,10 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
       jointTree.optimizeMove(*allMoves[bestMoveIndex]);
     }
     double ll = jointTree.computeJointLoglk();
-    if (fabs(ll - bestLoglk) > 0.00000001) {
-      std::cerr << ll << " " << bestLoglk << " " 
-        << jointTree.computeJointLoglk() << std::endl;
+    double error = fabs(ll - bestLoglk);
+    if (error > 0.01) {
+      Logger::info << "Warning, potential numerical issue in SPRSearch::applySPRRound " << error << std::endl;
     }
-    assert(fabs(ll - bestLoglk) < 0.00000001);
   }
   return foundBetterMove;
 }

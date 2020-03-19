@@ -183,7 +183,7 @@ def run_reconciliation_test(cores, model):
     print("Test " + test_name + ": FAILED")
   return ok
 
-dataset_set = ["simulated_2_map_in_label", "simulated_2"]
+dataset_set = ["simulated_2", "simulated_2_map_in_label"]
 with_starting_tree_set = [False, True]
 strategy_set = ["SPR", "EVAL"]
 model_set = ["UndatedDL", "UndatedDTL"]
