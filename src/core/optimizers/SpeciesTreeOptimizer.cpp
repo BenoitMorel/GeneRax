@@ -50,7 +50,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     setGeneTreesFromFamilies(initialFamilies);
   }
   _modelRates = ModelParameters(startingRates, model, perFamilyRates, _geneTrees->getTrees().size());
-  _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"), true);
+  //_speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"), true);
   _speciesTree->addListener(this);
   std::string subsamplesPath = FileSystem::joinPaths(_outputDir, "subsamples");
   FileSystem::mkdir(FileSystem::joinPaths(_outputDir, "sub_genes_opt"), true);

@@ -19,21 +19,9 @@
 #include <optimizers/SpeciesTreeOptimizer.hpp>
 #include <trees/SpeciesTree.hpp>
 
-
-
-void GeneRaxCore::initInstance(GeneRaxInstance &instance) 
+static void initStartingSpeciesTree(GeneRaxInstance &instance)
 {
-  srand(static_cast<unsigned int>(instance.args.seed));
-  FileSystem::mkdir(instance.args.output, true);
-  Logger::initFileOutput(FileSystem::joinPaths(instance.args.output, "generax"));
-  assert(ParallelContext::isRandConsistent());
-  instance.args.printCommand();
-  instance.args.printSummary();
-  instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
-  instance.speciesTree = FileSystem::joinPaths(instance.args.output, "startingSpeciesTree.newick");
-  Logger::timed << "Filtering invalid families..." << std::endl;
-  bool needAlignments = instance.args.optimizeGeneTrees;
-  Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, false);
+  instance.speciesTree = FileSystem::joinPaths(instance.args.output, "starting_species_tree.newick");
   if (instance.args.speciesTree == "random") {
     Logger::timed << "Generating random starting species tree" << std::endl;
     SpeciesTree speciesTree(instance.initialFamilies);
@@ -54,6 +42,28 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
     LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
   }
   ParallelContext::barrier();
+  SpeciesTree copy(instance.speciesTree); 
+  instance.speciesTree = FileSystem::joinPaths(instance.args.output, "inferred_species_tree.newick");
+  if (ParallelContext::getRank() == 0) {
+    copy.getTree().save(instance.speciesTree);
+  }
+  ParallelContext::barrier();
+}
+
+void GeneRaxCore::initInstance(GeneRaxInstance &instance) 
+{
+  srand(static_cast<unsigned int>(instance.args.seed));
+  FileSystem::mkdir(instance.args.output, true);
+  Logger::initFileOutput(FileSystem::joinPaths(instance.args.output, "generax"));
+  assert(ParallelContext::isRandConsistent());
+  instance.args.printCommand();
+  instance.args.printSummary();
+  instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
+  Logger::timed << "Filtering invalid families..." << std::endl;
+  bool needAlignments = instance.args.optimizeGeneTrees;
+  Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, false);
+  initStartingSpeciesTree(instance);
+
   Logger::timed << "Filtering invalid families based on the starting species tree..." << std::endl;
   Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, true);
   if (!instance.initialFamilies.size()) {
