@@ -67,6 +67,7 @@ void ReconciliationEvaluation::setRoot(pll_unode_t * root)
 
 double ReconciliationEvaluation::evaluate(bool fastMode)
 {
+  fastMode = false;
   double res = _evaluators->computeLogLikelihood(fastMode);
   if (!_infinitePrecision && !std::isnormal(res)) {
     updatePrecision(true);  

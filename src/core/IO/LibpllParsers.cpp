@@ -77,18 +77,32 @@ pll_utree_t *LibpllParsers::readNewickFromStr(const std::string &newickString)
 pll_rtree_t *LibpllParsers::readRootedFromFile(const std::string &newickFile)
 {
   auto tree = pll_rtree_parse_newick(newickFile.c_str());
-  if (!tree) {
-    throw LibpllException("Error while reading tree from file: ", newickFile);
+  if (tree) {
+    return tree;
   }
-  return tree;
+  try {
+    auto utree = readNewickFromFile(newickFile);
+    pll_utree_destroy(utree, 0);
+  } catch (...) {
+    throw LibpllException("Error while reading tree from file: ", newickFile); 
+  }
+  throw LibpllException("Error, the following tree should be rooted and is not:", newickFile.c_str());
+
 }
 
 pll_rtree_t *LibpllParsers::readRootedFromStr(const std::string &newickString)
 {
   auto rtree =  pll_rtree_parse_newick_string(newickString.c_str());
-  if (!rtree) 
+  if (rtree) {
+    return rtree;
+  }
+  try {
+    auto utree = readNewickFromStr(newickString);
+    pll_utree_destroy(utree, 0);
+  } catch (...) {
     throw LibpllException("Error while reading tree from std::string: ", newickString);
-  return rtree;
+  }
+  throw LibpllException("Error, trying to read an unrooted tree as rooted:", newickString.c_str());
 }
   
 void LibpllParsers::saveUtree(const pll_unode_t *utree, 

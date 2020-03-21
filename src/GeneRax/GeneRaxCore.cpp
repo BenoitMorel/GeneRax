@@ -21,6 +21,7 @@
 
 static void initStartingSpeciesTree(GeneRaxInstance &instance)
 {
+  Logger::info << "hey" << std::endl;
   instance.speciesTree = FileSystem::joinPaths(instance.args.output, "starting_species_tree.newick");
   if (instance.args.speciesTree == "random") {
     Logger::timed << "Generating random starting species tree" << std::endl;
@@ -39,14 +40,31 @@ static void initStartingSpeciesTree(GeneRaxInstance &instance)
       startingNJTree->save(instance.speciesTree);
     }
   } else {
+    // check that we can read the species tree
+    unsigned int canRead = 1;
+    if (ParallelContext::getRank() == 0) {
+      try {
+        SpeciesTree reader(instance.args.speciesTree);
+      } catch (const std::exception &e) {
+        Logger::info << "Error while trying to parse the species tree:" << std::endl;
+        Logger::info << e.what() << std::endl;
+        canRead = 0;
+      }
+    }
+    ParallelContext::broadcastUInt(0, canRead);
+    if (!canRead) {
+      ParallelContext::abort(153);
+    }
+    // add labels to internal nodes
     LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
   }
   ParallelContext::barrier();
-  SpeciesTree copy(instance.speciesTree); 
-  instance.speciesTree = FileSystem::joinPaths(instance.args.output, "inferred_species_tree.newick");
   if (ParallelContext::getRank() == 0) {
+    SpeciesTree copy(instance.speciesTree); 
+    instance.speciesTree = FileSystem::joinPaths(instance.args.output, "inferred_species_tree.newick");
     copy.getTree().save(instance.speciesTree);
   }
+  Logger::info << "hey" << std::endl;
   ParallelContext::barrier();
 }
 
