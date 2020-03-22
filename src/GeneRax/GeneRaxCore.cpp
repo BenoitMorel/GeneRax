@@ -13,6 +13,7 @@
 #include <maths/Parameters.hpp>
 #include <IO/FileSystem.hpp>
 #include <IO/ParallelOfstream.hpp>
+#include <maths/Random.hpp>
 #include <NJ/NeighborJoining.hpp>
 #include <parallelization/Scheduler.hpp>
 #include <routines/Routines.hpp>
@@ -21,7 +22,6 @@
 
 static void initStartingSpeciesTree(GeneRaxInstance &instance)
 {
-  Logger::info << "hey" << std::endl;
   instance.speciesTree = FileSystem::joinPaths(instance.args.output, "starting_species_tree.newick");
   if (instance.args.speciesTree == "random") {
     Logger::timed << "Generating random starting species tree" << std::endl;
@@ -70,9 +70,12 @@ static void initStartingSpeciesTree(GeneRaxInstance &instance)
 
 void GeneRaxCore::initInstance(GeneRaxInstance &instance) 
 {
-  srand(static_cast<unsigned int>(instance.args.seed));
+  Random::setSeed(static_cast<unsigned int>(instance.args.seed));
   FileSystem::mkdir(instance.args.output, true);
   Logger::initFileOutput(FileSystem::joinPaths(instance.args.output, "generax"));
+  // assert twice, before of a bug I had at the 
+  // second rand() call with openmpi
+  assert(ParallelContext::isRandConsistent());
   assert(ParallelContext::isRandConsistent());
   instance.args.printCommand();
   instance.args.printSummary();

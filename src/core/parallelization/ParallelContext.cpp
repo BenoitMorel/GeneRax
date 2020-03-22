@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cmath>
 #include <IO/Logger.hpp>
+#include <maths/Random.hpp>
 
 std::ofstream ParallelContext::sink("/dev/null");
 bool ParallelContext::ownMPIContext(true);
@@ -384,7 +385,7 @@ bool ParallelContext::allowSchedulerSplitImplementation()
 
 bool ParallelContext::isRandConsistent()
 {
-  return isIntEqual(rand());
+  return isIntEqual(Random::getInt());
 }
 
 bool ParallelContext::isIntEqual(int value)

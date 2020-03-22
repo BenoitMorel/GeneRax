@@ -15,6 +15,7 @@ extern "C" {
 #include <vector>
 #include <unordered_set>
 #include <util/CArrayRange.hpp>
+#include <maths/Random.hpp>
 
 
 /**
@@ -32,7 +33,7 @@ public:
   /**
    *  Construct a random tree from a set of taxa labels
    */
-  PLLUnrootedTree(const std::vector<const char*> &labels, unsigned int seed = static_cast<unsigned int>(rand()));
+  PLLUnrootedTree(const std::vector<const char*> &labels, unsigned int seed = static_cast<unsigned int>(Random::getInt()));
 
   /**
    * Forbid copy

@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <maths/ScaledValue.hpp>
 #include <trees/PLLRootedTree.hpp>
+#include <maths/Random.hpp>
 
 
 
@@ -755,7 +756,7 @@ bool AbstractReconciliationModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rno
 template<class REAL> 
 REAL getRandom(REAL max)
 {
-  return max * (static_cast<double>(rand()) / static_cast<double>(RAND_MAX));
+  return max * Random::getProba();
 }
 template<class C, class REAL>
 int sampleIndex(const C &container)

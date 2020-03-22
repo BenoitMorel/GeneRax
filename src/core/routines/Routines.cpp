@@ -13,6 +13,7 @@
 #include <maths/ModelParameters.hpp>
 #include <routines/scheduled_routines/RaxmlMaster.hpp>
 #include <routines/scheduled_routines/GeneRaxMaster.hpp>
+#include <maths/Random.hpp>
 
 
 void Routines::runRaxmlOptimization(Families &families,
@@ -130,7 +131,7 @@ void Routines::inferReconciliation(
     bool saveTransfersOnly
     )
 {
-  auto consistentSeed = rand();
+  auto consistentSeed = Random::getInt();
   ParallelContext::barrier();
   PLLRootedTree speciesTree(speciesTreeFile);
   PerCoreGeneTrees geneTrees(families);
@@ -182,7 +183,7 @@ void Routines::inferReconciliation(
       }
     }
   }
-  srand(consistentSeed);
+  Random::setSeed(consistentSeed);
   ParallelContext::barrier();
 }
   
@@ -194,10 +195,10 @@ void Routines::computeSuperMatrixFromOrthoGroups(
       bool largestOnly,
       bool masterOnly)
 {
-  auto savedSeed = rand(); // for some reason, parsing
+  auto savedSeed = Random::getInt(); // for some reason, parsing
                           // the Model calls rand, so we
                           // have so ensure seed consistency
-  srand(savedSeed);
+  Random::setSeed(savedSeed);
   if (masterOnly && ParallelContext::getRank() != 0) {
     return;
   }
@@ -257,7 +258,7 @@ void Routines::computeSuperMatrixFromOrthoGroups(
     }
   }
   LibpllParsers::writeSuperMatrixFasta(superMatrix, outputFasta);
-  srand(savedSeed);
+  Random::setSeed(savedSeed);
 }
 
 
@@ -265,7 +266,7 @@ bool Routines::createRandomTrees(const std::string &geneRaxOutputDir, Families &
 {
   std::string startingTreesDir = FileSystem::joinPaths(geneRaxOutputDir, "startingTrees");
   bool startingTreesDirCreated = false;
-  auto consistentSeed = rand();
+  auto consistentSeed = Random::getInt();
   for (auto &family: families) {
     if (family.startingGeneTree == "__random__") {
         if (!startingTreesDirCreated) {
@@ -279,7 +280,7 @@ bool Routines::createRandomTrees(const std::string &geneRaxOutputDir, Families &
         }
     }
   }
-  srand(consistentSeed);
+  Random::setSeed(consistentSeed);
   ParallelContext::barrier();
   return startingTreesDirCreated;
 }
