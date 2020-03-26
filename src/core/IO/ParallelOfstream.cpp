@@ -11,6 +11,8 @@ ParallelOfstream::ParallelOfstream(const std::string &fileName, bool masterRankO
   
 void ParallelOfstream::close()
 {
+  // force the _os destruction if it holds an ofstream
+  _os = std::make_unique<std::ostream>(nullptr);
 }
 
 ParallelOfstream::~ParallelOfstream()
