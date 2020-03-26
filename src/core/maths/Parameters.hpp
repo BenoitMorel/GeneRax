@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <IO/ParallelOfstream.hpp>
+#include <IO/Logger.hpp>
 #include <fstream>
 #include <cmath>
 
@@ -154,6 +155,9 @@ public:
     std::string debugStr;
     std::getline(is2, debugStr);
     std::ifstream is(src);
+    if (!is.good()) {
+      std::cerr << "Cannot read parameters from " << src << std::endl;
+    }
     assert(is.good());
     while (!is.eof()) {
       double a = -42;
