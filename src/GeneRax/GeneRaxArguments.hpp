@@ -42,8 +42,9 @@ public:
    unsigned int maxSPRRadius;
    double recWeight;
    int seed;
+   double filterFamilies;
    std::string exec;
-   
+
    // species tree search
    bool rerootSpeciesTree;
    bool optimizeSpeciesTree;

@@ -30,6 +30,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   maxSPRRadius(5),
   recWeight(1.0), 
   seed(123),
+  filterFamilies(true),
   exec(iargv[0]),
   rerootSpeciesTree(false),
   optimizeSpeciesTree(false),
@@ -94,6 +95,8 @@ void GeneRaxArguments::init() {
       recWeight = atof(argv[++i]);
     } else if (arg == "--seed") {
       seed = atoi(argv[++i]);
+    } else if (arg == "--skip-family-filtering") {
+      filterFamilies = false;
     } else if (arg == "--species-fast-radius") {
       speciesFastRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--species-slow-radius") {

@@ -89,11 +89,15 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
   Logger::timed << "Filtering invalid families..." << std::endl;
   bool needAlignments = instance.args.optimizeGeneTrees;
-  Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, false);
+  if (instance.args.filterFamilies) {
+    Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, false);
+  }
   initStartingSpeciesTree(instance);
 
   Logger::timed << "Filtering invalid families based on the starting species tree..." << std::endl;
-  Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, true);
+  if (instance.args.filterFamilies) {
+    Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, true);
+  }
   if (!instance.initialFamilies.size()) {
     Logger::info << "[Error] No valid families! Aborting GeneRax" << std::endl;
     ParallelContext::abort(10);
