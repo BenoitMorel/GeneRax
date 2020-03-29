@@ -18,7 +18,8 @@ public:
    * built in NJst (another NJ took).
    */
   static std::unique_ptr<PLLRootedTree> geneTreeNJ(const Families &families);
-
+  
+ 
   /**
    *  Infer a NJ tree, using the number of genes per species and per family
    *  to compute the distance matrix.

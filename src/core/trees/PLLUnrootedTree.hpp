@@ -80,6 +80,7 @@ public:
   pll_utree_t *getRawPtr() {return _tree.get();}
   
   CArrayRange<pll_unode_t*> getLeaves();
+  CArrayRange<pll_unode_t*> getNodes();
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;
 };

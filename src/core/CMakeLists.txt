@@ -12,6 +12,7 @@ set(jointsearch-core_SOURCES
   likelihoods/ReconciliationEvaluation.cpp
   maths/Random.cpp
   NJ/NeighborJoining.cpp
+  NJ/NFJ.cpp
   optimizers/DTLOptimizer.cpp
   optimizers/PerFamilyDTLOptimizer.cpp
   optimizers/SpeciesTreeOptimizer.cpp

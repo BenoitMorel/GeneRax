@@ -159,7 +159,7 @@ void GeneRaxArguments::checkInputs() {
     Logger::info << "Aborting." << std::endl;
     ParallelContext::abort(1);
   }
-  if (speciesTree.size() && speciesTree != "random" && speciesTree != "NJ" && speciesTree != "NJst") {
+  if (speciesTree.size() && speciesTree != "random" && speciesTree != "NJ" && speciesTree != "NJst" && speciesTree != "NFJ") {
     assertFileExists(speciesTree);
   }
 }

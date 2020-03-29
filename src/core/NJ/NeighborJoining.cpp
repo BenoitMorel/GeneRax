@@ -6,11 +6,15 @@
 #include <IO/GeneSpeciesMapping.hpp>
 #include <trees/PLLUnrootedTree.hpp>
 #include <algorithm>
+#include <memory>
 
 typedef std::vector<double> Count;
 typedef std::vector<Count> DistanceMatrix;
 typedef std::vector<DistanceMatrix> DistanceMatrixVector;
 static const double invalidDouble = std::numeric_limits<double>::infinity();
+
+
+
 
 static double l1(const Count &c1, const Count &c2) {
   double res = 0.0;
@@ -273,6 +277,7 @@ void getMedianDistanceMatrix(const DistanceMatrixVector &v,
     }
   }
 }
+  
 
 std::unique_ptr<PLLRootedTree> NeighborJoining::geneTreeNJ(const Families &families)
 {

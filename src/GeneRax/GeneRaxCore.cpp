@@ -15,6 +15,7 @@
 #include <IO/ParallelOfstream.hpp>
 #include <maths/Random.hpp>
 #include <NJ/NeighborJoining.hpp>
+#include <NJ/NFJ.hpp>
 #include <parallelization/Scheduler.hpp>
 #include <routines/Routines.hpp>
 #include <optimizers/SpeciesTreeOptimizer.hpp>
@@ -38,6 +39,12 @@ static void initStartingSpeciesTree(GeneRaxInstance &instance)
     if (ParallelContext::getRank() == 0) {
       auto startingNJTree = NeighborJoining::geneTreeNJ(instance.initialFamilies); 
       startingNJTree->save(instance.speciesTree);
+    }
+  } else if (instance.args.speciesTree == "NFJ") {
+    Logger::timed << "Generating NFJ species tree" << std::endl;
+    if (ParallelContext::getRank() == 0) {
+      auto startingNFJTree = NFJ::geneTreeNFJ(instance.initialFamilies); 
+      startingNFJTree->save(instance.speciesTree);
     }
   } else {
     // check that we can read the species tree
