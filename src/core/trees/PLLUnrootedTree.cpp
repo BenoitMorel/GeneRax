@@ -80,7 +80,7 @@ unsigned int PLLUnrootedTree::getLeavesNumber() const
 
 unsigned int PLLUnrootedTree::getInnerNodesNumber() const
 {
-  return _tree->inner_count * 3;
+  return _tree->inner_count;
 }
   
 pll_unode_t *PLLUnrootedTree::getNode(unsigned int node_index)

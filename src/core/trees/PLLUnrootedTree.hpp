@@ -80,6 +80,12 @@ public:
   pll_utree_t *getRawPtr() {return _tree.get();}
   
   CArrayRange<pll_unode_t*> getLeaves();
+
+  /*
+   *  C++11 range for accessing nodes. 
+   *  Only includes one of the three pll internal element per node
+   *  in the tree
+   */
   CArrayRange<pll_unode_t*> getNodes();
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;
