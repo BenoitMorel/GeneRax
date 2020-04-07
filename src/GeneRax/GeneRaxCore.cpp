@@ -267,6 +267,7 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
   if (instance.args.reconcile || instance.args.reconciliationSamples > 0) {
     Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
     ModelParameters modelRates(instance.rates, instance.recModel, false, 1);
+    instance.readModelParameters(modelRates);
     Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, 
       modelRates, instance.args.output, instance.args.reconcile,
       instance.args.reconciliationSamples);

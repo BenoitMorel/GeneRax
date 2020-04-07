@@ -4,6 +4,7 @@
 #include "GeneRaxArguments.hpp"
 #include <string>
 #include <maths/Parameters.hpp>
+#include <maths/ModelParameters.hpp>
 #include <IO/FamiliesFileParser.hpp>
 
 
@@ -51,6 +52,8 @@ struct GeneRaxInstance {
   GeneRaxInstance & operator = (const GeneRaxInstance &) = delete;
   GeneRaxInstance(GeneRaxInstance &&) = delete;
   GeneRaxInstance & operator = (GeneRaxInstance &&) = delete;
+  
+  void readModelParameters(ModelParameters &modelParameters);
 
 };
 
