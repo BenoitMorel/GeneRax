@@ -394,7 +394,7 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
     geneTree->mergeNodesWithSameSpeciesId();
   }
   // main loop of the algorithm
-  for (unsigned int i = 0; i < speciesNumber - 3; ++i) {
+  for (unsigned int i = 0; i < speciesNumber - 2; ++i) {
     Logger::info << std::endl;
     Logger::info << "*******************************" << std::endl;
     Logger::info << "Remaining species: " << remainingSpeciesIds.size() << std::endl;
@@ -439,9 +439,8 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
   for (auto speciesId: remainingSpeciesIds) {
     lastSpecies.push_back(speciesIdToStr[speciesId]);
   }
-  assert(lastSpecies.size() == 3);
-  std::string newick = "((" + lastSpecies[0] + "," + lastSpecies[1] +
-    ")," + lastSpecies[2] + ");";
+  assert(lastSpecies.size() == 2);
+  std::string newick = "(" + lastSpecies[0] + "," + lastSpecies[1] + ");";
   return std::make_unique<PLLRootedTree>(newick, false); 
 }
 
