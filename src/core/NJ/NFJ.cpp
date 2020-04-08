@@ -215,13 +215,17 @@ void NFJTree::mergeNodesWithSpeciesId(unsigned int speciesId)
   GeneIdsSet geneSetCopy = geneSet;
   for (auto geneId: geneSetCopy) { 
     while (true) {
+      if (getLeavesNumber() < 4) {
+        // nothing to merge!
+        return;
+      }
       if (geneSet.find(geneId) == geneSet.end()) {
-        // we already erased it
+        // we already erased this gene
         break;
       }
       auto geneIdNeighbor = getNeighborLeaf(geneId);
       if (geneIdNeighbor == -1) {
-        // no neighbor
+        // this leaf neighbor is not a leaf, continue
         break;
       }
       if (geneSet.find(geneIdNeighbor) != geneSet.end()) {
@@ -266,7 +270,7 @@ std::string NFJTree::recursiveToString(int nodeId, int sonToSkipId)
   }
   // edge case: leaf
   if (node.isLeaf) {
-    return std::to_string(node.geneId);
+    return std::to_string(node.speciesId);
   }
   std::string res = "(";
   bool firstNodeWritten = false;
@@ -348,8 +352,11 @@ static void filterGeneTrees(std::vector<std::shared_ptr<NFJTree> > &geneTrees)
   auto geneTreesCopy = geneTrees;
   geneTrees.clear();
   for (auto geneTree: geneTreesCopy) {
-    if (geneTree->getLeavesNumber() >= 4 && geneTree->coveredSpeciesNumber() > 3) {
+    if (geneTree->getLeavesNumber() >= 4 ) {
       geneTrees.push_back(geneTree);
+    } else {
+      Logger::info << "Filter out " << geneTree->toString() << std::endl;
+      Logger::info << geneTree->getLeavesNumber() << " " << geneTree->coveredSpeciesNumber() << std::endl;
     }
   }
 }
@@ -385,6 +392,7 @@ std::unique_ptr<PLLRootedTree> NFJ::geneTreeNFJ(const Families &families)
   for (auto geneTree: geneTrees) {
     geneTree->mergeNodesWithSameSpeciesId();
   }
+  filterGeneTrees(geneTrees);
   // main loop of the algorithm
   for (unsigned int i = 0; i < speciesNumber - 3; ++i) {
     Logger::info << std::endl;
