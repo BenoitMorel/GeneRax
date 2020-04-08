@@ -44,14 +44,37 @@ public:
       MatrixDouble &denominatorMatrix);
   int coveredSpeciesNumber();
   std::string toString();
+  void printInternalState();
+  unsigned int getLeavesNumber() {
+    return _leavesNumber;
+  }
 private:
   int getAnyValidId();
   int getNeighborLeaf(int nodeId);
   std::string recursiveToString(int nodeId, int sonToSkipId);
   std::vector<NFJNode> _nodes;
   SpeciesIdToGeneIds _speciesIdToGeneIds;
+  unsigned int _leavesNumber;
+  static int hackCounter;
+  int _hackIndex;
 };
+
+int NFJTree::hackCounter = 0;
   
+void NFJTree::printInternalState()
+{
+  for (auto &node: _nodes) {
+    if (node.isValid) {
+      Logger::info << "gid=" << node.geneId;
+      if (node.isLeaf) {
+        Logger::info << " spid=" << node.speciesId << "parent=" << node.sons[0] << std::endl;
+      } else {
+        Logger::info << " " << node.sons[0] << " "  << node.sons[1] << " " << node.sons[2] << std::endl;
+      }
+    }
+  }
+  Logger::info << "Covered species " << coveredSpeciesNumber() << std::endl;
+}
 
 static void printMatrix(const MatrixDouble m) 
 {
@@ -94,7 +117,9 @@ static std::pair<int, int> getMaxInMatrix(MatrixDouble &m)
 void NFJTree::relabelNodesWithSpeciesId(unsigned int speciesId, 
     unsigned int newSpeciesId)
 {
-  //Logger::info << toString() << std::endl;
+  if (_speciesIdToGeneIds.find(speciesId) == _speciesIdToGeneIds.end()) {
+    return;
+  }
   if (_speciesIdToGeneIds.find(newSpeciesId) == _speciesIdToGeneIds.end()) {
     _speciesIdToGeneIds.insert({newSpeciesId, GeneIdsSet()});
   }
@@ -105,7 +130,6 @@ void NFJTree::relabelNodesWithSpeciesId(unsigned int speciesId,
     newGeneIdSet.insert(geneId);
   }
   _speciesIdToGeneIds.erase(speciesId);
- // Logger::info << toString() << std::endl;
 }
 
 void NFJTree::updateNeigborMatrix(MatrixDouble &neighborMatrix,
@@ -168,6 +192,9 @@ int NFJTree::getNeighborLeaf(int nodeId)
   assert(node.isLeaf);
   assert(node.isValid);
   auto &parentNode = _nodes[node.sons[0]];
+  if(parentNode.isLeaf) {
+    Logger::info << "Error in " << _hackIndex << std::endl;
+  }
   assert(!parentNode.isLeaf);
   for (int i = 0; i < 3; ++i) {
     auto &candidateNode = _nodes[parentNode.sons[i]];
@@ -181,6 +208,9 @@ int NFJTree::getNeighborLeaf(int nodeId)
 
 void NFJTree::mergeNodesWithSpeciesId(unsigned int speciesId)
 {
+  if (_speciesIdToGeneIds.find(speciesId) == _speciesIdToGeneIds.end()) {
+    return;
+  }
   auto &geneSet = _speciesIdToGeneIds[speciesId];
   GeneIdsSet geneSetCopy = geneSet;
   for (auto geneId: geneSetCopy) { 
@@ -204,6 +234,7 @@ void NFJTree::mergeNodesWithSpeciesId(unsigned int speciesId)
             break;
           }
         }
+        // merge
         parent.speciesId = speciesId;
         geneSet.insert(parent.geneId);
         geneSet.erase(geneId);
@@ -211,6 +242,7 @@ void NFJTree::mergeNodesWithSpeciesId(unsigned int speciesId)
         _nodes[geneId].isValid = false;
         _nodes[geneIdNeighbor].isValid = false;
         geneId = parent.geneId;
+        _leavesNumber--;
       } else {
         break;
       }
@@ -241,7 +273,7 @@ std::string NFJTree::recursiveToString(int nodeId, int sonToSkipId)
   for (int i = 0; i < 3; ++i) {
     if (sonToSkipId != node.sons[i]) {
       res += recursiveToString(node.sons[i], node.geneId);
-      if (!firstNodeWritten) {
+      if ((!firstNodeWritten || sonToSkipId == -1) && i != 2) {
         res += ",";
         firstNodeWritten = true;
       }
@@ -274,7 +306,9 @@ static std::vector<int> computePLLIdToId(PLLUnrootedTree &pllTree)
 
 NFJTree::NFJTree(const std::string &treeFile, 
       const GeneSpeciesMapping &mapping,
-      const StringToInt &speciesStrToId)
+      const StringToInt &speciesStrToId):
+  _leavesNumber(0),
+  _hackIndex(hackCounter++)
 {
   PLLUnrootedTree pllTree(treeFile);
   _nodes.resize(pllTree.getLeavesNumber() * 2 - 2);
@@ -301,13 +335,24 @@ NFJTree::NFJTree(const std::string &treeFile,
         _speciesIdToGeneIds.insert({nfjNode.speciesId, GeneIdsSet()});
       }
       _speciesIdToGeneIds[nfjNode.speciesId].insert(nfjNode.geneId);
+      _leavesNumber++;
     }
   }
   Logger::info << toString() << std::endl;
+  Logger::info << _leavesNumber << " leaves" << std::endl;
 }
 
 
-
+static void filterGeneTrees(std::vector<std::shared_ptr<NFJTree> > &geneTrees)
+{
+  auto geneTreesCopy = geneTrees;
+  geneTrees.clear();
+  for (auto geneTree: geneTreesCopy) {
+    if (geneTree->getLeavesNumber() >= 4 && geneTree->coveredSpeciesNumber() > 3) {
+      geneTrees.push_back(geneTree);
+    }
+  }
+}
 
 std::unique_ptr<PLLRootedTree> NFJ::geneTreeNFJ(const Families &families)
 {
@@ -316,10 +361,11 @@ std::unique_ptr<PLLRootedTree> NFJ::geneTreeNFJ(const Families &families)
   StringToInt speciesStrToId;
   std::vector<std::string> speciesIdToStr;
   
+  // fill the structure that map speciesStr <-> speciesId
+  // and create gene trees mapped with the species IDs
   for (auto &family: families) {
     GeneSpeciesMapping mapping;
     mapping.fill(family.mappingFile, family.startingGeneTree);
-    // fill speciesIdToStr and speciesStrToId
     auto coveredSpecies = mapping.getCoveredSpecies();
     for (auto &species: mapping.getCoveredSpecies()) {
       if (speciesStrToId.find(species) == speciesStrToId.end()) {
@@ -327,7 +373,6 @@ std::unique_ptr<PLLRootedTree> NFJ::geneTreeNFJ(const Families &families)
         speciesIdToStr.push_back(species);
       }
     }
-    // todo fill speciesIdToStr
     geneTrees.push_back(std::make_shared<NFJTree>( 
           family.startingGeneTree, mapping, speciesStrToId));
   }
@@ -336,17 +381,19 @@ std::unique_ptr<PLLRootedTree> NFJ::geneTreeNFJ(const Families &families)
   for (unsigned int i = 0; i < speciesNumber; ++i) {
     remainingSpeciesIds.insert(i);
   }
+  filterGeneTrees(geneTrees);
+  for (auto geneTree: geneTrees) {
+    geneTree->mergeNodesWithSameSpeciesId();
+  }
+  // main loop of the algorithm
   for (unsigned int i = 0; i < speciesNumber - 3; ++i) {
-    auto geneTreesCopy = geneTrees;
-    geneTrees.clear();
-    for (auto geneTree: geneTreesCopy) {
-      if (geneTree->coveredSpeciesNumber() > 3) {
-        geneTrees.push_back(geneTree);
-      }
-    }
-    for (auto geneTree: geneTrees) {
-      geneTree->mergeNodesWithSameSpeciesId();
-    }
+    Logger::info << std::endl;
+    Logger::info << "*******************************" << std::endl;
+    Logger::info << "Remaining species: " << remainingSpeciesIds.size() << std::endl;
+    // filter out gene trees that do not hold information
+    filterGeneTrees(geneTrees);
+    // merge identical tips in cherries
+    // compute the frequency matrix
     VectorDouble zeros(speciesNumber);
     MatrixDouble neighborMatrix(speciesNumber, zeros);
     MatrixDouble denominatorMatrix(speciesNumber, zeros);
@@ -360,9 +407,12 @@ std::unique_ptr<PLLRootedTree> NFJ::geneTreeNFJ(const Families &families)
     printMatrix(denominatorMatrix);
     */
     divideMatrix(neighborMatrix, denominatorMatrix);
-    auto bestPairSpecies = getMaxInMatrix(neighborMatrix);
+    /*
     Logger::info << "Frequencies: " << std::endl;
     printMatrix(neighborMatrix);
+    */
+    // compute the two species to join, and join them
+    auto bestPairSpecies = getMaxInMatrix(neighborMatrix);
     std::string speciesStr1 = speciesIdToStr[bestPairSpecies.first];
     std::string speciesStr2 = speciesIdToStr[bestPairSpecies.second];
     Logger::info << "Best pair " << bestPairSpecies.first
@@ -371,6 +421,7 @@ std::unique_ptr<PLLRootedTree> NFJ::geneTreeNFJ(const Families &families)
     for (auto geneTree: geneTrees) {
       geneTree->relabelNodesWithSpeciesId(bestPairSpecies.second,
         bestPairSpecies.first);
+      geneTree->mergeNodesWithSpeciesId(bestPairSpecies.first);
     }
     speciesIdToStr[bestPairSpecies.first] = std::string("(") + 
       speciesStr1 + "," + speciesStr2 + ")";
