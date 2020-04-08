@@ -26,6 +26,7 @@ void GeneRaxInstance::readModelParameters(ModelParameters &modelParameters)
     for (unsigned int dim = 0; dim < freeParameters; ++dim) {
       paramsReader >> ratesToRead[dim];
     }
+    modelParameters.setRates(i, ratesToRead);
   }
 }
 
