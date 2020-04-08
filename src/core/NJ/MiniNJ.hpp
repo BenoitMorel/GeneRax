@@ -10,7 +10,7 @@
  * Both distance matrix and NJ tree computations could be 
  * implemented more efficiently if needed.
  */
-class NeighborJoining {
+class MiniNJ {
 public:
   /**
    * Infer a NJ tree, using the gene tree internode distances to compute

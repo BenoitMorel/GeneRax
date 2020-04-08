@@ -1,8 +1,8 @@
-#include "NFJ.hpp"
+#include "Cherry.hpp"
 
 #include <vector>
 #include <memory>
-#include "NeighborJoining.hpp"
+#include "MiniNJ.hpp"
 #include <IO/Logger.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <trees/PLLUnrootedTree.hpp>
@@ -16,7 +16,7 @@ typedef std::unordered_map<int, GeneIdsSet> SpeciesIdToGeneIds;
 
 
 
-struct NFJNode {
+struct CherryNode {
   bool isLeaf; 
   int sons[3];
   int geneId;
@@ -25,11 +25,11 @@ struct NFJNode {
 };
 
 /**
- *  Unrooted gene tree for NFJ algorithm
+ *  Unrooted gene tree for Cherry algorithm
  */
-class NFJTree {
+class CherryTree {
 public:
-  NFJTree(const std::string &treeFile, 
+  CherryTree(const std::string &treeString, 
       const GeneSpeciesMapping &mapping,
       const StringToInt &speciesStrToId);
   
@@ -52,16 +52,16 @@ private:
   int getAnyValidId();
   int getNeighborLeaf(int nodeId);
   std::string recursiveToString(int nodeId, int sonToSkipId);
-  std::vector<NFJNode> _nodes;
+  std::vector<CherryNode> _nodes;
   SpeciesIdToGeneIds _speciesIdToGeneIds;
   unsigned int _leavesNumber;
   static int hackCounter;
   int _hackIndex;
 };
 
-int NFJTree::hackCounter = 0;
+int CherryTree::hackCounter = 0;
   
-void NFJTree::printInternalState()
+void CherryTree::printInternalState()
 {
   for (auto &node: _nodes) {
     if (node.isValid) {
@@ -114,7 +114,7 @@ static std::pair<int, int> getMaxInMatrix(MatrixDouble &m)
   return minPair;
 }
   
-void NFJTree::relabelNodesWithSpeciesId(unsigned int speciesId, 
+void CherryTree::relabelNodesWithSpeciesId(unsigned int speciesId, 
     unsigned int newSpeciesId)
 {
   if (_speciesIdToGeneIds.find(speciesId) == _speciesIdToGeneIds.end()) {
@@ -132,7 +132,7 @@ void NFJTree::relabelNodesWithSpeciesId(unsigned int speciesId,
   _speciesIdToGeneIds.erase(speciesId);
 }
 
-void NFJTree::updateNeigborMatrix(MatrixDouble &neighborMatrix,
+void CherryTree::updateNeigborMatrix(MatrixDouble &neighborMatrix,
       MatrixDouble &denominatorMatrix)
 {
   for (auto &p: _speciesIdToGeneIds) {
@@ -157,17 +157,17 @@ void NFJTree::updateNeigborMatrix(MatrixDouble &neighborMatrix,
       auto spid2 = p2.first; 
       const auto &geneIdSet2 = p2.second;
       denominatorMatrix[speciesId][spid2] += 
-        std::min(geneIdSet.size(), geneIdSet2.size());
+        geneIdSet.size() +  geneIdSet2.size();
     }
   }
 }
   
-int NFJTree::coveredSpeciesNumber()
+int CherryTree::coveredSpeciesNumber()
 {
   return _speciesIdToGeneIds.size();
 }
   
-void NFJTree::mergeNodesWithSameSpeciesId()
+void CherryTree::mergeNodesWithSameSpeciesId()
 {
   for (auto &p: _speciesIdToGeneIds) {
     mergeNodesWithSpeciesId(p.first);
@@ -175,7 +175,7 @@ void NFJTree::mergeNodesWithSameSpeciesId()
 }
 
 
-int NFJTree::getAnyValidId()
+int CherryTree::getAnyValidId()
 {
   for (auto &p: _speciesIdToGeneIds) {
     for (auto id: p.second) {
@@ -186,7 +186,7 @@ int NFJTree::getAnyValidId()
   return -1;
 }
  
-int NFJTree::getNeighborLeaf(int nodeId)
+int CherryTree::getNeighborLeaf(int nodeId)
 {
   auto &node = _nodes[nodeId];
   assert(node.isLeaf);
@@ -206,7 +206,7 @@ int NFJTree::getNeighborLeaf(int nodeId)
 }
 
 
-void NFJTree::mergeNodesWithSpeciesId(unsigned int speciesId)
+void CherryTree::mergeNodesWithSpeciesId(unsigned int speciesId)
 {
   if (_speciesIdToGeneIds.find(speciesId) == _speciesIdToGeneIds.end()) {
     return;
@@ -255,12 +255,12 @@ void NFJTree::mergeNodesWithSpeciesId(unsigned int speciesId)
 }
   
 
-std::string NFJTree::toString()
+std::string CherryTree::toString()
 {
   return recursiveToString(getAnyValidId(), -1) + ";";
 }
 
-std::string NFJTree::recursiveToString(int nodeId, int sonToSkipId)
+std::string CherryTree::recursiveToString(int nodeId, int sonToSkipId)
 {
   auto &node = _nodes[nodeId];
   assert(node.isValid);
@@ -308,13 +308,13 @@ static std::vector<int> computePLLIdToId(PLLUnrootedTree &pllTree)
   return pllIdToId;
 }
 
-NFJTree::NFJTree(const std::string &treeFile, 
+CherryTree::CherryTree(const std::string &treeString, 
       const GeneSpeciesMapping &mapping,
       const StringToInt &speciesStrToId):
   _leavesNumber(0),
   _hackIndex(hackCounter++)
 {
-  PLLUnrootedTree pllTree(treeFile);
+  PLLUnrootedTree pllTree(treeString, false);
   _nodes.resize(pllTree.getLeavesNumber() * 2 - 2);
   auto pllIdToId = computePLLIdToId(pllTree);
   for (auto pllNode: pllTree.getNodes()) {
@@ -342,29 +342,26 @@ NFJTree::NFJTree(const std::string &treeFile,
       _leavesNumber++;
     }
   }
-  Logger::info << toString() << std::endl;
-  Logger::info << _leavesNumber << " leaves" << std::endl;
 }
 
 
-static void filterGeneTrees(std::vector<std::shared_ptr<NFJTree> > &geneTrees)
+static void filterGeneTrees(std::vector<std::shared_ptr<CherryTree> > &geneTrees)
 {
   auto geneTreesCopy = geneTrees;
   geneTrees.clear();
   for (auto geneTree: geneTreesCopy) {
-    if (geneTree->getLeavesNumber() >= 4 ) {
+    if (geneTree->getLeavesNumber() >= 4 && geneTree->coveredSpeciesNumber() > 2 ) {
       geneTrees.push_back(geneTree);
     } else {
-      Logger::info << "Filter out " << geneTree->toString() << std::endl;
-      Logger::info << geneTree->getLeavesNumber() << " " << geneTree->coveredSpeciesNumber() << std::endl;
+      //Logger::info << geneTree->getLeavesNumber() << " " << geneTree->coveredSpeciesNumber() << std::endl;
     }
   }
 }
 
-std::unique_ptr<PLLRootedTree> NFJ::geneTreeNFJ(const Families &families)
+std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
 {
   // Init gene trees and frequency matrix
-  std::vector<std::shared_ptr<NFJTree> > geneTrees;
+  std::vector<std::shared_ptr<CherryTree> > geneTrees;
   StringToInt speciesStrToId;
   std::vector<std::string> speciesIdToStr;
   
@@ -380,19 +377,22 @@ std::unique_ptr<PLLRootedTree> NFJ::geneTreeNFJ(const Families &families)
         speciesIdToStr.push_back(species);
       }
     }
-    geneTrees.push_back(std::make_shared<NFJTree>( 
-          family.startingGeneTree, mapping, speciesStrToId));
+    std::ifstream reader(family.startingGeneTree);
+    std::string line;
+    while (std::getline(reader, line)) {
+      geneTrees.push_back(std::make_shared<CherryTree>( 
+          line, mapping, speciesStrToId));
+    }
   }
+  Logger::info << "Loaded " << geneTrees.size() << " gene trees" << std::endl;
   unsigned int speciesNumber = speciesStrToId.size();
   std::unordered_set<int> remainingSpeciesIds;
   for (unsigned int i = 0; i < speciesNumber; ++i) {
     remainingSpeciesIds.insert(i);
   }
-  filterGeneTrees(geneTrees);
   for (auto geneTree: geneTrees) {
     geneTree->mergeNodesWithSameSpeciesId();
   }
-  filterGeneTrees(geneTrees);
   // main loop of the algorithm
   for (unsigned int i = 0; i < speciesNumber - 3; ++i) {
     Logger::info << std::endl;

@@ -14,8 +14,8 @@
 #include <IO/FileSystem.hpp>
 #include <IO/ParallelOfstream.hpp>
 #include <maths/Random.hpp>
-#include <NJ/NeighborJoining.hpp>
-#include <NJ/NFJ.hpp>
+#include <NJ/MiniNJ.hpp>
+#include <NJ/Cherry.hpp>
 #include <parallelization/Scheduler.hpp>
 #include <routines/Routines.hpp>
 #include <optimizers/SpeciesTreeOptimizer.hpp>
@@ -31,20 +31,20 @@ static void initStartingSpeciesTree(GeneRaxInstance &instance)
   } else if (instance.args.speciesTree == "NJ") {
     Logger::timed << "Generating NJ species tree" << std::endl;
     if (ParallelContext::getRank() == 0) {
-      auto startingNJTree = NeighborJoining::countProfileNJ(instance.initialFamilies); 
+      auto startingNJTree = MiniNJ::countProfileNJ(instance.initialFamilies); 
       startingNJTree->save(instance.speciesTree);
     }
-  } else if (instance.args.speciesTree == "NJst") {
+  } else if (instance.args.speciesTree == "MiniNJ") {
     Logger::timed << "Generating NJst species tree" << std::endl;
     if (ParallelContext::getRank() == 0) {
-      auto startingNJTree = NeighborJoining::geneTreeNJ(instance.initialFamilies); 
+      auto startingNJTree = MiniNJ::geneTreeNJ(instance.initialFamilies); 
       startingNJTree->save(instance.speciesTree);
     }
-  } else if (instance.args.speciesTree == "NFJ") {
-    Logger::timed << "Generating NFJ species tree" << std::endl;
+  } else if (instance.args.speciesTree == "Cherry") {
+    Logger::timed << "Generating Cherry species tree" << std::endl;
     if (ParallelContext::getRank() == 0) {
-      auto startingNFJTree = NFJ::geneTreeNFJ(instance.initialFamilies); 
-      startingNFJTree->save(instance.speciesTree);
+      auto startingCherryTree = Cherry::geneTreeCherry(instance.initialFamilies); 
+      startingCherryTree->save(instance.speciesTree);
     }
   } else {
     // check that we can read the species tree
@@ -118,12 +118,14 @@ void GeneRaxCore::initRandomGeneTrees(GeneRaxInstance &instance)
   
 void GeneRaxCore::printStats(GeneRaxInstance &instance)
 {
-  std::string coverageFile = FileSystem::joinPaths(instance.args.output,
+  if (instance.args.filterFamilies) {
+    std::string coverageFile = FileSystem::joinPaths(instance.args.output,
       std::string("perSpeciesCoverage.txt"));
-  Logger::timed << "Gathering statistics about the families..." << std::endl;
-  Family::printStats(instance.currentFamilies, 
+    Logger::timed << "Gathering statistics about the families..." << std::endl;
+    Family::printStats(instance.currentFamilies, 
       instance.speciesTree,
       coverageFile);
+  }
 }
 
 void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)

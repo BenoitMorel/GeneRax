@@ -1,4 +1,4 @@
-#include "NeighborJoining.hpp"
+#include "MiniNJ.hpp"
 #include <unordered_map>
 #include <vector>
 #include <string>
@@ -122,7 +122,7 @@ static std::unique_ptr<PLLRootedTree> applyNJ(DistanceMatrix &distanceMatrix,
 }
 
 
-std::unique_ptr<PLLRootedTree> NeighborJoining::countProfileNJ(const Families &families)
+std::unique_ptr<PLLRootedTree> MiniNJ::countProfileNJ(const Families &families)
 {
   std::vector<Count> speciesToCountVector;
   std::vector<std::string> speciesIdToSpeciesString;
@@ -279,7 +279,7 @@ void getMedianDistanceMatrix(const DistanceMatrixVector &v,
 }
   
 
-std::unique_ptr<PLLRootedTree> NeighborJoining::geneTreeNJ(const Families &families)
+std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families)
 {
   bool median = false;
   std::vector<std::string> speciesIdToSpeciesString;
@@ -308,12 +308,16 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::geneTreeNJ(const Families &famil
   for (auto &family: families) {
     GeneSpeciesMapping mappings;
     mappings.fill(family.mappingFile, family.startingGeneTree);
-    PLLUnrootedTree geneTree(family.startingGeneTree);
-    geneDistancesFromGeneTree(geneTree, 
-        mappings,
-        speciesStringToSpeciesId,
-        (median ? distanceMatrixVector[i++] : distanceMatrix),
-        distanceDenominator);
+    std::ifstream reader(family.startingGeneTree);
+    std::string geneTreeStr;
+    while (std::getline(reader, geneTreeStr)) {
+      PLLUnrootedTree geneTree(geneTreeStr, false);
+      geneDistancesFromGeneTree(geneTree, 
+          mappings,
+          speciesStringToSpeciesId,
+          (median ? distanceMatrixVector[i++] : distanceMatrix),
+          distanceDenominator);
+    }
   }
   if (median) {
     getMedianDistanceMatrix(distanceMatrixVector, distanceMatrix);

@@ -8,13 +8,13 @@
 
 
 
-class NFJ {
+class Cherry {
 public:
-  NFJ() = delete;
+  Cherry() = delete;
 
   /**
    *
    */
-  static std::unique_ptr<PLLRootedTree> geneTreeNFJ(const Families &families);
+  static std::unique_ptr<PLLRootedTree> geneTreeCherry(const Families &families);
 };
 
