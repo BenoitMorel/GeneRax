@@ -21,10 +21,21 @@ void LibpllParsers::labelRootedTree(pll_rtree_t *tree)
 {
   assert(tree);
   unsigned int index = 0;
+  std::unordered_set<std::string> existingLabels;
+  for (unsigned int i = 0; i < tree->tip_count + tree->inner_count; ++i) {
+    auto label = tree->nodes[i]->label;
+    if (label) {
+      existingLabels.insert(label);
+    }
+  }
   for (unsigned int i = 0; i < tree->tip_count + tree->inner_count; ++i) {
     auto node = tree->nodes[i];
     if (!node->label) {
-      auto label = std::string("species_" + std::to_string(index++));
+      auto label = std::string("node_" + std::to_string(index++));
+      while (existingLabels.find(label) != existingLabels.end()) {
+        // make sure we use a label that do not already exists
+        label = std::string("node_" + std::to_string(index++));
+      }
       node->label = static_cast<char*>(malloc(sizeof(char) * (label.size() + 1)));
       std::strcpy(node->label, label.c_str());
     }
