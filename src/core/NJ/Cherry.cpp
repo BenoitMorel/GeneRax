@@ -15,6 +15,7 @@ typedef std::unordered_set<int> GeneIdsSet;
 typedef std::unordered_map<int, GeneIdsSet> SpeciesIdToGeneIds;
 
 
+static const bool CHERRY_DBG = false;
 
 struct CherryNode {
   bool isLeaf; 
@@ -132,9 +133,29 @@ void CherryTree::relabelNodesWithSpeciesId(unsigned int speciesId,
   _speciesIdToGeneIds.erase(speciesId);
 }
 
-void CherryTree::updateNeigborMatrix(MatrixDouble &neighborMatrix,
-      MatrixDouble &denominatorMatrix)
+void CherryTree::updateNeigborMatrix(MatrixDouble &neighborMatrixToUpdate,
+      MatrixDouble &denominatorMatrixToUpdate)
 {
+  MatrixDouble *neighborMatrix = &neighborMatrixToUpdate;
+  MatrixDouble *denominatorMatrix = &denominatorMatrixToUpdate;
+  
+  
+  /*
+  // settings
+  const bool perFamilyWeight = false; 
+  
+  // init from settings
+  auto speciesNumber = neighborMatrixToUpdate.size();
+  bool intermediateMatrices = perFamilyWeight;
+  bool deleteMatrices = false;
+  if (intermediateMatrices) {
+    VectorDouble zeros(speciesNumber);
+    neighborMatrix = new MatrixDouble(speciesNumber, zeros);
+    denominatorMatrix = new MatrixDouble(speciesNumber, zeros);
+    deleteMatrices = true;
+  }
+  */
+
   for (auto &p: _speciesIdToGeneIds) {
     auto speciesId = p.first;
     // First fill neighborMatrix
@@ -148,7 +169,7 @@ void CherryTree::updateNeigborMatrix(MatrixDouble &neighborMatrix,
       auto spid1 = _nodes[geneId].speciesId;
       auto spid2 = _nodes[neighborGeneId].speciesId;
       assert(spid1 == speciesId);
-      neighborMatrix[spid1][spid2] += 1.0;
+      (*neighborMatrix)[spid1][spid2] += 1.0;
     }
     // Then fill denominatorMatrix with
     // the maximum possible number of neighbors
@@ -156,10 +177,32 @@ void CherryTree::updateNeigborMatrix(MatrixDouble &neighborMatrix,
     for (auto &p2: _speciesIdToGeneIds) {
       auto spid2 = p2.first; 
       const auto &geneIdSet2 = p2.second;
-      denominatorMatrix[speciesId][spid2] += 
-        geneIdSet.size() +  geneIdSet2.size();
+      (*denominatorMatrix)[speciesId][spid2] += 
+        //geneIdSet.size();
+        //geneIdSet2.size();
+        //geneIdSet.size() +  geneIdSet2.size();
+        std::min(geneIdSet.size(),  geneIdSet2.size());
     }
   }
+ 
+  /*
+  // update according to settings
+  if (perFamilyWeight) {
+    for (unsigned int i = 0; i < speciesNumber; ++i) {
+      for (unsigned int j = 0; j < speciesNumber; ++j) {
+        if ((*denominatorMatrix)[i][j] != 0.0) {
+          neighborMatrixToUpdate[i][j] += (*neighborMatrix)[i][j] / (*denominatorMatrix)[i][j];
+          neighborMatrixToUpdate[i][j] += 1.0;
+        }
+      }
+    }
+  }
+
+  if (deleteMatrices) {
+    delete denominatorMatrix;
+    delete neighborMatrix;
+  }  
+  */
 }
   
 int CherryTree::coveredSpeciesNumber()
@@ -290,8 +333,6 @@ std::string CherryTree::recursiveToString(int nodeId, int sonToSkipId)
 static std::vector<int> computePLLIdToId(PLLUnrootedTree &pllTree)
 {
   int currentId = 0;
-  Logger::info << "PLL Tree nodes number: " << pllTree.getNodesNumber() << std::endl;
-  Logger::info << "Leaves number: " << pllTree.getLeavesNumber() << std::endl;
   int maxPllNodeId = pllTree.getLeavesNumber()
     + pllTree.getInnerNodesNumber() * 3;
   std::vector<int> pllIdToId(maxPllNodeId, -1);
@@ -353,7 +394,6 @@ static void filterGeneTrees(std::vector<std::shared_ptr<CherryTree> > &geneTrees
     if (geneTree->getLeavesNumber() >= 4 && geneTree->coveredSpeciesNumber() > 2 ) {
       geneTrees.push_back(geneTree);
     } else {
-      //Logger::info << geneTree->getLeavesNumber() << " " << geneTree->coveredSpeciesNumber() << std::endl;
     }
   }
 }
@@ -390,6 +430,7 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
   for (unsigned int i = 0; i < speciesNumber; ++i) {
     remainingSpeciesIds.insert(i);
   }
+  filterGeneTrees(geneTrees);
   for (auto geneTree: geneTrees) {
     geneTree->mergeNodesWithSameSpeciesId();
   }
@@ -398,27 +439,38 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
     Logger::info << std::endl;
     Logger::info << "*******************************" << std::endl;
     Logger::info << "Remaining species: " << remainingSpeciesIds.size() << std::endl;
-    // filter out gene trees that do not hold information
+    if (CHERRY_DBG) {
+      Logger::info << "Species mappings:" << std::endl;
+      for (auto spid: remainingSpeciesIds) {
+        Logger::info << "  " << spid << "\t" << speciesIdToStr[spid] << std::endl;
+      }
+    }
+      // filter out gene trees that do not hold information
     filterGeneTrees(geneTrees);
     // merge identical tips in cherries
     // compute the frequency matrix
+    if (CHERRY_DBG) {
+      for (auto &tree: geneTrees) {
+        Logger::info << "Tree " <<  tree->toString() << std::endl;
+      }
+    }
     VectorDouble zeros(speciesNumber);
     MatrixDouble neighborMatrix(speciesNumber, zeros);
     MatrixDouble denominatorMatrix(speciesNumber, zeros);
     for (auto geneTree: geneTrees) {
       geneTree->updateNeigborMatrix(neighborMatrix, denominatorMatrix);
     }
-    /*
-    Logger::info << "Neighbors: " << std::endl;
-    printMatrix(neighborMatrix);
-    Logger::info << "Denominators: " << std::endl;
-    printMatrix(denominatorMatrix);
-    */
+    if (CHERRY_DBG) {
+      Logger::info << "Neighbors: " << std::endl;
+      printMatrix(neighborMatrix);
+      Logger::info << "Denominators: " << std::endl;
+      printMatrix(denominatorMatrix);
+    }
     divideMatrix(neighborMatrix, denominatorMatrix);
-    /*
-    Logger::info << "Frequencies: " << std::endl;
-    printMatrix(neighborMatrix);
-    */
+    if (CHERRY_DBG) {
+      Logger::info << "Frequencies: " << std::endl;
+      printMatrix(neighborMatrix);
+    }
     // compute the two species to join, and join them
     auto bestPairSpecies = getMaxInMatrix(neighborMatrix);
     std::string speciesStr1 = speciesIdToStr[bestPairSpecies.first];
