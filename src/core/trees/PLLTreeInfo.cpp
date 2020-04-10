@@ -3,6 +3,7 @@
 #include <sstream>
 #include <fstream>
 #include <IO/Logger.hpp>
+#include <maths/Random.hpp>
 
 extern "C" {
   #include <pllmod_common.h>
@@ -37,10 +38,9 @@ PLLTreeInfo::PLLTreeInfo(const std::string &newickStrOrFile,
     bool isNewickAFile,
     const std::string& alignmentFilename,
     const std::string &modelStrOrFile) :
-  _treeinfo(nullptr, treeinfoDestroy)
+  _treeinfo(nullptr, treeinfoDestroy),
+  _model(LibpllParsers::getModel(modelStrOrFile))
 {
- 
-  buildModel(modelStrOrFile);
   PLLSequencePtrs sequences;
   unsigned int *patternWeights = nullptr;
   LibpllParsers::parseMSA(alignmentFilename, _model->charmap(), sequences, patternWeights);
@@ -74,7 +74,7 @@ void PLLTreeInfo::buildTree(const std::string &newickStrOrFile,
     for (const auto &seq: sequences) {
       labels.push_back(seq->label);
     }
-    unsigned int seed = static_cast<unsigned int>(rand());
+    unsigned int seed = static_cast<unsigned int>(Random::getInt());
     _utree = std::unique_ptr<PLLUnrootedTree>(new PLLUnrootedTree(labels, seed));
   } else {
     _utree = std::unique_ptr<PLLUnrootedTree>(new PLLUnrootedTree(newickStrOrFile, isNewickAFile));

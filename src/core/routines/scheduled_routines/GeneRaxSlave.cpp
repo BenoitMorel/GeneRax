@@ -5,7 +5,7 @@
 #include <IO/LibpllParsers.hpp>
 #include <algorithm>
 #include <limits>
-#include <trees/PerCoreGeneTrees.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
 #include <optimizers/DTLOptimizer.hpp>
 #include <maths/Parameters.hpp>
 #include <trees/JointTree.hpp>
@@ -14,7 +14,7 @@
 #include <IO/ParallelOfstream.hpp>
 #include <../../ext/MPIScheduler/src/mpischeduler.hpp>
 #include <sstream>
-#include <routines/RaxmlSlave.hpp>
+#include <routines/scheduled_routines/RaxmlSlave.hpp>
 
 static void getTreeStrings(const std::string &filename, std::vector<std::string> &treeStrings) 
 {

@@ -15,6 +15,7 @@ extern "C" {
 #include <vector>
 #include <unordered_set>
 #include <util/CArrayRange.hpp>
+#include <maths/Random.hpp>
 
 
 /**
@@ -32,7 +33,7 @@ public:
   /**
    *  Construct a random tree from a set of taxa labels
    */
-  PLLUnrootedTree(const std::vector<const char*> &labels, unsigned int seed = static_cast<unsigned int>(rand()));
+  PLLUnrootedTree(const std::vector<const char*> &labels, unsigned int seed = static_cast<unsigned int>(Random::getInt()));
 
   /**
    * Forbid copy
@@ -79,6 +80,13 @@ public:
   pll_utree_t *getRawPtr() {return _tree.get();}
   
   CArrayRange<pll_unode_t*> getLeaves();
+
+  /*
+   *  C++11 range for accessing nodes. 
+   *  Only includes one of the three pll internal element per node
+   *  in the tree
+   */
+  CArrayRange<pll_unode_t*> getNodes();
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;
 };

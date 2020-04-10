@@ -8,7 +8,7 @@
 JSArguments::JSArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
-  strategy(Strategy::EVAL),
+  strategy(GeneSearchStrategy::EVAL),
   reconciliationModel(RecModel::UndatedDL),
   reconciliationOpt(RecOpt::Simplex),
   libpllModel("GTR"),

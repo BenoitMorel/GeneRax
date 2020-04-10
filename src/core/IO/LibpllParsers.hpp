@@ -5,7 +5,9 @@
 #include <string>
 #include <IO/FamiliesFileParser.hpp>
 #include <unordered_set>
+#include <unordered_map>
 #include <memory>
+#include <IO/Model.hpp>
 
 typedef struct pll_utree_s pll_utree_t;
 typedef struct pll_unode_s pll_unode_t;
@@ -13,7 +15,6 @@ typedef struct pll_rtree_s pll_rtree_t;
 typedef struct pll_rnode_s pll_rnode_t;
 typedef unsigned long long pll_state_t;
 
-class Model;
 struct PLLSequence {
   PLLSequence(char *label_, char *seq_, unsigned int len_):
     label(label_),
@@ -29,6 +30,7 @@ struct PLLSequence {
 };
 using PLLSequencePtr = std::unique_ptr<PLLSequence>;
 using PLLSequencePtrs = std::vector<PLLSequencePtr>;
+using SuperMatrix = std::unordered_map<std::string, std::string>;
 
 class LibpllException: public std::exception {
 public:
@@ -78,7 +80,9 @@ public:
   static void getRtreeNewickString(const pll_rtree_t *rtree, std::string &newick);
   static void getRnodeNewickString(const pll_rnode_t *rnode, std::string &newick);
   static void getRtreeHierarchicalString(const pll_rtree_t *rtree, std::string &newick);
-
+  static std::unique_ptr<Model> getModel(const std::string &modelStrOrFilename);
+  static void writeSuperMatrixFasta(const SuperMatrix &superMatrix,
+      const std::string &outputFile);
 private:
   /**
    *  parse sequences and pattern weights from fasta file
@@ -104,7 +108,6 @@ private:
     PLLSequencePtrs &sequences,
     unsigned int *&weights);
   
-
 
 
 };

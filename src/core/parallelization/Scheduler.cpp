@@ -5,6 +5,7 @@
 #include <parallelization/ParallelContext.hpp>
 #include <IO/FileSystem.hpp>
 #include <cassert>
+#include <maths/Random.hpp>
 
 void Scheduler::schedule(const std::string &outputDir, 
     const std::string &commandFile, 
@@ -12,7 +13,7 @@ void Scheduler::schedule(const std::string &outputDir,
     const std::string &execPath)
 {
   assert(ParallelContext::isRandConsistent());
-  auto consistentSeed = rand();
+  auto consistentSeed = Random::getInt();
   std::vector<char *> argv;
   std::string exec = "mpi-scheduler";
   std::string implem = splitImplem ? "--split-scheduler" : "--fork-scheduler";
@@ -40,7 +41,7 @@ void Scheduler::schedule(const std::string &outputDir,
     std::cout.clear();
   }
   // seed accross ranks might not be consistent anymore
-  srand(consistentSeed);
+  Random::setSeed(consistentSeed);
   ParallelContext::barrier(); 
 }
 

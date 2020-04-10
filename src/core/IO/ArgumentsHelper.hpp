@@ -13,50 +13,50 @@ class ArgumentsHelper {
 public:
   ArgumentsHelper() = delete;
 
-  static std::string strategyToStr(Strategy s)
+  static std::string strategyToStr(GeneSearchStrategy s)
   {
     switch(s) {
-    case Strategy::SPR:
+    case GeneSearchStrategy::SPR:
       return "SPR";
-    case Strategy::EVAL:
+    case GeneSearchStrategy::EVAL:
       return "EVAL";
     }
     exit(41);
   }
 
-  static Strategy strToStrategy(const std::string &str) 
+  static GeneSearchStrategy strToStrategy(const std::string &str) 
   {
     if (str == "SPR") {
-      return Strategy::SPR;
+      return GeneSearchStrategy::SPR;
     }  else if (str == "EVAL") {
-      return Strategy::EVAL;
+      return GeneSearchStrategy::EVAL;
     } else {
       Logger::info << "Invalid strategy " << str << std::endl;
       exit(41);
     }
   }
   
-  static std::string speciesStrategyToStr(SpeciesStrategy s)
+  static std::string speciesStrategyToStr(SpeciesSearchStrategy s)
   {
     switch(s) {
-    case SpeciesStrategy::SPR:
+    case SpeciesSearchStrategy::SPR:
       return "SPR";
-    case SpeciesStrategy::TRANSFERS:
+    case SpeciesSearchStrategy::TRANSFERS:
       return "EVAL";
-    case SpeciesStrategy::HYBRID:
+    case SpeciesSearchStrategy::HYBRID:
       return "HYBRID";
     }
     exit(41);
   }
 
-  static SpeciesStrategy strToSpeciesStrategy(const std::string &str) 
+  static SpeciesSearchStrategy strToSpeciesSearchStrategy(const std::string &str) 
   {
     if (str == "SPR") {
-      return SpeciesStrategy::SPR;
+      return SpeciesSearchStrategy::SPR;
     }  else if (str == "TRANSFERS") {
-      return SpeciesStrategy::TRANSFERS;
+      return SpeciesSearchStrategy::TRANSFERS;
     }  else if (str == "HYBRID") {
-      return SpeciesStrategy::HYBRID;
+      return SpeciesSearchStrategy::HYBRID;
     } else {
       Logger::info << "Invalid species strategy " << str << std::endl;
       exit(41);

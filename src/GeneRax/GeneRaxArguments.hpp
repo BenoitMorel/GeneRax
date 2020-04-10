@@ -20,10 +20,9 @@ public:
    std::string execPath;
    std::string families;
    std::string speciesTree;
-   Strategy strategy;
-   SpeciesStrategy speciesStrategy;
+   GeneSearchStrategy strategy;
+   SpeciesSearchStrategy speciesStrategy;
    std::string reconciliationModelStr;
-   RecOpt reconciliationOpt;
    std::string output;
    bool perFamilyDTLRates;
    bool rootedGeneTree;
@@ -38,13 +37,16 @@ public:
    double transferRate;
    bool optimizeGeneTrees;
    bool reconcile;
+   bool buildSuperMatrix;
    unsigned int reconciliationSamples;
    unsigned int maxSPRRadius;
    double recWeight;
    int seed;
+   bool filterFamilies;
    std::string exec;
-   
+
    // species tree search
+   bool rerootSpeciesTree;
    bool optimizeSpeciesTree;
    unsigned int speciesFastRadius;
    unsigned int speciesSlowRadius;

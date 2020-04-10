@@ -2,7 +2,7 @@
 
 #include <likelihoods/ReconciliationEvaluation.hpp>
 #include <IO/LibpllParsers.hpp>
-#include <families/Families.hpp>
+#include <IO/Families.hpp>
 #include <string>
 #include <util/enums.hpp>
 #include <memory>

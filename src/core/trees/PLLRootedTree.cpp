@@ -4,6 +4,7 @@
 #include <IO/Logger.hpp>
 #include <set>
 #include <cstring>
+#include <maths/Random.hpp>
 
 
 void PLLRootedTree::setSon(pll_rnode_t *parent, pll_rnode_t *newSon, bool left)
@@ -170,7 +171,7 @@ pll_rtree_t *PLLRootedTree::buildRandomTree(const std::unordered_set<std::string
       root = createNode(label, allNodes);
       continue;
     }
-    auto brother = allNodes[static_cast<size_t>(rand()) % allNodes.size()];
+    auto brother = allNodes[static_cast<size_t>(Random::getInt()) % allNodes.size()];
     auto parent = createNode("", allNodes);
     auto node = createNode(label, allNodes);
     auto grandpa = brother->parent;
@@ -179,7 +180,7 @@ pll_rtree_t *PLLRootedTree::buildRandomTree(const std::unordered_set<std::string
     } else {
       root = parent;
     }
-    bool randBool = static_cast<bool>(rand() % 2);
+    bool randBool = static_cast<bool>(Random::getInt() % 2);
     setSon(parent, brother, randBool);
     setSon(parent, node, !randBool);
   }

@@ -16,7 +16,7 @@ void Scenario::addEvent(ReconciliationEventType type,
     unsigned int destSpeciesNode) 
 {
   
-  addTransfer(type, geneNode, speciesNode, INVALID, destSpeciesNode);
+  addTransfer(type, geneNode, speciesNode, INVALID_NODE_ID, destSpeciesNode);
 }
   
 void Scenario::addTransfer(ReconciliationEventType type, 
@@ -132,6 +132,195 @@ void Scenario::saveTransfers(const std::string &filename, bool masterRankOnly)
     }
   }
 }
+  
+void Scenario::saveLargestOrthoGroup(std::string &filename, bool masterRankOnly) const
+{
+  ParallelOfstream os(filename, masterRankOnly);
+  pll_unode_t virtualRoot;
+  virtualRoot.next = _geneRoot;
+  virtualRoot.node_index = _virtualRootIndex;
+  virtualRoot.label = nullptr;
+  virtualRoot.length = 0.0;
+  std::unique_ptr<OrthoGroup> orthoGroup(getLargestOrthoGroupRec(&virtualRoot, true));
+  for (auto value: *orthoGroup) {
+    os << value << std::endl;
+  }
+  os << "-" << std::endl;
+
+}
+
+void Scenario::saveAllOrthoGroups(std::string &filename, bool masterRankOnly) const
+{
+  ParallelOfstream os(filename, masterRankOnly);
+  pll_unode_t virtualRoot;
+  virtualRoot.next = _geneRoot;
+  virtualRoot.node_index = _virtualRootIndex;
+  virtualRoot.label = nullptr;
+  virtualRoot.length = 0.0;
+  OrthoGroupPtr currentOrthoGroup = std::make_shared<OrthoGroup>();
+  OrthoGroups orthoGroups;
+  getAllOrthoGroupRec(&virtualRoot, orthoGroups, currentOrthoGroup, true);
+  orthoGroups.push_back(currentOrthoGroup);
+  for (auto orthoGroup: orthoGroups) {
+    for (auto value: *orthoGroup) {
+      os << value << std::endl;
+    }
+    os << "-" << std::endl;
+  }
+
+}
+
+
+
+OrthoGroup *Scenario::getLargestOrthoGroupRec(pll_unode_t *geneNode, bool isVirtualRoot) const
+{
+  auto &events = _geneIdToEvents[geneNode->node_index];
+  for (auto &event: events) {
+    if (event.type == ReconciliationEventType::EVENT_TL) {
+      return new OrthoGroup();
+    }
+  }
+  if (geneNode->next == nullptr) {
+    auto res = new OrthoGroup();
+    res->insert(std::string(geneNode->label));
+    return res;
+  } else {
+    auto left = geneNode->next->back;
+    auto right = geneNode->next->next->back;
+    if (isVirtualRoot) {
+      left = geneNode->next;
+      right = geneNode->next->back;
+    }
+    auto leftOrthoGroup = getLargestOrthoGroupRec(left, false);
+    auto rightOrthoGroup = getLargestOrthoGroupRec(right, false);
+    auto &event = events.back();
+    switch (event.type) {
+    case ReconciliationEventType::EVENT_S:
+      // keep both groups
+      for (auto &v: *leftOrthoGroup) {
+        rightOrthoGroup->insert(v);
+      }
+      delete leftOrthoGroup;
+      return rightOrthoGroup;
+    case ReconciliationEventType::EVENT_T:
+      // only keep the non transfered gene
+      if (event.transferedGeneNode == left->node_index) {
+        delete leftOrthoGroup;
+        return  rightOrthoGroup;
+      } else if (event.transferedGeneNode == right->node_index) {
+        delete rightOrthoGroup;
+        return leftOrthoGroup;
+      } else {
+        assert(false);
+      }
+    case ReconciliationEventType::EVENT_TL:
+    case ReconciliationEventType::EVENT_None:
+    case ReconciliationEventType::EVENT_SL:
+    case ReconciliationEventType::EVENT_L:
+      // we already handled these cases
+      // or they should not be the last event
+      // attached to this gene node
+      assert(false);
+      break;
+    case ReconciliationEventType::EVENT_Invalid:
+      delete leftOrthoGroup;
+      delete rightOrthoGroup;
+      break;
+    case ReconciliationEventType::EVENT_D:
+      // keep the bigger group!
+      if (leftOrthoGroup->size() < rightOrthoGroup->size()) {
+        std::swap(leftOrthoGroup, rightOrthoGroup);
+      }
+      delete rightOrthoGroup;
+      return leftOrthoGroup;
+    }
+    return new OrthoGroup();
+  }
+}
+
+static void appendOrtho(OrthoGroupPtr &orthoGroups, 
+    const OrthoGroupPtr &orthoGroupsToAppend)
+{
+  orthoGroups->insert(orthoGroupsToAppend->begin(),
+      orthoGroupsToAppend->end());
+}
+
+void Scenario::getAllOrthoGroupRec(pll_unode_t *geneNode,
+      OrthoGroups &orthoGroups,
+      OrthoGroupPtr &currentOrthoGroup,
+      bool isVirtualRoot) const
+{
+  auto &events = _geneIdToEvents[geneNode->node_index];
+  bool underTL = false;
+  for (auto &event: events) {
+    if (event.type == ReconciliationEventType::EVENT_TL) {
+      underTL = true;
+    }
+  }
+  if (geneNode->next == nullptr) {
+    currentOrthoGroup->insert(std::string(geneNode->label));
+  } else {
+    auto left = geneNode->next->back;
+    auto right = geneNode->next->next->back;
+    if (isVirtualRoot) {
+      left = geneNode->next;
+      right = geneNode->next->back;
+    }
+    OrthoGroupPtr leftOrthoGroup = std::make_shared<OrthoGroup>();
+    OrthoGroupPtr rightOrthoGroup = std::make_shared<OrthoGroup>();
+    getAllOrthoGroupRec(left, orthoGroups, leftOrthoGroup, false);
+    getAllOrthoGroupRec(right, orthoGroups, rightOrthoGroup, false);
+    auto &event = events.back();
+    switch (event.type) {
+    case ReconciliationEventType::EVENT_S:
+      // merge both groups
+      appendOrtho(currentOrthoGroup, leftOrthoGroup);
+      appendOrtho(currentOrthoGroup, rightOrthoGroup);
+      break;
+    case ReconciliationEventType::EVENT_T:
+      // save the orthoGroup from the transfered gene,
+      // and keep filling the orthoGroup on the non transfered gene
+      if (event.transferedGeneNode == left->node_index) {
+        appendOrtho(currentOrthoGroup, rightOrthoGroup);
+        orthoGroups.push_back(leftOrthoGroup);
+      } else if (event.transferedGeneNode == right->node_index) {
+        appendOrtho(currentOrthoGroup, leftOrthoGroup);
+        orthoGroups.push_back(rightOrthoGroup);
+      } else {
+        assert(false);
+      }
+      break;
+    case ReconciliationEventType::EVENT_TL:
+    case ReconciliationEventType::EVENT_None:
+    case ReconciliationEventType::EVENT_SL:
+    case ReconciliationEventType::EVENT_L:
+      // we already handled these cases
+      // or they should not be the last event
+      // attached to this gene node
+      assert(false);
+      break;
+    case ReconciliationEventType::EVENT_Invalid:
+      orthoGroups.push_back(leftOrthoGroup);
+      orthoGroups.push_back(rightOrthoGroup);
+      break;
+    case ReconciliationEventType::EVENT_D:
+      // save the biggest group and continue working on the other
+      if (leftOrthoGroup->size() < rightOrthoGroup->size()) {
+        std::swap(leftOrthoGroup, rightOrthoGroup);
+      }
+      orthoGroups.push_back(rightOrthoGroup);
+      appendOrtho(currentOrthoGroup, leftOrthoGroup); 
+      break;
+    }
+  }
+  if (underTL) {
+    // we got transfered: separate the current orthogroup
+    orthoGroups.push_back(currentOrthoGroup);
+    currentOrthoGroup->clear();
+  }
+}
+
+
 void Scenario::initBlackList(unsigned int genesNumber, unsigned int speciesNumber)
 {
   std::vector<int>  blackListAux(speciesNumber, false);

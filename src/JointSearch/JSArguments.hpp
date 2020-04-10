@@ -20,7 +20,7 @@ public:
    std::string alignment;
    std::string speciesTree;
    std::string geneSpeciesMap;
-   Strategy strategy;
+   GeneSearchStrategy strategy;
    RecModel reconciliationModel;
    RecOpt reconciliationOpt;
    std::string libpllModel;

@@ -8,10 +8,9 @@
 GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
-  strategy(Strategy::SPR),
-  speciesStrategy(SpeciesStrategy::SPR),
+  strategy(GeneSearchStrategy::SPR),
+  speciesStrategy(SpeciesSearchStrategy::SPR),
   reconciliationModelStr("UndatedDTL"),
-  reconciliationOpt(RecOpt::Grid),
   output("GeneRax"),
   perFamilyDTLRates(false),
   rootedGeneTree(true),
@@ -26,11 +25,14 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   transferRate(0.0),
   optimizeGeneTrees(true),
   reconcile(false),
+  buildSuperMatrix(false),
   reconciliationSamples(0),
   maxSPRRadius(5),
   recWeight(1.0), 
   seed(123),
+  filterFamilies(true),
   exec(iargv[0]),
+  rerootSpeciesTree(false),
   optimizeSpeciesTree(false),
   speciesFastRadius(5),
   speciesSlowRadius(0),
@@ -55,15 +57,13 @@ void GeneRaxArguments::init() {
       speciesTree = std::string(argv[++i]);
     } else if (arg == "--strategy") {
       strategy = ArgumentsHelper::strToStrategy(std::string(argv[++i]));
-      if (strategy == Strategy::EVAL) {
+      if (strategy == GeneSearchStrategy::EVAL) {
         recRadius = maxSPRRadius = 0;
       }
     } else if (arg == "--species-strategy") {
-      speciesStrategy = ArgumentsHelper::strToSpeciesStrategy(std::string(argv[++i]));
+      speciesStrategy = ArgumentsHelper::strToSpeciesSearchStrategy(std::string(argv[++i]));
     } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModelStr = std::string(argv[++i]);
-    } else if (arg == "--rec-opt") {
-      reconciliationOpt = ArgumentsHelper::strToRecOpt(std::string(argv[++i]));
     } else if (arg == "-p" || arg == "--prefix") {
       output = std::string(argv[++i]);
     } else if (arg == "--per-family-rates") {
@@ -95,18 +95,25 @@ void GeneRaxArguments::init() {
       recWeight = atof(argv[++i]);
     } else if (arg == "--seed") {
       seed = atoi(argv[++i]);
+    } else if (arg == "--skip-family-filtering") {
+      filterFamilies = false;
     } else if (arg == "--species-fast-radius") {
       speciesFastRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--species-slow-radius") {
       speciesSlowRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--species-initial-samples") {
       speciesInitialFamiliesSubsamples = static_cast<unsigned int>(atoi(argv[++i]));
+    } else if (arg == "--reroot-species-tree") {
+      rerootSpeciesTree = true;
     } else if (arg == "--optimize-species-tree") {
       optimizeSpeciesTree = true;
     } else if (arg == "--do-not-optimize-gene-trees") {
       optimizeGeneTrees = false;
     } else if (arg == "--reconcile") {
       reconcile = true;
+    } else if (arg == "--build-supermatrix") {
+      reconcile = true;
+      buildSuperMatrix = true;
     } else if (arg == "--reconciliation-samples") {
       reconciliationSamples = static_cast<unsigned int>(atoi(argv[++i]));
     } else {
@@ -155,7 +162,7 @@ void GeneRaxArguments::checkInputs() {
     Logger::info << "Aborting." << std::endl;
     ParallelContext::abort(1);
   }
-  if (speciesTree.size() && speciesTree != "random" && speciesTree != "NJ" && speciesTree != "NJst") {
+  if (speciesTree.size() && speciesTree != "random" && speciesTree != "NJ" && speciesTree != "MiniNJ" && speciesTree != "Cherry") {
     assertFileExists(speciesTree);
   }
 }
@@ -166,7 +173,6 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "-s, --species-tree <SPECIES TREE>" << std::endl;
   Logger::info << "--strategy <STRATEGY>  {EVAL, SPR}" << std::endl;
   Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, Auto}" << std::endl;
-  Logger::info << "--rec-opt <reconciliationOpt>  {window, simplex}" << std::endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << std::endl;
   Logger::info << "--unrooted-gene-tree" << std::endl;
   Logger::info << "--support-threshold <threshold>" << std::endl;
@@ -201,7 +207,6 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "Species Strategy: " << ArgumentsHelper::speciesStrategyToStr(speciesStrategy) << std::endl;
   Logger::info << "Strategy: " << ArgumentsHelper::strategyToStr(strategy) << std::endl;
   Logger::info << "Reconciliation model: " << reconciliationModelStr << std::endl;
-  Logger::info << "Reconciliation opt: " << ArgumentsHelper::recOptToStr(reconciliationOpt) << std::endl;
   Logger::info << "DTL rates: "; 
   if (perSpeciesDTLRates) {
     Logger::info << "per species rates" << std::endl;
@@ -224,6 +229,9 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "Reconciliation likelihood weight: " << recWeight << std::endl;
   Logger::info << "Random seed: " << seed << std::endl;
   Logger::info << "Infer ML reconciliation: " << boolStr[reconcile] << std::endl;
+  if (buildSuperMatrix) {
+    Logger::info << "Infer supermatrix: " << boolStr[buildSuperMatrix] << std::endl;
+  }
   if (reconciliationSamples) {
     Logger::info << "Reconciliation samples to infer: " << reconciliationSamples << std::endl;
   }

@@ -6,7 +6,6 @@
 #include <cstring>
 #include <sstream>
 #include <stack>
-#include <IO/Model.hpp>
 #include <array>
 
 extern "C" {
@@ -22,10 +21,21 @@ void LibpllParsers::labelRootedTree(pll_rtree_t *tree)
 {
   assert(tree);
   unsigned int index = 0;
+  std::unordered_set<std::string> existingLabels;
+  for (unsigned int i = 0; i < tree->tip_count + tree->inner_count; ++i) {
+    auto label = tree->nodes[i]->label;
+    if (label) {
+      existingLabels.insert(label);
+    }
+  }
   for (unsigned int i = 0; i < tree->tip_count + tree->inner_count; ++i) {
     auto node = tree->nodes[i];
     if (!node->label) {
-      auto label = std::string("species_" + std::to_string(index++));
+      auto label = std::string("node_" + std::to_string(index++));
+      while (existingLabels.find(label) != existingLabels.end()) {
+        // make sure we use a label that do not already exists
+        label = std::string("node_" + std::to_string(index++));
+      }
       node->label = static_cast<char*>(malloc(sizeof(char) * (label.size() + 1)));
       std::strcpy(node->label, label.c_str());
     }
@@ -50,12 +60,14 @@ pll_utree_t *LibpllParsers::readNewickFromFile(const std::string &newickFilename
   if (!std::getline(is, line)) {
     throw LibpllException("Error while reading tree (file is empty) from file: ", newickFilename); 
   }
+  /*
   std::string temp;
   while (std::getline(is, temp)) {
     if (line.size() > 0) {
       throw LibpllException("Error: found more than one tree in the file: ", newickFilename);
     }
   }
+  */
   
   pll_utree_t *res = nullptr;
   try {
@@ -78,18 +90,32 @@ pll_utree_t *LibpllParsers::readNewickFromStr(const std::string &newickString)
 pll_rtree_t *LibpllParsers::readRootedFromFile(const std::string &newickFile)
 {
   auto tree = pll_rtree_parse_newick(newickFile.c_str());
-  if (!tree) {
-    throw LibpllException("Error while reading tree from file: ", newickFile);
+  if (tree) {
+    return tree;
   }
-  return tree;
+  try {
+    auto utree = readNewickFromFile(newickFile);
+    pll_utree_destroy(utree, 0);
+  } catch (...) {
+    throw LibpllException("Error while reading tree from file: ", newickFile); 
+  }
+  throw LibpllException("Error, the following tree should be rooted and is not:", newickFile.c_str());
+
 }
 
 pll_rtree_t *LibpllParsers::readRootedFromStr(const std::string &newickString)
 {
   auto rtree =  pll_rtree_parse_newick_string(newickString.c_str());
-  if (!rtree) 
+  if (rtree) {
+    return rtree;
+  }
+  try {
+    auto utree = readNewickFromStr(newickString);
+    pll_utree_destroy(utree, 0);
+  } catch (...) {
     throw LibpllException("Error while reading tree from std::string: ", newickString);
-  return rtree;
+  }
+  throw LibpllException("Error, trying to read an unrooted tree as rooted:", newickString.c_str());
 }
   
 void LibpllParsers::saveUtree(const pll_unode_t *utree, 
@@ -285,10 +311,8 @@ void LibpllParsers::parsePhylip(const char *phylipFile,
   }
   pll_msa_destroy(msa);
 }
-
-bool LibpllParsers::fillLabelsFromAlignment(const std::string &alignmentFilename, 
-    const std::string& modelStrOrFilename,  
-    std::unordered_set<std::string> &leaves)
+  
+std::unique_ptr<Model> LibpllParsers::getModel(const std::string &modelStrOrFilename)
 {
   std::string modelStr = modelStrOrFilename;
   std::ifstream f(modelStr);
@@ -296,12 +320,19 @@ bool LibpllParsers::fillLabelsFromAlignment(const std::string &alignmentFilename
     getline(f, modelStr);
     modelStr = modelStr.substr(0, modelStr.find(","));
   }
-  Model model(modelStr);
+  return std::make_unique<Model>(modelStr);
+}
+
+bool LibpllParsers::fillLabelsFromAlignment(const std::string &alignmentFilename, 
+    const std::string& modelStrOrFilename,  
+    std::unordered_set<std::string> &leaves)
+{
+  auto model = getModel(modelStrOrFilename);
   PLLSequencePtrs sequences;
   unsigned int *patternWeights = nullptr;
   bool res = true;
   try { 
-    LibpllParsers::parseMSA(alignmentFilename, model.charmap(), sequences, patternWeights);
+    LibpllParsers::parseMSA(alignmentFilename, model->charmap(), sequences, patternWeights);
   } catch (...) {
     res = false;
   }
@@ -331,5 +362,17 @@ bool LibpllParsers::areLabelsValid(std::unordered_set<std::string> &leaves)
     }
   }
   return true;
+}
+  
+void LibpllParsers::writeSuperMatrixFasta(const SuperMatrix &superMatrix,
+      const std::string &outputFile)
+{
+  std::ofstream os(outputFile);
+  for (auto &p: superMatrix) {
+    auto &label = p.first;
+    auto &sequence = p.second;
+    os << ">" << label << std::endl;
+    os << sequence << std::endl;
+  }
 }
   

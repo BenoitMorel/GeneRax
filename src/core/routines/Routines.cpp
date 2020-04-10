@@ -3,15 +3,73 @@
 #include <sstream>
 #include <IO/Logger.hpp>
 #include <IO/LibpllParsers.hpp>
-#include <trees/PerCoreGeneTrees.hpp>
 #include <trees/SpeciesTree.hpp>
 #include <optimizers/DTLOptimizer.hpp>
 #include <parallelization/ParallelContext.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
 #include <IO/FileSystem.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <trees/PLLRootedTree.hpp>
-#include <util/Scenario.hpp>
 #include <maths/ModelParameters.hpp>
+#include <routines/scheduled_routines/RaxmlMaster.hpp>
+#include <routines/scheduled_routines/GeneRaxMaster.hpp>
+#include <maths/Random.hpp>
+
+
+void Routines::runRaxmlOptimization(Families &families,
+    const std::string &output,
+    const std::string &execPath,
+    unsigned int iteration,
+    bool splitImplem,
+    long &sumElapsedSec)
+{
+  RaxmlMaster::runRaxmlOptimization(families, output,
+      execPath,
+      iteration,
+      splitImplem, 
+      sumElapsedSec);
+}
+  
+void Routines::optimizeGeneTrees(Families &families,
+    RecModel recModel,
+    Parameters &rates,
+    const std::string &output, 
+    const std::string &resultName, 
+    const std::string &execPath, 
+    const std::string &speciesTreePath,
+    RecOpt reconciliationOpt,
+    bool perFamilyDTLRates,
+    bool rootedGeneTree,
+    double supportThreshold,
+    double recWeight,
+    bool enableRec,
+    bool enableLibpll,
+    unsigned int sprRadius,
+    unsigned int iteration,
+    bool schedulerSplitImplem,
+    long &elapsed,
+    bool inPlace)
+{
+  GeneRaxMaster::optimizeGeneTrees(families,
+      recModel,
+      rates,
+      output,
+      resultName,
+      execPath,
+      speciesTreePath,
+      reconciliationOpt,
+      perFamilyDTLRates,
+      rootedGeneTree,
+      supportThreshold,
+      recWeight,
+      enableRec,
+      enableLibpll,
+      sprRadius,
+      iteration,
+      schedulerSplitImplem,
+      elapsed,
+      inPlace);
+}
 
 void Routines::optimizeRates(bool userDTLRates, 
     const std::string &speciesTreeFile,
@@ -73,7 +131,7 @@ void Routines::inferReconciliation(
     bool saveTransfersOnly
     )
 {
-  auto consistentSeed = rand();
+  auto consistentSeed = Random::getInt();
   ParallelContext::barrier();
   PLLRootedTree speciesTree(speciesTreeFile);
   PerCoreGeneTrees geneTrees(families);
@@ -87,6 +145,8 @@ void Routines::inferReconciliation(
       std::string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
       std::string speciesEventCountsFile = getSpeciesEventCountFile(outputDir, tree.name);
       std::string transfersFile = getTransfersFile(outputDir, tree.name);
+      std::string orthoGroupFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_orthogroups.txt");
+      std::string allOrthoGroupFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_orthogroups_all.txt");
       std::string treeWithEventsFileNHX = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
       std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, 
           tree.name + "_reconciliated.xml");
@@ -99,6 +159,8 @@ void Routines::inferReconciliation(
         scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
         scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, ReconciliationFormat::RecPhyloXML, false);
         scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
+        scenario.saveLargestOrthoGroup(orthoGroupFile, false);
+        scenario.saveAllOrthoGroups(allOrthoGroupFile, false);
       }
       scenario.saveTransfers(transfersFile, false);
     }
@@ -121,8 +183,82 @@ void Routines::inferReconciliation(
       }
     }
   }
-  srand(consistentSeed);
+  Random::setSeed(consistentSeed);
   ParallelContext::barrier();
+}
+  
+void Routines::computeSuperMatrixFromOrthoGroups(
+      const std::string &speciesTreeFile,
+      Families &families,
+      const std::string &outputDir,
+      const std::string &outputFasta,
+      bool largestOnly,
+      bool masterOnly)
+{
+  auto savedSeed = Random::getInt(); // for some reason, parsing
+                          // the Model calls rand, so we
+                          // have so ensure seed consistency
+  Random::setSeed(savedSeed);
+  if (masterOnly && ParallelContext::getRank() != 0) {
+    return;
+  }
+  PLLRootedTree speciesTree(speciesTreeFile);
+  const std::unordered_set<std::string> speciesSet(
+      speciesTree.getLabels(true));
+  std::string reconciliationsDir = FileSystem::joinPaths(outputDir, "reconciliations");
+  std::unordered_map<std::string, std::string> superMatrix;
+  for (auto &species: speciesSet) {
+    superMatrix.insert({species, std::string()});
+  }
+  unsigned int offset = 0;
+  unsigned int currentSize = 0;
+  std::ofstream partitionOs(outputFasta + ".part");
+  for (auto &family: families) {
+    std::string orthoGroupFile = FileSystem::joinPaths(reconciliationsDir, family.name);
+    if (largestOnly) {
+      orthoGroupFile +=  "_orthogroups.txt";
+    } else {
+      orthoGroupFile +=  "_orthogroups_all.txt";
+    }
+    OrthoGroups orthoGroups;
+    parseOrthoGroups(orthoGroupFile, orthoGroups);
+    for (auto &orthoGroup: orthoGroups) {
+      if (orthoGroup->size() < 4) {
+        continue;
+      }
+      auto model = LibpllParsers::getModel(family.libpllModel);
+      PLLSequencePtrs sequences;
+      unsigned int *weights = nullptr;
+      LibpllParsers::parseMSA(family.alignmentFile, 
+        model->charmap(),
+        sequences,
+        weights);
+      GeneSpeciesMapping mapping;
+      mapping.fill(family.mappingFile, family.startingGeneTree);
+      for (auto &sequence: sequences) {
+        std::string geneLabel(sequence->label);
+        if (orthoGroup->find(geneLabel) != orthoGroup->end()) {
+          // add the sequence to the supermatrix
+          superMatrix[mapping.getSpecies(geneLabel)] += std::string(sequence->seq);
+          offset = superMatrix[mapping.getSpecies(geneLabel)].size();
+          currentSize = sequence->len;
+        }
+      }
+      partitionOs << model->name() << ", " << family.name;
+      partitionOs << " = " << offset - currentSize + 1 << "-" << offset << std::endl;
+      std::string gaps(currentSize, '-');
+      for (auto &superPair: superMatrix) {
+        auto &superSequence = superPair.second;
+        if (superSequence.size() != offset) {
+          superSequence += gaps;
+          assert(superSequence.size() == offset);
+        }
+      }
+      free(weights);
+    }
+  }
+  LibpllParsers::writeSuperMatrixFasta(superMatrix, outputFasta);
+  Random::setSeed(savedSeed);
 }
 
 
@@ -130,7 +266,7 @@ bool Routines::createRandomTrees(const std::string &geneRaxOutputDir, Families &
 {
   std::string startingTreesDir = FileSystem::joinPaths(geneRaxOutputDir, "startingTrees");
   bool startingTreesDirCreated = false;
-  auto consistentSeed = rand();
+  auto consistentSeed = Random::getInt();
   for (auto &family: families) {
     if (family.startingGeneTree == "__random__") {
         if (!startingTreesDirCreated) {
@@ -144,7 +280,7 @@ bool Routines::createRandomTrees(const std::string &geneRaxOutputDir, Families &
         }
     }
   }
-  srand(consistentSeed);
+  Random::setSeed(consistentSeed);
   ParallelContext::barrier();
   return startingTreesDirCreated;
 }
@@ -232,11 +368,9 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     const std::string &outputDir)
 {
   int samples = 5;
-  Logger::timed << "Coucou inferReconciliation" << std::endl;
   inferReconciliation(speciesTreeFile, families, modelRates, outputDir, false, samples, true);
   
   SpeciesTree speciesTree(speciesTreeFile);
-  Logger::timed << "Coucou gather transfers" << std::endl;
   for (int i = 0; i < samples; ++i) {
     auto begin = ParallelContext::getBegin(families.size());
     auto end = ParallelContext::getEnd(families.size());
@@ -314,4 +448,20 @@ void Routines::buildEvaluations(PerCoreGeneTrees &geneTrees,
 }
 
 
+void Routines::parseOrthoGroups(const std::string &familyName,
+      OrthoGroups &orthoGroups)
+{
+  std::ifstream is(familyName);
+  std::string tmp;
+  OrthoGroupPtr currentOrthoGroup = std::make_shared<OrthoGroup>();
+  while (is >> tmp) {
+    if (tmp == std::string("-")) {
+      orthoGroups.push_back(currentOrthoGroup);
+      currentOrthoGroup = std::make_shared<OrthoGroup>();
+    } else {
+      currentOrthoGroup->insert(tmp);
+    }
+  }
+  //orthoGroups.push_back(currentOrthoGroup);
+}
 

@@ -4,6 +4,7 @@
 #include <vector>
 #include <IO/FamiliesFileParser.hpp>
 
+
 class RaxmlMaster {
 public:
   RaxmlMaster() = delete;
@@ -12,6 +13,5 @@ public:
     const std::string &execPath,
     unsigned int iteration,
     bool splitImplem,
-    long &sumElapsed);
-
+    long &sumElapsedSec);
 };

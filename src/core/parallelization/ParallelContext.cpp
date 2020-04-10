@@ -1,6 +1,9 @@
 #include "parallelization/ParallelContext.hpp"
 #include <algorithm>
 #include <cassert>
+#include <cmath>
+#include <IO/Logger.hpp>
+#include <maths/Random.hpp>
 
 std::ofstream ParallelContext::sink("/dev/null");
 bool ParallelContext::ownMPIContext(true);
@@ -37,11 +40,6 @@ void ParallelContext::init(void *commPtr)
 
 }
   
-ParallelException::~ParallelException() 
-{
-}
-
-
 void ParallelContext::finalize()
 {
   if (!_mpiEnabled) {
@@ -387,7 +385,7 @@ bool ParallelContext::allowSchedulerSplitImplementation()
 
 bool ParallelContext::isRandConsistent()
 {
-  return isIntEqual(rand());
+  return isIntEqual(Random::getInt());
 }
 
 bool ParallelContext::isIntEqual(int value)
@@ -397,6 +395,20 @@ bool ParallelContext::isIntEqual(int value)
   allGatherInt(value, rands);
   for (auto v: rands) {
     if (v != rands[0]) {
+      return false;
+    }
+  }
+#endif
+  return true;
+}
+
+bool ParallelContext::isDoubleEqual(double value)
+{
+#ifdef WITH_MPI
+  std::vector<double> rands(getSize());
+  allGatherDouble(value, rands);
+  for (auto v: rands) {
+    if (fabs(v - rands[0]) > 0.00000001) {
       return false;
     }
   }

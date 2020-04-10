@@ -74,8 +74,12 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
   double initialReconciliationLoglk = jointTree.computeReconciliationLoglk();
   double initialLibpllLoglk = jointTree.computeLibpllLoglk();
   double averageReconciliationDiff = 0;
-  assert(fabs(initialLoglk 
-        - (initialReconciliationLoglk + initialLibpllLoglk)) < 0.000000001);
+  double error = fabs(initialLoglk - 
+      (initialReconciliationLoglk + initialLibpllLoglk));
+  if (error > 0.01)
+  {
+    Logger::info << "WARNING: potential numerical issue in SearchUtils::findBestMove " << error << std::endl;
+  }
   auto begin = ParallelContext::getBegin(static_cast<unsigned int>(allMoves.size()));
   auto end = ParallelContext::getEnd(static_cast<unsigned int>(allMoves.size()));
   unsigned int bestRank = 0;
@@ -117,6 +121,7 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
   ParallelContext::getMax(bestLoglk, bestRank);
   ParallelContext::broadcastUInt(bestRank, bestMoveIndex);
   Logger::info << "best;; " << bestLoglk << " " << bestRank << std::endl;
+  jointTree.getReconciliationEvaluation().invalidateAllCLVs();
   return bestMoveIndex != static_cast<unsigned int>(-1);
 }
 

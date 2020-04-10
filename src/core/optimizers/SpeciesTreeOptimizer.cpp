@@ -2,7 +2,6 @@
 
 #include <optimizers/DTLOptimizer.hpp>
 #include <IO/FileSystem.hpp>
-#include <routines/GeneRaxMaster.hpp>
 #include <routines/Routines.hpp>
 #include <algorithm>
 #include <trees/TreeDuplicatesFinder.hpp>
@@ -51,7 +50,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     setGeneTreesFromFamilies(initialFamilies);
   }
   _modelRates = ModelParameters(startingRates, model, perFamilyRates, _geneTrees->getTrees().size());
-  _speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"), true);
+  //_speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"), true);
   _speciesTree->addListener(this);
   std::string subsamplesPath = FileSystem::joinPaths(_outputDir, "subsamples");
   FileSystem::mkdir(FileSystem::joinPaths(_outputDir, "sub_genes_opt"), true);
@@ -496,9 +495,11 @@ double SpeciesTreeOptimizer::optimizeDTLRates()
   return computeRecLikelihood();
 }
   
-void SpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
+std::string SpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
 {
-  saveCurrentSpeciesTreePath(FileSystem::joinPaths(_outputDir, name), masterRankOnly);
+  std::string res = FileSystem::joinPaths(_outputDir, name);
+  saveCurrentSpeciesTreePath(res, masterRankOnly);
+  return res;
 }
 
 void SpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly)
@@ -526,7 +527,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(unsigned int radius)
   }
   for (unsigned i = 0; i < iterationsNumber; ++i) {
     Logger::mute();
-    GeneRaxMaster::optimizeGeneTrees(_currentFamilies, 
+    Routines::optimizeGeneTrees(_currentFamilies, 
       _modelRates.model, rates.rates, _outputDir, resultName, 
       _execPath, speciesTree, recOpt, perFamilyDTLRates, rootedGeneTree, 
       _supportThreshold, recWeight, true, true, radius, _geneTreeIteration, 

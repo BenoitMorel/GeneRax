@@ -6,7 +6,8 @@
 #include <IO/GeneSpeciesMapping.hpp>
 #include <algorithm>
 #include <trees/PLLRootedTree.hpp>
-#include <trees/PerCoreGeneTrees.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
+#include <maths/Random.hpp>
 
 enum FamilyErrorCode {
   ERROR_OK = 0,
@@ -124,7 +125,7 @@ void Family::filterFamilies(Families &families, const std::string &speciesTreeFi
   ParallelContext::barrier();
   // at the end of this function, different ranks will have
   // a different rand state, so we save a seed
-  auto consistentSeed = rand(); 
+  auto consistentSeed = Random::getInt(); 
   Families copy = families;
   unsigned int initialFamilySize = static_cast<unsigned int>(copy.size());
   families.clear();
@@ -173,7 +174,7 @@ void Family::filterFamilies(Families &families, const std::string &speciesTreeFi
   if (speciesTree) {
     pll_rtree_destroy(speciesTree, 0);
   }
-  srand(consistentSeed);
+  Random::setSeed(consistentSeed);
 }
 
 
