@@ -8,6 +8,7 @@
 GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
+  speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
   strategy(GeneSearchStrategy::SPR),
   speciesStrategy(SpeciesSearchStrategy::SPR),
   reconciliationModelStr("UndatedDTL"),
@@ -55,6 +56,7 @@ void GeneRaxArguments::init() {
       families = std::string(argv[++i]);
     } else if (arg == "-s" || arg == "--species-tree") {
       speciesTree = std::string(argv[++i]);
+      speciesTreeAlgorithm = Enums::strToSpeciesTree(speciesTree);
     } else if (arg == "--strategy") {
       strategy = ArgumentsHelper::strToStrategy(std::string(argv[++i]));
       if (strategy == GeneSearchStrategy::EVAL) {
@@ -162,7 +164,7 @@ void GeneRaxArguments::checkInputs() {
     Logger::info << "Aborting." << std::endl;
     ParallelContext::abort(1);
   }
-  if (speciesTree.size() && speciesTree != "random" && speciesTree != "NJ" && speciesTree != "MiniNJ" && speciesTree != "Cherry") {
+  if (speciesTreeAlgorithm == SpeciesTreeAlgorithm::User) {
     assertFileExists(speciesTree);
   }
 }

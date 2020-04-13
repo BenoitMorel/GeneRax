@@ -24,29 +24,33 @@
 static void initStartingSpeciesTree(GeneRaxInstance &instance)
 {
   instance.speciesTree = FileSystem::joinPaths(instance.args.output, "starting_species_tree.newick");
-  if (instance.args.speciesTree == "random") {
+  switch (instance.args.speciesTreeAlgorithm) {
+  case SpeciesTreeAlgorithm::Random:
     Logger::timed << "Generating random starting species tree" << std::endl;
-    SpeciesTree speciesTree(instance.initialFamilies);
-    speciesTree.saveToFile(instance.speciesTree, true);
-  } else if (instance.args.speciesTree == "NJ") {
-    Logger::timed << "Generating NJ species tree" << std::endl;
+    SpeciesTree(instance.initialFamilies).saveToFile(instance.speciesTree, true);
+    break;
+  case SpeciesTreeAlgorithm::MiniNJ:
+    Logger::timed << "Generating MiniNJ species tree" << std::endl;
     if (ParallelContext::getRank() == 0) {
-      auto startingNJTree = MiniNJ::countProfileNJ(instance.initialFamilies); 
-      startingNJTree->save(instance.speciesTree);
+      auto miniNJSpeciesTree = MiniNJ::runMiniNJ(instance.initialFamilies); 
+      miniNJSpeciesTree->save(instance.speciesTree);
     }
-  } else if (instance.args.speciesTree == "MiniNJ") {
+    break;
+  case SpeciesTreeAlgorithm::NJst:
     Logger::timed << "Generating NJst species tree" << std::endl;
     if (ParallelContext::getRank() == 0) {
-      auto startingNJTree = MiniNJ::geneTreeNJ(instance.initialFamilies); 
-      startingNJTree->save(instance.speciesTree);
+      auto startingNJstTree = MiniNJ::runNJst(instance.initialFamilies); 
+      startingNJstTree->save(instance.speciesTree);
     }
-  } else if (instance.args.speciesTree == "Cherry") {
+    break;
+  case SpeciesTreeAlgorithm::Cherry:
     Logger::timed << "Generating Cherry species tree" << std::endl;
     if (ParallelContext::getRank() == 0) {
       auto startingCherryTree = Cherry::geneTreeCherry(instance.initialFamilies); 
       startingCherryTree->save(instance.speciesTree);
     }
-  } else {
+    break;
+  case SpeciesTreeAlgorithm::User:
     // check that we can read the species tree
     unsigned int canRead = 1;
     if (ParallelContext::getRank() == 0) {
@@ -64,6 +68,7 @@ static void initStartingSpeciesTree(GeneRaxInstance &instance)
     }
     // add labels to internal nodes
     LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
+    break;
   }
   ParallelContext::barrier();
   if (ParallelContext::getRank() == 0) {

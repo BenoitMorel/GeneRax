@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cassert>
-
+#include <string>
 
 /**
  *  Reconciliation models 
@@ -66,6 +66,14 @@ enum class PartialLikelihoodMode {
   NoPartial // always recompute all CLVs from scratch
 };
 
+enum class SpeciesTreeAlgorithm {
+  User = 0,
+  MiniNJ,
+  Cherry,
+  NJst,
+  Random
+};
+
 /**
  * Helper methods to work with the enums
  */
@@ -125,6 +133,20 @@ public:
     return false;
   }
 
+  static SpeciesTreeAlgorithm strToSpeciesTree(const std::string &str) 
+  {
+    if (str == std::string("MiniNJ")) {
+      return SpeciesTreeAlgorithm::MiniNJ;
+    } else if (str == std::string("NJst")) {
+      return SpeciesTreeAlgorithm::NJst;
+    } else if (str == std::string("Cherry")) {
+      return SpeciesTreeAlgorithm::Cherry;
+    } else if (str == std::string("Random")) {
+      return SpeciesTreeAlgorithm::Random;
+    } else {
+      return SpeciesTreeAlgorithm::User;
+    }
+  }
 };
 
 

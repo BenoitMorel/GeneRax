@@ -20,6 +20,7 @@ public:
    std::string execPath;
    std::string families;
    std::string speciesTree;
+   SpeciesTreeAlgorithm speciesTreeAlgorithm;
    GeneSearchStrategy strategy;
    SpeciesSearchStrategy speciesStrategy;
    std::string reconciliationModelStr;
