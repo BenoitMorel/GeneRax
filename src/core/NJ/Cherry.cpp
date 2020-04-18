@@ -177,10 +177,14 @@ void CherryTree::updateNeigborMatrix(MatrixDouble &neighborMatrixToUpdate,
     for (auto &p2: _speciesIdToGeneIds) {
       auto spid2 = p2.first; 
       const auto &geneIdSet2 = p2.second;
+      double small = std::min(geneIdSet.size(),  geneIdSet2.size());
+      double big = std::max(geneIdSet.size(),  geneIdSet2.size());
       (*denominatorMatrix)[speciesId][spid2] += 
         //geneIdSet.size();
         //geneIdSet2.size();
         //geneIdSet.size() +  geneIdSet2.size();
+        //std::min(geneIdSet.size(),  geneIdSet2.size());
+        2.0 * small / (small/big + 1.0);
         std::min(geneIdSet.size(),  geneIdSet2.size());
     }
   }
@@ -436,10 +440,10 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
   }
   // main loop of the algorithm
   for (unsigned int i = 0; i < speciesNumber - 2; ++i) {
-    Logger::info << std::endl;
-    Logger::info << "*******************************" << std::endl;
-    Logger::info << "Remaining species: " << remainingSpeciesIds.size() << std::endl;
     if (CHERRY_DBG) {
+      Logger::info << std::endl;
+      Logger::info << "*******************************" << std::endl;
+      Logger::info << "Remaining species: " << remainingSpeciesIds.size() << std::endl;
       Logger::info << "Species mappings:" << std::endl;
       for (auto spid: remainingSpeciesIds) {
         Logger::info << "  " << spid << "\t" << speciesIdToStr[spid] << std::endl;
@@ -475,9 +479,11 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
     auto bestPairSpecies = getMaxInMatrix(neighborMatrix);
     std::string speciesStr1 = speciesIdToStr[bestPairSpecies.first];
     std::string speciesStr2 = speciesIdToStr[bestPairSpecies.second];
-    Logger::info << "Best pair " << bestPairSpecies.first
-      << " " << bestPairSpecies.second << std::endl;
-    Logger::info << "Best pair " << speciesStr1 << " " << speciesStr2 << std::endl;
+    if (CHERRY_DBG) {
+      Logger::info << "Best pair " << bestPairSpecies.first
+        << " " << bestPairSpecies.second << std::endl;
+      Logger::info << "Best pair " << speciesStr1 << " " << speciesStr2 << std::endl;
+    }
     for (auto geneTree: geneTrees) {
       geneTree->relabelNodesWithSpeciesId(bestPairSpecies.second,
         bestPairSpecies.first);
