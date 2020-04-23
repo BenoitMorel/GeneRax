@@ -10,7 +10,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   argv(iargv),
   speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
   strategy(GeneSearchStrategy::SPR),
-  speciesStrategy(SpeciesSearchStrategy::SPR),
+  speciesStrategy(SpeciesSearchStrategy::HYBRID),
   reconciliationModelStr("UndatedDTL"),
   output("GeneRax"),
   perFamilyDTLRates(false),

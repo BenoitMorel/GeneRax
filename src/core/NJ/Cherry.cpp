@@ -180,12 +180,9 @@ void CherryTree::updateNeigborMatrix(MatrixDouble &neighborMatrixToUpdate,
       double small = std::min(geneIdSet.size(),  geneIdSet2.size());
       double big = std::max(geneIdSet.size(),  geneIdSet2.size());
       (*denominatorMatrix)[speciesId][spid2] += 
-        //geneIdSet.size();
-        //geneIdSet2.size();
-        //geneIdSet.size() +  geneIdSet2.size();
-        //std::min(geneIdSet.size(),  geneIdSet2.size());
-        2.0 * small / (small/big + 1.0);
-        std::min(geneIdSet.size(),  geneIdSet2.size());
+        2.0  / (1.0 / big + 1.0 / small);
+        
+      //std::min(geneIdSet.size(),  geneIdSet2.size());
     }
   }
  
