@@ -593,7 +593,7 @@ void SpeciesTreeOptimizer::newBestTreeCallback()
   
 void SpeciesTreeOptimizer::setGeneTreesFromFamilies(const Families &families)
 {
-  _geneTrees = std::make_unique<PerCoreGeneTrees>(families);
+  _geneTrees = std::make_unique<PerCoreGeneTrees>(families, true);
   //TreeDuplicatesFinder::findDuplicates(*_geneTrees);
   updateEvaluations();
 }

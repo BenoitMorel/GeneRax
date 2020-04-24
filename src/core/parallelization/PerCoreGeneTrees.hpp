@@ -32,7 +32,8 @@ public:
    *  from the description of the gene families.
    *  @param families families description
    */
-  PerCoreGeneTrees(const Families &families);
+  PerCoreGeneTrees(const Families &families, 
+      bool acceptMultipleTrees = false);
   /**
    * Create an instance with a unique gene tree, without 
    * accouting for parallelization.

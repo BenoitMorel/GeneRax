@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <numeric>
 #include <iostream>
+#include <sstream>
 
 template <typename T>
 std::vector<size_t> sort_indexes_descending(const std::vector<T> &v) {
@@ -39,7 +40,20 @@ static std::vector<size_t> getMyIndices(const std::vector<unsigned int> &treeSiz
   return myIndices;
 }
 
-PerCoreGeneTrees::PerCoreGeneTrees(const Families &families)
+static void splitLines(const std::string &input, 
+    std::vector<std::string> &output)
+{
+  std::stringstream ss(input);
+  std::string to;
+  while(std::getline(ss,to,'\n')){
+    if (to.size() > 2) {
+      output.push_back(to);
+    }
+  }
+}
+
+PerCoreGeneTrees::PerCoreGeneTrees(const Families &families,
+    bool acceptMultipleTrees)
 {
   auto treeSizes = LibpllParsers::parallelGetTreeSizes(families);
   auto myIndices = getMyIndices(treeSizes);
@@ -49,11 +63,22 @@ PerCoreGeneTrees::PerCoreGeneTrees(const Families &families)
   for (auto i: myIndices) {
     std::string geneTreeStr;
     FileSystem::getFileContent(families[i].startingGeneTree, geneTreeStr);
-    _geneTrees[index].name = families[i].name;
-    _geneTrees[index].mapping.fill(families[i].mappingFile, geneTreeStr);
-    _geneTrees[index].geneTree = new PLLUnrootedTree(families[i].startingGeneTree, true);
-    _geneTrees[index].ownTree = true;
-    index++;
+    std::vector<std::string> geneTreeStrVector;
+    splitLines(geneTreeStr, geneTreeStrVector);
+    if (acceptMultipleTrees) {
+      if (index == 0) {
+        _geneTrees.resize(myIndices.size() * geneTreeStrVector.size());
+      }
+    } else {
+      geneTreeStrVector.resize(1);
+    }
+    for (auto &currentGeneTreeStr: geneTreeStrVector) {
+      _geneTrees[index].name = families[i].name;
+      _geneTrees[index].mapping.fill(families[i].mappingFile, currentGeneTreeStr);
+      _geneTrees[index].geneTree = new PLLUnrootedTree(currentGeneTreeStr, false);
+      _geneTrees[index].ownTree = true;
+      index++;
+    }
   }
   ParallelContext::barrier();
 }
