@@ -58,6 +58,38 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   saveCurrentSpeciesTreeId();
 }
 
+void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
+      unsigned int sprRadius)
+{
+  switch (strategy) {
+  case SpeciesSearchStrategy::SPR:
+    for (unsigned int radius = 1; radius <= sprRadius; ++radius) {
+      optimizeDTLRates();
+      sprSearch(radius);
+      rootExhaustiveSearch(false);
+    }
+    break;
+  case SpeciesSearchStrategy::TRANSFERS:
+    for (unsigned int i = 0; i < 3; ++i) {
+      optimizeDTLRates();
+      transferSearch();
+    }
+    break;
+  case SpeciesSearchStrategy::HYBRID:
+    optimizeDTLRates();
+    double ll1 = transferSearch();
+    double ll2 = sprSearch(1);
+    if (fabs(ll1 - ll2) > 0.001) {
+      optimizeDTLRates();
+      ll1 = rootExhaustiveSearch(false);
+      ll2 = transferSearch();
+      ll1 = sprSearch(1);
+    }
+    optimizeDTLRates();
+    rootExhaustiveSearch(false);
+    break;
+  }
+}
 
 
 SpeciesTreeOptimizer::~SpeciesTreeOptimizer()
@@ -103,7 +135,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree,
   }
 }
 
-void SpeciesTreeOptimizer::rootExhaustiveSearch(bool doOptimizeGeneTrees)
+double SpeciesTreeOptimizer::rootExhaustiveSearch(bool doOptimizeGeneTrees)
 {
   //Logger::timed << getStepTag(!doOptimizeGeneTrees) << " Trying to re-root the species tree" << std::endl;
 
@@ -134,6 +166,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearch(bool doOptimizeGeneTrees)
   for (unsigned int i = 1; i < bestMovesHistory.size(); ++i) {
     SpeciesTreeOperator::changeRoot(*_speciesTree, bestMovesHistory[i]);
   }
+  return bestLL;
 }
 
 

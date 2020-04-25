@@ -394,8 +394,10 @@ static void filterGeneTrees(std::vector<std::shared_ptr<CherryTree> > &geneTrees
   for (auto geneTree: geneTreesCopy) {
     if (geneTree->getLeavesNumber() >= 4 && geneTree->coveredSpeciesNumber() > 2 ) {
       geneTrees.push_back(geneTree);
-    } else {
     }
+  }
+  if (CHERRY_DBG) {
+    Logger::info << "Number of gene trees after filtering: " << geneTrees.size() << std::endl;;
   }
 }
 
@@ -436,6 +438,9 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
     geneTree->mergeNodesWithSameSpeciesId();
   }
   // main loop of the algorithm
+  VectorDouble zeros(speciesNumber);
+  MatrixDouble neighborMatrix(speciesNumber, zeros);
+  MatrixDouble denominatorMatrix(speciesNumber, zeros);
   for (unsigned int i = 0; i < speciesNumber - 2; ++i) {
     if (CHERRY_DBG) {
       Logger::info << std::endl;
@@ -455,9 +460,9 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
         Logger::info << "Tree " <<  tree->toString() << std::endl;
       }
     }
-    VectorDouble zeros(speciesNumber);
-    MatrixDouble neighborMatrix(speciesNumber, zeros);
-    MatrixDouble denominatorMatrix(speciesNumber, zeros);
+    
+    neighborMatrix = MatrixDouble(speciesNumber, zeros);
+    denominatorMatrix = MatrixDouble(speciesNumber, zeros);
     for (auto geneTree: geneTrees) {
       geneTree->updateNeigborMatrix(neighborMatrix, denominatorMatrix);
     }
@@ -474,6 +479,23 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
     }
     // compute the two species to join, and join them
     auto bestPairSpecies = getMaxInMatrix(neighborMatrix);
+    
+    if (bestPairSpecies.first == bestPairSpecies.second) {
+      // edge case when we filtered out all gene trees
+      assert(geneTrees.size() == 0);
+      bestPairSpecies = {-1, -1};
+      for (auto speciesId: remainingSpeciesIds) {
+        if (bestPairSpecies.first == -1) {
+          bestPairSpecies.first = speciesId;
+          continue;
+        }
+        if (bestPairSpecies.second == -1) {
+          bestPairSpecies.second = speciesId;
+          break;
+        }
+      }
+      assert(bestPairSpecies.second != -1);
+    }
     std::string speciesStr1 = speciesIdToStr[bestPairSpecies.first];
     std::string speciesStr2 = speciesIdToStr[bestPairSpecies.second];
     if (CHERRY_DBG) {

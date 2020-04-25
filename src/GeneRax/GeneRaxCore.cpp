@@ -189,32 +189,9 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
     Logger::timed << "Start optimizing the species tree with fixed gene trees (on " 
       << instance.currentFamilies.size() << " families " << std::endl;
   }
-  switch (instance.args.speciesStrategy) {
-  case SpeciesSearchStrategy::SPR:
-    for (unsigned int radius = 1; radius <= instance.args.speciesFastRadius; ++radius) {
-      speciesTreeOptimizer.optimizeDTLRates();
-      speciesTreeOptimizer.sprSearch(radius);
-      speciesTreeOptimizer.rootExhaustiveSearch(false);
-      instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
-    }
-    break;
-  case SpeciesSearchStrategy::TRANSFERS:
-    for (unsigned int i = 0; i < 3; ++i) {
-      speciesTreeOptimizer.optimizeDTLRates();
-      speciesTreeOptimizer.transferSearch();
-      instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
-    }
-    break;
-  case SpeciesSearchStrategy::HYBRID:
-    for (unsigned int i = 0; i < 2; ++i) {
-      speciesTreeOptimizer.optimizeDTLRates();
-      speciesTreeOptimizer.transferSearch();
-      speciesTreeOptimizer.sprSearch(1);
-      speciesTreeOptimizer.rootExhaustiveSearch(false);
-      instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
-    }
-    break;
-  }
+  speciesTreeOptimizer.optimize(instance.args.speciesStrategy,
+      instance.args.speciesFastRadius);
+  instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
   instance.speciesTree = speciesTreeOptimizer.saveCurrentSpeciesTreeId();
   if (instance.args.speciesSlowRadius > 0) {
     Logger::info << std::endl;

@@ -66,10 +66,15 @@ public:
   SpeciesTreeOptimizer(SpeciesTreeOptimizer &&) = delete;
   SpeciesTreeOptimizer & operator = (SpeciesTreeOptimizer &&) = delete;
   virtual ~SpeciesTreeOptimizer(); 
-    
+   
+
+
   virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
-  void rootExhaustiveSearch(bool doOptimizeGeneTrees);
+  void optimize(SpeciesSearchStrategy strategy,
+      unsigned int sprRadius);
+  
+  double rootExhaustiveSearch(bool doOptimizeGeneTrees);
   double fastTransfersRound(MovesBlackList &blacklist);
   double fastSPRRound(unsigned int radius);
   double slowSPRRound(unsigned int radius, double bestLL);
