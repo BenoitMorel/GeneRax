@@ -397,6 +397,7 @@ void CherryProTree::updateDenominatorMatrixRec(int geneId, MatrixDouble &denomin
     for (auto &spid1: leftClade) {
       for (auto &spid2: rightClade) {
         denominatorMatrix[spid1][spid2]++;
+        denominatorMatrix[spid2][spid1]++;
       }
     }
   }
@@ -410,6 +411,21 @@ void CherryProTree::updateNeigborMatrix(MatrixDouble &neighborMatrixToUpdate,
   MatrixDouble *neighborMatrix = &neighborMatrixToUpdate;
   MatrixDouble *denominatorMatrix = &denominatorMatrixToUpdate;
   
+  /*
+  // settings
+  const bool perFamilyWeight = true; 
+  
+  // init from settings
+  auto speciesNumber = neighborMatrixToUpdate.size();
+  bool intermediateMatrices = perFamilyWeight;
+  bool deleteMatrices = false;
+  if (intermediateMatrices) {
+    VectorDouble zeros(speciesNumber);
+    neighborMatrix = new MatrixDouble(speciesNumber, zeros);
+    denominatorMatrix = new MatrixDouble(speciesNumber, zeros);
+    deleteMatrices = true;
+  }
+  */
   
 
   for (auto &p: _speciesIdToGeneIds) {
@@ -444,7 +460,24 @@ void CherryProTree::updateNeigborMatrix(MatrixDouble &neighborMatrixToUpdate,
       }
     }
   }
- 
+  /*
+  // update according to settings
+  if (perFamilyWeight) {
+    for (unsigned int i = 0; i < speciesNumber; ++i) {
+      for (unsigned int j = 0; j < speciesNumber; ++j) {
+        if ((*denominatorMatrix)[i][j] != 0.0 && i != j) {
+          neighborMatrixToUpdate[i][j] += (*neighborMatrix)[i][j] / (*denominatorMatrix)[i][j];
+          denominatorMatrixToUpdate[i][j] += 1.0;
+        }
+      }
+    }
+  }
+
+  if (deleteMatrices) {
+    delete denominatorMatrix;
+    delete neighborMatrix;
+  }  
+ */
 }
   
 int CherryProTree::coveredSpeciesNumber()
@@ -624,7 +657,7 @@ static void filterGeneTrees(std::vector<std::shared_ptr<CherryProTree> > &geneTr
   auto geneTreesCopy = geneTrees;
   geneTrees.clear();
   for (auto geneTree: geneTreesCopy) {
-    if (geneTree->getLeavesNumber() >= 4 && geneTree->coveredSpeciesNumber() > 2 ) {
+    if (geneTree->getLeavesNumber() >= 3 && geneTree->coveredSpeciesNumber() >= 3 ) {
       geneTrees.push_back(geneTree);
     }
   }
