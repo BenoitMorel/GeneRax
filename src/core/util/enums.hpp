@@ -70,6 +70,7 @@ enum class SpeciesTreeAlgorithm {
   User = 0,
   MiniNJ,
   Cherry,
+  CherryPro,
   NJst,
   Random
 };
@@ -141,6 +142,8 @@ public:
       return SpeciesTreeAlgorithm::NJst;
     } else if (str == std::string("Cherry")) {
       return SpeciesTreeAlgorithm::Cherry;
+    } else if (str == std::string("CherryPro")) {
+      return SpeciesTreeAlgorithm::CherryPro;
     } else if (str == std::string("Random")) {
       return SpeciesTreeAlgorithm::Random;
     } else {

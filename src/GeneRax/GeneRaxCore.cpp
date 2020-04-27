@@ -16,6 +16,7 @@
 #include <maths/Random.hpp>
 #include <NJ/MiniNJ.hpp>
 #include <NJ/Cherry.hpp>
+#include <NJ/CherryPro.hpp>
 #include <parallelization/Scheduler.hpp>
 #include <routines/Routines.hpp>
 #include <optimizers/SpeciesTreeOptimizer.hpp>
@@ -48,6 +49,13 @@ static void initStartingSpeciesTree(GeneRaxInstance &instance)
     if (ParallelContext::getRank() == 0) {
       auto startingCherryTree = Cherry::geneTreeCherry(instance.initialFamilies); 
       startingCherryTree->save(instance.speciesTree);
+    }
+    break;
+  case SpeciesTreeAlgorithm::CherryPro:
+    Logger::timed << "Generating CherryPro species tree" << std::endl;
+    if (ParallelContext::getRank() == 0) {
+      auto startingCherryProTree = CherryPro::geneTreeCherryPro(instance.initialFamilies); 
+      startingCherryProTree->save(instance.speciesTree);
     }
     break;
   case SpeciesTreeAlgorithm::User:

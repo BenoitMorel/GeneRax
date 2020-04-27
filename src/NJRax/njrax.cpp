@@ -3,6 +3,7 @@
 
 #include <NJ/MiniNJ.hpp>
 #include <NJ/Cherry.hpp>
+#include <NJ/CherryPro.hpp>
 #include <trees/PLLRootedTree.hpp>
 #include <IO/Families.hpp>
 #include <util/enums.hpp>
@@ -50,6 +51,9 @@ int main(int argc, char** argv)
     break;
   case SpeciesTreeAlgorithm::Cherry:
     speciesTree = Cherry::geneTreeCherry(families); 
+    break;
+  case SpeciesTreeAlgorithm::CherryPro:
+    speciesTree = CherryPro::geneTreeCherryPro(families); 
     break;
   default:
     std::cerr << "Error: invalid strategy algorithm" << std::endl;

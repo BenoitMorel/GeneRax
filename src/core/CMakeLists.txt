@@ -13,6 +13,7 @@ set(jointsearch-core_SOURCES
   maths/Random.cpp
   NJ/MiniNJ.cpp
   NJ/Cherry.cpp
+  NJ/CherryPro.cpp
   optimizers/DTLOptimizer.cpp
   optimizers/PerFamilyDTLOptimizer.cpp
   optimizers/SpeciesTreeOptimizer.cpp
