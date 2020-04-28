@@ -19,12 +19,13 @@ typedef std::pair<int, int> CherryProEdge;
 typedef std::set<int> Clade;
 static const bool CHERRY_DBG = false;
 static const int PARENT_INDEX = 0;
-static const int LEFT_INDEX = 1;
-static const int RIGHT_INDEX = 2;
+static const int LEFT_INDEX = 2;
+static const int RIGHT_INDEX = 1;
 
 
 static const bool USE_CHERRY_PRO_METRIC = true;
 static const bool ALWAYS_RETAG = false;
+//#define WEIGHTED_CLADES 
 
 struct CherryProNode {
   bool isLeaf; 
@@ -33,6 +34,10 @@ struct CherryProNode {
   bool speciation;
   int speciesId; // only for leaves
   bool isValid;
+#ifdef WEIGHTED_CLADES
+  std::set<int> clade;
+#endif
+
   CherryProNode():
     isLeaf(false),
     geneId(-1),
@@ -62,6 +67,7 @@ public:
   void updateNeigborMatrix(MatrixDouble &neighborMatrix,
       MatrixDouble &denominatorMatrix);
   int coveredSpeciesNumber();
+  int getCladeSize(int speciesId)  {return _speciesIdToCladeSize[speciesId];}
   std::string toString();
   void printInternalState();
   unsigned int getLeavesNumber() {
@@ -69,7 +75,7 @@ public:
   }
   std::pair<int, int> getChildrenIds(const CherryProEdge &edge);
   void findBestRootAndTag(bool removeRoot);
-  
+  int _hackIndex;
 private:
   int getRootId() {return _nodes.size() - 1;}
   int getRootedLeftChildId(int geneId);
@@ -88,9 +94,9 @@ private:
   std::string recursiveToString(int nodeId);
   std::vector<CherryProNode> _nodes;
   SpeciesIdToGeneIds _speciesIdToGeneIds;
+  std::unordered_map<int, int>  _speciesIdToCladeSize;
   unsigned int _leavesNumber;
   static int hackCounter;
-  int _hackIndex;
 };
 
 int CherryProTree::hackCounter = 0;
@@ -361,13 +367,54 @@ static std::pair<int, int> getMaxInMatrix(MatrixDouble &m)
   }
   return minPair;
 }
-  
+ 
+
+static double getRatio(const MatrixDouble m, int i, int j, double bestScore)
+{
+  return fabs(bestScore - m[i][j]) / (bestScore + m[i][j]);
+}
+
+static bool shouldWeFight(const MatrixDouble &neighborMatrix, 
+    const std::pair<int, int> &p)
+{
+  static const double RATIO_LIMIT = 0.1;
+  double myScore = neighborMatrix[p.first][p.second];
+  double worseRatio = 1000.0;
+  std::pair<int, int> worsePair = {-1, -1};
+  for (unsigned int i = 0; i < neighborMatrix.size(); ++i) {
+    auto ratio1 = getRatio(neighborMatrix, p.first, i, myScore);
+    if (int(i) != p.second) {
+      if (ratio1 < RATIO_LIMIT) {
+        Logger::info << "Yes, with " << p.first << " " << i << std::endl;
+      }
+      if (ratio1 < worseRatio) {
+        worseRatio = ratio1;
+        worsePair = {p.first, i};
+      }
+    }
+    auto ratio2 = getRatio(neighborMatrix, p.second, i, myScore);
+    if (int(i) != p.first) {
+      if (ratio2 < RATIO_LIMIT) {
+        Logger::info << "Yes, with " << p.second << " " << i << std::endl;
+      }
+      if (ratio2 < worseRatio) {
+        worseRatio = ratio2;
+        worsePair = {p.second, i};
+      }
+    }
+  }
+  Logger::info << "Worst ratio: " << worseRatio << " from pair " << worsePair.first << " " << worsePair.second << std::endl;
+  return false;
+}
+
+
 void CherryProTree::relabelNodesWithSpeciesId(unsigned int speciesId, 
     unsigned int newSpeciesId)
 {
   if (_speciesIdToGeneIds.find(speciesId) == _speciesIdToGeneIds.end()) {
     return;
   }
+  _speciesIdToCladeSize[newSpeciesId] += _speciesIdToCladeSize[speciesId];
   if (_speciesIdToGeneIds.find(newSpeciesId) == _speciesIdToGeneIds.end()) {
     _speciesIdToGeneIds.insert({newSpeciesId, GeneIdsSet()});
   }
@@ -411,23 +458,6 @@ void CherryProTree::updateNeigborMatrix(MatrixDouble &neighborMatrixToUpdate,
   MatrixDouble *neighborMatrix = &neighborMatrixToUpdate;
   MatrixDouble *denominatorMatrix = &denominatorMatrixToUpdate;
   
-  /*
-  // settings
-  const bool perFamilyWeight = true; 
-  
-  // init from settings
-  auto speciesNumber = neighborMatrixToUpdate.size();
-  bool intermediateMatrices = perFamilyWeight;
-  bool deleteMatrices = false;
-  if (intermediateMatrices) {
-    VectorDouble zeros(speciesNumber);
-    neighborMatrix = new MatrixDouble(speciesNumber, zeros);
-    denominatorMatrix = new MatrixDouble(speciesNumber, zeros);
-    deleteMatrices = true;
-  }
-  */
-  
-
   for (auto &p: _speciesIdToGeneIds) {
     auto speciesId = p.first;
     // First fill neighborMatrix
@@ -438,10 +468,23 @@ void CherryProTree::updateNeigborMatrix(MatrixDouble &neighborMatrixToUpdate,
         // no leaf neighbor
         continue;
       }
-      auto spid1 = _nodes[geneId].speciesId;
-      auto spid2 = _nodes[neighborGeneId].speciesId;
+      auto &gene1 = _nodes[geneId];
+      auto &gene2 = _nodes[neighborGeneId];
+      auto spid1 = gene1.speciesId;
+      auto spid2 = gene2.speciesId;
       assert(spid1 == speciesId);
-      (*neighborMatrix)[spid1][spid2] += 1.0;
+      double neighborFrequency = 1.0;
+#ifdef WEIGHTED_CLADES
+        double sp1Size = _speciesIdToCladeSize[spid1];
+        double sp2Size = _speciesIdToCladeSize[spid2];
+        double g1Size = double(gene1.clade.size());
+        double g2Size = double(gene2.clade.size());
+        double factor = (g1Size * g2Size) / (sp1Size * sp2Size);
+        if (factor < 0.5) {
+          neighborFrequency *= 0.5;
+        }
+#endif
+      (*neighborMatrix)[spid1][spid2] += neighborFrequency;
     }
     // Then fill denominatorMatrix with
     // the maximum possible number of neighbors
@@ -460,24 +503,6 @@ void CherryProTree::updateNeigborMatrix(MatrixDouble &neighborMatrixToUpdate,
       }
     }
   }
-  /*
-  // update according to settings
-  if (perFamilyWeight) {
-    for (unsigned int i = 0; i < speciesNumber; ++i) {
-      for (unsigned int j = 0; j < speciesNumber; ++j) {
-        if ((*denominatorMatrix)[i][j] != 0.0 && i != j) {
-          neighborMatrixToUpdate[i][j] += (*neighborMatrix)[i][j] / (*denominatorMatrix)[i][j];
-          denominatorMatrixToUpdate[i][j] += 1.0;
-        }
-      }
-    }
-  }
-
-  if (deleteMatrices) {
-    delete denominatorMatrix;
-    delete neighborMatrix;
-  }  
- */
 }
   
 int CherryProTree::coveredSpeciesNumber()
@@ -554,16 +579,24 @@ void CherryProTree::mergeNodesWithSpeciesId(unsigned int speciesId)
         break;
       }
       if (geneSet.find(geneIdNeighbor) != geneSet.end()) {
-        auto &parent = _nodes[_nodes[geneId].sons[0]];
+        auto &left = _nodes[geneId];
+        auto &right = _nodes[geneIdNeighbor];
+        auto &parent = _nodes[left.sons[0]];
         parent.isLeaf = true;
         assert(parent.geneId != getRootId());
-        // merge
+        // merge geneId and geneIdNeighbor
         parent.speciesId = speciesId;
         geneSet.insert(parent.geneId);
         geneSet.erase(geneId);
         geneSet.erase(geneIdNeighbor);
-        _nodes[geneId].isValid = false;
-        _nodes[geneIdNeighbor].isValid = false;
+        left.isValid = false;
+        right.isValid = false;
+#ifdef WEIGHTED_CLADES
+          parent.clade.insert(left.clade.begin(), left.clade.end());
+          parent.clade.insert(right.clade.begin(), right.clade.end());
+          left.clade.clear();
+          right.clade.clear();
+#endif
         geneId = parent.geneId;
         _leavesNumber--;
       } else {
@@ -587,10 +620,15 @@ std::string CherryProTree::recursiveToString(int nodeId)
   if (node.isLeaf) {
     return std::to_string(node.speciesId);
   }
+  auto str1 = recursiveToString(getRootedLeftChildId(nodeId));
+  auto str2 = recursiveToString(getRootedRightChildId(nodeId));
+  if (str1 > str2) {
+    std::swap(str1, str2);
+  }
   std::string res = "(";
-  res += recursiveToString(getRootedLeftChildId(nodeId));
+  res += str1;
   res += ",";
-  res += recursiveToString(getRootedRightChildId(nodeId));
+  res += str2;
   res += ")";
   return res;
 }
@@ -617,8 +655,9 @@ static std::vector<int> computePLLIdToId(PLLUnrootedTree &pllTree)
 CherryProTree::CherryProTree(const std::string &treeString, 
       const GeneSpeciesMapping &mapping,
       const StringToInt &speciesStrToId):
-  _leavesNumber(0),
-  _hackIndex(hackCounter++)
+  _hackIndex(hackCounter++),
+  _leavesNumber(0)
+
 {
   PLLUnrootedTree pllTree(treeString, false);
   _nodes.resize(pllTree.getLeavesNumber() * 2 - 2);
@@ -640,6 +679,9 @@ CherryProTree::CherryProTree(const std::string &treeString,
       nfjNode.isLeaf = true;
       auto species = mapping.getSpecies(pllNode->label);
       nfjNode.speciesId = speciesStrToId.at(species);
+#ifdef WEIGHTED_CLADES      
+        nfjNode.clade.insert(nfjNode.speciesId);
+#endif
       if (_speciesIdToGeneIds.find(nfjNode.speciesId) == 
           _speciesIdToGeneIds.end()) {
         _speciesIdToGeneIds.insert({nfjNode.speciesId, GeneIdsSet()});
@@ -647,6 +689,9 @@ CherryProTree::CherryProTree(const std::string &treeString,
       _speciesIdToGeneIds[nfjNode.speciesId].insert(nfjNode.geneId);
       _leavesNumber++;
     }
+  }
+  for (auto p: _speciesIdToGeneIds) {
+    _speciesIdToCladeSize.insert({p.first, 1});
   }
   findBestRootAndTag(false);
 }
@@ -726,11 +771,13 @@ std::unique_ptr<PLLRootedTree> CherryPro::geneTreeCherryPro(const Families &fami
       }
       filterGeneTrees(geneTrees);
     }
+    /*
     if (CHERRY_DBG) {
       for (auto &tree: geneTrees) {
-        Logger::info << "Tree " <<  tree->toString() << std::endl;
+        Logger::info << "Tree " << tree->_hackIndex << " " <<  tree->toString() << std::endl;
       }
     }
+    */
     
     neighborMatrix = MatrixDouble(speciesNumber, zeros);
     denominatorMatrix = MatrixDouble(speciesNumber, zeros);
@@ -750,7 +797,7 @@ std::unique_ptr<PLLRootedTree> CherryPro::geneTreeCherryPro(const Families &fami
     }
     // compute the two species to join, and join them
     auto bestPairSpecies = getMaxInMatrix(neighborMatrix);
-    
+    shouldWeFight(neighborMatrix, bestPairSpecies);
     if (bestPairSpecies.first == bestPairSpecies.second) {
       // edge case when we filtered out all gene trees
       std::cout << "We filtered all gene trees, taking a random pair of species..." << std::endl;
@@ -774,7 +821,7 @@ std::unique_ptr<PLLRootedTree> CherryPro::geneTreeCherryPro(const Families &fami
       Logger::info << "Remaining gene trees: " << geneTrees.size() << std::endl;
       Logger::info << "Best pair " << bestPairSpecies.first
         << " " << bestPairSpecies.second << std::endl;
-      Logger::info << "Best pair " << speciesStr1 << " " << speciesStr2 << std::endl;
+      Logger::info << speciesStr1 << std::endl << speciesStr2 << std::endl;
     }
     for (auto geneTree: geneTrees) {
       geneTree->relabelNodesWithSpeciesId(bestPairSpecies.second,
@@ -791,6 +838,9 @@ std::unique_ptr<PLLRootedTree> CherryPro::geneTreeCherryPro(const Families &fami
   }
   assert(lastSpecies.size() == 2);
   std::string newick = "(" + lastSpecies[0] + "," + lastSpecies[1] + ");";
+  if (CHERRY_DBG) {
+    Logger::info << newick << std::endl;
+  }
   return std::make_unique<PLLRootedTree>(newick, false); 
 }
 
