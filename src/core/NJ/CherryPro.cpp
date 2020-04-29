@@ -21,11 +21,12 @@ static const bool CHERRY_DBG = false;
 static const int PARENT_INDEX = 0;
 static const int LEFT_INDEX = 2;
 static const int RIGHT_INDEX = 1;
-
+typedef std::array<int, 3> TripletInt;
+typedef std::array<bool, 3> TripletBool;
 
 static const bool USE_CHERRY_PRO_METRIC = true;
 static const bool ALWAYS_RETAG = false;
-//#define WEIGHTED_CLADES 
+//define WEIGHTED_CLADES 
 
 struct CherryProNode {
   bool isLeaf; 
@@ -76,8 +77,11 @@ public:
   std::pair<int, int> getChildrenIds(const CherryProEdge &edge);
   void findBestRootAndTag(bool removeRoot);
   int _hackIndex;
-private:
   int getRootId() {return _nodes.size() - 1;}
+  int countTripletRec(int geneId, 
+    const TripletInt &clade,
+    TripletBool &present);
+private:
   int getRootedLeftChildId(int geneId);
   int getRootedRightChildId(int geneId);
   int getRootedParentId(int geneId);
@@ -98,6 +102,9 @@ private:
   unsigned int _leavesNumber;
   static int hackCounter;
 };
+
+
+typedef std::vector<std::shared_ptr<CherryProTree> > GeneTrees;
 
 int CherryProTree::hackCounter = 0;
 
@@ -375,36 +382,30 @@ static double getRatio(const MatrixDouble m, int i, int j, double bestScore)
 }
 
 static bool shouldWeFight(const MatrixDouble &neighborMatrix, 
-    const std::pair<int, int> &p)
+    const std::pair<int, int> &p,
+    std::pair<int, int> &bestCompetingPair)
 {
   static const double RATIO_LIMIT = 0.1;
   double myScore = neighborMatrix[p.first][p.second];
-  double worseRatio = 1000.0;
-  std::pair<int, int> worsePair = {-1, -1};
+  double worstRatio = 1000.0;
   for (unsigned int i = 0; i < neighborMatrix.size(); ++i) {
     auto ratio1 = getRatio(neighborMatrix, p.first, i, myScore);
     if (int(i) != p.second) {
-      if (ratio1 < RATIO_LIMIT) {
-        Logger::info << "Yes, with " << p.first << " " << i << std::endl;
-      }
-      if (ratio1 < worseRatio) {
-        worseRatio = ratio1;
-        worsePair = {p.first, i};
+      if (ratio1 < worstRatio) {
+        worstRatio = ratio1;
+        bestCompetingPair = {p.first, i};
       }
     }
     auto ratio2 = getRatio(neighborMatrix, p.second, i, myScore);
     if (int(i) != p.first) {
-      if (ratio2 < RATIO_LIMIT) {
-        Logger::info << "Yes, with " << p.second << " " << i << std::endl;
-      }
-      if (ratio2 < worseRatio) {
-        worseRatio = ratio2;
-        worsePair = {p.second, i};
+      if (ratio2 < worstRatio) {
+        worstRatio = ratio2;
+        bestCompetingPair = {p.second, i};
       }
     }
   }
-  Logger::info << "Worst ratio: " << worseRatio << " from pair " << worsePair.first << " " << worsePair.second << std::endl;
-  return false;
+  Logger::info << "Worst ratio: " << worstRatio << " from pair " << bestCompetingPair.first << " " << bestCompetingPair.second << std::endl;
+  return (worstRatio < 0.1);
 }
 
 
@@ -480,9 +481,7 @@ void CherryProTree::updateNeigborMatrix(MatrixDouble &neighborMatrixToUpdate,
         double g1Size = double(gene1.clade.size());
         double g2Size = double(gene2.clade.size());
         double factor = (g1Size * g2Size) / (sp1Size * sp2Size);
-        if (factor < 0.5) {
-          neighborFrequency *= 0.5;
-        }
+        neighborFrequency *= factor;
 #endif
       (*neighborMatrix)[spid1][spid2] += neighborFrequency;
     }
@@ -630,6 +629,11 @@ std::string CherryProTree::recursiveToString(int nodeId)
   res += ",";
   res += str2;
   res += ")";
+  if (node.speciation) {
+    res += "S";
+  } else {
+    res += "D";
+  }
   return res;
 }
 
@@ -711,10 +715,81 @@ static void filterGeneTrees(std::vector<std::shared_ptr<CherryProTree> > &geneTr
   }
 }
 
+int CherryProTree::countTripletRec(int geneId, 
+    const TripletInt &clade,
+    TripletBool &present)
+{
+  auto &node = _nodes[geneId];
+  if (node.isLeaf) {
+    for (int i = 0; i < 3; ++i) {
+      present[i] = (clade[i] == node.speciesId);
+    }
+    return 0;
+  }
+  TripletBool &present1 = present;
+  TripletBool present2;
+  int count = 0;
+  count += countTripletRec(node.sons[1], clade, present1);
+  count += countTripletRec(node.sons[2], clade, present2);
+  if ((present1[0] && present1[1] && present2[2])
+      || (present2[0] && present2[1] && present1[2])) {
+    // we found the ordered triplet!
+    if (node.speciation) {
+      count++;
+    }
+    for (int i = 0; i < 3; ++i) {
+      present[i] = false;
+    }
+  } else if ((present1[0] && present2[1]) || (present1[1] && present2[0])) {
+    if (present1[2] || present2[2]) {
+      for (int i = 0; i < 3; ++i) {
+        present[i] = false;
+      }
+    } else {
+      // we found the two first elements
+      present[0] = present[1] = node.speciation;
+    }
+  } else {
+    for (int i = 0; i < 3; ++i) {
+      present[i] = present1[i] || present2[i];
+    }
+  }
+  return count;
+}
+
+static int countFight(GeneTrees &geneTrees,
+    const std::pair<int, int> &p1,
+    const std::pair<int, int> &p2)
+{
+  int third = (p1.first == p2.first || p1.second == p2.first) ? p2.second : p2.first;
+  TripletInt clade = {p1.first, p1.second, third};
+  int count = 0;
+  TripletBool present;
+  for (auto &geneTree: geneTrees) {
+    count += geneTree->countTripletRec(geneTree->getRootId(), 
+        clade, present);
+  }
+  return count;
+} 
+
+/**
+ *  Return true if we decide that bestPair is
+ *  really better than competingPair
+ */
+static bool fight(GeneTrees &geneTrees,
+   const std::pair<int, int> &bestPair,
+   const std::pair<int, int> &competingPair)
+{
+  int count1 = countFight(geneTrees, bestPair, competingPair);
+  int count2 = countFight(geneTrees, competingPair, bestPair);
+  Logger::info << count1 << " vs " << count2 << std::endl;
+  return count1 > count2;
+}
+
 std::unique_ptr<PLLRootedTree> CherryPro::geneTreeCherryPro(const Families &families)
 {
   // Init gene trees and frequency matrix
-  std::vector<std::shared_ptr<CherryProTree> > geneTrees;
+  GeneTrees geneTrees;
   StringToInt speciesStrToId;
   std::vector<std::string> speciesIdToStr;
   
@@ -771,13 +846,11 @@ std::unique_ptr<PLLRootedTree> CherryPro::geneTreeCherryPro(const Families &fami
       }
       filterGeneTrees(geneTrees);
     }
-    /*
     if (CHERRY_DBG) {
       for (auto &tree: geneTrees) {
         Logger::info << "Tree " << tree->_hackIndex << " " <<  tree->toString() << std::endl;
       }
     }
-    */
     
     neighborMatrix = MatrixDouble(speciesNumber, zeros);
     denominatorMatrix = MatrixDouble(speciesNumber, zeros);
@@ -797,7 +870,15 @@ std::unique_ptr<PLLRootedTree> CherryPro::geneTreeCherryPro(const Families &fami
     }
     // compute the two species to join, and join them
     auto bestPairSpecies = getMaxInMatrix(neighborMatrix);
-    shouldWeFight(neighborMatrix, bestPairSpecies);
+    std::pair<int, int> bestCompetingPair;
+    bool doFight = shouldWeFight(neighborMatrix, bestPairSpecies, bestCompetingPair);
+    if (doFight) {
+      Logger::info << "Fight!!" << std::endl;
+      if (!fight(geneTrees, bestPairSpecies, bestCompetingPair)) {
+        Logger::info << "Lost fight, swapping!" << std::endl;
+        std::swap(bestPairSpecies, bestCompetingPair);
+      }
+    }
     if (bestPairSpecies.first == bestPairSpecies.second) {
       // edge case when we filtered out all gene trees
       std::cout << "We filtered all gene trees, taking a random pair of species..." << std::endl;
