@@ -49,6 +49,9 @@ int main(int argc, char** argv)
   case SpeciesTreeAlgorithm::NJst:
     speciesTree = MiniNJ::runNJst(families); 
     break;
+  case SpeciesTreeAlgorithm::Weighted:
+    speciesTree = MiniNJ::runWeighted(families); 
+    break;
   case SpeciesTreeAlgorithm::Cherry:
     speciesTree = Cherry::geneTreeCherry(families); 
     break;

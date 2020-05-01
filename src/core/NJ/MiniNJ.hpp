@@ -24,7 +24,8 @@ public:
    *  Run the original NJst algorithm
    */
   static std::unique_ptr<PLLRootedTree> runNJst(const Families &families);
+  static std::unique_ptr<PLLRootedTree> runWeighted(const Families &families);
   
 private:
-  static std::unique_ptr<PLLRootedTree> geneTreeNJ(const Families &families, bool minAlgo);
+  static std::unique_ptr<PLLRootedTree> geneTreeNJ(const Families &families, bool minAlgo, bool weightedAlgo);
 };

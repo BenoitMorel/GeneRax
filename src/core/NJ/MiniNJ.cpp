@@ -205,16 +205,21 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
 
 std::unique_ptr<PLLRootedTree> MiniNJ::runNJst(const Families &families)
 {
-  return geneTreeNJ(families, false);
+  return geneTreeNJ(families, false, false);
+}
+
+std::unique_ptr<PLLRootedTree> MiniNJ::runWeighted(const Families &families)
+{
+  return geneTreeNJ(families, false, true);
 }
 
 std::unique_ptr<PLLRootedTree> MiniNJ::runMiniNJ(const Families &families)
 {
-  return geneTreeNJ(families, true);
+  return geneTreeNJ(families, true, false);
 }
 
 
-std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool minAlgo)
+std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool minAlgo, bool weightedAlgo)
 {
   std::vector<std::string> speciesIdToSpeciesString;
   std::unordered_map<std::string, unsigned int> speciesStringToSpeciesId;
@@ -239,7 +244,7 @@ std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool
   bool normalize = false;
   bool useBL = false;
   bool useBootstrap = false;
-  bool reweight = false;
+  bool reweight = weightedAlgo;
   for (auto &family: families) {
     GeneSpeciesMapping mappings;
     mappings.fill(family.mappingFile, family.startingGeneTree);
