@@ -14,13 +14,14 @@ typedef std::vector<VectorDouble> MatrixDouble;
 typedef std::unordered_map<std::string, unsigned int> StringToInt;
 typedef std::unordered_set<int> GeneIdsSet;
 typedef std::unordered_map<int, GeneIdsSet> SpeciesIdToGeneIds;
+typedef std::set<int> Clade;
 
 
 static const bool CHERRY_DBG = false;
 static const bool WITHOUT_CHERRY_MERGING = false;
 static const bool MININJ = false;
 static const bool MERGE_CATERPILLAR = false;
-static const int TREES_TO_DISPLAY = 15;
+static const int TREES_TO_DISPLAY = 0;
 
 struct CherryNode {
   bool isLeaf; 
@@ -28,7 +29,8 @@ struct CherryNode {
   int geneId;
   int speciesId; // only for leaves
   bool isValid;
-  std::set<int> speciesClade; // indixed with the initial
+  int height;
+  Clade speciesClade; // indixed with the initial
                               // species indices
 };
 
@@ -134,6 +136,8 @@ static void divideMatrix(MatrixDouble &m, const MatrixDouble &denom)
   }
 }
 
+
+
 static std::pair<int, int> getMaxInMatrix(MatrixDouble &m)
 {
   assert(m.size());
@@ -165,6 +169,12 @@ static std::pair<int, int> getMinInMatrix(MatrixDouble &m)
 void CherryTree::relabelNodesWithSpeciesId(unsigned int speciesId, 
     unsigned int newSpeciesId)
 {
+  for (auto geneId: _speciesIdToGeneIds[speciesId]) {
+    _nodes[geneId].height++;
+  }
+  for (auto geneId: _speciesIdToGeneIds[newSpeciesId]) {
+    _nodes[geneId].height++;
+  }
   if (_speciesIdToGeneIds.find(speciesId) == _speciesIdToGeneIds.end()) {
     return;
   }
@@ -192,6 +202,7 @@ void CherryTree::updateInternodeDistance(int geneId,
 {
   auto &node = _nodes[geneId];
   if (node.isLeaf) {
+    currentDistance += node.height;
     auto &v = speciesDistances[sourceSpeciesId][node.speciesId];
     auto &d = denominator[sourceSpeciesId][node.speciesId];
     auto &c = count[sourceSpeciesId][node.speciesId];
@@ -231,7 +242,7 @@ void CherryTree::updateMiniNJMatrix(MatrixDouble &distanceMatrixToUpdate,
     const auto &geneIdSet = p.second;
     for (auto geneId: geneIdSet) {
       auto &node = _nodes[geneId];
-      updateInternodeDistance(node.sons[0], geneId, speciesId, 0, speciesDistance, denominator, count);
+      updateInternodeDistance(node.sons[0], geneId, speciesId, node.height, speciesDistance, denominator, count);
     }
   }
   for (int i = 0; i < speciesNumber; ++i) {
@@ -393,19 +404,16 @@ int CherryTree::mergeNeighbors(int geneId1, int geneId2)
       break;
     }
   }
+  parent.height = 0;
   parent.isLeaf = true;
   parent.speciesId = node1.speciesId;
   auto &geneSet = _speciesIdToGeneIds[node1.speciesId];
   geneSet.insert(parent.geneId);
-  geneSet.erase(node1.geneId);
-  geneSet.erase(node2.geneId);
-  node1.isValid = false;
-  node2.isValid = false;
-  _leavesNumber--;
+  _leavesNumber++;
   parent.speciesClade.insert(node1.speciesClade.begin(), node1.speciesClade.end());
-  node1.speciesClade.clear();
   parent.speciesClade.insert(node2.speciesClade.begin(), node2.speciesClade.end());
-  node2.speciesClade.clear();
+  erase(node1.geneId);
+  erase(node2.geneId);
   return parent.geneId;
 }
 
@@ -603,6 +611,7 @@ CherryTree::CherryTree(const std::string &treeString,
     nfjNode.sons[0] = pllIdToId[pllNode->back->node_index];
     nfjNode.geneId = geneId;
     nfjNode.isValid = true;
+    nfjNode.height = 0;
     if (pllNode->next) {
       // internal node
       nfjNode.isLeaf = false;
@@ -695,7 +704,7 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
     // merge identical tips in cherries
     // compute the frequency matrix
     if (CHERRY_DBG) {
-      for (int i = 0; i < TREES_TO_DISPLAY; ++i) {
+      for (int i = 0; i < std::min(int(geneTrees.size()), TREES_TO_DISPLAY); ++i) {
         Logger::info << "Tree " << geneTrees[i]->_hackIndex << " " <<  geneTrees[i]->toString() << std::endl;
       }
     }
@@ -756,25 +765,13 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
     std::string speciesStr2 = speciesIdToStr[bestPairSpecies.second];
     if (CHERRY_DBG) {
       Logger::info << "Best pair " << bestPairSpecies.first
-        << " " << bestPairSpecies.second << std::endl;
+        << " " << bestPairSpecies.second << " with distance " << neighborMatrix[bestPairSpecies.first][bestPairSpecies.second] << std::endl;
       Logger::info << "Best pair " << speciesStr1 << " " << speciesStr2 << std::endl;
     }
-    int plop = 0;
     for (auto geneTree: geneTrees) {
       geneTree->relabelNodesWithSpeciesId(bestPairSpecies.second,
         bestPairSpecies.first);
-      /*
-      if (plop < TREES_TO_DISPLAY) {  
-          Logger::info << "Tree1 " << geneTree->_hackIndex << " " <<  geneTree->toString() << std::endl;
-      }
-      */
       geneTree->mergeNodesWithSpeciesId(bestPairSpecies.first);
-      /*
-      if (plop < TREES_TO_DISPLAY) {  
-          Logger::info << "Tree2 " << geneTree->_hackIndex << " " <<  geneTree->toString() << std::endl;
-      }
-      plop++; 
-      */
     }
     speciesIdToStr[bestPairSpecies.first] = std::string("(") + 
       speciesStr1 + "," + speciesStr2 + ")";
