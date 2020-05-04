@@ -26,7 +26,6 @@ typedef std::array<bool, 3> TripletBool;
 
 static const bool USE_CHERRY_PRO_METRIC = true;
 static const bool ALWAYS_RETAG = false;
-//define WEIGHTED_CLADES 
 
 struct CherryProNode {
   bool isLeaf; 
@@ -35,9 +34,6 @@ struct CherryProNode {
   bool speciation;
   int speciesId; // only for leaves
   bool isValid;
-#ifdef WEIGHTED_CLADES
-  std::set<int> clade;
-#endif
 
   CherryProNode():
     isLeaf(false),
@@ -385,6 +381,7 @@ static bool shouldWeFight(const MatrixDouble &neighborMatrix,
     const std::pair<int, int> &p,
     std::pair<int, int> &bestCompetingPair)
 {
+  return false;
   static const double RATIO_LIMIT = 0.1;
   double myScore = neighborMatrix[p.first][p.second];
   double worstRatio = 1000.0;
@@ -475,14 +472,6 @@ void CherryProTree::updateNeigborMatrix(MatrixDouble &neighborMatrixToUpdate,
       auto spid2 = gene2.speciesId;
       assert(spid1 == speciesId);
       double neighborFrequency = 1.0;
-#ifdef WEIGHTED_CLADES
-        double sp1Size = _speciesIdToCladeSize[spid1];
-        double sp2Size = _speciesIdToCladeSize[spid2];
-        double g1Size = double(gene1.clade.size());
-        double g2Size = double(gene2.clade.size());
-        double factor = (g1Size * g2Size) / (sp1Size * sp2Size);
-        neighborFrequency *= factor;
-#endif
       (*neighborMatrix)[spid1][spid2] += neighborFrequency;
     }
     // Then fill denominatorMatrix with
@@ -590,12 +579,6 @@ void CherryProTree::mergeNodesWithSpeciesId(unsigned int speciesId)
         geneSet.erase(geneIdNeighbor);
         left.isValid = false;
         right.isValid = false;
-#ifdef WEIGHTED_CLADES
-          parent.clade.insert(left.clade.begin(), left.clade.end());
-          parent.clade.insert(right.clade.begin(), right.clade.end());
-          left.clade.clear();
-          right.clade.clear();
-#endif
         geneId = parent.geneId;
         _leavesNumber--;
       } else {
@@ -683,9 +666,6 @@ CherryProTree::CherryProTree(const std::string &treeString,
       nfjNode.isLeaf = true;
       auto species = mapping.getSpecies(pllNode->label);
       nfjNode.speciesId = speciesStrToId.at(species);
-#ifdef WEIGHTED_CLADES      
-        nfjNode.clade.insert(nfjNode.speciesId);
-#endif
       if (_speciesIdToGeneIds.find(nfjNode.speciesId) == 
           _speciesIdToGeneIds.end()) {
         _speciesIdToGeneIds.insert({nfjNode.speciesId, GeneIdsSet()});
