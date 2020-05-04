@@ -20,7 +20,6 @@ typedef std::set<int> Clade;
 static const bool CHERRY_DBG = false;
 static const bool WITHOUT_CHERRY_MERGING = false;
 static const bool MININJ = false;
-static const bool MERGE_CATERPILLAR = false;
 static const int TREES_TO_DISPLAY = 0;
 
 struct CherryNode {
@@ -78,10 +77,6 @@ private:
     MatrixDouble &speciesDistance,
     MatrixDouble &denominator,
     MatrixDouble &count);
-  int mergeCaterpillar(CherryNode &node1,
-    CherryNode &parent1,
-    CherryNode &parent2,
-    CherryNode &node2);
   int getThirdIndex(CherryNode &node,
     int id1, 
     int id2);
@@ -471,23 +466,6 @@ void CherryTree::erase(int nodeId)
   node.speciesClade.clear();
 }
 
-int CherryTree::mergeCaterpillar(CherryNode &node1,
-    CherryNode &parent1,
-    CherryNode &parent2,
-    CherryNode &node2)
-{
-  // disconnect parent2
-  int out2 = parent2.sons[getThirdIndex(parent2, parent1.geneId, node2.geneId)];
-  connect(parent1, parent2.geneId, out2);
-  connect(_nodes[out2], parent2.geneId, parent1.geneId);
-  // discard node2 and parent2
-  node1.speciesClade.insert(node2.speciesClade.begin(), node2.speciesClade.end());
-  
-  erase(parent2.geneId);
-  erase(node2.geneId);
-  return node1.geneId;
-}
-
 void CherryTree::mergeNodesWithSpeciesId(unsigned int speciesId)
 {
   if (_speciesIdToGeneIds.find(speciesId) == _speciesIdToGeneIds.end()) {
@@ -512,22 +490,6 @@ void CherryTree::mergeNodesWithSpeciesId(unsigned int speciesId)
           // merge
           geneId = mergeNeighbors(geneId, geneIdNeighbor);
         } else {
-          break;
-        }
-      } else if (MERGE_CATERPILLAR) {
-        auto &node1 = _nodes[geneId];
-        auto &parent1 = _nodes[node1.sons[0]];
-        bool merged = false;
-        for (int i = 0; i < 3; ++i) { 
-          auto &parent2 = _nodes[parent1.sons[i]];
-          auto node2Id = getChildIdWithSpecies(parent2.geneId, speciesId);
-          if (node2Id != -1) {
-            geneId = mergeCaterpillar(node1, parent1, parent2, _nodes[node2Id]);
-            merged = true;
-            break;
-          }
-        }
-        if (!merged) {
           break;
         }
       } else {
