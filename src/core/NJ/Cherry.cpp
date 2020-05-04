@@ -208,7 +208,7 @@ void CherryTree::updateInternodeDistance(int geneId,
         c +=  1.0;
       }
       */
-      //v = std::min(currentDistance, v);
+      v = std::min(currentDistance, v);
     }
     return;
   }
