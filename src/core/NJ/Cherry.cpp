@@ -7,15 +7,20 @@
 #include <IO/GeneSpeciesMapping.hpp>
 #include <trees/PLLUnrootedTree.hpp>
 #include <unordered_map>
+#include<set>
 
 typedef std::vector<double> VectorDouble;
 typedef std::vector<VectorDouble> MatrixDouble;
-typedef std::unordered_map<std::string, int> StringToInt;
+typedef std::unordered_map<std::string, unsigned int> StringToInt;
 typedef std::unordered_set<int> GeneIdsSet;
 typedef std::unordered_map<int, GeneIdsSet> SpeciesIdToGeneIds;
 
 
 static const bool CHERRY_DBG = false;
+static const bool WITHOUT_CHERRY_MERGING = false;
+static const bool MININJ = true;
+static const bool MERGE_CATERPILLAR = false;
+static const int TREES_TO_DISPLAY = 15;
 
 struct CherryNode {
   bool isLeaf; 
@@ -23,6 +28,8 @@ struct CherryNode {
   int geneId;
   int speciesId; // only for leaves
   bool isValid;
+  std::set<int> speciesClade; // indixed with the initial
+                              // species indices
 };
 
 /**
@@ -49,15 +56,41 @@ public:
   unsigned int getLeavesNumber() {
     return _leavesNumber;
   }
+
+  std::pair<int, int> getChildren(int geneId, int parentId);
+  void updateMiniNJMatrix(MatrixDouble &distanceMatrixToUpdate,
+      MatrixDouble &denominatorMatrixToUpdate);
+  int _hackIndex;
 private:
+  // return child geneId or -1 if not exists
+  int getChildIdWithSpecies(int geneId, int speciesId);
+  int mergeNeighbors(int geneId1, int geneId2);
   int getAnyValidId();
   int getNeighborLeaf(int nodeId);
   std::string recursiveToString(int nodeId, int sonToSkipId);
+  void erase(int nodeId);
+  void updateInternodeDistance(int geneId, 
+    int parentGeneId, 
+    int sourceSpeciesId,
+    double currentDistance,
+    MatrixDouble &speciesDistance,
+    MatrixDouble &denominator,
+    MatrixDouble &count);
+  int mergeCaterpillar(CherryNode &node1,
+    CherryNode &parent1,
+    CherryNode &parent2,
+    CherryNode &node2);
+  int getThirdIndex(CherryNode &node,
+    int id1, 
+    int id2);
+  void connect(CherryNode &node,
+    int previousId,
+    int newId);
+
   std::vector<CherryNode> _nodes;
   SpeciesIdToGeneIds _speciesIdToGeneIds;
   unsigned int _leavesNumber;
   static int hackCounter;
-  int _hackIndex;
 };
 
 int CherryTree::hackCounter = 0;
@@ -114,6 +147,20 @@ static std::pair<int, int> getMaxInMatrix(MatrixDouble &m)
   }
   return minPair;
 }
+static std::pair<int, int> getMinInMatrix(MatrixDouble &m)
+{
+  assert(m.size());
+  std::pair<int, int> minPair = {0, 0};
+  for (unsigned int i = 0; i < m.size(); ++i) {
+    for (unsigned int j = 0; j < m.size(); ++j) { 
+      auto minValue = m[minPair.first][minPair.second];
+      if (minValue == 0.0 || (minValue >= m[i][j] && m[i][j] != 0.0)) {
+        minPair = {i, j};    
+      }
+    }
+  }
+  return minPair;
+}
   
 void CherryTree::relabelNodesWithSpeciesId(unsigned int speciesId, 
     unsigned int newSpeciesId)
@@ -132,6 +179,87 @@ void CherryTree::relabelNodesWithSpeciesId(unsigned int speciesId,
   }
   _speciesIdToGeneIds.erase(speciesId);
 }
+
+
+
+void CherryTree::updateInternodeDistance(int geneId, 
+    int parentGeneId, 
+    int sourceSpeciesId,
+    double currentDistance,
+    MatrixDouble &speciesDistances,
+    MatrixDouble &denominator,
+    MatrixDouble &count)
+{
+  auto &node = _nodes[geneId];
+  if (node.isLeaf) {
+    auto &v = speciesDistances[sourceSpeciesId][node.speciesId];
+    auto &d = denominator[sourceSpeciesId][node.speciesId];
+    auto &c = count[sourceSpeciesId][node.speciesId];
+    if (v == 0.0) {
+      v = currentDistance; //std::min(3.0, currentDistance);
+      d = 1.0;
+      c = 1.0;
+    } else {
+      /*
+      if (currentDistance < v) {
+        v = currentDistance;
+        c = 1.0;
+      } else if (currentDistance == v) {
+        c +=  1.0;
+      }
+      */
+      //v = std::min(currentDistance, v);
+    }
+    return;
+  }
+  auto children = getChildren(geneId, parentGeneId);
+  updateInternodeDistance(children.first, geneId, sourceSpeciesId, currentDistance + 1.0, speciesDistances, denominator, count);
+  updateInternodeDistance(children.second, geneId, sourceSpeciesId, currentDistance + 1.0, speciesDistances, denominator, count);
+}
+
+void CherryTree::updateMiniNJMatrix(MatrixDouble &distanceMatrixToUpdate,
+      MatrixDouble &denominatorMatrixToUpdate)
+{
+  int speciesNumber = distanceMatrixToUpdate.size(); 
+  double zero = 0.0;
+  VectorDouble zeros(speciesNumber, zero);
+  MatrixDouble speciesDistance(speciesNumber, zeros);
+  MatrixDouble denominator(speciesNumber, zeros);
+  MatrixDouble count(speciesNumber, zeros);
+  for (auto &p: _speciesIdToGeneIds) {
+    auto speciesId = p.first;
+    const auto &geneIdSet = p.second;
+    for (auto geneId: geneIdSet) {
+      auto &node = _nodes[geneId];
+      updateInternodeDistance(node.sons[0], geneId, speciesId, 0, speciesDistance, denominator, count);
+    }
+  }
+  for (int i = 0; i < speciesNumber; ++i) {
+    for (int j = 0; j < speciesNumber; ++j) {
+      if (i != j && speciesDistance[i][j] != zero) { 
+        distanceMatrixToUpdate[i][j] += count[i][j] * speciesDistance[i][j];
+        denominatorMatrixToUpdate[i][j] += count[i][j] * denominator[i][j];
+      }
+    }
+  }  
+}
+  
+std::pair<int, int> CherryTree::getChildren(int geneId, int parentId)
+{
+  auto &node = _nodes[geneId];
+  if (node.sons[0] == parentId) {
+    return {node.sons[1], node.sons[2]};
+  } else if (node.sons[1] == parentId) {
+    return {node.sons[0], node.sons[2]};
+  } else if (node.sons[2] == parentId) {
+    return {node.sons[0], node.sons[1]};
+  } else {
+    assert(false);
+    return {-1, -1};
+  }
+}
+
+
 
 void CherryTree::updateNeigborMatrix(MatrixDouble &neighborMatrixToUpdate,
       MatrixDouble &denominatorMatrixToUpdate)
@@ -250,6 +378,108 @@ int CherryTree::getNeighborLeaf(int nodeId)
 }
 
 
+int CherryTree::mergeNeighbors(int geneId1, int geneId2)
+{
+  auto &node1 = _nodes[geneId1];
+  auto &node2 = _nodes[geneId2];
+  auto &parent = _nodes[node1.sons[0]];
+  assert(node1.isLeaf && node2.isLeaf);
+  assert(node1.sons[0] == node2.sons[0]);
+  assert(node1.speciesId == node2.speciesId);
+  for (int i = 0; i < 3; ++i) {
+    if (parent.sons[i] != geneId1 &&
+        parent.sons[i] != geneId2) {
+      parent.sons[0] = parent.sons[i];
+      break;
+    }
+  }
+  parent.isLeaf = true;
+  parent.speciesId = node1.speciesId;
+  auto &geneSet = _speciesIdToGeneIds[node1.speciesId];
+  geneSet.insert(parent.geneId);
+  geneSet.erase(node1.geneId);
+  geneSet.erase(node2.geneId);
+  node1.isValid = false;
+  node2.isValid = false;
+  _leavesNumber--;
+  parent.speciesClade.insert(node1.speciesClade.begin(), node1.speciesClade.end());
+  node1.speciesClade.clear();
+  parent.speciesClade.insert(node2.speciesClade.begin(), node2.speciesClade.end());
+  node2.speciesClade.clear();
+  return parent.geneId;
+}
+
+int CherryTree::getChildIdWithSpecies(int geneId, int speciesId)
+{
+  auto &node = _nodes[geneId];
+  if (node.isLeaf) {
+    return -1;
+  }
+  for (int i = 0; i < 3; ++i) {
+    auto &child = _nodes[node.sons[i]];
+    if (child.isLeaf && child.speciesId == speciesId) {
+      return child.geneId;
+    }
+  }
+  return -1;
+} 
+
+int CherryTree::getThirdIndex(CherryNode &node,
+    int id1, 
+    int id2)
+{
+  for (int i = 0; i < 3; ++i) {
+    if (node.sons[i] != id1 && node.sons[i] != id2) {
+      return i;
+    }
+  }
+  assert(false);
+  return -1;
+}
+
+void CherryTree::connect(CherryNode &node,
+    int previousId,
+    int newId)
+{
+  for (int i = 0; i < 3; ++i) {
+    if (node.sons[i] == previousId) {
+      node.sons[i] = newId;
+      return;
+    }
+  }
+  assert(false);
+}
+
+
+void CherryTree::erase(int nodeId)
+{
+  auto &node = _nodes[nodeId];
+  node.isValid = false;
+  if (node.isLeaf) {
+    _leavesNumber--;
+    auto &geneSet = _speciesIdToGeneIds[node.speciesId];
+    geneSet.erase(node.geneId);
+  }
+  node.speciesClade.clear();
+}
+
+int CherryTree::mergeCaterpillar(CherryNode &node1,
+    CherryNode &parent1,
+    CherryNode &parent2,
+    CherryNode &node2)
+{
+  // disconnect parent2
+  int out2 = parent2.sons[getThirdIndex(parent2, parent1.geneId, node2.geneId)];
+  connect(parent1, parent2.geneId, out2);
+  connect(_nodes[out2], parent2.geneId, parent1.geneId);
+  // discard node2 and parent2
+  node1.speciesClade.insert(node2.speciesClade.begin(), node2.speciesClade.end());
+  
+  erase(parent2.geneId);
+  erase(node2.geneId);
+  return node1.geneId;
+}
+
 void CherryTree::mergeNodesWithSpeciesId(unsigned int speciesId)
 {
   if (_speciesIdToGeneIds.find(speciesId) == _speciesIdToGeneIds.end()) {
@@ -257,6 +487,7 @@ void CherryTree::mergeNodesWithSpeciesId(unsigned int speciesId)
   }
   auto &geneSet = _speciesIdToGeneIds[speciesId];
   GeneIdsSet geneSetCopy = geneSet;
+  // MERGE NEIGHBORS
   for (auto geneId: geneSetCopy) { 
     while (true) {
       if (getLeavesNumber() < 4) {
@@ -268,29 +499,29 @@ void CherryTree::mergeNodesWithSpeciesId(unsigned int speciesId)
         break;
       }
       auto geneIdNeighbor = getNeighborLeaf(geneId);
-      if (geneIdNeighbor == -1) {
-        // this leaf neighbor is not a leaf, continue
-        break;
-      }
-      if (geneSet.find(geneIdNeighbor) != geneSet.end()) {
-        auto &parent = _nodes[_nodes[geneId].sons[0]];
-        parent.isLeaf = true;
-        for (int i = 0; i < 3; ++i) {
-          if (parent.sons[i] != geneIdNeighbor &&
-              parent.sons[i] != geneId) {
-            parent.sons[0] = parent.sons[i];
+      if (geneIdNeighbor != -1) { // CHERRY CASE
+        if (_nodes[geneIdNeighbor].speciesId == speciesId) {
+          // merge
+          geneId = mergeNeighbors(geneId, geneIdNeighbor);
+        } else {
+          break;
+        }
+      } else if (MERGE_CATERPILLAR) {
+        auto &node1 = _nodes[geneId];
+        auto &parent1 = _nodes[node1.sons[0]];
+        bool merged = false;
+        for (int i = 0; i < 3; ++i) { 
+          auto &parent2 = _nodes[parent1.sons[i]];
+          auto node2Id = getChildIdWithSpecies(parent2.geneId, speciesId);
+          if (node2Id != -1) {
+            geneId = mergeCaterpillar(node1, parent1, parent2, _nodes[node2Id]);
+            merged = true;
             break;
           }
         }
-        // merge
-        parent.speciesId = speciesId;
-        geneSet.insert(parent.geneId);
-        geneSet.erase(geneId);
-        geneSet.erase(geneIdNeighbor);
-        _nodes[geneId].isValid = false;
-        _nodes[geneIdNeighbor].isValid = false;
-        geneId = parent.geneId;
-        _leavesNumber--;
+        if (!merged) {
+          break;
+        }
       } else {
         break;
       }
@@ -314,7 +545,14 @@ std::string CherryTree::recursiveToString(int nodeId, int sonToSkipId)
   }
   // edge case: leaf
   if (node.isLeaf) {
-    return std::to_string(node.speciesId);
+    auto res = std::to_string(node.speciesId);
+    res += "{";
+    for (auto &e: node.speciesClade) {
+      res += std::to_string(e);
+      res += ",";
+    }
+    res.back() = '}';
+    return res;
   }
   std::string res = "(";
   bool firstNodeWritten = false;
@@ -353,8 +591,8 @@ static std::vector<int> computePLLIdToId(PLLUnrootedTree &pllTree)
 CherryTree::CherryTree(const std::string &treeString, 
       const GeneSpeciesMapping &mapping,
       const StringToInt &speciesStrToId):
-  _leavesNumber(0),
-  _hackIndex(hackCounter++)
+  _hackIndex(hackCounter++),
+  _leavesNumber(0)
 {
   PLLUnrootedTree pllTree(treeString, false);
   _nodes.resize(pllTree.getLeavesNumber() * 2 - 2);
@@ -381,6 +619,7 @@ CherryTree::CherryTree(const std::string &treeString,
         _speciesIdToGeneIds.insert({nfjNode.speciesId, GeneIdsSet()});
       }
       _speciesIdToGeneIds[nfjNode.speciesId].insert(nfjNode.geneId);
+      nfjNode.speciesClade.insert(nfjNode.speciesId);
       _leavesNumber++;
     }
   }
@@ -438,7 +677,7 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
     geneTree->mergeNodesWithSameSpeciesId();
   }
   // main loop of the algorithm
-  VectorDouble zeros(speciesNumber);
+  VectorDouble zeros(speciesNumber, 0.0);
   MatrixDouble neighborMatrix(speciesNumber, zeros);
   MatrixDouble denominatorMatrix(speciesNumber, zeros);
   for (unsigned int i = 0; i < speciesNumber - 2; ++i) {
@@ -456,30 +695,47 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
     // merge identical tips in cherries
     // compute the frequency matrix
     if (CHERRY_DBG) {
-      for (auto &tree: geneTrees) {
-        Logger::info << "Tree " <<  tree->toString() << std::endl;
+      for (int i = 0; i < TREES_TO_DISPLAY; ++i) {
+        Logger::info << "Tree " << geneTrees[i]->_hackIndex << " " <<  geneTrees[i]->toString() << std::endl;
       }
     }
     
     neighborMatrix = MatrixDouble(speciesNumber, zeros);
     denominatorMatrix = MatrixDouble(speciesNumber, zeros);
     for (auto geneTree: geneTrees) {
-      geneTree->updateNeigborMatrix(neighborMatrix, denominatorMatrix);
+      if (MININJ) {
+        geneTree->updateMiniNJMatrix(neighborMatrix, denominatorMatrix);
+      } else {
+        geneTree->updateNeigborMatrix(neighborMatrix, denominatorMatrix);
+      }
     }
+    /*
     if (CHERRY_DBG) {
       Logger::info << "Neighbors: " << std::endl;
       printMatrix(neighborMatrix);
       Logger::info << "Denominators: " << std::endl;
       printMatrix(denominatorMatrix);
     }
+    */
     divideMatrix(neighborMatrix, denominatorMatrix);
     if (CHERRY_DBG) {
       Logger::info << "Frequencies: " << std::endl;
       printMatrix(neighborMatrix);
     }
+    if (WITHOUT_CHERRY_MERGING) {
+      if (!MININJ) {
+        for (auto &c: neighborMatrix) {
+          for (auto &d: c) {
+            d = -d;
+          }
+        }
+      }
+      return MiniNJ::applyNJ(neighborMatrix, speciesIdToStr, speciesStrToId);
+    }
     // compute the two species to join, and join them
-    auto bestPairSpecies = getMaxInMatrix(neighborMatrix);
-    
+    std::pair<int, int> bestPairSpecies = MININJ ? 
+      getMinInMatrix(neighborMatrix) : getMaxInMatrix(neighborMatrix);
+    Logger::info << bestPairSpecies.first << " " << bestPairSpecies.second << std::endl; 
     if (bestPairSpecies.first == bestPairSpecies.second) {
       // edge case when we filtered out all gene trees
       assert(geneTrees.size() == 0);
@@ -503,10 +759,22 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
         << " " << bestPairSpecies.second << std::endl;
       Logger::info << "Best pair " << speciesStr1 << " " << speciesStr2 << std::endl;
     }
+    int plop = 0;
     for (auto geneTree: geneTrees) {
       geneTree->relabelNodesWithSpeciesId(bestPairSpecies.second,
         bestPairSpecies.first);
+      /*
+      if (plop < TREES_TO_DISPLAY) {  
+          Logger::info << "Tree1 " << geneTree->_hackIndex << " " <<  geneTree->toString() << std::endl;
+      }
+      */
       geneTree->mergeNodesWithSpeciesId(bestPairSpecies.first);
+      /*
+      if (plop < TREES_TO_DISPLAY) {  
+          Logger::info << "Tree2 " << geneTree->_hackIndex << " " <<  geneTree->toString() << std::endl;
+      }
+      plop++; 
+      */
     }
     speciesIdToStr[bestPairSpecies.first] = std::string("(") + 
       speciesStr1 + "," + speciesStr2 + ")";
@@ -518,6 +786,7 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
   }
   assert(lastSpecies.size() == 2);
   std::string newick = "(" + lastSpecies[0] + "," + lastSpecies[1] + ");";
+  Logger::info << newick << std::endl;
   return std::make_unique<PLLRootedTree>(newick, false); 
 }
 

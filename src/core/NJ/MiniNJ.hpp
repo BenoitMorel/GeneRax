@@ -3,6 +3,20 @@
 #include <IO/Families.hpp>
 #include <trees/PLLRootedTree.hpp>
 #include <memory>
+#include <unordered_map>
+#include <vector>
+#include <string>
+#include <IO/Logger.hpp>
+#include <IO/GeneSpeciesMapping.hpp>
+#include <trees/PLLUnrootedTree.hpp>
+#include <algorithm>
+#include <memory>
+
+
+
+typedef std::vector<double> Count;
+typedef std::vector<Count> DistanceMatrix;
+static const double invalidDouble = std::numeric_limits<double>::infinity();
 
 /*
  * Naive NJ implementation. 
@@ -24,8 +38,12 @@ public:
    *  Run the original NJst algorithm
    */
   static std::unique_ptr<PLLRootedTree> runNJst(const Families &families);
-  static std::unique_ptr<PLLRootedTree> runWeighted(const Families &families);
+  static std::unique_ptr<PLLRootedTree> runUstar(const Families &families);
+  static std::unique_ptr<PLLRootedTree> runWMinNJ(const Families &families);
   
+  static std::unique_ptr<PLLRootedTree> applyNJ(DistanceMatrix &distanceMatrix,
+    std::vector<std::string> &speciesIdToSpeciesString,
+    std::unordered_map<std::string, unsigned int> &speciesStringToSpeciesId);
 private:
-  static std::unique_ptr<PLLRootedTree> geneTreeNJ(const Families &families, bool minAlgo, bool weightedAlgo);
+  static std::unique_ptr<PLLRootedTree> geneTreeNJ(const Families &families, bool minAlgo, bool ustarAlgo = false, bool reweight = false);
 };

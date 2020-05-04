@@ -72,7 +72,8 @@ enum class SpeciesTreeAlgorithm {
   Cherry,
   CherryPro,
   NJst,
-  Weighted,
+  WMinNJ,
+  Ustar,
   Random
 };
 
@@ -141,8 +142,10 @@ public:
       return SpeciesTreeAlgorithm::MiniNJ;
     } else if (str == std::string("NJst")) {
       return SpeciesTreeAlgorithm::NJst;
-    } else if (str == std::string("Weighted")) {
-      return SpeciesTreeAlgorithm::Weighted;
+    } else if (str == std::string("WMiniNJ")) {
+      return SpeciesTreeAlgorithm::WMinNJ;
+    } else if (str == std::string("Ustar")) {
+      return SpeciesTreeAlgorithm::Ustar;
     } else if (str == std::string("Cherry")) {
       return SpeciesTreeAlgorithm::Cherry;
     } else if (str == std::string("CherryPro")) {

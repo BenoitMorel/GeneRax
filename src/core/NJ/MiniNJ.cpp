@@ -1,17 +1,4 @@
 #include "MiniNJ.hpp"
-#include <unordered_map>
-#include <vector>
-#include <string>
-#include <IO/Logger.hpp>
-#include <IO/GeneSpeciesMapping.hpp>
-#include <trees/PLLUnrootedTree.hpp>
-#include <algorithm>
-#include <memory>
-
-typedef std::vector<double> Count;
-typedef std::vector<Count> DistanceMatrix;
-static const double invalidDouble = std::numeric_limits<double>::infinity();
-
 
 
 
@@ -73,7 +60,7 @@ Position findMinPosition(const DistanceMatrix &distanceMatrix)
 }
 
 
-static std::unique_ptr<PLLRootedTree> applyNJ(DistanceMatrix &distanceMatrix,
+std::unique_ptr<PLLRootedTree> MiniNJ::applyNJ(DistanceMatrix &distanceMatrix,
     std::vector<std::string> &speciesIdToSpeciesString,
     std::unordered_map<std::string, unsigned int> &speciesStringToSpeciesId)
 {
@@ -138,10 +125,10 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
     DistanceMatrix &distances,
     DistanceMatrix &distancesDenominator,
     bool minMode,
-    bool normalize,
+    bool reweight,
     bool useBL,
     bool useBootstrap,
-    bool reweight)
+    bool ustar)
 {
   unsigned int speciesNumber = distances.size();
   std::vector<double>zeros(speciesNumber, 0.0);
@@ -161,7 +148,7 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
   std::vector<std::vector<double> > leafDistances(leaves.size(), zerosLeaf);
   for (auto leafNode: leaves) {
     fillDistancesRec(leafNode->back, useBL, useBootstrap, 0.0, leafDistances[leafNode->node_index]);
-    fillDistancesRec(leafNode, useBL, useBootstrap, 0.0, leafDistances[leafNode->node_index]);
+    //fillDistancesRec(leafNode, useBL, useBootstrap, 0.0, leafDistances[leafNode->node_index]);
   }
 
   // fill species distance matrices
@@ -188,10 +175,12 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
   }
   for (unsigned int i = 0; i < speciesNumber; ++i) {
     for (unsigned int j = 0; j < speciesNumber; ++j) {
-      if (normalize) {
-        distancesToAdd[i][j] /= double(leaves.size());
-      }
       if (reweight) {
+        double factor = (double(leaves.size()));
+        distancesToAdd[i][j] *= factor;
+        distancesDenominatorToAdd[i][j] *= factor;
+      }
+      if (ustar) {
         if (distancesDenominatorToAdd[i][j] > 0.0) {
           distancesToAdd[i][j] /= distancesDenominatorToAdd[i][j];
           distancesDenominatorToAdd[i][j] = 1.0;
@@ -205,21 +194,26 @@ void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
 
 std::unique_ptr<PLLRootedTree> MiniNJ::runNJst(const Families &families)
 {
-  return geneTreeNJ(families, false, false);
+  return geneTreeNJ(families, false);
 }
 
-std::unique_ptr<PLLRootedTree> MiniNJ::runWeighted(const Families &families)
+std::unique_ptr<PLLRootedTree> MiniNJ::runWMinNJ(const Families &families)
 {
-  return geneTreeNJ(families, false, true);
+  return geneTreeNJ(families, true, false, true);
+}
+
+std::unique_ptr<PLLRootedTree> MiniNJ::runUstar(const Families &families)
+{
+  return geneTreeNJ(families, false, true, false);
 }
 
 std::unique_ptr<PLLRootedTree> MiniNJ::runMiniNJ(const Families &families)
 {
-  return geneTreeNJ(families, true, false);
+  return geneTreeNJ(families, true);
 }
 
 
-std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool minAlgo, bool weightedAlgo)
+std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool minAlgo, bool ustarAlgo, bool reweight)
 {
   std::vector<std::string> speciesIdToSpeciesString;
   std::unordered_map<std::string, unsigned int> speciesStringToSpeciesId;
@@ -241,10 +235,8 @@ std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool
   DistanceMatrix distanceDenominator(speciesNumber, nullDistances);
     
   bool minMode = minAlgo;
-  bool normalize = false;
   bool useBL = false;
   bool useBootstrap = false;
-  bool reweight = weightedAlgo;
   for (auto &family: families) {
     GeneSpeciesMapping mappings;
     mappings.fill(family.mappingFile, family.startingGeneTree);
@@ -258,10 +250,10 @@ std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool
           distanceMatrix,
           distanceDenominator,
           minMode,
-          normalize,
+          reweight,
           useBL,
           useBootstrap,
-          reweight);
+          ustarAlgo);
     }
   }
   for (unsigned int i = 0; i < speciesNumber; ++i) {
