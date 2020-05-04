@@ -18,7 +18,7 @@ typedef std::unordered_map<int, GeneIdsSet> SpeciesIdToGeneIds;
 
 static const bool CHERRY_DBG = false;
 static const bool WITHOUT_CHERRY_MERGING = false;
-static const bool MININJ = true;
+static const bool MININJ = false;
 static const bool MERGE_CATERPILLAR = false;
 static const int TREES_TO_DISPLAY = 15;
 
