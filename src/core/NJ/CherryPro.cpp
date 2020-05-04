@@ -456,9 +456,10 @@ void CherryProTree::updateNeigborMatrix(MatrixDouble &neighborMatrixToUpdate,
   MatrixDouble *neighborMatrix = &neighborMatrixToUpdate;
   MatrixDouble *denominatorMatrix = &denominatorMatrixToUpdate;
   
+
+  // First fill neighborMatrix
   for (auto &p: _speciesIdToGeneIds) {
     auto speciesId = p.first;
-    // First fill neighborMatrix
     const auto &geneIdSet = p.second;
     for (auto geneId: geneIdSet) {
       auto neighborGeneId = getNeighborLeaf(geneId);
@@ -474,13 +475,17 @@ void CherryProTree::updateNeigborMatrix(MatrixDouble &neighborMatrixToUpdate,
       double neighborFrequency = 1.0;
       (*neighborMatrix)[spid1][spid2] += neighborFrequency;
     }
-    // Then fill denominatorMatrix with
-    // the maximum possible number of neighbors
-    // between two species
-    if (USE_CHERRY_PRO_METRIC) {
-      Clade clade;
-      updateDenominatorMatrixRec(getRootId(), *denominatorMatrix, clade);
-    } else {
+  }
+  // Then fill denominatorMatrix with
+  // the maximum possible number of neighbors
+  // between two species
+  if (USE_CHERRY_PRO_METRIC) {
+    Clade clade;
+    updateDenominatorMatrixRec(getRootId(), *denominatorMatrix, clade);
+  } else {
+    for (auto &p: _speciesIdToGeneIds) {
+      auto speciesId = p.first;
+      const auto &geneIdSet = p.second;
       for (auto &p2: _speciesIdToGeneIds) {
         auto spid2 = p2.first; 
         const auto &geneIdSet2 = p2.second;
@@ -803,7 +808,7 @@ std::unique_ptr<PLLRootedTree> CherryPro::geneTreeCherryPro(const Families &fami
     geneTree->mergeNodesWithSameSpeciesId();
   }
   // main loop of the algorithm
-  VectorDouble zeros(speciesNumber);
+  VectorDouble zeros(speciesNumber, 0.0);
   MatrixDouble neighborMatrix(speciesNumber, zeros);
   MatrixDouble denominatorMatrix(speciesNumber, zeros);
   for (unsigned int i = 0; i < speciesNumber - 2; ++i) {
