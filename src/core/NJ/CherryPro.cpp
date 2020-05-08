@@ -17,7 +17,8 @@ typedef std::unordered_set<int> GeneIdsSet;
 typedef std::unordered_map<int, GeneIdsSet> SpeciesIdToGeneIds;
 typedef std::pair<int, int> CherryProEdge;
 typedef std::set<int> Clade;
-static const bool CHERRY_DBG = false;
+
+static const bool CHERRY_DBG = true;
 static const int PARENT_INDEX = 0;
 static const int LEFT_INDEX = 2;
 static const int RIGHT_INDEX = 1;
@@ -25,6 +26,7 @@ typedef std::array<int, 3> TripletInt;
 typedef std::array<bool, 3> TripletBool;
 
 static const bool USE_CHERRY_PRO_METRIC = true;
+static const bool USE_WEIGHTED_CHERRY_PRO_METRIC = false;
 static const bool ALWAYS_RETAG = false;
 
 struct CherryProNode {
@@ -479,9 +481,28 @@ void CherryProTree::updateNeigborMatrix(MatrixDouble &neighborMatrixToUpdate,
   // Then fill denominatorMatrix with
   // the maximum possible number of neighbors
   // between two species
+  assert(!(USE_CHERRY_PRO_METRIC && USE_WEIGHTED_CHERRY_PRO_METRIC));
   if (USE_CHERRY_PRO_METRIC) {
     Clade clade;
     updateDenominatorMatrixRec(getRootId(), *denominatorMatrix, clade);
+  } else if (USE_WEIGHTED_CHERRY_PRO_METRIC) {
+    Clade clade;
+    int speciesNumber = denominatorMatrix->size();
+    VectorDouble zeros(speciesNumber, 0.0);
+    MatrixDouble maxNeighbors(speciesNumber, zeros);
+    updateDenominatorMatrixRec(getRootId(), maxNeighbors, clade);
+    for (auto &p: _speciesIdToGeneIds) {
+      auto speciesId = p.first;
+      const auto &geneIdSet = p.second;
+      for (auto &p2: _speciesIdToGeneIds) {
+        auto spid2 = p2.first; 
+        const auto &geneIdSet2 = p2.second;
+        double small = maxNeighbors[speciesId][spid2] / 2.0;
+        double big = (geneIdSet.size() +  geneIdSet2.size()) / 2.0;
+        (*denominatorMatrix)[speciesId][spid2] += 
+          2.0  / (1.0 / big + 1.0 / small);
+      }
+    }
   } else {
     for (auto &p: _speciesIdToGeneIds) {
       auto speciesId = p.first;
@@ -886,7 +907,8 @@ std::unique_ptr<PLLRootedTree> CherryPro::geneTreeCherryPro(const Families &fami
     if (CHERRY_DBG) {
       Logger::info << "Remaining gene trees: " << geneTrees.size() << std::endl;
       Logger::info << "Best pair " << bestPairSpecies.first
-        << " " << bestPairSpecies.second << std::endl;
+        << " " << bestPairSpecies.second << " with distance " << neighborMatrix[bestPairSpecies.first][bestPairSpecies.second] << std::endl;
+      Logger::info << "Best pair " << speciesStr1 << " " << speciesStr2 << std::endl;
       Logger::info << speciesStr1 << std::endl << speciesStr2 << std::endl;
     }
     for (auto geneTree: geneTrees) {
