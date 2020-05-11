@@ -379,6 +379,24 @@ static double getRatio(const MatrixDouble m, int i, int j, double bestScore)
   return fabs(bestScore - m[i][j]) / (bestScore + m[i][j]);
 }
 
+static double lineSupport(const MatrixDouble &neighborMatrix,
+    const std::pair<int, int> p)
+{
+  auto &line = neighborMatrix[p.first];
+  auto sum = std::accumulate(line.begin(), line.end(), 0.0);
+  return (100.0 * neighborMatrix[p.first][p.second]) / sum;
+}
+
+static double computeSupport(const MatrixDouble &neighborMatrix,
+  const std::pair<int, int> &p)
+{
+  auto support1 = lineSupport(neighborMatrix, p);
+  auto support2 = lineSupport(neighborMatrix, {p.second, p.first});
+  Logger::info << support1 << " " << support2 << std::endl;
+  return std::min(support1, support2);
+}
+
+
 static bool shouldWeFight(const MatrixDouble &neighborMatrix, 
     const std::pair<int, int> &p,
     std::pair<int, int> &bestCompetingPair)
@@ -854,7 +872,7 @@ std::unique_ptr<PLLRootedTree> CherryPro::geneTreeCherryPro(const Families &fami
     }
     if (CHERRY_DBG) {
       for (auto &tree: geneTrees) {
-        Logger::info << "Tree " << tree->_hackIndex << " " <<  tree->toString() << std::endl;
+        //Logger::info << "Tree " << tree->_hackIndex << " " <<  tree->toString() << std::endl;
       }
     }
     
@@ -902,6 +920,7 @@ std::unique_ptr<PLLRootedTree> CherryPro::geneTreeCherryPro(const Families &fami
       }
       assert(bestPairSpecies.second != -1);
     }
+    auto support = computeSupport(neighborMatrix, bestPairSpecies);
     std::string speciesStr1 = speciesIdToStr[bestPairSpecies.first];
     std::string speciesStr2 = speciesIdToStr[bestPairSpecies.second];
     if (CHERRY_DBG) {
@@ -910,6 +929,7 @@ std::unique_ptr<PLLRootedTree> CherryPro::geneTreeCherryPro(const Families &fami
         << " " << bestPairSpecies.second << " with distance " << neighborMatrix[bestPairSpecies.first][bestPairSpecies.second] << std::endl;
       Logger::info << "Best pair " << speciesStr1 << " " << speciesStr2 << std::endl;
       Logger::info << speciesStr1 << std::endl << speciesStr2 << std::endl;
+      Logger::info << "Support: " << support << std::endl;
     }
     for (auto geneTree: geneTrees) {
       geneTree->relabelNodesWithSpeciesId(bestPairSpecies.second,
@@ -917,7 +937,7 @@ std::unique_ptr<PLLRootedTree> CherryPro::geneTreeCherryPro(const Families &fami
       geneTree->mergeNodesWithSpeciesId(bestPairSpecies.first);
     }
     speciesIdToStr[bestPairSpecies.first] = std::string("(") + 
-      speciesStr1 + "," + speciesStr2 + ")";
+      speciesStr1 + "," + speciesStr2 + ")" + std::to_string(support);
     remainingSpeciesIds.erase(bestPairSpecies.second);
   }
   std::vector<std::string> lastSpecies;
