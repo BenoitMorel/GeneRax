@@ -14,6 +14,37 @@
 #include <routines/scheduled_routines/RaxmlMaster.hpp>
 #include <routines/scheduled_routines/GeneRaxMaster.hpp>
 #include <maths/Random.hpp>
+#include <trees/PLLRootedTree.hpp>
+#include <NJ/MiniNJ.hpp>
+#include <NJ/Cherry.hpp>
+#include <NJ/CherryPro.hpp>
+  
+std::unique_ptr<PLLRootedTree> 
+Routines::computeInitialSpeciesTree(Families &families,
+      SpeciesTreeAlgorithm algo)
+{
+  switch (algo) {
+  case SpeciesTreeAlgorithm::MiniNJ:
+    return MiniNJ::runMiniNJ(families); 
+  case SpeciesTreeAlgorithm::NJst:
+    return MiniNJ::runNJst(families); 
+  case SpeciesTreeAlgorithm::WMinNJ:
+    return MiniNJ::runWMinNJ(families); 
+  case SpeciesTreeAlgorithm::Ustar:
+    return MiniNJ::runUstar(families); 
+  case SpeciesTreeAlgorithm::Cherry:
+    return Cherry::geneTreeCherry(families); 
+  case SpeciesTreeAlgorithm::CherryPro:
+    return CherryPro::geneTreeCherryPro(families); 
+  case SpeciesTreeAlgorithm::Random:
+    return std::make_unique<PLLRootedTree>(
+        std::make_unique<SpeciesTree>(families)->getTree().getNewickString(), 
+        false);
+  case SpeciesTreeAlgorithm::User:
+    assert(false);
+  }
+  return nullptr;
+}
 
 
 void Routines::runRaxmlOptimization(Families &families,

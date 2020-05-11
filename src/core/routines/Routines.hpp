@@ -21,7 +21,11 @@ class Routines {
 
 public:
   Routines() = delete;
-  
+
+
+  static std::unique_ptr<PLLRootedTree> computeInitialSpeciesTree(Families &family,
+      SpeciesTreeAlgorithm algo);
+
   /*
    *  Schedule gene tree inference using
    *  sequences only, with raxml-ng algorithm.

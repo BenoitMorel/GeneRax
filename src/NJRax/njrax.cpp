@@ -7,6 +7,16 @@
 #include <trees/PLLRootedTree.hpp>
 #include <IO/Families.hpp>
 #include <util/enums.hpp>
+#include <routines/SlavesMain.hpp>
+#include <routines/Routines.hpp>
+
+/**
+ *  Hack for fix a link error
+ */
+int unused(int argc, char** argv)
+{
+  return static_scheduled_main(argc, argv, 0);
+}
 
 int main(int argc, char** argv)
 {
@@ -40,31 +50,8 @@ int main(int argc, char** argv)
   families.push_back(info);
   SpeciesTreeAlgorithm speciesTreeAlgorithm = Enums::strToSpeciesTree(algoStr);
 
-    
-  std::unique_ptr<PLLRootedTree> speciesTree = nullptr;
-  switch (speciesTreeAlgorithm) {
-  case SpeciesTreeAlgorithm::MiniNJ:
-    speciesTree = MiniNJ::runMiniNJ(families); 
-    break;
-  case SpeciesTreeAlgorithm::NJst:
-    speciesTree = MiniNJ::runNJst(families); 
-    break;
-  case SpeciesTreeAlgorithm::WMinNJ:
-    speciesTree = MiniNJ::runWMinNJ(families); 
-    break;
-  case SpeciesTreeAlgorithm::Ustar:
-    speciesTree = MiniNJ::runUstar(families); 
-    break;
-  case SpeciesTreeAlgorithm::Cherry:
-    speciesTree = Cherry::geneTreeCherry(families); 
-    break;
-  case SpeciesTreeAlgorithm::CherryPro:
-    speciesTree = CherryPro::geneTreeCherryPro(families); 
-    break;
-  default:
-    std::cerr << "Error: invalid strategy algorithm" << std::endl;
-    exit(2);
-  }
+  auto speciesTree(Routines::computeInitialSpeciesTree(families, 
+        speciesTreeAlgorithm));
   speciesTree->save(outputSpeciesTree);
   return 0;
 }

@@ -54,7 +54,7 @@ endmacro()
 
 
 add_subdirectory(JointSearch)
-add_subdirectory(NJRax)
 add_subdirectory(GeneRax)
+add_subdirectory(NJRax)
 add_subdirectory(tests)
 

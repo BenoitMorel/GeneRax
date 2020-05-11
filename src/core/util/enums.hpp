@@ -150,7 +150,8 @@ public:
       return SpeciesTreeAlgorithm::Cherry;
     } else if (str == std::string("CherryPro")) {
       return SpeciesTreeAlgorithm::CherryPro;
-    } else if (str == std::string("Random")) {
+    } else if (str == std::string("Random") || 
+        str == std::string("random")) {
       return SpeciesTreeAlgorithm::Random;
     } else {
       return SpeciesTreeAlgorithm::User;

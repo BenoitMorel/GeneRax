@@ -75,6 +75,14 @@ void PLLRootedTree::save(const std::string &fileName) const
   LibpllParsers::saveRtree(_tree->root, fileName);
 }
   
+std::string PLLRootedTree::getNewickString() const
+{
+  std::string res;
+  LibpllParsers::getRtreeNewickString(_tree.get(), res);
+
+  return res;
+}
+  
 void PLLRootedTree::setMissingBranchLengths(double minBL)
 {
   for (auto node: getNodes()) {

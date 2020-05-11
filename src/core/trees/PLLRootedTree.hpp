@@ -66,6 +66,8 @@ public:
    */
   void save(const std::string &fileName) const; 
 
+  std::string getNewickString() const;
+
   /**
    * Replace null branch lengths with minBL
    */
