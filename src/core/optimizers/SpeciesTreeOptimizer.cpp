@@ -77,6 +77,8 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     break;
   case SpeciesSearchStrategy::HYBRID:
     optimizeDTLRates();
+    rootExhaustiveSearch(false);
+    optimizeDTLRates();
     double ll1 = transferSearch();
     double ll2 = sprSearch(1);
     if (fabs(ll1 - ll2) > 0.001) {
@@ -316,8 +318,8 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
     }
   }
   Logger::timed << "Total number of transfers: " << transfers << std::endl;
-  Logger::timed << "Number of species pairs: " << pow(_speciesTree->getTree().getNodesNumber(), 2) << std::endl;
-  Logger::timed << "Maximum umber of moves to try: " << transferMoves.size() << std::endl;
+  //Logger::timed << "Number of species pairs: " << pow(_speciesTree->getTree().getNodesNumber(), 2) << std::endl;
+  //Logger::timed << "Maximum umber of moves to try: " << transferMoves.size() << std::endl;
   std::sort(transferMoves.begin(), transferMoves.end());
   unsigned int index = 0;
   const unsigned int stopAfterFailures = 50;
@@ -511,7 +513,10 @@ ModelParameters SpeciesTreeOptimizer::computeOptimizedRates()
   auto rates = _modelRates;
   rates =  DTLOptimizer::optimizeModelParameters(_evaluations, !_firstOptimizeRatesCall, rates);
   _firstOptimizeRatesCall = false;
-  Logger::timed << "optimize rates done" << std::endl;
+  Logger::timed << "optimize rates done: " << std::endl;
+  if (!rates.perFamilyRates) {
+    Logger::timed << " Best rates: " << rates.rates << std::endl;
+  }
   return rates;
 }
   
