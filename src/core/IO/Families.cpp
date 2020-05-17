@@ -180,7 +180,10 @@ void Family::filterFamilies(Families &families, const std::string &speciesTreeFi
 
 
   
-void Family::printStats(Families &families, const std::string &speciesTreeFile, const std::string &coverageFile)
+void Family::printStats(Families &families, 
+    const std::string &speciesTreeFile, 
+    const std::string &coverageFile,
+    const std::string &fractionMissingFile)
 {
  
   PLLRootedTree speciesTree(speciesTreeFile);
@@ -240,6 +243,19 @@ void Family::printStats(Families &families, const std::string &speciesTreeFile, 
   for (auto &coverage: coverageVector) {
     os << coverage.second << ": " << coverage.first << std::endl;
   }
+
+  unsigned int maxGenes = 0;
+  for (auto &species: speciesLabels) {
+    maxGenes = std::max(maxGenes, 
+        perSpeciesGenes[species]);
+  }
+  ParallelOfstream osFM(fractionMissingFile, true);
+  for (auto &species: speciesLabels) {
+    unsigned int genes = perSpeciesGenes[species];
+    double fm = double(maxGenes - genes) / double(maxGenes);
+    osFM << species << " " << fm << std::endl;
+  }
+
 
   Logger::timed << "Input data information:" << std::endl;
   Logger::info << "- Number of gene families: " << families.size() << std::endl;

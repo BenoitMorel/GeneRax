@@ -33,7 +33,7 @@ class Family {
 public:
   Family() = delete;
   static void filterFamilies(Families &families, const std::string &speciesTreeFile, bool checkAlignments, bool checkSpeciesTree);
-  static void printStats(Families &families, const std::string &speciesTreeFile, const std::string &coverageFile);
+  static void printStats(Families &families, const std::string &speciesTreeFile, const std::string &coverageFile, const std::string &fractionMissingFile);
 };
 
 

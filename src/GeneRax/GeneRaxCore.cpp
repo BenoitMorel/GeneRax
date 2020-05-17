@@ -104,10 +104,13 @@ void GeneRaxCore::printStats(GeneRaxInstance &instance)
   if (instance.args.filterFamilies) {
     std::string coverageFile = FileSystem::joinPaths(instance.args.output,
       std::string("perSpeciesCoverage.txt"));
+    std::string fractionMissingFile = FileSystem::joinPaths(instance.args.output,
+      std::string("fractionMissing.txt"));
     Logger::timed << "Gathering statistics about the families..." << std::endl;
     Family::printStats(instance.currentFamilies, 
       instance.speciesTree,
-      coverageFile);
+      coverageFile,
+      fractionMissingFile);
   }
 }
 
