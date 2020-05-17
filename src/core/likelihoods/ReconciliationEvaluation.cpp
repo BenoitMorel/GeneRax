@@ -19,7 +19,8 @@ ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
   const GeneSpeciesMapping& geneSpeciesMapping,
   RecModel recModel,
   bool rootedGeneTree, 
-  bool pruneSpeciesTree):
+  bool pruneSpeciesTree,
+  std::string fractionMissingFile):
     _speciesTree(speciesTree),
     _initialGeneTree(initialGeneTree),
     _geneSpeciesMapping(geneSpeciesMapping),
@@ -29,6 +30,7 @@ ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
     _infinitePrecision(true)
 {
   _evaluators = buildRecModelObject(_model, _infinitePrecision);
+  _evaluators->setFractionMissingGenes(fractionMissingFile);
 }
   
 ReconciliationEvaluation::~ReconciliationEvaluation()
@@ -55,6 +57,12 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
   _evaluators->setRates(_rates);
 }
   
+void ReconciliationEvaluation::setFractionMissingGenes(const std::string &fractionMissingFile)
+{
+  assert(_evaluators);
+  _evaluators->setFractionMissingGenes(fractionMissingFile);
+}
+
 pll_unode_t *ReconciliationEvaluation::getRoot() 
 {
   return _evaluators->getRoot();

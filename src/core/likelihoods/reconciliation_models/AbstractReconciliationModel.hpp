@@ -77,6 +77,8 @@ public:
   virtual bool inferMLScenario(Scenario &scenario, bool stochastic = false) = 0;
 
   virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate) = 0;
+
+  virtual void setFractionMissingGenes(const std::string &fractionMissingFile) = 0;
 };
 
 
@@ -120,6 +122,8 @@ public:
   virtual bool inferMLScenario(Scenario &scenario, bool stochastic = false);
   // overload from parent
   virtual void setPartialLikelihoodMode(PartialLikelihoodMode mode) {_likelihoodMode = mode;};
+  // overload from parents
+  virtual void setFractionMissingGenes(const std::string &fractionMissingFile);
 protected:
   // called by the constructor
   virtual void initSpeciesTree();
@@ -183,6 +187,7 @@ protected:
   unsigned int _maxGeneId;
   bool _fastMode;
   PartialLikelihoodMode _likelihoodMode;
+  std::vector<double> _fm;
   virtual void beforeComputeLogLikelihood(); 
   virtual void afterComputeLogLikelihood() {};
   pll_rnode_t *getSpeciesSon(pll_rnode_t *node, bool left) {return left ? getSpeciesLeft(node) : getSpeciesRight(node);}
@@ -597,6 +602,21 @@ template <class REAL>
 void AbstractReconciliationModel<REAL>::invalidateCLV(unsigned int nodeIndex)
 {
   _invalidatedNodes.insert(nodeIndex);
+}
+  
+template <class REAL>
+void AbstractReconciliationModel<REAL>::setFractionMissingGenes(const std::string &fractionMissingFile)
+{
+  _fm = std::vector<double>(_allSpeciesNodesCount, 0.0);
+  if (!fractionMissingFile.size()) {
+    return;
+  }
+  std::ifstream is(fractionMissingFile);
+  std::string species;
+  double fm;
+  while (is >> species >> fm) {
+    _fm[_speciesNameToId[species]] = fm;
+  }
 }
   
 template <class REAL>

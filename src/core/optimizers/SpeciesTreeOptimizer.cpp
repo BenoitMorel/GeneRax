@@ -641,9 +641,10 @@ void SpeciesTreeOptimizer::updateEvaluations()
   assert(_geneTrees);
   auto &trees = _geneTrees->getTrees();
   _evaluations.resize(trees.size());
+  std::string fractionMissingFile;
   for (unsigned int i = 0; i < trees.size(); ++i) {
     auto &tree = trees[i];
-    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _modelRates.model, false, _pruneSpeciesTree);
+    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _modelRates.model, false, _pruneSpeciesTree, fractionMissingFile);
     _evaluations[i]->setRates(_modelRates.getRates(i));
     _evaluations[i]->setPartialLikelihoodMode(PartialLikelihoodMode::PartialSpecies);
   }

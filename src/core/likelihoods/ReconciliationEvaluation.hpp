@@ -31,7 +31,8 @@ public:
     const GeneSpeciesMapping& geneSpeciesMapping,
     RecModel recModel,
     bool rootedGeneTree,
-    bool pruneSpeciesTree = false);
+    bool pruneSpeciesTree = false,
+    std::string fractionMissingFile = std::string());
   
   /**
    * Forbid copy
@@ -42,7 +43,7 @@ public:
   ReconciliationEvaluation & operator = (ReconciliationEvaluation &&) = delete;
   ~ReconciliationEvaluation();
   void setRates(const Parameters &parameters);
-
+  void setFractionMissingGenes(const std::string &fractionMissingFile);
 
   /**
    * Get the current root of the gene tree. Return null if the tree does not have a 
