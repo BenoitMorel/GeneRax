@@ -203,8 +203,7 @@ void UndatedDTLModel<REAL>::setRates(const RatesVector &rates)
   _PL = lossRates;
   _PT = transferRates;
   _PS.resize(this->_allSpeciesNodesCount);
-  for (auto speciesNode: this->_allSpeciesNodes) {
-    auto e = speciesNode->node_index;
+  for (unsigned int e = 0; e < this->_allSpeciesNodesCount; ++e) {
     auto sum = _PD[e] + _PL[e] + _PT[e] + 1.0;
     _PD[e] /= sum;
     _PL[e] /= sum;
