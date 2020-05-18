@@ -45,6 +45,7 @@ public:
    int seed;
    bool filterFamilies;
    std::string exec;
+   bool fractionMissing;
 
    // species tree search
    bool rerootSpeciesTree;

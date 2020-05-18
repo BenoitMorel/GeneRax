@@ -33,6 +33,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   seed(123),
   filterFamilies(true),
   exec(iargv[0]),
+  fractionMissing(false),
   rerootSpeciesTree(false),
   optimizeSpeciesTree(false),
   speciesFastRadius(5),
@@ -109,6 +110,8 @@ void GeneRaxArguments::init() {
       rerootSpeciesTree = true;
     } else if (arg == "--optimize-species-tree") {
       optimizeSpeciesTree = true;
+    } else if (arg == "--fraction-missing") {
+      fractionMissing = true;
     } else if (arg == "--do-not-optimize-gene-trees") {
       optimizeGeneTrees = false;
     } else if (arg == "--reconcile") {

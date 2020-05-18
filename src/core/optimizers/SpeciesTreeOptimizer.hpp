@@ -58,7 +58,8 @@ public:
       bool pruneSpeciesTree,
       double supportThreshold,
       const std::string &outputDir,
-      const std::string &execPath);
+      const std::string &execPath,
+      bool fractionMissing);
   
   // forbid copy
   SpeciesTreeOptimizer(const SpeciesTreeOptimizer &) = delete;
@@ -122,6 +123,7 @@ private:
   bool _pruneSpeciesTree;
   Parameters _globalRates;
   ModelParameters _modelRates;
+  std::string _fractionMissingFile;
 private:
   ModelParameters computeOptimizedRates(); 
   void updateEvaluations();
