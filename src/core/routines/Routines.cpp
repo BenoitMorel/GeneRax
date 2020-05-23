@@ -431,7 +431,6 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
   }
   mpiMergeTransferFrequencies(transferFrequencies, outputDir);
   ParallelContext::barrier();
-  Logger::timed <<"Finished writing transfers frequencies" << std::endl;
   assert(ParallelContext::isRandConsistent());
 }
 

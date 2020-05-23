@@ -64,6 +64,11 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   saveCurrentSpeciesTreeId();
 }
 
+static bool testAndSwap(double &ll1, double &ll2) {
+  std::swap(ll1, ll2);
+  return fabs(ll1 - ll2) > 0.001;
+}
+
 void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
       unsigned int sprRadius)
 {
@@ -82,19 +87,19 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     }
     break;
   case SpeciesSearchStrategy::HYBRID:
-    optimizeDTLRates();
-    rootExhaustiveSearch(false);
-    optimizeDTLRates();
-    double ll1 = transferSearch();
-    double ll2 = sprSearch(1);
-    if (fabs(ll1 - ll2) > 0.001) {
-      optimizeDTLRates();
-      ll1 = rootExhaustiveSearch(false);
-      ll2 = transferSearch();
-      ll1 = sprSearch(1);
+    double ll1, ll2;
+    ll1 = ll2 = computeRecLikelihood();
+    int index = 0;
+    bool stop = false;
+    while (!stop) {
+      if (index++ % 2 == 0) {
+        ll1 = transferSearch();
+      } else {
+        ll2 = optimizeDTLRates();
+        ll1 = sprSearch(1);
+      }
+      stop = !testAndSwap(ll1, ll2);
     }
-    optimizeDTLRates();
-    rootExhaustiveSearch(false);
     break;
   }
 }
@@ -126,7 +131,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree,
       visits++;
       if (ll > bestLL) {
         bestLL = ll;
-        bestMovesHistory = movesHistory;
+        bestMovesHistory = movesHistory; 
         Logger::info << "Found better root " << ll << std::endl;
       }
       rootExhaustiveSearchAux(speciesTree, 
@@ -145,8 +150,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree,
 
 double SpeciesTreeOptimizer::rootExhaustiveSearch(bool doOptimizeGeneTrees)
 {
-  //Logger::timed << getStepTag(!doOptimizeGeneTrees) << " Trying to re-root the species tree" << std::endl;
-
+  Logger::timed << "Root exhaustive search " << std::endl;
   std::vector<unsigned int> movesHistory;
   std::vector<unsigned int> bestMovesHistory;
   unsigned int geneRadius = doOptimizeGeneTrees ? 1 : 0;
@@ -303,7 +307,6 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
     _outputDir);
   unsigned int transfers = 0;
   ParallelContext::barrier();
-  Logger::timed << "Start computing the moves to perform......" << std::endl;
   std::unordered_map<std::string, unsigned int> labelsToIds;
   _speciesTree->getLabelsToId(labelsToIds);
   std::vector<TransferMove> transferMoves;
@@ -323,9 +326,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
       }
     }
   }
-  Logger::timed << "Total number of transfers: " << transfers << std::endl;
-  //Logger::timed << "Number of species pairs: " << pow(_speciesTree->getTree().getNodesNumber(), 2) << std::endl;
-  //Logger::timed << "Maximum umber of moves to try: " << transferMoves.size() << std::endl;
+  Logger::timed << "  Inferred transfers:" << transfers << std::endl;
   std::sort(transferMoves.begin(), transferMoves.end());
   unsigned int index = 0;
   const unsigned int stopAfterFailures = 50;
@@ -336,19 +337,13 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
   for (auto &transferMove: transferMoves) {
     index++;
     _stats.testedTransfers++;
-    /*
-    Logger::info << _speciesTree->getNode(transferMove.prune)->label 
-                 << " " 
-                 <<_speciesTree->getNode(transferMove.regraft)->label 
-                 << std::endl;
-                 */
     if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, transferMove.prune, transferMove.regraft)) {
       blacklist.blacklist(transferMove);
       if (testPruning(transferMove.prune, transferMove.regraft, refApproxLL, hash1)) {
         _stats.acceptedTransfers++;
         failures = 0;
         improvements++;
-        Logger::timed << "better from heuristic (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ")"   << std::endl;
+        Logger::info << "  better tree (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ")"   << std::endl;
         // we enough improvements to recompute the new transfers
         hash1 = _speciesTree->getNodeIndexHash(); 
         refApproxLL = computeApproxRecLikelihood();
@@ -379,7 +374,8 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
     SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
     for (auto regraft: regrafts) {
       if (testPruning(prune, regraft, refApproxLL, hash1)) {
-        Logger::timed << "\tnew best tree " << _bestRecLL << " -> " << _lastRecLL << std::endl;
+        Logger::timed << "\tnew best tree (LL=" 
+          << _bestRecLL << ")"<< std::endl;
         hash1 = _speciesTree->getNodeIndexHash(); 
         refApproxLL = computeApproxRecLikelihood();
       }
@@ -481,7 +477,7 @@ double SpeciesTreeOptimizer::transferSearch()
     bestLL = optimizeDTLRates();
     newLL = fastTransfersRound(blacklist);
   } while (newLL - bestLL > 0.001);
-  Logger::timed << "After transfer search: " << bestLL << std::endl;
+  Logger::timed << "After transfer search: " << newLL << std::endl;
   Logger::info << _stats << std::endl; 
   saveCurrentSpeciesTreeId();
   _stats.reset();
@@ -515,14 +511,9 @@ ModelParameters SpeciesTreeOptimizer::computeOptimizedRates()
   if (_userDTLRates) {
     return _modelRates;
   }
-  Logger::timed << "optimize rates " << std::endl;
   auto rates = _modelRates;
   rates =  DTLOptimizer::optimizeModelParameters(_evaluations, !_firstOptimizeRatesCall, rates);
   _firstOptimizeRatesCall = false;
-  Logger::timed << "optimize rates done: " << std::endl;
-  if (!rates.perFamilyRates) {
-    Logger::timed << " Best rates: " << rates.rates << std::endl;
-  }
   return rates;
 }
   
@@ -531,10 +522,15 @@ double SpeciesTreeOptimizer::optimizeDTLRates()
   if (_userDTLRates) {
     return computeRecLikelihood();
   }
+  Logger::timed << "optimize rates " << std::endl;
   _modelRates = computeOptimizedRates();
   unsigned int i = 0;
   for (auto &evaluation: _evaluations) {
     evaluation->setRates(_modelRates.getRates(i++));
+  }
+  Logger::timed << "optimize rates done (LL=" << computeRecLikelihood() << ")" << std::endl;
+  if (!_modelRates.perFamilyRates) {
+    Logger::timed << " Best rates: " << _modelRates.rates << std::endl;
   }
   return computeRecLikelihood();
 }
