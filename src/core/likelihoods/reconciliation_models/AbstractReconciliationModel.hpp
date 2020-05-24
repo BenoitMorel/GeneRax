@@ -213,6 +213,7 @@ private:
   std::map<std::string, std::string> _geneNameToSpeciesName;
   std::map<std::string, unsigned int> _speciesNameToId;
   std::vector<unsigned int> _speciesCoverage;
+  unsigned int _numberOfCoveredSpecies;
   // set of invalid CLVs. All the CLVs from these CLVs to
   // the root(s) need to be recomputed
   std::unordered_set<unsigned int> _invalidatedNodes;
@@ -287,8 +288,12 @@ void AbstractReconciliationModel<REAL>::mapGenesToSpecies()
       _geneToSpecies[node->node_index] = _speciesNameToId[speciesName];
     }
   }
-  _speciesCoverage = std::vector<unsigned int>(_allSpeciesNodesCount, false);
+  _numberOfCoveredSpecies = 0;
+  _speciesCoverage = std::vector<unsigned int>(_allSpeciesNodesCount, 0);
   for (auto node: _allNodes) {
+    if (!_speciesCoverage[_geneToSpecies[node->node_index]]) {
+      _numberOfCoveredSpecies++;
+    }
     _speciesCoverage[_geneToSpecies[node->node_index]]++;
   }
 
