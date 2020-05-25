@@ -128,9 +128,18 @@ void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
     startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate, 0.1);
     break;
   }
-  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, 
-      instance.recModel, startingRates, instance.args.perFamilyDTLRates, instance.args.userDTLRates, instance.args.pruneSpeciesTree, instance.args.supportThreshold, 
-      instance.args.output, instance.args.exec, instance.args.fractionMissing);
+  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, 
+      instance.currentFamilies, 
+      instance.recModel, 
+      startingRates, 
+      instance.args.perFamilyDTLRates, 
+      instance.args.userDTLRates, 
+      instance.args.minGeneBranchLength, 
+      instance.args.pruneSpeciesTree, 
+      instance.args.supportThreshold, 
+      instance.args.output, 
+      instance.args.exec, 
+      instance.args.fractionMissing);
   if (instance.args.rerootSpeciesTree) {
     Logger::info << "Rerooting the species tree..." << std::endl;
     speciesTreeOptimizer.optimizeDTLRates();
@@ -162,9 +171,18 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
     startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate, 0.1);
     break;
   }
-  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, instance.currentFamilies, 
-      instance.recModel, startingRates, instance.args.perFamilyDTLRates, instance.args.userDTLRates, instance.args.pruneSpeciesTree, instance.args.supportThreshold, 
-      instance.args.output, instance.args.exec, instance.args.fractionMissing);
+  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, 
+      instance.currentFamilies, 
+      instance.recModel, 
+      startingRates, 
+      instance.args.perFamilyDTLRates, 
+      instance.args.userDTLRates, 
+      instance.args.minGeneBranchLength,
+      instance.args.pruneSpeciesTree, 
+      instance.args.supportThreshold, 
+      instance.args.output, 
+      instance.args.exec, 
+      instance.args.fractionMissing);
   if (instance.args.speciesFastRadius > 0) {
     Logger::info << std::endl;
     Logger::timed << "Start optimizing the species tree with fixed gene trees (on " 

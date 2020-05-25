@@ -18,9 +18,13 @@
 template <class REAL>
 class UndatedDTLModel: public AbstractReconciliationModel<REAL> {
 public:
-  UndatedDTLModel(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree, bool pruneSpeciesTree):
+  UndatedDTLModel(PLLRootedTree &speciesTree, 
+      const GeneSpeciesMapping &geneSpeciesMappingp, 
+      bool rootedGeneTree, 
+      double minGeneBranchLength,
+      bool pruneSpeciesTree):
     
-    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree, pruneSpeciesTree)
+    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree, minGeneBranchLength, pruneSpeciesTree)
   {
   } 
   UndatedDTLModel(const UndatedDTLModel &) = delete;
@@ -315,12 +319,36 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     leftGeneNode = this->getLeft(geneNode, isVirtualRoot);
     rightGeneNode = this->getRight(geneNode, isVirtualRoot);
   }
+
   unsigned int f = 0;
   unsigned int g = 0;
   if (!isSpeciesLeaf) {
     f = this->getSpeciesLeft(speciesNode)->node_index;
     g = this->getSpeciesRight(speciesNode)->node_index;
   }
+
+  if (this->_minGeneBranchLength >= 0.0) {
+    if (!isSpeciesLeaf && !isGeneLeaf) {
+      auto u_left = leftGeneNode->node_index;
+      auto u_right = rightGeneNode->node_index;
+      if (leftGeneNode->length <= this->_minGeneBranchLength
+          || rightGeneNode->length <= this->_minGeneBranchLength) {
+        auto best_left = std::max(_dtlclvs[u_left]._uq[f],
+            _dtlclvs[u_left]._uq[g]);
+        best_left = std::max(best_left, 
+            _dtlclvs[u_left]._uq[e]);
+        auto best_right = std::max(_dtlclvs[u_right]._uq[f],
+            _dtlclvs[u_right]._uq[g]);
+        best_right = std::max(best_right, 
+            _dtlclvs[u_right]._uq[e]);
+        proba = REAL(_PS[e]) * best_left * best_right;
+        scale(proba);
+        return;
+      } 
+    }
+  }
+
+
   if (not isGeneLeaf) {
     // S event
     auto u_left = leftGeneNode->node_index;

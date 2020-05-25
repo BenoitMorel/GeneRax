@@ -53,6 +53,7 @@ public:
    unsigned int speciesFastRadius;
    unsigned int speciesSlowRadius;
    int speciesInitialFamiliesSubsamples;
+   double minGeneBranchLength;
 private:
 
   void init();

@@ -21,6 +21,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     const Parameters &startingRates,
     bool perFamilyRates,
     bool userDTLRates,
+    double minGeneBranchLength,
     bool pruneSpeciesTree,
     double supportThreshold,
     const std::string &outputDir,
@@ -40,6 +41,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _bestLibpllLL(-std::numeric_limits<double>::infinity()),
   _firstOptimizeRatesCall(true),
   _userDTLRates(userDTLRates),
+  _minGeneBranchLength(minGeneBranchLength),
   _pruneSpeciesTree(pruneSpeciesTree),
   _modelRates(startingRates, model, false, 1)
 {
@@ -645,7 +647,7 @@ void SpeciesTreeOptimizer::updateEvaluations()
   _evaluations.resize(trees.size());
   for (unsigned int i = 0; i < trees.size(); ++i) {
     auto &tree = trees[i];
-    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _modelRates.model, false, _pruneSpeciesTree, _fractionMissingFile);
+    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _modelRates.model, false, _minGeneBranchLength, _pruneSpeciesTree, _fractionMissingFile);
     _evaluations[i]->setRates(_modelRates.getRates(i));
     _evaluations[i]->setPartialLikelihoodMode(PartialLikelihoodMode::PartialSpecies);
   }

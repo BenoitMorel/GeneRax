@@ -99,6 +99,7 @@ public:
   AbstractReconciliationModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
       bool rootedGeneTree,
+      double minGeneBranchLength,
       bool pruneSpeciesTree);
   virtual void setInitialGeneTree(pll_utree_t *tree);
   virtual ~AbstractReconciliationModel() {}
@@ -187,6 +188,7 @@ protected:
   unsigned int _maxGeneId;
   bool _fastMode;
   PartialLikelihoodMode _likelihoodMode;
+  double _minGeneBranchLength;
   std::vector<double> _fm;
   virtual void beforeComputeLogLikelihood(); 
   virtual void afterComputeLogLikelihood() {};
@@ -240,10 +242,12 @@ template <class REAL>
 AbstractReconciliationModel<REAL>::AbstractReconciliationModel(PLLRootedTree &speciesTree, 
     const GeneSpeciesMapping &geneSpeciesMapping, 
     bool rootedGeneTree,
+    double minGeneBranchLength,
     bool pruneSpeciesTree):
   _geneRoot(0),
   _maxGeneId(1),
   _fastMode(false),
+  _minGeneBranchLength(minGeneBranchLength),
   _likelihoodMode(PartialLikelihoodMode::PartialGenes),
   _rootedGeneTree(rootedGeneTree),
   _speciesTree(speciesTree),

@@ -14,9 +14,13 @@
 template <class REAL>
 class UndatedIDTLModel: public AbstractReconciliationModel<REAL> {
 public:
-  UndatedIDTLModel(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, bool rootedGeneTree, bool pruneSpeciesTree):
+  UndatedIDTLModel(PLLRootedTree &speciesTree, 
+      const GeneSpeciesMapping &geneSpeciesMappingp, 
+      bool rootedGeneTree, 
+      double minGeneBranchLength,
+      bool pruneSpeciesTree):
     
-    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree, pruneSpeciesTree)
+    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree, minGeneBranchLength, pruneSpeciesTree)
   {
   } 
   UndatedIDTLModel(const UndatedIDTLModel &) = delete;

@@ -38,7 +38,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   optimizeSpeciesTree(false),
   speciesFastRadius(5),
   speciesSlowRadius(0),
-  speciesInitialFamiliesSubsamples(-1)
+  speciesInitialFamiliesSubsamples(-1),
+  minGeneBranchLength(0.000001)
 {
   if (argc == 1) {
     printHelp();
@@ -121,6 +122,8 @@ void GeneRaxArguments::init() {
       buildSuperMatrix = true;
     } else if (arg == "--reconciliation-samples") {
       reconciliationSamples = static_cast<unsigned int>(atoi(argv[++i]));
+    } else if (arg == "--gene-min-bl") {
+      minGeneBranchLength = atof(argv[++i]);
     } else {
       Logger::error << "Unrecognized argument " << arg << std::endl;
       Logger::error << "Aborting" << std::endl;

@@ -22,15 +22,23 @@ public:
    *  Constructor 
    *  @param speciesTree rooted species tree (std::fixed)
    *  @param initialGeneTree initial gene tree
-   *  @param geneSpeciesMapping gene-to-species geneSpeciesMappingping
+   *  @param geneSpeciesMapping gene-to-species geneSpeciesMapping
    *  @param recModel the reconciliation model to use
-   *  @param rootedGeneTree should we compute the likelihood of a rooted or unrooted gene tree?
+   *  @param rootedGeneTree should we compute the 
+   *    likelihood of a rooted or unrooted gene tree?
+   *  @param minGeneBranchLength contract branches with length
+   *    under this value
+   *  @param pruneSpeciesTree if set to true, prune from the 
+   *    species tree the taxa that are not covered by any gene
+   *  @param fractionMissingFile file containing the fraction
+   *    of missing file for each species
    */
   ReconciliationEvaluation(PLLRootedTree &speciesTree,
     PLLUnrootedTree &initialGeneTree,
     const GeneSpeciesMapping& geneSpeciesMapping,
     RecModel recModel,
     bool rootedGeneTree,
+    double minGeneBranchLength = -1.0,
     bool pruneSpeciesTree = false,
     std::string fractionMissingFile = std::string());
   
@@ -89,6 +97,7 @@ private:
   PLLUnrootedTree &_initialGeneTree;
   GeneSpeciesMapping _geneSpeciesMapping;
   bool _rootedGeneTree;
+  double _minGeneBranchLength;
   bool _pruneSpeciesTree;
   RecModel _model; 
   bool _infinitePrecision;

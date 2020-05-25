@@ -55,6 +55,7 @@ public:
       const Parameters &startingRates,
       bool perFamilyRates,
       bool userDTLRates,
+      double minGeneBranchLength,
       bool pruneSpeciesTree,
       double supportThreshold,
       const std::string &outputDir,
@@ -120,6 +121,7 @@ private:
   SpeciesSearchStats _stats;
   bool _firstOptimizeRatesCall;
   bool _userDTLRates;
+  double _minGeneBranchLength;
   bool _pruneSpeciesTree;
   Parameters _globalRates;
   ModelParameters _modelRates;

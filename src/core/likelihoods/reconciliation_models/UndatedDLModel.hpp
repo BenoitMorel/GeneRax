@@ -23,8 +23,9 @@ class UndatedDLModel: public AbstractReconciliationModel<REAL> {
 public:
   UndatedDLModel(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, 
       bool rootedGeneTree,
+      double minGeneBranchLength,
       bool pruneSpeciesTree):
-    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree, pruneSpeciesTree) {}
+    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree, minGeneBranchLength, pruneSpeciesTree) {}
   
   
   UndatedDLModel(const UndatedDLModel &) = delete;

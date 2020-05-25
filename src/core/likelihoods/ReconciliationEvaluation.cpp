@@ -19,12 +19,14 @@ ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
   const GeneSpeciesMapping& geneSpeciesMapping,
   RecModel recModel,
   bool rootedGeneTree, 
+  double minGeneBranchLength,
   bool pruneSpeciesTree,
   std::string fractionMissingFile):
     _speciesTree(speciesTree),
     _initialGeneTree(initialGeneTree),
     _geneSpeciesMapping(geneSpeciesMapping),
     _rootedGeneTree(rootedGeneTree),
+    _minGeneBranchLength(minGeneBranchLength),
     _pruneSpeciesTree(pruneSpeciesTree),
     _model(recModel),
     _infinitePrecision(true)
@@ -111,23 +113,23 @@ ReconciliationModelInterface *ReconciliationEvaluation::buildRecModelObject(RecM
   switch(recModel) {
   case RecModel::UndatedDL:
     if (infinitePrecision) {
-      res = new UndatedDLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _pruneSpeciesTree);
+      res = new UndatedDLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
     } else {
-      res = new UndatedDLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _pruneSpeciesTree);
+      res = new UndatedDLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
     }
     break;
   case RecModel::UndatedDTL:
     if (infinitePrecision) {
-      res = new UndatedDTLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _pruneSpeciesTree);
+      res = new UndatedDTLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
     } else {
-      res = new UndatedDTLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _pruneSpeciesTree);
+      res = new UndatedDTLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
     }
     break;
   case RecModel::UndatedIDTL:
     if (infinitePrecision) {
-      res = new UndatedIDTLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _pruneSpeciesTree);
+      res = new UndatedIDTLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
     } else {
-      res = new UndatedIDTLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _pruneSpeciesTree);
+      res = new UndatedIDTLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
     }
     break;
   }
