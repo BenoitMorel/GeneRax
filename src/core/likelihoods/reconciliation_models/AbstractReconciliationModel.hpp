@@ -187,8 +187,8 @@ protected:
   std::vector<unsigned int> _geneIds;
   unsigned int _maxGeneId;
   bool _fastMode;
-  PartialLikelihoodMode _likelihoodMode;
   double _minGeneBranchLength;
+  PartialLikelihoodMode _likelihoodMode;
   std::vector<double> _fm;
   virtual void beforeComputeLogLikelihood(); 
   virtual void afterComputeLogLikelihood() {};

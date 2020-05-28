@@ -327,24 +327,67 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     g = this->getSpeciesRight(speciesNode)->node_index;
   }
 
+  enum class Strat {
+    initial, smart, extreme, none
+  };
+  Strat strategy = Strat::none;
   if (this->_minGeneBranchLength >= 0.0) {
     if (!isSpeciesLeaf && !isGeneLeaf) {
       auto u_left = leftGeneNode->node_index;
       auto u_right = rightGeneNode->node_index;
-      if (leftGeneNode->length <= this->_minGeneBranchLength
-          || rightGeneNode->length <= this->_minGeneBranchLength) {
-        auto best_left = std::max(_dtlclvs[u_left]._uq[f],
-            _dtlclvs[u_left]._uq[g]);
-        best_left = std::max(best_left, 
-            _dtlclvs[u_left]._uq[e]);
-        auto best_right = std::max(_dtlclvs[u_right]._uq[f],
-            _dtlclvs[u_right]._uq[g]);
-        best_right = std::max(best_right, 
-            _dtlclvs[u_right]._uq[e]);
-        proba = REAL(_PS[e]) * best_left * best_right;
-        scale(proba);
-        return;
-      } 
+      bool leftPolytomy = leftGeneNode->length <= 
+        this->_minGeneBranchLength;
+      bool rightPolytomy = rightGeneNode->length <= 
+        this->_minGeneBranchLength;
+      if (leftPolytomy || rightPolytomy) {
+        if (strategy == Strat::smart) { 
+          std::vector<unsigned int> children;
+          if (leftPolytomy && leftGeneNode->next) {
+            children.push_back(this->getLeft(leftGeneNode, false)->node_index);
+            children.push_back(this->getRight(leftGeneNode, false)->node_index);
+          } else {
+            children.push_back(u_left);
+          }
+          if (rightPolytomy && rightGeneNode->next) {
+            children.push_back(this->getLeft(rightGeneNode, false)->node_index);
+            children.push_back(this->getRight(rightGeneNode, false)->node_index);
+          } else {
+            children.push_back(u_right);
+          }
+          if (children.size() > 2) {
+            proba = REAL(1);
+            for (auto child: children) {
+              auto &uq = _dtlclvs[child]._uq;
+              REAL childProba = std::max(uq[f], uq[g]) * _PS[e];
+              childProba = std::max(childProba, uq[e]);
+              proba *= childProba;
+              scale(proba);
+            }
+            return;
+          }
+        } else if (strategy == Strat::initial) {
+          auto best_left = std::max(_dtlclvs[u_left]._uq[f],
+              _dtlclvs[u_left]._uq[g]);
+          best_left = std::max(best_left, 
+              _dtlclvs[u_left]._uq[e]);
+          auto best_right = std::max(_dtlclvs[u_right]._uq[f],
+              _dtlclvs[u_right]._uq[g]);
+          best_right = std::max(best_right, 
+              _dtlclvs[u_right]._uq[e]);
+          proba = REAL(_PS[e]) * best_left * best_right;
+          scale(proba);
+          return;
+        } else if (strategy == Strat::extreme) {
+          if (!leftPolytomy) {
+            proba = _dtlclvs[u_left]._uq[e];
+          } else if (!rightPolytomy) {
+            proba = _dtlclvs[u_right]._uq[e]; 
+          } else {
+            proba = REAL(0.9);
+          }
+          return;
+        }
+      }
     }
   }
 

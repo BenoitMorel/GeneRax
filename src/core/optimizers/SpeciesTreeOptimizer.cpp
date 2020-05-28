@@ -515,7 +515,7 @@ ModelParameters SpeciesTreeOptimizer::computeOptimizedRates()
   }
   auto rates = _modelRates;
   rates =  DTLOptimizer::optimizeModelParameters(_evaluations, !_firstOptimizeRatesCall, rates);
-  _firstOptimizeRatesCall = false;
+  _firstOptimizeRatesCall = true;
   return rates;
 }
   
