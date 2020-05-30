@@ -103,6 +103,7 @@ public:
 
   const Parameters getGlobalRates() {return _globalRates;}
 
+  void likelihoodsSnapshot();
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;

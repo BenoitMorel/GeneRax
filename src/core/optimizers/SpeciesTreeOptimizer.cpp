@@ -660,5 +660,13 @@ void SpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<pll_rnod
   }
 }
 
-
-
+void SpeciesTreeOptimizer::likelihoodsSnapshot()
+{
+  std::string filename = _outputDir + "/snapshot_core" + std::to_string(ParallelContext::getRank()); 
+  std::ofstream os(filename);
+  auto &trees = _geneTrees->getTrees();
+  for (unsigned int i = 0; i < trees.size(); ++i) {
+    os << trees[i].name << " ";
+    os << _evaluations[i]->evaluate() << std::endl;
+  }
+}
