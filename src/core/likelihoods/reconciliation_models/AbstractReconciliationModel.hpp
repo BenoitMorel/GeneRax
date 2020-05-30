@@ -128,14 +128,13 @@ public:
 protected:
   // called by the constructor
   virtual void initSpeciesTree();
-  // Called when computeLogLikelihood is called for the first time
   // Called by computeLogLikelihood
   virtual void updateCLV(pll_unode_t *geneNode) = 0;
   // Called by computeLogLikelihood
-  virtual void computeRootLikelihood(pll_unode_t *virtualRoot) = 0;
+  virtual void computeGeneRootLikelihood(pll_unode_t *virtualRoot) = 0;
   // Called by computeLogLikelihood
-  virtual REAL getRootLikelihood(pll_unode_t *root) const = 0;
-  virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) = 0;
+  virtual REAL getGeneRootLikelihood(pll_unode_t *root) const = 0;
+  virtual REAL getGeneRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) = 0;
   virtual REAL getLikelihoodFactor() const = 0;
   virtual void recomputeSpeciesProbabilities() = 0;
   // Called by inferMLScenario
@@ -643,7 +642,7 @@ void AbstractReconciliationModel<REAL>::computeMLRoot(pll_unode_t *&bestGeneRoot
   REAL max = REAL();
   for (auto root: roots) {
     for (auto speciesNode: _allSpeciesNodes) {
-      REAL ll = getRootLikelihood(root, speciesNode);
+      REAL ll = getGeneRootLikelihood(root, speciesNode);
       if (max < ll) {
         max = ll;
         bestGeneRoot = root;
@@ -661,7 +660,7 @@ pll_unode_t *AbstractReconciliationModel<REAL>::computeMLRoot()
   getRoots(roots, _geneIds);
   REAL max = REAL();
   for (auto root: roots) {
-    REAL rootProba = getRootLikelihood(root);
+    REAL rootProba = getGeneRootLikelihood(root);
     if (max < rootProba) {
       bestRoot = root;
       max = rootProba;
@@ -678,7 +677,7 @@ double AbstractReconciliationModel<REAL>::getSumLikelihood()
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
   for (auto root: roots) {
-    total += getRootLikelihood(root);
+    total += getGeneRootLikelihood(root);
   }
   return log(total) - log(getLikelihoodFactor()); 
 }
@@ -693,7 +692,7 @@ void AbstractReconciliationModel<REAL>::computeLikelihoods()
     pll_unode_t virtualRoot;
     virtualRoot.next = root;
     virtualRoot.node_index = root->node_index + _maxGeneId + 1;
-    computeRootLikelihood(&virtualRoot);
+    computeGeneRootLikelihood(&virtualRoot);
   }
 }
 

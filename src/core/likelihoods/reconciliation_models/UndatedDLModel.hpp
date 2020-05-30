@@ -42,8 +42,8 @@ protected:
   // overload from parent
   virtual void updateCLV(pll_unode_t *geneNode);
   // overload from parent
-  virtual REAL getRootLikelihood(pll_unode_t *root) const;
-  virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {
+  virtual REAL getGeneRootLikelihood(pll_unode_t *root) const;
+  virtual REAL getGeneRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {
     return _dlclvs[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];
   }
 
@@ -51,7 +51,7 @@ protected:
   virtual void recomputeSpeciesProbabilities();
   virtual REAL getLikelihoodFactor() const;
   // overload from parent
-  virtual void computeRootLikelihood(pll_unode_t *virtualRoot);
+  virtual void computeGeneRootLikelihood(pll_unode_t *virtualRoot);
   // overlead from parent
   virtual void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
       REAL &proba,
@@ -281,7 +281,7 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
 }
   
 template <class REAL>
-REAL UndatedDLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
+REAL UndatedDLModel<REAL>::getGeneRootLikelihood(pll_unode_t *root) const
 {
   REAL sum = REAL();
   auto u = root->node_index + this->_maxGeneId + 1;
@@ -293,7 +293,7 @@ REAL UndatedDLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
 }
 
 template <class REAL>
-void UndatedDLModel<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
+void UndatedDLModel<REAL>::computeGeneRootLikelihood(pll_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
   for (auto speciesNode: getSpeciesNodesToUpdate()) {

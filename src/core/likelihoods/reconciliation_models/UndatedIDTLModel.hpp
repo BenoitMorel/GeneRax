@@ -41,10 +41,10 @@ protected:
   // overload from parent
   virtual void recomputeSpeciesProbabilities();
   // overloaded from parent
-  virtual REAL getRootLikelihood(pll_unode_t *root) const;
+  virtual REAL getGeneRootLikelihood(pll_unode_t *root) const;
   // overload from parent
-  virtual void computeRootLikelihood(pll_unode_t *virtualRoot);
-  virtual REAL getRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {
+  virtual void computeGeneRootLikelihood(pll_unode_t *virtualRoot);
+  virtual REAL getGeneRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {
     return _dtlclvs[root->node_index + this->_maxGeneId + 1]._uq[speciesRoot->node_index];
   }
   virtual REAL getLikelihoodFactor() const;
@@ -510,7 +510,7 @@ void UndatedIDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode
 
 
 template <class REAL>
-void UndatedIDTLModel<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
+void UndatedIDTLModel<REAL>::computeGeneRootLikelihood(pll_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
   resetTransferSums(this->_fastMode ? _dtlclvs[u]._survivingTransferSumsOneMore : _dtlclvs[u]._survivingTransferSums, _dtlclvs[u]._survivingTransferSumsInvariant, _dtlclvs[u]._uq);
@@ -534,7 +534,7 @@ void UndatedIDTLModel<REAL>::computeRootLikelihood(pll_unode_t *virtualRoot)
 
 
 template <class REAL>
-REAL UndatedIDTLModel<REAL>::getRootLikelihood(pll_unode_t *root) const
+REAL UndatedIDTLModel<REAL>::getGeneRootLikelihood(pll_unode_t *root) const
 {
   REAL sum = REAL();
   auto u = root->node_index + this->_maxGeneId + 1;
