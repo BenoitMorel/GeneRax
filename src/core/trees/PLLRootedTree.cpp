@@ -98,12 +98,13 @@ void PLLRootedTree::setMissingLabels()
   unsigned int i = 0;
   std::string prefix("s");
   for (auto node: getNodes()) {
-    if (!node->label) {
+    if (node->left) {
       std::string newLabel;
       do {
         newLabel = prefix + std::to_string(i++);
       }
       while (labels.find(newLabel) != labels.end());
+      free(node->label);
       node->label = static_cast<char*>(malloc(sizeof(char) * (newLabel.size() + 1)));
       std::strcpy(node->label, newLabel.c_str());
     }
