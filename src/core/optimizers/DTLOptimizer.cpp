@@ -141,6 +141,7 @@ Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreEvaluations &evaluat
   for (auto rates: startingRates) {
     Parameters newRates = optimizeParameters(evaluations, rates);
     bool stop = (fabs(newRates.getScore() - best.getScore()) < 3.0);
+    stop = false;
     if (newRates.getScore() > best.getScore()) {
       best = newRates;
     }
