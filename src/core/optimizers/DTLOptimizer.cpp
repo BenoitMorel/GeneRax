@@ -118,16 +118,15 @@ Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreEvaluations &evaluat
   std::vector<Parameters> startingRates;
   if (startingParameters) {
     startingRates.push_back(*startingParameters);
-  } else if (freeParameters == 2) {
+  } 
+  if (freeParameters == 2) {
     startingRates.push_back(Parameters(0.1, 0.2));
     startingRates.push_back(Parameters(0.2, 0.2));
     startingRates.push_back(Parameters(0.5, 0.5));
     startingRates.push_back(Parameters(0.5, 1.0));
     startingRates.push_back(Parameters(0.01, 0.01));
   } else if (freeParameters == 3) {
-    startingRates.push_back(Parameters(0.5, 0.5, 0.2));
     startingRates.push_back(Parameters(0.1, 0.2, 0.1));
-    startingRates.push_back(Parameters(0.2, 0.2, 0.0));
     startingRates.push_back(Parameters(0.01, 0.01, 0.01));
   } else {
     startingRates.push_back(Parameters(0.5, 0.5, 0.2, 0.0));
