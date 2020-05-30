@@ -130,7 +130,7 @@ public:
         return false;
       case RecModel::UndatedDTL:
       case RecModel::UndatedIDTL:
-        return true;
+        return false;
     }
     assert(false);
     return false;
