@@ -419,6 +419,7 @@ void AbstractReconciliationModel<REAL>::onSpeciesTreeChange(const std::unordered
         }
       }
     }
+    _allSpeciesNodes.clear();
     fillPrunedNodesPostOrder(getPrunedRoot(), _allSpeciesNodes);
   }
   assert(_allSpeciesNodes.size()); // && _allSpeciesNodes.back() == _speciesTree.getRoot());
