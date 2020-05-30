@@ -66,9 +66,9 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   saveCurrentSpeciesTreeId();
 }
 
-static bool testAndSwap(double &ll1, double &ll2) {
-  std::swap(ll1, ll2);
-  return fabs(ll1 - ll2) > 0.001;
+static bool testAndSwap(size_t &hash1, size_t &hash2) {
+  std::swap(hash1, hash2);
+  return hash1 != hash2;
 }
 
 void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
@@ -79,29 +79,30 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     for (unsigned int radius = 1; radius <= sprRadius; ++radius) {
       optimizeDTLRates();
       sprSearch(radius);
-      rootExhaustiveSearch(false);
     }
     break;
   case SpeciesSearchStrategy::TRANSFERS:
-    for (unsigned int i = 0; i < 3; ++i) {
-      optimizeDTLRates();
-      transferSearch();
-    }
+    transferSearch();
     break;
   case SpeciesSearchStrategy::HYBRID:
-    double ll1, ll2;
-    ll1 = ll2 = computeRecLikelihood();
-    int index = 0;
-    bool stop = false;
-    while (!stop) {
+    /**
+     *  Alternate transfer search and normal
+     *  SPR search, until one does not find
+     *  a better tree. Run each at least once.
+     */
+    size_t hash1 = 0;
+    size_t hash2 = 0;
+    unsigned int index = 0;
+    do {
       if (index++ % 2 == 0) {
-        ll1 = transferSearch();
+        transferSearch();
       } else {
-        ll2 = optimizeDTLRates();
-        ll1 = sprSearch(1);
+        optimizeDTLRates();
+        sprSearch(1);
       }
-      stop = !testAndSwap(ll1, ll2);
+      hash1 = _speciesTree->getHash();
     }
+    while(testAndSwap(hash1, hash2));
     break;
   }
 }
@@ -345,7 +346,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
         _stats.acceptedTransfers++;
         failures = 0;
         improvements++;
-        Logger::info << "  better tree (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ")"   << std::endl;
+        Logger::info << "  better tree (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ", hash=" << _speciesTree->getHash() << ")"   << std::endl;
         // we enough improvements to recompute the new transfers
         hash1 = _speciesTree->getNodeIndexHash(); 
         refApproxLL = computeApproxRecLikelihood();
@@ -377,7 +378,7 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
     for (auto regraft: regrafts) {
       if (testPruning(prune, regraft, refApproxLL, hash1)) {
         Logger::timed << "\tnew best tree (LL=" 
-          << _bestRecLL << ")"<< std::endl;
+          << _bestRecLL << ", hash=" << _speciesTree->getHash() << ")"<< std::endl;
         hash1 = _speciesTree->getNodeIndexHash(); 
         refApproxLL = computeApproxRecLikelihood();
       }
@@ -636,7 +637,6 @@ void SpeciesTreeOptimizer::newBestTreeCallback()
 void SpeciesTreeOptimizer::setGeneTreesFromFamilies(const Families &families)
 {
   _geneTrees = std::make_unique<PerCoreGeneTrees>(families, true);
-  //TreeDuplicatesFinder::findDuplicates(*_geneTrees);
   updateEvaluations();
 }
   
