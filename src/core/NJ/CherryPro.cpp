@@ -1,6 +1,7 @@
 #include "CherryPro.hpp"
 
 #include <vector>
+#include <array>
 #include <memory>
 #include <set>
 #include "MiniNJ.hpp"
@@ -402,7 +403,6 @@ static bool shouldWeFight(const MatrixDouble &neighborMatrix,
     std::pair<int, int> &bestCompetingPair)
 {
   return false;
-  static const double RATIO_LIMIT = 0.1;
   double myScore = neighborMatrix[p.first][p.second];
   double worstRatio = 1000.0;
   for (unsigned int i = 0; i < neighborMatrix.size(); ++i) {
