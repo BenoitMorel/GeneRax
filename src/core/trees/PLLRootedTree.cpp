@@ -94,16 +94,18 @@ void PLLRootedTree::setMissingBranchLengths(double minBL)
 
 void PLLRootedTree::setMissingLabels() 
 {
-  auto labels = getLabels(false);
+  auto labels = getLabels(true);
   unsigned int i = 0;
   std::string prefix("s");
   for (auto node: getNodes()) {
     if (node->left) {
       std::string newLabel;
-      do {
+      if (node->label) {
+        newLabel = std::string(node->label);
+      }
+      while (labels.find(newLabel) != labels.end() || newLabel.size() == 0) {
         newLabel = prefix + std::to_string(i++);
       }
-      while (labels.find(newLabel) != labels.end());
       free(node->label);
       node->label = static_cast<char*>(malloc(sizeof(char) * (newLabel.size() + 1)));
       std::strcpy(node->label, newLabel.c_str());
