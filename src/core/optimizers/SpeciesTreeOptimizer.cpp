@@ -348,9 +348,11 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
         double factor = 1.0;
         if (plop % 2 == 0) {
           if (coverages.find(key1) != coverages.end()) {
+            assert(coverages[key1] != 0.0);
             factor /= coverages[key1];
           }
           if (coverages.find(key2) != coverages.end()) {
+            assert(coverages[key2] != 0.0);
             factor /= coverages[key2];
           }
         }
@@ -383,6 +385,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
         Logger::info << "  better tree (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ", hash=" << _speciesTree->getHash() << ")"   << std::endl;
         // we enough improvements to recompute the new transfers
         hash1 = _speciesTree->getNodeIndexHash(); 
+        assert(ParallelContext::isIntEqual(hash1));
         refApproxLL = computeApproxRecLikelihood();
       } else {
         failures++;
@@ -411,9 +414,10 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
     SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
     for (auto regraft: regrafts) {
       if (testPruning(prune, regraft, refApproxLL, hash1)) {
-        Logger::timed << "\tnew best tree (LL=" 
+        Logger::timed << "\tbetter tree (LL=" 
           << _bestRecLL << ", hash=" << _speciesTree->getHash() << ")"<< std::endl;
         hash1 = _speciesTree->getNodeIndexHash(); 
+        assert(ParallelContext::isIntEqual(hash1));
         refApproxLL = computeApproxRecLikelihood();
       }
     }
