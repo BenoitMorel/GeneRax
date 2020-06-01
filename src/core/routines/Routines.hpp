@@ -83,6 +83,7 @@ public:
   static void getTransfersFrequencies(const std::string &speciesTreeFile,
     Families &families,
     const ModelParameters &modelRates,
+    bool pruneMode,
     TransferFrequencies &frequencies,
     const std::string &outputDir);
   
@@ -103,6 +104,7 @@ public:
     const std::string &speciesTreeFile,
     Families &families,
     const ModelParameters &modelRates,
+    bool pruneMode,
     const std::string &outputDir,
     bool bestReconciliation,
     unsigned int reconciliationSamples,

@@ -324,6 +324,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
   Routines::getTransfersFrequencies(speciesTreeFile,
     _currentFamilies,
     _modelRates,
+    _pruneSpeciesTree,
     frequencies,
     _outputDir);
   auto coverages = getCoverage(_outputDir + "/perSpeciesCoverage.txt");

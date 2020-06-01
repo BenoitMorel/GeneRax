@@ -252,7 +252,7 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
     ModelParameters modelRates(instance.rates, instance.recModel, false, 1);
     instance.readModelParameters(modelRates);
     Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, 
-      modelRates, instance.args.output, instance.args.reconcile,
+      modelRates, instance.args.pruneSpeciesTree, instance.args.output, instance.args.reconcile,
       instance.args.reconciliationSamples);
     if (instance.args.buildSuperMatrix) {
       /*
