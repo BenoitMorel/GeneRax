@@ -144,7 +144,7 @@ bool SpeciesTreeOperator::canApplySPRMove(SpeciesTree &speciesTree, unsigned int
   if (pruneNode->parent == regraftNode) {
     return false;
   }
-  if (!pruneNode->parent || pruneNode == getBrother(pruneNode)) {
+  if (!pruneNode->parent || regraftNode == getBrother(pruneNode)) {
     return false;
   }
   while (regraftNode != speciesTree.getRoot()) {
