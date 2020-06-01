@@ -172,6 +172,8 @@ void UndatedDTLModel<REAL>::resetTransferSums(const REAL &transferSum,
     }
     diff /= this->_allSpeciesNodes.size();
     transferSumInvariant = transferSum - diff;
+  } else {
+
   }
 }
 
@@ -227,8 +229,12 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
 {
   _uE.resize(this->_allSpeciesNodesCount);
   REAL unused = REAL(1.0);
+  for (auto speciesNode: getSpeciesNodesToUpdate()) {
+    _uE[speciesNode->node_index] = REAL(0.0);
+  }
   resetTransferSums(_transferExtinctionSum, unused, _uE);
   for (unsigned int it = 0; it < getIterationsNumber(); ++it) {
+    updateTransferSums(_transferExtinctionSum, unused, _uE);
     for (auto speciesNode: getSpeciesNodesToUpdate()) {
       auto e = speciesNode->node_index;
       REAL proba(_PL[e]);
@@ -246,7 +252,6 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
       //PRINT_ERROR_PROBA(proba)
       _uE[speciesNode->node_index] = proba;
     }
-    updateTransferSums(_transferExtinctionSum, unused, _uE);
   }
     
   for (auto speciesNode: getSpeciesNodesToUpdate()) {
@@ -691,6 +696,7 @@ void UndatedDTLModel<REAL>::getBestTransferLoss(Scenario &scenario,
   proba = REAL();
   auto e = originSpeciesNode->node_index;
   auto u = parentGeneNode->node_index;
+  
   std::unordered_set<unsigned int> parents;
   parents.insert(originSpeciesNode->node_index);
   unsigned int speciesNumber = this->_allSpeciesNodes.size();

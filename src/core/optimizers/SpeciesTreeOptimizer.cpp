@@ -194,9 +194,7 @@ bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
   bool tryApproxFirst = Enums::implementsApproxLikelihood(_modelRates.model);
   bool check = false;
   // Apply the move
-  //Logger::info << "Before move " << *_speciesTree << std::endl;
   auto rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
- // Logger::info << "After move " << *_speciesTree << std::endl;
   _stats.testedTrees++;
   bool canTestMove = true;
   // Discard bad moves with an approximation of the likelihood function
@@ -204,7 +202,6 @@ bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
   bool needFullRollback = false;
   if (tryApproxFirst) {
     approxRecLL = computeApproxRecLikelihood();
-    //Logger::info << approxRecLL << std::endl;
     if (approxRecLL - _bestRecLL < 0.0) {
       canTestMove = false;
     } else {
@@ -379,9 +376,6 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
         _stats.acceptedTransfers++;
         failures = 0;
         improvements++;
-        auto labelPrune = _speciesTree->getNode(transferMove.prune)->label;
-        auto labelRegraft = _speciesTree->getNode(transferMove.regraft)->label;
-        Logger::info << labelPrune << " -> " << labelRegraft << std::endl;
         Logger::info << "  better tree (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ", hash=" << _speciesTree->getHash() << ")"   << std::endl;
         // we enough improvements to recompute the new transfers
         hash1 = _speciesTree->getNodeIndexHash(); 

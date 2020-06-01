@@ -696,7 +696,41 @@ void AbstractReconciliationModel<REAL>::computeLikelihoods()
   }
 }
 
-  
+ 
+static std::string speciesTreeString(pll_rnode_t *node)
+{
+  if (!node->left) {
+    return std::to_string(node->node_index);
+  } 
+  std::string res = "(";
+  res += speciesTreeString(node->left);
+  res += ",";
+  res += speciesTreeString(node->right);
+  res += ")";
+  res += std::to_string(node->node_index);
+  return res;
+}
+
+static std::string geneTreeString(pll_unode_t *node, const std::vector<unsigned int> toSpecies)
+{
+  std::string res;
+  if (!node->next) {
+    //res += std::to_string(node->node_index);
+    //res += "-";
+    res += std::to_string(toSpecies[node->node_index]);
+  } else {
+    auto left = node->next->back;
+    auto right = node->next->next->back;
+    res += "(";
+    res += geneTreeString(left, toSpecies);
+    res += ",";
+    res += geneTreeString(right, toSpecies);
+    res += ")";
+    //res += std::to_string(node->node_index);
+  }
+  return res;
+}
+
 template <class REAL>
 bool AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario, bool stochastic)
 {
@@ -719,7 +753,14 @@ bool AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario, bool
   virtualRoot.node_index = geneRoot->node_index + _maxGeneId + 1;
   scenario.setVirtualRootIndex(virtualRoot.node_index);
   scenario.initBlackList(_maxGeneId, _speciesTree.getNodesNumber());
-  return backtrace(&virtualRoot, speciesRoot, scenario, true, stochastic);
+  Logger::perrank << speciesTreeString(_speciesTree.getRoot()) << ";" << std::endl;
+  Logger::perrank << _maxGeneId << std::endl;
+  if (1005 <= _maxGeneId) {
+    auto buggyGene = _allNodes[1005];
+    Logger::perrank << geneTreeString(buggyGene, _geneToSpecies) << ";" << std::endl;
+  }
+  auto res =  backtrace(&virtualRoot, speciesRoot, scenario, true, stochastic);
+  return res;
 }
   
 
@@ -746,6 +787,7 @@ bool AbstractReconciliationModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rno
   computeProbability(geneNode, speciesNode, temp, isVirtualRoot, &scenario, &event, stochastic);
   scenario.addEvent(event);
   bool ok = true;
+  Logger::perrank << int(event.type) << " g="  << geneNode->node_index << " s=" << speciesNode->node_index << " ll=" << temp << std::endl;
   // safety check
   switch(event.type) {
   case ReconciliationEventType::EVENT_S:
