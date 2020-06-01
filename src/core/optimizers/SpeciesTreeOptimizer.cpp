@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <trees/TreeDuplicatesFinder.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
-
+#include <fstream>
 
 static std::string getStepTag(bool fastMove)
 {
@@ -245,10 +245,10 @@ bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
 struct TransferMove {
   unsigned int prune;
   unsigned int regraft;
-  unsigned int transfers;
-  TransferMove(): prune(0), regraft(0), transfers(0) {
+  double transfers;
+  TransferMove(): prune(0), regraft(0), transfers(0.0) {
   }
-  TransferMove(unsigned int p, unsigned int r, unsigned int t): prune(p), regraft(r), transfers(t) {
+  TransferMove(unsigned int p, unsigned int r, double t): prune(p), regraft(r), transfers(t) {
   }
   bool operator < (const TransferMove& tm) const
   {
@@ -292,6 +292,24 @@ struct MovesBlackList {
   void blacklist(const TransferMove &move) { _blacklist.insert(move); }
 };
 
+static std::unordered_map<std::string, double> getCoverage(const std::string &path)
+{
+  std::ifstream is(path);
+  std::unordered_map<std::string, double> res;
+  std::string line;
+  std::getline(is, line);
+  while (std::getline(is, line))
+  {
+    std::istringstream iss(line);
+    std::string species;
+    double coverage;
+    iss >> species >> coverage;
+    species.pop_back();
+    res.insert({species, coverage});
+  }
+  return res;
+}
+
 double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
 {
   unsigned int minTransfers = 1;
@@ -308,11 +326,14 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
     _modelRates,
     frequencies,
     _outputDir);
+  auto coverages = getCoverage(_outputDir + "/perSpeciesCoverage.txt");
   unsigned int transfers = 0;
   ParallelContext::barrier();
   std::unordered_map<std::string, unsigned int> labelsToIds;
   _speciesTree->getLabelsToId(labelsToIds);
   std::vector<TransferMove> transferMoves;
+  static int plop = 0;
+  plop++;
   for (auto entry: frequencies) {
     transfers += entry.second;
     if (entry.second >= minTransfers) {
@@ -323,8 +344,17 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
       // HERE
       if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, prune, regraft)) {
         TransferMove move(prune, regraft, entry.second);
+        double factor = 1.0;
+        if (plop % 2 == 0) {
+          if (coverages.find(key1) != coverages.end()) {
+            factor /= coverages[key1];
+          }
+          if (coverages.find(key2) != coverages.end()) {
+            factor /= coverages[key2];
+          }
+        }
         if (!blacklist.isBlackListed(move)) {
-          transferMoves.push_back(TransferMove(prune, regraft, entry.second)); 
+          transferMoves.push_back(TransferMove(prune, regraft, factor * entry.second)); 
         }
       }
     }
@@ -346,6 +376,9 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
         _stats.acceptedTransfers++;
         failures = 0;
         improvements++;
+        auto labelPrune = _speciesTree->getNode(transferMove.prune)->label;
+        auto labelRegraft = _speciesTree->getNode(transferMove.regraft)->label;
+        Logger::info << labelPrune << " -> " << labelRegraft << std::endl;
         Logger::info << "  better tree (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ", hash=" << _speciesTree->getHash() << ")"   << std::endl;
         // we enough improvements to recompute the new transfers
         hash1 = _speciesTree->getNodeIndexHash(); 
@@ -478,6 +511,7 @@ double SpeciesTreeOptimizer::transferSearch()
   MovesBlackList blacklist;
   do {
     bestLL = optimizeDTLRates();
+    newLL = fastTransfersRound(blacklist);
     newLL = fastTransfersRound(blacklist);
   } while (newLL - bestLL > 0.001);
   Logger::timed << "After transfer search: " << newLL << std::endl;
