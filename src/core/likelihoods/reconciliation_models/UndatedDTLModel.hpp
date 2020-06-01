@@ -627,16 +627,11 @@ void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode,
   auto e = originSpeciesNode->node_index;
   auto u_left = this->getLeft(parentGeneNode, isVirtualRoot);
   auto u_right = this->getRight(parentGeneNode, isVirtualRoot);
-  std::unordered_set<unsigned int> parents;
-  parents.insert(originSpeciesNode->node_index);
-  for (auto parent = originSpeciesNode; this->getSpeciesParent(parent) != 0; parent = this->getSpeciesParent(parent)) {
-    parents.insert(this->getSpeciesParent(parent)->node_index);
-  }
   std::vector<REAL> transferProbas(speciesNumber * 2, REAL());
   double factor = _PT[e] / static_cast<double>(speciesNumber);
   for (auto species: this->_allSpeciesNodes) {
     auto h = species->node_index;
-    if (parents.count(h)) {
+    if (h == e) {
       continue;
     }
     transferProbas[h] = (_dtlclvs[u_left->node_index]._uq[h] 
@@ -697,17 +692,12 @@ void UndatedDTLModel<REAL>::getBestTransferLoss(Scenario &scenario,
   auto e = originSpeciesNode->node_index;
   auto u = parentGeneNode->node_index;
   
-  std::unordered_set<unsigned int> parents;
-  parents.insert(originSpeciesNode->node_index);
   unsigned int speciesNumber = this->_allSpeciesNodes.size();
   std::vector<REAL> transferProbas(speciesNumber, REAL());
-  for (auto parent = originSpeciesNode; this->getSpeciesParent(parent) != 0; parent = this->getSpeciesParent(parent)) {
-    parents.insert(this->getSpeciesParent(parent)->node_index);
-  }
   REAL factor = _uE[e] * (_PT[e] / static_cast<double>(this->_allSpeciesNodes.size()));
   for (auto species: this->_allSpeciesNodes) {
     auto h = species->node_index;
-    if (parents.count(h)) {
+    if (h == e) {
       continue;
     }
     transferProbas[h] = _dtlclvs[u]._uq[h] * factor;
