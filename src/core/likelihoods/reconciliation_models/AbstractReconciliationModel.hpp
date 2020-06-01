@@ -750,11 +750,11 @@ bool AbstractReconciliationModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rno
   switch(event.type) {
   case ReconciliationEventType::EVENT_S:
     if (!event.cross) {
-      ok &= backtrace(leftGeneNode, speciesNode->left, scenario, false, stochastic); 
-      ok &= backtrace(rightGeneNode, speciesNode->right, scenario, false, stochastic); 
+      ok &= backtrace(leftGeneNode, this->getSpeciesLeft(speciesNode), scenario, false, stochastic); 
+      ok &= backtrace(rightGeneNode, this->getSpeciesRight(speciesNode), scenario, false, stochastic); 
     } else {
-      ok &= backtrace(leftGeneNode, speciesNode->right, scenario, false, stochastic); 
-      ok &= backtrace(rightGeneNode, speciesNode->left, scenario, false, stochastic); 
+      ok &= backtrace(leftGeneNode, this->getSpeciesRight(speciesNode), scenario, false, stochastic); 
+      ok &= backtrace(rightGeneNode, this->getSpeciesLeft(speciesNode), scenario, false, stochastic); 
     }
     break;
   case ReconciliationEventType::EVENT_D:
