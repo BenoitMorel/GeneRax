@@ -141,6 +141,7 @@ JointTree::JointTree(const std::string &newickString,
       _geneSpeciesMap, 
       reconciliationModel,
       rootedGeneTree);
+  Logger::info << ratesVector << std::endl;
   setRates(ratesVector);
 
 }

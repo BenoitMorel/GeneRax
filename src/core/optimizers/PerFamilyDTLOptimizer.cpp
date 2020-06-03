@@ -232,11 +232,15 @@ void PerFamilyDTLOptimizer::optimizeRateSimplex(JointTree &jointTree, bool trans
 {
   Logger::timed << "Starting DTL rates optimization" << std::endl;
   std::vector<Parameters> rates;
-  rates.push_back(Parameters(0.01, 0.01, 0.01));
-  rates.push_back(Parameters(1.0, 0.01, 0.01));
-  rates.push_back(Parameters(0.01, 1.0, 1.0));
   if (transfers) {
+    rates.push_back(Parameters(0.01, 0.01, 0.01));
+    rates.push_back(Parameters(1.0, 0.01, 0.01));
+    rates.push_back(Parameters(0.01, 1.0, 1.0));
     rates.push_back(Parameters(0.01, 0.01, 1.0));
+  } else {
+    rates.push_back(Parameters(0.01, 0.01));
+    rates.push_back(Parameters(1.0, 0.01));
+    rates.push_back(Parameters(0.01, 1.0));
   }
   for (auto &r: rates) {
     updateLL(r, jointTree);

@@ -71,6 +71,18 @@ int internal_main(int argc, char** argv, void* comm)
       lossRate = arguments.lossRate;
       transferRate = arguments.transferRate;
     }
+    Parameters startingParameters;
+    switch (arguments.reconciliationModel) {
+      case RecModel::UndatedDL:
+      startingParameters = Parameters(dupRate, lossRate);
+      break;
+    case RecModel::UndatedDTL:
+      startingParameters = Parameters(dupRate, lossRate, transferRate);
+      break;
+    default:
+      Logger::error << "Unsupported reconciliation model" << std::endl;
+      assert(false);
+    };
     double supportThreshold = -1.0; // no constraint search
     auto jointTree = std::make_unique<JointTree>(geneTreeString,
         arguments.alignment,
@@ -84,7 +96,7 @@ int internal_main(int argc, char** argv, void* comm)
         1.0,
         arguments.check,
         true, // optimize DTL rates?
-        Parameters(dupRate, lossRate, transferRate)
+        startingParameters
         );
     jointTree->printInfo();
     jointTree->optimizeParameters();
