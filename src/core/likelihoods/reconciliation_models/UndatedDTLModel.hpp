@@ -237,6 +237,10 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
     updateTransferSums(_transferExtinctionSum, unused, _uE);
     for (auto speciesNode: getSpeciesNodesToUpdate()) {
       auto e = speciesNode->node_index;
+     if (it + 1 == getIterationsNumber() && !speciesNode->left) {
+        _uE[e] = _uE[e] * (1.0 - this->_fm[e]) + REAL(this->_fm[e]);
+        continue;
+      }
       REAL proba(_PL[e]);
       REAL temp = _uE[e] * _uE[e] * _PD[e];
       scale(temp);
@@ -252,11 +256,6 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
       //PRINT_ERROR_PROBA(proba)
       _uE[speciesNode->node_index] = proba;
     }
-  }
-    
-  for (auto speciesNode: getSpeciesNodesToUpdate()) {
-    auto e = speciesNode->node_index;
-    _uE[e] = _uE[e] * (1.0 - this->_fm[e]) + REAL(this->_fm[e]);
   }
 }
 
