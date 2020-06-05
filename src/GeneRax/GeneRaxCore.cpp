@@ -201,7 +201,6 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
   }
   instance.totalLibpllLL = speciesTreeOptimizer.getLibpllLikeliohood();
   instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
-  instance.rates = speciesTreeOptimizer.getGlobalRates();
   Logger::timed << "End of optimizing the species tree" << std::endl;
   Logger::info << "joint ll = " << instance.totalLibpllLL + instance.totalRecLL << std::endl;
   instance.speciesTree = speciesTreeOptimizer.saveCurrentSpeciesTreeId();
@@ -251,9 +250,10 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
     Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
     ModelParameters modelRates(instance.rates, instance.recModel, false, 1);
     instance.readModelParameters(modelRates);
+    bool optimizeRates = true;
     Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, 
       modelRates, instance.args.pruneSpeciesTree, instance.args.output, instance.args.reconcile,
-      instance.args.reconciliationSamples);
+      instance.args.reconciliationSamples, optimizeRates);
     if (instance.args.buildSuperMatrix) {
       /*
       std::string outputSuperMatrix = FileSystem::joinPaths(

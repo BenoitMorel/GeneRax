@@ -103,11 +103,12 @@ public:
   static void inferReconciliation(
     const std::string &speciesTreeFile,
     Families &families,
-    const ModelParameters &modelRates,
+    const ModelParameters &initialModelRates,
     bool pruneMode,
     const std::string &outputDir,
     bool bestReconciliation,
     unsigned int reconciliationSamples,
+    bool optimizeRates,
     bool saveTransfersOnly = false
     );
 

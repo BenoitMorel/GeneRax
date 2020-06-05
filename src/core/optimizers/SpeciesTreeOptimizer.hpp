@@ -101,7 +101,6 @@ public:
   double computeRecLikelihood();
   double computeApproxRecLikelihood();
 
-  const Parameters getGlobalRates() {return _globalRates;}
 
   void likelihoodsSnapshot();
 private:
@@ -124,7 +123,6 @@ private:
   bool _userDTLRates;
   double _minGeneBranchLength;
   bool _pruneSpeciesTree;
-  Parameters _globalRates;
   ModelParameters _modelRates;
   std::string _fractionMissingFile;
 private:

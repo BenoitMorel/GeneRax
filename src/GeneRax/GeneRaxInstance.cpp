@@ -4,6 +4,7 @@
 void GeneRaxInstance::readModelParameters(ModelParameters &modelParameters)
 {
   Parameters defaultRates = rates;
+  assert(rates.dimensions());
   modelParameters = ModelParameters(defaultRates, 
       recModel, 
       args.perFamilyDTLRates, 
@@ -28,6 +29,7 @@ void GeneRaxInstance::readModelParameters(ModelParameters &modelParameters)
     }
     modelParameters.setRates(i, ratesToRead);
   }
+  assert(modelParameters.rates.dimensions());
 }
 
 
