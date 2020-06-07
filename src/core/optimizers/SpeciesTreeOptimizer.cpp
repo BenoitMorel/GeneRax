@@ -26,7 +26,8 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     double supportThreshold,
     const std::string &outputDir,
     const std::string &execPath,
-    bool fractionMissing):
+    bool fractionMissing,
+    bool constrainSearch):
   _speciesTree(nullptr),
   _geneTrees(nullptr),
   _initialFamilies(initialFamilies),
@@ -44,6 +45,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _minGeneBranchLength(minGeneBranchLength),
   _pruneSpeciesTree(pruneSpeciesTree),
   _modelRates(startingRates, model, false, 1),
+  _constrainSearch(constrainSearch),
   _okForClades(0),
   _koForClades(0)
 {
@@ -77,9 +79,10 @@ static bool testAndSwap(size_t &hash1, size_t &hash2) {
 void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
       unsigned int sprRadius)
 {
+  _bestRecLL = computeRecLikelihood();
   switch (strategy) {
   case SpeciesSearchStrategy::SPR:
-    for (unsigned int radius = sprRadius; radius <= sprRadius; ++radius) {
+    for (unsigned int radius = 1; radius <= sprRadius; ++radius) {
       optimizeDTLRates();
       sprSearch(radius);
     }
@@ -205,7 +208,8 @@ bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
   double approxRecLL;
   bool needFullRollback = false;
   auto wrongClades2 = _unsupportedCladesNumber();
-  if (wrongClades2 > wrongClades1) {
+  
+  if (_constrainSearch && wrongClades2 > wrongClades1) {
     canTestMove = false;
     _koForClades++;
   } else {

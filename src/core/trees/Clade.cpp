@@ -85,11 +85,14 @@ CladeSet Clade::buildCladeSet(PLLRootedTree &tree)
     }
   }
   auto maximumClade = clades.back();
+  auto emptyClade = Clade();
   CladeSet res;
   for (auto &clade: clades) {
     res.insert(clade.getHash());
+    //res.insert(clade.getComplement(maximumClade).getHash());
   }
   res.erase(maximumClade.getHash());
+  res.erase(emptyClade.getHash());
   return res;
 }
 

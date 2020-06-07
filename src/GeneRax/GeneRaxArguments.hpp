@@ -46,8 +46,9 @@ public:
    bool filterFamilies;
    std::string exec;
    bool fractionMissing;
-
+  
    // species tree search
+   bool constrainSpeciesSearch;
    bool rerootSpeciesTree;
    bool optimizeSpeciesTree;
    unsigned int speciesFastRadius;

@@ -62,7 +62,8 @@ public:
       double supportThreshold,
       const std::string &outputDir,
       const std::string &execPath,
-      bool fractionMissing);
+      bool fractionMissing,
+      bool constrainSearch);
   
   // forbid copy
   SpeciesTreeOptimizer(const SpeciesTreeOptimizer &) = delete;
@@ -130,6 +131,7 @@ private:
   ModelParameters _modelRates;
   std::string _fractionMissingFile;
   CladeSet _geneClades;
+  bool _constrainSearch;
   unsigned int _okForClades;
   unsigned int _koForClades;
 private:

@@ -139,7 +139,8 @@ void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
       instance.args.supportThreshold, 
       instance.args.output, 
       instance.args.exec, 
-      instance.args.fractionMissing);
+      instance.args.fractionMissing,
+      instance.args.constrainSpeciesSearch);
   if (instance.args.rerootSpeciesTree) {
     Logger::info << "Rerooting the species tree..." << std::endl;
     speciesTreeOptimizer.optimizeDTLRates();
@@ -182,7 +183,8 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
       instance.args.supportThreshold, 
       instance.args.output, 
       instance.args.exec, 
-      instance.args.fractionMissing);
+      instance.args.fractionMissing,
+      instance.args.constrainSpeciesSearch);
   if (instance.args.speciesFastRadius > 0) {
     Logger::info << std::endl;
     Logger::timed << "Start optimizing the species tree with fixed gene trees (on " 
