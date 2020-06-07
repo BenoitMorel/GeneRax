@@ -209,4 +209,31 @@ pll_rtree_t *PLLRootedTree::buildRandomTree(const std::unordered_set<std::string
   return res;
 }
 
+StringToUintMap PLLRootedTree::getLabelToIntMap()
+{
+  StringToUintMap map;
+  for (auto node: getLeaves()) {
+    map.insert({std::string(node->label), node->node_index});
+  }
+  return map;
+}
+ 
+static void fillPostOrder(pll_rnode_t *node, 
+    std::vector<pll_rnode_t*> &nodes)
+{
+  if (node->left) {
+    fillPostOrder(node->left, nodes);
+    fillPostOrder(node->right, nodes);
+  }
+  nodes.push_back(node);
+}
+
+std::vector<pll_rnode_t*> PLLRootedTree::getPostOrderNodes() const
+{ 
+  std::vector<pll_rnode_t*> nodes;
+  fillPostOrder(getRoot(), nodes);
+  return nodes;
+}
+
+
 

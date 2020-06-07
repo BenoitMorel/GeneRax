@@ -2,6 +2,9 @@
 
 #include <cassert>
 #include <string>
+#include <unordered_map>
+
+using StringToUintMap = std::unordered_map<std::string, unsigned int>;
 
 /**
  *  Reconciliation models 

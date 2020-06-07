@@ -15,6 +15,8 @@ extern "C" {
 #include <vector>
 #include <unordered_set>
 #include <util/CArrayRange.hpp>
+#include <util/enums.hpp>
+
 
 /**
  *  C++ wrapper around the libpll pll_rtree_t structure
@@ -61,6 +63,11 @@ public:
    */
   std::unordered_set<std::string> getLabels(bool leavesOnly) const;
 
+  /**
+   *  Get a mapping from label to integer 
+   */
+  StringToUintMap getLabelToIntMap();
+
   /*
    * Save the tree in newick format in filename
    */
@@ -84,7 +91,8 @@ public:
   CArrayRange<pll_rnode_t*> getLeaves() const;
   CArrayRange<pll_rnode_t*> getInnerNodes() const;
   CArrayRange<pll_rnode_t*> getNodes() const;
-  
+  std::vector<pll_rnode_t*> getPostOrderNodes() const;
+
   static void setSon(pll_rnode_t *parent, pll_rnode_t *newSon, bool left);
   
   friend std::ostream& operator<<(std::ostream& os, const PLLRootedTree &tree)

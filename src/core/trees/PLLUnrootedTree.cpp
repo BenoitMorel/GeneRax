@@ -73,6 +73,11 @@ unsigned int PLLUnrootedTree::getNodesNumber() const
   return getLeavesNumber() + getInnerNodesNumber();
 }
 
+unsigned int PLLUnrootedTree::getDirectedNodesNumber() const
+{
+  return getLeavesNumber() + 3 * getInnerNodesNumber();
+}
+
 unsigned int PLLUnrootedTree::getLeavesNumber() const
 {
   return _tree->tip_count;
@@ -103,4 +108,41 @@ std::unordered_set<std::string> PLLUnrootedTree::getLeavesLabels()
   }
   return res;
 }
+
+static void fillPostOrder(pll_unode_t *node,
+    std::vector<pll_unode_t*> &nodes,
+    std::unordered_set<unsigned int> &markedNodes)
+{
+  // we already traversed this node
+  if (markedNodes.find(node->node_index) != markedNodes.end()) {
+    return;
+  }
+  // mark the node as traversed
+  markedNodes.insert(node->node_index);
+  // first process children
+  if (node->next) {
+    fillPostOrder(node->next->back, nodes, markedNodes);
+    fillPostOrder(node->next->next->back, nodes, markedNodes);
+  }
+  nodes.push_back(node);
+}
+
+std::vector<pll_unode_t*> PLLUnrootedTree::getPostOrderNodes()
+{
+  std::vector<pll_unode_t*> nodes;
+  std::unordered_set<unsigned int> markedNodes;
+  // do the post order traversal from all possible virtual roots 
+  for (auto node: getNodes()) {
+    fillPostOrder(node, nodes, markedNodes);
+    if (node->next) {
+      fillPostOrder(node->next, nodes, markedNodes);
+      fillPostOrder(node->next->next, nodes, markedNodes);
+    }
+  }
+  assert(nodes.size() == getDirectedNodesNumber());
+  return nodes;
+}
+
+
+
 

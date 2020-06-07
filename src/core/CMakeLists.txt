@@ -30,6 +30,7 @@ set(jointsearch-core_SOURCES
   search/Rollbacks.cpp
   search/SearchUtils.cpp
   search/SPRSearch.cpp
+  trees/Clade.cpp
   trees/PLLUnrootedTree.cpp
   trees/PLLRootedTree.cpp
   trees/PLLTreeInfo.cpp

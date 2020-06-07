@@ -47,8 +47,13 @@ public:
   /*
    * Tree dimension
    */
+  // number of nodes in the node buffer (#leaves + #innner)
   unsigned int getNodesNumber() const;
+  // #leaves + 3 * #inner
+  unsigned int getDirectedNodesNumber() const;
+  // #leaves
   unsigned int getLeavesNumber() const;
+  // #inner
   unsigned int getInnerNodesNumber() const; 
 
   /*
@@ -87,6 +92,13 @@ public:
    *  in the tree
    */
   CArrayRange<pll_unode_t*> getNodes();
+
+  /**
+   *  Create a vector of all nodes (including all three pll
+   *  internal elements per internal node), such that a node
+   *  always comes after its (virtual) children.
+   */
+  std::vector<pll_unode_t*> getPostOrderNodes();
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;
 };

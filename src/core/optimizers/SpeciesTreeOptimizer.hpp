@@ -8,6 +8,8 @@
 #include <IO/Families.hpp>
 #include <memory>
 #include <maths/ModelParameters.hpp>
+#include <trees/Clade.hpp>
+
 
 struct EvaluatedMove {
   unsigned int prune;
@@ -103,6 +105,8 @@ public:
 
 
   void likelihoodsSnapshot();
+
+
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
@@ -125,7 +129,10 @@ private:
   bool _pruneSpeciesTree;
   ModelParameters _modelRates;
   std::string _fractionMissingFile;
+  CladeSet _geneClades;
 private:
+  void _computeAllGeneClades();
+  unsigned int _unsupportedCladesNumber();
   ModelParameters computeOptimizedRates(); 
   void updateEvaluations();
   void rootExhaustiveSearchAux(SpeciesTree &speciesTree, 

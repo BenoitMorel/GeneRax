@@ -64,6 +64,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   FileSystem::mkdir(FileSystem::joinPaths(_outputDir, "sub_genes_opt"), true);
   FileSystem::mkdir(subsamplesPath, true);
   saveCurrentSpeciesTreeId();
+  _computeAllGeneClades();
 }
 
 static bool testAndSwap(size_t &hash1, size_t &hash2) {
@@ -76,7 +77,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
 {
   switch (strategy) {
   case SpeciesSearchStrategy::SPR:
-    for (unsigned int radius = 1; radius <= sprRadius; ++radius) {
+    for (unsigned int radius = sprRadius; radius <= sprRadius; ++radius) {
       optimizeDTLRates();
       sprSearch(radius);
     }
@@ -191,6 +192,7 @@ bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
     double refApproxLL, 
     unsigned int hash1)
 {
+  auto unsupportedBefore = _unsupportedCladesNumber();
   bool tryApproxFirst = Enums::implementsApproxLikelihood(_modelRates.model);
   bool check = false;
   // Apply the move
@@ -200,7 +202,11 @@ bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
   // Discard bad moves with an approximation of the likelihood function
   double approxRecLL;
   bool needFullRollback = false;
-  if (tryApproxFirst) {
+  bool testClades = true;
+  if (testClades && _unsupportedCladesNumber() > unsupportedBefore) {
+    canTestMove = false;
+  }
+  if (tryApproxFirst && canTestMove) {
     approxRecLL = computeApproxRecLikelihood();
     if (approxRecLL - _bestRecLL < 0.0) {
       canTestMove = false;
@@ -376,7 +382,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
         _stats.acceptedTransfers++;
         failures = 0;
         improvements++;
-        Logger::info << "  better tree (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ", hash=" << _speciesTree->getHash() << ")"   << std::endl;
+        Logger::info << "  better tree (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() << ")"   << std::endl;
         // we enough improvements to recompute the new transfers
         hash1 = _speciesTree->getNodeIndexHash(); 
         assert(ParallelContext::isIntEqual(hash1));
@@ -703,3 +709,68 @@ void SpeciesTreeOptimizer::likelihoodsSnapshot()
     os << _evaluations[i]->evaluate() << std::endl;
   }
 }
+
+std::string getCladesSetPath(const std::string &outputDir,
+    int rank)
+{
+  std::string basePath = "clades_" + std::to_string(rank) + ".txt";
+  return FileSystem::joinPaths(outputDir, basePath);
+}
+
+void SpeciesTreeOptimizer::_computeAllGeneClades()
+{
+  Logger::timed << "Computing gene clades..." << std::endl;
+  ParallelContext::barrier();
+  
+  // Compute local clades
+  auto speciesLabelToInt = _speciesTree->getTree().getLabelToIntMap();
+  CladeSet allClades; 
+  for (auto &tree: _geneTrees->getTrees()) {
+    auto cladesSet = Clade::buildCladeSet(*tree.geneTree,
+        tree.mapping,
+        speciesLabelToInt);
+    allClades.insert(cladesSet.begin(), cladesSet.end());
+  }
+  // Write local clades
+  std::ofstream os(
+      getCladesSetPath(_outputDir, ParallelContext::getRank()));
+  for (auto clade: allClades) {
+    os << clade << " ";
+  }
+  os.close();
+  ParallelContext::barrier();
+  // Load all clades
+  _geneClades.clear();
+  for (unsigned int rank = 0; rank < ParallelContext::getSize(); ++rank) {
+    std::ifstream is(getCladesSetPath(_outputDir, rank));
+    unsigned int clade = 0;
+    while (is >> clade) {
+      _geneClades.insert(clade);
+    }
+  }
+  Logger::timed << "Per rank number of clades: " << _geneClades.size()  << std::endl;
+}
+
+struct Counter
+{
+  struct value_type { template<typename T> value_type(const T&) { } };
+  void push_back(const value_type&) { ++count; }
+  size_t count = 0;
+};
+
+  template<typename T1, typename T2>
+size_t intersection_size(const T1& s1, const T2& s2)
+{
+  Counter c;
+  set_intersection(s1.begin(), s1.end(), s2.begin(), s2.end(), std::back_inserter(c));
+  return c.count;
+}
+
+unsigned int SpeciesTreeOptimizer::_unsupportedCladesNumber()
+{
+  auto speciesClades = Clade::buildCladeSet(_speciesTree->getTree());
+  unsigned int intersectionSize =  intersection_size(speciesClades, 
+      _geneClades);
+  return speciesClades.size() - intersectionSize;
+}
+
