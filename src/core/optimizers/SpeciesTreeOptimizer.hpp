@@ -130,6 +130,8 @@ private:
   ModelParameters _modelRates;
   std::string _fractionMissingFile;
   CladeSet _geneClades;
+  unsigned int _okForClades;
+  unsigned int _koForClades;
 private:
   void _computeAllGeneClades();
   unsigned int _unsupportedCladesNumber();

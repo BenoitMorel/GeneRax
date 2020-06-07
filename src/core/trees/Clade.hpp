@@ -45,4 +45,18 @@ private:
   size_t _hash;
 };
 
+struct Counter
+{
+  struct value_type { template<typename T> value_type(const T&) { } };
+  void push_back(const value_type&) { ++count; }
+  size_t count = 0;
+};
+
+  template<typename T1, typename T2>
+size_t intersection_size(const T1& s1, const T2& s2)
+{
+  Counter c;
+  set_intersection(s1.begin(), s1.end(), s2.begin(), s2.end(), std::back_inserter(c));
+  return c.count;
+}
 

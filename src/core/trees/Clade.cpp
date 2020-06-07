@@ -89,6 +89,7 @@ CladeSet Clade::buildCladeSet(PLLRootedTree &tree)
   for (auto &clade: clades) {
     res.insert(clade.getHash());
   }
+  res.erase(maximumClade.getHash());
   return res;
 }
 
@@ -113,9 +114,21 @@ CladeSet Clade::buildCladeSet(PLLUnrootedTree &tree,
       clade.mergeWith(cladeRight);
     }
   }
+  bool bipartitionsOnly = true;
   CladeSet res;
-  for (auto &clade: clades) {
-    res.insert(clade.getHash());
+  if (bipartitionsOnly) {
+    for (auto node: postOrderNodes) {
+      auto &c1 = clades[node->node_index];
+      auto &c2 = clades[node->back->node_index];
+      if (intersection_size(c1._ids, c2._ids) == 0) {
+        res.insert(c1.getHash());  
+        res.insert(c2.getHash());  
+      }
+    }
+  } else {
+    for (auto &clade: clades) {
+      res.insert(clade.getHash());
+    }
   }
   return res;
 }

@@ -43,7 +43,9 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _userDTLRates(userDTLRates),
   _minGeneBranchLength(minGeneBranchLength),
   _pruneSpeciesTree(pruneSpeciesTree),
-  _modelRates(startingRates, model, false, 1)
+  _modelRates(startingRates, model, false, 1),
+  _okForClades(0),
+  _koForClades(0)
 {
   if (fractionMissing) {
     _fractionMissingFile = FileSystem::joinPaths(
@@ -192,7 +194,7 @@ bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
     double refApproxLL, 
     unsigned int hash1)
 {
-  auto unsupportedBefore = _unsupportedCladesNumber();
+  auto wrongClades1 = _unsupportedCladesNumber();
   bool tryApproxFirst = Enums::implementsApproxLikelihood(_modelRates.model);
   bool check = false;
   // Apply the move
@@ -202,9 +204,12 @@ bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
   // Discard bad moves with an approximation of the likelihood function
   double approxRecLL;
   bool needFullRollback = false;
-  bool testClades = true;
-  if (testClades && _unsupportedCladesNumber() > unsupportedBefore) {
+  auto wrongClades2 = _unsupportedCladesNumber();
+  if (wrongClades2 > wrongClades1) {
     canTestMove = false;
+    _koForClades++;
+  } else {
+    _okForClades++;
   }
   if (tryApproxFirst && canTestMove) {
     approxRecLL = computeApproxRecLikelihood();
@@ -415,7 +420,7 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
     for (auto regraft: regrafts) {
       if (testPruning(prune, regraft, refApproxLL, hash1)) {
         Logger::timed << "\tbetter tree (LL=" 
-          << _bestRecLL << ", hash=" << _speciesTree->getHash() << ")"<< std::endl;
+          << _bestRecLL << ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() << ")"<< std::endl;
         hash1 = _speciesTree->getNodeIndexHash(); 
         assert(ParallelContext::isIntEqual(hash1));
         refApproxLL = computeApproxRecLikelihood();
@@ -511,13 +516,16 @@ double SpeciesTreeOptimizer::transferSearch()
   _stats.reset();
   auto bestLL = computeRecLikelihood();
   Logger::timed << getStepTag(true) << " Starting species transfer search, bestLL=" 
-    << bestLL << ")" <<std::endl;
+    << bestLL <<  ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() 
+    << ")" <<std::endl;
   double newLL = bestLL;
   MovesBlackList blacklist;
   do {
     bestLL = optimizeDTLRates();
     newLL = fastTransfersRound(blacklist);
     newLL = fastTransfersRound(blacklist);
+    Logger::info << "  Accepted: " << _okForClades << std::endl;
+    Logger::info << "  Rejected: " << _koForClades << std::endl;
   } while (newLL - bestLL > 0.001);
   Logger::timed << "After transfer search: " << newLL << std::endl;
   Logger::info << _stats << std::endl; 
@@ -532,7 +540,7 @@ double SpeciesTreeOptimizer::sprSearch(unsigned int radius, bool doOptimizeGeneT
   unsigned int geneRadius = doOptimizeGeneTrees ? 1 : 0;
   double bestLL = doOptimizeGeneTrees ? computeLikelihood(geneRadius) : computeRecLikelihood();
   Logger::timed << getStepTag(!doOptimizeGeneTrees) << " Starting species SPR search, radius=" 
-    << radius << ", bestLL=" << bestLL << ")" <<std::endl;
+    << radius << ", bestLL=" << bestLL  << ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() << ")" <<std::endl;
   double newLL = bestLL;
   do {
     bestLL = newLL;
@@ -545,6 +553,8 @@ double SpeciesTreeOptimizer::sprSearch(unsigned int radius, bool doOptimizeGeneT
   Logger::timed << "After normal search: " << bestLL << std::endl;
   Logger::info << _stats << std::endl;
   saveCurrentSpeciesTreeId();
+  Logger::info << "  Accepted: " << _okForClades << std::endl;
+  Logger::info << "  Rejected: " << _koForClades << std::endl;
   return newLL;
 }
   
@@ -748,23 +758,10 @@ void SpeciesTreeOptimizer::_computeAllGeneClades()
       _geneClades.insert(clade);
     }
   }
-  Logger::timed << "Per rank number of clades: " << _geneClades.size()  << std::endl;
+  assert(ParallelContext::isIntEqual(_geneClades.size()));
+  Logger::timed << "Number number of supported bipartitions: " << _geneClades.size()  << std::endl;
 }
 
-struct Counter
-{
-  struct value_type { template<typename T> value_type(const T&) { } };
-  void push_back(const value_type&) { ++count; }
-  size_t count = 0;
-};
-
-  template<typename T1, typename T2>
-size_t intersection_size(const T1& s1, const T2& s2)
-{
-  Counter c;
-  set_intersection(s1.begin(), s1.end(), s2.begin(), s2.end(), std::back_inserter(c));
-  return c.count;
-}
 
 unsigned int SpeciesTreeOptimizer::_unsupportedCladesNumber()
 {
