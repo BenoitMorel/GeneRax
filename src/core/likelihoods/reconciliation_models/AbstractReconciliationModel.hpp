@@ -753,14 +753,7 @@ bool AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario, bool
   virtualRoot.node_index = geneRoot->node_index + _maxGeneId + 1;
   scenario.setVirtualRootIndex(virtualRoot.node_index);
   scenario.initBlackList(_maxGeneId, _speciesTree.getNodesNumber());
-  Logger::perrank << speciesTreeString(_speciesTree.getRoot()) << ";" << std::endl;
-  Logger::perrank << _maxGeneId << std::endl;
-  if (1005 <= _maxGeneId) {
-    auto buggyGene = _allNodes[1005];
-    Logger::perrank << geneTreeString(buggyGene, _geneToSpecies) << ";" << std::endl;
-  }
-  auto res =  backtrace(&virtualRoot, speciesRoot, scenario, true, stochastic);
-  return res;
+  return  backtrace(&virtualRoot, speciesRoot, scenario, true, stochastic);
 }
   
 
@@ -787,7 +780,6 @@ bool AbstractReconciliationModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rno
   computeProbability(geneNode, speciesNode, temp, isVirtualRoot, &scenario, &event, stochastic);
   scenario.addEvent(event);
   bool ok = true;
-  Logger::perrank << int(event.type) << " g="  << geneNode->node_index << " s=" << speciesNode->node_index << " ll=" << temp << std::endl;
   // safety check
   switch(event.type) {
   case ReconciliationEventType::EVENT_S:

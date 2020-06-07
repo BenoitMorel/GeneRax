@@ -61,6 +61,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
     setGeneTreesFromFamilies(initialFamilies);
   }
+  Logger::info << startingRates << std::endl;
   _modelRates = ModelParameters(startingRates, model, perFamilyRates, _geneTrees->getTrees().size());
   //_speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"), true);
   _speciesTree->addListener(this);
@@ -103,7 +104,6 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
       if (index++ % 2 == 0) {
         transferSearch();
       } else {
-        optimizeDTLRates();
         sprSearch(1);
       }
       hash1 = _speciesTree->getHash();
@@ -524,13 +524,16 @@ double SpeciesTreeOptimizer::transferSearch()
     << ")" <<std::endl;
   double newLL = bestLL;
   MovesBlackList blacklist;
+  int index = 0;
   do {
-    bestLL = optimizeDTLRates();
+    if (index++ > 0) {
+      bestLL = optimizeDTLRates();
+    }
     newLL = fastTransfersRound(blacklist);
     newLL = fastTransfersRound(blacklist);
     Logger::info << "  Accepted: " << _okForClades << std::endl;
     Logger::info << "  Rejected: " << _koForClades << std::endl;
-  } while (newLL - bestLL > 0.001);
+  } while (newLL - bestLL > 1.0);
   Logger::timed << "After transfer search: " << newLL << std::endl;
   Logger::info << _stats << std::endl; 
   saveCurrentSpeciesTreeId();

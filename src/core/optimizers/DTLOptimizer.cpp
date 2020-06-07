@@ -62,7 +62,7 @@ static bool lineSearchParameters(Evaluations &evaluations,
 Parameters DTLOptimizer::optimizeParameters(PerCoreEvaluations &evaluations,
     const Parameters &startingParameters)
 {
-  double epsilon = 0.0000001;
+  double epsilon = 0.000001;
   Parameters currentRates = startingParameters;
   updateLL(currentRates, evaluations);
   unsigned int llComputationsGrad = 0;

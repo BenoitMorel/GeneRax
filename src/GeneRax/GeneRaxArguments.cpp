@@ -21,9 +21,9 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   perSpeciesDTLRates(false),
   useTransferFrequencies(false),
   userDTLRates(false),
-  dupRate(1.0),
-  lossRate(1.0),
-  transferRate(0.0),
+  dupRate(0.2),
+  lossRate(0.2),
+  transferRate(0.2),
   optimizeGeneTrees(true),
   reconcile(false),
   buildSuperMatrix(false),
@@ -108,7 +108,7 @@ void GeneRaxArguments::init() {
       speciesSlowRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--species-initial-samples") {
       speciesInitialFamiliesSubsamples = static_cast<unsigned int>(atoi(argv[++i]));
-    } else if (arg == "--unconstraint-species-search") {
+    } else if (arg == "--unconstrained-species-search") {
       constrainSpeciesSearch = false;
     } else if (arg == "--reroot-species-tree") {
       rerootSpeciesTree = true;
