@@ -24,7 +24,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   lossRate(1.0),
   transferRate(0.0),
   optimizeGeneTrees(true),
-  reconcile(false),
+  reconcile(true),
   buildSuperMatrix(false),
   reconciliationSamples(0),
   maxSPRRadius(5),
@@ -111,6 +111,8 @@ void GeneRaxArguments::init() {
       optimizeGeneTrees = false;
     } else if (arg == "--reconcile") {
       reconcile = true;
+    } else if (arg == "--do-not-reconcile") {
+      reconcile = false;
     } else if (arg == "--build-supermatrix") {
       reconcile = true;
       buildSuperMatrix = true;
@@ -183,7 +185,7 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "--transfer-rate <transfer rate>" << std::endl;
   Logger::info << "--max-spr-radius <max SPR radius>" << std::endl;
   Logger::info << "--rec-weight <reconciliation likelihood weight>" << std::endl;
-  Logger::info << "--reconcile" << std::endl;
+  Logger::info << "--do-not-reconcile" << std::endl;
   Logger::info << "--reconciliation-samples <number of samples>" << std::endl;
   Logger::info << "--seed <seed>" << std::endl;
   Logger::info << "Please find more information on the GeneRax github wiki" << std::endl;
