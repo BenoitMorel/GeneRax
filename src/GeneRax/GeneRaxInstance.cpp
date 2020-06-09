@@ -9,6 +9,9 @@ void GeneRaxInstance::readModelParameters(ModelParameters &modelParameters)
       recModel, 
       args.perFamilyDTLRates, 
       currentFamilies.size());
+  if (!args.perFamilyDTLRates) {
+    return;
+  }
   auto freeParameters = Enums::freeParameters(recModel);
   Parameters ratesToRead(rates);
   auto resultsPath = FileSystem::joinPaths(args.output, "results");
