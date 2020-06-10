@@ -219,10 +219,10 @@ void Routines::inferReconciliation(
       Scenario scenario;
       std::string nhxSamples = FileSystem::joinPaths(reconciliationsDir, tree.name + "_samples.nhx");
       ParallelOfstream nhxOs(nhxSamples, false);
-      for (unsigned int i = 0; i < reconciliationSamples; ++i) {
+      for (unsigned int sample = 0; sample < reconciliationSamples; ++sample) {
         bool stochastic = true;
         evaluations[i]->inferMLScenario(scenario, stochastic);
-        std::string transfersFile = getTransfersFile(outputDir, tree.name, i);
+        std::string transfersFile = getTransfersFile(outputDir, tree.name, sample);
         if (!saveTransfersOnly) {
           scenario.saveReconciliation(nhxOs, ReconciliationFormat::NHX);
         }
