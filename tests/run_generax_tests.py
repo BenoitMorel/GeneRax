@@ -145,6 +145,8 @@ def run_generax(test_data, test_output, families_file, strategy, model, cores):
   command.append(strategy)
   command.append("--rec-model")
   command.append(model)
+  command.append("--max-spr-radius")
+  command.append("1")
   command.append("-p")
   command.append(os.path.join(test_output, "generax"))
   logs_file_path = os.path.join(test_output, "tests_logs.txt")
