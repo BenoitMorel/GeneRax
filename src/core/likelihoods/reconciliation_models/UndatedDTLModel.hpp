@@ -130,7 +130,7 @@ private:
     pll_rnode_t *&recievingSpecies,
     REAL &proba,
     bool stochastic = false);
-  unsigned int getIterationsNumber() const { return this->_fastMode ? 1 : 3;}    
+  unsigned int getIterationsNumber() const { return this->_fastMode ? 1 : 4;}    
   REAL getCorrectedTransferExtinctionSum(unsigned int speciesId) const {
     return _transferExtinctionSum * _PT[speciesId];
   }
