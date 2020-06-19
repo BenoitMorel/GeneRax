@@ -24,6 +24,15 @@ public:
   ScaledValue():value(0.0), scaler(NULL_SCALER) {
   }
 
+  operator double()
+  {
+    if (scaler == NULL_SCALER) {
+      return value;
+    } else {
+      return 0.0;
+    }
+  }
+
   void setNull() {
     value = 0.0;
     scaler = NULL_SCALER;

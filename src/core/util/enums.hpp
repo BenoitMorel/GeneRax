@@ -10,7 +10,10 @@ using StringToUintMap = std::unordered_map<std::string, unsigned int>;
  *  Reconciliation models 
  */
 enum class RecModel {
-  UndatedDL, UndatedDTL, UndatedIDTL
+  UndatedDL, 
+  UndatedDTL, 
+  UndatedIDTL,
+  ParsimonyDL
 };
 
 
@@ -99,6 +102,8 @@ public:
         return 3;
       case RecModel::UndatedIDTL:
         return 4;
+      case RecModel::ParsimonyDL:
+        return 0;
     }
     assert(false);
   }
@@ -111,6 +116,7 @@ public:
   {
     switch (m) {
     case RecModel::UndatedDL:
+    case RecModel::ParsimonyDL:
       return false;
     case RecModel::UndatedDTL:
     case RecModel::UndatedIDTL:
@@ -129,6 +135,7 @@ public:
   static bool implementsApproxLikelihood(RecModel m)
   {
     switch (m) {
+      case RecModel::ParsimonyDL:
       case RecModel::UndatedDL:
         return false;
       case RecModel::UndatedDTL:

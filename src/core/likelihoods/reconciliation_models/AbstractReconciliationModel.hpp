@@ -50,6 +50,8 @@ public:
    */
   virtual void rollbackToLastState() = 0;
 
+  virtual bool isParsimony() const = 0;
+
   /**
    *  Get/set the root of the gene tree (only relevant in rooted gene tree mode)
    */ 
@@ -107,6 +109,8 @@ public:
   virtual void setRates(const RatesVector &rates) = 0;
   // overload from parent
   virtual double computeLogLikelihood(bool fastMode = false);
+  // overload from parent 
+  virtual bool isParsimony() const {return false;}
   // overload from parent 
   virtual void rollbackToLastState() {assert(false);}
   // overload from parent
@@ -639,7 +643,9 @@ void AbstractReconciliationModel<REAL>::computeMLRoot(pll_unode_t *&bestGeneRoot
 {
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
-  REAL max = REAL();
+  REAL max = isParsimony() ? 
+    REAL(-std::numeric_limits<double>::infinity()) 
+    : REAL();
   for (auto root: roots) {
     for (auto speciesNode: _allSpeciesNodes) {
       REAL ll = getGeneRootLikelihood(root, speciesNode);
@@ -658,7 +664,9 @@ pll_unode_t *AbstractReconciliationModel<REAL>::computeMLRoot()
   pll_unode_t *bestRoot = 0;
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
-  REAL max = REAL();
+  REAL max = isParsimony() ? 
+    REAL(-std::numeric_limits<double>::infinity()) 
+    : REAL();
   for (auto root: roots) {
     REAL rootProba = getGeneRootLikelihood(root);
     if (max < rootProba) {
@@ -676,10 +684,25 @@ double AbstractReconciliationModel<REAL>::getSumLikelihood()
   REAL total = REAL();
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
-  for (auto root: roots) {
-    total += getGeneRootLikelihood(root);
+  if (!isParsimony()) {
+    for (auto root: roots) {
+      total += getGeneRootLikelihood(root);
+    }
+  } else {
+    total =  REAL(-std::numeric_limits<double>::infinity()); 
+    for (auto root: roots) {
+      auto v = getGeneRootLikelihood(root);
+      if (total < v) {
+        total = v;
+      }
+    }
   }
-  return log(total) - log(getLikelihoodFactor()); 
+  bool applyLog = !isParsimony();
+  if (applyLog) {
+    return log(total) - log(getLikelihoodFactor()); 
+  } else {
+    return double(total);
+  }
 }
 
 

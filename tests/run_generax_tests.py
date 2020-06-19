@@ -95,6 +95,7 @@ def run_reconciliation(species_tree, families_file, model, test_output, cores):
   command.append("-p")
   command.append(os.path.join(test_output, "generax"))
   logs_file_path = os.path.join(test_output, "tests_logs.txt")
+  print(logs_file_path)
   with open(logs_file_path, "w") as writer:
     subprocess.check_call(command, stdout = writer, stderr = writer)
 
@@ -188,12 +189,13 @@ def run_reconciliation_test(cores, model):
 dataset_set = ["simulated_2", "simulated_2_map_in_label"]
 with_starting_tree_set = [False, True]
 strategy_set = ["SPR", "EVAL"]
-model_set = ["UndatedDL", "UndatedDTL"]
+model_set = ["ParsimonyDL", "UndatedDL", "UndatedDTL"]
 cores_set = [1]
 if (is_mpi_installed()):
   cores_set.append(3)
 
 all_ok = True
+all_ok = all_ok and run_reconciliation_test(1, "ParsimonyDL")
 all_ok = all_ok and run_reconciliation_test(1, "UndatedDTL")
 all_ok = all_ok and run_reconciliation_test(1, "UndatedDL")
 for dataset in dataset_set:

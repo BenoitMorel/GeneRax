@@ -3,6 +3,10 @@
 
 void GeneRaxInstance::readModelParameters(ModelParameters &modelParameters)
 {
+  auto freeParameters = Enums::freeParameters(recModel);
+  if (!freeParameters) {
+    return;
+  }
   Parameters defaultRates = rates;
   assert(rates.dimensions());
   modelParameters = ModelParameters(defaultRates, 
@@ -12,7 +16,6 @@ void GeneRaxInstance::readModelParameters(ModelParameters &modelParameters)
   if (!args.perFamilyDTLRates) {
     return;
   }
-  auto freeParameters = Enums::freeParameters(recModel);
   Parameters ratesToRead(rates);
   auto resultsPath = FileSystem::joinPaths(args.output, "results");
   for (unsigned int i = 0; i < this->currentFamilies.size(); ++i) {

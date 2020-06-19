@@ -4,6 +4,7 @@
 #include <likelihoods/reconciliation_models/UndatedDLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedIDTLModel.hpp>
+#include <likelihoods/reconciliation_models/ParsimonyDLModel.hpp>
 #include <cmath>
 #include <IO/FileSystem.hpp>
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
@@ -43,8 +44,11 @@ ReconciliationEvaluation::~ReconciliationEvaluation()
 
 void ReconciliationEvaluation::setRates(const Parameters &parameters)
 {
-  assert(parameters.dimensions());
   unsigned int freeParameters = Enums::freeParameters(_model);
+  if (!freeParameters) {
+    return;
+  }
+  assert(parameters.dimensions());
   assert(0 == parameters.dimensions() % freeParameters);
   _rates.resize(freeParameters);
   for (auto &r: _rates) {
@@ -78,15 +82,15 @@ void ReconciliationEvaluation::setRoot(pll_unode_t * root)
 double ReconciliationEvaluation::evaluate(bool fastMode)
 {
   double res = _evaluators->computeLogLikelihood(fastMode);
+  /*
   if (!_infinitePrecision && !std::isnormal(res)) {
     updatePrecision(true);  
     res = _evaluators->computeLogLikelihood(fastMode);
     updatePrecision(false);  
   }
-  if (!std::isnormal(res)) {
-    std::cerr << "wrong reconciliation ll " << res << std::endl;
-  }
-  assert(std::isnormal(res));
+  */
+  //assert(std::isnormal(res));
+  
   return res;
 }
 
@@ -130,6 +134,10 @@ ReconciliationModelInterface *ReconciliationEvaluation::buildRecModelObject(RecM
     } else {
       res = new UndatedIDTLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
     }
+    break;
+  case RecModel::ParsimonyDL:
+    res = new ParsimonyDLModel(_speciesTree, _geneSpeciesMapping,
+        _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
     break;
   }
   res->setInitialGeneTree(_initialGeneTree.getRawPtr());

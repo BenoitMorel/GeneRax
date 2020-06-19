@@ -162,7 +162,7 @@ def get_rand_utree(taxa_set):
   return tree.to_string()
 
 def get_rand_rec_model():
-  models = ["UndatedDL", "UndatedDTL"]
+  models = ["UndatedDL", "UndatedDTL", "ParsimonyDL"]
   return random.choice(models)
 
 def get_rand_subst_model_dna():
