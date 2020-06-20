@@ -118,6 +118,10 @@ void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
 {
   Parameters startingRates;
   switch (instance.recModel) {
+  case RecModel::ParsimonyDL:
+  case RecModel::ParsimonyDTL:
+    startingRates = Parameters();
+    break;
   case RecModel::UndatedDL:
     startingRates = Parameters(instance.args.dupRate, instance.args.lossRate);
   break;
@@ -162,6 +166,10 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
   ParallelContext::barrier();
   Parameters startingRates;
   switch (instance.recModel) {
+  case RecModel::ParsimonyDL:
+  case RecModel::ParsimonyDTL:
+    startingRates = Parameters();
+    break;
   case RecModel::UndatedDL:
     startingRates = Parameters(instance.args.dupRate, instance.args.lossRate);
   break;

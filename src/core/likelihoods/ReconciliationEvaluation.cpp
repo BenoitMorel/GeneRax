@@ -5,6 +5,7 @@
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedIDTLModel.hpp>
 #include <likelihoods/reconciliation_models/ParsimonyDLModel.hpp>
+#include <likelihoods/reconciliation_models/ParsimonyDTLModel.hpp>
 #include <cmath>
 #include <IO/FileSystem.hpp>
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
@@ -139,6 +140,10 @@ ReconciliationModelInterface *ReconciliationEvaluation::buildRecModelObject(RecM
     res = new ParsimonyDLModel(_speciesTree, _geneSpeciesMapping,
         _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
     break;
+  case RecModel::ParsimonyDTL:
+    res = new ParsimonyDTLModel(_speciesTree, _geneSpeciesMapping,
+        _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
+    break;
   }
   res->setInitialGeneTree(_initialGeneTree.getRawPtr());
   return res;
@@ -153,12 +158,11 @@ void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
     _evaluators->setRates(_rates);
  }
 }
-
 void ReconciliationEvaluation::inferMLScenario(Scenario &scenario, bool stochastic) {
   auto infinitePrecision = _infinitePrecision;
   updatePrecision(true);
   auto ll = evaluate();
-  assert(std::isfinite(ll) && ll < 0.0);
+  assert(std::isfinite(ll) && ll <= 0.0);
   _evaluators->inferMLScenario(scenario, stochastic);
   updatePrecision(infinitePrecision);
 }
@@ -173,7 +177,7 @@ pll_unode_t *ReconciliationEvaluation::inferMLRoot()
   auto infinitePrecision = _infinitePrecision;
   updatePrecision(true);
   auto ll = evaluate(); 
-  assert(std::isfinite(ll) && ll < 0.0);
+  assert(std::isfinite(ll) && ll <= 0.0);
   auto res = computeMLRoot();
   updatePrecision(infinitePrecision);
   assert(res);

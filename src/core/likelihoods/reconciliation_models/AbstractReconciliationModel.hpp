@@ -762,7 +762,7 @@ bool AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario, bool
   updateCLVs();
   computeLikelihoods(); 
   auto ll = getSumLikelihood();
-  assert(std::isnormal(ll) && ll < 0.0);
+  assert(ll == 0.0 || (std::isnormal(ll) && ll <= 0.0));
 
   pll_unode_t *geneRoot = 0;
   pll_rnode_t *speciesRoot = 0;

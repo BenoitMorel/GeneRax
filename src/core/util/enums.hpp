@@ -13,7 +13,8 @@ enum class RecModel {
   UndatedDL, 
   UndatedDTL, 
   UndatedIDTL,
-  ParsimonyDL
+  ParsimonyDL,
+  ParsimonyDTL
 };
 
 
@@ -104,6 +105,8 @@ public:
         return 4;
       case RecModel::ParsimonyDL:
         return 0;
+      case RecModel::ParsimonyDTL:
+        return 0;
     }
     assert(false);
   }
@@ -118,6 +121,7 @@ public:
     case RecModel::UndatedDL:
     case RecModel::ParsimonyDL:
       return false;
+    case RecModel::ParsimonyDTL:
     case RecModel::UndatedDTL:
     case RecModel::UndatedIDTL:
       return true;
@@ -136,6 +140,7 @@ public:
   {
     switch (m) {
       case RecModel::ParsimonyDL:
+      case RecModel::ParsimonyDTL:
       case RecModel::UndatedDL:
         return false;
       case RecModel::UndatedDTL:

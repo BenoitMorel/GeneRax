@@ -33,6 +33,10 @@ struct GeneRaxInstance {
     currentIteration(0)
   {
     switch (recModel) {
+      case RecModel::ParsimonyDL:
+      case RecModel::ParsimonyDTL:
+      rates = Parameters();
+      break;
       case RecModel::UndatedDL:
       rates = Parameters(2);
       rates[0] = args.dupRate;

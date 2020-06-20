@@ -20,7 +20,7 @@ public:
       bool pruneSpeciesTree):
     AbstractReconciliationModel<double>(speciesTree, geneSpeciesMappingp, rootedGeneTree, minGeneBranchLength, pruneSpeciesTree),
     _costS(-0.0),
-    _costD(-0.005),
+    _costD(-1.0),
     _costL(-0.0)
     {}
   
@@ -32,7 +32,7 @@ public:
   virtual ~ParsimonyDLModel() {}
   
   // overloaded from parent
-  virtual void setRates(const RatesVector &rates){}
+  virtual void setRates(const RatesVector &){}
 protected:
   // overload from parent
   virtual void setInitialGeneTree(pll_utree_t *tree);
@@ -59,9 +59,9 @@ protected:
   virtual bool isParsimony() const {return true;}
 private:
   // parsimony costs
+  double _costS;
   double _costD;
   double _costL;
-  double _costS;
   
   // uq[geneId][speciesId] = parsimony cost
   // of a gene node rooted at a species node
@@ -105,7 +105,7 @@ void ParsimonyDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *sp
       bool isVirtualRoot,
       Scenario *,
       Scenario::Event *event,
-      bool stochastic)
+      bool)
   
 {
   auto gid = geneNode->node_index;
