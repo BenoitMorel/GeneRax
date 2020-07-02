@@ -99,6 +99,7 @@ public:
    *  always comes after its (virtual) children.
    */
   std::vector<pll_unode_t*> getPostOrderNodes();
+
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;
 };

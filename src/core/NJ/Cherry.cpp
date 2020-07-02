@@ -8,9 +8,8 @@
 #include <trees/PLLUnrootedTree.hpp>
 #include <unordered_map>
 #include<set>
+#include <util/types.hpp>
 
-typedef std::vector<double> VectorDouble;
-typedef std::vector<VectorDouble> MatrixDouble;
 typedef std::unordered_map<std::string, unsigned int> StringToInt;
 typedef std::unordered_set<int> GeneIdsSet;
 typedef std::unordered_map<int, GeneIdsSet> SpeciesIdToGeneIds;

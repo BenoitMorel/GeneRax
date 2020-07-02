@@ -479,7 +479,6 @@ template <class REAL>
 double AbstractReconciliationModel<REAL>::computeLogLikelihood(bool fastMode)
 {
   _fastMode = fastMode;
-
   beforeComputeLogLikelihood();
   //Logger::info << "computeLikelihoods " << _fastMode << " " << _speciesNodesToUpdate.size() << std::endl;
   auto root = getRoot();
