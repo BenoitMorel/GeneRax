@@ -14,9 +14,9 @@ extern "C" {
 #include <memory>
 #include <vector>
 #include <unordered_set>
+#include <util/types.hpp>
 #include <util/CArrayRange.hpp>
 #include <maths/Random.hpp>
-
 
 /**
  *  C++ wrapper around the libpll pll_utree_t structure
@@ -99,6 +99,19 @@ public:
    *  always comes after its (virtual) children.
    */
   std::vector<pll_unode_t*> getPostOrderNodes();
+
+  /**
+   *  Compute a matrix of pairwise distances.
+   *  The distance between two leaves is the sum of the
+   *  branch lengths along the path between these two leaves.
+   *  
+   *  distances[i][j] is the distance between node1 and node2,
+   *  such that node1->node_index == i && node2->node_index == j
+   *
+   *  The output matrix is symetric, and the diagonal elements 
+   *  are set to 0.0
+   */
+  void computePairwiseDistances(MatrixDouble &distances);
 
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;

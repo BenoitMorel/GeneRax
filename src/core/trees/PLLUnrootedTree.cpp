@@ -143,6 +143,36 @@ std::vector<pll_unode_t*> PLLUnrootedTree::getPostOrderNodes()
   return nodes;
 }
 
+static void computePairwiseDistancesRec(pll_unode_t *currentNode, 
+    double currentDistance,
+    VectorDouble &distancesVector)
+{
+  currentDistance += currentNode->length;
+  if (!currentNode->next) {
+    // leaf
+    distancesVector[currentNode->node_index] = currentDistance;
+    return;
+  }
+  computePairwiseDistancesRec(currentNode->next->back, 
+      currentDistance, 
+      distancesVector);
+  computePairwiseDistancesRec(currentNode->next->next->back, 
+      currentDistance, 
+      distancesVector);
+} 
+
+void PLLUnrootedTree::computePairwiseDistances(MatrixDouble &distances)
+{
+  auto leavesNumber = getLeavesNumber();
+  VectorDouble zeros(leavesNumber, 0.0);
+  distances = MatrixDouble(leavesNumber, zeros);
+  for (auto leaf: getLeaves()) {
+    auto &distancesVector = distances[leaf->node_index];
+    computePairwiseDistancesRec(leaf->back, 0.0, distancesVector);
+  }
+
+}
+
 
 
 
