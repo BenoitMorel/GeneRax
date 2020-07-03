@@ -210,27 +210,43 @@ std::unordered_set<unsigned int>
 
 
 
-void PLLUnrootedTree::getMADRelativeDeviations()
+std::vector<double> PLLUnrootedTree::getMADRelativeDeviations()
 {
   MatrixDouble distances;
-  computePairwiseDistances(distances);
- 
-  for (auto node: getNodes()) {
-    // we reuse notations from MAD paper
-    // I and J are the set of leaves of each
-    // side of the branch node
+  computePairwiseDistances(distances, false);
+  auto nodes = getPostOrderNodes();  
+  std::vector<double> deviations(nodes.size());
+  for (auto node: getPostOrderNodes()) {
+    // we reuse notations from the MAD paper (I, J, i, j, rho, b, c)
+    // I and J are the set of leaves of each side of the branch node
+    // rho is the relative position of the rooting that minimizes 
+    // the squared relative deviation
     auto I = getClade(node); 
     auto J = getClade(node->back);
     auto rho = 0.0;
     auto rhoDen = 0.0;
+    auto i = node->node_index;
+    auto Dij = node->length;
     for (auto b: I) {
       for (auto c: J) {
         auto invPowBC = pow(distances[b][c], -2.0);
-        //rho += (distances[b][c] - 2 * 
+        rho += (distances[b][c] - 2.0 * distances[i][b]) * invPowBC;
+        rhoDen += invPowBC;
       }
     }
+    rho = rho / (2.0 * Dij * rhoDen);
+    rho = std::max(std::min(rho, 1.0), 0.0);
+    auto deviation = 0.0;
+    for (auto b: I) {
+      for (auto c: J) {
+        auto v = (2.0 * (distances[i][b] + rho * Dij) / distances[b][c]);
+        v -= 1.0;
+        deviation += pow(v, 2.0);
+      }
+    }
+    deviations[node->node_index] = deviation;
   }
-
+  return deviations;
 }
 
 

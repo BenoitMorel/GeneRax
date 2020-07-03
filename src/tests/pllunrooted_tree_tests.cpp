@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
+#include <algorithm>
 
 const std::string tree1("((A,B),(C,D), (E,F));");
 const std::string tree2("(E, F, ((A,B),(C,D)));");
@@ -29,11 +30,9 @@ void testTree(const std::string &treeStr)
   os.close();
   PLLUnrootedTree treeFromFile("temp.txt", true);
   PLLUnrootedTree tree(treeStr, false);
-  
   for (auto node: tree.getNodes()) {
     testGetClade(node, tree.getLeavesNumber());
   }
-  
   assert(tree.getNodesNumber() == treeFromFile.getNodesNumber());
 }
 
@@ -78,6 +77,47 @@ void testDistances(bool leavesOnly)
   }
 }
 
+void testMADRooting()
+{
+  PLLUnrootedTree t1(treeWithDistances1, false);
+  auto deviations = t1.getMADRelativeDeviations(); 
+  assert(deviations.size() == t1.getDirectedNodesNumber());
+  auto minIt = std::min_element(deviations.begin(), deviations.end());
+  auto minIndex = std::distance(deviations.begin(), minIt);
+  pll_unode_t *root = nullptr;
+  for (auto node: t1.getNodes()) {
+    if (node->node_index == minIndex) {
+      root = node;
+      break;
+    }
+    if (node->next) {
+      if (node->next->node_index == minIndex) {
+        root = node->next;
+        break;
+      } 
+      if (node->next->next->node_index == minIndex) {
+        root = node->next->next;
+        break;
+      }
+    }
+  }
+  assert(root);
+  auto c1 = PLLUnrootedTree::getClade(root);
+  auto c2 = PLLUnrootedTree::getClade(root->back);
+  std::unordered_map<std::string, int> indices;
+  for (auto leaf: t1.getLeaves()) {
+    indices.insert({std::string(leaf->label), leaf->node_index});
+  }
+  if (c1.find(indices["A"]) == c1.end()) {
+    std::swap(c1, c2);
+  }
+  assert(c1.find(indices["A"]) != c1.end());
+  assert(c1.find(indices["B"]) != c1.end());
+  assert(c1.find(indices["E"]) != c1.end());
+  assert(c1.find(indices["F"]) != c1.end());
+  assert(c2.find(indices["C"]) != c2.end());
+  assert(c2.find(indices["D"]) != c2.end());
+}
 
 
 int main(int, char**)
@@ -87,6 +127,7 @@ int main(int, char**)
   testTree(treeWithDistances1);
   testDistances(true);
   testDistances(false);
+  testMADRooting();
   std::cout << "Test PLLUnrootedTree ok!" << std::endl;
   return 0;
 }

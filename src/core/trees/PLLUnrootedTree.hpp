@@ -120,7 +120,7 @@ public:
       bool leavesOnly = true);
 
   // TODO: DOCUMENT
-  void getMADRelativeDeviations();
+  std::vector<double> getMADRelativeDeviations();
 
   /**
    *  Return the set of leaves under the input directed node
