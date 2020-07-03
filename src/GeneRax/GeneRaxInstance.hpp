@@ -48,7 +48,11 @@ struct GeneRaxInstance {
       rates[0] = args.dupRate;
       rates[1] = args.lossRate;
       rates[2] = args.transferRate;
-      break; 
+      break;
+      case RecModel::SimpleDS:
+      rates = Parameters(1);
+      rates[0] = args.dupRate;
+      break;
     }
   }
   

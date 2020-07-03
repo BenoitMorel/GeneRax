@@ -1,6 +1,7 @@
 
 #include "ReconciliationEvaluation.hpp"
 #include <IO/Logger.hpp>
+#include <likelihoods/reconciliation_models/SimpleDSModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedIDTLModel.hpp>
@@ -148,6 +149,13 @@ ReconciliationModelInterface *ReconciliationEvaluation::buildRecModelObject(RecM
   case RecModel::ParsimonyDTL:
     res = new ParsimonyDTLModel(_speciesTree, _geneSpeciesMapping,
         _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
+    break;
+  case RecModel::SimpleDS:
+    if (infinitePrecision) {
+      res = new SimpleDSModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
+    } else {
+      res = new SimpleDSModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
+    }
     break;
   }
   res->setInitialGeneTree(_initialGeneTree);

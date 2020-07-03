@@ -125,11 +125,15 @@ void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
   case RecModel::UndatedDL:
     startingRates = Parameters(instance.args.dupRate, instance.args.lossRate);
   break;
-    case RecModel::UndatedDTL:
+  case RecModel::UndatedDTL:
     startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate);
     break;
   case RecModel::UndatedIDTL:
     startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate, 0.1);
+    break;
+  case RecModel::SimpleDS:
+    startingRates = Parameters(1);
+    startingRates[0] = instance.args.dupRate;
     break;
   }
   SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, 
@@ -178,6 +182,10 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
     break;
   case RecModel::UndatedIDTL:
     startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate, 0.1);
+    break;
+  case RecModel::SimpleDS:
+    startingRates = Parameters(1);
+    startingRates[0] = instance.args.dupRate;
     break;
   }
   SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, 

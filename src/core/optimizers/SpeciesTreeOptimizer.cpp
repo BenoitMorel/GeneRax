@@ -61,7 +61,6 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
     setGeneTreesFromFamilies(initialFamilies);
   }
-  Logger::info << startingRates << std::endl;
   _modelRates = ModelParameters(startingRates, model, perFamilyRates, _geneTrees->getTrees().size());
   //_speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"), true);
   _speciesTree->addListener(this);
