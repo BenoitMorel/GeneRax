@@ -38,7 +38,7 @@ public:
   virtual void setRates(const RatesVector &rates);
 protected:
   // overload from parent
-  virtual void setInitialGeneTree(pll_utree_t *tree);
+  virtual void setInitialGeneTree(PLLUnrootedTree &tree);
   // overload from parent
   virtual void updateCLV(pll_unode_t *geneNode);
   // overload from parent
@@ -79,7 +79,7 @@ private:
 
 
 template <class REAL>
-void UndatedDLModel<REAL>::setInitialGeneTree(pll_utree_t *tree)
+void UndatedDLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
 {
   AbstractReconciliationModel<REAL>::setInitialGeneTree(tree);
   assert(this->_allSpeciesNodesCount);

@@ -38,7 +38,7 @@ public:
   unsigned int getIterationsNumber() const {return 2;}    
 protected:
   // overload from parent
-  virtual void setInitialGeneTree(pll_utree_t *tree);
+  virtual void setInitialGeneTree(PLLUnrootedTree &tree);
   // overload from parent
   virtual void updateCLV(pll_unode_t *geneNode);
   // overload from parent
@@ -105,7 +105,7 @@ private:
 
 
 
-void ParsimonyDTLModel::setInitialGeneTree(pll_utree_t *tree)
+void ParsimonyDTLModel::setInitialGeneTree(PLLUnrootedTree &tree)
 {
   AbstractReconciliationModel<double>::setInitialGeneTree(tree);
   assert(this->_allSpeciesNodesCount);

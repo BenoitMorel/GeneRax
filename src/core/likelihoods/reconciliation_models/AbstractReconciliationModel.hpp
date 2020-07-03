@@ -32,7 +32,7 @@ class ReconciliationModelInterface {
 public:
   virtual ~ReconciliationModelInterface() {}
   
-  virtual void setInitialGeneTree(pll_utree_t *tree) = 0;
+  virtual void setInitialGeneTree(PLLUnrootedTree &tree) = 0;
   
   /*
    * Set the per-species lineage rates
@@ -62,7 +62,8 @@ public:
    * Compute and set the maximum likelihood root. Relevant in both rooted and unrooted gene tree modes
    */
   virtual pll_unode_t *computeMLRoot() = 0;
-  
+
+  virtual void enableMADRooting(bool enable) = 0;
 
   virtual void setPartialLikelihoodMode(PartialLikelihoodMode mode) = 0;
   
@@ -103,7 +104,7 @@ public:
       bool rootedGeneTree,
       double minGeneBranchLength,
       bool pruneSpeciesTree);
-  virtual void setInitialGeneTree(pll_utree_t *tree);
+  virtual void setInitialGeneTree(PLLUnrootedTree &tree);
   virtual ~AbstractReconciliationModel() {}
   // overload from parent
   virtual void setRates(const RatesVector &rates) = 0;
@@ -179,6 +180,7 @@ protected:
   virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
   
   void updateCLVs();
+  virtual void enableMADRooting(bool enable);
   virtual pll_unode_t *computeMLRoot();
 protected:
   pll_unode_t *_geneRoot;
@@ -237,6 +239,9 @@ private:
   std::vector<pll_rnode_t *> _speciesParent;
   pll_rnode_t *_prunedRoot;
   bool _pruneSpeciesTree;
+  PLLUnrootedTree *_pllUnrootedTree;
+  bool _madRootingEnabled;
+  std::vector<double> _madProbabilities;
 };
 
 
@@ -256,7 +261,9 @@ AbstractReconciliationModel<REAL>::AbstractReconciliationModel(PLLRootedTree &sp
   _speciesTree(speciesTree),
   _geneNameToSpeciesName(geneSpeciesMapping.getMap()),
   _allSpeciesNodesInvalid(true),
-  _pruneSpeciesTree(pruneSpeciesTree)
+  _pruneSpeciesTree(pruneSpeciesTree),
+  _pllUnrootedTree(nullptr),
+  _madRootingEnabled(false)
 {
   initSpeciesTree();
 }
@@ -308,9 +315,10 @@ void AbstractReconciliationModel<REAL>::mapGenesToSpecies()
 }
 
 template <class REAL>
-void AbstractReconciliationModel<REAL>::setInitialGeneTree(pll_utree_t *tree)
+void AbstractReconciliationModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
 {
-  initFromUtree(tree);
+  _pllUnrootedTree = &tree;
+  initFromUtree(tree.getRawPtr());
   mapGenesToSpecies();
   _maxGeneId = static_cast<unsigned int>(_allNodes.size() - 1);
   invalidateAllCLVs();
@@ -636,6 +644,27 @@ void AbstractReconciliationModel<REAL>::invalidateAllCLVs()
 {
   _isCLVUpdated = std::vector<bool>(_maxGeneId + 1, false);
 }
+ 
+
+template <class REAL>
+void AbstractReconciliationModel<REAL>::enableMADRooting(bool enable)
+{
+  _madRootingEnabled = enable;
+  double beta = -1;
+  double epsilon = 0.1;
+  if (enable) {
+    _madProbabilities = _pllUnrootedTree->getMADRelativeDeviations();
+    double sum = 0.0;
+    for (auto &v: _madProbabilities) {
+      v += epsilon;
+      v = pow(v, beta);
+      sum += v;
+    }
+    for (auto &v: _madProbabilities) {
+      v /= sum;
+    }
+  } 
+}
 
 template <class REAL>
 void AbstractReconciliationModel<REAL>::computeMLRoot(pll_unode_t *&bestGeneRoot, pll_rnode_t *&bestSpeciesRoot) 
@@ -648,6 +677,9 @@ void AbstractReconciliationModel<REAL>::computeMLRoot(pll_unode_t *&bestGeneRoot
   for (auto root: roots) {
     for (auto speciesNode: _allSpeciesNodes) {
       REAL ll = getGeneRootLikelihood(root, speciesNode);
+      if (_madRootingEnabled) {
+        ll *= _madProbabilities[root->node_index];
+      }
       if (max < ll) {
         max = ll;
         bestGeneRoot = root;
@@ -668,6 +700,9 @@ pll_unode_t *AbstractReconciliationModel<REAL>::computeMLRoot()
     : REAL();
   for (auto root: roots) {
     REAL rootProba = getGeneRootLikelihood(root);
+    if (_madRootingEnabled) {
+      rootProba *= _madProbabilities[root->node_index];
+    }
     if (max < rootProba) {
       bestRoot = root;
       max = rootProba;
@@ -683,9 +718,16 @@ double AbstractReconciliationModel<REAL>::getSumLikelihood()
   REAL total = REAL();
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
+  //Logger::info << "HEY" << std::endl;
   if (!isParsimony()) {
     for (auto root: roots) {
-      total += getGeneRootLikelihood(root);
+      auto ll = getGeneRootLikelihood(root);
+      if (_madRootingEnabled) {
+        ll *= _madProbabilities[root->node_index];
+        //Logger::info << root->node_index << " " << _madProbabilities[root->node_index] << std::endl;
+      }
+
+      total += ll;
     }
   } else {
     total =  REAL(-std::numeric_limits<double>::infinity()); 

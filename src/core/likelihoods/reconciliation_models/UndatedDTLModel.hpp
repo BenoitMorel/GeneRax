@@ -39,7 +39,7 @@ public:
   virtual void rollbackToLastState();
 protected:
   // overloaded from parent
-  virtual void setInitialGeneTree(pll_utree_t *tree);
+  virtual void setInitialGeneTree(PLLUnrootedTree &tree);
   // overloaded from parent
   virtual void updateCLV(pll_unode_t *geneNode);
   // overload from parent
@@ -149,7 +149,7 @@ const unsigned int CACHE_SIZE = 100000;
 
 
 template <class REAL>
-void UndatedDTLModel<REAL>::setInitialGeneTree(pll_utree_t *tree)
+void UndatedDTLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
 {
   AbstractReconciliationModel<REAL>::setInitialGeneTree(tree);
   assert(this->_allSpeciesNodesCount);

@@ -706,6 +706,7 @@ void SpeciesTreeOptimizer::updateEvaluations()
     _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _modelRates.model, false, _minGeneBranchLength, _pruneSpeciesTree, _fractionMissingFile);
     _evaluations[i]->setRates(_modelRates.getRates(i));
     _evaluations[i]->setPartialLikelihoodMode(PartialLikelihoodMode::PartialSpecies);
+    //_evaluations[i]->enableMADRooting(true);
   }
 }
 

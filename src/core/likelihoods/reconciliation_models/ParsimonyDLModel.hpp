@@ -35,7 +35,7 @@ public:
   virtual void setRates(const RatesVector &){}
 protected:
   // overload from parent
-  virtual void setInitialGeneTree(pll_utree_t *tree);
+  virtual void setInitialGeneTree(PLLUnrootedTree &tree);
   // overload from parent
   virtual void updateCLV(pll_unode_t *geneNode);
   // overload from parent
@@ -78,7 +78,7 @@ private:
 
 
 
-void ParsimonyDLModel::setInitialGeneTree(pll_utree_t *tree)
+void ParsimonyDLModel::setInitialGeneTree(PLLUnrootedTree &tree)
 {
   AbstractReconciliationModel<double>::setInitialGeneTree(tree);
   assert(this->_allSpeciesNodesCount);

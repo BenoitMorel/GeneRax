@@ -94,6 +94,11 @@ double ReconciliationEvaluation::evaluate(bool fastMode)
   
   return res;
 }
+  
+void ReconciliationEvaluation::enableMADRooting(bool enable)
+{
+  _evaluators->enableMADRooting(enable);
+}
 
 void ReconciliationEvaluation::invalidateCLV(unsigned int nodeIndex)
 {
@@ -145,7 +150,7 @@ ReconciliationModelInterface *ReconciliationEvaluation::buildRecModelObject(RecM
         _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
     break;
   }
-  res->setInitialGeneTree(_initialGeneTree.getRawPtr());
+  res->setInitialGeneTree(_initialGeneTree);
   return res;
 }
   
