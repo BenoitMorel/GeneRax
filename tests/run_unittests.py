@@ -13,6 +13,7 @@ def call_test(test_name):
 
 call_test("species_tree_tests")
 call_test("pllrooted_tree_tests")
+call_test("pllunrooted_tree_tests")
 
 
 

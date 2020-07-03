@@ -161,18 +161,77 @@ static void computePairwiseDistancesRec(pll_unode_t *currentNode,
       distancesVector);
 } 
 
-void PLLUnrootedTree::computePairwiseDistances(MatrixDouble &distances)
+void PLLUnrootedTree::computePairwiseDistances(MatrixDouble &distances,
+    bool leavesOnly)
 {
-  auto leavesNumber = getLeavesNumber();
-  VectorDouble zeros(leavesNumber, 0.0);
-  distances = MatrixDouble(leavesNumber, zeros);
-  for (auto leaf: getLeaves()) {
-    auto &distancesVector = distances[leaf->node_index];
-    computePairwiseDistancesRec(leaf->back, 0.0, distancesVector);
+  auto M = leavesOnly ? getLeavesNumber() : getDirectedNodesNumber(); 
+  auto N = getLeavesNumber();
+  auto MIter = leavesOnly ? getLeavesNumber() : getNodesNumber();
+  VectorDouble zeros(N, 0.0);
+  distances = MatrixDouble(M, zeros);
+  for (unsigned int i = 0; i < MIter; ++i) {
+    auto node = getNode(i);
+    auto &distancesVector = distances[node->node_index];
+    computePairwiseDistancesRec(node->back, 0.0, distancesVector);
+    if (node->next) {
+      // compute distances to leaves in all three directions
+      computePairwiseDistancesRec(node->next->back, 
+          0.0, 
+          distancesVector);
+      computePairwiseDistancesRec(node->next->next->back, 
+          0.0, 
+          distancesVector);
+      // also update the two other directed nodes
+      distances[node->next->node_index] = distancesVector;
+      distances[node->next->next->node_index] = distancesVector;
+    }
+  }
+}
+
+
+static void getCladeRec(pll_unode_t *node, 
+    std::unordered_set<unsigned int> &clade)
+{
+  if (node->next) {
+    getCladeRec(node->next->back, clade);
+    getCladeRec(node->next->next->back, clade);
+  } else {
+    clade.insert(node->node_index);
+  }
+}
+
+std::unordered_set<unsigned int> 
+  PLLUnrootedTree::getClade(pll_unode_t *node)
+{
+  std::unordered_set<unsigned int> clade;
+  getCladeRec(node, clade);
+  return clade;
+}
+
+
+
+void PLLUnrootedTree::getMADRelativeDeviations()
+{
+  MatrixDouble distances;
+  computePairwiseDistances(distances);
+ 
+  for (auto node: getNodes()) {
+    // we reuse notations from MAD paper
+    // I and J are the set of leaves of each
+    // side of the branch node
+    auto I = getClade(node); 
+    auto J = getClade(node->back);
+    auto rho = 0.0;
+    auto rhoDen = 0.0;
+    for (auto b: I) {
+      for (auto c: J) {
+        auto invPowBC = pow(distances[b][c], -2.0);
+        //rho += (distances[b][c] - 2 * 
+      }
+    }
   }
 
 }
-
 
 
 

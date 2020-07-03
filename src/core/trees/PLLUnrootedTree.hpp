@@ -102,16 +102,30 @@ public:
 
   /**
    *  Compute a matrix of pairwise distances.
-   *  The distance between two leaves is the sum of the
-   *  branch lengths along the path between these two leaves.
+   *  The distance between two nodes is the sum of the
+   *  branch lengths along the path between these two nodes.
    *  
    *  distances[i][j] is the distance between node1 and node2,
    *  such that node1->node_index == i && node2->node_index == j
    *
-   *  The output matrix is symetric, and the diagonal elements 
-   *  are set to 0.0
+   *  If leavesOnly is true, the output matrix is symetric, 
+   *  and the diagonal elements are set to 0.0
+   *
+   *  If leavesOnly is false, distances is a rectangular matrix
+   *  with dimensions distances[max_gene_id][leaves_number]
+   *
+   *  
    */
-  void computePairwiseDistances(MatrixDouble &distances);
+  void computePairwiseDistances(MatrixDouble &distances,
+      bool leavesOnly = true);
+
+  // TODO: DOCUMENT
+  void getMADRelativeDeviations();
+
+  /**
+   *  Return the set of leaves under the input directed node
+   */
+  static std::unordered_set<unsigned int> getClade(pll_unode_t *node);
 
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;
