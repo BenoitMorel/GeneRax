@@ -871,9 +871,9 @@ std::unique_ptr<PLLRootedTree> CherryPro::geneTreeCherryPro(const Families &fami
       filterGeneTrees(geneTrees);
     }
     if (CHERRY_DBG) {
-      for (auto &tree: geneTrees) {
+      //for (auto &tree: geneTrees) {
         //Logger::info << "Tree " << tree->_hackIndex << " " <<  tree->toString() << std::endl;
-      }
+      //}
     }
     
     neighborMatrix = MatrixDouble(speciesNumber, zeros);

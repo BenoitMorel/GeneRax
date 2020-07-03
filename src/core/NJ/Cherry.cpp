@@ -485,7 +485,7 @@ void CherryTree::mergeNodesWithSpeciesId(unsigned int speciesId)
       }
       auto geneIdNeighbor = getNeighborLeaf(geneId);
       if (geneIdNeighbor != -1) { // CHERRY CASE
-        if (_nodes[geneIdNeighbor].speciesId == speciesId) {
+        if (_nodes[geneIdNeighbor].speciesId == int(speciesId)) {
           // merge
           geneId = mergeNeighbors(geneId, geneIdNeighbor);
         } else {
