@@ -8,6 +8,8 @@ void GeneRaxInstance::readModelParameters(ModelParameters &modelParameters)
     return;
   }
   Parameters defaultRates = rates;
+  Logger::info << "Free parameters " << freeParameters << std::endl;
+  Logger::info << "Rates : " << rates;
   assert(rates.dimensions());
   modelParameters = ModelParameters(defaultRates, 
       recModel, 

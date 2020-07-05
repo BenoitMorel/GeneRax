@@ -3,6 +3,7 @@
 #include <cassert>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 using StringToUintMap = std::unordered_map<std::string, unsigned int>;
 
@@ -112,6 +113,34 @@ public:
         return 1;
     }
     assert(false);
+  }
+
+  static std::vector<std::string> parameterNames(RecModel m)  {
+    std::vector<std::string> res;
+    switch (m) {
+      case RecModel::UndatedDL:
+        res.push_back("D");
+        res.push_back("L");
+        break;
+      case RecModel::UndatedDTL:
+        res.push_back("D");
+        res.push_back("L");
+        res.push_back("T");
+        break;
+      case RecModel::UndatedIDTL:
+        res.push_back("D");
+        res.push_back("L");
+        res.push_back("T");
+        res.push_back("I");
+        break;
+      case RecModel::ParsimonyDL:
+      case RecModel::ParsimonyDTL:
+        break;
+      case RecModel::SimpleDS:
+        res.push_back("D");
+        break;
+    }
+    return res;
   }
 
   /**

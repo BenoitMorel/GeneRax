@@ -374,8 +374,13 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
     Routines::optimizeRates(instance.args.userDTLRates, instance.speciesTree, instance.recModel,
       instance.args.rootedGeneTree, instance.args.pruneSpeciesTree, 
       instance.currentFamilies, perSpeciesDTLRates, instance.rates, instance.elapsedRates);
-    if (instance.rates.dimensions() <= 3) {
-      Logger::info << instance.rates << std::endl;
+    if (!instance.args.perFamilyDTLRates && !instance.args.perSpeciesDTLRates) {
+      auto paramNames = Enums::parameterNames(instance.recModel);
+      Logger::info << "\t";
+      for (unsigned int i = 0; i < paramNames.size(); ++i) {
+        Logger::info << paramNames[i] << "=" << instance.rates[i] << ", ";
+      }
+      Logger::info << "RecLL= " << instance.rates.getScore() << std::endl;
     } else {
       Logger::info << "\tRecLL=" << instance.rates.getScore() << std::endl;
     }
