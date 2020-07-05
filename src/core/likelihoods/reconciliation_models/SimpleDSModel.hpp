@@ -103,6 +103,25 @@ void SimpleDSModel<REAL>::updateCLV(pll_unode_t *geneNode)
       _dsclvs[geneNode->node_index].proba);
 }
 
+template <class REAL>
+static REAL dividePowerTwo(REAL v, unsigned int powerTwo)
+{
+  /*
+  v *= pow(2.0, -double(powerTwo));
+  return v;
+  */
+  const unsigned int MAX_EXPO_TWO = 16;
+  const double MAX_POWER_TWO = pow(2.0, -double(MAX_EXPO_TWO));
+  
+  while (powerTwo > MAX_EXPO_TWO) {
+    v *= MAX_POWER_TWO;
+    scale<REAL>(v);
+    powerTwo -= MAX_EXPO_TWO;
+  }
+  v *= pow(2.0, -double(powerTwo));
+  scale<REAL>(v);
+  return v;
+}
 
 template <class REAL>
 void SimpleDSModel<REAL>::computeProbability(pll_unode_t *geneNode, 
@@ -140,13 +159,26 @@ void SimpleDSModel<REAL>::computeProbability(pll_unode_t *geneNode,
   _dsclvs[gid].genesCount = _dsclvs[v].genesCount + _dsclvs[w].genesCount;
   proba = REAL(_dsclvs[v].proba * _dsclvs[w].proba);
   if (clade.size() == leftClade.size() + rightClade.size()) {
+    // proba *=  _PS / 2^(species - 1)
     proba *= _PS;
-    proba /= pow(2.0, clade.size() - 1);
+    unsigned int species = clade.size();
+    proba = dividePowerTwo(proba, species - 1);
   } else {
+    // proba *= _PD * (2^(genes - 1) - 2^(species -1))
+    // or proba *= _PD / ((2^(species - 1)) * (2^(genes - species) - 1))
+    unsigned int species = clade.size();
+    unsigned int genes = _dsclvs[gid].genesCount;
     proba *= _PD;
-    proba /= pow(2.0, _dsclvs[gid].genesCount - 1) - pow(2.0, clade.size() - 1);
+    proba = dividePowerTwo(proba, species - 1);
+    unsigned int diff = genes - species;
+    if (diff < 8) { // no overflow, and we account for "- 1.0"
+      proba /= (pow(2.0, diff) - 1.0);
+      scale<REAL>(proba);
+    } else { // we neglect the "- 1.0" and make sure we do not overflow
+      proba = dividePowerTwo(proba, diff);
+    }
   }
-  scale(proba);
+    //proba /= pow(2.0, _dsclvs[gid].genesCount - 1) - pow(2.0, clade.size() - 1);
 }
   
 template <class REAL>
