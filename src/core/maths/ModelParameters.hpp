@@ -16,6 +16,13 @@
  */
 class ModelParameters {
 public:
+  ModelParameters():
+    model(RecModel::UndatedDL),
+    perFamilyRates(false),
+    modelFreeParameters(0)
+  {
+  }
+  
   /**
    *  @param rates Starting rates 
    *  @param model Reconciliation model 

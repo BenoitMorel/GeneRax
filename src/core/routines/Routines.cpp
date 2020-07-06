@@ -421,7 +421,19 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
   bool bestReconciliation = true;
   bool saveTransfersOnly = true; 
   bool optimizeRates = false;
-  inferReconciliation(speciesTreeFile, families, modelParameters, pruneMode, outputDir, bestReconciliation, samples, optimizeRates, saveTransfersOnly);
+  ModelParameters transfersModelParameter;
+  if (Enums::accountsForTransfers(modelParameters.model)) {
+    transfersModelParameter = modelParameters;
+  } else {
+    // the current model does not account for transfers
+    // to infer transfers, we use a model that does
+    Parameters transfersParameters(0.2, 0.2, 0.2);
+    transfersModelParameter = ModelParameters(transfersParameters,
+        RecModel::UndatedDTL,
+        false,
+        1);
+  }
+  inferReconciliation(speciesTreeFile, families, transfersModelParameter, pruneMode, outputDir, bestReconciliation, samples, optimizeRates, saveTransfersOnly);
   
   SpeciesTree speciesTree(speciesTreeFile);
   for (int i = (bestReconciliation ? -1 : 0); i < samples; ++i) {
