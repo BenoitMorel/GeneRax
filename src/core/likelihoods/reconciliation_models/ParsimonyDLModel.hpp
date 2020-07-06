@@ -98,6 +98,17 @@ void ParsimonyDLModel::updateCLV(pll_unode_t *geneNode)
   }
 }
 
+static void getPolytomy(pll_unode_t *node, 
+    std::vector<pll_unode_t *> &polytomy,
+    double minBranchLength = 0.0000011)
+{
+  if (!node->next || node->length > minBranchLength) {
+    polytomy.push_back(node);
+  } else {
+    getPolytomy(node->next->back, polytomy);
+    getPolytomy(node->next->next->back, polytomy);
+  }
+}
 
 
 void ParsimonyDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
@@ -145,10 +156,22 @@ void ParsimonyDLModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *sp
   for (unsigned int i = 0; i < 5; ++i) {
     values[i] = -std::numeric_limits<double>::infinity();
   }
-  
+ 
+
   if (not isGeneLeaf) {
     auto u_left = leftGeneNode->node_index;
     auto u_right = rightGeneNode->node_index;
+
+    std::vector<pll_unode_t *> polytomy;
+    getPolytomy(leftGeneNode, polytomy);
+    getPolytomy(rightGeneNode, polytomy);
+    if (polytomy.size() > 2) {
+      proba = 0.0;
+      for (auto node: polytomy) {
+        proba += _dlclvs[node->node_index][e];
+      }
+      return;
+    }
     if (not isSpeciesLeaf) {
       // S event
       values[0] = _costS + _dlclvs[u_left][f] + _dlclvs[u_right][g];
