@@ -44,6 +44,7 @@ static void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
     RecOpt recOpt,
     bool perFamilyDTLRates,
     bool rootedGeneTree,
+    bool madRooting,
     double supportThreshold,
     double recWeight,
     bool enableRec,
@@ -66,6 +67,7 @@ static void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
       recModel,
       recOpt,
       rootedGeneTree,
+      madRooting,
       supportThreshold,
       recWeight,
       false, //check
@@ -111,7 +113,7 @@ static std::string getArg(const std::string &str)
 
 int GeneRaxSlave::optimizeGeneTreesMain(int argc, char** argv, void* comm)
 {
-  assert(argc == 19);
+  assert(argc == 20);
   ParallelContext::init(comm);
   Logger::timed << "Starting optimizeGeneTreesSlave" << std::endl;
   int i = 2;
@@ -133,6 +135,7 @@ int GeneRaxSlave::optimizeGeneTreesMain(int argc, char** argv, void* comm)
   int sprRadius = atoi(argv[i++]);
   std::string outputGeneTree(argv[i++]);
   std::string outputStats(argv[i++]);
+  bool madRooting = bool(atoi(argv[i++]));
   optimizeGeneTreesSlave(startingGeneTreeFile,
       mappingFile,
       alignmentFile,
@@ -143,6 +146,7 @@ int GeneRaxSlave::optimizeGeneTreesMain(int argc, char** argv, void* comm)
       recOpt,
       perFamilyDTLRates,
       rootedGeneTree,
+      madRooting,
       supportThreshold,
       recWeight,
       enableRec,

@@ -15,6 +15,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   output("GeneRax"),
   perFamilyDTLRates(false),
   rootedGeneTree(true),
+  madRooting(false),
   pruneSpeciesTree(false),
   supportThreshold(-1.0),
   recRadius(0),
@@ -75,6 +76,8 @@ void GeneRaxArguments::init() {
       perFamilyDTLRates = true;
     } else if (arg == "--unrooted-gene-tree") {
       rootedGeneTree = false;
+    } else if (arg == "--mad-rooting") {
+      madRooting = true;
     } else if (arg == "--prune-species-tree") {
       pruneSpeciesTree = true;
     } else if (arg == "--support-threshold") {

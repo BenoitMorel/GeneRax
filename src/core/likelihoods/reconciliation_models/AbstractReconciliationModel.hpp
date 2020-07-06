@@ -650,8 +650,8 @@ template <class REAL>
 void AbstractReconciliationModel<REAL>::enableMADRooting(bool enable)
 {
   _madRootingEnabled = enable;
-  double beta = -1;
-  double epsilon = 0.1;
+  double beta = -2;
+  double epsilon = 0.01;
   if (enable) {
     _madProbabilities = _pllUnrootedTree->getMADRelativeDeviations();
     double sum = 0.0;

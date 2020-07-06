@@ -25,6 +25,7 @@ public:
               RecModel reconciliationModel,
               RecOpt reconciliationOpt,
               bool rootedGeneTree,
+              bool madRooting,
               double supportThreshold,
               double recWeight,
               bool safeMode,
@@ -85,6 +86,7 @@ private:
     RecOpt _recOpt;
     double _recWeight;
     double _supportThreshold;
+    bool _madRooting;
 };
 
 

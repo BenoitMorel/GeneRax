@@ -24,6 +24,7 @@ void GeneRaxMaster::optimizeGeneTrees(Families &families,
     RecOpt recOpt,
     bool perFamilyDTLRates,
     bool rootedGeneTree,
+    bool madRooting,
     double supportThreshold,
     double recWeight,
     bool enableRec,
@@ -89,7 +90,8 @@ void GeneRaxMaster::optimizeGeneTrees(Families &families,
     os << static_cast<int>(enableLibpll)  << " ";
     os << sprRadius  << " ";
     os << geneTreePath << " ";
-    os << outputStats <<  std::endl;
+    os << outputStats << " ";
+    os << static_cast<int>(madRooting) <<  std::endl;
     family.startingGeneTree = geneTreePath;
     family.statsFile = outputStats;
   } 

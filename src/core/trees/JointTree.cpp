@@ -119,6 +119,7 @@ JointTree::JointTree(const std::string &newickString,
     RecModel reconciliationModel,
     RecOpt reconciliationOpt,
     bool rootedGeneTree,
+    bool madRooting,
     double supportThreshold,
     double recWeight,
     bool safeMode,
@@ -132,7 +133,8 @@ JointTree::JointTree(const std::string &newickString,
   _enableLibpll(true),
   _recOpt(reconciliationOpt),
   _recWeight(recWeight),
-  _supportThreshold(supportThreshold)
+  _supportThreshold(supportThreshold),
+  _madRooting(madRooting)
 {
 
   _geneSpeciesMap.fill(geneSpeciesMapfile, newickString);
@@ -222,9 +224,16 @@ void JointTree::rollbackLastMove() {
 }
 
 void JointTree::save(const std::string &fileName, bool append) {
+  if (_madRooting) {
+    reconciliationEvaluation_->enableMADRooting(true);
+    reconciliationEvaluation_->inferMLRoot();
+  }
   auto root = reconciliationEvaluation_->getRoot();
   if (!root) {
     root = reconciliationEvaluation_->inferMLRoot();
+  }
+  if (_madRooting) {
+    reconciliationEvaluation_->enableMADRooting(false);
   }
   assert(root);
   LibpllParsers::saveUtree(root, fileName, append);

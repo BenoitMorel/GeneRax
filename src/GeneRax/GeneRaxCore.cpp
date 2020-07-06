@@ -394,7 +394,8 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
   Routines::optimizeGeneTrees(instance.currentFamilies, instance.recModel, instance.rates, 
       instance.args.output, "results", instance.args.execPath, instance.speciesTree, 
       RecOpt::Grid, instance.args.perFamilyDTLRates, 
-      instance.args.rootedGeneTree, instance.args.supportThreshold, 
+      instance.args.rootedGeneTree, instance.args.madRooting,
+      instance.args.supportThreshold, 
       instance.args.recWeight, true, enableLibpll, sprRadius, 
       instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), elapsed);
   instance.elapsedSPR += elapsed;

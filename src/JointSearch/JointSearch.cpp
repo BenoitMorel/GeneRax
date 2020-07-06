@@ -84,6 +84,7 @@ int internal_main(int argc, char** argv, void* comm)
       assert(false);
     };
     double supportThreshold = -1.0; // no constraint search
+    bool madRooting = false;
     auto jointTree = std::make_unique<JointTree>(geneTreeString,
         arguments.alignment,
         arguments.speciesTree,
@@ -92,6 +93,7 @@ int internal_main(int argc, char** argv, void* comm)
         arguments.reconciliationModel,
         arguments.reconciliationOpt,
         arguments.rootedGeneTree,
+        madRooting,
         supportThreshold,
         1.0,
         arguments.check,

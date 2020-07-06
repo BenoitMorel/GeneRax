@@ -619,6 +619,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(unsigned int radius)
   unsigned int iterationsNumber = 1;
   bool inPlace = false; 
   bool perFamilyDTLRates = false;
+  bool madRooting = false;
   assert(perFamilyDTLRates == false);
   if (radius == 1) {
     iterationsNumber = 2;
@@ -628,6 +629,7 @@ double SpeciesTreeOptimizer::optimizeGeneTrees(unsigned int radius)
     Routines::optimizeGeneTrees(_currentFamilies, 
       _modelRates.model, rates.rates, _outputDir, resultName, 
       _execPath, speciesTree, recOpt, perFamilyDTLRates, rootedGeneTree, 
+      madRooting,
       _supportThreshold, recWeight, true, true, radius, _geneTreeIteration, 
         useSplitImplem, sumElapsedSPR, inPlace);
     _geneTreeIteration++;

@@ -27,6 +27,7 @@ public:
    std::string output;
    bool perFamilyDTLRates;
    bool rootedGeneTree;
+   bool madRooting;
    bool pruneSpeciesTree;
    double supportThreshold;
    unsigned int recRadius;
