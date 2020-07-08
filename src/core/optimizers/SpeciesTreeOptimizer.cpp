@@ -109,6 +109,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
       hash1 = _speciesTree->getHash();
     }
     while(testAndSwap(hash1, hash2));
+    rootExhaustiveSearch();
     break;
   }
 }
