@@ -99,6 +99,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     size_t hash1 = 0;
     size_t hash2 = 0;
     unsigned int index = 0;
+    optimizeDTLRates();
     do {
       if (index++ % 2 == 0) {
         transferSearch();
@@ -525,14 +526,17 @@ double SpeciesTreeOptimizer::transferSearch()
   MovesBlackList blacklist;
   int index = 0;
   do {
-    if (index++ > 0) {
+    if (index > 0) {
       bestLL = optimizeDTLRates();
     }
     newLL = fastTransfersRound(blacklist);
-    newLL = fastTransfersRound(blacklist);
     Logger::info << "  Accepted: " << _okForClades << std::endl;
     Logger::info << "  Rejected: " << _koForClades << std::endl;
+    index++;
   } while (newLL - bestLL > 1.0);
+  if (index == 1) {
+      bestLL = optimizeDTLRates();
+  }
   Logger::timed << "After transfer search: " << newLL << std::endl;
   Logger::info << _stats << std::endl; 
   saveCurrentSpeciesTreeId();
