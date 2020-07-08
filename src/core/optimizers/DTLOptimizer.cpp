@@ -31,38 +31,43 @@ static void updateLL(Parameters &rates, Evaluations &evaluations) {
 static bool lineSearchParameters(Evaluations &evaluations, 
     Parameters &currentRates, 
     const Parameters &gradient, 
-    unsigned int &llComputationsLine)
+    unsigned int &llComputationsLine,
+    const OptimizationSettings &settings
+    )
 {
   double alpha = 0.1; 
-  double epsilon = 0.0000001;
-  const double minAlpha = epsilon; //(dimensions == 2 ? epsilon : 0.001);
-  const double minImprovement = 0.1;
+  const double minAlpha = settings.minAlpha;
   Parameters currentGradient(gradient);
-  bool stop = true;
+  bool noImprovement = true;
+  //Logger::info << "lineSearch " << currentRates.getScore() << std::endl;
   while (alpha > minAlpha) {
     currentGradient.normalize(alpha);
     Parameters proposal = currentRates + (currentGradient * alpha);
     updateLL(proposal, evaluations);
     llComputationsLine++;
-    if (currentRates.getScore() + minImprovement < proposal.getScore()) {
+    if (currentRates.getScore() + settings.lineSearchMinImprovement
+        < proposal.getScore()) {
+      //Logger::info << "Improv alpha=" << alpha << " score=" << proposal.getScore() << std::endl;
       currentRates = proposal;
-      stop = false;
+      noImprovement = false;
       alpha *= 1.5;
     } else {
       alpha *= 0.5;
-      if (!stop) {
-        return !stop;
+      if (!noImprovement) {
+        return true;
       }
+      //Logger::info << "No improv alpha=" << alpha << std::endl;
     }
   }
-  return !stop;
+  return !noImprovement;
 }
 
 
 Parameters DTLOptimizer::optimizeParameters(PerCoreEvaluations &evaluations,
-    const Parameters &startingParameters)
+    const Parameters &startingParameters,
+    OptimizationSettings settings)
 {
-  double epsilon = 0.000001;
+  double epsilon = settings.epsilon;
   Parameters currentRates = startingParameters;
   updateLL(currentRates, evaluations);
   unsigned int llComputationsGrad = 0;
@@ -78,19 +83,20 @@ Parameters DTLOptimizer::optimizeParameters(PerCoreEvaluations &evaluations,
       llComputationsGrad++;
       gradient[i] = (currentRates.getScore() - closeRates.getScore()) / (-epsilon);
     }
-  } while (lineSearchParameters(evaluations, currentRates, gradient, llComputationsLine));
+  } while (lineSearchParameters(evaluations, currentRates, gradient, llComputationsLine, settings));
   return currentRates;
 }
 
 ModelParameters DTLOptimizer::optimizeModelParameters(PerCoreEvaluations &evaluations,
     bool optimizeFromStartingParameters,
-    const ModelParameters &startingParameters)
+    const ModelParameters &startingParameters,
+    OptimizationSettings settings)
 {
 
   ModelParameters res = startingParameters;
   if (!startingParameters.perFamilyRates) {
     const Parameters *startingRates = optimizeFromStartingParameters ? &startingParameters.rates :  nullptr;
-    res.rates = DTLOptimizer::optimizeParametersGlobalDTL(evaluations, startingRates);
+    res.rates = DTLOptimizer::optimizeParametersGlobalDTL(evaluations, startingRates, settings);
   } else {
     ParallelContext::pushSequentialContext(); // work locally
     for (unsigned int i = 0; i < evaluations.size(); ++i) {
@@ -98,7 +104,7 @@ ModelParameters DTLOptimizer::optimizeModelParameters(PerCoreEvaluations &evalua
       const Parameters *startingRates = optimizeFromStartingParameters ? &localRates : nullptr;
       PerCoreEvaluations localEvaluation;
       localEvaluation.push_back(evaluations[i]);
-      localRates = DTLOptimizer::optimizeParametersGlobalDTL(localEvaluation, startingRates);
+      localRates = DTLOptimizer::optimizeParametersGlobalDTL(localEvaluation, startingRates, settings);
       res.setRates(i, localRates);
     }
     ParallelContext::popContext();
@@ -108,7 +114,8 @@ ModelParameters DTLOptimizer::optimizeModelParameters(PerCoreEvaluations &evalua
 
 
 Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreEvaluations &evaluations, 
-    const Parameters *startingParameters)
+    const Parameters *startingParameters,
+    OptimizationSettings settings)
 {
   unsigned int freeParameters = 0;
   if (evaluations.size()) {
@@ -148,8 +155,9 @@ Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreEvaluations &evaluat
   Parameters best;
   best.setScore(-10000000000);
   for (auto rates: startingRates) {
-    Parameters newRates = optimizeParameters(evaluations, rates);
-    bool stop = (fabs(newRates.getScore() - best.getScore()) < 3.0);
+    Parameters newRates = optimizeParameters(evaluations, rates, settings);
+    bool stop = (fabs(newRates.getScore() - best.getScore()) 
+        < settings.optimizationMinImprovement);
     stop = false;
     if (newRates.getScore() > best.getScore()) {
       best = newRates;

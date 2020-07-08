@@ -574,7 +574,12 @@ ModelParameters SpeciesTreeOptimizer::computeOptimizedRates()
     return _modelRates;
   }
   auto rates = _modelRates;
-  rates =  DTLOptimizer::optimizeModelParameters(_evaluations, !_firstOptimizeRatesCall, rates);
+  OptimizationSettings settings;
+  settings.lineSearchMinImprovement = 10.0;
+  settings.minAlpha = 0.01;
+  double ll = computeRecLikelihood();
+  settings.optimizationMinImprovement = std::max(3.0, ll / 1000.0);
+  rates =  DTLOptimizer::optimizeModelParameters(_evaluations, !_firstOptimizeRatesCall, rates, settings);
   _firstOptimizeRatesCall = true;
   return rates;
 }

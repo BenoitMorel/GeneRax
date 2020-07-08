@@ -11,6 +11,23 @@ class PerCoreGeneTrees;
 
 class RootedTree;
 
+struct OptimizationSettings {
+  OptimizationSettings(): 
+    lineSearchMinImprovement(0.1),
+    optimizationMinImprovement(3.0),
+    minAlpha(0.0000001),
+    epsilon(0.0000001)
+  {}
+
+
+
+  double lineSearchMinImprovement;
+  double optimizationMinImprovement;
+  double minAlpha;
+  double epsilon;
+
+};
+
 class DTLOptimizer {
 public:
   DTLOptimizer() = delete;
@@ -26,7 +43,8 @@ public:
    *  @return The parameters that maximize the function
    */
   static Parameters optimizeParameters(PerCoreEvaluations &evaluations, 
-      const Parameters &startingParameters);
+      const Parameters &startingParameters,
+      OptimizationSettings settings = OptimizationSettings());
  
   /**
    *  Finds the global parameters that maximize evaluations. Global 
@@ -38,14 +56,16 @@ public:
    *  @return The parameters that maximize the function
    */
   static Parameters optimizeParametersGlobalDTL(PerCoreEvaluations &evaluations, 
-      const Parameters *startingParameters = nullptr);
+      const Parameters *startingParameters = nullptr,
+      OptimizationSettings settings = OptimizationSettings());
 
   /**
    * Same as optimizeParameters, but with a ModelParameters as input.
    */
   static ModelParameters optimizeModelParameters(PerCoreEvaluations &evaluations, 
       bool optimizeFromStartingParameters,
-      const ModelParameters &startingParameters);
+      const ModelParameters &startingParameters,
+      OptimizationSettings settings = OptimizationSettings());
 
   /**
    * Finds the per-species parameters that maximize  evaluations
