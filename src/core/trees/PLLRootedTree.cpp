@@ -249,6 +249,14 @@ pll_rnode_t *PLLRootedTree::getLCA(pll_rnode_t *n1, pll_rnode_t *n2)
   }
   return _lcaCache->lcas[n1->node_index][n2->node_index];
 }
+  
+bool PLLRootedTree::areParents(pll_rnode_t *n1, pll_rnode_t *n2)
+{
+  if (!_lcaCache) {
+    buildLCACache();
+  }
+  return _lcaCache->parents[n1->node_index][n2->node_index];
+}
 
 
 static void fillWithChildren(pll_rnode_t *n1,

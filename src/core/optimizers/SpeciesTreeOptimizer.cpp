@@ -109,7 +109,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
       hash1 = _speciesTree->getHash();
     }
     while(testAndSwap(hash1, hash2));
-    rootExhaustiveSearch();
+    rootExhaustiveSearch(false);
     break;
   }
 }
@@ -712,9 +712,10 @@ void SpeciesTreeOptimizer::updateEvaluations()
   assert(_geneTrees);
   auto &trees = _geneTrees->getTrees();
   _evaluations.resize(trees.size());
+  bool rootedGeneTrees = false;
   for (unsigned int i = 0; i < trees.size(); ++i) {
     auto &tree = trees[i];
-    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _modelRates.model, false, _minGeneBranchLength, _pruneSpeciesTree, _fractionMissingFile);
+    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _modelRates.model, rootedGeneTrees, _minGeneBranchLength, _pruneSpeciesTree, _fractionMissingFile);
     _evaluations[i]->setRates(_modelRates.getRates(i));
     _evaluations[i]->setPartialLikelihoodMode(PartialLikelihoodMode::PartialSpecies);
     //_evaluations[i]->enableMADRooting(true);

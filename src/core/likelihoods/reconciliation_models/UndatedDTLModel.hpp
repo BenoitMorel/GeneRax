@@ -81,14 +81,16 @@ private:
     DTLCLV():
       _survivingTransferSums(REAL()),
       _survivingTransferSumsInvariant(REAL()),
-      _survivingTransferSumsOneMore(REAL())
+      _survivingTransferSumsOneMore(REAL()),
+      _lca(nullptr)
     {}
 
     DTLCLV(unsigned int speciesNumber):
       _uq(speciesNumber, REAL()),
       _survivingTransferSums(REAL()),
       _survivingTransferSumsInvariant(REAL()),
-      _survivingTransferSumsOneMore(REAL())
+      _survivingTransferSumsOneMore(REAL()),
+      _lca(nullptr)
     {}
     // probability of a gene node rooted at a species node
     std::vector<REAL> _uq;
@@ -102,6 +104,8 @@ private:
     // because we need it to compute _survivingTransferSumsInvariant
     // consistently in fast mode
     REAL _survivingTransferSumsOneMore;
+
+    pll_rnode_t *_lca;
   };
 
   // Current DTLCLV values
@@ -259,24 +263,42 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
   }
 }
 
-
+#define LCA_OPT
 template <class REAL>
 void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
 {
   auto gid = geneNode->node_index;
+  // update species LCA
+#ifdef LCA_OPT
+  if (!geneNode->next) { // gene leaf
+    _dtlclvs[gid]._lca = this->_speciesTree.getNode(
+        this->_geneToSpecies[gid]);
+  } else { // gene internal node
+    auto left = geneNode->next->back->node_index;
+    auto right = geneNode->next->next->back->node_index;
+    _dtlclvs[gid]._lca = this->_speciesTree.getLCA(_dtlclvs[left]._lca, _dtlclvs[right]._lca);
+  }
+  auto lca = _dtlclvs[gid]._lca;
+#endif
   resetTransferSums(this->_fastMode ? _dtlclvs[gid]._survivingTransferSumsOneMore : _dtlclvs[gid]._survivingTransferSums, _dtlclvs[gid]._survivingTransferSumsInvariant, _dtlclvs[gid]._uq);
-  
   if (!this->_fastMode) {
     for (auto speciesNode: getSpeciesNodesToUpdate()) {
       _dtlclvs[gid]._uq[speciesNode->node_index] = REAL();
     }
   }
+
   for (unsigned int it = 0; it < getIterationsNumber(); ++it) {
     updateTransferSums(_dtlclvs[gid]._survivingTransferSums, _dtlclvs[gid]._survivingTransferSumsInvariant, _dtlclvs[gid]._uq);
     for (auto speciesNode: getSpeciesNodesToUpdate()) { 
-      computeProbability(geneNode, 
+#ifdef LCA_OPT
+      if (this->_speciesTree.areParents(lca, speciesNode)) 
+#endif
+      {
+        computeProbability(geneNode, 
           speciesNode, 
           _dtlclvs[gid]._uq[speciesNode->node_index]);
+      
+      } 
     }
   }
   if (this->_likelihoodMode == PartialLikelihoodMode::PartialSpecies && !this->_fastMode) {

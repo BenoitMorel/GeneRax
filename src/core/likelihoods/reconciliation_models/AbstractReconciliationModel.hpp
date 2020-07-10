@@ -195,6 +195,7 @@ protected:
   double _minGeneBranchLength;
   PartialLikelihoodMode _likelihoodMode;
   std::vector<double> _fm;
+  PLLRootedTree &_speciesTree;
   virtual void beforeComputeLogLikelihood(); 
   virtual void afterComputeLogLikelihood() {};
   pll_rnode_t *getSpeciesSon(pll_rnode_t *node, bool left) {return left ? getSpeciesLeft(node) : getSpeciesRight(node);}
@@ -216,7 +217,6 @@ private:
   
   
   bool _rootedGeneTree;
-  PLLRootedTree &_speciesTree;
   std::map<std::string, std::string> _geneNameToSpeciesName;
   std::map<std::string, unsigned int> _speciesNameToId;
   std::vector<unsigned int> _speciesCoverage;
@@ -257,8 +257,8 @@ AbstractReconciliationModel<REAL>::AbstractReconciliationModel(PLLRootedTree &sp
   _fastMode(false),
   _minGeneBranchLength(minGeneBranchLength),
   _likelihoodMode(PartialLikelihoodMode::PartialGenes),
-  _rootedGeneTree(rootedGeneTree),
   _speciesTree(speciesTree),
+  _rootedGeneTree(rootedGeneTree),
   _geneNameToSpeciesName(geneSpeciesMapping.getMap()),
   _allSpeciesNodesInvalid(true),
   _pruneSpeciesTree(pruneSpeciesTree),

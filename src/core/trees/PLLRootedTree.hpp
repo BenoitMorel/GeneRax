@@ -105,9 +105,16 @@ public:
   }
 
   /**
-   *  First call is O(n^2), and all next calls O(1)
+   * Get lowest common ancestor
+   * First call is O(n^2), and all next calls O(1)
    */
   pll_rnode_t *getLCA(pll_rnode_t *n1, pll_rnode_t *n2);
+
+  /**
+   * Return true if either one of n1 or n2 is parent of another
+   * First call is O(n^2), and all next calls O(1)
+   */
+  bool areParents(pll_rnode_t *n1, pll_rnode_t *n2);
 
   void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
