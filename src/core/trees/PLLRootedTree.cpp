@@ -234,6 +234,100 @@ std::vector<pll_rnode_t*> PLLRootedTree::getPostOrderNodes() const
   fillPostOrder(getRoot(), nodes);
   return nodes;
 }
+  
+void PLLRootedTree::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *)
+{
+  if (_lcaCache) {
+    buildLCACache();
+  }
+}
+  
+pll_rnode_t *PLLRootedTree::getLCA(pll_rnode_t *n1, pll_rnode_t *n2)
+{
+  if (!_lcaCache) {
+    buildLCACache();
+  }
+  return _lcaCache->lcas[n1->node_index][n2->node_index];
+}
 
+
+static void fillWithChildren(pll_rnode_t *n1,
+    pll_rnode_t *n2,
+    std::vector<pll_rnode_t *> &n1lcas)
+{
+  if (!n2) {
+    return;
+  }
+  n1lcas[n2->node_index] = n1;
+  fillWithChildren(n1, n2->left, n1lcas);
+  fillWithChildren(n1, n2->right, n1lcas);
+}
+
+/**
+ * Recursion that starts with n2 == root and lca == root
+ * traverse all nodes from the root to the leaves with n2
+ * to fill n1 LCAs
+ */
+static void findn1LCAs(pll_rnode_t *n1,
+    pll_rnode_t *n2,
+    pll_rnode_t *lca,
+    const std::unordered_set<pll_rnode_t*> &n1Ancestors,
+    std::vector<pll_rnode_t *> &n1lcas)
+{
+  if (!n2) {
+    // end of the recursion
+    return;
+  }
+  if (n1 == n2) {
+    // edge case: from now, the lca of n1 and all children of n2
+    // is n1.
+    fillWithChildren(n1, n2, n1lcas);
+  } else {
+    if (n1Ancestors.find(n2) != n1Ancestors.end()) {
+      // n2 is an ancestor of n1, and thus the new lca
+      // in the recursion
+      lca = n2;
+    }
+    n1lcas[n2->node_index] = lca;
+    findn1LCAs(n1, n2->left, lca, n1Ancestors, n1lcas);
+    findn1LCAs(n1, n2->right, lca, n1Ancestors, n1lcas);
+  }
+}
+
+
+static void findLCAs(pll_rnode_t *n1, std::vector<pll_rnode_t *> &n1lcas)
+{
+  std::unordered_set<pll_rnode_t *> n1Ancestors;
+  auto it = n1;
+  auto root = n1;
+  while (it) {
+    n1Ancestors.insert(it);
+    root = it;
+    it = it->parent;
+  }
+  findn1LCAs(n1, root, root, n1Ancestors, n1lcas);
+}
+
+void PLLRootedTree::buildLCACache()
+{
+  auto N = getNodesNumber();
+  _lcaCache = std::make_unique<LCACache>();
+  std::vector<pll_rnode_t *> nulls(N, nullptr);
+  _lcaCache->lcas = std::vector<std::vector<pll_rnode_t *> >(N, nulls);
+  std::vector<bool> falses(N, false);
+  _lcaCache->parents = std::vector<std::vector<bool > >(N, falses);
+  for (auto n: getNodes()) {
+    findLCAs(n, _lcaCache->lcas[n->node_index]);
+  }
+  for (auto n1: getNodes()) {
+    auto n2 = n1;
+    while (n2) {
+      _lcaCache->parents[n1->node_index][n2->node_index] = true;
+      _lcaCache->parents[n2->node_index][n1->node_index] = true;
+      n2 = n2->parent;
+    }
+  }
+
+}
 
 

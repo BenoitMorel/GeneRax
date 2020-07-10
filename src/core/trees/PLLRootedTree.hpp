@@ -104,11 +104,28 @@ public:
     return os;
   }
 
+  /**
+   *  First call is O(n^2), and all next calls O(1)
+   */
+  pll_rnode_t *getLCA(pll_rnode_t *n1, pll_rnode_t *n2);
 
+  void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
 private:
   std::unique_ptr<pll_rtree_t, void(*)(pll_rtree_t*)> _tree;
-
+  
+  struct LCACache {
+    // vectors are indexed with rnodes indices
+    // lcas[n1][n2] == lca(n1, n2) in the tree
+    // parents[n1][n2] is true if n2 is an ancestor
+    //   of n1 or n1 an ancestor of n2
+    std::vector<std::vector<pll_rnode_t *> > lcas;
+    std::vector<std::vector<bool> > parents;
+  };
+  std::unique_ptr<LCACache> _lcaCache;
+  
+  
+  void buildLCACache();
   static pll_rtree_t *buildRandomTree(const std::unordered_set<std::string> &leafLabels);
 };
 

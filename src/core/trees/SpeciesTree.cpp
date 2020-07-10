@@ -64,6 +64,7 @@ void SpeciesTree::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *n
   for (auto listener: _listeners) {
     listener->onSpeciesTreeChange(nodesToInvalidate);
   }
+  _speciesTree.onSpeciesTreeChange(nodesToInvalidate);
 }
   
 static void setRootAux(SpeciesTree &speciesTree, pll_rnode_t *root) {
