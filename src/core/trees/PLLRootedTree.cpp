@@ -258,6 +258,13 @@ bool PLLRootedTree::areParents(pll_rnode_t *n1, pll_rnode_t *n2)
   return _lcaCache->parents[n1->node_index][n2->node_index];
 }
 
+std::vector<bool> &PLLRootedTree::getParentsCache(pll_rnode_t *n1)
+{
+  if (!_lcaCache) {
+    buildLCACache();
+  }
+  return _lcaCache->parents[n1->node_index];
+}
 
 static void fillWithChildren(pll_rnode_t *n1,
     pll_rnode_t *n2,

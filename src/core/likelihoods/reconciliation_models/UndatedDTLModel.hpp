@@ -279,6 +279,7 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
     _dtlclvs[gid]._lca = this->_speciesTree.getLCA(_dtlclvs[left]._lca, _dtlclvs[right]._lca);
   }
   auto lca = _dtlclvs[gid]._lca;
+  auto parentsCache = this->_speciesTree.getParentsCache(lca);
 #endif
   resetTransferSums(this->_fastMode ? _dtlclvs[gid]._survivingTransferSumsOneMore : _dtlclvs[gid]._survivingTransferSums, _dtlclvs[gid]._survivingTransferSumsInvariant, _dtlclvs[gid]._uq);
   if (!this->_fastMode) {
@@ -286,12 +287,11 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
       _dtlclvs[gid]._uq[speciesNode->node_index] = REAL();
     }
   }
-
   for (unsigned int it = 0; it < getIterationsNumber(); ++it) {
     updateTransferSums(_dtlclvs[gid]._survivingTransferSums, _dtlclvs[gid]._survivingTransferSumsInvariant, _dtlclvs[gid]._uq);
     for (auto speciesNode: getSpeciesNodesToUpdate()) { 
 #ifdef LCA_OPT
-      if (this->_speciesTree.areParents(lca, speciesNode)) 
+      if (parentsCache[speciesNode->node_index]) 
 #endif
       {
         computeProbability(geneNode, 
@@ -550,7 +550,12 @@ void UndatedDTLModel<REAL>::computeGeneRootLikelihood(pll_unode_t *virtualRoot)
       _dtlclvs[u]._uq[e] = REAL();
     }
   }
-  for (unsigned int it = 0; it < getIterationsNumber(); ++it) {
+  /*
+  auto left = virtualRoot->next->node_index;
+  auto right = virtualRoot->next->next->node_index;
+  auto lca = this->_speciesTree.getLCA(_dtlclvs[left]._lca, _dtlclvs[right]._lca);
+  */
+  for (unsigned int it = 0; it < 1; ++it) { //getIterationsNumber(); ++it) {
     updateTransferSums(_dtlclvs[u]._survivingTransferSums, _dtlclvs[u]._survivingTransferSumsInvariant, _dtlclvs[u]._uq);
     for (auto speciesNode: getSpeciesNodesToUpdate()) {
       unsigned int e = speciesNode->node_index;

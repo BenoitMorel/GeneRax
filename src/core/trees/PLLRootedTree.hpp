@@ -117,6 +117,11 @@ public:
   bool areParents(pll_rnode_t *n1, pll_rnode_t *n2);
 
   void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
+  
+  
+  std::vector<bool> &getParentsCache(pll_rnode_t *n1);
+  
+  void buildLCACache();
 
 private:
   std::unique_ptr<pll_rtree_t, void(*)(pll_rtree_t*)> _tree;
@@ -132,7 +137,6 @@ private:
   std::unique_ptr<LCACache> _lcaCache;
   
   
-  void buildLCACache();
   static pll_rtree_t *buildRandomTree(const std::unordered_set<std::string> &leafLabels);
 };
 
