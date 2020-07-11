@@ -58,6 +58,9 @@ void ParallelContext::finalize()
   
 void ParallelContext::pushSequentialContext()
 {
+  if (!_mpiEnabled) {
+    return;
+  }
 #ifdef WITH_MPI
   MPI_Comm newComm;
   MPI_Comm_split(getComm(), getRank(), getRank(), &newComm);
@@ -68,6 +71,9 @@ void ParallelContext::pushSequentialContext()
 
 void ParallelContext::popContext()
 {
+  if (!_mpiEnabled) {
+    return;
+  }
 #ifdef WITH_MPI
   MPI_Comm_free(&_commStack.top());
  _commStack.pop();
