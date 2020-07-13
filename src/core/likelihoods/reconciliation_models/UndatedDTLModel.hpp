@@ -26,9 +26,6 @@ public:
     
     AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree, minGeneBranchLength, pruneSpeciesTree)
   {
-    for (unsigned int i = 0; i < this->_allSpeciesNodesCount; ++i) {
-      _allIndicesSet.insert(i);
-    }
   } 
   UndatedDTLModel(const UndatedDTLModel &) = delete;
   UndatedDTLModel & operator = (const UndatedDTLModel &) = delete;
@@ -99,10 +96,8 @@ private:
 
   // Current DTLCLV values
   std::vector<DTLCLV> _dtlclvs;
-  std::set<unsigned int> _allIndicesSet;
 private:
   void updateTransferSums(REAL &transferExtinctionSum,
-      const std::set<unsigned int> &sumIndices,
       const std::vector<REAL> &probabilities);
   void getBestTransfer(pll_unode_t *parentGeneNode, 
     pll_rnode_t *originSpeciesNode,
@@ -149,7 +144,6 @@ void UndatedDTLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
 
 template <class REAL>
 void UndatedDTLModel<REAL>::updateTransferSums(REAL &transferSum,
-    const std::set<unsigned int> &sumIndices,
     const std::vector<REAL> &probabilities)
 {
   transferSum = REAL();
@@ -203,7 +197,7 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
   _transferExtinctionSum = REAL();
   for (unsigned int it = 0; it < getIterationsNumber(); ++it) {
     if (it) {
-      updateTransferSums(_transferExtinctionSum, _allIndicesSet, _uE);
+      updateTransferSums(_transferExtinctionSum, _uE);
     }
     for (auto speciesNode: getSpeciesNodesToUpdate()) {
       auto e = speciesNode->node_index;
@@ -235,7 +229,7 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
   auto gid = geneNode->node_index;
   // update species LCA
   bool onlyLCA = false;
-  auto speciesRoot = this->_speciesTree.getRoot();
+  //auto speciesRoot = this->_speciesTree.getRoot();
   if (!geneNode->next) { // gene leaf
     _dtlclvs[gid]._lca = this->_speciesTree.getNode(
         this->_geneToSpecies[gid]);
@@ -258,7 +252,6 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
   for (unsigned int it = 0; it < getIterationsNumber(); ++it) {
     if (it) {
       updateTransferSums(_dtlclvs[gid]._survivingTransferSums, 
-        this->_allIndicesSet,//_speciesTree.getParentSetCache(lca),
         _dtlclvs[gid]._uq);
     }
     for (auto speciesNode: getSpeciesNodesToUpdate()) { 

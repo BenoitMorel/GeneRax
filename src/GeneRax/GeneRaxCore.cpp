@@ -70,15 +70,16 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   instance.args.printCommand();
   instance.args.printSummary();
   instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
-  Logger::timed << "Filtering invalid families..." << std::endl;
   bool needAlignments = instance.args.optimizeGeneTrees;
   if (instance.args.filterFamilies) {
+    Logger::timed << "Filtering invalid families..." << std::endl;
     Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, false);
   }
+  Logger::info << "Starting species tree initialization..." << std::endl;
   initStartingSpeciesTree(instance);
 
-  Logger::timed << "Filtering invalid families based on the starting species tree..." << std::endl;
   if (instance.args.filterFamilies) {
+    Logger::timed << "Filtering invalid families based on the starting species tree..." << std::endl;
     Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, true);
   }
   if (!instance.initialFamilies.size()) {
@@ -87,6 +88,7 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   }
   instance.currentFamilies = instance.initialFamilies;
   initFolders(instance);
+  Logger::info << "End of instance initialization" << std::endl;
 }
 
 void GeneRaxCore::initRandomGeneTrees(GeneRaxInstance &instance)
@@ -116,6 +118,7 @@ void GeneRaxCore::printStats(GeneRaxInstance &instance)
 
 void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
 {
+  Logger::info << "Reroot species tree..." << std::endl;
   Parameters startingRates;
   switch (instance.recModel) {
   case RecModel::ParsimonyDL:
