@@ -24,7 +24,10 @@ public:
     rates((info.perFamilyRates ? familiesNumber : 1), rates),
     info(info),
     familiesNumber(familiesNumber)
-  {}
+  {
+    std::cerr << familiesNumber << std::endl;
+  
+  }
 
   Parameters getRates(unsigned int familyIndex) const {
     if (info.perFamilyRates) {

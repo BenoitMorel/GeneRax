@@ -32,7 +32,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _userDTLRates(userDTLRates),
   _minGeneBranchLength(minGeneBranchLength),
   _pruneSpeciesTree(pruneSpeciesTree),
-  _modelRates(startingRates, 0, recModelInfo),
+  _modelRates(startingRates, 1, recModelInfo),
   _constrainSearch(constrainSearch),
   _okForClades(0),
   _koForClades(0)
