@@ -190,13 +190,13 @@ def run_reconciliation_test(cores, model):
 dataset_set = ["simulated_2", "simulated_2_map_in_label"]
 with_starting_tree_set = [False, True]
 strategy_set = ["SPR", "EVAL"]
-model_set = ["ParsimonyDL", "UndatedDL", "UndatedDTL"]
+model_set = ["UndatedDL", "UndatedDTL"]#, "ParsimonyDL"]
 cores_set = [1]
 if (is_mpi_installed()):
   cores_set.append(3)
 
 all_ok = True
-all_ok = all_ok and run_reconciliation_test(1, "ParsimonyDL")
+#all_ok = all_ok and run_reconciliation_test(1, "ParsimonyDL")
 all_ok = all_ok and run_reconciliation_test(1, "UndatedDTL")
 all_ok = all_ok and run_reconciliation_test(1, "UndatedDL")
 for dataset in dataset_set:
