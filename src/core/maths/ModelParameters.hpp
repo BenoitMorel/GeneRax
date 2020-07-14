@@ -25,7 +25,6 @@ public:
     info(info),
     familiesNumber(familiesNumber)
   {
-    std::cerr << familiesNumber << std::endl;
   
   }
 
