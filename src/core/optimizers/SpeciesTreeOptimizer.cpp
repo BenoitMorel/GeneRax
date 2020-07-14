@@ -37,6 +37,8 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _okForClades(0),
   _koForClades(0)
 {
+
+  _modelRates.info.perFamilyRates = false; // will be unset later
   if (fractionMissing) {
     _fractionMissingFile = FileSystem::joinPaths(
       _outputDir,
