@@ -365,7 +365,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
   unsigned int index = 0;
   const unsigned int stopAfterFailures = 50;
   const unsigned int stopAfterImprovements = 50;
-  const unsigned int minTrial = _speciesTree->getTree().getNodesNumber();
+  const unsigned int minTrial = 50; //_speciesTree->getTree().getNodesNumber();
   unsigned int failures = 0;
   unsigned int improvements = 0;
   for (auto &transferMove: transferMoves) {
