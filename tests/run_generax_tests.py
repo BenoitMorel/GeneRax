@@ -96,6 +96,7 @@ def run_reconciliation(species_tree, families_file, model, test_output, cores):
   command.append(os.path.join(test_output, "generax"))
   logs_file_path = os.path.join(test_output, "tests_logs.txt")
   print(logs_file_path)
+  print(" ".join(command))
   with open(logs_file_path, "w") as writer:
     subprocess.check_call(command, stdout = writer, stderr = writer)
 

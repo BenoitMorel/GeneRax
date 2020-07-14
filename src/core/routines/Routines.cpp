@@ -180,7 +180,7 @@ void Routines::inferReconciliation(
   evaluations.resize(geneTrees.getTrees().size());
   for (unsigned int i = 0; i  < geneTrees.getTrees().size(); ++i) {
     auto &tree = geneTrees.getTrees()[i];
-    evaluations[i] = std::make_shared<ReconciliationEvaluation>(speciesTree, *tree.geneTree, tree.mapping, modelParameters.model, true, -1.0, pruneMode);
+    evaluations[i] = std::make_shared<ReconciliationEvaluation>(speciesTree, *tree.geneTree, tree.mapping, modelParameters.info.model, true, -1.0, pruneMode);
     evaluations[i]->setRates(modelParameters.getRates(i));
   }
   if (optimizeRates) {
@@ -424,16 +424,18 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
   bool saveTransfersOnly = true; 
   bool optimizeRates = false;
   ModelParameters transfersModelParameter;
-  if (Enums::accountsForTransfers(modelParameters.model)) {
+  if (Enums::accountsForTransfers(modelParameters.info.model)) {
     transfersModelParameter = modelParameters;
   } else {
     // the current model does not account for transfers
     // to infer transfers, we use a model that does
     Parameters transfersParameters(0.2, 0.2, 0.2);
+    RecModelInfo recModelInfo = modelParameters.info;
+    recModelInfo.model = RecModel::UndatedDTL;
+    recModelInfo.perFamilyRates = false;
     transfersModelParameter = ModelParameters(transfersParameters,
-        RecModel::UndatedDTL,
-        false,
-        1);
+        1,
+        recModelInfo);
   }
   inferReconciliation(speciesTreeFile, families, transfersModelParameter, pruneMode, outputDir, bestReconciliation, samples, optimizeRates, saveTransfersOnly);
   

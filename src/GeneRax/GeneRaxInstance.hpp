@@ -62,7 +62,7 @@ struct GeneRaxInstance {
   GeneRaxInstance & operator = (GeneRaxInstance &&) = delete;
   
   void readModelParameters(ModelParameters &modelParameters);
-
+  RecModelInfo getRecModelInfo();
 };
 
 

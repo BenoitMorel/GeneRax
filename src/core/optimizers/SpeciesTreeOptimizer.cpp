@@ -10,9 +10,8 @@
 
 SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile, 
     const Families &initialFamilies, 
-    RecModel model,
+    const RecModelInfo &recModelInfo,
     const Parameters &startingRates,
-    bool perFamilyRates,
     bool userDTLRates,
     double minGeneBranchLength,
     bool pruneSpeciesTree,
@@ -33,7 +32,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _userDTLRates(userDTLRates),
   _minGeneBranchLength(minGeneBranchLength),
   _pruneSpeciesTree(pruneSpeciesTree),
-  _modelRates(startingRates, model, false, 1),
+  _modelRates(startingRates, 0, recModelInfo),
   _constrainSearch(constrainSearch),
   _okForClades(0),
   _koForClades(0)
@@ -50,7 +49,9 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
     setGeneTreesFromFamilies(initialFamilies);
   }
-  _modelRates = ModelParameters(startingRates, model, perFamilyRates, _geneTrees->getTrees().size());
+  _modelRates = ModelParameters(startingRates, 
+      _geneTrees->getTrees().size(),
+      recModelInfo);
   //_speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"), true);
   _speciesTree->addListener(this);
   std::string subsamplesPath = FileSystem::joinPaths(_outputDir, "subsamples");
@@ -154,7 +155,7 @@ double SpeciesTreeOptimizer::rootExhaustiveSearch()
   movesHistory.push_back(0);
   rootExhaustiveSearchAux(*_speciesTree, 
       *_geneTrees, 
-      _modelRates.model, 
+      _modelRates.info.model, 
       movesHistory, 
       bestMovesHistory, 
       bestLL, 
@@ -162,7 +163,7 @@ double SpeciesTreeOptimizer::rootExhaustiveSearch()
   movesHistory[0] = 1;
   rootExhaustiveSearchAux(*_speciesTree, 
       *_geneTrees, 
-      _modelRates.model, 
+      _modelRates.info.model, 
       movesHistory, 
       bestMovesHistory, 
       bestLL, 
@@ -182,7 +183,8 @@ bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
     unsigned int hash1)
 {
   auto wrongClades1 = _unsupportedCladesNumber();
-  bool tryApproxFirst = Enums::implementsApproxLikelihood(_modelRates.model);
+  bool tryApproxFirst = Enums::implementsApproxLikelihood(
+      _modelRates.info.model);
   bool check = false;
   // Apply the move
   auto rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
@@ -531,7 +533,7 @@ double SpeciesTreeOptimizer::optimizeDTLRates()
     evaluation->setRates(_modelRates.getRates(i++));
   }
   Logger::timed << "optimize rates done (LL=" << computeRecLikelihood() << ")" << std::endl;
-  if (!_modelRates.perFamilyRates) {
+  if (!_modelRates.info.perFamilyRates) {
     Logger::timed << " Best rates: " << _modelRates.rates << std::endl;
   }
   return computeRecLikelihood();
@@ -599,7 +601,7 @@ void SpeciesTreeOptimizer::updateEvaluations()
   bool rootedGeneTrees = false;
   for (unsigned int i = 0; i < trees.size(); ++i) {
     auto &tree = trees[i];
-    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _modelRates.model, rootedGeneTrees, _minGeneBranchLength, _pruneSpeciesTree, _fractionMissingFile);
+    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _modelRates.info.model, rootedGeneTrees, _minGeneBranchLength, _pruneSpeciesTree, _fractionMissingFile);
     _evaluations[i]->setRates(_modelRates.getRates(i));
     _evaluations[i]->setPartialLikelihoodMode(PartialLikelihoodMode::PartialSpecies);
     //_evaluations[i]->enableMADRooting(true);

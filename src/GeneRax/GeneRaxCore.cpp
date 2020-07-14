@@ -142,9 +142,8 @@ void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
     }
     SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, 
         instance.currentFamilies, 
-        instance.recModel, 
+        instance.getRecModelInfo(), 
         startingRates, 
-        instance.args.perFamilyDTLRates, 
         instance.args.userDTLRates, 
         instance.args.minGeneBranchLength, 
         instance.args.pruneSpeciesTree, 
@@ -192,9 +191,8 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
   }
   SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, 
       instance.currentFamilies, 
-      instance.recModel, 
+      instance.getRecModelInfo(), 
       startingRates, 
-      instance.args.perFamilyDTLRates, 
       instance.args.userDTLRates, 
       instance.args.minGeneBranchLength,
       instance.args.pruneSpeciesTree, 
@@ -260,7 +258,9 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
   assert(ParallelContext::isRandConsistent());
   if (instance.args.reconcile || instance.args.reconciliationSamples > 0) {
     Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
-    ModelParameters modelRates(instance.rates, instance.recModel, false, 1);
+    ModelParameters modelRates(instance.rates,
+        1,
+        instance.getRecModelInfo());
     instance.readModelParameters(modelRates);
     bool optimizeRates = true;
     Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, 

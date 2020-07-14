@@ -53,9 +53,8 @@ class SpeciesTreeOptimizer: public SpeciesTree::Listener {
 public:
   SpeciesTreeOptimizer(const std::string speciesTreeFile, 
       const Families &initialFamilies, 
-      RecModel model,
+      const RecModelInfo &recModelInfo,
       const Parameters &startingRates,
-      bool perFamilyRates,
       bool userDTLRates,
       double minGeneBranchLength,
       bool pruneSpeciesTree,

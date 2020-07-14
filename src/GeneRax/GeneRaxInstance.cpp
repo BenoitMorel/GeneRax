@@ -11,10 +11,10 @@ void GeneRaxInstance::readModelParameters(ModelParameters &modelParameters)
   Logger::info << "Free parameters " << freeParameters << std::endl;
   Logger::info << "Rates : " << rates;
   assert(rates.dimensions());
+  
   modelParameters = ModelParameters(defaultRates, 
-      recModel, 
-      args.perFamilyDTLRates, 
-      currentFamilies.size());
+      currentFamilies.size(),
+      getRecModelInfo());
   if (!args.perFamilyDTLRates) {
     return;
   }
@@ -40,4 +40,10 @@ void GeneRaxInstance::readModelParameters(ModelParameters &modelParameters)
   assert(modelParameters.rates.dimensions());
 }
 
+RecModelInfo GeneRaxInstance::getRecModelInfo()
+{
+  RecModelInfo info(recModel, 
+      args.perFamilyDTLRates);
+  return info;
+}
 

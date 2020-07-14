@@ -94,7 +94,7 @@ ModelParameters DTLOptimizer::optimizeModelParameters(PerCoreEvaluations &evalua
 {
 
   ModelParameters res = startingParameters;
-  if (!startingParameters.perFamilyRates) {
+  if (!startingParameters.info.perFamilyRates) {
     const Parameters *startingRates = optimizeFromStartingParameters ? &startingParameters.rates :  nullptr;
     res.rates = DTLOptimizer::optimizeParametersGlobalDTL(evaluations, startingRates, settings);
   } else {
