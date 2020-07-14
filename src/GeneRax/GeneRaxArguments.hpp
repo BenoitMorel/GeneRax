@@ -53,7 +53,6 @@ public:
    bool rerootSpeciesTree;
    bool optimizeSpeciesTree;
    unsigned int speciesFastRadius;
-   unsigned int speciesSlowRadius;
    int speciesInitialFamiliesSubsamples;
    double minGeneBranchLength;
 private:

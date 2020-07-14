@@ -79,27 +79,21 @@ public:
   void optimize(SpeciesSearchStrategy strategy,
       unsigned int sprRadius);
   
-  double rootExhaustiveSearch(bool doOptimizeGeneTrees);
+  double rootExhaustiveSearch();
   double fastTransfersRound(MovesBlackList &blacklist);
   double fastSPRRound(unsigned int radius);
-  double slowSPRRound(unsigned int radius, double bestLL);
-  double sprSearch(unsigned int radius, bool doOptimizeGeneTrees = false);
+  double sprSearch(unsigned int radius);
   double transferSearch();
   double optimizeDTLRates();
  
 
-  double optimizeGeneTrees(unsigned int radius);
-  void revertGeneTreeOptimization();
-
-  double computeLikelihood(unsigned int geneSPRRadius);
+  double computeLikelihood();
   // return the path to the saved species tree
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
   const SpeciesTree &getSpeciesTree() const {return *_speciesTree;} 
 
   double getReconciliationLikelihood() const {return _bestRecLL;}
-  double getLibpllLikeliohood() const {return _bestLibpllLL;}
-  double getJointLikelihood() const {return getReconciliationLikelihood() + getLibpllLikeliohood();}
 
   double computeRecLikelihood();
   double computeApproxRecLikelihood();
@@ -113,16 +107,12 @@ private:
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
   PerCoreEvaluations _evaluations; 
   Families _initialFamilies;
-  Families _currentFamilies;
   RecModel _recModel;
   std::string _outputDir;
   std::string _execPath;
-  unsigned int _geneTreeIteration;
   double _supportThreshold;
   double _lastRecLL;
-  double _lastLibpllLL;
   double _bestRecLL;
-  double _bestLibpllLL;
   SpeciesSearchStats _stats;
   bool _firstOptimizeRatesCall;
   bool _userDTLRates;
@@ -142,7 +132,6 @@ private:
   void rootExhaustiveSearchAux(SpeciesTree &speciesTree, 
       PerCoreGeneTrees &geneTrees, 
       RecModel model, 
-      bool doOptimizeGeneTrees, 
       std::vector<unsigned int> &movesHistory, 
       std::vector<unsigned int> &bestMovesHistory, 
       double &bestLL, 

@@ -39,7 +39,6 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   rerootSpeciesTree(false),
   optimizeSpeciesTree(false),
   speciesFastRadius(5),
-  speciesSlowRadius(0),
   speciesInitialFamiliesSubsamples(-1),
   minGeneBranchLength(0.000001)
 {
@@ -107,8 +106,6 @@ void GeneRaxArguments::init() {
       filterFamilies = false;
     } else if (arg == "--species-fast-radius") {
       speciesFastRadius = static_cast<unsigned int>(atoi(argv[++i]));
-    } else if (arg == "--species-slow-radius") {
-      speciesSlowRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--species-initial-samples") {
       speciesInitialFamiliesSubsamples = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--unconstrained-species-search") {

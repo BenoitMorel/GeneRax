@@ -54,7 +54,6 @@ static void initStartingSpeciesTree(GeneRaxInstance &instance)
     instance.speciesTree = FileSystem::joinPaths(instance.args.output, "inferred_species_tree.newick");
     copy.getTree().save(instance.speciesTree);
   }
-  Logger::info << "hey" << std::endl;
   ParallelContext::barrier();
 }
 
@@ -118,46 +117,46 @@ void GeneRaxCore::printStats(GeneRaxInstance &instance)
 
 void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
 {
-  Logger::info << "Reroot species tree..." << std::endl;
-  Parameters startingRates;
-  switch (instance.recModel) {
-  case RecModel::ParsimonyDL:
-  case RecModel::ParsimonyDTL:
-    startingRates = Parameters();
-    break;
-  case RecModel::UndatedDL:
-    startingRates = Parameters(instance.args.dupRate, instance.args.lossRate);
-  break;
-  case RecModel::UndatedDTL:
-    startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate);
-    break;
-  case RecModel::UndatedIDTL:
-    startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate, 0.1);
-    break;
-  case RecModel::SimpleDS:
-    startingRates = Parameters(1);
-    startingRates[0] = instance.args.dupRate;
-    break;
-  }
-  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, 
-      instance.currentFamilies, 
-      instance.recModel, 
-      startingRates, 
-      instance.args.perFamilyDTLRates, 
-      instance.args.userDTLRates, 
-      instance.args.minGeneBranchLength, 
-      instance.args.pruneSpeciesTree, 
-      instance.args.supportThreshold, 
-      instance.args.output, 
-      instance.args.exec, 
-      instance.args.fractionMissing,
-      instance.args.constrainSpeciesSearch);
   if (instance.args.rerootSpeciesTree) {
     Logger::info << "Rerooting the species tree..." << std::endl;
+    Logger::info << "Reroot species tree..." << std::endl;
+    Parameters startingRates;
+    switch (instance.recModel) {
+    case RecModel::ParsimonyDL:
+    case RecModel::ParsimonyDTL:
+      startingRates = Parameters();
+      break;
+    case RecModel::UndatedDL:
+      startingRates = Parameters(instance.args.dupRate, instance.args.lossRate);
+    break;
+    case RecModel::UndatedDTL:
+      startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate);
+      break;
+    case RecModel::UndatedIDTL:
+      startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate, 0.1);
+      break;
+    case RecModel::SimpleDS:
+      startingRates = Parameters(1);
+      startingRates[0] = instance.args.dupRate;
+      break;
+    }
+    SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, 
+        instance.currentFamilies, 
+        instance.recModel, 
+        startingRates, 
+        instance.args.perFamilyDTLRates, 
+        instance.args.userDTLRates, 
+        instance.args.minGeneBranchLength, 
+        instance.args.pruneSpeciesTree, 
+        instance.args.supportThreshold, 
+        instance.args.output, 
+        instance.args.exec, 
+        instance.args.fractionMissing,
+        instance.args.constrainSpeciesSearch);
     speciesTreeOptimizer.optimizeDTLRates();
-    speciesTreeOptimizer.rootExhaustiveSearch(false);
+    speciesTreeOptimizer.rootExhaustiveSearch();
+    instance.speciesTree = speciesTreeOptimizer.saveCurrentSpeciesTreeId();
   }
-  instance.speciesTree = speciesTreeOptimizer.saveCurrentSpeciesTreeId();
 }
 
 static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
@@ -213,17 +212,9 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
       instance.args.speciesFastRadius);
   instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
   instance.speciesTree = speciesTreeOptimizer.saveCurrentSpeciesTreeId();
-  if (instance.args.speciesSlowRadius > 0) {
-    Logger::info << std::endl;
-    Logger::timed << "Start optimizing the species tree and gene trees together" << std::endl;
-  }
-  if (instance.args.speciesSlowRadius) {
-    speciesTreeOptimizer.sprSearch(instance.args.speciesSlowRadius, true);
-  }
-  instance.totalLibpllLL = speciesTreeOptimizer.getLibpllLikeliohood();
   instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
   Logger::timed << "End of optimizing the species tree" << std::endl;
-  Logger::info << "joint ll = " << instance.totalLibpllLL + instance.totalRecLL << std::endl;
+  Logger::info << "Reconciliatoin likelihood = " << instance.totalRecLL << std::endl;
   instance.speciesTree = speciesTreeOptimizer.saveCurrentSpeciesTreeId();
 
   instance.currentFamilies = saveFamilies;
