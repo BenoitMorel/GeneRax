@@ -121,7 +121,6 @@ public:
   
   
   std::vector<bool> &getParentsCache(pll_rnode_t *n1);
-  std::set<unsigned int> &getParentSetCache(pll_rnode_t *n1);
   
   void buildLCACache();
 
@@ -135,7 +134,6 @@ private:
     //   of n1 or n1 an ancestor of n2
     std::vector<std::vector<pll_rnode_t *> > lcas;
     std::vector<std::vector<bool> > parents;
-    std::vector<std::set<unsigned int> > parentSets;
   };
   std::unique_ptr<LCACache> _lcaCache;
   
