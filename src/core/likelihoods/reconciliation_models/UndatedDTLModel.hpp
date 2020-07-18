@@ -113,7 +113,7 @@ private:
     pll_rnode_t *&recievingSpecies,
     REAL &proba,
     bool stochastic = false);
-  unsigned int getIterationsNumber() const {4;}    
+  unsigned int getIterationsNumber() const {return 4;}    
   REAL getCorrectedTransferExtinctionSum(unsigned int speciesId) const {
     return _transferExtinctionSum * _PT[speciesId];
   }
@@ -221,10 +221,8 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
 template <class REAL>
 void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
 {
-  const bool ENABLE_LCA_OPT = false;
   auto gid = geneNode->node_index;
   // update species LCA
-  bool onlyParents = false;
   //auto speciesRoot = this->_speciesTree.getRoot();
   if (!geneNode->next) { // gene leaf
     _dtlclvs[gid]._lca = this->_speciesTree.getNode(
@@ -233,9 +231,6 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
     auto left = geneNode->next->back->node_index;
     auto right = geneNode->next->next->back->node_index;
     _dtlclvs[gid]._lca = this->_speciesTree.getLCA(_dtlclvs[left]._lca, _dtlclvs[right]._lca);
-    auto lcaLeft = _dtlclvs[left]._lca;
-    auto lcaRight = _dtlclvs[right]._lca;
-    onlyParents = (lcaLeft == _dtlclvs[gid]._lca || lcaRight == _dtlclvs[gid]._lca);
   }
   auto lca = _dtlclvs[gid]._lca;
   auto &parentsCache = this->_speciesTree.getParentsCache(lca);
@@ -243,23 +238,12 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
   for (auto speciesNode: getSpeciesNodesToUpdate()) { 
     _dtlclvs[gid]._uq[speciesNode->node_index] = REAL();
   }
-  for (unsigned int it = 0; it < 1; ++it) {
-    if (onlyParents && ENABLE_LCA_OPT) {
-      auto speciesNode = _dtlclvs[gid]._lca;
-      while (speciesNode) {
-        computeProbability(geneNode, 
-          speciesNode, 
-          _dtlclvs[gid]._uq[speciesNode->node_index]);
-        speciesNode = this->getSpeciesParent(speciesNode);
-      }
-    } else {
-      for (auto speciesNode: getSpeciesNodesToUpdate()) { 
-        if (parentsCache[speciesNode->node_index]) {
-          computeProbability(geneNode, 
-            speciesNode, 
-            _dtlclvs[gid]._uq[speciesNode->node_index]);
-        }
-      }
+  
+  for (auto speciesNode: getSpeciesNodesToUpdate()) { 
+    if (parentsCache[speciesNode->node_index]) {
+      computeProbability(geneNode, 
+        speciesNode, 
+        _dtlclvs[gid]._uq[speciesNode->node_index]);
     }
     updateTransferSums(_dtlclvs[gid]._survivingTransferSums, 
       _dtlclvs[gid]._uq);
