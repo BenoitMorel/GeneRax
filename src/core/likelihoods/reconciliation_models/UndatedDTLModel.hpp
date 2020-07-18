@@ -245,9 +245,9 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
         speciesNode, 
         _dtlclvs[gid]._uq[speciesNode->node_index]);
     }
-    updateTransferSums(_dtlclvs[gid]._survivingTransferSums, 
-      _dtlclvs[gid]._uq);
   }
+  updateTransferSums(_dtlclvs[gid]._survivingTransferSums, 
+    _dtlclvs[gid]._uq);
 }
 
 
