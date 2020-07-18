@@ -6,6 +6,8 @@
 #include <IO/Logger.hpp>
 #include <algorithm>
 
+#define PRINT_ERROR_PROBA(x) // if (!IS_PROBA(x)) {std::cerr << "error " << x << std::endl;} assert(IS_PROBA(x));  
+
 
 /*
 * Undated reconciliation model, accouting for duplication, loss, transfers

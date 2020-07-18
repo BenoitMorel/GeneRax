@@ -6,7 +6,6 @@
 #include <IO/Logger.hpp>
 #include <algorithm>
 
-#define PRINT_ERROR_PROBA(x) // if (!IS_PROBA(x)) {std::cerr << "error " << x << std::endl;} assert(IS_PROBA(x));  
 
 
 
@@ -123,6 +122,9 @@ private:
     return _dtlclvs[geneId]._survivingTransferSums * _PT[speciesId];
   }
   std::vector<pll_rnode_s *> &getSpeciesNodesToUpdate() {
+    return this->_speciesNodesToUpdate;
+  }
+  std::vector<pll_rnode_s *> &getSpeciesNodesToUpdateSafe() {
     return this->_allSpeciesNodes;
   }
 };
@@ -144,7 +146,7 @@ void UndatedDTLModel<REAL>::updateTransferSums(REAL &transferSum,
     const std::vector<REAL> &probabilities)
 {
   transferSum = REAL();
-  for (auto speciesNode: getSpeciesNodesToUpdate()) {
+  for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
     auto e = speciesNode->node_index;
     //if (sumIndices.find(e) != sumIndices.end()) {
      transferSum += probabilities[e];
@@ -188,12 +190,12 @@ template <class REAL>
 void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
 {
   _uE.resize(this->_allSpeciesNodesCount);
-  for (auto speciesNode: getSpeciesNodesToUpdate()) {
+  for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
     _uE[speciesNode->node_index] = REAL(0.0);
   }
   _transferExtinctionSum = REAL();
   for (unsigned int it = 0; it < getIterationsNumber(); ++it) {
-    for (auto speciesNode: getSpeciesNodesToUpdate()) {
+    for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
       auto e = speciesNode->node_index;
       if (it + 1 == getIterationsNumber() && !speciesNode->left) {
         _uE[e] = _uE[e] * (1.0 - this->_fm[e]) + REAL(this->_fm[e]);
@@ -239,7 +241,7 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
     _dtlclvs[gid]._uq[speciesNode->node_index] = REAL();
   }
   
-  for (auto speciesNode: getSpeciesNodesToUpdate()) { 
+  for (auto speciesNode: getSpeciesNodesToUpdateSafe()) { 
     if (parentsCache[speciesNode->node_index]) {
       computeProbability(geneNode, 
         speciesNode, 
@@ -260,11 +262,9 @@ void UndatedDTLModel<REAL>::computeGeneRootLikelihood(pll_unode_t *virtualRoot)
     auto e = speciesNode->node_index;
     _dtlclvs[u]._uq[e] = REAL();
   }
-  for (unsigned int it = 0; it < 1; ++it) { 
-    for (auto speciesNode: getSpeciesNodesToUpdate()) {
-      unsigned int e = speciesNode->node_index;
-      computeProbability(virtualRoot, speciesNode, _dtlclvs[u]._uq[e], true);
-    }
+  for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
+    unsigned int e = speciesNode->node_index;
+    computeProbability(virtualRoot, speciesNode, _dtlclvs[u]._uq[e], true);
   }
 }
 
@@ -292,11 +292,11 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     proba = REAL(_PS[e]);
     return;
   }
-  typedef std::array<REAL, 8>  ValuesArray;
+  typedef std::array<REAL, 7>  ValuesArray;
   ValuesArray values;
   if (event) {
     values[0] = values[1] = values[2] = values[3] = REAL();
-    values[4] = values[5] = values[6] = values[7] = REAL();
+    values[4] = values[5] = values[6] = REAL();
   }
   proba = REAL();
   
@@ -359,27 +359,16 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     proba += values[3];
     proba += values[4];
   }
-  // TL event
-  /*
-  if (!isVirtualRoot) {
-    values[7] = getCorrectedTransferSum(gid, e);
-    values[7] *= _uE[e];
-    scale(values[7]);
-    proba += values[7];
-  } 
-  */
   if (event) {
     assert(scenario);
     pll_unode_t *transferedGene = 0;
     pll_unode_t *stayingGene = 0;
     pll_rnode_t *recievingSpecies = 0;
-    pll_rnode_t *tlRecievingSpecies = 0;
-    values[5] = values[6] = values[7] = REAL(); // invalidate these ones
+    values[5] = values[6] = REAL(); // invalidate these ones
     if (!isGeneLeaf) {
       getBestTransfer(geneNode, speciesNode, isVirtualRoot, 
           transferedGene, stayingGene, recievingSpecies, values[5], stochastic);
     }
-    getBestTransferLoss(*scenario, geneNode, speciesNode, tlRecievingSpecies, values[7], stochastic);
     int maxValueIndex = 0;
     if (!stochastic) {
       maxValueIndex =static_cast<unsigned int>(std::distance(values.begin(),
@@ -424,13 +413,6 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     case 6:
       assert(false);
       break;
-    case 7:
-      event->type = ReconciliationEventType::EVENT_TL;
-      event->transferedGeneNode = gid;
-      event->destSpeciesNode = tlRecievingSpecies->node_index;
-      event->pllTransferedGeneNode = geneNode;
-      event->pllDestSpeciesNode = tlRecievingSpecies;
-      break;
     default:
       assert(false);
     };
@@ -448,8 +430,6 @@ REAL UndatedDTLModel<REAL>::getGeneRootLikelihood(pll_unode_t *root) const
     auto e = speciesNode->node_index;
     sum += _dtlclvs[u]._uq[e];
   }
-  PRINT_ERROR_PROBA(sum);
-  assert(IS_PROBA(sum));
   return sum;
 }
 
