@@ -75,22 +75,18 @@ private:
    */
   struct DTLCLV {
     DTLCLV():
-      _survivingTransferSums(REAL()),
-      _lca(nullptr)
+      _survivingTransferSums(REAL())
     {}
 
     DTLCLV(unsigned int speciesNumber):
       _uq(speciesNumber, REAL()),
-      _survivingTransferSums(REAL()),
-      _lca(nullptr)
+      _survivingTransferSums(REAL())
     {}
     // probability of a gene node rooted at a species node
     std::vector<REAL> _uq;
     // sum of transfer probabilities. Can be computed only once
     // for all species, to reduce computation complexity
     REAL _survivingTransferSums;
-    // LCA of the species mapped to gene leaves under this node
-    pll_rnode_t *_lca;
   };
 
   // Current DTLCLV values
@@ -224,17 +220,7 @@ template <class REAL>
 void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
 {
   auto gid = geneNode->node_index;
-  // update species LCA
-  //auto speciesRoot = this->_speciesTree.getRoot();
-  if (!geneNode->next) { // gene leaf
-    _dtlclvs[gid]._lca = this->_speciesTree.getNode(
-        this->_geneToSpecies[gid]);
-  } else { // gene internal node
-    auto left = geneNode->next->back->node_index;
-    auto right = geneNode->next->next->back->node_index;
-    _dtlclvs[gid]._lca = this->_speciesTree.getLCA(_dtlclvs[left]._lca, _dtlclvs[right]._lca);
-  }
-  auto lca = _dtlclvs[gid]._lca;
+  auto lca = this->_geneToSpeciesLCA[gid];
   auto &parentsCache = this->_speciesTree.getParentsCache(lca);
   _dtlclvs[gid]._survivingTransferSums = REAL();
   for (auto speciesNode: getSpeciesNodesToUpdate()) { 

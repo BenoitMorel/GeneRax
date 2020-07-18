@@ -190,6 +190,7 @@ protected:
   std::vector<unsigned int> _geneToSpecies;
   // gene ids in postorder 
   std::vector<unsigned int> _geneIds;
+  std::vector<pll_rnode_t *> _geneToSpeciesLCA;
   unsigned int _maxGeneId;
   bool _fastMode;
   double _minGeneBranchLength;
@@ -321,6 +322,7 @@ void AbstractReconciliationModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree
   initFromUtree(tree.getRawPtr());
   mapGenesToSpecies();
   _maxGeneId = static_cast<unsigned int>(_allNodes.size() - 1);
+  _geneToSpeciesLCA.resize(_maxGeneId + 1);
   invalidateAllCLVs();
 }
   
@@ -588,6 +590,18 @@ void AbstractReconciliationModel<REAL>::updateCLVsRec(pll_unode_t *node)
         continue;
       }
     }
+    
+    // update LCA
+    auto gid = currentNode->node_index;
+    if (!currentNode->next) { // gene leaf
+      _geneToSpeciesLCA[gid] = _speciesTree.getNode(_geneToSpecies[gid]);
+    } else { // gene internal node
+      auto left = currentNode->next->back->node_index;
+      auto right = currentNode->next->next->back->node_index;
+      _geneToSpeciesLCA[gid] = 
+        this->_speciesTree.getLCA(_geneToSpeciesLCA[left], _geneToSpeciesLCA[right]); 
+    }
+
     updateCLV(currentNode);
     nodes.pop();
     _isCLVUpdated[currentNode->node_index] = true;
