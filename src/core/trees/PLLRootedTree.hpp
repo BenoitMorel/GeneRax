@@ -121,6 +121,7 @@ public:
   
   
   std::vector<bool> &getParentsCache(pll_rnode_t *n1);
+  std::vector<bool> &getAncestorssCache(pll_rnode_t *n1);
   
   void buildLCACache();
 
@@ -132,8 +133,10 @@ private:
     // lcas[n1][n2] == lca(n1, n2) in the tree
     // parents[n1][n2] is true if n2 is an ancestor
     //   of n1 or n1 an ancestor of n2
+    // ancestors[n1][n2] is true if n2 is ancestor of n1
     std::vector<std::vector<pll_rnode_t *> > lcas;
     std::vector<std::vector<bool> > parents;
+    std::vector<std::vector<bool> > ancestors;
   };
   std::unique_ptr<LCACache> _lcaCache;
   

@@ -265,6 +265,14 @@ std::vector<bool> &PLLRootedTree::getParentsCache(pll_rnode_t *n1)
   }
   return _lcaCache->parents[n1->node_index];
 }
+
+std::vector<bool> &PLLRootedTree::getAncestorssCache(pll_rnode_t *n1)
+{
+  if (!_lcaCache) {
+    buildLCACache();
+  }
+  return _lcaCache->ancestorss[n1->node_index];
+}
   
 static void fillWithChildren(pll_rnode_t *n1,
     pll_rnode_t *n2,
@@ -331,6 +339,7 @@ void PLLRootedTree::buildLCACache()
   _lcaCache->lcas = std::vector<std::vector<pll_rnode_t *> >(N, nulls);
   std::vector<bool> falses(N, false);
   _lcaCache->parents = std::vector<std::vector<bool > >(N, falses);
+  _lcaCache->ancestors = std::vector<std::vector<bool > >(N, falses);
   for (auto n: getNodes()) {
     findLCAs(n, _lcaCache->lcas[n->node_index]);
   }
@@ -339,6 +348,7 @@ void PLLRootedTree::buildLCACache()
     while (n2) {
       _lcaCache->parents[n1->node_index][n2->node_index] = true;
       _lcaCache->parents[n2->node_index][n1->node_index] = true;
+      _lcaCache->ancestors[n1->node_index][n2->node_index] = true;
       n2 = n2->parent;
     }
   }
