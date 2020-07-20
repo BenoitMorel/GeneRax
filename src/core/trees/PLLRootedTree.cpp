@@ -271,7 +271,7 @@ std::vector<bool> &PLLRootedTree::getAncestorssCache(pll_rnode_t *n1)
   if (!_lcaCache) {
     buildLCACache();
   }
-  return _lcaCache->ancestorss[n1->node_index];
+  return _lcaCache->ancestors[n1->node_index];
 }
   
 static void fillWithChildren(pll_rnode_t *n1,

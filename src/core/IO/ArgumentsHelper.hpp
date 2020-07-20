@@ -66,6 +66,8 @@ public:
   static std::string recModelToStr(RecModel recModel)
   {
     switch(recModel) {
+    case RecModel::ParsimonyD:
+      return "ParsimonyD";
     case RecModel::ParsimonyDL:
       return "ParsimonyDL";
     case RecModel::ParsimonyDTL:
@@ -84,14 +86,14 @@ public:
 
   static bool isValidRecModel(const std::string &str)
   {
-    return (str == "UndatedDL") || (str == "UndatedDTL") || (str == "UndatedIDTL") || (str == "ParsimonyDL") || (str == "ParsimonyDTL") || (str == "SimpleDS");
+    return (str == "UndatedDL") || (str == "UndatedDTL") || (str == "UndatedIDTL") || (str == "ParsimonyDL") || (str == "ParsimonyDTL") || (str == "SimpleDS") || (str == "ParsimonyD");
   }
 
   static RecModel strToRecModel(const std::string &str)
   {
     if (str == "UndatedDL") {
       return RecModel::UndatedDL;
-    } else if (str == "ParsimonyDL") {
+    } else if (str == "ParsimonyD") {
       return RecModel::ParsimonyDL;
     } else if (str == "ParsimonyDTL") {
       return RecModel::ParsimonyDTL;

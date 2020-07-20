@@ -122,6 +122,7 @@ void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
     Logger::info << "Reroot species tree..." << std::endl;
     Parameters startingRates;
     switch (instance.recModel) {
+    case RecModel::ParsimonyD:
     case RecModel::ParsimonyDL:
     case RecModel::ParsimonyDTL:
       startingRates = Parameters();
@@ -171,6 +172,7 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
   ParallelContext::barrier();
   Parameters startingRates;
   switch (instance.recModel) {
+  case RecModel::ParsimonyD:
   case RecModel::ParsimonyDL:
   case RecModel::ParsimonyDTL:
     startingRates = Parameters();

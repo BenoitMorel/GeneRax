@@ -14,6 +14,7 @@ enum class RecModel {
   UndatedDL, 
   UndatedDTL, 
   UndatedIDTL,
+  ParsimonyD,
   ParsimonyDL,
   ParsimonyDTL,
   SimpleDS
@@ -105,8 +106,8 @@ public:
         return 3;
       case RecModel::UndatedIDTL:
         return 4;
+      case RecModel::ParsimonyD:
       case RecModel::ParsimonyDL:
-        return 0;
       case RecModel::ParsimonyDTL:
         return 0;
       case RecModel::SimpleDS:
@@ -133,6 +134,7 @@ public:
         res.push_back("T");
         res.push_back("I");
         break;
+      case RecModel::ParsimonyD:
       case RecModel::ParsimonyDL:
       case RecModel::ParsimonyDTL:
         break;
@@ -151,6 +153,7 @@ public:
   {
     switch (m) {
     case RecModel::UndatedDL:
+    case RecModel::ParsimonyD:
     case RecModel::ParsimonyDL:
     case RecModel::SimpleDS:
       return false;
@@ -172,6 +175,7 @@ public:
   static bool implementsApproxLikelihood(RecModel m)
   {
     switch (m) {
+      case RecModel::ParsimonyD:
       case RecModel::ParsimonyDL:
       case RecModel::ParsimonyDTL:
       case RecModel::UndatedDL:

@@ -5,6 +5,7 @@
 #include <likelihoods/reconciliation_models/UndatedDLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedIDTLModel.hpp>
+#include <likelihoods/reconciliation_models/ParsimonyDModel.hpp>
 #include <likelihoods/reconciliation_models/ParsimonyDLModel.hpp>
 #include <likelihoods/reconciliation_models/ParsimonyDTLModel.hpp>
 #include <cmath>
@@ -141,6 +142,10 @@ ReconciliationModelInterface *ReconciliationEvaluation::buildRecModelObject(RecM
     } else {
       res = new UndatedIDTLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
     }
+    break;
+  case RecModel::ParsimonyD:
+    res = new ParsimonyDModel(_speciesTree, _geneSpeciesMapping,
+        _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
     break;
   case RecModel::ParsimonyDL:
     res = new ParsimonyDLModel(_speciesTree, _geneSpeciesMapping,

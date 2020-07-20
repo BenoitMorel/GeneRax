@@ -33,6 +33,7 @@ struct GeneRaxInstance {
     currentIteration(0)
   {
     switch (recModel) {
+      case RecModel::ParsimonyD:
       case RecModel::ParsimonyDL:
       case RecModel::ParsimonyDTL:
       rates = Parameters();
