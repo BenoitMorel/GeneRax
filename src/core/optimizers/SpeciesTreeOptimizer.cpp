@@ -180,47 +180,28 @@ double SpeciesTreeOptimizer::rootExhaustiveSearch()
 
 
 bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
-    unsigned int regraft,
-    unsigned int hash1)
+    unsigned int regraft)
 {
   auto wrongClades1 = _unsupportedCladesNumber();
-  bool check = false;
   // Apply the move
   auto rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
   _stats.testedTrees++;
-  bool canTestMove = true;
-  bool needFullRollback = false;
   auto wrongClades2 = _unsupportedCladesNumber();
-  
-  if (_constrainSearch && wrongClades2 > wrongClades1) {
-    canTestMove = false;
-    _koForClades++;
-  } else {
-    _okForClades++;
-  }
+  bool canTestMove = !(_constrainSearch && wrongClades2 > wrongClades1);
   if (canTestMove) {
     // we really test the move
+    _okForClades++;
     _lastRecLL = computeRecLikelihood();
     if (_lastRecLL > _bestRecLL) {
       // Better tree found! keep it and return
       newBestTreeCallback();
       return true;
     }
+  } else {
+    _koForClades++;
   }
   // we do not keep the tree
   SpeciesTreeOperator::reverseSPRMove(*_speciesTree, prune, rollback);
-  if (needFullRollback) {
-    for (auto &evaluation: _evaluations) {
-      evaluation->rollbackToLastState();
-    }
-  }
-  // ensure that we correctly reverted
-  if (check) {
-    auto hash2 = _speciesTree->getNodeIndexHash(); 
-    assert(hash1 == hash2);
-    auto revertedLL = computeRecLikelihood();
-    assert(fabs(revertedLL - _bestRecLL) < 0.1);
-  }
   return false;
 }
 
@@ -356,7 +337,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
     _stats.testedTransfers++;
     if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, transferMove.prune, transferMove.regraft)) {
       blacklist.blacklist(transferMove);
-      if (testPruning(transferMove.prune, transferMove.regraft, hash1)) {
+      if (testPruning(transferMove.prune, transferMove.regraft)) {
         _stats.acceptedTransfers++;
         failures = 0;
         improvements++;
@@ -388,7 +369,7 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
     std::vector<unsigned int> regrafts;
     SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
     for (auto regraft: regrafts) {
-      if (testPruning(prune, regraft,  hash1)) {
+      if (testPruning(prune, regraft)) {
         Logger::timed << "\tbetter tree (LL=" 
           << _bestRecLL << ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() << ")"<< std::endl;
         hash1 = _speciesTree->getNodeIndexHash(); 
@@ -400,42 +381,7 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
 }
 
 
-struct less_than_evaluatedmove
-{
-  inline bool operator() (const EvaluatedMove& e1, const EvaluatedMove& e2)
-  {
-    return e1.ll > e2.ll;
-  }
-};
-
-std::vector<EvaluatedMove> SpeciesTreeOptimizer::getSortedCandidateMoves(unsigned int speciesRadius) 
-{
-  std::vector<unsigned int> prunes;
-  SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, prunes);
-  std::vector<EvaluatedMove> evaluatedMoves;
-  for (auto prune: prunes) {
-    std::vector<unsigned int> regrafts;
-    SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, speciesRadius, regrafts);
-    for (auto regraft: regrafts) {
-      unsigned int rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
-      EvaluatedMove em;
-      em.prune = prune;
-      em.regraft = regraft;
-      em.ll = computeRecLikelihood();
-      evaluatedMoves.push_back(em);
-      SpeciesTreeOperator::reverseSPRMove(*_speciesTree, em.prune, rollback);
-    }
-  }
-  std::sort(evaluatedMoves.begin(), evaluatedMoves.end(), less_than_evaluatedmove());
-  return evaluatedMoves;
-}
   
-struct ReferenceLikelihood {
-  unsigned int radius;
-  double refLikelihood;
-  double tolerance;
-};
-
 double SpeciesTreeOptimizer::transferSearch()
 {
   _stats.reset();

@@ -134,11 +134,9 @@ private:
       double &bestLL, 
       unsigned int &visits);
   bool testPruning(unsigned int prune,
-    unsigned int regraft,
-    unsigned int hash1);
+    unsigned int regraft);
   void newBestTreeCallback();
   std::string getSpeciesTreePath(const std::string &speciesId);
-  std::vector<EvaluatedMove> getSortedCandidateMoves(unsigned int speciesRadius);
   void setGeneTreesFromFamilies(const Families &families);
   void reGenerateEvaluations();
 };
