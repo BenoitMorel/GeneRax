@@ -130,9 +130,6 @@ template <class REAL>
 void UndatedDTLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
 {
   AbstractReconciliationModel<REAL>::setInitialGeneTree(tree);
-  assert(this->_allSpeciesNodesCount);
-  assert(this->_maxGeneId);
-  std::vector<REAL> zeros(this->_allSpeciesNodesCount);
   DTLCLV nullCLV(this->_allSpeciesNodesCount);
   _dtlclvs = std::vector<DTLCLV>(2 * (this->_maxGeneId + 1), nullCLV);
 }
@@ -143,10 +140,7 @@ void UndatedDTLModel<REAL>::updateTransferSums(REAL &transferSum,
 {
   transferSum = REAL();
   for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
-    auto e = speciesNode->node_index;
-    //if (sumIndices.find(e) != sumIndices.end()) {
-     transferSum += probabilities[e];
-    //}
+    transferSum += probabilities[speciesNode->node_index];
   }
   transferSum /= this->_allSpeciesNodes.size();
 }
@@ -221,17 +215,29 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
 {
   auto gid = geneNode->node_index;
   auto lca = this->_geneToSpeciesLCA[gid];
+  auto lcaRight = lca;
+  auto lcaLeft = lca;
+  if (geneNode->next) {
+    auto geneLeft = geneNode->next->back; 
+    auto geneRight = geneNode->next->next->back;
+    lcaRight = this->_geneToSpeciesLCA[geneLeft->node_index];
+    lcaLeft = this->_geneToSpeciesLCA[geneRight->node_index];
+  }
   auto &parentsCache = this->_speciesTree.getParentsCache(lca);
+  auto &ancestorsLeft = this->_speciesTree.getAncestorssCache(lcaLeft);
+  auto &ancestorsRight = this->_speciesTree.getAncestorssCache(lcaRight);
   _dtlclvs[gid]._survivingTransferSums = REAL();
   for (auto speciesNode: getSpeciesNodesToUpdate()) { 
     _dtlclvs[gid]._uq[speciesNode->node_index] = REAL();
   }
   
   for (auto speciesNode: getSpeciesNodesToUpdateSafe()) { 
-    if (parentsCache[speciesNode->node_index]) {
+    auto e = speciesNode->node_index;
+    //if (parentsCache[e]) {
+    if (ancestorsLeft[e] || ancestorsRight[e]) {
       computeProbability(geneNode, 
         speciesNode, 
-        _dtlclvs[gid]._uq[speciesNode->node_index]);
+        _dtlclvs[gid]._uq[e]);
     }
   }
   updateTransferSums(_dtlclvs[gid]._survivingTransferSums, 
