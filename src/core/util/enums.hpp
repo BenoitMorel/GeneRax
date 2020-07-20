@@ -166,29 +166,6 @@ public:
     return false;
   }
 
-  /**
-   * @param m reconciliation model
-   * @return true if the corresponding likelihood evaluation
-   *         implementation implements a faster approximative
-   *         mode (useful to implement heuristics in the search)
-   */
-  static bool implementsApproxLikelihood(RecModel m)
-  {
-    switch (m) {
-      case RecModel::ParsimonyD:
-      case RecModel::ParsimonyDL:
-      case RecModel::ParsimonyDTL:
-      case RecModel::UndatedDL:
-      case RecModel::SimpleDS:
-        return false;
-      case RecModel::UndatedDTL:
-      case RecModel::UndatedIDTL:
-        return false;
-    }
-    assert(false);
-    return false;
-  }
-
   static SpeciesTreeAlgorithm strToSpeciesTree(const std::string &str) 
   {
     if (str == std::string("MiniNJ")) {

@@ -35,7 +35,6 @@ struct SpeciesSearchStats {
     os << "Tested transfers: " << stats.testedTransfers << std::endl;
     os << "Accepted transfers trees: " << stats.acceptedTransfers << std::endl;
     */
-    //os << "Approx likelihood calls: " << stats.approxLikelihoodCalls << std::endl;
     //os << "Exact likelihood calls: " << stats.exactLikelihoodCalls << std::endl;
     return os;
   }
@@ -95,7 +94,6 @@ public:
   double getReconciliationLikelihood() const {return _bestRecLL;}
 
   double computeRecLikelihood();
-  double computeApproxRecLikelihood();
 
 
   void likelihoodsSnapshot();
@@ -137,7 +135,6 @@ private:
       unsigned int &visits);
   bool testPruning(unsigned int prune,
     unsigned int regraft,
-    double refApproxLL, 
     unsigned int hash1);
   void newBestTreeCallback();
   std::string getSpeciesTreePath(const std::string &speciesId);
