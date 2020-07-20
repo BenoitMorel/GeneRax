@@ -67,6 +67,9 @@ Parameters DTLOptimizer::optimizeParameters(PerCoreEvaluations &evaluations,
     const Parameters &startingParameters,
     OptimizationSettings settings)
 {
+  if (startingParameters.dimensions() == 0) {
+    return Parameters();
+  }
   double epsilon = settings.epsilon;
   Parameters currentRates = startingParameters;
   updateLL(currentRates, evaluations);
@@ -122,6 +125,9 @@ Parameters DTLOptimizer::optimizeParametersGlobalDTL(PerCoreEvaluations &evaluat
     freeParameters = Enums::freeParameters(evaluations[0]->getRecModel());
   }
   ParallelContext::maxUInt(freeParameters);
+  if (freeParameters == 0) {
+    return Parameters();
+  }
   std::vector<Parameters> startingRates;
   if (startingParameters) {
     startingRates.push_back(*startingParameters);

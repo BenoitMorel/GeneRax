@@ -38,8 +38,8 @@ protected:
   virtual void updateCLV(pll_unode_t *geneNode);
   // overload from parent
   virtual double getGeneRootLikelihood(pll_unode_t *root) const;
-  virtual double  getGeneRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {
-    return _dlclvs[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];
+  virtual double  getGeneRootLikelihood(pll_unode_t *root, pll_rnode_t *) {
+    return _dlclvs[root->node_index + this->_maxGeneId + 1].cost;
   }
 
   // overload from parent
@@ -55,6 +55,7 @@ protected:
       Scenario::Event *event = nullptr,
       bool stochastic = false);
   virtual bool isParsimony() const {return true;}
+  virtual bool sumOverAllOriginations() const {return false;}
 private:
   // parsimony costs
   double _costD;
@@ -62,7 +63,10 @@ private:
   // uq[geneId][speciesId] = parsimony cost
   // of a gene node rooted at a species node
   // to produce the subtree of this gene node
-  typedef std::vector<double> DLCLV;
+  struct DLCLV {
+    double cost;
+    DLCLV():  cost(-std::numeric_limits<double>::infinity()) {}
+  };
   std::vector<DLCLV> _dlclvs;
  
 private:
@@ -77,21 +81,15 @@ private:
 void ParsimonyDModel::setInitialGeneTree(PLLUnrootedTree &tree)
 {
   AbstractReconciliationModel<double>::setInitialGeneTree(tree);
-  assert(this->_allSpeciesNodesCount);
-  assert(this->_maxGeneId);
-  std::vector<double> zeros(this->_allSpeciesNodesCount);
-  _dlclvs = std::vector<std::vector<double> >(2 * (this->_maxGeneId + 1),zeros);
+  _dlclvs = std::vector<DLCLV>(2 * (this->_maxGeneId + 1));
 }
 
 
 void ParsimonyDModel::updateCLV(pll_unode_t *geneNode)
 {
-  assert(geneNode);
-  for (auto speciesNode: getSpeciesNodesToUpdate()) {
-    computeProbability(geneNode, 
-        speciesNode, 
-        _dlclvs[geneNode->node_index][speciesNode->node_index]);
-  }
+  computeProbability(geneNode, 
+        nullptr, 
+        _dlclvs[geneNode->node_index].cost);
 }
 
 static void getPolytomyD(pll_unode_t *node, 
@@ -107,82 +105,57 @@ static void getPolytomyD(pll_unode_t *node,
 }
 
 
-void ParsimonyDModel::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+void ParsimonyDModel::computeProbability(pll_unode_t *geneNode, 
+    pll_rnode_t *, 
       double &proba,
       bool isVirtualRoot,
       Scenario *,
-      Scenario::Event *event,
+      Scenario::Event *,
       bool)
   
 {
-  assert(!event);
+  proba = 0.0;
   auto gid = geneNode->node_index;
-  pll_unode_t *leftGeneNode = 0;     
-  pll_unode_t *rightGeneNode = 0;     
-  bool isGeneLeaf = !geneNode->next;
-  if (!isGeneLeaf) {
-    leftGeneNode = this->getLeft(geneNode, isVirtualRoot);
-    rightGeneNode = this->getRight(geneNode, isVirtualRoot);
+  if (!geneNode->next) {
+    return; 
   }
-  bool isSpeciesLeaf = !this->getSpeciesLeft(speciesNode);
-  auto e = speciesNode->node_index;
-  unsigned int f = 0;
-  unsigned int g = 0;
-  if (!isSpeciesLeaf) {
-    f = this->getSpeciesLeft(speciesNode)->node_index;
-    g = this->getSpeciesRight(speciesNode)->node_index;
-  }
-
-
-  proba = -std::numeric_limits<double>::infinity();
-  if (isSpeciesLeaf and isGeneLeaf) {
-    // present
-    if (e == this->_geneToSpecies[gid]) {
-      proba = 0.0;
+  auto leftGeneNode = this->getLeft(geneNode, isVirtualRoot);
+  auto rightGeneNode = this->getRight(geneNode, isVirtualRoot);
+  auto v = leftGeneNode->node_index;
+  auto w = rightGeneNode->node_index;
+  proba = _dlclvs[v].cost + _dlclvs[w].cost;
+  std::vector<pll_unode_t *> polytomy;
+  getPolytomyD(leftGeneNode, polytomy);
+  getPolytomyD(rightGeneNode, polytomy);
+  if (polytomy.size() > 2) {
+    proba = 0.0;
+    for (auto node: polytomy) {
+      proba += _dlclvs[node->node_index].cost;
     }
     return;
   }
-  if (not isGeneLeaf) {
-    auto u_left = leftGeneNode->node_index;
-    auto u_right = rightGeneNode->node_index;
-
-    std::vector<pll_unode_t *> polytomy;
-    getPolytomyD(leftGeneNode, polytomy);
-    getPolytomyD(rightGeneNode, polytomy);
-    if (polytomy.size() > 2) {
-      proba = 0.0;
-      for (auto node: polytomy) {
-        proba += _dlclvs[node->node_index][e];
-      }
-      return;
-    }
-    // D event
-    proba = _costD + _dlclvs[u_left][e] + _dlclvs[u_right][e];
+  // D event
+  auto leftLCA = this->_geneToSpeciesLCA[v];
+  auto rightLCA = this->_geneToSpeciesLCA[w];
+  auto &parentsCache = this->_speciesTree.getParentsCache(rightLCA);
+  if (parentsCache[leftLCA->node_index]) {
+    proba += _costD;
   }
+  // else: SL or S event
 }
   
 
 double ParsimonyDModel::getGeneRootLikelihood(pll_unode_t *root) const
 {
-  double max =  -std::numeric_limits<double>::infinity();
   auto u = root->node_index + this->_maxGeneId + 1;
-  for (auto speciesNode: this->_allSpeciesNodes) {
-    auto e = speciesNode->node_index;
-    if (max < _dlclvs[u][e]) {
-      max = _dlclvs[u][e];
-    }
-  }
-  return max;
+  return _dlclvs[u].cost;
 }
 
 
 void ParsimonyDModel::computeGeneRootLikelihood(pll_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
-  for (auto speciesNode: getSpeciesNodesToUpdate()) {
-    auto e = speciesNode->node_index;
-    computeProbability(virtualRoot, speciesNode, _dlclvs[u][e], true);
-  }
+  computeProbability(virtualRoot, nullptr, _dlclvs[u].cost, true);
 }
 
 

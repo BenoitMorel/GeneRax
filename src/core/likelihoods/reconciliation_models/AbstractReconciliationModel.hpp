@@ -82,6 +82,13 @@ public:
   virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate) = 0;
 
   virtual void setFractionMissingGenes(const std::string &fractionMissingFile) = 0;
+
+  /**
+   * If return true, the evaluated likelihood is the product of
+   * the likelihoods of all possible originations. Else, the only
+   * possible origination is at the species tree root.
+   */
+  virtual bool sumOverAllOriginations() const = 0;
 };
 
 
@@ -130,6 +137,8 @@ public:
   virtual void setPartialLikelihoodMode(PartialLikelihoodMode mode) {_likelihoodMode = mode;};
   // overload from parents
   virtual void setFractionMissingGenes(const std::string &fractionMissingFile);
+  // overload from parents
+  virtual bool sumOverAllOriginations() const {return true;}
 protected:
   // called by the constructor
   virtual void initSpeciesTree();
@@ -688,6 +697,7 @@ void AbstractReconciliationModel<REAL>::computeMLRoot(pll_unode_t *&bestGeneRoot
   REAL max = isParsimony() ? 
     REAL(-std::numeric_limits<double>::infinity()) 
     : REAL();
+  assert(sumOverAllOriginations());
   for (auto root: roots) {
     for (auto speciesNode: _allSpeciesNodes) {
       REAL ll = getGeneRootLikelihood(root, speciesNode);

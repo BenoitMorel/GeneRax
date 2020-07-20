@@ -20,8 +20,8 @@ public:
       bool pruneSpeciesTree):
     AbstractReconciliationModel<double>(speciesTree, geneSpeciesMappingp, rootedGeneTree, minGeneBranchLength, pruneSpeciesTree),
     _costS(-0.0),
-    _costD(-2.0),
-    _costL(-1.0)
+    _costD(-1.0),
+    _costL(-0.0)
     {}
   
   

@@ -94,6 +94,8 @@ public:
     if (str == "UndatedDL") {
       return RecModel::UndatedDL;
     } else if (str == "ParsimonyD") {
+      return RecModel::ParsimonyD;
+    } else if (str == "ParsimonyDL") {
       return RecModel::ParsimonyDL;
     } else if (str == "ParsimonyDTL") {
       return RecModel::ParsimonyDTL;
