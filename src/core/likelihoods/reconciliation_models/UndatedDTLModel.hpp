@@ -64,8 +64,8 @@ private:
   std::vector<double> _PT; // Transfer probability, per branch
   std::vector<double> _PS; // Speciation probability, per branch
   // SPECIES
-  std::vector<REAL> _uE; // Probability for a gene to become extinct on each brance
-  REAL _transferExtinctionSum;
+  std::vector<double> _uE; // Probability for a gene to become extinct on each brance
+  double _transferExtinctionSum;
 
   
   /**
@@ -109,7 +109,7 @@ private:
     REAL &proba,
     bool stochastic = false);
   unsigned int getIterationsNumber() const {return 4;}    
-  REAL getCorrectedTransferExtinctionSum(unsigned int speciesId) const {
+  double getCorrectedTransferExtinctionSum(unsigned int speciesId) const {
     return _transferExtinctionSum * _PT[speciesId];
   }
 
@@ -191,22 +191,23 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
         _uE[e] = _uE[e] * (1.0 - this->_fm[e]) + REAL(this->_fm[e]);
         continue;
       }
-      REAL proba(_PL[e]);
-      REAL temp = _uE[e] * _uE[e] * _PD[e];
-      scale(temp);
+      double proba(_PL[e]);
+      double temp = _uE[e] * _uE[e] * _PD[e];
       proba += temp;
       temp = getCorrectedTransferExtinctionSum(e) * _uE[e];
-      scale(temp);
       proba += temp;
       if (this->getSpeciesLeft(speciesNode)) {
         temp = _uE[this->getSpeciesLeft(speciesNode)->node_index]  * _uE[this->getSpeciesRight(speciesNode)->node_index] * _PS[e];
-        scale(temp);
         proba += temp;
       }
       //PRINT_ERROR_PROBA(proba)
       _uE[speciesNode->node_index] = proba;
     }
-    updateTransferSums(_transferExtinctionSum, _uE);
+    _transferExtinctionSum = 0.0;
+    for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
+      _transferExtinctionSum += _uE[speciesNode->node_index];
+    }
+    _transferExtinctionSum /= this->_allSpeciesNodes.size();
   }
 }
 
@@ -444,7 +445,7 @@ REAL UndatedDTLModel<REAL>::getLikelihoodFactor() const
   REAL factor(0.0);
   for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
-    factor += (REAL(1.0) - _uE[e]);
+    factor += (REAL(1.0) - REAL(_uE[e]));
   }
   return factor;
       
