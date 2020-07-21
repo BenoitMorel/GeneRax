@@ -115,7 +115,6 @@ void ParsimonyDModel::computeProbability(pll_unode_t *geneNode,
   
 {
   proba = 0.0;
-  auto gid = geneNode->node_index;
   if (!geneNode->next) {
     return; 
   }

@@ -81,9 +81,11 @@ private:
     DTLCLV(unsigned int speciesNumber):
       _uq(speciesNumber, REAL()),
       _survivingTransferSums(REAL())
-    {}
+    {
+    }
     // probability of a gene node rooted at a species node
     std::vector<REAL> _uq;
+
     // sum of transfer probabilities. Can be computed only once
     // for all species, to reduce computation complexity
     REAL _survivingTransferSums;
@@ -226,26 +228,21 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
   }
   auto &ancestorsLeft = this->_speciesTree.getAncestorssCache(lcaLeft);
   auto &ancestorsRight = this->_speciesTree.getAncestorssCache(lcaRight);
-  
-  _dtlclvs[gid]._survivingTransferSums = REAL();
-  for (auto speciesNode: getSpeciesNodesToUpdate()) { 
-    auto e = speciesNode->node_index;
-    if (!(ancestorsLeft[e] || ancestorsRight[e])) {
-      _dtlclvs[gid]._uq[speciesNode->node_index] = REAL();
-    }
-  }
-  
+  auto &clv = _dtlclvs[gid];
+  auto &uq = clv._uq;
+  std::fill(uq.begin(), uq.end(), REAL());
+  REAL sum = REAL();
   for (auto speciesNode: getSpeciesNodesToUpdateSafe()) { 
     auto e = speciesNode->node_index;
-    //if (parentsCache[e]) {
     if (ancestorsLeft[e] || ancestorsRight[e]) {
       computeProbability(geneNode, 
         speciesNode, 
-        _dtlclvs[gid]._uq[e]);
+        uq[e]);
+      sum += uq[e];
     }
   }
-  updateTransferSums(_dtlclvs[gid]._survivingTransferSums, 
-    _dtlclvs[gid]._uq);
+  sum /= this->_allSpeciesNodes.size();
+  clv._survivingTransferSums = sum;
 }
 
 

@@ -289,6 +289,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
     _pruneSpeciesTree,
     frequencies,
     _outputDir);
+  Logger::timed << "Start generating transfer SPR moves......" << std::endl;
   auto coverages = getCoverage(_outputDir + "/perSpeciesCoverage.txt");
   unsigned int transfers = 0;
   ParallelContext::barrier();
@@ -327,20 +328,27 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
   Logger::timed << "  Inferred transfers:" << transfers << std::endl;
   std::sort(transferMoves.begin(), transferMoves.end());
   unsigned int index = 0;
-  const unsigned int stopAfterFailures = 50;
-  const unsigned int stopAfterImprovements = 50;
-  const unsigned int minTrial = 50; //_speciesTree->getTree().getNodesNumber();
+  const unsigned int stopAfterFailures = 50u;
+  const unsigned int speciesNumber = _speciesTree->getTree().getNodesNumber();
+  const unsigned int stopAfterImprovements = std::max(15u, speciesNumber / 4);
+  const unsigned int minTrial = 0;//std::max(50u, speciesNumber / 2);
   unsigned int failures = 0;
   unsigned int improvements = 0;
+  std::unordered_set<unsigned int> alreadyPruned;
+  Logger::timed << "Start the search..." << std::endl;
   for (auto &transferMove: transferMoves) {
     index++;
     _stats.testedTransfers++;
+    if (alreadyPruned.find(transferMove.prune) != alreadyPruned.end()) {
+      continue;
+    }
     if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, transferMove.prune, transferMove.regraft)) {
       blacklist.blacklist(transferMove);
       if (testPruning(transferMove.prune, transferMove.regraft)) {
         _stats.acceptedTransfers++;
         failures = 0;
         improvements++;
+        alreadyPruned.insert(transferMove.prune);
         Logger::info << "  better tree (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() << ")"   << std::endl;
         // we enough improvements to recompute the new transfers
         hash1 = _speciesTree->getNodeIndexHash(); 
