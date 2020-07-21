@@ -218,6 +218,12 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
 {
   auto gid = geneNode->node_index; 
   auto lca = this->_geneToSpeciesLCA[gid];
+  auto &clv = _dtlclvs[gid];
+  auto &uq = clv._uq;
+  
+  auto &parentsCache = this->_speciesTree.getParentsCache(lca);
+  
+  /*
   auto lcaRight = lca;
   auto lcaLeft = lca;
   if (geneNode->next) {
@@ -228,18 +234,20 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
   }
   auto &ancestorsLeft = this->_speciesTree.getAncestorssCache(lcaLeft);
   auto &ancestorsRight = this->_speciesTree.getAncestorssCache(lcaRight);
-  auto &clv = _dtlclvs[gid];
-  auto &uq = clv._uq;
+  */
+
   std::fill(uq.begin(), uq.end(), REAL());
   REAL sum = REAL();
   for (auto speciesNode: getSpeciesNodesToUpdateSafe()) { 
     auto e = speciesNode->node_index;
-    if (ancestorsLeft[e] || ancestorsRight[e]) {
+    if (parentsCache[e]) {
+    //if (ancestorsLeft[e] || ancestorsRight[e]) {
       computeProbability(geneNode, 
         speciesNode, 
         uq[e]);
       sum += uq[e];
     }
+    //}
   }
   sum /= this->_allSpeciesNodes.size();
   clv._survivingTransferSums = sum;
@@ -251,23 +259,20 @@ void UndatedDTLModel<REAL>::computeGeneRootLikelihood(pll_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
   _dtlclvs[u]._survivingTransferSums = REAL();
-  for (auto speciesNode: getSpeciesNodesToUpdate()) {
-    auto e = speciesNode->node_index;
-    _dtlclvs[u]._uq[e] = REAL();
-  }
+  std::fill(_dtlclvs[u]._uq.begin(), _dtlclvs[u]._uq.end(), REAL());
+  /*
   auto geneLeft = this->getLeft(virtualRoot, true);
   auto geneRight = this->getRight(virtualRoot, true);
   auto lcaRight = this->_geneToSpeciesLCA[geneLeft->node_index];
   auto lcaLeft = this->_geneToSpeciesLCA[geneRight->node_index];
   auto &ancestorsLeft = this->_speciesTree.getAncestorssCache(lcaLeft);
   auto &ancestorsRight = this->_speciesTree.getAncestorssCache(lcaRight);
-  
-  
+  */
   for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
     unsigned int e = speciesNode->node_index;
-    if (ancestorsLeft[e] || ancestorsRight[e]) {
-      computeProbability(virtualRoot, speciesNode, _dtlclvs[u]._uq[e], true);
-    }
+    //if (ancestorsLeft[e] || ancestorsRight[e]) {
+    computeProbability(virtualRoot, speciesNode, _dtlclvs[u]._uq[e], true);
+    //}
   }
 }
 
