@@ -78,10 +78,12 @@ public:
       unsigned int sprRadius);
   
   double rootExhaustiveSearch();
-  double fastTransfersRound(MovesBlackList &blacklist);
-  double fastSPRRound(unsigned int radius);
-  double sprSearch(unsigned int radius);
   double transferSearch();
+  double fastTransfersRound(MovesBlackList &blacklist);
+  double reconciliationSearch();
+  double reconciliationRound();
+  double sprSearch(unsigned int radius);
+  double fastSPRRound(unsigned int radius);
   double optimizeDTLRates();
  
 

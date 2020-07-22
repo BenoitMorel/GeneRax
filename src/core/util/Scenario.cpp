@@ -9,6 +9,18 @@
 
 const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "L", "Leaf", "Invalid"};
 
+  
+void PerSpeciesEvents::parallelSum() 
+{
+  for (auto &speciesEvents: events) 
+  {
+    ParallelContext::sumUInt(speciesEvents.DCount);
+    ParallelContext::sumUInt(speciesEvents.SCount);
+    ParallelContext::sumUInt(speciesEvents.SLCount);
+    ParallelContext::sumUInt(speciesEvents.TCount);
+    ParallelContext::sumUInt(speciesEvents.TLCount);
+  }
+}
 
 void Scenario::addEvent(ReconciliationEventType type, 
     unsigned int geneNode, 
@@ -50,6 +62,34 @@ void Scenario::saveEventsCounts(const std::string &filename, bool masterRankOnly
   ParallelOfstream os(filename, masterRankOnly);
   for (unsigned int i = 0; i < static_cast<unsigned int>(ReconciliationEventType::EVENT_Invalid); ++i) {
     os << eventNames[i] << ":" << _eventsCount[i] << std::endl;
+  }
+}
+
+void Scenario::gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents) const
+{
+  for (auto &event: _events) {
+    auto e = event.speciesNode;
+    auto &speciesEvents = perSpeciesEvents.events[e];
+    switch (event.type) {
+      case ReconciliationEventType::EVENT_S: 
+      case ReconciliationEventType::EVENT_None:
+        speciesEvents.SCount++;
+        break;
+      case ReconciliationEventType::EVENT_SL: 
+        speciesEvents.SLCount++;
+        break;
+      case ReconciliationEventType::EVENT_D:
+        speciesEvents.DCount++;
+        break;
+      case ReconciliationEventType::EVENT_T:
+        speciesEvents.TCount++;
+        break;
+      case ReconciliationEventType::EVENT_TL:
+        speciesEvents.TLCount++;
+        break;
+      default:
+        assert(false);
+    }
   }
 }
 

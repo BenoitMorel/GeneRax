@@ -16,7 +16,6 @@ class PerCoreGeneTrees;
 typedef std::unordered_map<std::string, unsigned int> TransferFrequencies;
 
 
-
 class Routines {
 
 public:
@@ -81,6 +80,12 @@ public:
     Parameters &rates,
     long &sumElapsed);
 
+  static void getPerSpeciesEvents(const std::string &speciesTreeFile,
+    Families &families,
+    const ModelParameters &modelRates,
+    bool pruneMode,
+    PerSpeciesEvents &events);
+
   static void getTransfersFrequencies(const std::string &speciesTreeFile,
     Families &families,
     const ModelParameters &modelRates,
@@ -112,6 +117,20 @@ public:
     bool optimizeRates,
     bool saveTransfersOnly = false
     );
+
+  /**
+   * Infer the reconciliation scenarios between the families gene trees 
+   * and the species tree. 
+   */
+  static void inferAndGetReconciliationScenarios(
+    const std::string &speciesTreeFile,
+    Families &families,
+    const ModelParameters &initialModelRates,
+    bool pruneMode,
+    unsigned int reconciliationSamples, // 0 for ML
+    bool optimizeRates,
+    std::vector<Scenario> &scenarios)
+  ;
 
   /**
    *  todobenoit

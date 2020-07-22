@@ -539,7 +539,7 @@ void UndatedDTLModel<REAL>::getBestTransferLoss(Scenario &scenario,
   auto e = originSpeciesNode->node_index;
   auto u = parentGeneNode->node_index;
   
-  unsigned int speciesNumber = this->_allSpeciesNodes.size();
+  unsigned int speciesNumber = this->_speciesTree.getNodesNumber();;
   std::vector<REAL> transferProbas(speciesNumber, REAL());
   REAL factor = _uE[e] * (_PT[e] / static_cast<double>(this->_allSpeciesNodes.size()));
   for (auto species: this->_allSpeciesNodes) {

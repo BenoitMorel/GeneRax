@@ -18,6 +18,34 @@ typedef std::unordered_set<std::string> OrthoGroup;
 typedef std::shared_ptr<OrthoGroup> OrthoGroupPtr;
 typedef std::vector<OrthoGroupPtr> OrthoGroups;
 
+struct SpeciesEvents {
+  unsigned int DCount;
+  unsigned int SCount;
+  unsigned int SLCount;
+  unsigned int TCount;
+  unsigned int TLCount;
+  SpeciesEvents():
+    DCount(0), 
+    SCount(0),
+    SLCount(0),
+    TCount(0),
+    TLCount(0)
+  {}
+
+
+  double speciesFrequency() const {
+    return SCount + TCount;
+  }
+};
+
+struct PerSpeciesEvents {
+  std::vector<SpeciesEvents> events;
+  PerSpeciesEvents(unsigned int speciesNodeCount = 0):
+    events(speciesNodeCount) 
+  {}
+  void parallelSum();
+};
+
 /*
  * Store the set of events that reconciles a gene tree with a species tree
  */
@@ -99,15 +127,16 @@ public:
    * Various methods to save information from the Scenario
    */
   void saveEventsCounts(const std::string &filename, bool masterRankOnly = true); 
-  void savePerSpeciesEventsCounts(const std::string &filename, bool masterRankOnly = true); 
   void saveTransfers(const std::string &filename, bool masterRankOnly = true); 
   void saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly = true);
   void saveReconciliation(ParallelOfstream &os, ReconciliationFormat format);
 
   void saveLargestOrthoGroup(std::string &filename, bool masterRankOnly = true) const;
   void saveAllOrthoGroups(std::string &filename, bool masterRankOnly = true) const;
+  void savePerSpeciesEventsCounts(const std::string &filename, bool masterRankOnl = true);
+  void gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents) const;
   /**
-   * The following methods help blacklisting couples of gene and species nodes.
+   * The following methods help blacklisting pairs of gene and species nodes.
    * The motivation is that both ML and sampling reconciliation inference algorithm
    * could get stuck in an infinite loop of transfers, because of some approximations
    * in the likelihood computation. 

@@ -91,7 +91,12 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     size_t hash1 = 0;
     size_t hash2 = 0;
     unsigned int index = 0;
+    /*
+    reconciliationSearch();
+    return;
+    */
     optimizeDTLRates();
+    //transferSearch();
     do {
       if (index++ % 2 == 0) {
         transferSearch();
@@ -273,6 +278,36 @@ static std::unordered_map<std::string, double> getCoverage(const std::string &pa
   return res;
 }
 
+double SpeciesTreeOptimizer::reconciliationRound()
+{
+  _bestRecLL = computeRecLikelihood();
+  auto hash1 = _speciesTree->getNodeIndexHash(); 
+  std::string speciesTreeFile(FileSystem::joinPaths(_outputDir, "speciesTreeTemp.newick"));
+  saveCurrentSpeciesTreePath(speciesTreeFile, true);
+  ParallelContext::barrier();
+  PLLRootedTree speciesTree(speciesTreeFile);
+  PerSpeciesEvents perSpeciesEvents;
+  Routines::getPerSpeciesEvents(speciesTreeFile,
+    _initialFamilies,
+    _modelRates,
+    _pruneSpeciesTree,
+    perSpeciesEvents);
+  unsigned int speciesNumber = speciesTree.getNodesNumber();
+  assert(perSpeciesEvents.events.size() == speciesNumber);
+  std::vector<std::pair<unsigned int, unsigned int> > scoredSpecies;
+  for (unsigned int e = 0; e < speciesNumber; ++e) {
+    auto &speciesEvents = perSpeciesEvents.events[e];
+  }
+  std::sort(scoredSpecies.begin(), scoredSpecies.end());
+  Logger::timed << "Start generating reconciliation SPR moves......" << std::endl;
+
+  return _bestRecLL;
+}
+
+//#define NO_CORRECTION
+//#define STUPID_CORRECTION
+#define NEW_CORRECTION
+//#define BOTH_CORRECTIONS
 double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
 {
   unsigned int minTransfers = 1;
@@ -289,6 +324,18 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
     _pruneSpeciesTree,
     frequencies,
     _outputDir);
+  PerSpeciesEvents perSpeciesEvents;
+  Routines::getPerSpeciesEvents(speciesTreeFile,
+    _initialFamilies,
+    _modelRates,
+    _pruneSpeciesTree,
+    perSpeciesEvents);
+  unsigned int speciesNumber = _speciesTree->getTree().getNodesNumber();
+  std::vector<double> speciesFrequencies;
+  for (unsigned int e = 0; e < speciesNumber; ++e) {
+    auto &speciesEvents = perSpeciesEvents.events[e];
+    speciesFrequencies.push_back(speciesEvents.speciesFrequency());
+  }
   Logger::timed << "Start generating transfer SPR moves......" << std::endl;
   auto coverages = getCoverage(_outputDir + "/perSpeciesCoverage.txt");
   unsigned int transfers = 0;
@@ -296,8 +343,18 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
   std::unordered_map<std::string, unsigned int> labelsToIds;
   _speciesTree->getLabelsToId(labelsToIds);
   std::vector<TransferMove> transferMoves;
+#ifndef NEW_CORRECTION
   static int plop = 0;
+#endif
+#ifdef NO_CORRECTION
+  plop = 1;
+#endif
+#ifdef STUPID_CORRECTION
+  plop = 0;
+#endif
+#ifdef BOTH_CORRECTIONS
   plop++;
+#endif
   for (auto entry: frequencies) {
     transfers += entry.second;
     if (entry.second >= minTransfers) {
@@ -309,6 +366,10 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
       if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, prune, regraft)) {
         TransferMove move(prune, regraft, entry.second);
         double factor = 1.0;
+#ifdef NEW_CORRECTION
+        factor /= (1.0 + sqrt(speciesFrequencies[prune]));
+        factor /= (1.0 + sqrt(speciesFrequencies[regraft]));
+#else
         if (plop % 2 == 0) {
           if (coverages.find(key1) != coverages.end()) {
             assert(coverages[key1] != 0.0);
@@ -319,6 +380,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
             factor /= coverages[key2];
           }
         }
+#endif
         if (!blacklist.isBlackListed(move)) {
           transferMoves.push_back(TransferMove(prune, regraft, factor * entry.second)); 
         }
@@ -329,13 +391,13 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
   std::sort(transferMoves.begin(), transferMoves.end());
   unsigned int index = 0;
   const unsigned int stopAfterFailures = 50u;
-  const unsigned int speciesNumber = _speciesTree->getTree().getNodesNumber();
   const unsigned int stopAfterImprovements = std::max(15u, speciesNumber / 4);
   const unsigned int minTrial = 0;//std::max(50u, speciesNumber / 2);
   unsigned int failures = 0;
   unsigned int improvements = 0;
   std::unordered_set<unsigned int> alreadyPruned;
   Logger::timed << "Start the search..." << std::endl;
+  unsigned int trials = 0;
   for (auto &transferMove: transferMoves) {
     index++;
     _stats.testedTransfers++;
@@ -344,12 +406,13 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
     }
     if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, transferMove.prune, transferMove.regraft)) {
       blacklist.blacklist(transferMove);
+      trials++;
       if (testPruning(transferMove.prune, transferMove.regraft)) {
         _stats.acceptedTransfers++;
         failures = 0;
         improvements++;
         alreadyPruned.insert(transferMove.prune);
-        Logger::info << "  better tree (transfers:" << transferMove.transfers << ", trial: " << index << ", ll=" << _bestRecLL << ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() << ")"   << std::endl;
+        Logger::info << "  better tree (transfers:" << transferMove.transfers << ", trial: " << trials << ", ll=" << _bestRecLL << ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() << ")"   << std::endl;
         // we enough improvements to recompute the new transfers
         hash1 = _speciesTree->getNodeIndexHash(); 
         assert(ParallelContext::isIntEqual(hash1));
@@ -389,6 +452,20 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
 }
 
 
+double SpeciesTreeOptimizer::reconciliationSearch()
+{
+  auto bestLL = computeRecLikelihood();
+  Logger::timed << "[Species tree search, reconciliation-guided]" << " Starting species transfer search, bestLL=" 
+    << bestLL <<  ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() 
+    << ")" <<std::endl;
+  double newLL = bestLL;
+  do {
+    bestLL = newLL;
+    newLL = reconciliationRound();
+  } while (newLL - bestLL > 1.0);
+  Logger::timed << "After reconciliation search" << std::endl;
+  return newLL;
+}
   
 double SpeciesTreeOptimizer::transferSearch()
 {
