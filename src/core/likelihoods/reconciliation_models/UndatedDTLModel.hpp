@@ -469,7 +469,7 @@ void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode,
   REAL &proba, 
   bool stochastic)
 {
-  unsigned int speciesNumber = this->_allSpeciesNodes.size();
+  unsigned int speciesNumber = this->_speciesTree.getNodesNumber();;
   proba = REAL();
   auto e = originSpeciesNode->node_index;
   auto u_left = this->getLeft(parentGeneNode, isVirtualRoot);
