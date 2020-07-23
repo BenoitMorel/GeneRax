@@ -366,21 +366,23 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
       if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, prune, regraft)) {
         TransferMove move(prune, regraft, entry.second);
         double factor = 1.0;
+        if (_pruneSpeciesTree) {
 #ifdef NEW_CORRECTION
-        factor /= (1.0 + sqrt(speciesFrequencies[prune]));
-        factor /= (1.0 + sqrt(speciesFrequencies[regraft]));
+          factor /= (1.0 + sqrt(speciesFrequencies[prune]));
+          factor /= (1.0 + sqrt(speciesFrequencies[regraft]));
 #else
-        if (plop % 2 == 0) {
-          if (coverages.find(key1) != coverages.end()) {
-            assert(coverages[key1] != 0.0);
-            factor /= coverages[key1];
+          if (plop % 2 == 0) {
+            if (coverages.find(key1) != coverages.end()) {
+              assert(coverages[key1] != 0.0);
+              factor /= coverages[key1];
+            }
+            if (coverages.find(key2) != coverages.end()) {
+              assert(coverages[key2] != 0.0);
+              factor /= coverages[key2];
+            }
           }
-          if (coverages.find(key2) != coverages.end()) {
-            assert(coverages[key2] != 0.0);
-            factor /= coverages[key2];
-          }
-        }
 #endif
+        }
         if (!blacklist.isBlackListed(move)) {
           transferMoves.push_back(TransferMove(prune, regraft, factor * entry.second)); 
         }
