@@ -19,12 +19,14 @@ typedef std::shared_ptr<OrthoGroup> OrthoGroupPtr;
 typedef std::vector<OrthoGroupPtr> OrthoGroups;
 
 struct SpeciesEvents {
+  unsigned int LeafCount;
   unsigned int DCount;
   unsigned int SCount;
   unsigned int SLCount;
   unsigned int TCount;
   unsigned int TLCount;
   SpeciesEvents():
+    LeafCount(0), 
     DCount(0), 
     SCount(0),
     SLCount(0),

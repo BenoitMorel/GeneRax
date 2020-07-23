@@ -155,7 +155,7 @@ static std::string getTransfersFile(const std::string &outputDir, const std::str
   return res;
 }
 void Routines::inferAndGetReconciliationScenarios(
-    const std::string &speciesTreeFile,
+    PLLRootedTree &speciesTree,
     Families &families,
     const ModelParameters &initialModelRates,
     bool pruneMode,
@@ -167,7 +167,6 @@ void Routines::inferAndGetReconciliationScenarios(
   auto consistentSeed = Random::getInt();
   auto modelParameters = initialModelRates;
   ParallelContext::barrier();
-  PLLRootedTree speciesTree(speciesTreeFile);
   PerCoreGeneTrees geneTrees(families);
   // pre-fill scenarios array
   const unsigned int scenariosNumber = geneTrees.getTrees().size() * 
@@ -220,36 +219,17 @@ void Routines::inferReconciliation(
     bool saveTransfersOnly
     )
 {
-  auto consistentSeed = Random::getInt();
-  auto modelParameters = initialModelRates;
-  ParallelContext::barrier();
-  PLLRootedTree speciesTree(speciesTreeFile);
   PerCoreGeneTrees geneTrees(families);
   std::string reconciliationsDir = FileSystem::joinPaths(outputDir, "reconciliations");
   FileSystem::mkdir(reconciliationsDir, true);
-  std::vector<double> dup_count(speciesTree.getNodesNumber(), 0.0);
-  ParallelContext::barrier();
-  PerCoreEvaluations evaluations;
-  evaluations.resize(geneTrees.getTrees().size());
-  for (unsigned int i = 0; i  < geneTrees.getTrees().size(); ++i) {
-    auto &tree = geneTrees.getTrees()[i];
-    evaluations[i] = std::make_shared<ReconciliationEvaluation>(speciesTree, *tree.geneTree, tree.mapping, modelParameters.info.model, true, -1.0, pruneMode);
-    evaluations[i]->setRates(modelParameters.getRates(i));
-  }
-  if (optimizeRates) {
-    Logger::timed << "Optimizing DTL rates before reconciliation..." << std::endl;
-    bool optimizeFromStartingParameters = true;
-    modelParameters = DTLOptimizer::optimizeModelParameters(
-        evaluations, 
-        optimizeFromStartingParameters, 
-        modelParameters);
-    Logger::timed << "done" << std::endl;
-  }
-  ParallelContext::barrier();
-  
-  for (unsigned int i = 0; i  < geneTrees.getTrees().size(); ++i) {
-    auto &tree = geneTrees.getTrees()[i];
-    if (bestReconciliation) {
+  PLLRootedTree speciesTree(speciesTreeFile);
+  if (bestReconciliation) {
+    std::vector<Scenario> scenarios;
+    inferAndGetReconciliationScenarios(speciesTree, families, initialModelRates, 
+      pruneMode, 0, optimizeRates, scenarios);
+    assert(scenarios.size() == geneTrees.getTrees().size());
+    for (unsigned int i = 0; i  < geneTrees.getTrees().size(); ++i) {
+      auto &tree = geneTrees.getTrees()[i];
       std::string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
       std::string speciesEventCountsFile = getSpeciesEventCountFile(outputDir, tree.name);
       std::string transfersFile = getTransfersFile(outputDir, tree.name);
@@ -258,8 +238,7 @@ void Routines::inferReconciliation(
       std::string treeWithEventsFileNHX = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
       std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, 
           tree.name + "_reconciliated.xml");
-      Scenario scenario;
-      evaluations[i]->inferMLScenario(scenario);
+      auto &scenario = scenarios[i];
       if (!saveTransfersOnly) {
         scenario.saveEventsCounts(eventCountsFile, false);
         scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
@@ -270,13 +249,19 @@ void Routines::inferReconciliation(
       }
       scenario.saveTransfers(transfersFile, false);
     }
-    if (reconciliationSamples) {
-      Scenario scenario;
+  }
+  if (reconciliationSamples) {
+    std::vector<Scenario> scenarios;
+    inferAndGetReconciliationScenarios(speciesTree, families, initialModelRates, 
+      pruneMode, reconciliationSamples, optimizeRates, scenarios);
+    assert(scenarios.size() == geneTrees.getTrees().size() * reconciliationSamples);
+    for (unsigned int i = 0; i  < geneTrees.getTrees().size(); ++i) {
+      auto &tree = geneTrees.getTrees()[i];
       std::string nhxSamples = FileSystem::joinPaths(reconciliationsDir, tree.name + "_samples.nhx");
       ParallelOfstream nhxOs(nhxSamples, false);
       for (unsigned int sample = 0; sample < reconciliationSamples; ++sample) {
-        bool stochastic = true;
-        evaluations[i]->inferMLScenario(scenario, stochastic);
+        auto scenarioIndex = sample + i * reconciliationSamples;
+        auto &scenario = scenarios[scenarioIndex];
         std::string transfersFile = getTransfersFile(outputDir, tree.name, sample);
         if (!saveTransfersOnly) {
           scenario.saveReconciliation(nhxOs, ReconciliationFormat::NHX);
@@ -287,7 +272,6 @@ void Routines::inferReconciliation(
       }
     }
   }
-  Random::setSeed(consistentSeed);
   ParallelContext::barrier();
 }
   
@@ -469,15 +453,15 @@ void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
   Families &families,
   const ModelParameters &modelRates,
   bool pruneMode,
+  unsigned int reconciliationSamples,
   PerSpeciesEvents &events)
 {
   PLLRootedTree speciesTree(speciesTreeFile);
   events = PerSpeciesEvents(speciesTree.getNodesNumber());
   std::vector<Scenario> scenarios;
-  unsigned int reconciliationSamples = 0; // ML reconciliation
   bool optimizeRates = false;
   inferAndGetReconciliationScenarios(
-    speciesTreeFile,
+    speciesTree,
     families,
     modelRates,
     pruneMode,
@@ -496,11 +480,11 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     Families &families,
     const ModelParameters &modelParameters,
     bool pruneMode,
+    unsigned int reconciliationSamples,
     TransferFrequencies &transferFrequencies,
     const std::string &outputDir)
 {
-  int samples = 0;
-  bool bestReconciliation = true;
+  bool bestReconciliation = (reconciliationSamples == 0);
   bool saveTransfersOnly = true; 
   bool optimizeRates = false;
   ModelParameters transfersModelParameter;
@@ -517,10 +501,10 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
         1,
         recModelInfo);
   }
-  inferReconciliation(speciesTreeFile, families, transfersModelParameter, pruneMode, outputDir, bestReconciliation, samples, optimizeRates, saveTransfersOnly);
+  inferReconciliation(speciesTreeFile, families, transfersModelParameter, pruneMode, outputDir, bestReconciliation, reconciliationSamples, optimizeRates, saveTransfersOnly);
   
   SpeciesTree speciesTree(speciesTreeFile);
-  for (int i = (bestReconciliation ? -1 : 0); i < samples; ++i) {
+  for (int i = (bestReconciliation ? -1 : 0); i < reconciliationSamples; ++i) {
     auto begin = ParallelContext::getBegin(families.size());
     auto end = ParallelContext::getEnd(families.size());
     for (unsigned int j = begin; j < end; ++j) {

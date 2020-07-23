@@ -14,6 +14,7 @@ void PerSpeciesEvents::parallelSum()
 {
   for (auto &speciesEvents: events) 
   {
+    ParallelContext::sumUInt(speciesEvents.LeafCount);
     ParallelContext::sumUInt(speciesEvents.DCount);
     ParallelContext::sumUInt(speciesEvents.SCount);
     ParallelContext::sumUInt(speciesEvents.SLCount);
@@ -72,8 +73,10 @@ void Scenario::gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents
     auto &speciesEvents = perSpeciesEvents.events[e];
     switch (event.type) {
       case ReconciliationEventType::EVENT_S: 
-      case ReconciliationEventType::EVENT_None:
         speciesEvents.SCount++;
+        break;
+      case ReconciliationEventType::EVENT_None:
+        speciesEvents.LeafCount++;
         break;
       case ReconciliationEventType::EVENT_SL: 
         speciesEvents.SLCount++;

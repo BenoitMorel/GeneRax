@@ -84,12 +84,14 @@ public:
     Families &families,
     const ModelParameters &modelRates,
     bool pruneMode,
+    unsigned int reconciliationSamples,
     PerSpeciesEvents &events);
 
   static void getTransfersFrequencies(const std::string &speciesTreeFile,
     Families &families,
     const ModelParameters &modelRates,
     bool pruneMode,
+    unsigned int reconciliationSamples,
     TransferFrequencies &frequencies,
     const std::string &outputDir);
   
@@ -123,7 +125,7 @@ public:
    * and the species tree. 
    */
   static void inferAndGetReconciliationScenarios(
-    const std::string &speciesTreeFile,
+    PLLRootedTree &speciesTree,
     Families &families,
     const ModelParameters &initialModelRates,
     bool pruneMode,

@@ -91,12 +91,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     size_t hash1 = 0;
     size_t hash2 = 0;
     unsigned int index = 0;
-    /*
-    reconciliationSearch();
-    return;
-    */
     optimizeDTLRates();
-    //transferSearch();
     do {
       if (index++ % 2 == 0) {
         transferSearch();
@@ -280,6 +275,7 @@ static std::unordered_map<std::string, double> getCoverage(const std::string &pa
 
 double SpeciesTreeOptimizer::reconciliationRound()
 {
+  unsigned int reconciliationSamples = 0;
   _bestRecLL = computeRecLikelihood();
   auto hash1 = _speciesTree->getNodeIndexHash(); 
   std::string speciesTreeFile(FileSystem::joinPaths(_outputDir, "speciesTreeTemp.newick"));
@@ -291,14 +287,35 @@ double SpeciesTreeOptimizer::reconciliationRound()
     _initialFamilies,
     _modelRates,
     _pruneSpeciesTree,
+    reconciliationSamples,
     perSpeciesEvents);
   unsigned int speciesNumber = speciesTree.getNodesNumber();
   assert(perSpeciesEvents.events.size() == speciesNumber);
   std::vector<std::pair<unsigned int, unsigned int> > scoredSpecies;
+  Logger::info << speciesTree << std::endl;
   for (unsigned int e = 0; e < speciesNumber; ++e) {
     auto &speciesEvents = perSpeciesEvents.events[e];
+    auto score = speciesEvents.SLCount;
+    scoredSpecies.push_back({score, e});
+    auto speciesNode = speciesTree.getNode(e);
+    
+    auto v = speciesEvents;
+    Logger::info << e << " " << speciesNode->label 
+                                       << " S=" << v.SCount + v.LeafCount
+                                       << " SL=" << v.SLCount 
+                                       << " T=" << v.TCount 
+                                       << " D=" << v.DCount 
+                                       << " r=" << double(v.SCount + v.LeafCount) / double(v.SCount + v.LeafCount + v.SLCount + v.TCount + v.DCount)
+                                       << std::endl;
   }
   std::sort(scoredSpecies.begin(), scoredSpecies.end());
+  assert(ParallelContext::isIntEqual(scoredSpecies[0].first));
+  for (auto p: scoredSpecies) {
+    auto e = p.second;
+    auto score = p.first;
+    auto speciesNode = speciesTree.getNode(e);
+    //Logger::info << speciesNode->label << " " << score << std::endl;
+  }
   Logger::timed << "Start generating reconciliation SPR moves......" << std::endl;
 
   return _bestRecLL;
@@ -310,6 +327,7 @@ double SpeciesTreeOptimizer::reconciliationRound()
 //#define BOTH_CORRECTIONS
 double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
 {
+  unsigned int reconciliationSamples = 10;
   unsigned int minTransfers = 1;
   _bestRecLL = computeRecLikelihood();
   auto hash1 = _speciesTree->getNodeIndexHash(); 
@@ -322,6 +340,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
     _initialFamilies,
     _modelRates,
     _pruneSpeciesTree,
+    reconciliationSamples,
     frequencies,
     _outputDir);
   PerSpeciesEvents perSpeciesEvents;
@@ -329,6 +348,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
     _initialFamilies,
     _modelRates,
     _pruneSpeciesTree,
+    reconciliationSamples,
     perSpeciesEvents);
   unsigned int speciesNumber = _speciesTree->getTree().getNodesNumber();
   std::vector<double> speciesFrequencies;
@@ -445,6 +465,7 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
       if (testPruning(prune, regraft)) {
         Logger::timed << "\tbetter tree (LL=" 
           << _bestRecLL << ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() << ")"<< std::endl;
+        Logger::info << _speciesTree->getNode(prune)->label << " " << _speciesTree->getNode(regraft)->label << std::endl;
         hash1 = _speciesTree->getNodeIndexHash(); 
         assert(ParallelContext::isIntEqual(hash1));
       }
@@ -489,7 +510,7 @@ double SpeciesTreeOptimizer::transferSearch()
     index++;
   } while (newLL - bestLL > 1.0);
   if (index == 1) {
-      bestLL = optimizeDTLRates();
+      newLL = bestLL = optimizeDTLRates();
   }
   Logger::timed << "After transfer search: " << newLL << std::endl;
   Logger::info << _stats << std::endl; 
