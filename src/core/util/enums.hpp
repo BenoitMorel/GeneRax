@@ -13,10 +13,7 @@ using StringToUintMap = std::unordered_map<std::string, unsigned int>;
 enum class RecModel {
   UndatedDL, 
   UndatedDTL, 
-  UndatedIDTL,
   ParsimonyD,
-  ParsimonyDL,
-  ParsimonyDTL,
   SimpleDS
 };
 
@@ -104,11 +101,7 @@ public:
         return 2;
       case RecModel::UndatedDTL:
         return 3;
-      case RecModel::UndatedIDTL:
-        return 4;
       case RecModel::ParsimonyD:
-      case RecModel::ParsimonyDL:
-      case RecModel::ParsimonyDTL:
         return 0;
       case RecModel::SimpleDS:
         return 1;
@@ -128,15 +121,7 @@ public:
         res.push_back("L");
         res.push_back("T");
         break;
-      case RecModel::UndatedIDTL:
-        res.push_back("D");
-        res.push_back("L");
-        res.push_back("T");
-        res.push_back("I");
-        break;
       case RecModel::ParsimonyD:
-      case RecModel::ParsimonyDL:
-      case RecModel::ParsimonyDTL:
         break;
       case RecModel::SimpleDS:
         res.push_back("D");
@@ -154,12 +139,9 @@ public:
     switch (m) {
     case RecModel::UndatedDL:
     case RecModel::ParsimonyD:
-    case RecModel::ParsimonyDL:
     case RecModel::SimpleDS:
       return false;
-    case RecModel::ParsimonyDTL:
     case RecModel::UndatedDTL:
-    case RecModel::UndatedIDTL:
       return true;
     }
     assert(false);

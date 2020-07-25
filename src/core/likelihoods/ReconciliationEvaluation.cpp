@@ -4,10 +4,7 @@
 #include <likelihoods/reconciliation_models/SimpleDSModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
-#include <likelihoods/reconciliation_models/UndatedIDTLModel.hpp>
 #include <likelihoods/reconciliation_models/ParsimonyDModel.hpp>
-#include <likelihoods/reconciliation_models/ParsimonyDLModel.hpp>
-#include <likelihoods/reconciliation_models/ParsimonyDTLModel.hpp>
 #include <cmath>
 #include <IO/FileSystem.hpp>
 #include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
@@ -136,23 +133,8 @@ ReconciliationModelInterface *ReconciliationEvaluation::buildRecModelObject(RecM
       res = new UndatedDTLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
     }
     break;
-  case RecModel::UndatedIDTL:
-    if (infinitePrecision) {
-      res = new UndatedIDTLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
-    } else {
-      res = new UndatedIDTLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
-    }
-    break;
   case RecModel::ParsimonyD:
     res = new ParsimonyDModel(_speciesTree, _geneSpeciesMapping,
-        _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
-    break;
-  case RecModel::ParsimonyDL:
-    res = new ParsimonyDLModel(_speciesTree, _geneSpeciesMapping,
-        _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
-    break;
-  case RecModel::ParsimonyDTL:
-    res = new ParsimonyDTLModel(_speciesTree, _geneSpeciesMapping,
         _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
     break;
   case RecModel::SimpleDS:

@@ -34,8 +34,6 @@ struct GeneRaxInstance {
   {
     switch (recModel) {
       case RecModel::ParsimonyD:
-      case RecModel::ParsimonyDL:
-      case RecModel::ParsimonyDTL:
       rates = Parameters();
       break;
       case RecModel::UndatedDL:
@@ -44,7 +42,6 @@ struct GeneRaxInstance {
       rates[1] = args.lossRate;
       break;
       case RecModel::UndatedDTL:
-      case RecModel::UndatedIDTL:
       rates = Parameters(3);
       rates[0] = args.dupRate;
       rates[1] = args.lossRate;
