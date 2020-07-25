@@ -55,6 +55,7 @@ public:
    *  @return Trees allocated to the current core
    */
   std::vector<GeneTree> &getTrees() {return _geneTrees;}
+  const std::vector<GeneTree> &getTrees() const {return _geneTrees;}
 
   /**
    *  @param speciesTreeFile path to the species tree file

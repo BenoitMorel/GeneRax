@@ -126,13 +126,13 @@ public:
    */
   static void inferAndGetReconciliationScenarios(
     PLLRootedTree &speciesTree,
-    Families &families,
+    const PerCoreGeneTrees &geneTrees,
     const ModelParameters &initialModelRates,
     bool pruneMode,
     unsigned int reconciliationSamples, // 0 for ML
     bool optimizeRates,
-    std::vector<Scenario> &scenarios)
-  ;
+    std::vector<Scenario> &scenarios);
+ 
 
   /**
    *  todobenoit

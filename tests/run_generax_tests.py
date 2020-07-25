@@ -90,15 +90,17 @@ def run_reconciliation(species_tree, families_file, model, test_output, cores):
   command.append("0.2")
   command.append("--transfer-rate")
   command.append("0.1")
-  command.append("--reconciliation-samples")
-  command.append("10")
+  #command.append("--reconciliation-samples")
+  #command.append("10")
   command.append("-p")
   command.append(os.path.join(test_output, "generax"))
   logs_file_path = os.path.join(test_output, "tests_logs.txt")
-  print(logs_file_path)
-  print(" ".join(command))
   with open(logs_file_path, "w") as writer:
-    subprocess.check_call(command, stdout = writer, stderr = writer)
+    try:
+      subprocess.check_call(command, stdout = writer, stderr = writer)
+    except:
+      print("The following command failed: ")
+      print(" ".join(command))
 
 def is_string_in_file(string, file_name):
   return string in open(file_name).read()
@@ -153,7 +155,11 @@ def run_generax(test_data, test_output, families_file, strategy, model, cores):
   command.append(os.path.join(test_output, "generax"))
   logs_file_path = os.path.join(test_output, "tests_logs.txt")
   with open(logs_file_path, "w") as writer:
-    subprocess.check_call(command, stdout = writer, stderr = writer)
+    try:
+      subprocess.check_call(command, stdout = writer, stderr = writer)
+    except:
+      print("The following command failed: ")
+      print(" ".join(command))
 
 
 def run_test(dataset, with_starting_tree, strategy, model, cores):

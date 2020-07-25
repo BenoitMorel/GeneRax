@@ -156,7 +156,7 @@ static std::string getTransfersFile(const std::string &outputDir, const std::str
 }
 void Routines::inferAndGetReconciliationScenarios(
     PLLRootedTree &speciesTree,
-    Families &families,
+    const PerCoreGeneTrees &geneTrees,
     const ModelParameters &initialModelRates,
     bool pruneMode,
     unsigned int reconciliationSamples,
@@ -167,7 +167,6 @@ void Routines::inferAndGetReconciliationScenarios(
   auto consistentSeed = Random::getInt();
   auto modelParameters = initialModelRates;
   ParallelContext::barrier();
-  PerCoreGeneTrees geneTrees(families);
   // pre-fill scenarios array
   const unsigned int scenariosNumber = geneTrees.getTrees().size() * 
     (std::max(1u, reconciliationSamples));
@@ -225,7 +224,8 @@ void Routines::inferReconciliation(
   PLLRootedTree speciesTree(speciesTreeFile);
   if (bestReconciliation) {
     std::vector<Scenario> scenarios;
-    inferAndGetReconciliationScenarios(speciesTree, families, initialModelRates, 
+    
+    inferAndGetReconciliationScenarios(speciesTree, geneTrees, initialModelRates, 
       pruneMode, 0, optimizeRates, scenarios);
     assert(scenarios.size() == geneTrees.getTrees().size());
     for (unsigned int i = 0; i  < geneTrees.getTrees().size(); ++i) {
@@ -252,7 +252,7 @@ void Routines::inferReconciliation(
   }
   if (reconciliationSamples) {
     std::vector<Scenario> scenarios;
-    inferAndGetReconciliationScenarios(speciesTree, families, initialModelRates, 
+    inferAndGetReconciliationScenarios(speciesTree, geneTrees, initialModelRates, 
       pruneMode, reconciliationSamples, optimizeRates, scenarios);
     assert(scenarios.size() == geneTrees.getTrees().size() * reconciliationSamples);
     for (unsigned int i = 0; i  < geneTrees.getTrees().size(); ++i) {
@@ -460,9 +460,10 @@ void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
   events = PerSpeciesEvents(speciesTree.getNodesNumber());
   std::vector<Scenario> scenarios;
   bool optimizeRates = false;
+  PerCoreGeneTrees geneTrees(families);
   inferAndGetReconciliationScenarios(
     speciesTree,
-    families,
+    geneTrees,
     modelRates,
     pruneMode,
     reconciliationSamples,

@@ -35,11 +35,14 @@ static void recursivelySaveReconciliationsNHX(pll_rtree_t *speciesTree,
 {
   
   if(node->next) {
-    auto left = node->next->back;
-    auto right = node->next->next->back;
+    pll_unode_t *left = nullptr;
+    pll_unode_t *right = nullptr;
     if (isVirtualRoot) {
       left = node->next;
       right = node->next->back;
+    } else {
+      left = node->next->back;
+      right = node->next->next->back;
     }
     os << "(";
     recursivelySaveReconciliationsNHX(speciesTree, left, false, geneToEvents, os);
@@ -190,13 +193,21 @@ static void recursivelySaveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
   os << indent << "<name>" << (geneTree->label ? geneTree->label : "NULL") << "</name>" << std::endl;
   writeEventRecPhyloXML(geneTree, speciesTree, event, previousEvent, indent, os);  
 
+
   if (geneTree->next) {
-    auto left = geneTree->next->back;
-    auto right = geneTree->next->next->back;
+    pll_unode_t *left = nullptr;
+    pll_unode_t *right = nullptr;
     if (isVirtualRoot) {
+      
+      assert(geneTree->next);
+      assert(geneTree->next->back);
       left = geneTree->next;
       right = geneTree->next->back;
+    } else {
+      left = geneTree->next->back;
+      right = geneTree->next->next->back;
     }
+    
     recursivelySaveGeneTreeRecPhyloXML(left, false, speciesTree, geneToEvents, &event, indent, os);
     recursivelySaveGeneTreeRecPhyloXML(right, false, speciesTree, geneToEvents, &event, indent, os);
   }
