@@ -12,6 +12,7 @@
 #include <trees/PLLRootedTree.hpp>
 
 
+struct RecModelInfo;
 void printLibpllNode(pll_unode_s *node, std::ostream &os, bool isRoot);
 void printLibpllTreeRooted(pll_unode_t *root, std::ostream &os);
 
@@ -22,7 +23,7 @@ public:
               const std::string &speciestree_file,
               const std::string &geneSpeciesMapfile,
               const std::string &substitutionModel,
-              RecModel reconciliationModel,
+              const RecModelInfo &recModelInfo,
               RecOpt reconciliationOpt,
               bool rootedGeneTree,
               bool madRooting,

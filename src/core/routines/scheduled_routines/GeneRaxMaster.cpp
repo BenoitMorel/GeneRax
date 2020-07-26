@@ -6,6 +6,7 @@
 #include <IO/ParallelOfstream.hpp>
 #include <maths/Parameters.hpp>
 #include <parallelization/Scheduler.hpp>
+#include <util/RecModelInfo.hpp>
 #include <sstream>
 
 
@@ -15,14 +16,13 @@ static std::string toArg(const std::string &str) {
 
 
 void GeneRaxMaster::optimizeGeneTrees(Families &families,
-    RecModel recModel,
+    const RecModelInfo &recModelInfo,
     Parameters &rates,
     const std::string &output,
     const std::string &resultName,
     const std::string &execPath, 
     const std::string &speciesTreePath,
     RecOpt recOpt,
-    bool perFamilyDTLRates,
     bool rootedGeneTree,
     bool madRooting,
     double supportThreshold,
@@ -80,9 +80,9 @@ void GeneRaxMaster::optimizeGeneTrees(Families &families,
     os << speciesTreePath << " ";
     os << family.libpllModel  << " ";
     os << ratesFile << " ";
-    os << static_cast<int>(recModel)  << " ";
+    os << static_cast<int>(recModelInfo.model)  << " ";
     os << static_cast<int>(recOpt)  << " ";
-    os << static_cast<int>(perFamilyDTLRates)  << " ";
+    os << static_cast<int>(recModelInfo.perFamilyRates)  << " ";
     os << static_cast<int>(rootedGeneTree)  << " ";
     os << supportThreshold << " ";
     os << recWeight  << " ";

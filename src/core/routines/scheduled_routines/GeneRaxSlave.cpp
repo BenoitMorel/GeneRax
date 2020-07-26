@@ -40,9 +40,8 @@ static void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
     const std::string &speciesTreeFile,
     const std::string &libpllModel, 
     const std::string &ratesFile,
-    RecModel recModel,
+    const RecModelInfo &recModelInfo,
     RecOpt recOpt,
-    bool perFamilyDTLRates,
     bool rootedGeneTree,
     bool madRooting,
     double supportThreshold,
@@ -64,14 +63,14 @@ static void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
       speciesTreeFile,
       mappingFile,
       libpllModel,
-      recModel,
+      recModelInfo,
       recOpt,
       rootedGeneTree,
       madRooting,
       supportThreshold,
       recWeight,
+      recModelInfo.perFamilyRates,
       false, //check
-      perFamilyDTLRates, // optimize DTL
       ratesVector
       );
   jointTree->enableReconciliation(enableRec);
@@ -124,9 +123,10 @@ int GeneRaxSlave::optimizeGeneTreesMain(int argc, char** argv, void* comm)
   std::string libpllModel(argv[i++]);
   std::string ratesFile(argv[i++]);
   Logger::info << "LibpllModel " << libpllModel << std::endl;
-  RecModel recModel = RecModel(atoi(argv[i++])); 
+  RecModelInfo recModelInfo;
+  recModelInfo.model = RecModel(atoi(argv[i++])); 
   RecOpt recOpt = RecOpt(atoi(argv[i++])); 
-  bool perFamilyDTLRates = bool(atoi(argv[i++]));
+  recModelInfo.perFamilyRates = bool(atoi(argv[i++]));
   bool rootedGeneTree = bool(atoi(argv[i++]));
   double supportThreshold = double(atof(argv[i++]));
   double recWeight = double(atof(argv[i++]));
@@ -142,9 +142,8 @@ int GeneRaxSlave::optimizeGeneTreesMain(int argc, char** argv, void* comm)
       speciesTreeFile,
       libpllModel,
       ratesFile,
-      recModel,
+      recModelInfo,
       recOpt,
-      perFamilyDTLRates,
       rootedGeneTree,
       madRooting,
       supportThreshold,

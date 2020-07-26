@@ -188,14 +188,5 @@ Parameters DTLOptimizer::optimizeParametersPerSpecies(PerCoreEvaluations &evalua
 
 
 
-void DTLOptimizer::buildEvaluations(PerCoreGeneTrees &geneTrees, PLLRootedTree &speciesTree, RecModel recModel, Evaluations &evaluations)
-{
-  auto &trees = geneTrees.getTrees();
-  evaluations.resize(trees.size());
-  for (unsigned int i = 0; i < trees.size(); ++i) {
-    auto &tree = trees[i];
-    evaluations[i] = std::make_shared<ReconciliationEvaluation>(speciesTree, *tree.geneTree, tree.mapping, recModel, false);
-  }
-}
 
 

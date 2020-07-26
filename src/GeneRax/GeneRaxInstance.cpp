@@ -3,7 +3,7 @@
 
 void GeneRaxInstance::readModelParameters(ModelParameters &modelParameters)
 {
-  auto freeParameters = Enums::freeParameters(recModel);
+  auto freeParameters = Enums::freeParameters(recModelInfo.model);
   if (!freeParameters) {
     return;
   }
@@ -42,8 +42,6 @@ void GeneRaxInstance::readModelParameters(ModelParameters &modelParameters)
 
 RecModelInfo GeneRaxInstance::getRecModelInfo()
 {
-  RecModelInfo info(recModel, 
-      args.perFamilyDTLRates);
-  return info;
+  return recModelInfo;
 }
 

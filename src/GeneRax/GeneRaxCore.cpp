@@ -121,7 +121,7 @@ void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
     Logger::info << "Rerooting the species tree..." << std::endl;
     Logger::info << "Reroot species tree..." << std::endl;
     Parameters startingRates;
-    switch (instance.recModel) {
+    switch (instance.recModelInfo.model) {
     case RecModel::ParsimonyD:
       startingRates = Parameters();
       break;
@@ -166,7 +166,7 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
 
   ParallelContext::barrier();
   Parameters startingRates;
-  switch (instance.recModel) {
+  switch (instance.recModelInfo.model) {
   case RecModel::ParsimonyD:
     startingRates = Parameters();
     break;
@@ -357,11 +357,11 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
   long elapsed = 0;
   if (!instance.args.perFamilyDTLRates) {
     Logger::timed << "Reconciliation rates optimization... " << std::endl;
-    Routines::optimizeRates(instance.args.userDTLRates, instance.speciesTree, instance.recModel,
+    Routines::optimizeRates(instance.args.userDTLRates, instance.speciesTree, instance.recModelInfo,
       instance.args.rootedGeneTree, instance.args.pruneSpeciesTree, 
       instance.currentFamilies, perSpeciesDTLRates, instance.rates, instance.elapsedRates);
     if (!instance.args.perFamilyDTLRates && !instance.args.perSpeciesDTLRates) {
-      auto paramNames = Enums::parameterNames(instance.recModel);
+      auto paramNames = Enums::parameterNames(instance.recModelInfo.model);
       Logger::info << "\t";
       for (unsigned int i = 0; i < paramNames.size(); ++i) {
         Logger::info << paramNames[i] << "=" << instance.rates[i] << ", ";
@@ -377,9 +377,9 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
     additionalMsg = std::string("reconciliation rates and ");
   }
   Logger::timed << "Optimizing " + additionalMsg + "gene trees with radius=" << sprRadius << "... " << std::endl; 
-  Routines::optimizeGeneTrees(instance.currentFamilies, instance.recModel, instance.rates, 
+  Routines::optimizeGeneTrees(instance.currentFamilies, instance.recModelInfo, instance.rates, 
       instance.args.output, "results", instance.args.execPath, instance.speciesTree, 
-      RecOpt::Grid, instance.args.perFamilyDTLRates, 
+      RecOpt::Grid, 
       instance.args.rootedGeneTree, instance.args.madRooting,
       instance.args.supportThreshold, 
       instance.args.recWeight, true, enableLibpll, sprRadius, 

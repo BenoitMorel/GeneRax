@@ -6,20 +6,20 @@
 #include <util/enums.hpp>
 
 class Parameters;
+struct RecModelInfo;
 
 class GeneRaxMaster {
 public:
   GeneRaxMaster() = delete;
 
   static void optimizeGeneTrees(Families &families,
-    RecModel recModel,
+    const RecModelInfo &recModelInfo,
     Parameters &rates,
     const std::string &output, 
     const std::string &resultName, 
     const std::string &execPath, 
     const std::string &speciesTreePath,
     RecOpt reconciliationOpt,
-    bool perFamilyDTLRates,
     bool rootedGeneTree,
     bool madRooting,
     double supportThreshold,

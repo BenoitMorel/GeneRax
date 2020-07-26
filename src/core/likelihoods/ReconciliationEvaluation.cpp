@@ -18,7 +18,7 @@ double log(ScaledValue v)
 ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
   PLLUnrootedTree &initialGeneTree,
   const GeneSpeciesMapping& geneSpeciesMapping,
-  RecModel recModel,
+  const RecModelInfo &recModelInfo,
   bool rootedGeneTree, 
   double minGeneBranchLength,
   bool pruneSpeciesTree,
@@ -29,10 +29,11 @@ ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
     _rootedGeneTree(rootedGeneTree),
     _minGeneBranchLength(minGeneBranchLength),
     _pruneSpeciesTree(pruneSpeciesTree),
-    _model(recModel),
+    _recModelInfo(recModelInfo),
     _infinitePrecision(true)
 {
-  _evaluators = buildRecModelObject(_model, _infinitePrecision);
+  _evaluators = buildRecModelObject(_recModelInfo.model, 
+      _infinitePrecision);
   _evaluators->setFractionMissingGenes(fractionMissingFile);
 }
   
@@ -44,7 +45,7 @@ ReconciliationEvaluation::~ReconciliationEvaluation()
 
 void ReconciliationEvaluation::setRates(const Parameters &parameters)
 {
-  unsigned int freeParameters = Enums::freeParameters(_model);
+  unsigned int freeParameters = Enums::freeParameters(_recModelInfo.model);
   if (!freeParameters) {
     return;
   }
@@ -154,7 +155,8 @@ void ReconciliationEvaluation::updatePrecision(bool infinitePrecision)
   if (infinitePrecision != _infinitePrecision) {
     _infinitePrecision = infinitePrecision;
     delete _evaluators;
-    _evaluators = buildRecModelObject(_model, _infinitePrecision);
+    _evaluators = buildRecModelObject(_recModelInfo.model, 
+      _infinitePrecision);
     _evaluators->setRates(_rates);
  }
 }

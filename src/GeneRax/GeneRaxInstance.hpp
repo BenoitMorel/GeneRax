@@ -13,7 +13,7 @@ struct GeneRaxInstance {
   std::string speciesTree;
   Families initialFamilies;
   Families currentFamilies;
-  RecModel recModel;
+  RecModelInfo recModelInfo;
   Parameters rates;
   double totalLibpllLL;
   double totalRecLL;
@@ -24,7 +24,6 @@ struct GeneRaxInstance {
   
   GeneRaxInstance(int argc, char** argv):
     args(argc, argv),
-    recModel(ArgumentsHelper::strToRecModel(args.reconciliationModelStr)),
     totalLibpllLL(0),
     totalRecLL(0),
     elapsedRates(0),
@@ -32,7 +31,11 @@ struct GeneRaxInstance {
     elapsedRaxml(0),
     currentIteration(0)
   {
-    switch (recModel) {
+    auto recModel = ArgumentsHelper::strToRecModel(
+        args.reconciliationModelStr);
+    recModelInfo = RecModelInfo(recModel,
+        args.perFamilyDTLRates);
+    switch (recModelInfo.model) {
       case RecModel::ParsimonyD:
       rates = Parameters();
       break;

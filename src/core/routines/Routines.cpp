@@ -62,14 +62,13 @@ void Routines::runRaxmlOptimization(Families &families,
 }
   
 void Routines::optimizeGeneTrees(Families &families,
-    RecModel recModel,
+    const RecModelInfo &recModelInfo,
     Parameters &rates,
     const std::string &output, 
     const std::string &resultName, 
     const std::string &execPath, 
     const std::string &speciesTreePath,
     RecOpt reconciliationOpt,
-    bool perFamilyDTLRates,
     bool rootedGeneTree,
     bool madRooting,
     double supportThreshold,
@@ -83,14 +82,13 @@ void Routines::optimizeGeneTrees(Families &families,
     bool inPlace)
 {
   GeneRaxMaster::optimizeGeneTrees(families,
-      recModel,
+      recModelInfo,
       rates,
       output,
       resultName,
       execPath,
       speciesTreePath,
       reconciliationOpt,
-      perFamilyDTLRates,
       rootedGeneTree,
       madRooting,
       supportThreshold,
@@ -106,7 +104,7 @@ void Routines::optimizeGeneTrees(Families &families,
 
 void Routines::optimizeRates(bool userDTLRates, 
     const std::string &speciesTreeFile,
-    RecModel recModel,
+    const RecModelInfo &recModelInfo,
     bool rootedGeneTree,
     bool pruneSpeciesTree,
     Families &families,
@@ -126,7 +124,7 @@ void Routines::optimizeRates(bool userDTLRates,
   }
   PLLRootedTree speciesTree(speciesTreeFile);
   PerCoreEvaluations evaluations;
-  buildEvaluations(geneTrees, speciesTree, recModel, rootedGeneTree, pruneSpeciesTree, evaluations);
+  buildEvaluations(geneTrees, speciesTree, recModelInfo, rootedGeneTree, pruneSpeciesTree, evaluations);
   if (perSpeciesRates) {
     rates = DTLOptimizer::optimizeParametersPerSpecies(evaluations, speciesTree.getNodesNumber());
   } else {
@@ -176,7 +174,7 @@ void Routines::inferAndGetReconciliationScenarios(
   evaluations.resize(geneTrees.getTrees().size());
   for (unsigned int i = 0; i  < geneTrees.getTrees().size(); ++i) {
     auto &tree = geneTrees.getTrees()[i];
-    evaluations[i] = std::make_shared<ReconciliationEvaluation>(speciesTree, *tree.geneTree, tree.mapping, modelParameters.info.model, true, -1.0, pruneMode);
+    evaluations[i] = std::make_shared<ReconciliationEvaluation>(speciesTree, *tree.geneTree, tree.mapping, modelParameters.info, true, -1.0, pruneMode);
     evaluations[i]->setRates(modelParameters.getRates(i));
   }
   if (optimizeRates) {
@@ -562,7 +560,7 @@ void Routines::getParametersFromTransferFrequencies(const std::string &speciesTr
 
 void Routines::buildEvaluations(PerCoreGeneTrees &geneTrees, 
     PLLRootedTree &speciesTree, 
-    RecModel recModel, 
+    const RecModelInfo &recModelInfo,
     bool rootedGeneTree, 
     bool pruneSpeciesTree, 
     Evaluations &evaluations)
@@ -574,7 +572,7 @@ void Routines::buildEvaluations(PerCoreGeneTrees &geneTrees,
     evaluations[i] = std::make_shared<ReconciliationEvaluation>(speciesTree, 
         *tree.geneTree, 
         tree.mapping, 
-        recModel, 
+        recModelInfo, 
         rootedGeneTree, 
         pruneSpeciesTree);
   }

@@ -623,7 +623,7 @@ void SpeciesTreeOptimizer::updateEvaluations()
   bool rootedGeneTrees = false;
   for (unsigned int i = 0; i < trees.size(); ++i) {
     auto &tree = trees[i];
-    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _modelRates.info.model, rootedGeneTrees, _minGeneBranchLength, _pruneSpeciesTree, _fractionMissingFile);
+    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _modelRates.info, rootedGeneTrees, _minGeneBranchLength, _pruneSpeciesTree, _fractionMissingFile);
     _evaluations[i]->setRates(_modelRates.getRates(i));
     _evaluations[i]->setPartialLikelihoodMode(PartialLikelihoodMode::PartialSpecies);
     //_evaluations[i]->enableMADRooting(true);

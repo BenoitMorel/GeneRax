@@ -1,6 +1,7 @@
 #pragma once
 
 #include <util/enums.hpp>
+#include <util/RecModelInfo.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <vector>
 #include <memory>
@@ -23,7 +24,7 @@ public:
    *  @param speciesTree rooted species tree (std::fixed)
    *  @param initialGeneTree initial gene tree
    *  @param geneSpeciesMapping gene-to-species geneSpeciesMapping
-   *  @param recModel the reconciliation model to use
+   *  @param recModelInfo description of the reconciliation model
    *  @param rootedGeneTree should we compute the 
    *    likelihood of a rooted or unrooted gene tree?
    *  @param minGeneBranchLength contract branches with length
@@ -36,7 +37,7 @@ public:
   ReconciliationEvaluation(PLLRootedTree &speciesTree,
     PLLUnrootedTree &initialGeneTree,
     const GeneSpeciesMapping& geneSpeciesMapping,
-    RecModel recModel,
+    const RecModelInfo &recModelInfo,
     bool rootedGeneTree,
     double minGeneBranchLength = -1.0,
     bool pruneSpeciesTree = false,
@@ -69,7 +70,7 @@ public:
    */
   double evaluate(bool fastMode = false);
 
-  bool implementsTransfers() {return Enums::accountsForTransfers(_model);} 
+  bool implementsTransfers() {return Enums::accountsForTransfers(_recModelInfo.model);} 
 
   /*
    *  Call this everytime that the species tree changes
@@ -91,7 +92,7 @@ public:
   
   void inferMLScenario(Scenario &scenario, bool stochastic = false);
 
-  RecModel getRecModel() const {return _model;}
+  RecModel getRecModel() const {return _recModelInfo.model;}
   
   void rollbackToLastState();
 private:
@@ -101,7 +102,7 @@ private:
   bool _rootedGeneTree;
   double _minGeneBranchLength;
   bool _pruneSpeciesTree;
-  RecModel _model; 
+  RecModelInfo _recModelInfo; 
   bool _infinitePrecision;
   std::vector<std::vector<double> > _rates;
   // we actually own this pointer, but we do not 
