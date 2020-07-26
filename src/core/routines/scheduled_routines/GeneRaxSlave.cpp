@@ -42,7 +42,6 @@ static void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
     const std::string &ratesFile,
     const RecModelInfo &recModelInfo,
     RecOpt recOpt,
-    bool rootedGeneTree,
     bool madRooting,
     double supportThreshold,
     double recWeight,
@@ -65,7 +64,6 @@ static void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
       libpllModel,
       recModelInfo,
       recOpt,
-      rootedGeneTree,
       madRooting,
       supportThreshold,
       recWeight,
@@ -112,7 +110,7 @@ static std::string getArg(const std::string &str)
 
 int GeneRaxSlave::optimizeGeneTreesMain(int argc, char** argv, void* comm)
 {
-  assert(argc == 20);
+  assert(argc == 17 + RecModelInfo::getArgc());
   ParallelContext::init(comm);
   Logger::timed << "Starting optimizeGeneTreesSlave" << std::endl;
   int i = 2;
@@ -124,10 +122,12 @@ int GeneRaxSlave::optimizeGeneTreesMain(int argc, char** argv, void* comm)
   std::string ratesFile(argv[i++]);
   Logger::info << "LibpllModel " << libpllModel << std::endl;
   RecModelInfo recModelInfo;
-  recModelInfo.model = RecModel(atoi(argv[i++])); 
+  recModelInfo.readFromArgv(argv, i);
+  //recModelInfo.model = RecModel(atoi(argv[i++])); 
   RecOpt recOpt = RecOpt(atoi(argv[i++])); 
-  recModelInfo.perFamilyRates = bool(atoi(argv[i++]));
-  bool rootedGeneTree = bool(atoi(argv[i++]));
+  
+  //recModelInfo.perFamilyRates = bool(atoi(argv[i++]));
+  //recModel rootedGeneTree = bool(atoi(argv[i++]));
   double supportThreshold = double(atof(argv[i++]));
   double recWeight = double(atof(argv[i++]));
   bool enableRec = bool(atoi(argv[i++]));
@@ -144,7 +144,6 @@ int GeneRaxSlave::optimizeGeneTreesMain(int argc, char** argv, void* comm)
       ratesFile,
       recModelInfo,
       recOpt,
-      rootedGeneTree,
       madRooting,
       supportThreshold,
       recWeight,

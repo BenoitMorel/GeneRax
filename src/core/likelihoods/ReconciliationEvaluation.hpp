@@ -25,23 +25,11 @@ public:
    *  @param initialGeneTree initial gene tree
    *  @param geneSpeciesMapping gene-to-species geneSpeciesMapping
    *  @param recModelInfo description of the reconciliation model
-   *  @param rootedGeneTree should we compute the 
-   *    likelihood of a rooted or unrooted gene tree?
-   *  @param minGeneBranchLength contract branches with length
-   *    under this value
-   *  @param pruneSpeciesTree if set to true, prune from the 
-   *    species tree the taxa that are not covered by any gene
-   *  @param fractionMissingFile file containing the fraction
-   *    of missing file for each species
    */
   ReconciliationEvaluation(PLLRootedTree &speciesTree,
     PLLUnrootedTree &initialGeneTree,
     const GeneSpeciesMapping& geneSpeciesMapping,
-    const RecModelInfo &recModelInfo,
-    bool rootedGeneTree,
-    double minGeneBranchLength = -1.0,
-    bool pruneSpeciesTree = false,
-    std::string fractionMissingFile = std::string());
+    const RecModelInfo &recModelInfo); 
   
   /**
    * Forbid copy
@@ -52,7 +40,6 @@ public:
   ReconciliationEvaluation & operator = (ReconciliationEvaluation &&) = delete;
   ~ReconciliationEvaluation();
   void setRates(const Parameters &parameters);
-  void setFractionMissingGenes(const std::string &fractionMissingFile);
 
   /**
    * Get the current root of the gene tree. Return null if the tree does not have a 
@@ -99,9 +86,6 @@ private:
   PLLRootedTree &_speciesTree;
   PLLUnrootedTree &_initialGeneTree;
   GeneSpeciesMapping _geneSpeciesMapping;
-  bool _rootedGeneTree;
-  double _minGeneBranchLength;
-  bool _pruneSpeciesTree;
   RecModelInfo _recModelInfo; 
   bool _infinitePrecision;
   std::vector<std::vector<double> > _rates;

@@ -14,11 +14,12 @@
 
 class ParsimonyDModel: public AbstractReconciliationModel<double> {
 public:
-  ParsimonyDModel(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, 
-      bool rootedGeneTree,
-      double minGeneBranchLength,
-      bool pruneSpeciesTree):
-    AbstractReconciliationModel<double>(speciesTree, geneSpeciesMappingp, rootedGeneTree, minGeneBranchLength, pruneSpeciesTree),
+  ParsimonyDModel(PLLRootedTree &speciesTree, 
+      const GeneSpeciesMapping &geneSpeciesMappingp, 
+      const RecModelInfo &recModelInfo):
+    AbstractReconciliationModel<double>(speciesTree, 
+        geneSpeciesMappingp, 
+        recModelInfo),
     _costD(-1.0)
     {}
   

@@ -13,37 +13,26 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     const RecModelInfo &recModelInfo,
     const Parameters &startingRates,
     bool userDTLRates,
-    double minGeneBranchLength,
-    bool pruneSpeciesTree,
-    double supportThreshold,
     const std::string &outputDir,
     const std::string &execPath,
-    bool fractionMissing,
     bool constrainSearch):
   _speciesTree(nullptr),
   _geneTrees(nullptr),
   _initialFamilies(initialFamilies),
   _outputDir(outputDir),
   _execPath(execPath),
-  _supportThreshold(supportThreshold),
   _lastRecLL(-std::numeric_limits<double>::infinity()),
   _bestRecLL(-std::numeric_limits<double>::infinity()),
   _firstOptimizeRatesCall(true),
   _userDTLRates(userDTLRates),
-  _minGeneBranchLength(minGeneBranchLength),
-  _pruneSpeciesTree(pruneSpeciesTree),
   _modelRates(startingRates, 1, recModelInfo),
   _constrainSearch(constrainSearch),
   _okForClades(0),
   _koForClades(0)
 {
 
-  _modelRates.info.perFamilyRates = false; // will be unset later
-  if (fractionMissing) {
-    _fractionMissingFile = FileSystem::joinPaths(
-      _outputDir,
-      std::string("fractionMissing.txt"));
-  }
+  _modelRates.info.perFamilyRates = false; // we set it back a few
+                                           // lines later
   if (speciesTreeFile == "random") {
     _speciesTree = std::make_unique<SpeciesTree>(initialFamilies);
     setGeneTreesFromFamilies(initialFamilies);
@@ -54,7 +43,6 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _modelRates = ModelParameters(startingRates, 
       _geneTrees->getTrees().size(),
       recModelInfo);
-  //_speciesTree->saveToFile(FileSystem::joinPaths(_outputDir, "starting_species_tree.newick"), true);
   _speciesTree->addListener(this);
   std::string subsamplesPath = FileSystem::joinPaths(_outputDir, "subsamples");
   FileSystem::mkdir(FileSystem::joinPaths(_outputDir, "sub_genes_opt"), true);
@@ -277,7 +265,6 @@ double SpeciesTreeOptimizer::reconciliationRound()
 {
   unsigned int reconciliationSamples = 0;
   _bestRecLL = computeRecLikelihood();
-  auto hash1 = _speciesTree->getNodeIndexHash(); 
   std::string speciesTreeFile(FileSystem::joinPaths(_outputDir, "speciesTreeTemp.newick"));
   saveCurrentSpeciesTreePath(speciesTreeFile, true);
   ParallelContext::barrier();
@@ -286,7 +273,6 @@ double SpeciesTreeOptimizer::reconciliationRound()
   Routines::getPerSpeciesEvents(speciesTreeFile,
     _initialFamilies,
     _modelRates,
-    _pruneSpeciesTree,
     reconciliationSamples,
     perSpeciesEvents);
   unsigned int speciesNumber = speciesTree.getNodesNumber();
@@ -310,12 +296,14 @@ double SpeciesTreeOptimizer::reconciliationRound()
   }
   std::sort(scoredSpecies.begin(), scoredSpecies.end());
   assert(ParallelContext::isIntEqual(scoredSpecies[0].first));
+  /*
   for (auto p: scoredSpecies) {
     auto e = p.second;
     auto score = p.first;
     auto speciesNode = speciesTree.getNode(e);
     //Logger::info << speciesNode->label << " " << score << std::endl;
   }
+  */
   Logger::timed << "Start generating reconciliation SPR moves......" << std::endl;
 
   return _bestRecLL;
@@ -339,7 +327,6 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
   Routines::getTransfersFrequencies(speciesTreeFile,
     _initialFamilies,
     _modelRates,
-    _pruneSpeciesTree,
     reconciliationSamples,
     frequencies,
     _outputDir);
@@ -347,7 +334,6 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
   Routines::getPerSpeciesEvents(speciesTreeFile,
     _initialFamilies,
     _modelRates,
-    _pruneSpeciesTree,
     reconciliationSamples,
     perSpeciesEvents);
   unsigned int speciesNumber = _speciesTree->getTree().getNodesNumber();
@@ -386,7 +372,7 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
       if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, prune, regraft)) {
         TransferMove move(prune, regraft, entry.second);
         double factor = 1.0;
-        if (_pruneSpeciesTree) {
+        if (_modelRates.info.pruneSpeciesTree) {
 #ifdef NEW_CORRECTION
           factor /= (1.0 + sqrt(speciesFrequencies[prune]));
           factor /= (1.0 + sqrt(speciesFrequencies[regraft]));
@@ -620,10 +606,10 @@ void SpeciesTreeOptimizer::updateEvaluations()
   assert(_geneTrees);
   auto &trees = _geneTrees->getTrees();
   _evaluations.resize(trees.size());
-  bool rootedGeneTrees = false;
+  //bool rootedGeneTrees = false;
   for (unsigned int i = 0; i < trees.size(); ++i) {
     auto &tree = trees[i];
-    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _modelRates.info, rootedGeneTrees, _minGeneBranchLength, _pruneSpeciesTree, _fractionMissingFile);
+    _evaluations[i] = std::make_shared<ReconciliationEvaluation>(_speciesTree->getTree(), *tree.geneTree, tree.mapping, _modelRates.info);
     _evaluations[i]->setRates(_modelRates.getRates(i));
     _evaluations[i]->setPartialLikelihoodMode(PartialLikelihoodMode::PartialSpecies);
     //_evaluations[i]->enableMADRooting(true);

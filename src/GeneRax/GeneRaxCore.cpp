@@ -141,12 +141,8 @@ void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
         instance.getRecModelInfo(), 
         startingRates, 
         instance.args.userDTLRates, 
-        instance.args.minGeneBranchLength, 
-        instance.args.pruneSpeciesTree, 
-        instance.args.supportThreshold, 
         instance.args.output, 
         instance.args.exec, 
-        instance.args.fractionMissing,
         instance.args.constrainSpeciesSearch);
     speciesTreeOptimizer.optimizeDTLRates();
     speciesTreeOptimizer.rootExhaustiveSearch();
@@ -186,12 +182,8 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
       instance.getRecModelInfo(), 
       startingRates, 
       instance.args.userDTLRates, 
-      instance.args.minGeneBranchLength,
-      instance.args.pruneSpeciesTree, 
-      instance.args.supportThreshold, 
       instance.args.output, 
       instance.args.exec, 
-      instance.args.fractionMissing,
       instance.args.constrainSpeciesSearch);
   if (instance.args.speciesFastRadius > 0) {
     Logger::info << std::endl;
@@ -255,9 +247,13 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
         instance.getRecModelInfo());
     instance.readModelParameters(modelRates);
     bool optimizeRates = true;
-    Routines::inferReconciliation(instance.speciesTree, instance.currentFamilies, 
-      modelRates, instance.args.pruneSpeciesTree, instance.args.output, instance.args.reconcile,
-      instance.args.reconciliationSamples, optimizeRates);
+    Routines::inferReconciliation(instance.speciesTree, 
+        instance.currentFamilies, 
+        modelRates, 
+        instance.args.output, 
+        instance.args.reconcile,
+        instance.args.reconciliationSamples, 
+        optimizeRates);
     if (instance.args.buildSuperMatrix) {
       /*
       std::string outputSuperMatrix = FileSystem::joinPaths(
@@ -357,9 +353,13 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
   long elapsed = 0;
   if (!instance.args.perFamilyDTLRates) {
     Logger::timed << "Reconciliation rates optimization... " << std::endl;
-    Routines::optimizeRates(instance.args.userDTLRates, instance.speciesTree, instance.recModelInfo,
-      instance.args.rootedGeneTree, instance.args.pruneSpeciesTree, 
-      instance.currentFamilies, perSpeciesDTLRates, instance.rates, instance.elapsedRates);
+    Routines::optimizeRates(instance.args.userDTLRates, 
+        instance.speciesTree, 
+        instance.recModelInfo,
+        instance.currentFamilies, 
+        perSpeciesDTLRates, 
+        instance.rates, 
+        instance.elapsedRates);
     if (!instance.args.perFamilyDTLRates && !instance.args.perSpeciesDTLRates) {
       auto paramNames = Enums::parameterNames(instance.recModelInfo.model);
       Logger::info << "\t";
@@ -377,13 +377,24 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
     additionalMsg = std::string("reconciliation rates and ");
   }
   Logger::timed << "Optimizing " + additionalMsg + "gene trees with radius=" << sprRadius << "... " << std::endl; 
-  Routines::optimizeGeneTrees(instance.currentFamilies, instance.recModelInfo, instance.rates, 
-      instance.args.output, "results", instance.args.execPath, instance.speciesTree, 
+  const bool enableRecLL = true;
+  Routines::optimizeGeneTrees(instance.currentFamilies, 
+      instance.recModelInfo, 
+      instance.rates, 
+      instance.args.output, 
+      "results", 
+      instance.args.execPath, 
+      instance.speciesTree, 
       RecOpt::Grid, 
-      instance.args.rootedGeneTree, instance.args.madRooting,
+      instance.args.madRooting,
       instance.args.supportThreshold, 
-      instance.args.recWeight, true, enableLibpll, sprRadius, 
-      instance.currentIteration++, ParallelContext::allowSchedulerSplitImplementation(), elapsed);
+      instance.args.recWeight, 
+      enableRecLL, 
+      enableLibpll, 
+      sprRadius, 
+      instance.currentIteration++, 
+      ParallelContext::allowSchedulerSplitImplementation(), 
+      elapsed);
   instance.elapsedSPR += elapsed;
   Routines::gatherLikelihoods(instance.currentFamilies, instance.totalLibpllLL, instance.totalRecLL);
   Logger::info << "\tJointLL=" << instance.totalLibpllLL + instance.totalRecLL 

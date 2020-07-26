@@ -55,12 +55,8 @@ public:
       const RecModelInfo &recModelInfo,
       const Parameters &startingRates,
       bool userDTLRates,
-      double minGeneBranchLength,
-      bool pruneSpeciesTree,
-      double supportThreshold,
       const std::string &outputDir,
       const std::string &execPath,
-      bool fractionMissing,
       bool constrainSearch);
   
   // forbid copy
@@ -106,19 +102,14 @@ private:
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
   PerCoreEvaluations _evaluations; 
   Families _initialFamilies;
-  RecModel _recModel;
   std::string _outputDir;
   std::string _execPath;
-  double _supportThreshold;
   double _lastRecLL;
   double _bestRecLL;
   SpeciesSearchStats _stats;
   bool _firstOptimizeRatesCall;
   bool _userDTLRates;
-  double _minGeneBranchLength;
-  bool _pruneSpeciesTree;
   ModelParameters _modelRates;
-  std::string _fractionMissingFile;
   CladeSet _geneClades;
   bool _constrainSearch;
   unsigned int _okForClades;

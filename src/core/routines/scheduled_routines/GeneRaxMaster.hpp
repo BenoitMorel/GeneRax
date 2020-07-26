@@ -20,7 +20,6 @@ public:
     const std::string &execPath, 
     const std::string &speciesTreePath,
     RecOpt reconciliationOpt,
-    bool rootedGeneTree,
     bool madRooting,
     double supportThreshold,
     double recWeight,

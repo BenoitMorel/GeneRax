@@ -19,13 +19,10 @@ class UndatedDTLModel: public AbstractReconciliationModel<REAL> {
 public:
   UndatedDTLModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMappingp, 
-      bool rootedGeneTree, 
-      double minGeneBranchLength,
-      bool pruneSpeciesTree):
-    
-    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree, minGeneBranchLength, pruneSpeciesTree)
-  {
-  } 
+      const RecModelInfo &recModelInfo): 
+    AbstractReconciliationModel<REAL>(speciesTree, 
+        geneSpeciesMappingp, 
+        recModelInfo) {}
   UndatedDTLModel(const UndatedDTLModel &) = delete;
   UndatedDTLModel & operator = (const UndatedDTLModel &) = delete;
   UndatedDTLModel(UndatedDTLModel &&) = delete;

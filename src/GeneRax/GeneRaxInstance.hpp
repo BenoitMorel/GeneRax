@@ -33,8 +33,13 @@ struct GeneRaxInstance {
   {
     auto recModel = ArgumentsHelper::strToRecModel(
         args.reconciliationModelStr);
+    std::string fractionMissingFile;
     recModelInfo = RecModelInfo(recModel,
-        args.perFamilyDTLRates);
+        args.perFamilyDTLRates,
+        args.pruneSpeciesTree,
+        args.minGeneBranchLength,
+        fractionMissingFile
+        );
     switch (recModelInfo.model) {
       case RecModel::ParsimonyD:
       rates = Parameters();

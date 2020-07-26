@@ -18,23 +18,15 @@ double log(ScaledValue v)
 ReconciliationEvaluation::ReconciliationEvaluation(PLLRootedTree  &speciesTree,
   PLLUnrootedTree &initialGeneTree,
   const GeneSpeciesMapping& geneSpeciesMapping,
-  const RecModelInfo &recModelInfo,
-  bool rootedGeneTree, 
-  double minGeneBranchLength,
-  bool pruneSpeciesTree,
-  std::string fractionMissingFile):
+  const RecModelInfo &recModelInfo):
     _speciesTree(speciesTree),
     _initialGeneTree(initialGeneTree),
     _geneSpeciesMapping(geneSpeciesMapping),
-    _rootedGeneTree(rootedGeneTree),
-    _minGeneBranchLength(minGeneBranchLength),
-    _pruneSpeciesTree(pruneSpeciesTree),
     _recModelInfo(recModelInfo),
     _infinitePrecision(true)
 {
   _evaluators = buildRecModelObject(_recModelInfo.model, 
       _infinitePrecision);
-  _evaluators->setFractionMissingGenes(fractionMissingFile);
 }
   
 ReconciliationEvaluation::~ReconciliationEvaluation()
@@ -64,12 +56,6 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
   _evaluators->setRates(_rates);
 }
   
-void ReconciliationEvaluation::setFractionMissingGenes(const std::string &fractionMissingFile)
-{
-  assert(_evaluators);
-  _evaluators->setFractionMissingGenes(fractionMissingFile);
-}
-
 pll_unode_t *ReconciliationEvaluation::getRoot() 
 {
   return _evaluators->getRoot();
@@ -82,17 +68,7 @@ void ReconciliationEvaluation::setRoot(pll_unode_t * root)
 
 double ReconciliationEvaluation::evaluate(bool fastMode)
 {
-  double res = _evaluators->computeLogLikelihood(fastMode);
-  /*
-  if (!_infinitePrecision && !std::isnormal(res)) {
-    updatePrecision(true);  
-    res = _evaluators->computeLogLikelihood(fastMode);
-    updatePrecision(false);  
-  }
-  */
-  //assert(std::isnormal(res));
-  
-  return res;
+  return _evaluators->computeLogLikelihood(fastMode);
 }
   
 void ReconciliationEvaluation::enableMADRooting(bool enable)
@@ -122,27 +98,27 @@ ReconciliationModelInterface *ReconciliationEvaluation::buildRecModelObject(RecM
   switch(recModel) {
   case RecModel::UndatedDL:
     if (infinitePrecision) {
-      res = new UndatedDLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
+      res = new UndatedDLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _recModelInfo);
     } else {
-      res = new UndatedDLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
+      res = new UndatedDLModel<double>(_speciesTree, _geneSpeciesMapping, _recModelInfo);
     }
     break;
   case RecModel::UndatedDTL:
     if (infinitePrecision) {
-      res = new UndatedDTLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
+      res = new UndatedDTLModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _recModelInfo);
     } else {
-      res = new UndatedDTLModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
+      res = new UndatedDTLModel<double>(_speciesTree, _geneSpeciesMapping, _recModelInfo);
     }
     break;
   case RecModel::ParsimonyD:
     res = new ParsimonyDModel(_speciesTree, _geneSpeciesMapping,
-        _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
+        _recModelInfo);
     break;
   case RecModel::SimpleDS:
     if (infinitePrecision) {
-      res = new SimpleDSModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
+      res = new SimpleDSModel<ScaledValue>(_speciesTree, _geneSpeciesMapping, _recModelInfo);
     } else {
-      res = new SimpleDSModel<double>(_speciesTree, _geneSpeciesMapping, _rootedGeneTree, _minGeneBranchLength, _pruneSpeciesTree);
+      res = new SimpleDSModel<double>(_speciesTree, _geneSpeciesMapping, _recModelInfo);
     }
     break;
   }

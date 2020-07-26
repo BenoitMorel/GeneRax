@@ -108,9 +108,7 @@ public:
   // overload from parent
   AbstractReconciliationModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
-      bool rootedGeneTree,
-      double minGeneBranchLength,
-      bool pruneSpeciesTree);
+      const RecModelInfo &recModelInfo); 
   virtual void setInitialGeneTree(PLLUnrootedTree &tree);
   virtual ~AbstractReconciliationModel() {}
   // overload from parent
@@ -192,6 +190,7 @@ protected:
   virtual void enableMADRooting(bool enable);
   virtual pll_unode_t *computeMLRoot();
 protected:
+  RecModelInfo _info;
   pll_unode_t *_geneRoot;
   unsigned int _allSpeciesNodesCount;
   std::vector <pll_rnode_t *> _speciesNodesToUpdate;
@@ -202,7 +201,6 @@ protected:
   std::vector<pll_rnode_t *> _geneToSpeciesLCA;
   unsigned int _maxGeneId;
   bool _fastMode;
-  double _minGeneBranchLength;
   PartialLikelihoodMode _likelihoodMode;
   std::vector<double> _fm;
   PLLRootedTree &_speciesTree;
@@ -226,7 +224,6 @@ private:
     std::unordered_set<pll_rnode_t *> *nodesToAdd = nullptr);  
   
   
-  bool _rootedGeneTree;
   std::map<std::string, std::string> _geneNameToSpeciesName;
   std::map<std::string, unsigned int> _speciesNameToId;
   std::vector<unsigned int> _speciesCoverage;
@@ -248,7 +245,6 @@ private:
   std::vector<pll_rnode_t *> _speciesRight;
   std::vector<pll_rnode_t *> _speciesParent;
   pll_rnode_t *_prunedRoot;
-  bool _pruneSpeciesTree;
   PLLUnrootedTree *_pllUnrootedTree;
   bool _madRootingEnabled;
   std::vector<double> _madProbabilities;
@@ -257,25 +253,23 @@ private:
 
   
 template <class REAL>
-AbstractReconciliationModel<REAL>::AbstractReconciliationModel(PLLRootedTree &speciesTree, 
+AbstractReconciliationModel<REAL>::AbstractReconciliationModel(
+    PLLRootedTree &speciesTree, 
     const GeneSpeciesMapping &geneSpeciesMapping, 
-    bool rootedGeneTree,
-    double minGeneBranchLength,
-    bool pruneSpeciesTree):
+    const RecModelInfo &recModelInfo):
+  _info(recModelInfo),
   _geneRoot(0),
   _maxGeneId(1),
   _fastMode(false),
-  _minGeneBranchLength(minGeneBranchLength),
   _likelihoodMode(PartialLikelihoodMode::PartialGenes),
   _speciesTree(speciesTree),
-  _rootedGeneTree(rootedGeneTree),
   _geneNameToSpeciesName(geneSpeciesMapping.getMap()),
   _allSpeciesNodesInvalid(true),
-  _pruneSpeciesTree(pruneSpeciesTree),
   _pllUnrootedTree(nullptr),
   _madRootingEnabled(false)
 {
   initSpeciesTree();
+  setFractionMissingGenes(_info.fractionMissingFile);
 }
 
 template <class REAL>
@@ -416,7 +410,7 @@ void AbstractReconciliationModel<REAL>::onSpeciesTreeChange(const std::unordered
     _speciesParent[e] = speciesNode->parent;
   }
   _prunedRoot = _speciesTree.getRoot();
-  if (_pruneSpeciesTree && _speciesCoverage.size()) {
+  if (_info.pruneSpeciesTree && _speciesCoverage.size()) {
     std::vector<pll_rnode_t *> pruned(_allSpeciesNodesCount, nullptr);
     for (auto speciesNode: _allSpeciesNodes) {
       auto e = speciesNode->node_index;
@@ -471,7 +465,7 @@ void AbstractReconciliationModel<REAL>::getRoots(std::vector<pll_unode_t *> &roo
     const std::vector<unsigned int> &geneIds)
 {
   roots.clear();
-  if (_rootedGeneTree && _geneRoot) {
+  if (_info.rootedGeneTree && _geneRoot) {
     roots.push_back(_geneRoot);
     if (_geneRoot->next) {
       roots.push_back(_geneRoot->next);
@@ -503,7 +497,7 @@ double AbstractReconciliationModel<REAL>::computeLogLikelihood(bool fastMode)
   auto root = getRoot();
   updateCLVs();
   computeLikelihoods();
-  if (_rootedGeneTree) {
+  if (_info.rootedGeneTree) {
     setRoot(computeMLRoot());
     while (root != getRoot()) {
       updateCLVs();

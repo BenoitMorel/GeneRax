@@ -54,7 +54,6 @@ public:
     const std::string &execPath, 
     const std::string &speciesTreePath,
     RecOpt reconciliationOpt,
-    bool rootedGeneTree,
     bool madRooting,
     double supportThreshold,
     double recWeight,
@@ -72,8 +71,6 @@ public:
   static void optimizeRates(bool userDTLRates, 
     const std::string &speciesTreeFile,
     const RecModelInfo &recModelInfo,
-    bool rootedGeneTree,
-    bool pruneSpeciesTree,
     Families &families,
     bool perSpeciesRates, 
     Parameters &rates,
@@ -82,14 +79,12 @@ public:
   static void getPerSpeciesEvents(const std::string &speciesTreeFile,
     Families &families,
     const ModelParameters &modelRates,
-    bool pruneMode,
     unsigned int reconciliationSamples,
     PerSpeciesEvents &events);
 
   static void getTransfersFrequencies(const std::string &speciesTreeFile,
     Families &families,
     const ModelParameters &modelRates,
-    bool pruneMode,
     unsigned int reconciliationSamples,
     TransferFrequencies &frequencies,
     const std::string &outputDir);
@@ -111,7 +106,6 @@ public:
     const std::string &speciesTreeFile,
     Families &families,
     const ModelParameters &initialModelRates,
-    bool pruneMode,
     const std::string &outputDir,
     bool bestReconciliation,
     unsigned int reconciliationSamples,
@@ -127,7 +121,6 @@ public:
     PLLRootedTree &speciesTree,
     const PerCoreGeneTrees &geneTrees,
     const ModelParameters &initialModelRates,
-    bool pruneMode,
     unsigned int reconciliationSamples, // 0 for ML
     bool optimizeRates,
     std::vector<Scenario> &scenarios);
@@ -163,8 +156,6 @@ public:
   static void buildEvaluations(PerCoreGeneTrees &geneTrees, 
     PLLRootedTree &speciesTree, 
     const RecModelInfo &recModelInfo,
-    bool rootedGeneTree, 
-    bool pruneSpeciesTree, 
     Evaluations &evaluations);
 
 private:

@@ -25,7 +25,6 @@ public:
               const std::string &substitutionModel,
               const RecModelInfo &recModelInfo,
               RecOpt reconciliationOpt,
-              bool rootedGeneTree,
               bool madRooting,
               double supportThreshold,
               double recWeight,

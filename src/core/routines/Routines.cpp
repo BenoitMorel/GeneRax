@@ -69,7 +69,6 @@ void Routines::optimizeGeneTrees(Families &families,
     const std::string &execPath, 
     const std::string &speciesTreePath,
     RecOpt reconciliationOpt,
-    bool rootedGeneTree,
     bool madRooting,
     double supportThreshold,
     double recWeight,
@@ -89,7 +88,6 @@ void Routines::optimizeGeneTrees(Families &families,
       execPath,
       speciesTreePath,
       reconciliationOpt,
-      rootedGeneTree,
       madRooting,
       supportThreshold,
       recWeight,
@@ -105,8 +103,6 @@ void Routines::optimizeGeneTrees(Families &families,
 void Routines::optimizeRates(bool userDTLRates, 
     const std::string &speciesTreeFile,
     const RecModelInfo &recModelInfo,
-    bool rootedGeneTree,
-    bool pruneSpeciesTree,
     Families &families,
     bool perSpeciesRates, 
     Parameters &rates,
@@ -124,7 +120,7 @@ void Routines::optimizeRates(bool userDTLRates,
   }
   PLLRootedTree speciesTree(speciesTreeFile);
   PerCoreEvaluations evaluations;
-  buildEvaluations(geneTrees, speciesTree, recModelInfo, rootedGeneTree, pruneSpeciesTree, evaluations);
+  buildEvaluations(geneTrees, speciesTree, recModelInfo, evaluations);
   if (perSpeciesRates) {
     rates = DTLOptimizer::optimizeParametersPerSpecies(evaluations, speciesTree.getNodesNumber());
   } else {
@@ -156,7 +152,6 @@ void Routines::inferAndGetReconciliationScenarios(
     PLLRootedTree &speciesTree,
     const PerCoreGeneTrees &geneTrees,
     const ModelParameters &initialModelRates,
-    bool pruneMode,
     unsigned int reconciliationSamples,
     bool optimizeRates,
     std::vector<Scenario> &scenarios)
@@ -174,7 +169,7 @@ void Routines::inferAndGetReconciliationScenarios(
   evaluations.resize(geneTrees.getTrees().size());
   for (unsigned int i = 0; i  < geneTrees.getTrees().size(); ++i) {
     auto &tree = geneTrees.getTrees()[i];
-    evaluations[i] = std::make_shared<ReconciliationEvaluation>(speciesTree, *tree.geneTree, tree.mapping, modelParameters.info, true, -1.0, pruneMode);
+    evaluations[i] = std::make_shared<ReconciliationEvaluation>(speciesTree, *tree.geneTree, tree.mapping, modelParameters.info);
     evaluations[i]->setRates(modelParameters.getRates(i));
   }
   if (optimizeRates) {
@@ -208,7 +203,6 @@ void Routines::inferReconciliation(
     const std::string &speciesTreeFile,
     Families &families,
     const ModelParameters &initialModelRates,
-    bool pruneMode,
     const std::string &outputDir,
     bool bestReconciliation,
     unsigned int reconciliationSamples,
@@ -222,9 +216,13 @@ void Routines::inferReconciliation(
   PLLRootedTree speciesTree(speciesTreeFile);
   if (bestReconciliation) {
     std::vector<Scenario> scenarios;
-    
-    inferAndGetReconciliationScenarios(speciesTree, geneTrees, initialModelRates, 
-      pruneMode, 0, optimizeRates, scenarios);
+    const unsigned int reconciliationSamples = 0;
+    inferAndGetReconciliationScenarios(speciesTree, 
+        geneTrees, 
+        initialModelRates,
+        reconciliationSamples,
+        optimizeRates, 
+        scenarios);
     assert(scenarios.size() == geneTrees.getTrees().size());
     for (unsigned int i = 0; i  < geneTrees.getTrees().size(); ++i) {
       auto &tree = geneTrees.getTrees()[i];
@@ -250,8 +248,12 @@ void Routines::inferReconciliation(
   }
   if (reconciliationSamples) {
     std::vector<Scenario> scenarios;
-    inferAndGetReconciliationScenarios(speciesTree, geneTrees, initialModelRates, 
-      pruneMode, reconciliationSamples, optimizeRates, scenarios);
+    inferAndGetReconciliationScenarios(speciesTree, 
+        geneTrees, 
+        initialModelRates, 
+        reconciliationSamples, 
+        optimizeRates, 
+        scenarios);
     assert(scenarios.size() == geneTrees.getTrees().size() * reconciliationSamples);
     for (unsigned int i = 0; i  < geneTrees.getTrees().size(); ++i) {
       auto &tree = geneTrees.getTrees()[i];
@@ -450,7 +452,6 @@ void mpiMergeTransferFrequencies(TransferFrequencies &frequencies,
 void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
   Families &families,
   const ModelParameters &modelRates,
-  bool pruneMode,
   unsigned int reconciliationSamples,
   PerSpeciesEvents &events)
 {
@@ -463,7 +464,6 @@ void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
     speciesTree,
     geneTrees,
     modelRates,
-    pruneMode,
     reconciliationSamples,
     optimizeRates,
     scenarios);
@@ -478,14 +478,13 @@ void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
 void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     Families &families,
     const ModelParameters &modelParameters,
-    bool pruneMode,
     unsigned int reconciliationSamples,
     TransferFrequencies &transferFrequencies,
     const std::string &outputDir)
 {
-  bool bestReconciliation = (reconciliationSamples == 0);
-  bool saveTransfersOnly = true; 
-  bool optimizeRates = false;
+  const bool bestReconciliation = (reconciliationSamples == 0);
+  const bool saveTransfersOnly = true; 
+  const bool optimizeRates = false;
   ModelParameters transfersModelParameter;
   if (Enums::accountsForTransfers(modelParameters.info.model)) {
     transfersModelParameter = modelParameters;
@@ -500,10 +499,16 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
         1,
         recModelInfo);
   }
-  inferReconciliation(speciesTreeFile, families, transfersModelParameter, pruneMode, outputDir, bestReconciliation, reconciliationSamples, optimizeRates, saveTransfersOnly);
+  inferReconciliation(speciesTreeFile, 
+      families, 
+      transfersModelParameter, 
+      outputDir, bestReconciliation, 
+      reconciliationSamples, 
+      optimizeRates, 
+      saveTransfersOnly);
   
   SpeciesTree speciesTree(speciesTreeFile);
-  for (int i = (bestReconciliation ? -1 : 0); i < reconciliationSamples; ++i) {
+  for (unsigned int i = (bestReconciliation ? -1 : 0); i < reconciliationSamples; ++i) {
     auto begin = ParallelContext::getBegin(families.size());
     auto end = ParallelContext::getEnd(families.size());
     for (unsigned int j = begin; j < end; ++j) {
@@ -561,8 +566,6 @@ void Routines::getParametersFromTransferFrequencies(const std::string &speciesTr
 void Routines::buildEvaluations(PerCoreGeneTrees &geneTrees, 
     PLLRootedTree &speciesTree, 
     const RecModelInfo &recModelInfo,
-    bool rootedGeneTree, 
-    bool pruneSpeciesTree, 
     Evaluations &evaluations)
 {
   auto &trees = geneTrees.getTrees();
@@ -572,9 +575,7 @@ void Routines::buildEvaluations(PerCoreGeneTrees &geneTrees,
     evaluations[i] = std::make_shared<ReconciliationEvaluation>(speciesTree, 
         *tree.geneTree, 
         tree.mapping, 
-        recModelInfo, 
-        rootedGeneTree, 
-        pruneSpeciesTree);
+        recModelInfo);
   }
 }
 

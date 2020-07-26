@@ -15,11 +15,12 @@
 template <class REAL>
 class SimpleDSModel: public AbstractReconciliationModel<REAL> {
 public:
-  SimpleDSModel(PLLRootedTree &speciesTree, const GeneSpeciesMapping &geneSpeciesMappingp, 
-      bool rootedGeneTree,
-      double minGeneBranchLength,
-      bool pruneSpeciesTree):
-    AbstractReconciliationModel<REAL>(speciesTree, geneSpeciesMappingp, rootedGeneTree, minGeneBranchLength, pruneSpeciesTree) {}
+  SimpleDSModel(PLLRootedTree &speciesTree, 
+      const GeneSpeciesMapping &geneSpeciesMappingp, 
+      const RecModelInfo &recModelInfo): 
+    AbstractReconciliationModel<REAL>(speciesTree, 
+        geneSpeciesMappingp, 
+        recModelInfo) {}
   
   
   SimpleDSModel(const SimpleDSModel &) = delete;

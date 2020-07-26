@@ -118,7 +118,6 @@ JointTree::JointTree(const std::string &newickString,
     const std::string &substitutionModel,
     const RecModelInfo &recModelInfo,
     RecOpt reconciliationOpt,
-    bool rootedGeneTree,
     bool madRooting,
     double supportThreshold,
     double recWeight,
@@ -141,8 +140,8 @@ JointTree::JointTree(const std::string &newickString,
   reconciliationEvaluation_ = std::make_shared<ReconciliationEvaluation>(_speciesTree,  
       getGeneTree(),
       _geneSpeciesMap, 
-      recModelInfo,
-      rootedGeneTree);
+      recModelInfo
+      );
   Logger::info << ratesVector << std::endl;
   setRates(ratesVector);
 

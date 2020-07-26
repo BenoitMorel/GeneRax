@@ -23,7 +23,6 @@ void GeneRaxMaster::optimizeGeneTrees(Families &families,
     const std::string &execPath, 
     const std::string &speciesTreePath,
     RecOpt recOpt,
-    bool rootedGeneTree,
     bool madRooting,
     double supportThreshold,
     double recWeight,
@@ -80,10 +79,10 @@ void GeneRaxMaster::optimizeGeneTrees(Families &families,
     os << speciesTreePath << " ";
     os << family.libpllModel  << " ";
     os << ratesFile << " ";
-    os << static_cast<int>(recModelInfo.model)  << " ";
+    for (auto &str: recModelInfo.getArgv()) {
+      os << str << " ";
+    }
     os << static_cast<int>(recOpt)  << " ";
-    os << static_cast<int>(recModelInfo.perFamilyRates)  << " ";
-    os << static_cast<int>(rootedGeneTree)  << " ";
     os << supportThreshold << " ";
     os << recWeight  << " ";
     os << static_cast<int>(enableRec)  << " ";
