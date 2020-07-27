@@ -216,7 +216,6 @@ void Routines::inferReconciliation(
   PLLRootedTree speciesTree(speciesTreeFile);
   if (bestReconciliation) {
     std::vector<Scenario> scenarios;
-    const unsigned int reconciliationSamples = 0;
     inferAndGetReconciliationScenarios(speciesTree, 
         geneTrees, 
         initialModelRates,
@@ -508,7 +507,7 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
       saveTransfersOnly);
   
   SpeciesTree speciesTree(speciesTreeFile);
-  for (unsigned int i = (bestReconciliation ? -1 : 0); i < reconciliationSamples; ++i) {
+  for (int i = (bestReconciliation ? -1 : 0); i < (int)reconciliationSamples; ++i) {
     auto begin = ParallelContext::getBegin(families.size());
     auto end = ParallelContext::getEnd(families.size());
     for (unsigned int j = begin; j < end; ++j) {

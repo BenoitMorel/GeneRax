@@ -188,6 +188,9 @@ bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
     auto epsilon = 2.0 * _averageGeneRootDiff.getAverage();
     canTestMove &= (geneRootApproxLL + epsilon > _bestRecLL );
   }
+  if (!_averageGeneRootDiff.isSignificant()) {
+    geneRootApproxLL = computeRecLikelihood();
+  }
   if (canTestMove) {
     // we test the move with exact likelihood
     _okForClades++;
