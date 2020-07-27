@@ -55,7 +55,7 @@ public:
   /**
    *  @param input geneTree
    */
-  double evaluate(bool fastMode = false);
+  double evaluate();
 
   bool implementsTransfers() {return Enums::accountsForTransfers(_recModelInfo.model);} 
 

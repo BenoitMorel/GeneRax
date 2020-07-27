@@ -4,6 +4,7 @@
 #include <parallelization/PerCoreGeneTrees.hpp>
 #include <string>
 #include <maths/Parameters.hpp>
+#include <maths/AverageStream.hpp>
 #include <util/enums.hpp>
 #include <IO/Families.hpp>
 #include <memory>
@@ -101,6 +102,7 @@ private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
   PerCoreEvaluations _evaluations; 
+  std::vector<pll_unode_t*> _previousGeneRoots;
   Families _initialFamilies;
   std::string _outputDir;
   std::string _execPath;
@@ -114,6 +116,7 @@ private:
   bool _constrainSearch;
   unsigned int _okForClades;
   unsigned int _koForClades;
+  AverageStream _averageGeneRootDiff;
 private:
   void _computeAllGeneClades();
   unsigned int _unsupportedCladesNumber();
@@ -129,7 +132,10 @@ private:
   bool testPruning(unsigned int prune,
     unsigned int regraft);
   void newBestTreeCallback();
+  void beforeTestCallback();
+  void rollbackCallback();
   std::string getSpeciesTreePath(const std::string &speciesId);
   void setGeneTreesFromFamilies(const Families &families);
   void reGenerateEvaluations();
+  void optimizeGeneRoots();
 };

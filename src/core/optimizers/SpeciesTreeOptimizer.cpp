@@ -114,7 +114,9 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree,
   for (auto direction: moves) {
     if (SpeciesTreeOperator::canChangeRoot(speciesTree, direction)) {
       movesHistory.push_back(direction);
+      beforeTestCallback(); 
       SpeciesTreeOperator::changeRoot(speciesTree, direction);
+      optimizeGeneRoots();
       double ll = computeLikelihood();
       visits++;
       if (ll > bestLL) {
@@ -130,6 +132,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree,
           bestLL, 
           visits);
       SpeciesTreeOperator::revertChangeRoot(speciesTree, direction);
+      rollbackCallback();
       movesHistory.pop_back();
     }
   }
@@ -170,26 +173,40 @@ double SpeciesTreeOptimizer::rootExhaustiveSearch()
 bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
     unsigned int regraft)
 {
-  auto wrongClades1 = _unsupportedCladesNumber();
+  beforeTestCallback();
   // Apply the move
   auto rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
   _stats.testedTrees++;
-  auto wrongClades2 = _unsupportedCladesNumber();
-  bool canTestMove = !(_constrainSearch && wrongClades2 > wrongClades1);
+  bool canTestMove = true;
+  const bool geneRootOpt = _modelRates.info.rootedGeneTree; 
+  double geneRootApproxLL = 0.0;
+  if (canTestMove && geneRootOpt && _averageGeneRootDiff.isSignificant()) {
+    // approximate the likelihood with none exhaustive
+    // ML gene tree root search. Decide whether we can already
+    // discard the move
+    geneRootApproxLL = computeRecLikelihood();
+    auto epsilon = 2.0 * _averageGeneRootDiff.getAverage();
+    canTestMove &= (geneRootApproxLL + epsilon > _bestRecLL );
+  }
   if (canTestMove) {
-    // we really test the move
+    // we test the move with exact likelihood
     _okForClades++;
+    optimizeGeneRoots();
     _lastRecLL = computeRecLikelihood();
+    auto diff = _lastRecLL - geneRootApproxLL;
+    _averageGeneRootDiff.addValue(_lastRecLL - geneRootApproxLL);
     if (_lastRecLL > _bestRecLL) {
       // Better tree found! keep it and return
+      // without rollbacking
       newBestTreeCallback();
       return true;
     }
   } else {
     _koForClades++;
   }
-  // we do not keep the tree
+  // the tree is not better, rollback
   SpeciesTreeOperator::reverseSPRMove(*_speciesTree, prune, rollback);
+  rollbackCallback();
   return false;
 }
 
@@ -581,7 +598,7 @@ double SpeciesTreeOptimizer::computeRecLikelihood()
 {
   double ll = 0.0;
   for (auto &evaluation: _evaluations) {
-    ll += evaluation->evaluate(false);
+    ll += evaluation->evaluate();
   }
   ParallelContext::sumDouble(ll);
   _stats.exactLikelihoodCalls++;
@@ -614,6 +631,34 @@ void SpeciesTreeOptimizer::updateEvaluations()
     _evaluations[i]->setPartialLikelihoodMode(PartialLikelihoodMode::PartialSpecies);
     //_evaluations[i]->enableMADRooting(true);
   }
+  _previousGeneRoots.resize(_evaluations.size());
+  std::fill(_previousGeneRoots.begin(), _previousGeneRoots.end(), nullptr);
+}
+  
+void SpeciesTreeOptimizer::beforeTestCallback()
+{
+  if (_modelRates.info.rootedGeneTree) {
+    for (unsigned int i = 0; i < _evaluations.size(); ++i) {
+      _previousGeneRoots[i] = _evaluations[i]->getRoot();
+    }
+  }
+}
+
+void SpeciesTreeOptimizer::rollbackCallback()
+{
+  if (_modelRates.info.rootedGeneTree) {
+    for (unsigned int i = 0; i < _evaluations.size(); ++i) {
+      _evaluations[i]->setRoot(_previousGeneRoots[i]);
+    }
+  }
+}
+  
+void SpeciesTreeOptimizer::optimizeGeneRoots()
+{
+  for (unsigned int i = 0; i < _evaluations.size(); ++i) {
+    _evaluations[i]->setRoot(nullptr);
+  }
+  
 }
 
 void SpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
@@ -684,4 +729,7 @@ unsigned int SpeciesTreeOptimizer::_unsupportedCladesNumber()
       _geneClades);
   return speciesClades.size() - intersectionSize;
 }
+  
+
+
 

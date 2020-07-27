@@ -66,9 +66,9 @@ void ReconciliationEvaluation::setRoot(pll_unode_t * root)
   _evaluators->setRoot(root);
 }
 
-double ReconciliationEvaluation::evaluate(bool fastMode)
+double ReconciliationEvaluation::evaluate()
 {
-  return _evaluators->computeLogLikelihood(fastMode);
+  return _evaluators->computeLogLikelihood();
 }
   
 void ReconciliationEvaluation::enableMADRooting(bool enable)

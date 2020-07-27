@@ -42,7 +42,7 @@ public:
   /**
    * (incrementally) compute and return the likelihood of the gene tree 
    */
-  virtual double computeLogLikelihood(bool fastMode = false) = 0;
+  virtual double computeLogLikelihood() = 0;
 
   /**
    * If implemented, rollback to the state before the
@@ -114,7 +114,7 @@ public:
   // overload from parent
   virtual void setRates(const RatesVector &rates) = 0;
   // overload from parent
-  virtual double computeLogLikelihood(bool fastMode = false);
+  virtual double computeLogLikelihood();
   // overload from parent 
   virtual bool isParsimony() const {return false;}
   // overload from parent 
@@ -200,7 +200,6 @@ protected:
   std::vector<unsigned int> _geneIds;
   std::vector<pll_rnode_t *> _geneToSpeciesLCA;
   unsigned int _maxGeneId;
-  bool _fastMode;
   PartialLikelihoodMode _likelihoodMode;
   std::vector<double> _fm;
   PLLRootedTree &_speciesTree;
@@ -260,7 +259,6 @@ AbstractReconciliationModel<REAL>::AbstractReconciliationModel(
   _info(recModelInfo),
   _geneRoot(0),
   _maxGeneId(1),
-  _fastMode(false),
   _likelihoodMode(PartialLikelihoodMode::PartialGenes),
   _speciesTree(speciesTree),
   _geneNameToSpeciesName(geneSpeciesMapping.getMap()),
@@ -489,11 +487,9 @@ void AbstractReconciliationModel<REAL>::getRoots(std::vector<pll_unode_t *> &roo
 }
   
 template <class REAL>
-double AbstractReconciliationModel<REAL>::computeLogLikelihood(bool fastMode)
+double AbstractReconciliationModel<REAL>::computeLogLikelihood()
 {
-  _fastMode = fastMode;
   beforeComputeLogLikelihood();
-  //Logger::info << "computeLikelihoods " << _fastMode << " " << _speciesNodesToUpdate.size() << std::endl;
   auto root = getRoot();
   updateCLVs();
   computeLikelihoods();
@@ -509,7 +505,6 @@ double AbstractReconciliationModel<REAL>::computeLogLikelihood(bool fastMode)
   
   auto res = getSumLikelihood();
   afterComputeLogLikelihood();
-  _fastMode = false;
   return res;
 }
 
