@@ -22,6 +22,7 @@ struct RecModelInfo {
     model(RecModel::UndatedDTL),
     perFamilyRates(false),
     pruneSpeciesTree(false),
+    rootedGeneTree(false),
     branchLengthThreshold(-1.0)
   {
 
@@ -30,11 +31,13 @@ struct RecModelInfo {
   RecModelInfo(RecModel model,
       bool perFamilyRates,
       bool pruneSpeciesTree,
+      bool rootedGeneTree,
       double branchLengthThreshold,
       const std::string &fractionMissingFile):
     model(model),
     perFamilyRates(perFamilyRates),
     pruneSpeciesTree(pruneSpeciesTree),
+    rootedGeneTree(rootedGeneTree),
     branchLengthThreshold(branchLengthThreshold),
     fractionMissingFile(fractionMissingFile)
   {
@@ -60,6 +63,7 @@ struct RecModelInfo {
     argv.push_back(std::to_string(static_cast<int>(model)));
     argv.push_back(std::to_string(static_cast<int>(perFamilyRates)));
     argv.push_back(std::to_string(static_cast<int>(pruneSpeciesTree)));
+    argv.push_back(std::to_string(static_cast<int>(rootedGeneTree)));
     argv.push_back(std::to_string(branchLengthThreshold));
     if (fractionMissingFile.size()) {
       argv.push_back(fractionMissingFile);
@@ -71,7 +75,7 @@ struct RecModelInfo {
 
   static int getArgc() 
   {
-    return 5;
+    return 6;
   }
 
   unsigned int modelFreeParameters() const {
