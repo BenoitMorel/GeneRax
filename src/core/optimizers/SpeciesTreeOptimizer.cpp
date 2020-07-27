@@ -79,7 +79,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     size_t hash1 = 0;
     size_t hash2 = 0;
     unsigned int index = 0;
-    optimizeDTLRates();
+    //optimizeDTLRates();
     do {
       if (index++ % 2 == 0) {
         transferSearch();
@@ -193,7 +193,6 @@ bool SpeciesTreeOptimizer::testPruning(unsigned int prune,
     _okForClades++;
     optimizeGeneRoots();
     _lastRecLL = computeRecLikelihood();
-    auto diff = _lastRecLL - geneRootApproxLL;
     _averageGeneRootDiff.addValue(_lastRecLL - geneRootApproxLL);
     if (_lastRecLL > _bestRecLL) {
       // Better tree found! keep it and return
@@ -330,9 +329,11 @@ double SpeciesTreeOptimizer::reconciliationRound()
 //#define STUPID_CORRECTION
 #define NEW_CORRECTION
 //#define BOTH_CORRECTIONS
-double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
+double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist,
+    bool &maxImprovementsReached)
 {
-  unsigned int reconciliationSamples = 10;
+  maxImprovementsReached = false;
+  unsigned int reconciliationSamples = 0;
   unsigned int minTransfers = 1;
   _bestRecLL = computeRecLikelihood();
   auto hash1 = _speciesTree->getNodeIndexHash(); 
@@ -445,7 +446,8 @@ double SpeciesTreeOptimizer::fastTransfersRound(MovesBlackList &blacklist)
         failures++;
       }
       bool stop = index > minTrial && failures > stopAfterFailures;
-      stop |= improvements > stopAfterImprovements;
+      maxImprovementsReached = improvements > stopAfterImprovements;
+      stop |= maxImprovementsReached;
       if (stop) {
         return _bestRecLL;
       }
@@ -502,12 +504,14 @@ double SpeciesTreeOptimizer::transferSearch()
     << ")" <<std::endl;
   double newLL = bestLL;
   MovesBlackList blacklist;
-  int index = 0;
+  unsigned int index = 0;
+  bool maxImprovementsReached = true;
   do {
-    if (index > 0) {
+    bestLL = newLL;
+    if (maxImprovementsReached) {
       bestLL = optimizeDTLRates();
     }
-    newLL = fastTransfersRound(blacklist);
+    newLL = fastTransfersRound(blacklist, maxImprovementsReached);
     Logger::info << "  Accepted: " << _okForClades << std::endl;
     Logger::info << "  Rejected: " << _koForClades << std::endl;
     index++;

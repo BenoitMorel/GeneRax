@@ -76,7 +76,8 @@ public:
   
   double rootExhaustiveSearch();
   double transferSearch();
-  double fastTransfersRound(MovesBlackList &blacklist);
+  double fastTransfersRound(MovesBlackList &blacklist, 
+      bool &maxImprovementsReached);
   double reconciliationSearch();
   double reconciliationRound();
   double sprSearch(unsigned int radius);
