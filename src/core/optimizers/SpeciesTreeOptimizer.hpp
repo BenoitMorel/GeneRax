@@ -78,15 +78,11 @@ public:
   double transferSearch();
   double fastTransfersRound(MovesBlackList &blacklist, 
       bool &maxImprovementsReached);
-  double reconciliationSearch();
-  double reconciliationRound();
   double sprSearch(unsigned int radius);
   double fastSPRRound(unsigned int radius);
   double optimizeDTLRates();
  
 
-  double computeLikelihood();
-  // return the path to the saved species tree
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
   const SpeciesTree &getSpeciesTree() const {return *_speciesTree;} 
