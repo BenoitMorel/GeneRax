@@ -4,8 +4,9 @@
 #include <IO/Logger.hpp>
 #include <IO/LibpllParsers.hpp>
 #include <trees/SpeciesTree.hpp>
-#include <optimizers/DTLOptimizer.hpp>
 #include <parallelization/ParallelContext.hpp>
+#include <optimizers/DTLOptimizer.hpp>
+#include <optimizers/SpeciesTreeOptimizer.hpp>
 #include <parallelization/PerCoreGeneTrees.hpp>
 #include <IO/FileSystem.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
@@ -21,8 +22,11 @@
   
 std::unique_ptr<PLLRootedTree> 
 Routines::computeInitialSpeciesTree(Families &families,
-      SpeciesTreeAlgorithm algo)
+    const std::string globalOutputDir,
+    SpeciesTreeAlgorithm algo)
 {
+  std::string cladeOutput = FileSystem::joinPaths(
+      globalOutputDir, "cladesSpeciesTree");
   switch (algo) {
   case SpeciesTreeAlgorithm::MiniNJ:
     return MiniNJ::runMiniNJ(families); 
@@ -40,12 +44,43 @@ Routines::computeInitialSpeciesTree(Families &families,
     return std::make_unique<PLLRootedTree>(
         std::make_unique<SpeciesTree>(families)->getTree().getNewickString(), 
         false);
+  case SpeciesTreeAlgorithm::Clades:
+    FileSystem::mkdir(cladeOutput, true);
+    return computeSupportedCladeTree(families, cladeOutput);
   case SpeciesTreeAlgorithm::User:
     assert(false);
   }
   return nullptr;
 }
 
+std::unique_ptr<PLLRootedTree> 
+Routines::computeSupportedCladeTree(Families &families, 
+    const std::string &outputDir)
+{
+  ParallelContext::barrier();
+  Logger::info << "Generating random species tree..." << std::endl;
+  auto randomSpeciesTree = std::make_unique<SpeciesTree>(families);
+  auto speciesTreePath = FileSystem::joinPaths(outputDir, "random_starting_tree.newick");
+  randomSpeciesTree->saveToFile(speciesTreePath, true);
+  ParallelContext::barrier();
+  Logger::info << "Random species tree generated!" << std::endl;
+  RecModelInfo info;
+  bool userRates = true;
+  bool constrainSearch = false;
+  Logger::info << "Starting Clade tree search" << std::endl;
+  SpeciesTreeOptimizer speciesTreeOptimizer(speciesTreePath, 
+      families, 
+      info, 
+      info.getDefaultGlobalParameters(), 
+      userRates, 
+      outputDir, 
+      constrainSearch);
+  speciesTreeOptimizer.optimize(SpeciesSearchStrategy::HYBRID,
+    1,
+    SpeciesTreeOptimizer::SupportedClades);
+  return std::make_unique<PLLRootedTree>(
+      speciesTreeOptimizer.getSpeciesTree().getTree().getNewickString(), false);
+}
 
 void Routines::runRaxmlOptimization(Families &families,
     const std::string &output,

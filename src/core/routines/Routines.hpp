@@ -22,8 +22,14 @@ public:
   Routines() = delete;
 
 
-  static std::unique_ptr<PLLRootedTree> computeInitialSpeciesTree(Families &family,
+  static std::unique_ptr<PLLRootedTree> computeInitialSpeciesTree(
+      Families &family,
+      const std::string globalOutputDir,
       SpeciesTreeAlgorithm algo);
+
+  static std::unique_ptr<PLLRootedTree> computeSupportedCladeTree(
+      Families &family,
+      const std::string &outputDir);
 
   /*
    *  Schedule gene tree inference using
@@ -157,6 +163,7 @@ public:
     PLLRootedTree &speciesTree, 
     const RecModelInfo &recModelInfo,
     Evaluations &evaluations);
+
 
 private:
   static void parseOrthoGroups(const std::string &familyName,

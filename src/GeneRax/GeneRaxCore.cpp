@@ -44,7 +44,8 @@ static void initStartingSpeciesTree(GeneRaxInstance &instance)
     // add labels to internal nodes
     LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
   } else {
-    Routines::computeInitialSpeciesTree(instance.initialFamilies, 
+    Routines::computeInitialSpeciesTree(instance.initialFamilies,
+        instance.args.output,
         instance.args.speciesTreeAlgorithm)->save(instance.speciesTree);
 
   }
@@ -76,7 +77,7 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   }
   Logger::info << "Starting species tree initialization..." << std::endl;
   initStartingSpeciesTree(instance);
-
+  Logger::info << "End of species tree initialization" << std::endl;
   if (instance.args.filterFamilies) {
     Logger::timed << "Filtering invalid families based on the starting species tree..." << std::endl;
     Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, true);
@@ -120,29 +121,13 @@ void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
   if (instance.args.rerootSpeciesTree) {
     Logger::info << "Rerooting the species tree..." << std::endl;
     Logger::info << "Reroot species tree..." << std::endl;
-    Parameters startingRates;
-    switch (instance.recModelInfo.model) {
-    case RecModel::ParsimonyD:
-      startingRates = Parameters();
-      break;
-    case RecModel::UndatedDL:
-      startingRates = Parameters(instance.args.dupRate, instance.args.lossRate);
-    break;
-    case RecModel::UndatedDTL:
-      startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate);
-      break;
-    case RecModel::SimpleDS:
-      startingRates = Parameters(1);
-      startingRates[0] = instance.args.dupRate;
-      break;
-    }
+    Parameters startingRates = instance.getUserParameters();
     SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, 
         instance.currentFamilies, 
         instance.getRecModelInfo(), 
         startingRates, 
         instance.args.userDTLRates, 
         instance.args.output, 
-        instance.args.exec, 
         instance.args.constrainSpeciesSearch);
     speciesTreeOptimizer.optimizeDTLRates();
     speciesTreeOptimizer.rootExhaustiveSearch();
@@ -161,29 +146,13 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
   }
 
   ParallelContext::barrier();
-  Parameters startingRates;
-  switch (instance.recModelInfo.model) {
-  case RecModel::ParsimonyD:
-    startingRates = Parameters();
-    break;
-  case RecModel::UndatedDL:
-    startingRates = Parameters(instance.args.dupRate, instance.args.lossRate);
-  break;
-    case RecModel::UndatedDTL:
-    startingRates = Parameters(instance.args.dupRate, instance.args.lossRate, instance.args.transferRate);
-    break;
-  case RecModel::SimpleDS:
-    startingRates = Parameters(1);
-    startingRates[0] = instance.args.dupRate;
-    break;
-  }
+  Parameters startingRates = instance.getUserParameters();
   SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, 
       instance.currentFamilies, 
       instance.getRecModelInfo(), 
       startingRates, 
       instance.args.userDTLRates, 
       instance.args.output, 
-      instance.args.exec, 
       instance.args.constrainSpeciesSearch);
   if (instance.args.speciesFastRadius > 0) {
     Logger::info << std::endl;

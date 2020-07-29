@@ -1,6 +1,7 @@
 #pragma once
 
 #include <util/enums.hpp>
+#include <maths/Parameters.hpp>
 
 struct RecModelInfo {
   // reconciliation model (UndatedDTL, UndatedDL, etc)
@@ -20,9 +21,9 @@ struct RecModelInfo {
   
   RecModelInfo():
     model(RecModel::UndatedDTL),
-    perFamilyRates(false),
-    pruneSpeciesTree(false),
-    rootedGeneTree(false),
+    perFamilyRates(true),
+    pruneSpeciesTree(true),
+    rootedGeneTree(true),
     branchLengthThreshold(-1.0)
   {
 
@@ -81,5 +82,34 @@ struct RecModelInfo {
   unsigned int modelFreeParameters() const {
     return Enums::freeParameters(model);
   }
+ 
+  /*
+   *  Return global parameters with the appropriate 
+   *  number of values (all set to 0.1)
+   */
+  Parameters getDefaultGlobalParameters() const {
+    Parameters res(modelFreeParameters());
+    for (unsigned int i = 0; i < res.dimensions(); ++i) {
+      res[i] = 0.1;
+    }
+    return res;
+  }
 
+  /*
+   * Takes user-define parameters and return parameters
+   * with the appropriate dimensions. If the input parameters
+   * have too many values, the last ones are discarded, and if
+   * it does not have enough values, they are completed with 0.1
+   */
+  Parameters getParametersFromUser(const Parameters &user) const {
+    Parameters res(modelFreeParameters());
+    for (unsigned int i = 0; i < res.dimensions(); ++i) {
+      if (user.dimensions() > i) {
+        res[i] = user[i];
+      } else {
+        res[i] = 0.1;
+      }
+    }
+    return res;
+  }
 };

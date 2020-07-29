@@ -41,28 +41,14 @@ struct GeneRaxInstance {
         args.minGeneBranchLength,
         fractionMissingFile
         );
-    switch (recModelInfo.model) {
-      case RecModel::ParsimonyD:
-      rates = Parameters();
-      break;
-      case RecModel::UndatedDL:
-      rates = Parameters(2);
-      rates[0] = args.dupRate;
-      rates[1] = args.lossRate;
-      break;
-      case RecModel::UndatedDTL:
-      rates = Parameters(3);
-      rates[0] = args.dupRate;
-      rates[1] = args.lossRate;
-      rates[2] = args.transferRate;
-      break;
-      case RecModel::SimpleDS:
-      rates = Parameters(1);
-      rates[0] = args.dupRate;
-      break;
-    }
+    rates = getUserParameters();
   }
   
+  Parameters getUserParameters() const {
+    Parameters user(args.dupRate, args.lossRate, args.transferRate);
+    return recModelInfo.getParametersFromUser(user);
+  }
+
   GeneRaxInstance(const GeneRaxInstance &) = delete;
   GeneRaxInstance & operator = (const GeneRaxInstance &) = delete;
   GeneRaxInstance(GeneRaxInstance &&) = delete;

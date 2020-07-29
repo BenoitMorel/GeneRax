@@ -89,7 +89,6 @@ CladeSet Clade::buildCladeSet(PLLRootedTree &tree)
   CladeSet res;
   for (auto &clade: clades) {
     res.insert(clade.getHash());
-    //res.insert(clade.getComplement(maximumClade).getHash());
   }
   res.erase(maximumClade.getHash());
   res.erase(emptyClade.getHash());

@@ -49,8 +49,9 @@ int main(int argc, char** argv)
   info.mappingFile = inputMappingFile;
   families.push_back(info);
   SpeciesTreeAlgorithm speciesTreeAlgorithm = Enums::strToSpeciesTree(algoStr);
-
+  std::string fakeOutputDir = "njrax_output";
   auto speciesTree(Routines::computeInitialSpeciesTree(families, 
+        fakeOutputDir,
         speciesTreeAlgorithm));
   speciesTree->save(outputSpeciesTree);
   return 0;

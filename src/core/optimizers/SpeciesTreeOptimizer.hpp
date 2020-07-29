@@ -12,6 +12,7 @@
 #include <trees/Clade.hpp>
 
 
+
 struct EvaluatedMove {
   unsigned int prune;
   unsigned int regraft;
@@ -19,35 +20,6 @@ struct EvaluatedMove {
 };
 
 struct MovesBlackList;
-
-struct SpeciesSearchStats {
-  unsigned int exactLikelihoodCalls;
-  unsigned int approxLikelihoodCalls;
-  unsigned int testedTrees;
-  unsigned int testedTransfers;
-  unsigned int acceptedTrees;
-  unsigned int acceptedTransfers;
-  SpeciesSearchStats() { reset(); }
-
-  friend std::ostream& operator<<(std::ostream& os , const SpeciesSearchStats &) {
-    /*
-    os << "Tested trees: " << stats.testedTrees << std::endl;
-    os << "Accepted trees: " << stats.acceptedTrees << std::endl;
-    os << "Tested transfers: " << stats.testedTransfers << std::endl;
-    os << "Accepted transfers trees: " << stats.acceptedTransfers << std::endl;
-    */
-    //os << "Exact likelihood calls: " << stats.exactLikelihoodCalls << std::endl;
-    return os;
-  }
-  void reset() {
-    exactLikelihoodCalls = 0;
-    approxLikelihoodCalls = 0;
-    testedTrees = 0;
-    testedTransfers = 0;
-    acceptedTrees = 0;
-    acceptedTransfers = 0;
-  }
-};
 
 class SpeciesTreeOptimizer: public SpeciesTree::Listener {
 public:
@@ -57,7 +29,6 @@ public:
       const Parameters &startingRates,
       bool userDTLRates,
       const std::string &outputDir,
-      const std::string &execPath,
       bool constrainSearch);
   
   // forbid copy
@@ -67,21 +38,20 @@ public:
   SpeciesTreeOptimizer & operator = (SpeciesTreeOptimizer &&) = delete;
   virtual ~SpeciesTreeOptimizer(); 
    
-
+  enum OptimizationCriteria {
+    ReconciliationLikelihood = 0,
+    SupportedClades
+  };
 
   virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
   void optimize(SpeciesSearchStrategy strategy,
-      unsigned int sprRadius);
+      unsigned int sprRadius,
+      OptimizationCriteria criteria = ReconciliationLikelihood);
+  
+  double optimizeDTLRates();
   
   double rootExhaustiveSearch();
-  double transferSearch();
-  double fastTransfersRound(MovesBlackList &blacklist, 
-      bool &maxImprovementsReached);
-  double sprSearch(unsigned int radius);
-  double fastSPRRound(unsigned int radius);
-  double optimizeDTLRates();
- 
 
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
@@ -92,9 +62,6 @@ public:
   double computeRecLikelihood();
 
 
-  void likelihoodsSnapshot();
-
-
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
@@ -102,10 +69,8 @@ private:
   std::vector<pll_unode_t*> _previousGeneRoots;
   Families _initialFamilies;
   std::string _outputDir;
-  std::string _execPath;
   double _lastRecLL;
   double _bestRecLL;
-  SpeciesSearchStats _stats;
   bool _firstOptimizeRatesCall;
   bool _userDTLRates;
   ModelParameters _modelRates;
@@ -114,6 +79,8 @@ private:
   unsigned int _okForClades;
   unsigned int _koForClades;
   AverageStream _averageGeneRootDiff;
+  bool _hardToFindBetter;
+  OptimizationCriteria _optimizationCriteria;
 private:
   void _computeAllGeneClades();
   unsigned int _unsupportedCladesNumber();
@@ -135,4 +102,14 @@ private:
   void setGeneTreesFromFamilies(const Families &families);
   void reGenerateEvaluations();
   void optimizeGeneRoots();
+  double transferSearch();
+  double transferRound(MovesBlackList &blacklist, 
+      bool &maxImprovementsReached);
+  double sprSearch(unsigned int radius);
+  double fastSPRRound(unsigned int radius);
+  double veryLocalSearch(unsigned int spid1,
+      unsigned int spid2);
+  void setOptimizationCriteria(OptimizationCriteria criteria) {
+    _optimizationCriteria = criteria;
+  }
 };
