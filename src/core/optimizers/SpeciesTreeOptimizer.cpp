@@ -254,6 +254,23 @@ struct hash<TransferMove>
 }
 
 
+static std::unordered_map<std::string, double> getCoverage(const std::string &path)
+{
+  std::ifstream is(path);
+  std::unordered_map<std::string, double> res;
+  std::string line;
+  std::getline(is, line);
+  while (std::getline(is, line))
+  {
+    std::istringstream iss(line);
+    std::string species;
+    double coverage;
+    iss >> species >> coverage;
+    species.pop_back();
+    res.insert({species, coverage});
+  }
+  return res;
+}
 
 struct MovesBlackList {
   std::unordered_set<TransferMove> _blacklist;
@@ -261,7 +278,7 @@ struct MovesBlackList {
   void blacklist(const TransferMove &move) { _blacklist.insert(move); }
 };
 
-
+#define BOTH_CORRECTIONS
 double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
     bool &maxImprovementsReached)
 {
@@ -294,11 +311,24 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
     speciesFrequencies.push_back(speciesEvents.speciesFrequency());
   }
   Logger::timed << "Start generating transfer SPR moves......" << std::endl;
+  auto coverages = getCoverage(_outputDir + "/perSpeciesCoverage.txt");
   unsigned int transfers = 0;
   ParallelContext::barrier();
   std::unordered_map<std::string, unsigned int> labelsToIds;
   _speciesTree->getLabelsToId(labelsToIds);
   std::vector<TransferMove> transferMoves;
+#ifndef NEW_CORRECTION
+  static int plop = 0;
+#endif
+#ifdef NO_CORRECTION
+  plop = 1;
+#endif
+#ifdef STUPID_CORRECTION
+  plop = 0;
+#endif
+#ifdef BOTH_CORRECTIONS
+  plop++;
+#endif
   for (auto entry: frequencies) {
     transfers += entry.second;
     if (entry.second >= minTransfers) {
@@ -310,9 +340,22 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
         TransferMove move(prune, regraft, entry.second);
         double factor = 1.0;
         if (_modelRates.info.pruneSpeciesTree) {
+#ifdef NEW_CORRECTION
           factor /= (1.0 + sqrt(speciesFrequencies[prune]));
           factor /= (1.0 + sqrt(speciesFrequencies[regraft]));
-        }
+#else
+          if (plop % 2 == 0) {
+            if (coverages.find(key1) != coverages.end()) {
+              assert(coverages[key1] != 0.0);
+              factor /= coverages[key1];
+            }
+            if (coverages.find(key2) != coverages.end()) {
+              assert(coverages[key2] != 0.0);
+              factor /= coverages[key2];
+            }
+          }
+#endif 
+        }       
         if (!blacklist.isBlackListed(move)) {
           transferMoves.push_back(TransferMove(prune, regraft, factor * entry.second)); 
         }
