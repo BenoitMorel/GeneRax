@@ -36,7 +36,7 @@ struct SpeciesEvents {
 
 
   double speciesFrequency() const {
-    return SCount + TCount;
+    return SCount + TCount + DCount + SLCount + TLCount;
   }
 };
 
