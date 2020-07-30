@@ -85,7 +85,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     unsigned int index = 0;
     if (_hardToFindBetter) {
       optimizeDTLRates();
-      rootExhaustiveSearch(3);
+      rootSearch(3);
     }
     do {
       if (index++ % 2 == 0) {
@@ -94,12 +94,12 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
         sprSearch(1);
       }
       if (_hardToFindBetter) {
-        rootExhaustiveSearch(3);
+        rootSearch(3);
       }
       hash1 = _speciesTree->getHash();
     }
     while(testAndSwap(hash1, hash2));
-    rootExhaustiveSearch();
+    rootSearch();
     break;
   }
   setOptimizationCriteria(ReconciliationLikelihood);
@@ -111,7 +111,7 @@ SpeciesTreeOptimizer::~SpeciesTreeOptimizer()
   _speciesTree->removeListener(this);
 }
   
-void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree, 
+void SpeciesTreeOptimizer::rootSearchAux(SpeciesTree &speciesTree, 
     PerCoreGeneTrees &geneTrees, 
     RecModel model, 
     std::vector<unsigned int> &movesHistory, 
@@ -141,7 +141,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree,
         Logger::info << "Found better root " << ll << std::endl;
         plop = 3;
       }
-      rootExhaustiveSearchAux(speciesTree, 
+      rootSearchAux(speciesTree, 
           geneTrees, 
           model, 
           movesHistory, 
@@ -156,7 +156,7 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree,
   }
 }
 
-double SpeciesTreeOptimizer::rootExhaustiveSearch(unsigned int maxDepth)
+double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
 {
   Logger::timed << "Root search with depth=" << maxDepth << std::endl;
   std::vector<unsigned int> movesHistory;
@@ -164,7 +164,7 @@ double SpeciesTreeOptimizer::rootExhaustiveSearch(unsigned int maxDepth)
   double bestLL = computeRecLikelihood();
   unsigned int visits = 1;
   movesHistory.push_back(0);
-  rootExhaustiveSearchAux(*_speciesTree, 
+  rootSearchAux(*_speciesTree, 
       *_geneTrees, 
       _modelRates.info.model, 
       movesHistory, 
@@ -173,7 +173,7 @@ double SpeciesTreeOptimizer::rootExhaustiveSearch(unsigned int maxDepth)
       visits, 
       maxDepth); 
   movesHistory[0] = 1;
-  rootExhaustiveSearchAux(*_speciesTree, 
+  rootSearchAux(*_speciesTree, 
       *_geneTrees, 
       _modelRates.info.model, 
       movesHistory, 

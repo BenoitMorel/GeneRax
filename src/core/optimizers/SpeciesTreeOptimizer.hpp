@@ -51,7 +51,7 @@ public:
   
   double optimizeDTLRates();
   
-  double rootExhaustiveSearch(unsigned int maxDepth = 1000000);
+  double rootSearch(unsigned int maxDepth = 1000000);
 
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
@@ -86,7 +86,7 @@ private:
   unsigned int _unsupportedCladesNumber();
   ModelParameters computeOptimizedRates(); 
   void updateEvaluations();
-  void rootExhaustiveSearchAux(SpeciesTree &speciesTree, 
+  void rootSearchAux(SpeciesTree &speciesTree, 
       PerCoreGeneTrees &geneTrees, 
       RecModel model, 
       std::vector<unsigned int> &movesHistory, 

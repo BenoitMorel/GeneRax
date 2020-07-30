@@ -130,7 +130,7 @@ void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
         instance.args.output, 
         instance.args.constrainSpeciesSearch);
     speciesTreeOptimizer.optimizeDTLRates();
-    speciesTreeOptimizer.rootExhaustiveSearch();
+    speciesTreeOptimizer.rootSearch();
     instance.speciesTree = speciesTreeOptimizer.saveCurrentSpeciesTreeId();
   }
 }
