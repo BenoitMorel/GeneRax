@@ -13,7 +13,10 @@ class Parameters;
 class ModelParameters;
 class PLLRootedTree;
 class PerCoreGeneTrees;
-typedef std::unordered_map<std::string, unsigned int> TransferFrequencies;
+struct TransferFrequencies {
+  MatrixUint count;
+  std::vector<std::string> idToLabel;
+};
 
 
 class Routines {
@@ -92,8 +95,7 @@ public:
     Families &families,
     const ModelParameters &modelRates,
     unsigned int reconciliationSamples,
-    TransferFrequencies &frequencies,
-    const std::string &outputDir);
+    TransferFrequencies &frequencies);
   
   static void getLabelsFromTransferKey(const std::string &key, 
       std::string &label1, 
@@ -116,7 +118,7 @@ public:
     bool bestReconciliation,
     unsigned int reconciliationSamples,
     bool optimizeRates,
-    bool saveTransfersOnly = false
+    bool doNotWriteToFile = false
     );
 
   /**

@@ -17,6 +17,7 @@ extern "C" {
 #include <unordered_set>
 #include <util/CArrayRange.hpp>
 #include <util/enums.hpp>
+#include <util/types.hpp>
 
 
 /**
@@ -125,6 +126,15 @@ public:
   
   void buildLCACache();
 
+  /**
+   *  Compute and return a mapping between labels and 
+   *  unique IDs, such that the mapping does
+   *  not depend on the internal indices (to be sure
+   *  that the IDs are the same for different processes
+   *  working together)
+   */
+  StringToUint getDeterministicLabelToId() const;
+  std::vector<std::string> getDeterministicIdToLabel() const;
 private:
   std::unique_ptr<pll_rtree_t, void(*)(pll_rtree_t*)> _tree;
   

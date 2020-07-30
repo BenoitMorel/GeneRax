@@ -178,6 +178,19 @@ void ParallelContext::sumVectorDouble(std::vector<double> &value)
 #endif
 }
 
+void ParallelContext::sumVectorUInt(std::vector<unsigned int> &value)
+{
+#ifdef WITH_MPI
+  if (!_mpiEnabled) {
+    return;
+  }
+  std::vector<unsigned int> sum(value.size());
+  barrier();
+  MPI_Allreduce(&(value[0]), &(sum[0]), static_cast<int>(value.size()), MPI_UNSIGNED, MPI_SUM, getComm());
+  value = sum;
+#endif
+}
+
 void ParallelContext::parallelAnd(bool &value)
 {
 #ifdef WITH_MPI

@@ -57,6 +57,7 @@ public:
   static void sumDouble(double &value);
   static void sumUInt(unsigned int &value);
   static void sumVectorDouble(std::vector<double> &value);
+  static void sumVectorUInt(std::vector<unsigned int> &value);
   static void maxUInt(unsigned int &value);
   
   static void parallelAnd(bool &value);

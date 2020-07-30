@@ -299,8 +299,7 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
     _initialFamilies,
     _modelRates,
     reconciliationSamples,
-    frequencies,
-    _outputDir);
+    frequencies);
   PerSpeciesEvents perSpeciesEvents;
   Routines::getPerSpeciesEvents(speciesTreeFile,
     _initialFamilies,
@@ -319,22 +318,23 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
   std::unordered_map<std::string, unsigned int> labelsToIds;
   _speciesTree->getLabelsToId(labelsToIds);
   std::vector<TransferMove> transferMoves;
-  for (auto entry: frequencies) {
-    transfers += entry.second;
-    if (entry.second >= minTransfers) {
-      std::string key1, key2;
-      Routines::getLabelsFromTransferKey(entry.first, key1, key2);
-      unsigned int prune = labelsToIds[key2];
-      unsigned int regraft = labelsToIds[key1];
+  for (unsigned int from = 0; from < frequencies.count.size(); ++from) {
+    for (unsigned int to = 0; to < frequencies.count.size(); ++to) {
+      auto regraft = labelsToIds[frequencies.idToLabel[from]];
+      auto prune = labelsToIds[frequencies.idToLabel[to]];
+      auto count = frequencies.count[from][to];
+      if (count < minTransfers) {
+        continue;
+      }
       if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, prune, regraft)) {
-        TransferMove move(prune, regraft, entry.second);
+        TransferMove move(prune, regraft, count);
         double factor = 1.0;
         if (_modelRates.info.pruneSpeciesTree) {
           factor /= (1.0 + sqrt(speciesFrequencies[prune]));
           factor /= (1.0 + sqrt(speciesFrequencies[regraft]));
         }
         if (!blacklist.isBlackListed(move)) {
-          transferMoves.push_back(TransferMove(prune, regraft, factor * entry.second)); 
+          transferMoves.push_back(TransferMove(prune, regraft, factor * count)); 
         }
       }
     }

@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <util/enums.hpp>
+#include <util/types.hpp>
 #include <memory>
 #include <unordered_set>
 extern "C" {
@@ -137,6 +138,8 @@ public:
   void saveAllOrthoGroups(std::string &filename, bool masterRankOnly = true) const;
   void savePerSpeciesEventsCounts(const std::string &filename, bool masterRankOnl = true);
   void gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents) const;
+  void countTransfers(const StringToUint &labelToId,
+      MatrixUint &count);
   /**
    * The following methods help blacklisting pairs of gene and species nodes.
    * The motivation is that both ML and sampling reconciliation inference algorithm

@@ -355,4 +355,22 @@ void PLLRootedTree::buildLCACache()
 
 }
 
+StringToUint PLLRootedTree::getDeterministicLabelToId() const
+{
+  StringToUint res;
+  auto v = getDeterministicIdToLabel();
+  for (unsigned int i = 0; i < v.size(); ++i) {
+    res[v[i]] = i;
+  }
+  return res;
+}
 
+std::vector<std::string> PLLRootedTree::getDeterministicIdToLabel() const
+{
+  std::vector<std::string> labels;
+  for (auto node: getNodes()) {
+    labels.push_back(std::string(node->label)); 
+  }
+  std::sort(labels.begin(), labels.end());
+  return labels;
+}

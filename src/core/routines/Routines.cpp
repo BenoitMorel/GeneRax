@@ -242,7 +242,7 @@ void Routines::inferReconciliation(
     bool bestReconciliation,
     unsigned int reconciliationSamples,
     bool optimizeRates,
-    bool saveTransfersOnly
+    bool doNotWriteToFile
     )
 {
   PerCoreGeneTrees geneTrees(families);
@@ -269,7 +269,7 @@ void Routines::inferReconciliation(
       std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, 
           tree.name + "_reconciliated.xml");
       auto &scenario = scenarios[i];
-      if (!saveTransfersOnly) {
+      if (!doNotWriteToFile) {
         scenario.saveEventsCounts(eventCountsFile, false);
         scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
         scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, ReconciliationFormat::RecPhyloXML, false);
@@ -297,7 +297,7 @@ void Routines::inferReconciliation(
         auto scenarioIndex = sample + i * reconciliationSamples;
         auto &scenario = scenarios[scenarioIndex];
         std::string transfersFile = getTransfersFile(outputDir, tree.name, sample);
-        if (!saveTransfersOnly) {
+        if (!doNotWriteToFile) {
           scenario.saveReconciliation(nhxOs, ReconciliationFormat::NHX);
         }
         scenario.saveTransfers(transfersFile, false);
@@ -452,36 +452,6 @@ static std::string getLocalTempFile(const std::string &outputDir,
   return FileSystem::joinPaths(outputDir, f); 
 }
 
-void mpiMergeTransferFrequencies(TransferFrequencies &frequencies,
-    const std::string &outputDir)
-{
-  std::string tempPath = getLocalTempFile(outputDir, ParallelContext::getRank());
-  std::ofstream os(tempPath);
-  for (auto &pair: frequencies) {
-    os << pair.first << " " << pair.second << std::endl;
-  }
-  os.close();
-  frequencies.clear();
-  ParallelContext::barrier();
-  for (unsigned int i = 0; i < ParallelContext::getSize(); ++i) {
-    std::ifstream is(getLocalTempFile(outputDir, i));
-    assert(is.good());
-    std::string line;
-    while (std::getline(is, line)) {
-      std::istringstream iss(line);
-      std::string key;
-      unsigned int freq;
-      iss >> key >> freq;
-      if (frequencies.end() == frequencies.find(key)) {
-        frequencies.insert({key, freq});
-      } else {
-        frequencies[key] += freq;
-      }
-    }
-  }
-  ParallelContext::barrier();
-  remove(tempPath.c_str());
-}
 
 void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
   Families &families,
@@ -528,11 +498,10 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     Families &families,
     const ModelParameters &modelParameters,
     unsigned int reconciliationSamples,
-    TransferFrequencies &transferFrequencies,
-    const std::string &outputDir)
+    TransferFrequencies &transferFrequencies)
 {
   const bool bestReconciliation = (reconciliationSamples == 0);
-  const bool saveTransfersOnly = true; 
+  const bool doNotWriteToFile = true; 
   const bool optimizeRates = false;
   ModelParameters transfersModelParameter;
   if (Enums::accountsForTransfers(modelParameters.info.model)) {
@@ -549,68 +518,37 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
         recModelInfo);
   }
   transfersModelParameter.info.rootedGeneTree = false;
-  inferReconciliation(speciesTreeFile, 
-      families, 
-      transfersModelParameter, 
-      outputDir, bestReconciliation, 
-      reconciliationSamples, 
-      optimizeRates, 
-      saveTransfersOnly);
-  
   SpeciesTree speciesTree(speciesTreeFile);
-  for (int i = (bestReconciliation ? -1 : 0); i < (int)reconciliationSamples; ++i) {
-    auto begin = ParallelContext::getBegin(families.size());
-    auto end = ParallelContext::getEnd(families.size());
-    for (unsigned int j = begin; j < end; ++j) {
-      auto &family = families[j];
-      std::string transfersFile = getTransfersFile(outputDir, family.name, i);
-      std::string line;
-      std::ifstream is(transfersFile);
-      if (!is.good()) {
-        Logger::info << "ERROR " << transfersFile << std::endl;
-      }
-      assert(is.good());
-      while (std::getline(is, line))
-      {
-        std::istringstream iss(line);
-        std::string label1;
-        std::string label2;
-        iss >> label1 >> label2;
-        std::string key = getTransferKey(label1, label2);
-        if (transferFrequencies.end() == transferFrequencies.find(key)) {
-          transferFrequencies.insert(std::pair<std::string, unsigned int>(key, 1));
-        } else {
-          transferFrequencies[key]++;
-        }
-      }
+  PerCoreGeneTrees geneTrees(families);
+  std::vector<Scenario> scenarios;
+  inferAndGetReconciliationScenarios(speciesTree.getTree(), 
+      geneTrees, 
+      transfersModelParameter,
+      reconciliationSamples,
+      optimizeRates, 
+      scenarios);
+  
+  const auto labelToId = speciesTree.getTree().getDeterministicLabelToId();
+  const auto idToLabel = speciesTree.getTree().getDeterministicIdToLabel();
+  const unsigned int labelsNumber = idToLabel.size();
+  const VectorUint zeros(labelsNumber, 0);
+  transferFrequencies.count = MatrixUint(labelsNumber, zeros);
+  transferFrequencies.idToLabel = idToLabel;
+  unsigned int maxSample = std::max<unsigned int>(1u, reconciliationSamples);
+  for (unsigned int sample = 0; sample < maxSample; ++sample) {
+    for (unsigned int i = 0; i < geneTrees.getTrees().size(); ++i) {
+      auto index = sample + i * reconciliationSamples;
+      auto &scenario = scenarios[index];
+      scenario.countTransfers(labelToId, 
+          transferFrequencies.count);
     }
   }
-  mpiMergeTransferFrequencies(transferFrequencies, outputDir);
+  for (unsigned int i = 0; i < labelsNumber; ++i) {
+    ParallelContext::sumVectorUInt(transferFrequencies.count[i]); 
+  }
   ParallelContext::barrier();
   assert(ParallelContext::isRandConsistent());
 }
-
-
-void Routines::getParametersFromTransferFrequencies(const std::string &speciesTreeFile,
-  const TransferFrequencies &frequencies, 
-  Parameters &parameters)
-{
-  SpeciesTree speciesTree(speciesTreeFile);
-  std::unordered_map<std::string, unsigned int> labelsToIds;
-  speciesTree.getLabelsToId(labelsToIds);
-  unsigned int species = speciesTree.getTree().getNodesNumber();
-  parameters = Parameters(species * species);
-  for (auto &frequency: frequencies) {
-    std::string label1;
-    std::string label2;
-    getLabelsFromTransferKey(frequency.first, label1, label2);
-    unsigned int id1 = labelsToIds[label1];
-    unsigned int id2 = labelsToIds[label2];
-    parameters[id1 * species + id2] = frequency.second;
-  }
-}
-
-
 
 
 void Routines::buildEvaluations(PerCoreGeneTrees &geneTrees, 

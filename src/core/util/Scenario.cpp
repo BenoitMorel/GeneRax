@@ -165,6 +165,22 @@ void Scenario::saveReconciliation(ParallelOfstream &os, ReconciliationFormat for
   }
 }
   
+void Scenario::countTransfers(const StringToUint &labelToId,
+      MatrixUint &count)
+{
+
+  for (auto &event: _events) {
+    if (event.type == ReconciliationEventType::EVENT_T 
+        || event.type == ReconciliationEventType::EVENT_TL) {
+      auto labelFrom = _speciesTree->nodes[event.speciesNode]->label;
+      auto labelTo = _speciesTree->nodes[event.destSpeciesNode]->label;
+      auto from = labelToId.at(std::string(labelFrom));
+      auto to = labelToId.at(std::string(labelTo));
+      count[from][to]++;
+    }
+  }
+}
+  
 void Scenario::saveTransfers(const std::string &filename, bool masterRankOnly)
 {
   ParallelOfstream os(filename, masterRankOnly);
