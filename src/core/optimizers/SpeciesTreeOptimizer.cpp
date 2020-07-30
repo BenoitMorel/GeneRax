@@ -323,6 +323,7 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
       auto regraft = labelsToIds[frequencies.idToLabel[from]];
       auto prune = labelsToIds[frequencies.idToLabel[to]];
       auto count = frequencies.count[from][to];
+      transfers += count;
       if (count < minTransfers) {
         continue;
       }

@@ -184,7 +184,7 @@ void ParallelContext::sumVectorUInt(std::vector<unsigned int> &value)
   if (!_mpiEnabled) {
     return;
   }
-  std::vector<unsigned int> sum(value.size());
+  std::vector<unsigned int> sum(value.size(), 0u);
   barrier();
   MPI_Allreduce(&(value[0]), &(sum[0]), static_cast<int>(value.size()), MPI_UNSIGNED, MPI_SUM, getComm());
   value = sum;
