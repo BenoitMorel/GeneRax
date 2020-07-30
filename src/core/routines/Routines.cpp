@@ -485,7 +485,7 @@ void mpiMergeTransferFrequencies(TransferFrequencies &frequencies,
 
 void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
   Families &families,
-  const ModelParameters &modelRates,
+  const ModelParameters &modelParameters,
   unsigned int reconciliationSamples,
   PerSpeciesEvents &events)
 {
@@ -494,10 +494,25 @@ void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
   std::vector<Scenario> scenarios;
   bool optimizeRates = false;
   PerCoreGeneTrees geneTrees(families);
+  ModelParameters transfersModelParameter;
+  if (Enums::accountsForTransfers(modelParameters.info.model)) {
+    transfersModelParameter = modelParameters;
+  } else {
+    // the current model does not account for transfers
+    // to infer transfers, we use a model that does
+    Parameters transfersParameters(0.2, 0.2, 0.2);
+    RecModelInfo recModelInfo = modelParameters.info;
+    recModelInfo.model = RecModel::UndatedDTL;
+    recModelInfo.perFamilyRates = false;
+    transfersModelParameter = ModelParameters(transfersParameters,
+        1,
+        recModelInfo);
+  }
+  transfersModelParameter.info.rootedGeneTree = false;
   inferAndGetReconciliationScenarios(
     speciesTree,
     geneTrees,
-    modelRates,
+    transfersModelParameter,
     reconciliationSamples,
     optimizeRates,
     scenarios);
@@ -533,6 +548,7 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
         1,
         recModelInfo);
   }
+  transfersModelParameter.info.rootedGeneTree = false;
   inferReconciliation(speciesTreeFile, 
       families, 
       transfersModelParameter, 
