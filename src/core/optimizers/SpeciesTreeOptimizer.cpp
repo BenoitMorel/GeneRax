@@ -46,6 +46,11 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _speciesTree->addListener(this);
   saveCurrentSpeciesTreeId();
   _computeAllGeneClades();
+  _hardToFindBetter |= _unsupportedCladesNumber() <= std::max<unsigned int>(
+      _speciesTree->getTree().getNodesNumber() / 10, 1);
+  if (_hardToFindBetter) {
+    Logger::info << "Hard-to-find-better mode" << std::endl;
+  }
 }
 
 static bool testAndSwap(size_t &hash1, size_t &hash2) {
@@ -78,12 +83,18 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     size_t hash1 = 0;
     size_t hash2 = 0;
     unsigned int index = 0;
-    //optimizeDTLRates();
+    if (_hardToFindBetter) {
+      optimizeDTLRates();
+      rootExhaustiveSearch(3);
+    }
     do {
       if (index++ % 2 == 0) {
         transferSearch();
       } else {
         sprSearch(1);
+      }
+      if (_hardToFindBetter) {
+        rootExhaustiveSearch(3);
       }
       hash1 = _speciesTree->getHash();
     }
@@ -106,8 +117,12 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree,
     std::vector<unsigned int> &movesHistory, 
     std::vector<unsigned int> &bestMovesHistory, 
     double &bestLL, 
-    unsigned int &visits)
+    unsigned int &visits,
+    unsigned int maxDepth)
 {
+  if (movesHistory.size() > maxDepth) {
+    return;
+  }
   std::vector<unsigned int> moves;
   moves.push_back(movesHistory.back() % 2);
   moves.push_back(2 + (movesHistory.back() % 2));
@@ -119,10 +134,12 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree,
       optimizeGeneRoots();
       double ll = computeRecLikelihood();
       visits++;
+      unsigned int plop = 0;
       if (ll > bestLL) {
         bestLL = ll;
         bestMovesHistory = movesHistory; 
         Logger::info << "Found better root " << ll << std::endl;
+        plop = 3;
       }
       rootExhaustiveSearchAux(speciesTree, 
           geneTrees, 
@@ -130,7 +147,8 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree,
           movesHistory, 
           bestMovesHistory, 
           bestLL, 
-          visits);
+          visits,
+          maxDepth + plop);
       SpeciesTreeOperator::revertChangeRoot(speciesTree, direction);
       rollbackCallback();
       movesHistory.pop_back();
@@ -138,9 +156,9 @@ void SpeciesTreeOptimizer::rootExhaustiveSearchAux(SpeciesTree &speciesTree,
   }
 }
 
-double SpeciesTreeOptimizer::rootExhaustiveSearch()
+double SpeciesTreeOptimizer::rootExhaustiveSearch(unsigned int maxDepth)
 {
-  Logger::timed << "Root exhaustive search " << std::endl;
+  Logger::timed << "Root search with depth=" << maxDepth << std::endl;
   std::vector<unsigned int> movesHistory;
   std::vector<unsigned int> bestMovesHistory;
   double bestLL = computeRecLikelihood();
@@ -152,7 +170,8 @@ double SpeciesTreeOptimizer::rootExhaustiveSearch()
       movesHistory, 
       bestMovesHistory, 
       bestLL, 
-      visits); 
+      visits, 
+      maxDepth); 
   movesHistory[0] = 1;
   rootExhaustiveSearchAux(*_speciesTree, 
       *_geneTrees, 
@@ -160,8 +179,9 @@ double SpeciesTreeOptimizer::rootExhaustiveSearch()
       movesHistory, 
       bestMovesHistory, 
       bestLL, 
-      visits); 
-  assert (visits == 2 * _speciesTree->getTree().getLeavesNumber() - 3);
+      visits,
+      maxDepth); 
+  //assert (visits == 2 * _speciesTree->getTree().getLeavesNumber() - 3);
   for (unsigned int i = 1; i < bestMovesHistory.size(); ++i) {
     SpeciesTreeOperator::changeRoot(*_speciesTree, bestMovesHistory[i]);
   }
@@ -395,7 +415,7 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
 double SpeciesTreeOptimizer::veryLocalSearch(unsigned int spid1,
       unsigned int spid2)
 {
-  const unsigned int radius = 1;
+  const unsigned int radius = 2;
   std::vector<unsigned int> prunes;
   prunes.push_back(spid1);
   unsigned int trials = 0;

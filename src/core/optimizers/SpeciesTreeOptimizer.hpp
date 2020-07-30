@@ -51,7 +51,7 @@ public:
   
   double optimizeDTLRates();
   
-  double rootExhaustiveSearch();
+  double rootExhaustiveSearch(unsigned int maxDepth = 1000000);
 
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
@@ -92,7 +92,8 @@ private:
       std::vector<unsigned int> &movesHistory, 
       std::vector<unsigned int> &bestMovesHistory, 
       double &bestLL, 
-      unsigned int &visits);
+      unsigned int &visits,
+      unsigned int maxDepth);
   bool testPruning(unsigned int prune,
     unsigned int regraft);
   void newBestTreeCallback();
