@@ -4,7 +4,6 @@
 #include <IO/FileSystem.hpp>
 #include <routines/Routines.hpp>
 #include <algorithm>
-#include <trees/TreeDuplicatesFinder.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <fstream>
 

@@ -36,7 +36,6 @@ set(jointsearch-core_SOURCES
   trees/PLLTreeInfo.cpp
   trees/JointTree.cpp
   trees/SpeciesTree.cpp
-  trees/TreeDuplicatesFinder.cpp
   util/Scenario.cpp
   )
 
