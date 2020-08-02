@@ -11,11 +11,9 @@
 #include <trees/PLLUnrootedTree.hpp>
 #include <algorithm>
 #include <memory>
+#include <util/types.hpp>
 
 
-
-typedef std::vector<double> Count;
-typedef std::vector<Count> DistanceMatrix;
 static const double invalidDouble = std::numeric_limits<double>::infinity();
 
 /*
@@ -43,7 +41,7 @@ public:
   
   static std::unique_ptr<PLLRootedTree> applyNJ(DistanceMatrix &distanceMatrix,
     std::vector<std::string> &speciesIdToSpeciesString,
-    std::unordered_map<std::string, unsigned int> &speciesStringToSpeciesId);
+    StringToUint &speciesStringToSpeciesId);
 private:
   static std::unique_ptr<PLLRootedTree> geneTreeNJ(const Families &families, bool minAlgo, bool ustarAlgo = false, bool reweight = false);
 };

@@ -8,24 +8,21 @@
 #include <IO/Logger.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <trees/PLLUnrootedTree.hpp>
+#include <util/types.hpp>
 #include <unordered_map>
 #include <algorithm>
 
-typedef std::vector<double> VectorDouble;
-typedef std::vector<VectorDouble> MatrixDouble;
-typedef std::unordered_map<std::string, int> StringToInt;
-typedef std::unordered_set<int> GeneIdsSet;
-typedef std::unordered_map<int, GeneIdsSet> SpeciesIdToGeneIds;
-typedef std::pair<int, int> CherryProEdge;
-typedef std::set<int> Clade;
+using GeneIdsSet = std::unordered_set<int>;
+using SpeciesIdToGeneIds = std::unordered_map<int, GeneIdsSet>;
+using CherryProEdge = std::pair<int, int>;
+using Clade = std::set<int>;
+using TripletInt = std::array<int, 3>;
+using TripletBool = std::array<bool, 3>;
 
 static const bool CHERRY_DBG = true;
 static const int PARENT_INDEX = 0;
 static const int LEFT_INDEX = 2;
 static const int RIGHT_INDEX = 1;
-typedef std::array<int, 3> TripletInt;
-typedef std::array<bool, 3> TripletBool;
-
 static const bool USE_CHERRY_PRO_METRIC = true;
 static const bool USE_WEIGHTED_CHERRY_PRO_METRIC = false;
 static const bool ALWAYS_RETAG = false;
@@ -103,7 +100,7 @@ private:
 };
 
 
-typedef std::vector<std::shared_ptr<CherryProTree> > GeneTrees;
+using GeneTrees = std::vector<std::shared_ptr<CherryProTree> >;
 
 int CherryProTree::hackCounter = 0;
 

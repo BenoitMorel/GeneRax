@@ -38,7 +38,7 @@ static DistanceMatrix getQ(DistanceMatrix &distanceMatrix, unsigned int dmSize)
   return Q;
 }
 
-typedef std::pair<unsigned int, unsigned int> Position;
+using Position = std::pair<unsigned int, unsigned int>;
 
 Position findMinPosition(const DistanceMatrix &distanceMatrix)
 {
@@ -62,7 +62,7 @@ Position findMinPosition(const DistanceMatrix &distanceMatrix)
 
 std::unique_ptr<PLLRootedTree> MiniNJ::applyNJ(DistanceMatrix &distanceMatrix,
     std::vector<std::string> &speciesIdToSpeciesString,
-    std::unordered_map<std::string, unsigned int> &speciesStringToSpeciesId)
+    StringToUint &speciesStringToSpeciesId)
 {
   unsigned int speciesNumber = speciesIdToSpeciesString.size();
   std::string subtree;
@@ -143,7 +143,7 @@ void fillDistancesRec(pll_unode_t *currentNode,
 
 void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
     GeneSpeciesMapping &mapping,
-    std::unordered_map<std::string, unsigned int> &speciesStringToSpeciesId,
+    StringToUint &speciesStringToSpeciesId,
     DistanceMatrix &distances,
     DistanceMatrix &distancesDenominator,
     bool minMode,
@@ -238,7 +238,7 @@ std::unique_ptr<PLLRootedTree> MiniNJ::runMiniNJ(const Families &families)
 std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool minAlgo, bool ustarAlgo, bool reweight)
 {
   std::vector<std::string> speciesIdToSpeciesString;
-  std::unordered_map<std::string, unsigned int> speciesStringToSpeciesId;
+  StringToUint speciesStringToSpeciesId;
   for (auto &family: families) {
     GeneSpeciesMapping mappings;
     mappings.fill(family.mappingFile, family.startingGeneTree);

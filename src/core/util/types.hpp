@@ -2,9 +2,12 @@
 #include <vector>
 #include <unordered_map>
 
-typedef std::vector<double> VectorDouble;
-typedef std::vector<VectorDouble> MatrixDouble;
+using VectorDouble = std::vector<double>;
+using MatrixDouble = std::vector<VectorDouble>;
+using DistanceMatrix = MatrixDouble;
 using VectorUint = std::vector<unsigned int>;
 using MatrixUint = std::vector<VectorUint>;
-typedef std::unordered_map<std::string, unsigned int> StringToUint;
+using StringToUint = std::unordered_map<std::string, unsigned int>;
+using StringToInt = std::unordered_map<std::string, int>;
+
 

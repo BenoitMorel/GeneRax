@@ -4,7 +4,8 @@
 #include <vector>
 
 typedef struct pll_unode_s pll_unode_t;
-typedef std::unordered_map<pll_unode_t*, unsigned int> TreeDuplicates;
+
+using TreeDuplicates =  std::unordered_map<pll_unode_t*, unsigned int>;
 
 class PerCoreGeneTrees;
 

@@ -10,10 +10,9 @@
 #include<set>
 #include <util/types.hpp>
 
-typedef std::unordered_map<std::string, unsigned int> StringToInt;
-typedef std::unordered_set<int> GeneIdsSet;
-typedef std::unordered_map<int, GeneIdsSet> SpeciesIdToGeneIds;
-typedef std::set<int> Clade;
+using GeneIdsSet = std::unordered_set<int>;
+using SpeciesIdToGeneIds = std::unordered_map<int, GeneIdsSet>;
+using Clade = std::set<int>;
 
 
 static const bool CHERRY_DBG = false;
@@ -39,7 +38,7 @@ class CherryTree {
 public:
   CherryTree(const std::string &treeString, 
       const GeneSpeciesMapping &mapping,
-      const StringToInt &speciesStrToId);
+      const StringToUint &speciesStrToId);
   
   std::string toNewick();
 
@@ -559,7 +558,7 @@ static std::vector<int> computePLLIdToId(PLLUnrootedTree &pllTree)
 
 CherryTree::CherryTree(const std::string &treeString, 
       const GeneSpeciesMapping &mapping,
-      const StringToInt &speciesStrToId):
+      const StringToUint &speciesStrToId):
   _hackIndex(hackCounter++),
   _leavesNumber(0)
 {
@@ -614,7 +613,7 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
 {
   // Init gene trees and frequency matrix
   std::vector<std::shared_ptr<CherryTree> > geneTrees;
-  StringToInt speciesStrToId;
+  StringToUint speciesStrToId;
   std::vector<std::string> speciesIdToStr;
   
   // fill the structure that map speciesStr <-> speciesId

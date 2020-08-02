@@ -98,6 +98,6 @@ private:
   void updatePrecision(bool infinitePrecision);
 };
   
-typedef std::vector<std::shared_ptr<ReconciliationEvaluation> > Evaluations;
-typedef std::vector<std::shared_ptr<ReconciliationEvaluation> > PerCoreEvaluations;
+using Evaluations = std::vector<std::shared_ptr<ReconciliationEvaluation> >;
+using PerCoreEvaluations = std::vector<std::shared_ptr<ReconciliationEvaluation> >;
 

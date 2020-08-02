@@ -10,7 +10,7 @@
 class PLLUnrootedTree;
 class PLLRootedTree;
 class GeneSpeciesMapping;
-typedef std::set<size_t> CladeSet;
+using CladeSet = std::set<size_t>;
 
 class Clade {
 public:
