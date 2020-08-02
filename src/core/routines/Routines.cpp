@@ -224,7 +224,7 @@ void Routines::inferAndGetReconciliationScenarios(
       evaluations[i]->inferMLScenario(scenarios[i]);
     } else {
       for (unsigned int sample = 0; sample < reconciliationSamples; ++sample) {
-        auto index = sample + i * reconciliationSamples;
+        auto index = sample * geneTrees.getTrees().size() + i;
         evaluations[i]->inferMLScenario(scenarios[index], true);
       }
     }
@@ -294,7 +294,7 @@ void Routines::inferReconciliation(
       std::string nhxSamples = FileSystem::joinPaths(reconciliationsDir, tree.name + "_samples.nhx");
       ParallelOfstream nhxOs(nhxSamples, false);
       for (unsigned int sample = 0; sample < reconciliationSamples; ++sample) {
-        auto scenarioIndex = sample + i * reconciliationSamples;
+        auto scenarioIndex = sample * geneTrees.getTrees().size() + i;
         auto &scenario = scenarios[scenarioIndex];
         std::string transfersFile = getTransfersFile(outputDir, tree.name, sample);
         if (!doNotWriteToFile) {
@@ -537,7 +537,7 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
   unsigned int maxSample = std::max<unsigned int>(1u, reconciliationSamples);
   for (unsigned int sample = 0; sample < maxSample; ++sample) {
     for (unsigned int i = 0; i < geneTrees.getTrees().size(); ++i) {
-      auto index = sample + i * reconciliationSamples;
+      auto index = sample * geneTrees.getTrees().size() + i;
       auto &scenario = scenarios[index];
       scenario.countTransfers(labelToId, 
           transferFrequencies.count);
