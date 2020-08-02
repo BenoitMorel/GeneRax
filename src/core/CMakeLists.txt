@@ -14,6 +14,7 @@ set(jointsearch-core_SOURCES
   NJ/MiniNJ.cpp
   NJ/Cherry.cpp
   NJ/CherryPro.cpp
+  NJ/NeighborJoining.cpp
   optimizers/DTLOptimizer.cpp
   optimizers/PerFamilyDTLOptimizer.cpp
   optimizers/SpeciesTreeOptimizer.cpp

@@ -6,15 +6,9 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
-#include <IO/Logger.hpp>
-#include <IO/GeneSpeciesMapping.hpp>
-#include <trees/PLLUnrootedTree.hpp>
-#include <algorithm>
-#include <memory>
 #include <util/types.hpp>
 
 
-static const double invalidDouble = std::numeric_limits<double>::infinity();
 
 /*
  * Naive NJ implementation. 
