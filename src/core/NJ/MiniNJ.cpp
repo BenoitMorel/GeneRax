@@ -85,8 +85,28 @@ std::unique_ptr<PLLRootedTree> MiniNJ::applyNJ(DistanceMatrix &distanceMatrix,
       distanceMatrix[speciesEntryToRemove][i] = invalidDouble;
       distanceMatrix[i][speciesEntryToRemove] = invalidDouble;
     }
-    subtree = "(" + speciesIdToSpeciesString[minPosition.first] + ","
-      + speciesIdToSpeciesString[minPosition.second] + ")";
+    double bl1 = 0.0;
+    for (unsigned int k = 0; k < speciesNumber; ++k) {
+      if (copy[p1][k] != invalidDouble) {
+        bl1 += copy[p1][k] - copy[p2][k];
+      }
+    }
+    if (dmSize > 2) {
+      bl1 /= double(dmSize - 2);
+    }
+    bl1 += copy[p1][p2];
+    bl1 *= 0.5;
+    double bl2 = copy[p1][p2] - bl1;
+
+    Logger::info << bl1 << " " << bl2 << std::endl;
+
+    subtree = "(" + 
+      speciesIdToSpeciesString[minPosition.first] 
+      + ":" + std::to_string(bl1)
+      + ","
+      + speciesIdToSpeciesString[minPosition.second] 
+      + ":" + std::to_string(bl2)
+      + ")";
     speciesIdToSpeciesString[speciesEntryToUpdate] = subtree;
     speciesIdToSpeciesString[speciesEntryToRemove] = std::string("NULL");
     speciesStringToSpeciesId[subtree] = speciesEntryToUpdate;
