@@ -117,8 +117,7 @@ public:
     const std::string &outputDir,
     bool bestReconciliation,
     unsigned int reconciliationSamples,
-    bool optimizeRates,
-    bool doNotWriteToFile = false
+    bool optimizeRates
     );
 
   /**

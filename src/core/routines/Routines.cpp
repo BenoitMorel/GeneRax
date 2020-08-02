@@ -241,8 +241,7 @@ void Routines::inferReconciliation(
     const std::string &outputDir,
     bool bestReconciliation,
     unsigned int reconciliationSamples,
-    bool optimizeRates,
-    bool doNotWriteToFile
+    bool optimizeRates
     )
 {
   PerCoreGeneTrees geneTrees(families);
@@ -269,14 +268,12 @@ void Routines::inferReconciliation(
       std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, 
           tree.name + "_reconciliated.xml");
       auto &scenario = scenarios[i];
-      if (!doNotWriteToFile) {
-        scenario.saveEventsCounts(eventCountsFile, false);
-        scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
-        scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, ReconciliationFormat::RecPhyloXML, false);
-        scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
-        scenario.saveLargestOrthoGroup(orthoGroupFile, false);
-        scenario.saveAllOrthoGroups(allOrthoGroupFile, false);
-      }
+      scenario.saveEventsCounts(eventCountsFile, false);
+      scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
+      scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, ReconciliationFormat::RecPhyloXML, false);
+      scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
+      scenario.saveLargestOrthoGroup(orthoGroupFile, false);
+      scenario.saveAllOrthoGroups(allOrthoGroupFile, false);
       scenario.saveTransfers(transfersFile, false);
     }
   }
@@ -297,9 +294,7 @@ void Routines::inferReconciliation(
         auto scenarioIndex = sample * geneTrees.getTrees().size() + i;
         auto &scenario = scenarios[scenarioIndex];
         std::string transfersFile = getTransfersFile(outputDir, tree.name, sample);
-        if (!doNotWriteToFile) {
-          scenario.saveReconciliation(nhxOs, ReconciliationFormat::NHX);
-        }
+        scenario.saveReconciliation(nhxOs, ReconciliationFormat::NHX);
         scenario.saveTransfers(transfersFile, false);
         scenario.resetBlackList();
         nhxOs << "\n";
@@ -432,10 +427,6 @@ void Routines::gatherLikelihoods(Families &families,
 
 static const std::string keyDelimiter("-_-");
 
-static std::string getTransferKey(const std::string &label1, const std::string &label2)
-{
-  return label1 + keyDelimiter + label2; 
-}
 
 void Routines::getLabelsFromTransferKey(const std::string &key, std::string &label1, std::string &label2)
 {
@@ -444,13 +435,6 @@ void Routines::getLabelsFromTransferKey(const std::string &key, std::string &lab
   label2 = key.substr(pos + keyDelimiter.size());
 }
 
-
-static std::string getLocalTempFile(const std::string &outputDir,
-    unsigned int rank)
-{
-  std::string f = "temp_rank" + std::to_string(rank) + ".txt";
-  return FileSystem::joinPaths(outputDir, f); 
-}
 
 
 void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
@@ -500,8 +484,6 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
     unsigned int reconciliationSamples,
     TransferFrequencies &transferFrequencies)
 {
-  const bool bestReconciliation = (reconciliationSamples == 0);
-  const bool doNotWriteToFile = true; 
   const bool optimizeRates = false;
   ModelParameters transfersModelParameter;
   if (Enums::accountsForTransfers(modelParameters.info.model)) {

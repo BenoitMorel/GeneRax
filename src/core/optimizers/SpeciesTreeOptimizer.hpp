@@ -108,8 +108,7 @@ private:
       bool &maxImprovementsReached);
   double sprSearch(unsigned int radius);
   double fastSPRRound(unsigned int radius);
-  double veryLocalSearch(unsigned int spid1,
-      unsigned int spid2);
+  double veryLocalSearch(unsigned int spid);
   void setOptimizationCriteria(OptimizationCriteria criteria) {
     _optimizationCriteria = criteria;
   }

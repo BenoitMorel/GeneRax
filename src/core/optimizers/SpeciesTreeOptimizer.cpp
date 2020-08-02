@@ -368,7 +368,7 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
         hash1 = _speciesTree->getNodeIndexHash(); 
         assert(ParallelContext::isIntEqual(hash1));
         if (_hardToFindBetter) {
-          veryLocalSearch(transferMove.prune, transferMove.regraft);
+          veryLocalSearch(transferMove.prune);
         }
       } else {
         failures++;
@@ -406,19 +406,18 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
         Logger::info << _speciesTree->getNode(prune)->label << " " << _speciesTree->getNode(regraft)->label << std::endl;
         hash1 = _speciesTree->getNodeIndexHash(); 
         assert(ParallelContext::isIntEqual(hash1));
-        _bestRecLL = veryLocalSearch(prune, regraft);
+        _bestRecLL = veryLocalSearch(prune);
       }
     }
   }
   return _bestRecLL;
 }
 
-double SpeciesTreeOptimizer::veryLocalSearch(unsigned int spid1,
-      unsigned int spid2)
+double SpeciesTreeOptimizer::veryLocalSearch(unsigned int spid)
 {
   const unsigned int radius = 2;
   std::vector<unsigned int> prunes;
-  prunes.push_back(spid1);
+  prunes.push_back(spid);
   unsigned int trials = 0;
   for (auto prune: prunes) {
     std::vector<unsigned int> regrafts;
@@ -434,7 +433,7 @@ double SpeciesTreeOptimizer::veryLocalSearch(unsigned int spid1,
             _speciesTree->getHash() << " wrong_clades=" 
             << _unsupportedCladesNumber() << ")"<< std::endl;
         Logger::info << _speciesTree->getNode(prune)->label << " " << _speciesTree->getNode(regraft)->label << std::endl;
-        return veryLocalSearch(prune, regraft);
+        return veryLocalSearch(prune);
       }
     }
   }
