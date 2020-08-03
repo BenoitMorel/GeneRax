@@ -134,8 +134,8 @@ static void updateConstrainData(
 
 std::unique_ptr<PLLRootedTree> NeighborJoining::applyNJ(
     DistanceMatrix distanceMatrix,
-    std::vector<std::string> &speciesIdToSpeciesString,
-    StringToUint &speciesStringToSpeciesId,
+    std::vector<std::string> speciesIdToSpeciesString,
+    StringToUint speciesStringToSpeciesId,
     PLLRootedTree *constrainTree)
 {
 
@@ -179,7 +179,6 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::applyNJ(
   }
 
   unsigned int speciesNumber = speciesIdToSpeciesString.size();
-  Logger::info << "SPECIES NUMBER " << speciesNumber << std::endl;
   std::string subtree;
   // Start Neighbor Joining iterations
   for (unsigned int step = 0; step < speciesNumber - 1; ++step) {
@@ -198,19 +197,9 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::applyNJ(
     auto speciesEntryToUpdate = p1;
     auto speciesEntryToRemove = p2;
     // update new values:
-    if (constrainTree && step != speciesNumber - 2) {
-      updateConstrainData(speciesEntryToUpdate,
-          speciesEntryToRemove,
-          constrainCherries,
-          constrainLeaves,
-          constrainIndexToMatrixIndex,
-          matrixIndexToConstrainIndex,
-          *constrainTree);
-    }
     DistanceMatrix copy = distanceMatrix;
     for (unsigned int i = 0; i < speciesNumber; ++i) {
       double newDistance = 0.5 * (copy[i][p1] + copy[i][p2] - copy[p1][p2]);
-      newDistance = std::max(newDistance, 0.000000001);
       distanceMatrix[speciesEntryToUpdate][i] = newDistance;
       distanceMatrix[i][speciesEntryToUpdate] = newDistance;
     }
@@ -230,6 +219,8 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::applyNJ(
     bl1 += copy[p1][p2];
     bl1 *= 0.5;
     double bl2 = copy[p1][p2] - bl1;
+    bl1 = std::max(0.0, bl1);
+    bl2 = std::max(0.0, bl2);
     subtree = "(" + 
       speciesIdToSpeciesString[minPosition.first] 
       + ":" + std::to_string(bl1)
@@ -240,6 +231,16 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::applyNJ(
     speciesIdToSpeciesString[speciesEntryToUpdate] = subtree;
     speciesIdToSpeciesString[speciesEntryToRemove] = std::string("NULL");
     speciesStringToSpeciesId[subtree] = speciesEntryToUpdate;
+    
+    if (constrainTree && step != speciesNumber - 2) {
+      updateConstrainData(speciesEntryToUpdate,
+          speciesEntryToRemove,
+          constrainCherries,
+          constrainLeaves,
+          constrainIndexToMatrixIndex,
+          matrixIndexToConstrainIndex,
+          *constrainTree);
+    }
   }
   std::string newick = subtree + ";";
   return std::make_unique<PLLRootedTree>(newick, false); 

@@ -14,7 +14,7 @@ void fillDistancesRec(pll_unode_t *currentNode,
     std::vector<double> &distances)
 {
   if (useBL) {
-    currentDistance += currentNode->length;
+    currentDistance += std::max(0.0000001, currentNode->length);
   } else if (useBootstrap) {
     double bootstrapValue = (nullptr == currentNode->label) ? 0.0 : std::atof(currentNode->label);
     currentDistance += bootstrapValue;
@@ -145,12 +145,13 @@ std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool
   auto res = NeighborJoining::applyNJ(distanceMatrix, 
       speciesIdToSpeciesString, 
       speciesStringToSpeciesId);
+  /*
   return NeighborJoining::applyNJ(distanceMatrix, 
       speciesIdToSpeciesString, 
       speciesStringToSpeciesId,
       res.get());
-
-  //return res;
+    */
+  return res;
 }
 
 

@@ -20,13 +20,13 @@ public:
    *    is only used to compute the same tree but with branch lengths
    *  @return The NJ tree (rooted, although the root is irrelevant)
    *
-   *  distanceMatrix is passed by value on purpose
+   *  Some parameters are passed by value on purpose
    *  
    */
   static std::unique_ptr<PLLRootedTree> applyNJ(
       DistanceMatrix distanceMatrix,
-      std::vector<std::string> &speciesIdToSpeciesString,
-      StringToUint &speciesStringToSpeciesId,
+      std::vector<std::string> speciesIdToSpeciesString,
+      StringToUint speciesStringToSpeciesId,
       PLLRootedTree *constrainTree = nullptr);
 };
 

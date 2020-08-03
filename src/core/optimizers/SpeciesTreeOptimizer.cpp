@@ -532,6 +532,7 @@ std::string SpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, boo
 void SpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly)
 {
   _speciesTree->saveToFile(str, masterRankOnly);
+  /*
   auto blTree = NeighborJoining::applyNJ(
       _distanceInfo.distanceMatrix,
       _distanceInfo.speciesIdToSpeciesString,
@@ -540,6 +541,7 @@ void SpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bo
   if (ParallelContext::getRank() == 0) {
     blTree->save(str + ".bl");
   }
+  */
 }
 
 
@@ -675,11 +677,11 @@ unsigned int SpeciesTreeOptimizer::_unsupportedCladesNumber()
 void SpeciesTreeOptimizer::_computeDistanceInfo()
 {
   Logger::timed << "Computing distance matrix from gene tree..." << std::endl;
-  bool minMode = false;
-  bool reweight = false;
+  bool minMode = true;
+  bool reweight = true;
   bool useBL = true;
   bool useBootstrap = false;
-  bool ustar = true;
+  bool ustar = false;
   MiniNJ::computeDistanceMatrix(_initialFamilies,
       minMode, 
       reweight,
