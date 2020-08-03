@@ -6,6 +6,9 @@
 #include <algorithm>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <fstream>
+#include <NJ/MiniNJ.hpp>
+#include <NJ/NeighborJoining.hpp>
+
 
 SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile, 
     const Families &initialFamilies, 
@@ -39,6 +42,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
     setGeneTreesFromFamilies(initialFamilies);
   }
+  _computeDistanceInfo();
   _modelRates = ModelParameters(startingRates, 
       _geneTrees->getTrees().size(),
       recModelInfo);
@@ -528,6 +532,14 @@ std::string SpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, boo
 void SpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly)
 {
   _speciesTree->saveToFile(str, masterRankOnly);
+  auto blTree = NeighborJoining::applyNJ(
+      _distanceInfo.distanceMatrix,
+      _distanceInfo.speciesIdToSpeciesString,
+      _distanceInfo.speciesStringToSpeciesId,
+      &_speciesTree->getTree());
+  if (ParallelContext::getRank() == 0) {
+    blTree->save(str + ".bl");
+  }
 }
 
 
@@ -660,6 +672,22 @@ unsigned int SpeciesTreeOptimizer::_unsupportedCladesNumber()
   return speciesClades.size() - intersectionSize;
 }
   
-
-
-
+void SpeciesTreeOptimizer::_computeDistanceInfo()
+{
+  Logger::timed << "Computing distance matrix from gene tree..." << std::endl;
+  bool minMode = false;
+  bool reweight = false;
+  bool useBL = true;
+  bool useBootstrap = false;
+  bool ustar = true;
+  MiniNJ::computeDistanceMatrix(_initialFamilies,
+      minMode, 
+      reweight,
+      useBL,
+      useBootstrap,
+      ustar,
+      _distanceInfo.distanceMatrix,
+      _distanceInfo.speciesIdToSpeciesString,
+      _distanceInfo.speciesStringToSpeciesId);
+  Logger::timed << "Distance matrix computed" << std::endl;
+}

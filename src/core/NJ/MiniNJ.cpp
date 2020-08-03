@@ -33,7 +33,7 @@ void fillDistancesRec(pll_unode_t *currentNode,
 } 
 
 
-void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
+static void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
     GeneSpeciesMapping &mapping,
     StringToUint &speciesStringToSpeciesId,
     DistanceMatrix &distances,
@@ -126,10 +126,44 @@ std::unique_ptr<PLLRootedTree> MiniNJ::runMiniNJ(const Families &families)
 }
 
 
-std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool minAlgo, bool ustarAlgo, bool reweight)
+std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool minMode, bool ustar, bool reweight)
 {
+  DistanceMatrix distanceMatrix;
   std::vector<std::string> speciesIdToSpeciesString;
   StringToUint speciesStringToSpeciesId;
+  bool useBL = false;
+  bool useBootstrap = false;
+  computeDistanceMatrix(families,
+      minMode,
+      reweight,
+      useBL,
+      useBootstrap,
+      ustar,
+      distanceMatrix,
+      speciesIdToSpeciesString,
+      speciesStringToSpeciesId);
+  auto res = NeighborJoining::applyNJ(distanceMatrix, 
+      speciesIdToSpeciesString, 
+      speciesStringToSpeciesId);
+  return NeighborJoining::applyNJ(distanceMatrix, 
+      speciesIdToSpeciesString, 
+      speciesStringToSpeciesId,
+      res.get());
+
+  //return res;
+}
+
+
+void MiniNJ::computeDistanceMatrix(const Families &families,
+  bool minMode, 
+  bool reweight,
+  bool useBL,
+  bool useBootstrap,
+  bool ustar,
+  DistanceMatrix &distanceMatrix,
+  std::vector<std::string> &speciesIdToSpeciesString,
+  StringToUint &speciesStringToSpeciesId)
+{
   for (auto &family: families) {
     GeneSpeciesMapping mappings;
     mappings.fill(family.mappingFile, family.startingGeneTree);
@@ -144,12 +178,9 @@ std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool
   }
   unsigned int speciesNumber = speciesIdToSpeciesString.size(); 
   std::vector<double> nullDistances(speciesNumber, 0.0);
-  DistanceMatrix distanceMatrix(speciesNumber, nullDistances);  
+  distanceMatrix = DistanceMatrix(speciesNumber, nullDistances);  
   DistanceMatrix distanceDenominator(speciesNumber, nullDistances);
     
-  bool minMode = minAlgo;
-  bool useBL = false;
-  bool useBootstrap = false;
   for (auto &family: families) {
     GeneSpeciesMapping mappings;
     mappings.fill(family.mappingFile, family.startingGeneTree);
@@ -166,7 +197,7 @@ std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool
           reweight,
           useBL,
           useBootstrap,
-          ustarAlgo);
+          ustar);
     }
   }
   for (unsigned int i = 0; i < speciesNumber; ++i) {
@@ -179,7 +210,4 @@ std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool
       }
     }
   }
-  return NeighborJoining::applyNJ(distanceMatrix, 
-      speciesIdToSpeciesString, 
-      speciesStringToSpeciesId);
 }

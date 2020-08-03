@@ -19,6 +19,12 @@ struct EvaluatedMove {
   double ll;
 };
 
+struct DistanceInfo {
+  DistanceMatrix distanceMatrix;
+  std::vector<std::string> speciesIdToSpeciesString;
+  StringToUint speciesStringToSpeciesId;
+};
+
 struct MovesBlackList;
 
 class SpeciesTreeOptimizer: public SpeciesTree::Listener {
@@ -61,7 +67,6 @@ public:
 
   double computeRecLikelihood();
 
-
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
@@ -81,9 +86,11 @@ private:
   AverageStream _averageGeneRootDiff;
   bool _hardToFindBetter;
   OptimizationCriteria _optimizationCriteria;
+  DistanceInfo _distanceInfo;
 private:
   void _computeAllGeneClades();
   unsigned int _unsupportedCladesNumber();
+  void _computeDistanceInfo();
   ModelParameters computeOptimizedRates(); 
   void updateEvaluations();
   void rootSearchAux(SpeciesTree &speciesTree, 

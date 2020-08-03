@@ -8,7 +8,9 @@
 #include <string>
 #include <util/types.hpp>
 
-
+class PLLUnrootedTree;
+class PLLRootedTree;
+class GeneSpeciesMapping;
 
 /*
  * Naive NJ implementation. 
@@ -36,6 +38,18 @@ public:
   static std::unique_ptr<PLLRootedTree> applyNJ(DistanceMatrix &distanceMatrix,
     std::vector<std::string> &speciesIdToSpeciesString,
     StringToUint &speciesStringToSpeciesId);
+
+
+  static void computeDistanceMatrix(const Families &families,
+      bool minMode, 
+      bool reweight,
+      bool useBL,
+      bool useBootstrap,
+      bool ustar,
+      DistanceMatrix &distanceMatrix,
+      std::vector<std::string> &speciesIdToSpeciesString,
+      StringToUint &speciesStringToSpeciesId);
+
 private:
   static std::unique_ptr<PLLRootedTree> geneTreeNJ(const Families &families, bool minAlgo, bool ustarAlgo = false, bool reweight = false);
 };

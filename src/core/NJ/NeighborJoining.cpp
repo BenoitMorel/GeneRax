@@ -179,6 +179,7 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::applyNJ(
   }
 
   unsigned int speciesNumber = speciesIdToSpeciesString.size();
+  Logger::info << "SPECIES NUMBER " << speciesNumber << std::endl;
   std::string subtree;
   // Start Neighbor Joining iterations
   for (unsigned int step = 0; step < speciesNumber - 1; ++step) {
@@ -209,6 +210,7 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::applyNJ(
     DistanceMatrix copy = distanceMatrix;
     for (unsigned int i = 0; i < speciesNumber; ++i) {
       double newDistance = 0.5 * (copy[i][p1] + copy[i][p2] - copy[p1][p2]);
+      newDistance = std::max(newDistance, 0.000000001);
       distanceMatrix[speciesEntryToUpdate][i] = newDistance;
       distanceMatrix[i][speciesEntryToUpdate] = newDistance;
     }
