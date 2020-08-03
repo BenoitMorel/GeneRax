@@ -59,6 +59,8 @@ public:
   pll_rnode_t *getRoot() const;
   pll_rnode_t *getAnyInnerNode() const;
   pll_rnode_t *getNode(unsigned int node_index) const;
+  pll_rnode_t *getParent(unsigned int node_index) const;
+  pll_rnode_t *getNeighbor(unsigned int node_index) const;
 
   /**
    * labels

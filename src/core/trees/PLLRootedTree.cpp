@@ -152,6 +152,20 @@ pll_rnode_t *PLLRootedTree::getNode(unsigned int node_index) const
 {
   return _tree->nodes[node_index];
 }
+  
+pll_rnode_t *PLLRootedTree::getParent(unsigned int node_index) const 
+{
+  return getNode(node_index)->parent;
+}
+
+pll_rnode_t *PLLRootedTree::getNeighbor(unsigned int node_index) const
+{
+  auto node = getNode(node_index);
+  auto parent = node->parent;
+  assert(parent);
+  return parent->left == node ? parent->right : parent->left;
+}
+
 
 pll_rnode_t *PLLRootedTree::getAnyInnerNode() const
 {
