@@ -357,6 +357,7 @@ bool LibpllParsers::areLabelsValid(std::unordered_set<std::string> &leaves)
   for (auto &label: leaves) {
     for (auto c: label) {
       if (forbiddenCharacter[c]) {
+        std::cerr << "invalid label: " << label << std::endl;
         return false;
       }
     }
