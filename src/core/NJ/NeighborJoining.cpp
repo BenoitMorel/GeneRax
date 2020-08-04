@@ -88,16 +88,22 @@ static Position findConstrainedMinPosition(
 static void updateConstrainData(
     unsigned int speciesEntryToUpdate,
     unsigned int speciesEntryToRemove,
+    double blLeft, 
+    double blRight,
     std::set<Cherry> &constrainCherries,
     std::unordered_set<unsigned int> &constrainLeaves,
     std::vector<unsigned int> &constrainIndexToMatrixIndex,
     std::vector<unsigned int> &matrixIndexToConstrainIndex,
-    const PLLRootedTree &constrainTree)
+    PLLRootedTree &constrainTree)
 {
   auto constrainIndexToUpdate = 
     matrixIndexToConstrainIndex[speciesEntryToUpdate];
   auto constrainIndexToRemove = 
     matrixIndexToConstrainIndex[speciesEntryToRemove];
+
+  // Update branch lengthes
+  constrainTree.getNode(constrainIndexToUpdate)->length = blLeft;
+  constrainTree.getNode(constrainIndexToRemove)->length = blRight;
 
   // Erase outdated values
   auto cherriesOldSize = constrainCherries.size();
@@ -235,6 +241,8 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::applyNJ(
     if (constrainTree && step != speciesNumber - 2) {
       updateConstrainData(speciesEntryToUpdate,
           speciesEntryToRemove,
+          bl1,
+          bl2,
           constrainCherries,
           constrainLeaves,
           constrainIndexToMatrixIndex,
@@ -243,7 +251,9 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::applyNJ(
     }
   }
   std::string newick = subtree + ";";
-  return std::make_unique<PLLRootedTree>(newick, false); 
+  auto res = std::make_unique<PLLRootedTree>(newick, false); 
+  
+  return res;
 }
 
 

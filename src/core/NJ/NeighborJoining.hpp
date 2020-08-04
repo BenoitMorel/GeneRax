@@ -17,7 +17,9 @@ public:
    *  @param speciesStringToSpeciesId mapping from the species
    *    labels to the indices in the distance matrix
    *  @param constrainTree optional constrain tree: if set, the NJ
-   *    is only used to compute the same tree but with branch lengths
+   *    is only used to compute the same tree but with branch lengths.
+   *    A new instance of the tree is returned, but the constrainTree
+   *    branch lengthes are also updated in place.
    *  @return The NJ tree (rooted, although the root is irrelevant)
    *
    *  Some parameters are passed by value on purpose
