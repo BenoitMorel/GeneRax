@@ -162,6 +162,8 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, 
     new_loglh = -1 * pllmod_algo_opt_rates_weights_treeinfo (treeinfo,
         RAXML_FREERATE_MIN,
         RAXML_FREERATE_MAX,
+        RAXML_BRLEN_MIN,
+        RAXML_BRLEN_MAX,
         RAXML_BFGS_FACTOR,
         tolerance);
 
