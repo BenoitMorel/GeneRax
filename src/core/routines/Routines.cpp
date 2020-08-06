@@ -310,17 +310,28 @@ void Routines::inferReconciliation(
     }
   }
   ParallelContext::barrier();
-  
-  bool forceTransfers = false;
-  PerSpeciesEvents events;
-  getPerSpeciesEvents(speciesTreeFile,
-    families,
-    initialModelRates,
-    reconciliationSamples,
-    events,
-    forceTransfers);
-  for (auto &speciesEvent: events.events) {
-    Logger::info << speciesEvent.LeafCount << " " << speciesEvent.SCount << std::endl;
+  {
+    bool forceTransfers = false;
+    PerSpeciesEvents events;
+    getPerSpeciesEvents(speciesTreeFile,
+      families,
+      initialModelRates,
+      reconciliationSamples,
+      events,
+      forceTransfers);
+    PLLRootedTree speciesTree(speciesTreeFile);
+    ParallelOfstream os(FileSystem::joinPaths(outputDir, "per_species_event_counts.txt"));
+    os << "#S #SL #D #T #TL" << std::endl;
+    for (unsigned int e = 0; e < events.events.size(); ++e) {
+      std::string label(speciesTree.getNode(e)->label);
+      auto &eventCount = events.events[e];
+      os << label << " ";
+      os << "S=" << eventCount.SCount + eventCount.LeafCount << " ";
+      os << "SL=" << eventCount.SLCount << " ";
+      os << "D=" << eventCount.DCount << " ";
+      os << "T=" << eventCount.TCount << " ";
+      os << "TL=" << eventCount.TLCount << std::endl;
+    }
   }
 }
   
