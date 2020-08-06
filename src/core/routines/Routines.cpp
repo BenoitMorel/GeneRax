@@ -234,6 +234,8 @@ void Routines::inferAndGetReconciliationScenarios(
   ParallelContext::barrier();
 }
 
+  
+
 void Routines::inferReconciliation(
     const std::string &speciesTreeFile,
     Families &families,
@@ -267,6 +269,9 @@ void Routines::inferReconciliation(
       std::string treeWithEventsFileNHX = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
       std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, 
           tree.name + "_reconciliated.xml");
+      std::string treeWithEventsFileNewickEvents = FileSystem::joinPaths(
+          reconciliationsDir, 
+          tree.name + "_events.newick");
       auto &scenario = scenarios[i];
       scenario.saveEventsCounts(eventCountsFile, false);
       scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
@@ -274,6 +279,9 @@ void Routines::inferReconciliation(
       scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
       scenario.saveLargestOrthoGroup(orthoGroupFile, false);
       scenario.saveAllOrthoGroups(allOrthoGroupFile, false);
+      scenario.saveReconciliation(treeWithEventsFileNewickEvents, 
+          ReconciliationFormat::NewickEvents, false);
+      scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
       scenario.saveTransfers(transfersFile, false);
     }
   }
@@ -441,7 +449,8 @@ void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
   Families &families,
   const ModelParameters &modelParameters,
   unsigned int reconciliationSamples,
-  PerSpeciesEvents &events)
+  PerSpeciesEvents &events,
+  bool forceTransfers)
 {
   PLLRootedTree speciesTree(speciesTreeFile);
   events = PerSpeciesEvents(speciesTree.getNodesNumber());
@@ -449,7 +458,8 @@ void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
   bool optimizeRates = false;
   PerCoreGeneTrees geneTrees(families);
   ModelParameters transfersModelParameter;
-  if (Enums::accountsForTransfers(modelParameters.info.model)) {
+  if (Enums::accountsForTransfers(modelParameters.info.model)
+      || !forceTransfers) {
     transfersModelParameter = modelParameters;
   } else {
     // the current model does not account for transfers
