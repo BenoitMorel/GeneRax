@@ -310,6 +310,18 @@ void Routines::inferReconciliation(
     }
   }
   ParallelContext::barrier();
+  
+  bool forceTransfers = false;
+  PerSpeciesEvents events;
+  getPerSpeciesEvents(speciesTreeFile,
+    families,
+    initialModelRates,
+    reconciliationSamples,
+    events,
+    forceTransfers);
+  for (auto &speciesEvent: events.events) {
+    Logger::info << speciesEvent.LeafCount << " " << speciesEvent.SCount << std::endl;
+  }
 }
   
 void Routines::computeSuperMatrixFromOrthoGroups(
