@@ -119,6 +119,13 @@ void Scenario::saveReconciliation(ParallelOfstream &os, ReconciliationFormat for
         _geneIdToEvents, 
         os);
     break;
+  case ReconciliationFormat::NewickEvents:
+    ReconciliationWriter::saveReconciliationNewickEvents( 
+        _geneRoot, 
+        _virtualRootIndex, 
+        _geneIdToEvents, 
+        os);
+    break;
   }
 }
   

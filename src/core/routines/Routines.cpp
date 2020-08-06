@@ -150,6 +150,9 @@ void Routines::inferReconciliation(
       std::string treeWithEventsFileNHX = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
       std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, 
           tree.name + "_reconciliated.xml");
+      std::string treeWithEventsFileNewickEvents = FileSystem::joinPaths(
+          reconciliationsDir, 
+          tree.name + "_events.newick");
       Scenario scenario;
       ReconciliationEvaluation evaluation(speciesTree, *tree.geneTree, tree.mapping, modelRates.model, true);
       evaluation.setRates(modelRates.getRates(i));
@@ -158,6 +161,8 @@ void Routines::inferReconciliation(
         scenario.saveEventsCounts(eventCountsFile, false);
         scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
         scenario.saveReconciliation(treeWithEventsFileRecPhyloXML, ReconciliationFormat::RecPhyloXML, false);
+        scenario.saveReconciliation(treeWithEventsFileNewickEvents, 
+            ReconciliationFormat::NewickEvents, false);
         scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
         scenario.saveLargestOrthoGroup(orthoGroupFile, false);
         scenario.saveAllOrthoGroups(allOrthoGroupFile, false);

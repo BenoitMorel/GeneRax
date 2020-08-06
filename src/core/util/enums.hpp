@@ -37,7 +37,7 @@ enum class SpeciesSearchStrategy {
  *  Output formats for reconciled gene trees
  */
 enum class ReconciliationFormat {
-  NHX = 0, RecPhyloXML
+  NHX = 0, RecPhyloXML, NewickEvents
 };
 
 
@@ -54,6 +54,7 @@ enum class ReconciliationEventType {
   EVENT_None,   // no event
   EVENT_Invalid // invalid event
 };
+
 
 
 /*
@@ -123,6 +124,11 @@ public:
     }
     assert(false);
     return false;
+  }
+
+  static const char *getEventName(ReconciliationEventType type) {
+    static const char *eventNames[]  = {"S", "SL", "D", "T", "TL", "L", "Leaf", "Invalid"};
+    return eventNames[static_cast<int>(type)];
   }
 
 };

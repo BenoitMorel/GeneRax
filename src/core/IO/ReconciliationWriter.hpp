@@ -23,6 +23,11 @@ public:
       unsigned int virtualRootIndex,
       std::vector<std::vector<Scenario::Event> > &geneToEvent, 
       ParallelOfstream &os);
+  
+  static void saveReconciliationNewickEvents(pll_unode_t *geneRoot, 
+      unsigned int virtualRootIndex,
+      std::vector<std::vector<Scenario::Event> > &geneToEvent, 
+      ParallelOfstream &os);
 };
 
 
