@@ -307,11 +307,13 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
     reconciliationSamples,
     frequencies);
   PerSpeciesEvents perSpeciesEvents;
+  const bool forceTransfers = true;
   Routines::getPerSpeciesEvents(speciesTreeFile,
     _initialFamilies,
     _modelRates,
     reconciliationSamples,
-    perSpeciesEvents);
+    perSpeciesEvents,
+    forceTransfers);
   unsigned int speciesNumber = _speciesTree->getTree().getNodesNumber();
   std::vector<double> speciesFrequencies;
   for (unsigned int e = 0; e < speciesNumber; ++e) {

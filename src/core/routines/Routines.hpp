@@ -89,7 +89,8 @@ public:
     Families &families,
     const ModelParameters &modelRates,
     unsigned int reconciliationSamples,
-    PerSpeciesEvents &events);
+    PerSpeciesEvents &events,
+    bool forceTransfers);
 
   static void getTransfersFrequencies(const std::string &speciesTreeFile,
     Families &families,
@@ -104,6 +105,8 @@ public:
   static void getParametersFromTransferFrequencies(const std::string &speciesTreeFile,
       const TransferFrequencies &frequencies, 
       Parameters &parameters);
+
+
 
   /**
    * Infer the reconciliation between the families gene trees and the 
@@ -132,7 +135,6 @@ public:
     bool optimizeRates,
     std::vector<Scenario> &scenarios);
  
-
   /**
    *  todobenoit
    */

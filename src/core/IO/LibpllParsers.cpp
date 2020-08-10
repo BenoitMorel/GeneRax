@@ -7,6 +7,7 @@
 #include <sstream>
 #include <stack>
 #include <array>
+#include <IO/Logger.hpp>
 
 extern "C" {
 #include <pll.h>
@@ -23,22 +24,18 @@ void LibpllParsers::labelRootedTree(pll_rtree_t *tree)
   unsigned int index = 0;
   std::unordered_set<std::string> existingLabels;
   for (unsigned int i = 0; i < tree->tip_count + tree->inner_count; ++i) {
-    auto label = tree->nodes[i]->label;
-    if (label) {
-      existingLabels.insert(label);
-    }
-  }
-  for (unsigned int i = 0; i < tree->tip_count + tree->inner_count; ++i) {
     auto node = tree->nodes[i];
-    if (!node->label) {
-      auto label = std::string("node_" + std::to_string(index++));
-      while (existingLabels.find(label) != existingLabels.end()) {
+    auto label = node->label;
+    if (!label || existingLabels.find(label) != existingLabels.end()) {
+      auto newLabel = std::string("node_" + std::to_string(index++));
+      while (existingLabels.find(newLabel) != existingLabels.end()) {
         // make sure we use a label that do not already exists
-        label = std::string("node_" + std::to_string(index++));
+        newLabel = std::string("node_" + std::to_string(index++));
       }
-      node->label = static_cast<char*>(malloc(sizeof(char) * (label.size() + 1)));
-      std::strcpy(node->label, label.c_str());
+      node->label = static_cast<char*>(malloc(sizeof(char) * (newLabel.size() + 1)));
+      std::strcpy(node->label, newLabel.c_str());
     }
+    existingLabels.insert(std::string(node->label));
   }
 }
 
@@ -357,6 +354,7 @@ bool LibpllParsers::areLabelsValid(std::unordered_set<std::string> &leaves)
   for (auto &label: leaves) {
     for (auto c: label) {
       if (forbiddenCharacter[c]) {
+        std::cerr << "invalid label: " << label << std::endl;
         return false;
       }
     }

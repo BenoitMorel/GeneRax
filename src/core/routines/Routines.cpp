@@ -234,6 +234,8 @@ void Routines::inferAndGetReconciliationScenarios(
   ParallelContext::barrier();
 }
 
+  
+
 void Routines::inferReconciliation(
     const std::string &speciesTreeFile,
     Families &families,
@@ -267,6 +269,9 @@ void Routines::inferReconciliation(
       std::string treeWithEventsFileNHX = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
       std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, 
           tree.name + "_reconciliated.xml");
+      std::string treeWithEventsFileNewickEvents = FileSystem::joinPaths(
+          reconciliationsDir, 
+          tree.name + "_events.newick");
       auto &scenario = scenarios[i];
       scenario.saveEventsCounts(eventCountsFile, false);
       scenario.savePerSpeciesEventsCounts(speciesEventCountsFile, false);
@@ -274,6 +279,9 @@ void Routines::inferReconciliation(
       scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
       scenario.saveLargestOrthoGroup(orthoGroupFile, false);
       scenario.saveAllOrthoGroups(allOrthoGroupFile, false);
+      scenario.saveReconciliation(treeWithEventsFileNewickEvents, 
+          ReconciliationFormat::NewickEvents, false);
+      scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
       scenario.saveTransfers(transfersFile, false);
     }
   }
@@ -302,6 +310,29 @@ void Routines::inferReconciliation(
     }
   }
   ParallelContext::barrier();
+  {
+    bool forceTransfers = false;
+    PerSpeciesEvents events;
+    getPerSpeciesEvents(speciesTreeFile,
+      families,
+      initialModelRates,
+      reconciliationSamples,
+      events,
+      forceTransfers);
+    PLLRootedTree speciesTree(speciesTreeFile);
+    ParallelOfstream os(FileSystem::joinPaths(outputDir, "per_species_event_counts.txt"));
+    os << "#S #SL #D #T #TL" << std::endl;
+    for (unsigned int e = 0; e < events.events.size(); ++e) {
+      std::string label(speciesTree.getNode(e)->label);
+      auto &eventCount = events.events[e];
+      os << label << " ";
+      os << "S=" << eventCount.SCount + eventCount.LeafCount << " ";
+      os << "SL=" << eventCount.SLCount << " ";
+      os << "D=" << eventCount.DCount << " ";
+      os << "T=" << eventCount.TCount << " ";
+      os << "TL=" << eventCount.TLCount << std::endl;
+    }
+  }
 }
   
 void Routines::computeSuperMatrixFromOrthoGroups(
@@ -441,7 +472,8 @@ void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
   Families &families,
   const ModelParameters &modelParameters,
   unsigned int reconciliationSamples,
-  PerSpeciesEvents &events)
+  PerSpeciesEvents &events,
+  bool forceTransfers)
 {
   PLLRootedTree speciesTree(speciesTreeFile);
   events = PerSpeciesEvents(speciesTree.getNodesNumber());
@@ -449,7 +481,8 @@ void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
   bool optimizeRates = false;
   PerCoreGeneTrees geneTrees(families);
   ModelParameters transfersModelParameter;
-  if (Enums::accountsForTransfers(modelParameters.info.model)) {
+  if (Enums::accountsForTransfers(modelParameters.info.model)
+      || !forceTransfers) {
     transfersModelParameter = modelParameters;
   } else {
     // the current model does not account for transfers

@@ -255,3 +255,58 @@ void ReconciliationWriter::saveReconciliationRecPhyloXML(pll_rtree_t *speciesTre
 
 }
 
+static void recursivelySaveReconciliationsNewickEvents(
+    pll_unode_t *node, 
+    bool isVirtualRoot, 
+    std::vector<std::vector<Scenario::Event> > &geneToEvents, 
+    ParallelOfstream &os)
+{
+  
+  if(node->next) {
+    auto left = node->next->back;
+    auto right = node->next->next->back;
+    if (isVirtualRoot) {
+      left = node->next;
+      right = node->next->back;
+    }
+    os << "(";
+    recursivelySaveReconciliationsNewickEvents(
+        left, 
+        false, 
+        geneToEvents, 
+        os);
+    os << ",";
+    recursivelySaveReconciliationsNewickEvents(
+        right, 
+        false, 
+        geneToEvents, 
+        os);
+    os << ")";
+  } 
+  if (!node->next) {
+    os << node->label;
+  } else {
+    os << Enums::getEventName(geneToEvents[node->node_index].back().type); 
+  }
+  if (!isVirtualRoot) {
+    os << ":" << node->length;
+  }
+}
+  
+void ReconciliationWriter::saveReconciliationNewickEvents(pll_unode_t *geneRoot, 
+      unsigned int virtualRootIndex,
+      std::vector<std::vector<Scenario::Event> > &geneToEvent, 
+      ParallelOfstream &os)
+{
+  pll_unode_t virtualRoot;
+  virtualRoot.next = geneRoot;
+  virtualRoot.node_index = virtualRootIndex;
+  virtualRoot.label = nullptr;
+  virtualRoot.length = 0.0;
+  recursivelySaveReconciliationsNewickEvents(&virtualRoot, 
+      true, 
+      geneToEvent, 
+      os);
+  os << ";";
+
+}
