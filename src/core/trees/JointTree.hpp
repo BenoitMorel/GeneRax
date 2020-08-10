@@ -70,6 +70,7 @@ public:
     void enableLibpll(bool enable) {_enableLibpll = enable;}
     unsigned int getGeneTaxaNumber() {return getTreeInfo()->tip_count;}
     PLLUnrootedTree &getGeneTree() {return _libpllEvaluation.getGeneTree();}
+    Model &getModel() {return _libpllEvaluation.getModel();} 
     const GeneSpeciesMapping &getMappings() const {return _geneSpeciesMap;}
     double getSupportThreshold() const {return _supportThreshold;}
 private:
