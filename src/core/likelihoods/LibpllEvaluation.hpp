@@ -80,6 +80,7 @@ public:
   pllmod_treeinfo_t *getTreeInfo() {return _treeInfo->getTreeInfo();}
   const pllmod_treeinfo_t *getTreeInfo() const {return _treeInfo->getTreeInfo();}
 
+
   /**
    *  Invalidate a CLV at a given node index
    *  Relevant for computeLikelihood(true) calls
@@ -91,6 +92,7 @@ public:
     const std::string &outputTreeFile);
 
   std::string getModelStr();
+  Model &getModel() {return _treeInfo->getModel();} 
 
   PLLUnrootedTree &getGeneTree() {return _treeInfo->getTree();}
 

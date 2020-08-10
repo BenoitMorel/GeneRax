@@ -31,8 +31,9 @@ static void optimizeBranchesSlow(JointTree &tree,
 {
     auto root = tree.getTreeInfo()->root;
     // could be incremental and thus faster
-    unsigned int params_indices[4] = {0,0,0,0};
     auto treeinfo = tree.getTreeInfo();
+    auto ratecats = tree.getModel().num_ratecats();
+    std::vector<unsigned int> params_indices(ratecats, 0);
     tree.computeLibpllLoglk(); // update CLVs
     for (unsigned int j = 0; j < 2; ++j) {
       for (unsigned int i = 0; i < nodesToOptimize.size(); ++i) {
@@ -41,7 +42,7 @@ static void optimizeBranchesSlow(JointTree &tree,
           double newLoglk = pllmod_opt_optimize_branch_lengths_local(
               treeinfo->partitions[0],
               treeinfo->root,
-              params_indices,
+              &params_indices[0],
               RAXML_BRLEN_MIN,
               RAXML_BRLEN_MAX,
               RAXML_BRLEN_TOLERANCE,
