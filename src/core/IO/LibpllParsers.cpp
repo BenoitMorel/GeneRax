@@ -373,4 +373,4 @@ void LibpllParsers::writeSuperMatrixFasta(const SuperMatrix &superMatrix,
     os << sequence << std::endl;
   }
 }
-  
+
