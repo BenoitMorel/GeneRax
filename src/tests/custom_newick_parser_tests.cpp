@@ -18,6 +18,7 @@ void test_aux(const std::string &newickString, bool as_file)
     input = "temp.txt";
     std::ofstream os(input);
     os << newickString;
+    os.close();
   }
   auto pllTree = as_file ? 
     pll_rtree_parse_newick(input.c_str()) 
@@ -36,7 +37,7 @@ void test_aux(const std::string &newickString, bool as_file)
 
 void test(const std::string &newickString)
 {
-  //test_aux(newickString, true);
+  test_aux(newickString, true);
   test_aux(newickString, false);
 }
 
@@ -82,7 +83,7 @@ std::string random_string( size_t length )
 std::string getRandomNewick()
 {
   std::unordered_set<std::string> labels;
-  unsigned int labelsNumber =(rand() % 20000) + 4;
+  unsigned int labelsNumber =(rand() % 2000) + 4;
   unsigned int labelsSize = 5 + (rand() % 20);
   for (unsigned int i = 0; i < labelsNumber; ++i) {
     labels.insert(random_string(labelsSize));
@@ -92,29 +93,44 @@ std::string getRandomNewick()
 }
     
 
-void benchmark()
+void benchmark(bool asFile)
 {
+  if (asFile) {
+    std::cerr << "Benchmarking from file" << std::endl;
+  } else {
+    std::cerr << "Benchmarking from string" << std::endl;
+  }
   std::cerr << "[benchmark] generating random newick strings..." << std::endl;
   std::vector<std::string> newickStrings;
   unsigned int seed = 42;
-  unsigned int trees = 200;
+  unsigned int trees = 100;
   unsigned int iterations = 100;
   srand(seed);
   for (unsigned int i = 0; i < trees; ++i) {
-    newickStrings.push_back(getRandomNewick());
+    auto newick = getRandomNewick();
+    if (asFile) {
+      std::string file("temp_");
+      file += std::to_string(i);
+      file += ".txt";
+      std::ofstream os(file);
+      os << newick;
+      newickStrings.push_back(file);
+    } else {
+      newickStrings.push_back(newick);
+    }
   }
   std::vector<pll_rtree_t *> pllTrees;
   std::vector<pll_rtree_t *> customTrees;
   auto startCustom = std::chrono::high_resolution_clock::now();
   std::cerr << "[benchmark] parsing with custom..." << std::endl;
   for (unsigned int i = 0; i < iterations; ++i) {
-    benchmark_aux(newickStrings, customTrees, false, false);
+    benchmark_aux(newickStrings, customTrees, false, asFile);
   }
   auto elapsedCustom = std::chrono::high_resolution_clock::now() - startCustom;
   auto startPLL = std::chrono::high_resolution_clock::now();
   std::cerr << "[benchmark] parsing with pll..." << std::endl;
   for (unsigned int i = 0; i < iterations; ++i) {
-    benchmark_aux(newickStrings, pllTrees, true, false);
+    benchmark_aux(newickStrings, pllTrees, true, asFile);
   }
   auto elapsedPLL = std::chrono::high_resolution_clock::now() - startPLL;
   
@@ -148,7 +164,8 @@ int main(int, char**)
   std::string branchLengthsScientific 
     = "((a:1e-10,b:0.03)ab,(c:0,d:3)cd)root;";
   test(branchLengthsScientific);
-  benchmark();
+  benchmark(false);
+  benchmark(true);
   return 0;
 
 

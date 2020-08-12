@@ -6,6 +6,30 @@ static const unsigned int INVALID_INDEX = (unsigned int)-1;
 
 int is_separator[256] = {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
+
+#define MAX_BUFFER_SIZE 8824
+
+char *getFileContent(const char *filename)
+{
+  char * buffer = 0;
+  long length;
+  FILE * f = fopen (filename, "rb");
+
+  if (f)
+  {
+    fseek (f, 0, SEEK_END);
+    length = ftell (f);
+    fseek (f, 0, SEEK_SET);
+    buffer = (char *)malloc(length + 1);
+    if (buffer) {
+      fread (buffer, 1, length, f);
+    }
+    buffer[length] = '\0';
+    fclose (f);
+  }
+  return buffer;
+}
+
 struct RTreeParser {
   char* input;
   char* input_current;
@@ -18,6 +42,8 @@ struct RTreeParser {
   unsigned int depth;
   bool is_file;
   RTreeParsingError *error;
+  char file_buffer[MAX_BUFFER_SIZE];
+  char previous_file_buffer[MAX_BUFFER_SIZE];
 };
 
 enum TokenType {
@@ -52,18 +78,19 @@ int is_numeric(char *s, double *d)
 }
 
 
-unsigned int get_string_size(char *input_buffer)
+unsigned int get_string_size(RTreeParser *p)
 {
-  char *curr = input_buffer;
-  while (!is_separator[*curr]) {
+  char *curr = p->input_current;
+  while (!is_separator[(int)*curr]) {
     curr++;
   }
-  return curr - input_buffer; 
+  return curr - p->input_current; 
 }
 
-unsigned int read_token(char **buffer, 
+unsigned int read_token(RTreeParser *p, 
     Token *token)
 {
+  char **buffer = &p->input_current;
   if (**buffer == '\0') {
     return 0;
   } else if (**buffer == '(') {
@@ -82,7 +109,7 @@ unsigned int read_token(char **buffer,
     token->type = TT_SEMICOLON;
     (*buffer)++;
   } else {
-    unsigned int string_size = get_string_size(*buffer);
+    unsigned int string_size = get_string_size(p);
     token->str = (char *)malloc(string_size + 1);
     memcpy(token->str, *buffer, string_size);
     token->str[string_size] = '\0';
@@ -187,7 +214,7 @@ void parse(RTreeParser *p)
   tokenBL.str = NULL;
   bool end = false;
   rtree_add_node_down(p); // add root
-  while (read_token(&p->input_current, &token)) 
+  while (read_token(p, &token)) 
   {
     assert(!end);
     switch(token.type) {
@@ -195,7 +222,7 @@ void parse(RTreeParser *p)
       end = true;
       break;
     case TT_COLON:
-      read_token(&p->input_current, &tokenBL);
+      read_token(p, &tokenBL);
       assert(tokenBL.type == TT_DOUBLE);
       p->nodes[p->current_node_index]->length = tokenBL.numeric_value;
       destroy_token(&tokenBL);
@@ -262,11 +289,15 @@ pll_rtree_t * custom_rtree_parse_newick(const char *input,
   // todo: use const correctly!!
   p.is_file = is_file;
   if (is_file) {
-
+    p.input = getFileContent(input); 
+    if (p.input == NULL) {
+      error->type = PET_FILE_DO_NOT_EXISTS;
+      return NULL;
+    }
   } else {
     p.input = (char*)input;
   }
-  p.input_current = (char*)input;
+  p.input_current = (char*)p.input;
   p.nodes_capacity = 1000; // todo make dynamic
   p.nodes_number = 0;
   p.nodes = (pll_rnode_t **)
@@ -277,7 +308,9 @@ pll_rtree_t * custom_rtree_parse_newick(const char *input,
   parse(&p); 
   pll_rtree_t *rtree = build_rtree(&p);
   destroy_rtree_parser(&p);
-  
+  if (is_file) {
+    free(p.input);
+  }
   return rtree;
 }
 
