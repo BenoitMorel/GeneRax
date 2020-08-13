@@ -8,7 +8,7 @@
 #include <algorithm>  
 #include <trees/PLLRootedTree.hpp>
 #include <fstream>
-
+#include <unordered_map>
 
 void test_aux(const std::string &newickString, bool as_file)
 {
@@ -26,8 +26,12 @@ void test_aux(const std::string &newickString, bool as_file)
   auto customTree = custom_rtree_parse_newick(input.c_str(), 
       as_file,
       &error);
+  assert(customTree);
+  assert(pllTree);
   auto pllTreeString = pll_rtree_export_newick(pllTree->root, nullptr);
   auto customTreeString = pll_rtree_export_newick(customTree->root, nullptr);
+
+  
   assert(std::string(pllTreeString) == std::string(customTreeString));
   free(pllTreeString);
   free(customTreeString);
@@ -152,20 +156,24 @@ void benchmark(bool asFile)
 
 int main(int, char**)
 {
-   
-  std::string easy = "((a,b)ab,(c,d)cd)root;";
-  test(easy);
-  std::string noInternalLabels = "((a,b),(c,d));";
-  test(noInternalLabels);
-  std::string numericLabels = "((a,b)13,(c,d)4cd)root;";
-  test(numericLabels);
-  std::string branchLengths = "((a:30.5,b:0.03)ab,(c:0,d:3)cd)root;";
-  test(branchLengths);
-  std::string branchLengthsScientific 
-    = "((a:1e-10,b:0.03)ab,(c:0,d:3)cd)root;";
-  test(branchLengthsScientific);
+  std::unordered_map<std::string, std::string> newicks;
+ 
+  newicks.insert({"Easy", "((a,b)ab,(c,d)cd)root;"});
+  newicks.insert({"No internal label", "((a,b),(c,d));"});
+  newicks.insert({"Numeric labels", "((a,b)13,(c,d)4cd)root;"});
+  newicks.insert({"Branch lengths", "((a:30.5,b:0.03)ab,(c:0,d:3)cd)root;"});
+  newicks.insert({"Scientific notation", "((a:1e-10,b:0.03)ab,(c:0,d:3)cd)root;"});
+  newicks.insert({"Spaces","( (a : 30.5 , b : 0.03 ) ab , (c :0,d : 3 ) cd )root;"});  
+  newicks.insert({"Tabs","(\t(a\t:\t30.5\t,\tb\t:\t0.03\t)\tab\t,\t(c\t:0,d\t:\t3\t)\tcd\t)root\t;"});  
+  
+  for (auto &entry: newicks) {
+    std::cout << "[Test] " << entry.first << ": " << entry.second << std::endl;
+    test(entry.second);
+    std::cout << "[Test]   OK" << std::endl;
+  }
+  
   benchmark(false);
-  benchmark(true);
+  //benchmark(true);
   return 0;
 
 
