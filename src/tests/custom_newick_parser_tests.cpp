@@ -23,14 +23,13 @@ void test_aux(const std::string &newickString, bool as_file)
   auto pllTree = as_file ? 
     pll_rtree_parse_newick(input.c_str()) 
     : pll_rtree_parse_newick_string(input.c_str());
+  assert(pllTree);
   auto customTree = custom_rtree_parse_newick(input.c_str(), 
       as_file,
       &error);
   assert(customTree);
-  assert(pllTree);
   auto pllTreeString = pll_rtree_export_newick(pllTree->root, nullptr);
   auto customTreeString = pll_rtree_export_newick(customTree->root, nullptr);
-
   
   assert(std::string(pllTreeString) == std::string(customTreeString));
   free(pllTreeString);
@@ -163,7 +162,7 @@ void test_bad_trees_aux(const std::string &name,
   auto customTree = custom_rtree_parse_newick(tree.c_str(), 
       as_file,
       &error);
-  assert(error.type == expectedError);
+  assert(!customTree && error.type == expectedError);
   std::cout << "[Test bad tree]   OK!" << std::endl;
 }
 
@@ -177,6 +176,8 @@ void test_good_trees()
   newicks.insert({"Scientific notation", "((a:1e-10,b:0.03)ab,(c:0,d:3)cd)root;"});
   newicks.insert({"Spaces","( (a : 30.5 , b : 0.03 ) ab , (c :0,d : 3 ) cd )root;"});  
   newicks.insert({"Tabs","(\t(a\t:\t30.5\t,\tb\t:\t0.03\t)\tab\t,\t(c\t:0,d\t:\t3\t)\tcd\t)root\t;"});  
+  newicks.insert({"Newlines", "((a,b)ab\n,(c,d\n)cd)root;"});
+  newicks.insert({"Weird characters", "((a+7=5,b^o&)ab,($$£*c,d/\\?!_-|)cd)ro#~ot;"});
   
   for (auto &entry: newicks) {
     std::cout << "[Test good tree] " << entry.first << 
@@ -198,15 +199,39 @@ void test_bad_trees()
   test_bad_trees_aux("No semicolon",
       "((a,b),(c,(d, e)))", 
       PET_NOSEMICOLON);
-  test_bad_trees_aux("Invalid branch length",
-      "((a,b),(c,(d, e:0.hi)));", 
-      PET_INVALID_BRANCH_LENGTH);
-  /*
+  test_bad_trees_aux("Early semicolon",
+      "((a,b);,(c,(d, e)))", 
+      PET_INVALID_PARENTHESIS);
+  test_bad_trees_aux("Token after the newick string",
+      "((a,b),(c,(d, e)));wtf", 
+      PET_TOKEN_AFTER_SEMICOLON);
   test_bad_trees_aux("Too many left parenthesis",
       "((a,b),(c,(d, e:0.1));", 
-      PET_DOUBLE_BRANCH_LENGTH);
+      PET_INVALID_PARENTHESIS);
   test_bad_trees_aux("Too many right parenthesis",
       "(a,b),(c,(d, e:0.1)));", 
+      PET_INVALID_PARENTHESIS);
+  test_bad_trees_aux("Space in label",
+      "((a,b),(c,(d, e)hello world);", 
+      PET_INVALID_LABEL);
+  test_bad_trees_aux("Newline in label",
+      "((a,b),(c,(d, e)hello\nworld);", 
+      PET_INVALID_LABEL);
+  test_bad_trees_aux("Tab in label",
+      "((a,b),(c,(d, e)hello\tworld);", 
+      PET_INVALID_LABEL);
+  test_bad_trees_aux("Space in label",
+      "((a,b),(c,(d, e)hello world);", 
+      PET_INVALID_LABEL);
+  test_bad_trees_aux("0 children in non-terminal",
+      "((a,b),(c,(d, ())));", 
+      PET_EMPTY_NODE);
+  test_bad_trees_aux("only 1 child",
+      "((a,b),(c,(d, (e))));", 
+      PET_ONLY_ONE_CHILD);
+  /*
+  test_bad_trees_aux("label before BL",
+      "((a,b),(c,(d, e):0.5 label);", 
       PET_DOUBLE_BRANCH_LENGTH);
   test_bad_trees_aux("Double branch length",
       "((a,b),(c,(d, e:0.0:0.1)));", 

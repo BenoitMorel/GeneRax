@@ -3,11 +3,10 @@
 #include <stdlib.h>
 #include <iostream>
 
-int is_separator[256] = {1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-int to_trim[256] = {0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int is_separator[256] = {1,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+int to_trim[256] = {0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 
-#define MAX_BUFFER_SIZE 8824
 
 char *getFileContent(const char *filename)
 {
@@ -41,8 +40,6 @@ struct RTreeParser {
   pll_rnode_t *parent_node;
   bool is_file;
   RTreeParsingError *error;
-  char file_buffer[MAX_BUFFER_SIZE];
-  char previous_file_buffer[MAX_BUFFER_SIZE];
 };
 
 enum TokenType {
@@ -100,7 +97,7 @@ int is_numeric(char *s, double *d)
 
 void skip_spaces(char **buffer) 
 {
-  while (to_trim[**buffer]) {
+  while (to_trim[(int)**buffer]) {
     (*buffer)++;
   }
 }
@@ -150,7 +147,6 @@ unsigned int read_token(RTreeParser *p,
 
 void increase_nodes_capacity(RTreeParser *p)
 {
-  unsigned int capacity = p->nodes_capacity;
   p->nodes_capacity *= 4;  
   pll_rnode_t **new_buffer = (pll_rnode_t **)calloc(
       p->nodes_capacity, sizeof(pll_rnode_t *));
@@ -198,6 +194,12 @@ void rtree_add_node_down(RTreeParser *p)
 
 void rtree_go_up(RTreeParser *p)
 {
+  if (!p->current_node->label && !p->current_node->left) {
+    set_error(p, PET_EMPTY_NODE);
+  }
+  if (p->current_node->left && !p->current_node->right) {
+    set_error(p, PET_ONLY_ONE_CHILD);
+  }
   p->current_node = p->parent_node;
   p->parent_node = p->parent_node->parent;
 }
@@ -210,7 +212,10 @@ void rtree_add_node_neighbor(RTreeParser *p)
 
 void rtree_add_label(RTreeParser *p, Token *token)
 {
-  assert(!p->current_node->label);
+  if (p->current_node->label) {
+    set_error(p, PET_INVALID_LABEL);
+    return;
+  }
   p->current_node->label = token->str;
   token->str = NULL;
 }
@@ -229,10 +234,9 @@ void parse(RTreeParser *p)
   tokenBL.str = NULL;
   bool end = false;
   rtree_add_node_down(p); // add root
-  
-  while (!has_errored(p) && read_token(p, &token)) 
+   
+  while (!end && read_token(p, &token)) 
   {
-    assert(!end);
     switch(token.type) {
     case TT_SEMICOLON:
       end = true;
@@ -250,7 +254,13 @@ void parse(RTreeParser *p)
       rtree_add_node_down(p);
       break;
     case TT_RIGHT_PAR:
-      rtree_go_up(p); 
+      if (!p->parent_node) {
+        // at this point, we have more right than
+        // left parenthesis
+        set_error(p, PET_INVALID_PARENTHESIS);
+      } else {
+        rtree_go_up(p); 
+      }
       break;
     case TT_COMMA:
       rtree_add_node_neighbor(p);
@@ -261,12 +271,18 @@ void parse(RTreeParser *p)
       break;
     }
     destroy_token(&token);
+    end |= has_errored(p);
   }
   if (p->parent_node) {
-    set_error(p, PET_INVALID_SYNTAX);
+    // we have more left than right parenthesis
+    set_error(p, PET_INVALID_PARENTHESIS);
   }
   if (!end) {
     set_error(p, PET_NOSEMICOLON);
+  }
+  if (read_token(p, &token)) {
+    set_error(p, PET_TOKEN_AFTER_SEMICOLON);
+    destroy_token(&token);
   }
 }
 
