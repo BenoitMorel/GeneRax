@@ -40,7 +40,6 @@ struct RTreeParser {
   unsigned int nodes_number;
   unsigned int current_node_index;
   unsigned int parent_node_index;
-  unsigned int depth;
   bool is_file;
   RTreeParsingError *error;
   char file_buffer[MAX_BUFFER_SIZE];
@@ -167,7 +166,8 @@ pll_rnode_t *rtree_parse_add_node(RTreeParser *p)
     } else if (!parent_node->right) {
       parent_node->right = node;
     } else {
-      assert(false); // polytomy
+      p->error->type = PET_POLYTOMY;     
+      return NULL;
     }
   }
   p->nodes_number++;
@@ -176,7 +176,6 @@ pll_rnode_t *rtree_parse_add_node(RTreeParser *p)
 
 void rtree_add_node_down(RTreeParser *p) 
 {
-  p->depth++;
   p->parent_node_index = p->current_node_index;
   pll_rnode_t *current_node = rtree_parse_add_node(p);
   p->current_node_index = current_node->node_index;
@@ -184,7 +183,6 @@ void rtree_add_node_down(RTreeParser *p)
 
 void rtree_go_up(RTreeParser *p)
 {
-  p->depth--;
   if (p->parent_node_index != INVALID_INDEX) {
     auto parent = p->nodes[p->parent_node_index];
   }
@@ -270,14 +268,26 @@ pll_rtree_t *build_rtree(RTreeParser *p)
   for (unsigned int i = 1; i < p->nodes_number; ++i) {
     pll_rnode_t *node = p->nodes[i];
     if (!node->left) {
-      node->node_index = tips_index++;
+      node->node_index 
+        = node->clv_index 
+        = node->pmatrix_index 
+        = tips_index++;
+      node->scaler_index = PLL_SCALE_BUFFER_NONE;
     } else {
-      node->node_index = internal_index++;
+      node->scaler_index = internal_index - tips_number;
+      node->node_index 
+        = node->clv_index 
+        = node->pmatrix_index 
+        = internal_index++;
     }
     tree->nodes[node->node_index] = node;
   }
   tree->root = p->nodes[0];
-  tree->root->node_index = internal_index++;
+  tree->root->scaler_index = internal_index - tips_number;
+  tree->root->node_index 
+        = tree->root->clv_index 
+        = internal_index++;
+  tree->root->pmatrix_index = 0;
   tree->nodes[tree->root->node_index] = tree->root;
   assert(internal_index == p->nodes_number);
   assert(tips_index == tips_number);
@@ -307,13 +317,12 @@ pll_rtree_t * custom_rtree_parse_newick(const char *input,
     p.input = (char*)input;
   }
   p.input_current = (char*)p.input;
-  p.nodes_capacity = 1000; // todo make dynamic
+  p.nodes_capacity = 1000; 
   p.nodes_number = 0;
   p.nodes = (pll_rnode_t **)
     calloc(p.nodes_capacity, sizeof(pll_rnode_t *));
   assert(p.nodes);
   p.current_node_index = (unsigned int)-1;
-  p.depth = 0;
   parse(&p); 
   pll_rtree_t *rtree = build_rtree(&p);
   destroy_rtree_parser(&p);
