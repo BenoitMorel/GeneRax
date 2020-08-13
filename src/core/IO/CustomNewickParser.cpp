@@ -2,7 +2,6 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <iostream>
-static const unsigned int INVALID_INDEX = (unsigned int)-1;
 
 int is_separator[256] = {1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 int to_trim[256] = {0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
@@ -38,8 +37,8 @@ struct RTreeParser {
   pll_rnode_t **nodes;
   unsigned int nodes_capacity;
   unsigned int nodes_number;
-  unsigned int current_node_index;
-  unsigned int parent_node_index;
+  pll_rnode_t *current_node;
+  pll_rnode_t *parent_node;
   bool is_file;
   RTreeParsingError *error;
   char file_buffer[MAX_BUFFER_SIZE];
@@ -63,9 +62,30 @@ struct Token {
   double numeric_value;
 };
 
+int has_errored(struct RTreeParser *p)
+{
+  return p->error->type != PET_NOERROR;
+}
+
+void set_error(struct RTreeParser *p, ParsingErrorType type)
+{
+  if (!has_errored(p)) {
+    p->error->type = type;
+  }
+}
+
 void destroy_rtree_parser(struct RTreeParser *p)
 {
+  for (unsigned int i = 0; i < p->nodes_number; ++i) {
+    if (p->nodes[i]) {
+      free(p->nodes[i]->label);
+    }
+    free(p->nodes[i]);
+  }
   free(p->nodes);
+  if (p->is_file) {
+    free(p->input);
+  }
 }
 
 int is_numeric(char *s, double *d)
@@ -130,35 +150,29 @@ unsigned int read_token(RTreeParser *p,
 
 void increase_nodes_capacity(RTreeParser *p)
 {
-
   unsigned int capacity = p->nodes_capacity;
   p->nodes_capacity *= 4;  
   pll_rnode_t **new_buffer = (pll_rnode_t **)calloc(
       p->nodes_capacity, sizeof(pll_rnode_t *));
-  memcpy(new_buffer, p->nodes, capacity * sizeof(pll_rnode_t *));
+  memcpy(new_buffer, p->nodes, (p->nodes_number) * sizeof(pll_rnode_t *));
   free(p->nodes);
   p->nodes = new_buffer;
 }
 
 pll_rnode_t *rtree_parse_add_node(RTreeParser *p)
 {
-  p->current_node_index = p->nodes_number;
-  if (p->current_node_index >= p->nodes_capacity) {
+  if (p->nodes_number >= p->nodes_capacity) {
     increase_nodes_capacity(p);
   }
   pll_rnode_t *node = (pll_rnode_t *)malloc(sizeof(pll_rnode_t));
-  p->nodes[p->current_node_index] = node;
+  p->nodes[p->nodes_number] = node;
+  node->node_index = p->nodes_number;
   node->label = NULL;
   node->length = 0.0;
-  node->node_index = p->current_node_index;
   node->left = NULL;
   node->right = NULL;
   node->data = NULL;
-  if (INVALID_INDEX != p->parent_node_index) {
-    node->parent = p->nodes[p->parent_node_index];
-  } else {
-    node->parent = NULL;
-  }
+  node->parent = p->parent_node;
   if (node->parent != NULL) {
     pll_rnode_t *parent_node = node->parent;
     if (!parent_node->left) {
@@ -166,7 +180,9 @@ pll_rnode_t *rtree_parse_add_node(RTreeParser *p)
     } else if (!parent_node->right) {
       parent_node->right = node;
     } else {
-      p->error->type = PET_POLYTOMY;     
+      set_error(p, PET_POLYTOMY);
+      free(node);
+      p->nodes[p->nodes_number] = NULL;
       return NULL;
     }
   }
@@ -176,34 +192,26 @@ pll_rnode_t *rtree_parse_add_node(RTreeParser *p)
 
 void rtree_add_node_down(RTreeParser *p) 
 {
-  p->parent_node_index = p->current_node_index;
-  pll_rnode_t *current_node = rtree_parse_add_node(p);
-  p->current_node_index = current_node->node_index;
+  p->parent_node = p->current_node;
+  p->current_node = rtree_parse_add_node(p);
 }
 
 void rtree_go_up(RTreeParser *p)
 {
-  if (p->parent_node_index != INVALID_INDEX) {
-    auto parent = p->nodes[p->parent_node_index];
-  }
-  pll_rnode_t *new_current_node = p->nodes[p->parent_node_index];
-  p->current_node_index = new_current_node->node_index;
-  
-  p->parent_node_index = new_current_node->parent ? new_current_node->parent->node_index : INVALID_INDEX;
+  p->current_node = p->parent_node;
+  p->parent_node = p->parent_node->parent;
 }
 
       
 void rtree_add_node_neighbor(RTreeParser *p)
 {
-  pll_rnode_t *current_node = rtree_parse_add_node(p);
-  p->current_node_index = current_node->node_index;
+  p->current_node = rtree_parse_add_node(p);
 }
 
 void rtree_add_label(RTreeParser *p, Token *token)
 {
-  pll_rnode_t *current_node = p->nodes[p->current_node_index];
-  assert(!current_node->label);
-  current_node->label = token->str;
+  assert(!p->current_node->label);
+  p->current_node->label = token->str;
   token->str = NULL;
 }
 
@@ -221,7 +229,8 @@ void parse(RTreeParser *p)
   tokenBL.str = NULL;
   bool end = false;
   rtree_add_node_down(p); // add root
-  while (read_token(p, &token)) 
+  
+  while (!has_errored(p) && read_token(p, &token)) 
   {
     assert(!end);
     switch(token.type) {
@@ -230,8 +239,10 @@ void parse(RTreeParser *p)
       break;
     case TT_COLON:
       read_token(p, &tokenBL);
-      assert(tokenBL.type == TT_DOUBLE);
-      p->nodes[p->current_node_index]->length = tokenBL.numeric_value;
+      if (tokenBL.type != TT_DOUBLE) {
+        set_error(p, PET_INVALID_BRANCH_LENGTH);
+      }
+      p->current_node->length = tokenBL.numeric_value;
       destroy_token(&tokenBL);
       break;
     case TT_LEFT_PAR:
@@ -246,17 +257,24 @@ void parse(RTreeParser *p)
       break;
     case TT_STRING:
     case TT_DOUBLE:
-      // todo for now, we allow double label
       rtree_add_label(p, &token); 
       break;
     }
     destroy_token(&token);
   }
-  assert(p->parent_node_index == INVALID_INDEX);
+  if (p->parent_node) {
+    set_error(p, PET_INVALID_SYNTAX);
+  }
+  if (!end) {
+    set_error(p, PET_NOSEMICOLON);
+  }
 }
 
 pll_rtree_t *build_rtree(RTreeParser *p)
 {
+  if (has_errored(p)) {
+    return NULL;
+  }
   pll_rtree_t * tree = (pll_rtree_t *)malloc(sizeof(pll_rtree_t));
   tree->nodes = (pll_rnode_t **)malloc(
       (p->nodes_number)*sizeof(pll_rnode_t *));
@@ -267,6 +285,7 @@ pll_rtree_t *build_rtree(RTreeParser *p)
   // and should be placed at the end
   for (unsigned int i = 1; i < p->nodes_number; ++i) {
     pll_rnode_t *node = p->nodes[i];
+    p->nodes[i] = NULL; // avoid double free when destroying p
     if (!node->left) {
       node->node_index 
         = node->clv_index 
@@ -283,6 +302,7 @@ pll_rtree_t *build_rtree(RTreeParser *p)
     tree->nodes[node->node_index] = node;
   }
   tree->root = p->nodes[0];
+  p->nodes[0] = NULL; // avoid double free when destroying p
   tree->root->scaler_index = internal_index - tips_number;
   tree->root->node_index 
         = tree->root->clv_index 
@@ -301,7 +321,6 @@ pll_rtree_t * custom_rtree_parse_newick(const char *input,
     bool is_file,
     RTreeParsingError *error)
 {
-  // INIT
   RTreeParser p;
   p.error = error;
   error->type = PET_NOERROR;
@@ -310,7 +329,7 @@ pll_rtree_t * custom_rtree_parse_newick(const char *input,
   if (is_file) {
     p.input = getFileContent(input); 
     if (p.input == NULL) {
-      error->type = PET_FILE_DO_NOT_EXISTS;
+      set_error(&p, PET_FILE_DO_NOT_EXISTS);
       return NULL;
     }
   } else {
@@ -322,13 +341,11 @@ pll_rtree_t * custom_rtree_parse_newick(const char *input,
   p.nodes = (pll_rnode_t **)
     calloc(p.nodes_capacity, sizeof(pll_rnode_t *));
   assert(p.nodes);
-  p.current_node_index = (unsigned int)-1;
+  p.current_node = NULL;
+  p.parent_node = NULL;
   parse(&p); 
   pll_rtree_t *rtree = build_rtree(&p);
   destroy_rtree_parser(&p);
-  if (is_file) {
-    free(p.input);
-  }
   return rtree;
 }
 

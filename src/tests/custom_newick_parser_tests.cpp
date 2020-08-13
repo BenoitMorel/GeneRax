@@ -153,11 +153,23 @@ void benchmark(bool asFile)
   }
 }
 
+void test_bad_trees_aux(const std::string &name,
+    const std::string &tree, 
+    ParsingErrorType expectedError)
+{
+  std::cout << "[Test bad tree] " << name << ": " << tree << std::endl;;
+  RTreeParsingError error;
+  bool as_file = false;
+  auto customTree = custom_rtree_parse_newick(tree.c_str(), 
+      as_file,
+      &error);
+  assert(error.type == expectedError);
+  std::cout << "[Test bad tree]   OK!" << std::endl;
+}
 
-int main(int, char**)
+void test_good_trees()
 {
   std::unordered_map<std::string, std::string> newicks;
- 
   newicks.insert({"Easy", "((a,b)ab,(c,d)cd)root;"});
   newicks.insert({"No internal label", "((a,b),(c,d));"});
   newicks.insert({"Numeric labels", "((a,b)13,(c,d)4cd)root;"});
@@ -167,12 +179,46 @@ int main(int, char**)
   newicks.insert({"Tabs","(\t(a\t:\t30.5\t,\tb\t:\t0.03\t)\tab\t,\t(c\t:0,d\t:\t3\t)\tcd\t)root\t;"});  
   
   for (auto &entry: newicks) {
-    std::cout << "[Test] " << entry.first << ": " << entry.second << std::endl;
+    std::cout << "[Test good tree] " << entry.first << 
+      ": " << entry.second << std::endl;
     test(entry.second);
-    std::cout << "[Test]   OK" << std::endl;
+    std::cout << "[Test good tree]   OK" << std::endl;
   }
+}
+
+void test_bad_trees()
+{
   
-  benchmark(false);
+  test_bad_trees_aux("Unrooted",
+      "((a,b),(c,d),(e,f));", 
+      PET_POLYTOMY);
+  test_bad_trees_aux("Polytomy",
+      "((a,b),(c,(d, e, f));", 
+      PET_POLYTOMY);
+  test_bad_trees_aux("No semicolon",
+      "((a,b),(c,(d, e)))", 
+      PET_NOSEMICOLON);
+  test_bad_trees_aux("Invalid branch length",
+      "((a,b),(c,(d, e:0.hi)));", 
+      PET_INVALID_BRANCH_LENGTH);
+  /*
+  test_bad_trees_aux("Too many left parenthesis",
+      "((a,b),(c,(d, e:0.1));", 
+      PET_DOUBLE_BRANCH_LENGTH);
+  test_bad_trees_aux("Too many right parenthesis",
+      "(a,b),(c,(d, e:0.1)));", 
+      PET_DOUBLE_BRANCH_LENGTH);
+  test_bad_trees_aux("Double branch length",
+      "((a,b),(c,(d, e:0.0:0.1)));", 
+      PET_DOUBLE_BRANCH_LENGTH);
+  */
+}
+
+int main(int, char**)
+{
+  test_good_trees();  
+  test_bad_trees();
+  //benchmark(false);
   //benchmark(true);
   return 0;
 
