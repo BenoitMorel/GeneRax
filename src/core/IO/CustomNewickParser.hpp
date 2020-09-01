@@ -5,7 +5,7 @@ extern "C" {
 }
 
 enum ParsingErrorType {
-  PET_NOERROR,
+  PET_NOERROR = 0,
   PET_FILE_DO_NOT_EXISTS,
   PET_INVALID_PARENTHESIS,
   PET_INVALID_LABEL,
@@ -16,11 +16,15 @@ enum ParsingErrorType {
   PET_POLYTOMY,
   PET_EMPTY_NODE,
   PET_ONLY_ONE_CHILD,
-  PET_TOKEN_AFTER_SEMICOLON
+  PET_TOKEN_AFTER_SEMICOLON,
+  PET_LAST
 };
+
+const char* getParsingErrorMessage(ParsingErrorType type);
 
 struct RTreeParsingError {
   ParsingErrorType type;
+  unsigned int offset;
 };
 
 

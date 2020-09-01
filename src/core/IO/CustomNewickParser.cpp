@@ -7,6 +7,25 @@ int is_separator[256] = {1,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 int to_trim[256] = {0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 
+const char *messages[PET_LAST] = {
+  "PET_NOERROR",
+  "PET_FILE_DO_NOT_EXISTS",
+  "PET_INVALID_PARENTHESIS",
+  "PET_INVALID_LABEL",
+  "PET_INVALID_SYNTAX",
+  "PET_NOSEMICOLON",
+  "PET_DOUBLE_BRANCH_LENGTH",
+  "PET_INVALID_BRANCH_LENGTH",
+  "PET_POLYTOMY",
+  "PET_EMPTY_NODE",
+  "PET_ONLY_ONE_CHILD",
+  "PET_TOKEN_AFTER_SEMICOLON"
+};
+
+const char* getParsingErrorMessage(ParsingErrorType type)
+{
+  return messages[type];
+}
 
 char *getFileContent(const char *filename)
 {
@@ -68,6 +87,7 @@ void set_error(struct RTreeParser *p, ParsingErrorType type)
 {
   if (!has_errored(p)) {
     p->error->type = type;
+    p->error->offset = p->input_current - p->input;
   }
 }
 
@@ -164,7 +184,7 @@ pll_rnode_t *rtree_parse_add_node(RTreeParser *p)
   p->nodes[p->nodes_number] = node;
   node->node_index = p->nodes_number;
   node->label = NULL;
-  node->length = 0.0;
+  node->length = INFINITY;
   node->left = NULL;
   node->right = NULL;
   node->data = NULL;
@@ -210,11 +230,19 @@ void rtree_add_node_neighbor(RTreeParser *p)
   p->current_node = rtree_parse_add_node(p);
 }
 
+int is_branch_length_set(pll_rnode_t *node)
+{
+  return node && node->length != INFINITY;
+}
+
 void rtree_add_label(RTreeParser *p, Token *token)
 {
   if (p->current_node->label) {
     set_error(p, PET_INVALID_LABEL);
     return;
+  }
+  if (is_branch_length_set(p->current_node)) {
+    set_error(p, PET_INVALID_BRANCH_LENGTH);
   }
   p->current_node->label = token->str;
   token->str = NULL;
@@ -224,6 +252,17 @@ void destroy_token(Token *token)
 {
   free(token->str);
   token->str = NULL;
+}
+
+
+void terminate_node_creation(pll_rnode_t *node)
+{
+  if (!node) {
+    return;
+  }
+  if (!is_branch_length_set(node)) {
+    node->length = 0.0;
+  }
 }
 
 void parse(RTreeParser *p)
@@ -246,6 +285,9 @@ void parse(RTreeParser *p)
       if (tokenBL.type != TT_DOUBLE) {
         set_error(p, PET_INVALID_BRANCH_LENGTH);
       }
+      if (is_branch_length_set(p->current_node)) {
+        set_error(p, PET_DOUBLE_BRANCH_LENGTH);
+      }
       p->current_node->length = tokenBL.numeric_value;
       destroy_token(&tokenBL);
       break;
@@ -259,10 +301,12 @@ void parse(RTreeParser *p)
         // left parenthesis
         set_error(p, PET_INVALID_PARENTHESIS);
       } else {
+        terminate_node_creation(p->current_node);
         rtree_go_up(p); 
       }
       break;
     case TT_COMMA:
+      terminate_node_creation(p->current_node);
       rtree_add_node_neighbor(p);
       break;
     case TT_STRING:
@@ -283,6 +327,9 @@ void parse(RTreeParser *p)
   if (read_token(p, &token)) {
     set_error(p, PET_TOKEN_AFTER_SEMICOLON);
     destroy_token(&token);
+  }
+  if (p->error->type == PET_NOERROR) {
+    terminate_node_creation(p->current_node);
   }
 }
 

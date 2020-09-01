@@ -162,6 +162,14 @@ void test_bad_trees_aux(const std::string &name,
   auto customTree = custom_rtree_parse_newick(tree.c_str(), 
       as_file,
       &error);
+  if(error.type != expectedError) {
+    std::cerr << getParsingErrorMessage(error.type) << std::endl;
+  }
+  if (customTree) {
+    auto customTreeString = pll_rtree_export_newick(customTree->root, nullptr);
+    std::cout << customTreeString << std::endl;
+    free(customTreeString);
+  }
   assert(!customTree && error.type == expectedError);
   std::cout << "[Test bad tree]   OK!" << std::endl;
 }
@@ -229,22 +237,20 @@ void test_bad_trees()
   test_bad_trees_aux("only 1 child",
       "((a,b),(c,(d, (e))));", 
       PET_ONLY_ONE_CHILD);
-  /*
-  test_bad_trees_aux("label before BL",
-      "((a,b),(c,(d, e):0.5 label);", 
-      PET_DOUBLE_BRANCH_LENGTH);
+  test_bad_trees_aux("BL before label",
+      "((a,b),(c,(d, e):0.5 label));", 
+      PET_INVALID_BRANCH_LENGTH);
   test_bad_trees_aux("Double branch length",
       "((a,b),(c,(d, e:0.0:0.1)));", 
       PET_DOUBLE_BRANCH_LENGTH);
-  */
 }
 
 int main(int, char**)
 {
-  test_good_trees();  
-  test_bad_trees();
   //benchmark(false);
   //benchmark(true);
+  test_good_trees();  
+  test_bad_trees();
   return 0;
 
 
