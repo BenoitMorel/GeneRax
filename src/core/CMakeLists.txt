@@ -1,5 +1,6 @@
 
 set(jointsearch-core_SOURCES 
+  IO/CustomNewickParser.cpp
   IO/Families.cpp
   IO/Logger.cpp
   IO/GeneSpeciesMapping.cpp
