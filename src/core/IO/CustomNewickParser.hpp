@@ -20,16 +20,36 @@ enum ParsingErrorType {
   PET_LAST
 };
 
+/**
+ *  Get a short name describing the parsing error
+ */
 const char* getParsingErrorName(ParsingErrorType type);
+
+/**
+ * Get a short description of the parsing error
+ */
 const char* getParsingErrorDiagnostic(ParsingErrorType type);
 
-struct RTreeParsingError {
+/*
+ *  Parsing error information
+ */
+struct ParsingError {
+  // Error type. See also getParsingErrorName and
+  // getParsingErrorDiagnostic
   ParsingErrorType type;
+
+  // Offset in the newick string at which the error
+  // was detected
   unsigned int offset;
 };
 
-
+/**
+ *  Parse a rooted tree from a newick string or file
+ *  If an error occures, returns NULL and fills the 
+ *  error object.
+ */
 pll_rtree_t * custom_rtree_parse_newick(const char *s, 
     bool is_file,
-    RTreeParsingError *error);
+    ParsingError *error);
+
 

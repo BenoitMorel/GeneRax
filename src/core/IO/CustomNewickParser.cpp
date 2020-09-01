@@ -3,10 +3,12 @@
 #include <stdlib.h>
 #include <iostream>
 
+// a separator is a character that ends a label
 int is_separator[256] = {1,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+// characters to trim (outside a label)
 int to_trim[256] = {0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-
+// error type to error name
 const char *error_type_name[PET_LAST] = {
   "NOERROR",
   "FILE_DOES_NOT_EXISTS",
@@ -22,6 +24,7 @@ const char *error_type_name[PET_LAST] = {
   "TOKEN_AFTER_SEMICOLON"
 };
 
+// error type to error diagnostic
 const char *error_type_diagnostic[PET_LAST] = {
   "Tree was successfully parsed",
   "File does not exist",
@@ -48,6 +51,45 @@ const char* getParsingErrorDiagnostic(ParsingErrorType type)
   return error_type_diagnostic[type];
 }
 
+int is_numeric(char *s, double *d)
+{
+  if (s == NULL || *s == '\0' || isspace(*s))
+    return 0;
+  char * p;
+  *d = strtod (s, &p);
+  return *p == '\0';
+}
+
+
+/**
+ *  Increment buffer until next character is not
+ *  a space or tab
+ */
+void skip_spaces(char **buffer) 
+{
+  while (to_trim[(int)**buffer]) {
+    (*buffer)++;
+  }
+}
+
+/**
+ *  Return the size of the next token to read 
+ *  (number of characters before the next separator
+ *  after the current character)
+ */
+unsigned int get_token_size(char *buffer)
+{
+  char *curr = buffer;
+  while (!is_separator[(int)*curr]) {
+    curr++;
+  }
+  return curr - buffer; 
+}
+
+/**
+ *  Reads and return the content of a file.
+ *  Deallocation has to be done by the caller with free
+ */
 char *getFileContent(const char *filename)
 {
   char * buffer = 0;
@@ -68,20 +110,6 @@ char *getFileContent(const char *filename)
   }
   return buffer;
 }
-
-struct RTreeParser {
-  char* input;
-  char* input_current;
-  unsigned int input_size;
-  pll_rnode_t **nodes;
-  unsigned int nodes_capacity;
-  unsigned int nodes_number;
-  pll_rnode_t *current_node;
-  pll_rnode_t *parent_node;
-  bool is_file;
-  RTreeParsingError *error;
-};
-
 enum TokenType {
   TT_LEFT_PAR,
   TT_RIGHT_PAR,
@@ -93,69 +121,19 @@ enum TokenType {
 };
 
 struct Token {
+  // type of token (string, float, special character etc.)
   TokenType type;
+  // value of the token (only relevant for string and float tokens)
   char *str;
+  // size of str
   unsigned int str_size;
+  // floating value of the token (only relevant for float tokens)
   double numeric_value;
 };
 
-int has_errored(struct RTreeParser *p)
-{
-  return p->error->type != PET_NOERROR;
-}
-
-void set_error(struct RTreeParser *p, ParsingErrorType type)
-{
-  if (!has_errored(p)) {
-    p->error->type = type;
-    p->error->offset = p->input_current - p->input - 1;
-  }
-}
-
-void destroy_rtree_parser(struct RTreeParser *p)
-{
-  for (unsigned int i = 0; i < p->nodes_number; ++i) {
-    if (p->nodes[i]) {
-      free(p->nodes[i]->label);
-    }
-    free(p->nodes[i]);
-  }
-  free(p->nodes);
-  if (p->is_file) {
-    free(p->input);
-  }
-}
-
-int is_numeric(char *s, double *d)
-{
-  if (s == NULL || *s == '\0' || isspace(*s))
-    return 0;
-  char * p;
-  *d = strtod (s, &p);
-  return *p == '\0';
-}
-
-
-void skip_spaces(char **buffer) 
-{
-  while (to_trim[(int)**buffer]) {
-    (*buffer)++;
-  }
-}
-
-unsigned int get_string_size(RTreeParser *p)
-{
-  char *curr = p->input_current;
-  while (!is_separator[(int)*curr]) {
-    curr++;
-  }
-  return curr - p->input_current; 
-}
-
-unsigned int read_token(RTreeParser *p, 
+unsigned int read_token(char **buffer, 
     Token *token)
 {
-  char **buffer = &p->input_current;
   skip_spaces(buffer);
   if (**buffer == '\0') {
     return 0;
@@ -175,7 +153,7 @@ unsigned int read_token(RTreeParser *p,
     token->type = TT_SEMICOLON;
     (*buffer)++;
   } else {
-    unsigned int string_size = get_string_size(p);
+    unsigned int string_size = get_token_size(*buffer);
     token->str = (char *)malloc(string_size + 1);
     memcpy(token->str, *buffer, string_size);
     token->str[string_size] = '\0';
@@ -185,6 +163,78 @@ unsigned int read_token(RTreeParser *p,
   }
   return 1;
 }
+
+void destroy_token(Token *token)
+{
+  free(token->str);
+  token->str = NULL;
+}
+
+/*
+ *  Structure holding the current context of the parsing
+ */
+struct RTreeParser {
+  // Pointer to the start of the newick string 
+  char* input;
+  // Pointer to the current offset in the newick string
+  char* input_current;
+  // size of input
+  unsigned int input_size;
+  // buffer containing all nodes
+  pll_rnode_t **nodes;
+  // allocated size of nodes
+  unsigned int nodes_capacity;
+  // current number of parsed nodes (<= nodes_capacity)
+  unsigned int nodes_number;
+  // node currently being parsed
+  pll_rnode_t *current_node;
+  // parent of current_node (TODO this one is redundant)
+  pll_rnode_t *parent_node;
+  // are we reading from a file or from a string
+  bool is_file;
+  // object to fill if parsing fails
+  ParsingError *error;
+};
+
+
+/**
+ *  Deallocate all information stored in p
+ */
+void destroy_rtree_parser(struct RTreeParser *p)
+{
+  for (unsigned int i = 0; i < p->nodes_number; ++i) {
+    if (p->nodes[i]) {
+      free(p->nodes[i]->label);
+    }
+    free(p->nodes[i]);
+  }
+  free(p->nodes);
+  if (p->is_file) {
+    free(p->input);
+  }
+}
+
+/**
+ *  Return true if the parsing failed
+ */
+int has_errored(struct RTreeParser *p)
+{
+  return p->error->type != PET_NOERROR;
+}
+
+/**
+ *  Callback for parsing error
+ */
+void set_error(struct RTreeParser *p, ParsingErrorType type)
+{
+  if (!has_errored(p)) {
+    p->error->type = type;
+    p->error->offset = p->input_current - p->input - 1;
+  }
+}
+
+
+
 
 void increase_nodes_capacity(RTreeParser *p)
 {
@@ -273,11 +323,6 @@ void rtree_add_label(RTreeParser *p, Token *token)
   token->str = NULL;
 }
 
-void destroy_token(Token *token)
-{
-  free(token->str);
-  token->str = NULL;
-}
 
 
 void terminate_node_creation(pll_rnode_t *node)
@@ -299,14 +344,14 @@ void parse(RTreeParser *p)
   bool end = false;
   rtree_add_node_down(p); // add root
    
-  while (!end && read_token(p, &token)) 
+  while (!end && read_token(&p->input_current, &token)) 
   {
     switch(token.type) {
     case TT_SEMICOLON:
       end = true;
       break;
     case TT_COLON:
-      read_token(p, &tokenBL);
+      read_token(&p->input_current, &tokenBL);
       if (tokenBL.type != TT_DOUBLE) {
         set_error(p, PET_INVALID_BRANCH_LENGTH);
       }
@@ -349,7 +394,7 @@ void parse(RTreeParser *p)
   if (!end) {
     set_error(p, PET_NOSEMICOLON);
   }
-  if (read_token(p, &token)) {
+  if (read_token(&p->input_current, &token)) {
     set_error(p, PET_TOKEN_AFTER_SEMICOLON);
     destroy_token(&token);
   }
@@ -407,7 +452,7 @@ pll_rtree_t *build_rtree(RTreeParser *p)
 
 pll_rtree_t * custom_rtree_parse_newick(const char *input,
     bool is_file,
-    RTreeParsingError *error)
+    ParsingError *error)
 {
   RTreeParser p;
   p.error = error;

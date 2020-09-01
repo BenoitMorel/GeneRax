@@ -58,15 +58,6 @@ pll_utree_t *LibpllParsers::readNewickFromFile(const std::string &newickFilename
   if (!std::getline(is, line)) {
     throw LibpllException("Error while reading tree (file is empty) from file: ", newickFilename); 
   }
-  /*
-  std::string temp;
-  while (std::getline(is, temp)) {
-    if (line.size() > 0) {
-      throw LibpllException("Error: found more than one tree in the file: ", newickFilename);
-    }
-  }
-  */
-  
   pll_utree_t *res = nullptr;
   try {
     res = readNewickFromStr(line);
@@ -88,7 +79,7 @@ pll_utree_t *LibpllParsers::readNewickFromStr(const std::string &newickString)
 
 static pll_rtree_t *readRooted(const std::string &newick, bool isFile)
 {
-  RTreeParsingError error;
+  ParsingError error;
   auto tree = custom_rtree_parse_newick(newick.c_str(), 
       isFile,
       &error);

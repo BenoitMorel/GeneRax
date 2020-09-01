@@ -12,7 +12,7 @@
 
 void test_aux(const std::string &newickString, bool as_file)
 {
-  RTreeParsingError error;
+  ParsingError error;
   std::string input = newickString;
   if (as_file) {
     input = "temp.txt";
@@ -58,7 +58,7 @@ void benchmark_aux(const std::vector<std::string> &newickStrings,
         tree = pll_rtree_parse_newick_string(newickString.c_str());
       }
     } else {
-      RTreeParsingError error;
+      ParsingError error;
       tree = custom_rtree_parse_newick(newickString.c_str(), 
           as_file, 
           &error);
@@ -157,7 +157,7 @@ void test_bad_trees_aux(const std::string &name,
     ParsingErrorType expectedError)
 {
   std::cout << "[Test bad tree] " << name << ": " << tree << std::endl;;
-  RTreeParsingError error;
+  ParsingError error;
   bool as_file = false;
   auto customTree = custom_rtree_parse_newick(tree.c_str(), 
       as_file,
