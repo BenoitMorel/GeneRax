@@ -8,6 +8,7 @@
 #include <stack>
 #include <array>
 #include <IO/Logger.hpp>
+#include <IO/CustomNewickParser.hpp>
 
 extern "C" {
 #include <pll.h>
@@ -84,35 +85,42 @@ pll_utree_t *LibpllParsers::readNewickFromStr(const std::string &newickString)
   return utree;
 }
 
+
+static pll_rtree_t *readRooted(const std::string &newick, bool isFile)
+{
+  RTreeParsingError error;
+  auto tree = custom_rtree_parse_newick(newick.c_str(), 
+      isFile,
+      &error);
+  if (error.type == PET_NOERROR) {
+    return tree;
+  } else {
+    std::string errorMessage;
+    if (isFile) {
+      errorMessage = "Error while reading rooted tree from file " + newick + ".\n";
+    } else {
+      errorMessage = "Error while reading rooted tree from string " + newick + ".\n";
+    }
+    errorMessage += "Error name: ";
+    errorMessage += std::string(getParsingErrorName(error.type));
+    errorMessage += ".\n";
+    errorMessage += "Error help message: ";
+    errorMessage += std::string(getParsingErrorDiagnostic(error.type));
+    errorMessage += ".\n";
+    errorMessage += "The parsing error was detected at character ";
+    errorMessage += std::to_string(error.offset) + ".";
+    throw LibpllException(errorMessage); 
+  }
+}
+
 pll_rtree_t *LibpllParsers::readRootedFromFile(const std::string &newickFile)
 {
-  auto tree = pll_rtree_parse_newick(newickFile.c_str());
-  if (tree) {
-    return tree;
-  }
-  try {
-    auto utree = readNewickFromFile(newickFile);
-    pll_utree_destroy(utree, 0);
-  } catch (...) {
-    throw LibpllException("Error while reading tree from file: ", newickFile); 
-  }
-  throw LibpllException("Error, the following tree should be rooted and is not:", newickFile.c_str());
-
+  return readRooted(newickFile, true);
 }
 
 pll_rtree_t *LibpllParsers::readRootedFromStr(const std::string &newickString)
 {
-  auto rtree =  pll_rtree_parse_newick_string(newickString.c_str());
-  if (rtree) {
-    return rtree;
-  }
-  try {
-    auto utree = readNewickFromStr(newickString);
-    pll_utree_destroy(utree, 0);
-  } catch (...) {
-    throw LibpllException("Error while reading tree from std::string: ", newickString);
-  }
-  throw LibpllException("Error, trying to read an unrooted tree as rooted:", newickString.c_str());
+  return readRooted(newickString, false);
 }
   
 void LibpllParsers::saveUtree(const pll_unode_t *utree, 

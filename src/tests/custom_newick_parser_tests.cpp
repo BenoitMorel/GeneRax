@@ -163,7 +163,7 @@ void test_bad_trees_aux(const std::string &name,
       as_file,
       &error);
   if(error.type != expectedError) {
-    std::cerr << getParsingErrorMessage(error.type) << std::endl;
+    std::cerr << getParsingErrorName(error.type) << std::endl;
   }
   if (customTree) {
     auto customTreeString = pll_rtree_export_newick(customTree->root, nullptr);
@@ -185,7 +185,7 @@ void test_good_trees()
   newicks.insert({"Spaces","( (a : 30.5 , b : 0.03 ) ab , (c :0,d : 3 ) cd )root;"});  
   newicks.insert({"Tabs","(\t(a\t:\t30.5\t,\tb\t:\t0.03\t)\tab\t,\t(c\t:0,d\t:\t3\t)\tcd\t)root\t;"});  
   newicks.insert({"Newlines", "((a,b)ab\n,(c,d\n)cd)root;"});
-  newicks.insert({"Weird characters", "((a+7=5,b^o&)ab,($$£*c,d/\\?!_-|)cd)ro#~ot;"});
+  newicks.insert({"Weird characters", "((!a+7=5,b^o&)ab,($$£*c,d/\\?!_-|)cd)ro#~ot;"});
   
   for (auto &entry: newicks) {
     std::cout << "[Test good tree] " << entry.first << 
@@ -200,7 +200,7 @@ void test_bad_trees()
   
   test_bad_trees_aux("Unrooted",
       "((a,b),(c,d),(e,f));", 
-      PET_POLYTOMY);
+      PET_UNROOTED);
   test_bad_trees_aux("Polytomy",
       "((a,b),(c,(d, e, f));", 
       PET_POLYTOMY);
@@ -209,16 +209,16 @@ void test_bad_trees()
       PET_NOSEMICOLON);
   test_bad_trees_aux("Early semicolon",
       "((a,b);,(c,(d, e)))", 
-      PET_INVALID_PARENTHESIS);
+      PET_INVALID_PARENTHESES);
   test_bad_trees_aux("Token after the newick string",
       "((a,b),(c,(d, e)));wtf", 
       PET_TOKEN_AFTER_SEMICOLON);
   test_bad_trees_aux("Too many left parenthesis",
       "((a,b),(c,(d, e:0.1));", 
-      PET_INVALID_PARENTHESIS);
+      PET_INVALID_PARENTHESES);
   test_bad_trees_aux("Too many right parenthesis",
       "(a,b),(c,(d, e:0.1)));", 
-      PET_INVALID_PARENTHESIS);
+      PET_INVALID_PARENTHESES);
   test_bad_trees_aux("Space in label",
       "((a,b),(c,(d, e)hello world);", 
       PET_INVALID_LABEL);

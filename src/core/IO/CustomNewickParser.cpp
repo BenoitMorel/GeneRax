@@ -7,24 +7,45 @@ int is_separator[256] = {1,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 int to_trim[256] = {0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
 
-const char *messages[PET_LAST] = {
-  "PET_NOERROR",
-  "PET_FILE_DO_NOT_EXISTS",
-  "PET_INVALID_PARENTHESIS",
-  "PET_INVALID_LABEL",
-  "PET_INVALID_SYNTAX",
-  "PET_NOSEMICOLON",
-  "PET_DOUBLE_BRANCH_LENGTH",
-  "PET_INVALID_BRANCH_LENGTH",
-  "PET_POLYTOMY",
-  "PET_EMPTY_NODE",
-  "PET_ONLY_ONE_CHILD",
-  "PET_TOKEN_AFTER_SEMICOLON"
+const char *error_type_name[PET_LAST] = {
+  "NOERROR",
+  "FILE_DOES_NOT_EXISTS",
+  "INVALID_PARENTHESES",
+  "INVALID_LABEL",
+  "NO_SEMICOLON",
+  "DOUBLE_BRANCH_LENGTH",
+  "INVALID_BRANCH_LENGTH",
+  "POLYTOMY",
+  "UNROOTED",
+  "EMPTY_NODE",
+  "ONLY_ONE_CHILD",
+  "TOKEN_AFTER_SEMICOLON"
 };
 
-const char* getParsingErrorMessage(ParsingErrorType type)
+const char *error_type_diagnostic[PET_LAST] = {
+  "Tree was successfully parsed",
+  "File does not exist",
+  "The newick string contains too few left or right parentheses, or a semicolon was inserted too early.",
+  "A node label is invalid or was set twice. Please also check the presence of invalid characters, like ()[]'\";,: newlines spaces and tabs",
+  "The newick string should end with a semicolon",
+  "The branch length of a node was set twice",
+  "The branch length of a node could not be read as a floating value",
+  "The tree contains polytomies (nodes with strictly more than two children",
+  "The tree is unrooted: its top node has strictly more than two children",
+  "A node has no label nor children",
+  "A node has only one child",
+  "Some text follows the ending semicolon"
+};
+
+
+const char* getParsingErrorName(ParsingErrorType type)
 {
-  return messages[type];
+  return error_type_name[type];
+}
+
+const char* getParsingErrorDiagnostic(ParsingErrorType type)
+{
+  return error_type_diagnostic[type];
 }
 
 char *getFileContent(const char *filename)
@@ -87,7 +108,7 @@ void set_error(struct RTreeParser *p, ParsingErrorType type)
 {
   if (!has_errored(p)) {
     p->error->type = type;
-    p->error->offset = p->input_current - p->input;
+    p->error->offset = p->input_current - p->input - 1;
   }
 }
 
@@ -196,7 +217,11 @@ pll_rnode_t *rtree_parse_add_node(RTreeParser *p)
     } else if (!parent_node->right) {
       parent_node->right = node;
     } else {
-      set_error(p, PET_POLYTOMY);
+      if (parent_node->parent == NULL) {
+        set_error(p, PET_UNROOTED);
+      } else {
+        set_error(p, PET_POLYTOMY);
+      }
       free(node);
       p->nodes[p->nodes_number] = NULL;
       return NULL;
@@ -299,7 +324,7 @@ void parse(RTreeParser *p)
       if (!p->parent_node) {
         // at this point, we have more right than
         // left parenthesis
-        set_error(p, PET_INVALID_PARENTHESIS);
+        set_error(p, PET_INVALID_PARENTHESES);
       } else {
         terminate_node_creation(p->current_node);
         rtree_go_up(p); 
@@ -319,7 +344,7 @@ void parse(RTreeParser *p)
   }
   if (p->parent_node) {
     // we have more left than right parenthesis
-    set_error(p, PET_INVALID_PARENTHESIS);
+    set_error(p, PET_INVALID_PARENTHESES);
   }
   if (!end) {
     set_error(p, PET_NOSEMICOLON);
@@ -392,7 +417,7 @@ pll_rtree_t * custom_rtree_parse_newick(const char *input,
   if (is_file) {
     p.input = getFileContent(input); 
     if (p.input == NULL) {
-      set_error(&p, PET_FILE_DO_NOT_EXISTS);
+      set_error(&p, PET_FILE_DOES_NOT_EXISTS);
       return NULL;
     }
   } else {
