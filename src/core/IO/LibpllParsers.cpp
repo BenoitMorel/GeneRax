@@ -93,10 +93,10 @@ static pll_rtree_t *readRooted(const std::string &newick, bool isFile)
       errorMessage = "Error while reading rooted tree from string " + newick + ".\n";
     }
     errorMessage += "Error name: ";
-    errorMessage += std::string(getParsingErrorName(error.type));
+    errorMessage += std::string(get_parsing_error_name(error.type));
     errorMessage += ".\n";
     errorMessage += "Error help message: ";
-    errorMessage += std::string(getParsingErrorDiagnostic(error.type));
+    errorMessage += std::string(get_parsing_error_diagnostic(error.type));
     errorMessage += ".\n";
     errorMessage += "The parsing error was detected at character ";
     errorMessage += std::to_string(error.offset) + ".";

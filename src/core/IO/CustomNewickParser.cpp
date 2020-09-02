@@ -4,7 +4,9 @@
 #include <iostream>
 
 // a separator is a character that ends a label
-int is_separator[256] = {1,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+int is_separator[256] = {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,0,0,0,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
 // characters to trim (outside a label)
 int to_trim[256] = {0,0,0,0,0,0,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
@@ -29,11 +31,11 @@ const char *error_type_diagnostic[PET_LAST] = {
   "Tree was successfully parsed",
   "File does not exist",
   "The newick string contains too few left or right parentheses, or a semicolon was inserted too early.",
-  "A node label is invalid or was set twice. Please also check the presence of invalid characters, like ()[]'\";,: newlines spaces and tabs",
+  "A node label is invalid or was set twice. Please also check the presence of invalid characters, like ()[]'\";,: newlines spaces, tabs and unprintable characters like \x01",
   "The newick string should end with a semicolon",
   "The branch length of a node was set twice",
   "The branch length of a node could not be read as a floating value",
-  "The tree contains polytomies (nodes with strictly more than two children",
+  "The tree contains polytomies (nodes with strictly more than two children. This error might also be raised when a comma is missing",
   "The tree is unrooted: its top node has strictly more than two children",
   "A node has no label nor children",
   "A node has only one child",
@@ -41,12 +43,12 @@ const char *error_type_diagnostic[PET_LAST] = {
 };
 
 
-const char* getParsingErrorName(ParsingErrorType type)
+const char* get_parsing_error_name(ParsingErrorType type)
 {
   return error_type_name[type];
 }
 
-const char* getParsingErrorDiagnostic(ParsingErrorType type)
+const char* get_parsing_error_diagnostic(ParsingErrorType type)
 {
   return error_type_diagnostic[type];
 }
@@ -90,7 +92,7 @@ unsigned int get_token_size(char *buffer)
  *  Reads and return the content of a file.
  *  Deallocation has to be done by the caller with free
  */
-char *getFileContent(const char *filename)
+char *get_file_content(const char *filename)
 {
   char * buffer = 0;
   long length;
@@ -460,7 +462,7 @@ pll_rtree_t * custom_rtree_parse_newick(const char *input,
   // todo: use const correctly!!
   p.is_file = is_file;
   if (is_file) {
-    p.input = getFileContent(input); 
+    p.input = get_file_content(input); 
     if (p.input == NULL) {
       set_error(&p, PET_FILE_DOES_NOT_EXISTS);
       return NULL;

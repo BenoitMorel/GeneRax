@@ -23,19 +23,19 @@ enum ParsingErrorType {
 /**
  *  Get a short name describing the parsing error
  */
-const char* getParsingErrorName(ParsingErrorType type);
+const char* get_parsing_error_name(ParsingErrorType type);
 
 /**
  * Get a short description of the parsing error
  */
-const char* getParsingErrorDiagnostic(ParsingErrorType type);
+const char* get_parsing_error_diagnostic(ParsingErrorType type);
 
 /*
  *  Parsing error information
  */
 struct ParsingError {
-  // Error type. See also getParsingErrorName and
-  // getParsingErrorDiagnostic
+  // Error type. See also get_parsing_error_name and
+  // get_parsing_error_diagnostic
   ParsingErrorType type;
 
   // Offset in the newick string at which the error

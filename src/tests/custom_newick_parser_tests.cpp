@@ -27,6 +27,11 @@ void test_aux(const std::string &newickString, bool as_file)
   auto customTree = custom_rtree_parse_newick(input.c_str(), 
       as_file,
       &error);
+  if (error.type != PET_NOERROR) {
+    std::cout << get_parsing_error_name(error.type) << " " 
+      << error.offset << std::endl;
+  }
+  assert(error.type == PET_NOERROR);
   assert(customTree);
   auto pllTreeString = pll_rtree_export_newick(pllTree->root, nullptr);
   auto customTreeString = pll_rtree_export_newick(customTree->root, nullptr);
@@ -163,7 +168,7 @@ void test_bad_trees_aux(const std::string &name,
       as_file,
       &error);
   if(error.type != expectedError) {
-    std::cerr << getParsingErrorName(error.type) << std::endl;
+    std::cerr << get_parsing_error_name(error.type) << std::endl;
   }
   if (customTree) {
     auto customTreeString = pll_rtree_export_newick(customTree->root, nullptr);
@@ -180,11 +185,12 @@ void test_good_trees()
   newicks.insert({"Easy", "((a,b)ab,(c,d)cd)root;"});
   newicks.insert({"No internal label", "((a,b),(c,d));"});
   newicks.insert({"Numeric labels", "((a,b)13,(c,d)4cd)root;"});
-  newicks.insert({"Branch lengths", "((a:30.5,b:0.03)ab,(c:0,d:3)cd)root;"});
-  newicks.insert({"Scientific notation", "((a:1e-10,b:0.03)ab,(c:0,d:3)cd)root;"});
+  newicks.insert({"Branch lengths", "((a:30.5,b:0.03):48.0,(c:0,d:3)cd)root;"});
+  newicks.insert({"Scientific notation", "((a:1e-10,b:0.03)ab,(c:0,d:3E-5)cd)root;"});
   newicks.insert({"Spaces","( (a : 30.5 , b : 0.03 ) ab , (c :0,d : 3 ) cd )root;"});  
   newicks.insert({"Tabs","(\t(a\t:\t30.5\t,\tb\t:\t0.03\t)\tab\t,\t(c\t:0,d\t:\t3\t)\tcd\t)root\t;"});  
   newicks.insert({"Newlines", "((a,b)ab\n,(c,d\n)cd)root;"});
+  newicks.insert({"Windows newlines", "((a,b)ab\r\n,(c,d\r\n)cd)root;"});
   newicks.insert({"Weird characters", "((!a+7=5,b^o&)ab,($$£*c,d/\\?!_-|)cd)ro#~ot;"});
   
   for (auto &entry: newicks) {
@@ -210,6 +216,12 @@ void test_bad_trees()
   test_bad_trees_aux("Early semicolon",
       "((a,b);,(c,(d, e)))", 
       PET_INVALID_PARENTHESES);
+  test_bad_trees_aux("Comments",
+      "((a[comment],b),(c,(d, e):0.5));", 
+      PET_INVALID_LABEL);
+  test_bad_trees_aux("Missing comma",
+      "((a,b)(c,(d, e):0.5));", 
+      PET_POLYTOMY);
   test_bad_trees_aux("Token after the newick string",
       "((a,b),(c,(d, e)));wtf", 
       PET_TOKEN_AFTER_SEMICOLON);
@@ -221,6 +233,15 @@ void test_bad_trees()
       PET_INVALID_PARENTHESES);
   test_bad_trees_aux("Space in label",
       "((a,b),(c,(d, e)hello world);", 
+      PET_INVALID_LABEL);
+  test_bad_trees_aux("Windows newline in label",
+      "((a,b),(c,(d, e)hello\r\nworld);", 
+      PET_INVALID_LABEL);
+  test_bad_trees_aux("Unprintable character",
+      "((a,b),(c,(d, e)hello\x01world);", 
+      PET_INVALID_LABEL);
+  test_bad_trees_aux("Unprintable character",
+      "((a,b),(c,(d, e)hello\x18world);", 
       PET_INVALID_LABEL);
   test_bad_trees_aux("Newline in label",
       "((a,b),(c,(d, e)hello\nworld);", 
@@ -240,13 +261,34 @@ void test_bad_trees()
   test_bad_trees_aux("BL before label",
       "((a,b),(c,(d, e):0.5 label));", 
       PET_INVALID_BRANCH_LENGTH);
+  test_bad_trees_aux("Invalid BL",
+      "((a,b),(c,(d, e):0.a5));", 
+      PET_INVALID_BRANCH_LENGTH);
   test_bad_trees_aux("Double branch length",
       "((a,b),(c,(d, e:0.0:0.1)));", 
       PET_DOUBLE_BRANCH_LENGTH);
 }
 
+void produce_separator_table()
+{
+  std::cout << "{";
+  std::string separators("()[]\"';:,\n\r \t");
+  for (unsigned int i = 0; i < 256; ++i) {
+    char c = char(i);
+    bool isSeparator = false;
+    isSeparator |= (i < 32);
+    isSeparator |= separators.find(c) != std::string::npos;
+    std::cout << isSeparator;
+    if (i != 255) {
+      std::cout << ",";
+    }
+  }
+  std::cout << "};" << std::endl;
+}
+
 int main(int, char**)
 {
+  //produce_separator_table();
   //benchmark(false);
   //benchmark(true);
   test_good_trees();  
