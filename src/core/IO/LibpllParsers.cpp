@@ -8,7 +8,7 @@
 #include <stack>
 #include <array>
 #include <IO/Logger.hpp>
-#include <IO/CustomNewickParser.hpp>
+#include <IO/RootedNewickParser.hpp>
 
 extern "C" {
 #include <pll.h>

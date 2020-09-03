@@ -1,4 +1,4 @@
-#include <IO/CustomNewickParser.hpp>
+#include <IO/RootedNewickParser.hpp>
 #include <string>
 #include <iostream>
 #include <chrono>
