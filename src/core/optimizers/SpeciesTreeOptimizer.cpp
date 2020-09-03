@@ -91,6 +91,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     unsigned int index = 0;
     if (_hardToFindBetter) {
       optimizeDTLRates();
+      _bestRecLL = computeRecLikelihood();
       rootSearch(3);
     }
     do {
@@ -191,6 +192,7 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
   for (unsigned int i = 1; i < bestMovesHistory.size(); ++i) {
     SpeciesTreeOperator::changeRoot(*_speciesTree, bestMovesHistory[i]);
   }
+  optimizeGeneRoots();
   return bestLL;
 }
 
@@ -461,7 +463,7 @@ double SpeciesTreeOptimizer::transferSearch()
   do {
     bestLL = newLL;
     if (maxImprovementsReached) {
-      bestLL = optimizeDTLRates();
+      bestLL = _bestRecLL = optimizeDTLRates();
     }
     newLL = transferRound(blacklist, maxImprovementsReached);
     Logger::info << "  Accepted: " << _okForClades << std::endl;
@@ -469,7 +471,7 @@ double SpeciesTreeOptimizer::transferSearch()
     index++;
   } while (newLL - bestLL > 1.0);
   if (index == 1) {
-      newLL = bestLL = optimizeDTLRates();
+      newLL = bestLL = _bestRecLL = optimizeDTLRates();
   }
   Logger::timed << "After transfer search: " << newLL << std::endl;
   saveCurrentSpeciesTreeId();
