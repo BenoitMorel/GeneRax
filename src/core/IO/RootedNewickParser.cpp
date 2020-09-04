@@ -63,9 +63,9 @@ void set_error(struct RTreeParser *p, ParsingErrorType type)
   }
 }
 
-
-
-
+/**
+ *  Allocate a larger node buffer in p
+ */
 void increase_nodes_capacity(RTreeParser *p)
 {
   p->nodes_capacity *= 4;  
@@ -76,6 +76,9 @@ void increase_nodes_capacity(RTreeParser *p)
   p->nodes = new_buffer;
 }
 
+/**
+ *  Create and initialize a new node in p
+ */
 pll_rnode_t *rtree_parse_add_node(RTreeParser *p)
 {
   if (p->nodes_number >= p->nodes_capacity) {
@@ -111,12 +114,20 @@ pll_rnode_t *rtree_parse_add_node(RTreeParser *p)
   return node; 
 }
 
+/*
+ *  Create a new node under the current node in p
+ *  Called after a left parenthesis
+ */
 void rtree_add_node_down(RTreeParser *p) 
 {
   p->parent_node = p->current_node;
   p->current_node = rtree_parse_add_node(p);
 }
 
+/**
+ * Go up in the tree structure being built in p
+ * Called after a right parenthesis.
+ */
 void rtree_go_up(RTreeParser *p)
 {
   if (!p->current_node->label && !p->current_node->left) {
@@ -129,7 +140,10 @@ void rtree_go_up(RTreeParser *p)
   p->parent_node = p->parent_node->parent;
 }
 
-      
+/**
+ *  Create a neighbor node
+ *  Called after a comma
+ */
 void rtree_add_node_neighbor(RTreeParser *p)
 {
   p->current_node = rtree_parse_add_node(p);
@@ -233,6 +247,10 @@ void parse(RTreeParser *p)
   }
 }
 
+/**
+ *  Build the tree.
+ *  The input newick string should have already been parsed
+ */
 pll_rtree_t *build_rtree(RTreeParser *p)
 {
   if (has_errored(p)) {
