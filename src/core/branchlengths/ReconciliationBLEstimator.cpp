@@ -20,6 +20,7 @@ static void estimateBLRecursive(pll_unode_t *node,
     double lengthToAncestralSpecies,
     pll_rtree_t *speciesTree,
     const std::vector<std::vector<Scenario::Event> > &geneToEvents,
+    double familyWeight,
     std::vector<double> &speciesSumBL,
     std::vector<double> &speciesWeightBL)
 {
@@ -37,8 +38,8 @@ static void estimateBLRecursive(pll_unode_t *node,
       == ancestralSpeciesId;
     }
     if (isDirectSpeciation) {
-      speciesSumBL[currentSpeciesId] += lengthToAncestralSpecies;
-      speciesWeightBL[currentSpeciesId] += 1.0; // TODO: sites number
+      speciesSumBL[currentSpeciesId] += lengthToAncestralSpecies * familyWeight;
+      speciesWeightBL[currentSpeciesId] += familyWeight; 
     }
     lengthToAncestralSpecies = 0.0;  
     ancestralSpeciesId = currentSpeciesId;
@@ -55,6 +56,7 @@ static void estimateBLRecursive(pll_unode_t *node,
         lengthToAncestralSpecies,
         speciesTree,
         geneToEvents,
+        familyWeight,
         speciesSumBL,
         speciesWeightBL);
     estimateBLRecursive(rightGeneNode,
@@ -63,6 +65,7 @@ static void estimateBLRecursive(pll_unode_t *node,
         lengthToAncestralSpecies,
         speciesTree,
         geneToEvents,
+        familyWeight,
         speciesSumBL,
         speciesWeightBL);
   }
@@ -71,6 +74,7 @@ static void estimateBLRecursive(pll_unode_t *node,
     
 
 void estimateBLForFamily(const Scenario &scenario,
+    double familyWeight, 
     std::vector<double> &speciesSumBL,
     std::vector<double> &speciesWeightBL)
 {
@@ -88,8 +92,22 @@ void estimateBLForFamily(const Scenario &scenario,
       lengthToAncestralSpecies,
       scenario.getSpeciesTree(),
       scenario.getGeneIdToEvents(),
+      familyWeight,
       speciesSumBL,
       speciesWeightBL);
+}
+
+double getFamilyWeight(const FamilyInfo &info) 
+{
+  if (info.alignmentFile == "" || info.libpllModel == "") {
+    return 1.0;
+  }
+  auto alignmentLength = LibpllParsers::getMSALength(info.alignmentFile,
+      info.libpllModel);
+  if (alignmentLength == 0) {
+    return 1.0;
+  }
+  return static_cast<double>(alignmentLength);
 }
 
 void ReconciliationBLEstimator::estimate(
@@ -116,9 +134,11 @@ void ReconciliationBLEstimator::estimate(
     double speciesNodesNumber = speciesTree.getNodesNumber();
     std::vector<double> speciesSumBL(speciesNodesNumber, 0.0);
     std::vector<double> speciesWeightBL(speciesNodesNumber, 0.0);
-    
+       
     for (unsigned int i = 0; i < geneTrees.getTrees().size(); ++i) {
+      double familyWeight = getFamilyWeight(families[geneTrees.getTrees()[i].familyIndex]);
       estimateBLForFamily(scenarios[i],
+        familyWeight,
         speciesSumBL,
         speciesWeightBL);
     }

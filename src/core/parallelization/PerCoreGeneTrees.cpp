@@ -74,6 +74,7 @@ PerCoreGeneTrees::PerCoreGeneTrees(const Families &families,
     }
     for (auto &currentGeneTreeStr: geneTreeStrVector) {
       _geneTrees[index].name = families[i].name;
+      _geneTrees[index].familyIndex = i; 
       _geneTrees[index].mapping.fill(families[i].mappingFile, currentGeneTreeStr);
       _geneTrees[index].geneTree = new PLLUnrootedTree(currentGeneTreeStr, false);
       _geneTrees[index].ownTree = true;

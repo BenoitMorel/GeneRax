@@ -17,6 +17,7 @@ public:
   struct GeneTree {
     
     std::string name;
+    unsigned int familyIndex;
     GeneSpeciesMapping mapping;
     PLLUnrootedTree *geneTree;
     bool ownTree; // If true, I am responsible for destroying the tree

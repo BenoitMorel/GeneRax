@@ -58,7 +58,9 @@ public:
     const pll_state_t *stateMap,
     PLLSequencePtrs &sequences,
     unsigned int *&weights);
-  
+
+  static unsigned int getMSALength(const std::string &alignmentFilename,
+      const std::string &modelStrOrFilename);
   static void fillLeavesFromUtree(pll_utree_t *utree, std::unordered_set<std::string> &leaves);
   static void fillLeavesFromRtree(pll_rtree_t *rtree, std::unordered_set<std::string> &leaves);
   

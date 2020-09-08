@@ -339,6 +339,29 @@ bool LibpllParsers::fillLabelsFromAlignment(const std::string &alignmentFilename
   return res;
 }
   
+unsigned int LibpllParsers::getMSALength(const std::string &alignmentFilename,
+      const std::string &modelStrOrFilename)
+{
+  auto model = getModel(modelStrOrFilename);
+  PLLSequencePtrs sequences;
+  unsigned int *patternWeights = nullptr;
+  try { 
+    LibpllParsers::parseMSA(alignmentFilename, model->charmap(), sequences, patternWeights);
+  } catch (...) {
+    return 0;
+  }
+  if (sequences.size() == 0) {
+    return 0;
+  }
+  unsigned int length = 0;
+  for (unsigned int i = 0; i < sequences[0]->len; ++i) {
+    length += patternWeights[i];
+  }
+  free(patternWeights);
+  return length;
+
+}
+  
 bool LibpllParsers::areLabelsValid(std::unordered_set<std::string> &leaves)
 {
   std::array<bool, 256> forbiddenCharacter{}; // all set to false
