@@ -42,7 +42,12 @@ public:
    *  Reconcile the gene trees with the species tree and save results
    */
   static void reconcile(GeneRaxInstance &instance);
-  
+
+  /**
+   *  Estimate the branch lengths of the species tree
+   */
+  static void speciesTreeBLEstimation(GeneRaxInstance &instance);
+
   /**
    *  Write stats and print some last logs
    */

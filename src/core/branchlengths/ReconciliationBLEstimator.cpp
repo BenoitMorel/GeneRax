@@ -1,0 +1,140 @@
+#include "ReconciliationBLEstimator.hpp" 
+
+#include <memory>
+#include <algorithm>
+#include <routines/Routines.hpp>
+#include <maths/ModelParameters.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
+
+
+/**
+ *  Fills branch lengths between speciation or leaf events that are direct
+ *  parent in the species tree.
+ *  Speciation-loss events are not used because they happen along the gene
+ *  branch, and not on a gene node, and thus do not hold the time
+ *  of speciation
+ */
+static void estimateBLRecursive(pll_unode_t *node,
+    bool isVirtualRoot,
+    unsigned int ancestralSpeciesId,
+    double lengthToAncestralSpecies,
+    pll_rtree_t *speciesTree,
+    const std::vector<std::vector<Scenario::Event> > &geneToEvents,
+    std::vector<double> &speciesSumBL,
+    std::vector<double> &speciesWeightBL)
+{
+  auto &lastEvent = geneToEvents[node->node_index].back();
+  bool isSpeciation = lastEvent.type == ReconciliationEventType::EVENT_S;
+  isSpeciation |= lastEvent.type == ReconciliationEventType::EVENT_None;
+  lengthToAncestralSpecies += isVirtualRoot ? (node->length / 2.0)
+    : node->length;
+  if (isSpeciation) {
+    auto currentSpeciesId = lastEvent.speciesNode;
+    auto currentSpecies = speciesTree->nodes[currentSpeciesId];
+    bool isDirectSpeciation = false;
+    if (currentSpecies->parent) {
+      isDirectSpeciation |= currentSpecies->parent->node_index 
+      == ancestralSpeciesId;
+    }
+    if (isDirectSpeciation) {
+      speciesSumBL[currentSpeciesId] += lengthToAncestralSpecies;
+      speciesWeightBL[currentSpeciesId] += 1.0; // TODO: sites number
+    }
+    lengthToAncestralSpecies = 0.0;  
+    ancestralSpeciesId = currentSpeciesId;
+  }
+  if (node->next) {
+    // now go down
+    auto leftGeneNode = !isVirtualRoot ? node->next->back
+      : node->next;
+    auto rightGeneNode = !isVirtualRoot ? node->next->next->back
+      : node->next->back;
+    estimateBLRecursive(leftGeneNode,
+        false,
+        ancestralSpeciesId,
+        lengthToAncestralSpecies,
+        speciesTree,
+        geneToEvents,
+        speciesSumBL,
+        speciesWeightBL);
+    estimateBLRecursive(rightGeneNode,
+        false,
+        ancestralSpeciesId,
+        lengthToAncestralSpecies,
+        speciesTree,
+        geneToEvents,
+        speciesSumBL,
+        speciesWeightBL);
+  }
+}
+
+    
+
+void estimateBLForFamily(const Scenario &scenario,
+    std::vector<double> &speciesSumBL,
+    std::vector<double> &speciesWeightBL)
+{
+  auto geneRoot = scenario.getGeneRoot();
+  pll_unode_t virtualRoot;
+  virtualRoot.next = geneRoot;
+  virtualRoot.node_index = scenario.getVirtualRootIndex();
+  virtualRoot.label = nullptr;
+  virtualRoot.length = 0.0;
+  auto ancestralSpeciesId = static_cast<unsigned int>(-1);
+  double lengthToAncestralSpecies = 0.0;
+  estimateBLRecursive(&virtualRoot,
+      true,
+      ancestralSpeciesId,
+      lengthToAncestralSpecies,
+      scenario.getSpeciesTree(),
+      scenario.getGeneIdToEvents(),
+      speciesSumBL,
+      speciesWeightBL);
+}
+
+void ReconciliationBLEstimator::estimate(
+      const std::string &speciesTreeFile,
+      const Families &families, 
+      const RecModelInfo &recModelInfo,
+      const Parameters &rates)
+{
+    PLLRootedTree speciesTree(speciesTreeFile, true);
+    PerCoreGeneTrees geneTrees(families);
+    ModelParameters modelParameters(rates, 
+        families.size(),
+        recModelInfo);
+    const unsigned int samples = 0;
+    const bool optimizeRates = false;
+    std::vector<Scenario> scenarios;
+    Logger::timed << "[BL estimation] Infering scenarios" << std::endl;
+    Routines::inferAndGetReconciliationScenarios(speciesTree,
+        geneTrees,
+        modelParameters,
+        samples,
+        optimizeRates,
+        scenarios);
+    double speciesNodesNumber = speciesTree.getNodesNumber();
+    std::vector<double> speciesSumBL(speciesNodesNumber, 0.0);
+    std::vector<double> speciesWeightBL(speciesNodesNumber, 0.0);
+    
+    for (unsigned int i = 0; i < geneTrees.getTrees().size(); ++i) {
+      estimateBLForFamily(scenarios[i],
+        speciesSumBL,
+        speciesWeightBL);
+    }
+    ParallelContext::sumVectorDouble(speciesSumBL);
+    ParallelContext::sumVectorDouble(speciesWeightBL);
+    for (unsigned int i = 0; i < speciesSumBL.size(); ++i) {
+      auto length = 0.0;
+      if (speciesWeightBL[i] != 0.0) {
+        length = speciesSumBL[i] / speciesWeightBL[i];
+      }
+      speciesTree.getNode(i)->length = length;
+    }
+    Logger::timed << "[BL estimation] Inferred branch lengths:\n" << speciesTree.getNewickString() << std::endl;
+    if (ParallelContext::getRank() == 0) {
+      speciesTree.save(speciesTreeFile);
+    }
+    Logger::timed << "[BL estimation] Done" << std::endl;
+}
+

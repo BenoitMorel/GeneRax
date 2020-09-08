@@ -38,6 +38,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   constrainSpeciesSearch(false),
   rerootSpeciesTree(false),
   optimizeSpeciesTree(false),
+  estimateSpeciesBranchLenghts(false), 
   speciesFastRadius(5),
   speciesInitialFamiliesSubsamples(-1),
   minGeneBranchLength(0.000001)
@@ -114,6 +115,9 @@ void GeneRaxArguments::init() {
       rerootSpeciesTree = true;
     } else if (arg == "--optimize-species-tree") {
       optimizeSpeciesTree = true;
+      estimateSpeciesBranchLenghts = true;
+    } else if (arg == "--estimate-species-bl") {
+      estimateSpeciesBranchLenghts = true;
     } else if (arg == "--fraction-missing") {
       fractionMissing = true;
     } else if (arg == "--do-not-optimize-gene-trees") {

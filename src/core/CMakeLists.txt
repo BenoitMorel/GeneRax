@@ -1,5 +1,6 @@
 
 set(jointsearch-core_SOURCES 
+  branchlengths/ReconciliationBLEstimator.cpp
   IO/NewickParserCommon.cpp
   IO/RootedNewickParser.cpp
   IO/Families.cpp

@@ -151,6 +151,13 @@ public:
   void blackList(unsigned int geneNode, unsigned int speciesNode);
   bool isBlacklisted(unsigned int geneNode, unsigned int speciesNode);
   void resetBlackList();
+
+
+  pll_unode_t *getGeneRoot() const {return _geneRoot;}
+  unsigned int getVirtualRootIndex() const { return _virtualRootIndex;}
+  pll_rtree_t *getSpeciesTree() const {return _speciesTree;}
+  const std::vector<std::vector<Event> > &
+    getGeneIdToEvents() const {return _geneIdToEvents;}
 private:
   static const char *eventNames[];
   std::vector<Event> _events;

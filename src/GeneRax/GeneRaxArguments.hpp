@@ -52,6 +52,7 @@ public:
    bool constrainSpeciesSearch;
    bool rerootSpeciesTree;
    bool optimizeSpeciesTree;
+   bool estimateSpeciesBranchLenghts;
    unsigned int speciesFastRadius;
    int speciesInitialFamiliesSubsamples;
    double minGeneBranchLength;

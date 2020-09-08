@@ -2,6 +2,7 @@
 #include "GeneRaxCore.hpp"
 #include "GeneRaxInstance.hpp"
 #include <parallelization/ParallelContext.hpp>
+#include <branchlengths/ReconciliationBLEstimator.hpp>
 #include <IO/FamiliesFileParser.hpp>
 #include <IO/Logger.hpp>
 #include <IO/LibpllParsers.hpp>
@@ -370,4 +371,19 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
     << " RecLL=" << instance.totalRecLL << " LibpllLL=" << instance.totalLibpllLL << std::endl;
   Logger::info << std::endl;
 }
+  
+void GeneRaxCore::speciesTreeBLEstimation(GeneRaxInstance &instance)
+{
+  if (!instance.args.estimateSpeciesBranchLenghts) {
+    return;
+  }
+  Logger::timed << "Start estimating species tree branch lengths" << std::endl;
+  ReconciliationBLEstimator::estimate(
+      instance.speciesTree,
+      instance.currentFamilies,
+      instance.recModelInfo,
+      instance.rates);
+  Logger::timed << "Finished estimating species tree branch lengths" << std::endl;
+}
+
 
