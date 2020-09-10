@@ -361,6 +361,33 @@ unsigned int LibpllParsers::getMSALength(const std::string &alignmentFilename,
   return length;
 
 }
+
+double LibpllParsers::getMSAEntropy(const std::string &alignmentFilename,
+      const std::string &modelStrOrFilename)
+{
+  auto model = getModel(modelStrOrFilename);
+  PLLSequencePtrs sequences;
+  unsigned int *patternWeights = nullptr;
+  try { 
+    LibpllParsers::parseMSA(alignmentFilename, model->charmap(), sequences, patternWeights);
+  } catch (...) {
+    return 0;
+  }
+  if (sequences.size() == 0) {
+    return 0;
+  }
+  unsigned int nonGaps = 0;
+  for (auto &sequence: sequences) {
+    for (unsigned int i = 0; i < sequence->len; ++i) {
+      if (sequence->seq[i] != '-') {
+        nonGaps += patternWeights[i];
+      }
+    }
+  }
+  free(patternWeights);
+  return double(nonGaps) / double(sequences.size());
+
+}
   
 bool LibpllParsers::areLabelsValid(std::unordered_set<std::string> &leaves)
 {

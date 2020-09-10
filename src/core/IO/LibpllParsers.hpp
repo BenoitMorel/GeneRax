@@ -61,6 +61,11 @@ public:
 
   static unsigned int getMSALength(const std::string &alignmentFilename,
       const std::string &modelStrOrFilename);
+  /**
+   *  Length of MSA * ratio of non-gap characters
+   */
+  static double getMSAEntropy(const std::string &alignmentFilename,
+      const std::string &modelStrOrFilename);
   static void fillLeavesFromUtree(pll_utree_t *utree, std::unordered_set<std::string> &leaves);
   static void fillLeavesFromRtree(pll_rtree_t *rtree, std::unordered_set<std::string> &leaves);
   

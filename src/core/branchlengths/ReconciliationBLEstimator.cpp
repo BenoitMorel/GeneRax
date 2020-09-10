@@ -102,7 +102,7 @@ double getFamilyWeight(const FamilyInfo &info)
   if (info.alignmentFile == "" || info.libpllModel == "") {
     return 1.0;
   }
-  auto alignmentLength = LibpllParsers::getMSALength(info.alignmentFile,
+  auto alignmentLength = LibpllParsers::getMSAEntropy(info.alignmentFile,
       info.libpllModel);
   if (alignmentLength == 0) {
     return 1.0;
