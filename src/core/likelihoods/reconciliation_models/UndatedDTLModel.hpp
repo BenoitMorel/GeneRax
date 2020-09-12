@@ -62,8 +62,8 @@ private:
   std::vector<double> _PS; // Speciation probability, per branch
   // SPECIES
   std::vector<double> _uE; // Probability for a gene to become extinct on each brance
+  std::vector<double> _uEac; 
   double _transferExtinctionSum;
-
   
   /**
    *  All intermediate results needed to compute the reconciliation likelihood
@@ -77,11 +77,14 @@ private:
 
     DTLCLV(unsigned int speciesNumber):
       _uq(speciesNumber, REAL()),
+      _ac(speciesNumber, REAL()),
       _survivingTransferSums(REAL())
     {
     }
     // probability of a gene node rooted at a species node
     std::vector<REAL> _uq;
+    // ancestral correction
+    std::vector<REAL> _ac;
 
     // sum of transfer probabilities. Can be computed only once
     // for all species, to reduce computation complexity
@@ -92,6 +95,7 @@ private:
   std::vector<DTLCLV> _dtlclvs;
 private:
   void updateTransferSums(REAL &transferExtinctionSum,
+      std::vector<REAL> &ancestralCorrection, 
       const std::vector<REAL> &probabilities);
   void getBestTransfer(pll_unode_t *parentGeneNode, 
     pll_rnode_t *originSpeciesNode,
@@ -114,7 +118,8 @@ private:
 
   REAL getCorrectedTransferSum(unsigned int geneId, unsigned int speciesId) const
   {
-    return _dtlclvs[geneId]._survivingTransferSums * _PT[speciesId];
+    auto clv = _dtlclvs[geneId];
+    return (clv._survivingTransferSums - clv._ac[speciesId]) * _PT[speciesId];
   }
   std::vector<pll_rnode_s *> &getSpeciesNodesToUpdate() {
     return this->_speciesNodesToUpdate;
@@ -123,7 +128,6 @@ private:
     return this->_allSpeciesNodes;
   }
 };
-
 
 template <class REAL>
 void UndatedDTLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
@@ -135,13 +139,26 @@ void UndatedDTLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
 
 template <class REAL>
 void UndatedDTLModel<REAL>::updateTransferSums(REAL &transferSum,
+    std::vector<REAL> &ancestralCorrection, 
     const std::vector<REAL> &probabilities)
 {
+  int speciesNodesCount = this->_allSpeciesNodes.size();
   transferSum = REAL();
+  for (int i = speciesNodesCount - 1; i >= 0; --i) {
+    auto speciesNode = this->_allSpeciesNodes[static_cast<unsigned int>(i)];
+    auto e = speciesNode->node_index;
+    ancestralCorrection[e] = probabilities[e];
+    if (speciesNode->parent) {
+      auto p = speciesNode->parent->node_index;
+      ancestralCorrection[e] += ancestralCorrection[p];
+    }
+    ancestralCorrection[e] /= double(speciesNodesCount);
+  }
+
   for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
     transferSum += probabilities[speciesNode->node_index];
   }
-  transferSum /= this->_allSpeciesNodes.size();
+  transferSum /= speciesNodesCount;
 }
 
 
@@ -217,6 +234,7 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
   auto lca = this->_geneToSpeciesLCA[gid];
   auto &clv = _dtlclvs[gid];
   auto &uq = clv._uq;
+  auto &ac = clv._ac;
   
   auto &parentsCache = this->_speciesTree.getParentsCache(lca);
   
@@ -234,7 +252,8 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
   */
 
   std::fill(uq.begin(), uq.end(), REAL());
-  REAL sum = REAL();
+  std::fill(ac.begin(), ac.end(), REAL());
+  //REAL sum = REAL();
   for (auto speciesNode: getSpeciesNodesToUpdateSafe()) { 
     auto e = speciesNode->node_index;
     if (parentsCache[e]) {
@@ -242,12 +261,15 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
       computeProbability(geneNode, 
         speciesNode, 
         uq[e]);
-      sum += uq[e];
+      //sum += uq[e];
     }
     //}
   }
-  sum /= this->_allSpeciesNodes.size();
-  clv._survivingTransferSums = sum;
+  updateTransferSums(clv._survivingTransferSums,
+      ac,
+      uq);
+  //sum /= this->_allSpeciesNodes.size();
+  //clv._survivingTransferSums = sum;
 }
 
 
@@ -255,8 +277,10 @@ template <class REAL>
 void UndatedDTLModel<REAL>::computeGeneRootLikelihood(pll_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
-  _dtlclvs[u]._survivingTransferSums = REAL();
-  std::fill(_dtlclvs[u]._uq.begin(), _dtlclvs[u]._uq.end(), REAL());
+  auto &clv = _dtlclvs[u];
+  clv._survivingTransferSums = REAL();
+  std::fill(clv._uq.begin(), clv._uq.end(), REAL());
+  std::fill(clv._ac.begin(), clv._ac.end(), REAL());
   /*
   auto geneLeft = this->getLeft(virtualRoot, true);
   auto geneRight = this->getRight(virtualRoot, true);
@@ -271,6 +295,10 @@ void UndatedDTLModel<REAL>::computeGeneRootLikelihood(pll_unode_t *virtualRoot)
     computeProbability(virtualRoot, speciesNode, _dtlclvs[u]._uq[e], true);
     //}
   }
+  /*
+  updateTransferSums(clv._survivingTransferSums,
+      clv._ac,
+      clv._uq);*/
 }
 
 template <class REAL>
@@ -482,7 +510,7 @@ void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode,
         * _dtlclvs[u_right->node_index]._uq[e]) * factor;
     transferProbas[h + speciesNumber] = (_dtlclvs[u_right->node_index]._uq[h] 
         * _dtlclvs[u_left->node_index]._uq[e]) * factor;
-  }
+  } 
   if (stochastic) {
     // stochastic sample: proba will be set to the sum of probabilities
     proba = REAL();
