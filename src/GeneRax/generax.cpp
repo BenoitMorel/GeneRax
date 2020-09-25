@@ -22,6 +22,7 @@ int generax_main(int argc, char** argv, void* comm)
   GeneRaxCore::geneTreeJointSearch(instance);
   GeneRaxCore::reconcile(instance);
   GeneRaxCore::speciesTreeBLEstimation(instance);
+  GeneRaxCore::speciesTreeSupportEstimation(instance);
   GeneRaxCore::terminate(instance);
   
   Logger::close();

@@ -22,6 +22,7 @@
 #include <routines/Routines.hpp>
 #include <optimizers/SpeciesTreeOptimizer.hpp>
 #include <trees/SpeciesTree.hpp>
+#include <support/ICCalculator.hpp>
 
 static void initStartingSpeciesTree(GeneRaxInstance &instance)
 {
@@ -378,12 +379,27 @@ void GeneRaxCore::speciesTreeBLEstimation(GeneRaxInstance &instance)
     return;
   }
   Logger::timed << "Start estimating species tree branch lengths" << std::endl;
+  ParallelContext::barrier();
   ReconciliationBLEstimator::estimate(
       instance.speciesTree,
       instance.currentFamilies,
       instance.recModelInfo,
       instance.rates);
+  ParallelContext::barrier();
   Logger::timed << "Finished estimating species tree branch lengths" << std::endl;
 }
+
+void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
+{
+  ParallelContext::barrier();
+  if (ParallelContext::getRank() == 0) {
+    Logger::timed << "Start estimating species tree support values" << std::endl;
+    ICCalculator calculator(instance.speciesTree,
+        instance.currentFamilies);
+    Logger::timed << "Finished estimating species tree support values" << std::endl;
+  }
+  ParallelContext::barrier();
+}
+
 
 

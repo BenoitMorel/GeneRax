@@ -48,6 +48,12 @@ public:
    */
   static void speciesTreeBLEstimation(GeneRaxInstance &instance);
 
+
+  /**
+   *  Estimate the support values of the species tree
+   */
+  static void speciesTreeSupportEstimation(GeneRaxInstance &instance);
+
   /**
    *  Write stats and print some last logs
    */

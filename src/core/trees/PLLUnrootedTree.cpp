@@ -2,6 +2,8 @@
 
 #include <IO/LibpllParsers.hpp>
 #include <IO/Logger.hpp>
+#include <trees/PLLRootedTree.hpp>  
+
 
 static void destroyNodeData(void *)
 {
@@ -27,6 +29,12 @@ PLLUnrootedTree::PLLUnrootedTree(const std::string &str, bool isFile):
   _tree(buildUtree(str, isFile), utreeDestroy)
 {
 }
+
+PLLUnrootedTree::PLLUnrootedTree(PLLRootedTree &rootedTree):
+  _tree(pll_rtree_unroot(rootedTree.getRawPtr()), utreeDestroy)
+{
+}
+
 
 PLLUnrootedTree::PLLUnrootedTree(const std::vector<const char*> &labels,
     unsigned int seed):

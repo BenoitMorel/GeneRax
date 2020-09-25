@@ -34,6 +34,7 @@ set(jointsearch-core_SOURCES
   search/Rollbacks.cpp
   search/SearchUtils.cpp
   search/SPRSearch.cpp
+  support/ICCalculator.cpp
   trees/Clade.cpp
   trees/PLLUnrootedTree.cpp
   trees/PLLRootedTree.cpp

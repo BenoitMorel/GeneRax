@@ -18,6 +18,8 @@ extern "C" {
 #include <util/CArrayRange.hpp>
 #include <maths/Random.hpp>
 
+class PLLRootedTree;
+
 /**
  *  C++ wrapper around the libpll pll_utree_t structure
  *  to represent an unrooted tree
@@ -29,6 +31,9 @@ public:
    * to a newick file or a newick string
    */
   PLLUnrootedTree(const std::string &str, bool isFile = true);
+
+
+  PLLUnrootedTree(PLLRootedTree &rootedTree);
 
   /**
    *  Construct a random tree from a set of taxa labels
