@@ -10,6 +10,7 @@ extern "C" {
 #include <pllmod_util.h>  
 }
 
+#include <unordered_set>
 #include <string>
 #include <memory>
 #include <vector>
@@ -19,6 +20,8 @@ extern "C" {
 #include <maths/Random.hpp>
 
 class PLLRootedTree;
+
+
 
 /**
  *  C++ wrapper around the libpll pll_utree_t structure
@@ -92,8 +95,15 @@ public:
   CArrayRange<pll_unode_t*> getLeaves();
 
   /*
+   *  C++11 range for accessing internal nodes. 
+   *  Only includes one of the three pll elements per node
+   *  in the tree
+   */
+  CArrayRange<pll_unode_t*> getInnerNodes();
+
+  /*
    *  C++11 range for accessing nodes. 
-   *  Only includes one of the three pll internal element per node
+   *  For internal nodes, Only includes one of the three pll elements per node
    *  in the tree
    */
   CArrayRange<pll_unode_t*> getNodes();
@@ -104,6 +114,12 @@ public:
    *  always comes after its (virtual) children.
    */
   std::vector<pll_unode_t*> getPostOrderNodes();
+
+  /**
+   *  Return a set of all branches (for each node, one and only 
+   *  one of node and node->back will be inserted in the set)
+   */
+  std::unordered_set<pll_unode_t *> getBranches();
 
   /**
    *  Compute a matrix of pairwise distances.
@@ -124,6 +140,13 @@ public:
   void computePairwiseDistances(MatrixDouble &distances,
       bool leavesOnly = true);
 
+
+  /**
+   *  replace pu and pv by one of their three possible next pointers
+   *  such that their back pointers point to each other
+   */
+  static void orientTowardEachOther(pll_unode_t **pu, pll_unode_t **pv);
+
   // TODO: DOCUMENT
   std::vector<double> getMADRelativeDeviations();
 
@@ -131,6 +154,7 @@ public:
    *  Return the set of leaves under the input directed node
    */
   static std::unordered_set<unsigned int> getClade(pll_unode_t *node);
+
 
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;

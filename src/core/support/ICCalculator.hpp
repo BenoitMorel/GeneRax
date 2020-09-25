@@ -11,7 +11,7 @@ struct MetaQuartet {
   std::array<TaxaSet, 4> sets;
 };
 
-
+using SPIDSet = std::unordered_set<SPID>;
 
 class ICCalculator {
 public:
@@ -20,14 +20,20 @@ public:
 
 
 private:
+  // reference tree data
   PLLRootedTree _rootedReferenceTree;
   PLLUnrootedTree _referenceTree;
-  std::vector<std::unique_ptr<PLLUnrootedTree> > _evaluationTrees;
   TaxaSet _allTaxa;
+  std::vector<SPID> _refIdToSPID;
+
+  // evaluation trees data
+  std::vector<std::unique_ptr<PLLUnrootedTree> > _evaluationTrees;
+  
 
   void _readTrees(const std::string &referenceTreePath,
       const Families &families);
-  void _processNodePair(pll_rnode_t *u, pll_rnode_t *v);
+  void _mainLoop();
+  void _processNodePair(pll_unode_t *u, pll_unode_t *v);
 };
 
 

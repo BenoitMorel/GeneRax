@@ -140,6 +140,13 @@ void LibpllParsers::getRnodeNewickString(const pll_rnode_t *rnode, std::string &
   newick = std::string(newickStr);
   free(newickStr);
 }
+
+void LibpllParsers::getUnodeNewickString(const pll_unode_t *rnode, std::string &newick)
+{
+  char *newickStr = pll_utree_export_newick(rnode, 0);
+  newick = std::string(newickStr);
+  free(newickStr);
+}
   
 void LibpllParsers::getRtreeNewickString(const pll_rtree_t *rtree, std::string &newick)
 {

@@ -33,6 +33,9 @@ PLLUnrootedTree::PLLUnrootedTree(const std::string &str, bool isFile):
 PLLUnrootedTree::PLLUnrootedTree(PLLRootedTree &rootedTree):
   _tree(pll_rtree_unroot(rootedTree.getRawPtr()), utreeDestroy)
 {
+  pll_unode_t *root = 
+    _tree->nodes[_tree->tip_count + _tree->inner_count - 1];
+  pll_utree_reset_template_indices(root, _tree->tip_count);
 }
 
 
@@ -73,6 +76,11 @@ CArrayRange<pll_unode_t*> PLLUnrootedTree::getLeaves()
 CArrayRange<pll_unode_t*> PLLUnrootedTree::getNodes()
 {
   return CArrayRange<pll_unode_t*>(_tree->nodes, getNodesNumber());
+}
+
+CArrayRange<pll_unode_t*> PLLUnrootedTree::getInnerNodes()
+{
+  return CArrayRange<pll_unode_t*>(_tree->nodes + getLeavesNumber(), getInnerNodesNumber());
 }
 
 
@@ -133,6 +141,27 @@ static void fillPostOrder(pll_unode_t *node,
     fillPostOrder(node->next->next->back, nodes, markedNodes);
   }
   nodes.push_back(node);
+}
+
+std::unordered_set<pll_unode_t *> PLLUnrootedTree::getBranches()
+{
+  std::unordered_set<pll_unode_t *> branches;
+  for (auto node: getNodes()) {
+    if (branches.find(node->back) == branches.end()) {
+      branches.insert(node);
+    }
+    if (node->next) {
+      node = node->next;
+      if (branches.find(node->back) == branches.end()) {
+        branches.insert(node);
+      }
+      node = node->next;
+      if (branches.find(node->back) == branches.end()) {
+        branches.insert(node);
+      }
+    }
+  }
+  return branches;
 }
 
 std::vector<pll_unode_t*> PLLUnrootedTree::getPostOrderNodes()
@@ -214,6 +243,55 @@ std::unordered_set<unsigned int>
   std::unordered_set<unsigned int> clade;
   getCladeRec(node, clade);
   return clade;
+}
+
+
+// look for *pv (or one of his nexts) under the oriented node u.
+// if it is found, *pv is updated with the found next, and 
+// the function returns true (and false otherwise)
+static bool orientAux(pll_unode_t *u, pll_unode_t **pv)
+{
+  auto v = *pv;
+  if (v == u) {
+    return true;
+  }
+  if (v->next) {
+    if (v->next == u) {
+      *pv = v->next;
+      return true;
+    } else if (v->next->next == u) {
+      *pv = v->next->next;
+      return true;
+    }
+  }
+  if (!u->next) { 
+    // end of recursion, we did not find *v
+    return false;
+  } else {
+    return orientAux(u->next->back, pv) || 
+      orientAux(u->next->next->back, pv);
+  }
+}
+
+
+void PLLUnrootedTree::orientTowardEachOther(pll_unode_t **pu,
+    pll_unode_t **pv)
+{
+  assert((*pu) != (*pv));
+  auto *u = *pu;
+  if (orientAux(u->back, pv)) {
+    return;
+  }
+  if (u->next) {
+    if (orientAux(u->next->back, pv)) {
+      *pu = u->next;
+      return;
+    } else if (orientAux(u->next->next->back, pv)) {
+      *pu = u->next->next;
+      return;
+    }
+  }
+  assert(false);
 }
 
 

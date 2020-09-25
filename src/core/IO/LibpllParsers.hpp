@@ -86,6 +86,7 @@ public:
     const std::string &fileName);
   static void getRtreeNewickString(const pll_rtree_t *rtree, std::string &newick);
   static void getRnodeNewickString(const pll_rnode_t *rnode, std::string &newick);
+  static void getUnodeNewickString(const pll_unode_t *rnode, std::string &newick);
   static void getRtreeHierarchicalString(const pll_rtree_t *rtree, std::string &newick);
   static std::unique_ptr<Model> getModel(const std::string &modelStrOrFilename);
   static void writeSuperMatrixFasta(const SuperMatrix &superMatrix,
