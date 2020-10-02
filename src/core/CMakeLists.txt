@@ -36,6 +36,7 @@ set(jointsearch-core_SOURCES
   search/SPRSearch.cpp
   support/ICCalculator.cpp
   trees/Clade.cpp
+  trees/DSTagger.cpp
   trees/PLLUnrootedTree.cpp
   trees/PLLRootedTree.cpp
   trees/PLLTreeInfo.cpp
