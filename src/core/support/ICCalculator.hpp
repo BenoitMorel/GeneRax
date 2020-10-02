@@ -63,6 +63,7 @@ private:
 
   void _printQuartet(SPID a, SPID b, SPID c, SPID d);
 
+  std::string _getNewickWithScore(std::vector<double> &branchScores);
 };
 
 

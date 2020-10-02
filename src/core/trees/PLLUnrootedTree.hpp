@@ -81,6 +81,7 @@ public:
    * Save the tree in newick format in filename
    */
   void save(const std::string &fileName); 
+  std::string getNewickString();
 
   /**
    * Replace null branch lengths with minBL

@@ -38,7 +38,8 @@ ICCalculator::ICCalculator(const std::string &referenceTreePath,
       }
       //free(node->label)
   }
-
+  Logger::info << "LQIC score: " << std::endl;
+  Logger::info << _getNewickWithScore(_lqic) << std::endl;
 }
 
 void ICCalculator::_computeRefBranchIndices()
@@ -298,6 +299,21 @@ double ICCalculator::_getQic(SPID a, SPID b, SPID c, SPID d)
   } else {
     return -logScore;
   }
+}
+std::string _getNewickWithScore(std::vector<double> &branchScores)
+{
+  for (auto node: _referenceTree->getPostOrderNodes()) {
+    if (!node->next) {
+      continue;
+    }
+    auto branchIndex = _refNodeIndexToBranchIndex[node->node_index];
+    auto lqic = _lqic[branchIndex];
+    auto lqicStr = std::to_string(lqic);
+    free(node->label);
+    node->label = calloc(lqicStr.size() + 1, sizeof(char));
+    strcpy(node->label, lqicStr.c_str());
+  }
+  return _referenceTree.getNewickString(); 
 }
 
 

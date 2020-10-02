@@ -368,5 +368,11 @@ std::vector<double> PLLUnrootedTree::getMADRelativeDeviations()
   return deviations;
 }
 
+std::string PLLUnrootedTree::getNewickString()
+{
+  std::string str;
+  LibpllParsers::getUnodeNewickString(getAnyInnerNode(), str);
+  return res;
+}
 
 
