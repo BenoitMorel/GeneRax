@@ -372,7 +372,7 @@ std::string PLLUnrootedTree::getNewickString()
 {
   std::string str;
   LibpllParsers::getUnodeNewickString(getAnyInnerNode(), str);
-  return res;
+  return str;
 }
 
 

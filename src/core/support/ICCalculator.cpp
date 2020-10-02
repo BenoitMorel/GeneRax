@@ -28,19 +28,28 @@ ICCalculator::ICCalculator(const std::string &referenceTreePath,
   _initScores();
   _computeScores();  
 
-  _referenceTree.save("ploupi_unrooted.txt");
-  for (auto node: _referenceTree.getPostOrderNodes()) {
-      auto branchIndex = _refNodeIndexToBranchIndex[node->node_index];
-      auto lqic = _lqic[branchIndex];
-      auto lqicStr = std::to_string(lqic);
-      if (node->next && node->back->next) {
-        Logger::info << "node_index=" << node->node_index << " branch_index=" << branchIndex << ": " << lqic << " " << lqicStr << std::endl;
-      }
-      //free(node->label)
-  }
   Logger::info << "LQIC score: " << std::endl;
-  Logger::info << _getNewickWithScore(_lqic) << std::endl;
+  Logger::info << _getNewickWithScore(_lqic, std::string("LQIC")) << std::endl;
+  Logger::info << _getNewickWithScore(_qpic, std::string("QPIC")) << std::endl;
 }
+
+static double getLogScore(const std::array<unsigned int, 3> &q) 
+{
+  if (q[0] == 0 && q[1] == 0 && q[2] == 0) {
+    Logger::info << "  HEY NO OCCURENCES => qic = 0" << std::endl;
+    return 0.0;
+  }
+  auto qsum = std::accumulate(q.begin(), q.end(), 0);
+  double qic = 1.0;
+  for (unsigned int i = 0; i < 3; ++i) {
+    if (q[i] != 0) {
+      auto p = double(q[i]) / double(qsum);
+		  qic += p * log(p) / log(3);
+    }
+  }
+  return qic;
+}
+
 
 void ICCalculator::_computeRefBranchIndices()
 {
@@ -67,6 +76,7 @@ void ICCalculator::_initScores()
   Logger::timed << "[IC computation] Initializing scores..." << std::endl; 
   auto branchNumbers = _taxaNumber * 2 - 3;
   _lqic = std::vector<double>(branchNumbers, 1.0);
+  _qpic = std::vector<double>(branchNumbers, 1.0);
 }
 
 void ICCalculator::_readTrees(const Families &families)
@@ -190,11 +200,15 @@ void ICCalculator::_processNodePair(pll_unode_t *u, pll_unode_t *v)
   for (unsigned int i = 0; i < 4; ++i) {
     _getSpidUnderNode(referenceSubtrees[i], referenceMetaQuartet[i]);
   }
+  std::array<unsigned int, 3> counts = {0, 0, 0};
   for (auto a: referenceMetaQuartet[0]) {
     for (auto b: referenceMetaQuartet[1]) {
       for (auto c: referenceMetaQuartet[2]) {
         for (auto d: referenceMetaQuartet[3]) {
           auto qic = _getQic(a, b, c, d); 
+          counts[0] += _quartetCounts[_getLookupIndex(a,b,c,d)];
+          counts[1] += _quartetCounts[_getLookupIndex(a,c,b,d)];
+          counts[2] += _quartetCounts[_getLookupIndex(a,d,c,b)];
           for (auto branchIndex: branchIndices) {
             _lqic[branchIndex] = std::min(_lqic[branchIndex], qic);
           }
@@ -202,8 +216,10 @@ void ICCalculator::_processNodePair(pll_unode_t *u, pll_unode_t *v)
       }
     }
   }
-
-
+  if (branchIndices.size() == 1) {
+    auto branchIndex = branchIndices[0];
+    _qpic[branchIndex] =  getLogScore(counts);
+  }
 }
 
 
@@ -265,23 +281,6 @@ void ICCalculator::_printQuartet(SPID a, SPID b, SPID c, SPID d)
 }
   
 
-double getLogScore(const std::array<unsigned int, 3> &q) 
-{
-  if (q[0] == 0 && q[1] == 0 && q[2] == 0) {
-    Logger::info << "  HEY NO OCCURENCES => qic = 0" << std::endl;
-    return 0.0;
-  }
-  auto qsum = std::accumulate(q.begin(), q.end(), 0);
-  double qic = 1.0;
-  for (unsigned int i = 0; i < 3; ++i) {
-    if (q[i] != 0) {
-      auto p = double(q[i]) / double(qsum);
-		  qic += p * log(p) / log(3);
-    }
-  }
-  return qic;
-}
-
 
 double ICCalculator::_getQic(SPID a, SPID b, SPID c, SPID d)
 {
@@ -300,18 +299,18 @@ double ICCalculator::_getQic(SPID a, SPID b, SPID c, SPID d)
     return -logScore;
   }
 }
-std::string _getNewickWithScore(std::vector<double> &branchScores)
+std::string ICCalculator::_getNewickWithScore(std::vector<double> &branchScores, const std::string &scoreName)
 {
-  for (auto node: _referenceTree->getPostOrderNodes()) {
-    if (!node->next) {
+  for (auto node: _referenceTree.getPostOrderNodes()) {
+    if (!node->next || !node->back->next) {
       continue;
     }
     auto branchIndex = _refNodeIndexToBranchIndex[node->node_index];
-    auto lqic = _lqic[branchIndex];
-    auto lqicStr = std::to_string(lqic);
+    auto score = branchScores[branchIndex];
+    auto scoreStr = scoreName + std::string(" = ") + std::to_string(score);
     free(node->label);
-    node->label = calloc(lqicStr.size() + 1, sizeof(char));
-    strcpy(node->label, lqicStr.c_str());
+    node->label = (char *)calloc(scoreStr.size() + 1, sizeof(char));
+    strcpy(node->label, scoreStr.c_str());
   }
   return _referenceTree.getNewickString(); 
 }

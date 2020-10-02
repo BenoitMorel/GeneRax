@@ -37,7 +37,9 @@ private:
 
 
   // scores
-  std::vector<double> _lqic; //indexed with branch indices
+  // scores indexed with branch indices
+  std::vector<double> _lqic;
+  std::vector<double> _qpic; 
 
 
   // debug
@@ -63,7 +65,7 @@ private:
 
   void _printQuartet(SPID a, SPID b, SPID c, SPID d);
 
-  std::string _getNewickWithScore(std::vector<double> &branchScores);
+  std::string _getNewickWithScore(std::vector<double> &branchScores, const std::string &scoreName);
 };
 
 
