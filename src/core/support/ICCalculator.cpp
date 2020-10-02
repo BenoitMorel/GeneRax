@@ -1,25 +1,72 @@
 #include "ICCalculator.hpp"
 
 #include <array>
+#include <algorithm>
 #include <unordered_map>
 #include <IO/Logger.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <IO/LibpllParsers.hpp>
 
+void printTaxaSet(const TaxaSet &set) {
+  for (auto taxa: set) {
+
+    Logger::info << taxa <<" ";
+  }
+  Logger::info << std::endl;
+}
+
 ICCalculator::ICCalculator(const std::string &referenceTreePath,
       const Families &families):
   _rootedReferenceTree(referenceTreePath),
   _referenceTree(_rootedReferenceTree),
-  _evaluationTrees()
+  _taxaNumber(0)
 {
   _readTrees(families);
+  _computeRefBranchIndices();
   _computeQuartets();
-  
-  _computeScores();  
   printNQuartets(30);
-  
+  _initScores();
+  _computeScores();  
+
+
+  for (auto node: _referenceTree.getPostOrderNodes()) {
+      auto branchIndex = _refNodeIndexToBranchIndex[node->node_index];
+      auto lqic = _lqic[branchIndex];
+      auto lqicStr = std::to_string(lqic);
+      if (node->next && node->back->next) {
+        Logger::info << "node_index=" << node->node_index << " branch_index=" << branchIndex << ": " << lqic << " " << lqicStr << std::endl;
+      }
+      //free(node->label)
+  }
+
 }
 
+void ICCalculator::_computeRefBranchIndices()
+{
+  Logger::timed << "[IC computation] Assigning branch indices..." << std::endl; 
+  unsigned int currBranchIndex = 0;
+  auto branches = _referenceTree.getBranches();
+  _refNodeIndexToBranchIndex.resize(branches.size() * 2);
+  std::fill(_refNodeIndexToBranchIndex.begin(),
+      _refNodeIndexToBranchIndex.end(),
+      static_cast<unsigned int>(-1));
+  for (auto &branch: branches) {
+    _refNodeIndexToBranchIndex[branch->node_index] = currBranchIndex;
+    _refNodeIndexToBranchIndex[branch->back->node_index] = currBranchIndex;
+    currBranchIndex++;
+  }
+  assert(currBranchIndex == _taxaNumber * 2 - 3);
+  for (auto v: _refNodeIndexToBranchIndex) {
+    assert(v != static_cast<unsigned int>(-1));
+  }
+}
+
+void ICCalculator::_initScores()
+{
+  Logger::timed << "[IC computation] Initializing scores..." << std::endl; 
+  auto branchNumbers = _taxaNumber * 2 - 3;
+  _lqic = std::vector<double>(branchNumbers, 1.0);
+}
 
 void ICCalculator::_readTrees(const Families &families)
 {
@@ -33,10 +80,6 @@ void ICCalculator::_readTrees(const Families &families)
     _spidToString.push_back(speciesLabel);
   }
   _taxaNumber = _allSPID.size();
-  _refIdToSPID.resize(_rootedReferenceTree.getLeavesNumber());
-  for (auto &leaf: _rootedReferenceTree.getLeaves()) {
-    _refIdToSPID[leaf->node_index] = speciesLabelToSpid[std::string(leaf->label)];
-  }
   for (auto &family: families) {
     GeneSpeciesMapping mappings;
     mappings.fill(family.mappingFile, family.startingGeneTree);
@@ -63,7 +106,7 @@ void ICCalculator::_computeQuartets()
 {
   Logger::timed << "[IC computation] Computing quartets..." << std::endl; 
   unsigned int quartetsNumber = pow(_allSPID.size(), 4);
-  _quartetOccurences = std::vector<SPID>(quartetsNumber, SPID());
+  _quartetCounts = std::vector<SPID>(quartetsNumber, SPID());
 
   unsigned int printEvery = _evaluationTrees.size() >= 1000 ?
     _evaluationTrees.size() / 10 : 1000;
@@ -91,10 +134,10 @@ void ICCalculator::_computeQuartets()
                 // cover all equivalent quartets
                 // we need to swap ab|cd-cd|ab and c-d
                 // because of the travserse, we do not need to swap a-b
-                _quartetOccurences[_getLookupIndex(a,b,c,d)]++;
-                _quartetOccurences[_getLookupIndex(a,b,d,c)]++;
-                _quartetOccurences[_getLookupIndex(c,d,a,b)]++;
-                _quartetOccurences[_getLookupIndex(d,c,a,b)]++;
+                _quartetCounts[_getLookupIndex(a,b,c,d)]++;
+                _quartetCounts[_getLookupIndex(a,b,d,c)]++;
+                _quartetCounts[_getLookupIndex(c,d,a,b)]++;
+                _quartetCounts[_getLookupIndex(d,c,a,b)]++;
               }
             }
           }
@@ -115,37 +158,46 @@ void ICCalculator::_computeScores()
 }
   
 
-static SPIDSet _getSPIDClade(
-    pll_unode_t *u,
-    const std::vector<SPID> &idToSPID)
-{
-  SPIDSet set;
-  for (auto id: PLLUnrootedTree::getClade(u)) {
-    set.insert(idToSPID[id]);
-  }
-  return set;
-}
-
 void ICCalculator::_processNodePair(pll_unode_t *u, pll_unode_t *v)
 {
   if (u == v) {
     return;
   }
-  PLLUnrootedTree::orientTowardEachOther(&u, &v);
+  std::vector<pll_unode_t *> branchPath;
+  PLLUnrootedTree::orientTowardEachOther(&u, &v, branchPath);
+  std::vector<unsigned int> branchIndices;
+  for (auto branch: branchPath) {
+    branchIndices.push_back(_refNodeIndexToBranchIndex[branch->node_index]);
+  }
   assert(u != v);
   assert(u->next && v->next);
+  assert(branchPath.size()); 
   
   std::array<pll_unode_t*, 4> referenceSubtrees;
   referenceSubtrees[0] = u->next->back;
   referenceSubtrees[1] = u->next->next->back;
   referenceSubtrees[2] = v->next->back;
   referenceSubtrees[3] = v->next->next->back;
-  
+ 
   std::array<SPIDSet, 4> referenceMetaQuartet;
   for (unsigned int i = 0; i < 4; ++i) {
-    referenceMetaQuartet[i] = _getSPIDClade(referenceSubtrees[i], 
-        _refIdToSPID);
+    getTaxaUnderNode(referenceSubtrees[i], referenceMetaQuartet[i]);
   }
+  for (auto a: referenceMetaQuartet[0]) {
+    for (auto b: referenceMetaQuartet[1]) {
+      for (auto c: referenceMetaQuartet[2]) {
+        for (auto d: referenceMetaQuartet[3]) {
+          auto qic = _getQic(a, b, c, d); 
+          for (auto branchIndex: branchIndices) {
+            _lqic[branchIndex] = std::min(_lqic[branchIndex], qic);
+              Logger::info << "qic " << branchIndex << ": " << qic << " " << _lqic[branchIndex] << std::endl;
+          }
+        }
+      }
+    }
+  }
+
+
 }
 
 void ICCalculator::printNQuartets(unsigned int n) {
@@ -190,7 +242,7 @@ void ICCalculator::_printQuartet(SPID a, SPID b, SPID c, SPID d)
   unsigned int occurences[3];
   unsigned int sum = 0;
   for (unsigned int i = 0; i < 3; ++i) {
-    occurences[i] = _quartetOccurences[idx[i]];
+    occurences[i] = _quartetCounts[idx[i]];
     sum += occurences[i];
   }
   double frequencies[3];
@@ -202,6 +254,43 @@ void ICCalculator::_printQuartet(SPID a, SPID b, SPID c, SPID d)
   Logger::info << std::endl;
 
 
+}
+  
+
+double getLogScore(const std::array<unsigned int, 3> &q) 
+{
+  if (q[0] == 0 && q[1] == 0 && q[2] == 0) {
+    Logger::info << "  HEY NO OCCURENCES => qic = 0" << std::endl;
+    return 0.0;
+  }
+  auto qsum = std::accumulate(q.begin(), q.end(), 0);
+  double qic = 1.0;
+  for (unsigned int i = 0; i < 3; ++i) {
+    if (q[i] != 0) {
+      auto p = double(q[i]) / double(qsum);
+		  qic += p * log(p) / log(3);
+    }
+  }
+  return qic;
+}
+
+
+double ICCalculator::_getQic(SPID a, SPID b, SPID c, SPID d)
+{
+  std::array <unsigned int, 3> idx;
+  idx[0] = _getLookupIndex(a,b,c,d);
+  idx[1] = _getLookupIndex(a,c,b,d);
+  idx[2] = _getLookupIndex(a,d,c,b);
+  std::array<unsigned int, 3> counts;
+  for (unsigned int i = 0; i < 3; ++i) {
+    counts[i] = _quartetCounts[idx[i]];
+  }
+  auto logScore = getLogScore(counts);
+  if (counts[0] >= counts[1] && counts[0] >= counts[2]) {
+    return logScore;
+  } else {
+    return -logScore;
+  }
 }
 
 

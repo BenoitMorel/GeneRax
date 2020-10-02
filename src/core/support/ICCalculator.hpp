@@ -11,6 +11,7 @@ struct MetaQuartet {
   std::array<TaxaSet, 4> sets;
 };
 
+
 using SPIDSet = std::unordered_set<SPID>;
 
 class ICCalculator {
@@ -24,28 +25,32 @@ private:
   PLLRootedTree _rootedReferenceTree;
   PLLUnrootedTree _referenceTree;
   TaxaSet _allSPID;
-  std::vector<SPID> _refIdToSPID;
   unsigned int _taxaNumber;
+  std::vector<unsigned int> _refNodeIndexToBranchIndex;
+  unsigned int _maxBranchIndex;
 
   // evaluation trees data
   std::vector<std::unique_ptr<PLLUnrootedTree> > _evaluationTrees;
   
   // quartet information
-  std::vector<SPID> _quartetOccurences;
+  std::vector<SPID> _quartetCounts;
 
 
   // scores
   std::vector<double> _lqic; //indexed with species node_index
+
 
   // debug
   std::vector<std::string> _spidToString;
 
   void _readTrees(const Families &families);
   void _computeQuartets();
+  void _initScores();
   void _computeScores();
   void _processNodePair(pll_unode_t *u, pll_unode_t *v);
 
 
+  void _computeRefBranchIndices();
   unsigned int _getLookupIndex(unsigned int a, 
       unsigned int b,
       unsigned int c,
@@ -53,6 +58,8 @@ private:
     return a + _taxaNumber * (b + _taxaNumber * (c + _taxaNumber * d));
   }
   
+  double _getQic(SPID a, SPID b, SPID c, SPID d);
+
   void _printQuartet(SPID a, SPID b, SPID c, SPID d);
 };
 

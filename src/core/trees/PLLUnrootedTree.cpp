@@ -3,6 +3,7 @@
 #include <IO/LibpllParsers.hpp>
 #include <IO/Logger.hpp>
 #include <trees/PLLRootedTree.hpp>  
+#include <stack>
 
 
 static void destroyNodeData(void *)
@@ -143,20 +144,27 @@ static void fillPostOrder(pll_unode_t *node,
   nodes.push_back(node);
 }
 
+static bool isBranchIn(pll_unode_t *b, 
+    const std::unordered_set<pll_unode_t *> &branches)
+{
+  return branches.find(b) != branches.end() 
+    || branches.find(b->back) != branches.end();
+}
+
 std::unordered_set<pll_unode_t *> PLLUnrootedTree::getBranches()
 {
   std::unordered_set<pll_unode_t *> branches;
   for (auto node: getNodes()) {
-    if (branches.find(node->back) == branches.end()) {
+    if (!isBranchIn(node, branches)) {
       branches.insert(node);
     }
     if (node->next) {
       node = node->next;
-      if (branches.find(node->back) == branches.end()) {
+      if (!isBranchIn(node, branches)) {
         branches.insert(node);
       }
       node = node->next;
-      if (branches.find(node->back) == branches.end()) {
+      if (!isBranchIn(node, branches)) {
         branches.insert(node);
       }
     }
@@ -249,8 +257,11 @@ std::unordered_set<unsigned int>
 // look for *pv (or one of his nexts) under the oriented node u.
 // if it is found, *pv is updated with the found next, and 
 // the function returns true (and false otherwise)
-static bool orientAux(pll_unode_t *u, pll_unode_t **pv)
+static bool orientAux(pll_unode_t *u, 
+    pll_unode_t **pv,
+    std::stack<pll_unode_t *> &path)
 {
+  path.push(u);
   auto v = *pv;
   if (v == u) {
     return true;
@@ -266,28 +277,50 @@ static bool orientAux(pll_unode_t *u, pll_unode_t **pv)
   }
   if (!u->next) { 
     // end of recursion, we did not find *v
+    path.pop();
     return false;
   } else {
-    return orientAux(u->next->back, pv) || 
-      orientAux(u->next->next->back, pv);
+    if (orientAux(u->next->back, pv, path) || 
+      orientAux(u->next->next->back, pv, path)) {
+      return true;
+    } else {
+      path.pop();
+      return false;
+    }
   }
 }
 
+static void stackToVector(std::stack<pll_unode_t *> s,
+    std::vector<pll_unode_t *> &v)
+{
+  v.clear();
+  v.resize(s.size());
+  for (int i = s.size() - 1; i >= 0; --i) {
+    v[i] = s.top();
+    s.pop();
+  }
+}
 
 void PLLUnrootedTree::orientTowardEachOther(pll_unode_t **pu,
-    pll_unode_t **pv)
+    pll_unode_t **pv,
+    std::vector<pll_unode_t *> &branchesPath)
 {
   assert((*pu) != (*pv));
   auto *u = *pu;
-  if (orientAux(u->back, pv)) {
+  std::stack<pll_unode_t *> path;
+  if (orientAux(u->back, pv, path)) {
+    stackToVector(path, branchesPath);    
     return;
   }
+  assert(path.size() == 0);
   if (u->next) {
-    if (orientAux(u->next->back, pv)) {
+    if (orientAux(u->next->back, pv, path)) {
       *pu = u->next;
+      stackToVector(path, branchesPath);    
       return;
-    } else if (orientAux(u->next->next->back, pv)) {
+    } else if (orientAux(u->next->next->back, pv, path)) {
       *pu = u->next->next;
+      stackToVector(path, branchesPath);    
       return;
     }
   }
