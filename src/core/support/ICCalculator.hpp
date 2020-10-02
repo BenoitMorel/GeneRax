@@ -37,7 +37,7 @@ private:
 
 
   // scores
-  std::vector<double> _lqic; //indexed with species node_index
+  std::vector<double> _lqic; //indexed with branch indices
 
 
   // debug
@@ -59,8 +59,10 @@ private:
   }
   
   double _getQic(SPID a, SPID b, SPID c, SPID d);
+  void _getSpidUnderNode(pll_unode_t *node, TaxaSet &taxa);
 
   void _printQuartet(SPID a, SPID b, SPID c, SPID d);
+
 };
 
 

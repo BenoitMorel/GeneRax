@@ -28,7 +28,7 @@ ICCalculator::ICCalculator(const std::string &referenceTreePath,
   _initScores();
   _computeScores();  
 
-
+  _referenceTree.save("ploupi_unrooted.txt");
   for (auto node: _referenceTree.getPostOrderNodes()) {
       auto branchIndex = _refNodeIndexToBranchIndex[node->node_index];
       auto lqic = _lqic[branchIndex];
@@ -79,6 +79,9 @@ void ICCalculator::_readTrees(const Families &families)
     _allSPID.insert(spid);
     _spidToString.push_back(speciesLabel);
   }
+  for (auto &leaf: _referenceTree.getLeaves()) {
+    leaf->clv_index = speciesLabelToSpid[std::string(leaf->label)]; 
+  }
   _taxaNumber = _allSPID.size();
   for (auto &family: families) {
     GeneSpeciesMapping mappings;
@@ -92,11 +95,11 @@ void ICCalculator::_readTrees(const Families &families)
 }
 
 
-static void getTaxaUnderNode(pll_unode_t *node, TaxaSet &taxa)
+void ICCalculator::_getSpidUnderNode(pll_unode_t *node, TaxaSet &taxa)
 {
   if (node->next) {
-    getTaxaUnderNode(node->next->back, taxa);
-    getTaxaUnderNode(node->next->next->back, taxa);
+    _getSpidUnderNode(node->next->back, taxa);
+    _getSpidUnderNode(node->next->next->back, taxa);
   } else {
     taxa.insert(node->clv_index);
   }
@@ -120,9 +123,9 @@ void ICCalculator::_computeQuartets()
     }
     for (auto v: evaluationTree->getInnerNodes()) {
       TaxaSet subtreeTaxa[3];
-      getTaxaUnderNode(v->back, subtreeTaxa[0]);
-      getTaxaUnderNode(v->next->back, subtreeTaxa[1]);
-      getTaxaUnderNode(v->next->next->back, subtreeTaxa[2]);
+      _getSpidUnderNode(v->back, subtreeTaxa[0]);
+      _getSpidUnderNode(v->next->back, subtreeTaxa[1]);
+      _getSpidUnderNode(v->next->next->back, subtreeTaxa[2]);
       for (unsigned int i = 0; i < 3; ++i) {
         for (auto a: subtreeTaxa[i%3]) {
           for (auto b: subtreeTaxa[i%3]) {
@@ -163,6 +166,9 @@ void ICCalculator::_processNodePair(pll_unode_t *u, pll_unode_t *v)
   if (u == v) {
     return;
   }
+  assert(u->next && v->next);
+  assert(u->next != v && u->next->next != v);
+  assert(v->next != u && v->next->next != u);
   std::vector<pll_unode_t *> branchPath;
   PLLUnrootedTree::orientTowardEachOther(&u, &v, branchPath);
   std::vector<unsigned int> branchIndices;
@@ -181,7 +187,7 @@ void ICCalculator::_processNodePair(pll_unode_t *u, pll_unode_t *v)
  
   std::array<SPIDSet, 4> referenceMetaQuartet;
   for (unsigned int i = 0; i < 4; ++i) {
-    getTaxaUnderNode(referenceSubtrees[i], referenceMetaQuartet[i]);
+    _getSpidUnderNode(referenceSubtrees[i], referenceMetaQuartet[i]);
   }
   for (auto a: referenceMetaQuartet[0]) {
     for (auto b: referenceMetaQuartet[1]) {
@@ -190,7 +196,6 @@ void ICCalculator::_processNodePair(pll_unode_t *u, pll_unode_t *v)
           auto qic = _getQic(a, b, c, d); 
           for (auto branchIndex: branchIndices) {
             _lqic[branchIndex] = std::min(_lqic[branchIndex], qic);
-              Logger::info << "qic " << branchIndex << ": " << qic << " " << _lqic[branchIndex] << std::endl;
           }
         }
       }
@@ -199,6 +204,8 @@ void ICCalculator::_processNodePair(pll_unode_t *u, pll_unode_t *v)
 
 
 }
+
+
 
 void ICCalculator::printNQuartets(unsigned int n) {
   unsigned int idx = 0;
@@ -292,7 +299,6 @@ double ICCalculator::_getQic(SPID a, SPID b, SPID c, SPID d)
     return -logScore;
   }
 }
-
 
 
 
