@@ -13,6 +13,13 @@ class Clade;
 class DSTagger {
 public:
   DSTagger(PLLUnrootedTree &tree);
+  const std::vector<pll_unode_t *> &getBestRoots() const{
+    return _bestRoots;
+  }
+  bool isDuplication(unsigned int nodeIndex) const {
+    return _clvs[nodeIndex].isDup;
+  }
+  void print();
 private:
   PLLUnrootedTree &_tree;
   

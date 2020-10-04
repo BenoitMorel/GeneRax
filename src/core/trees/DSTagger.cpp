@@ -60,3 +60,7 @@ void DSTagger::_tagNode(pll_unode_t *node, CLV &clv)
   }
 }
 
+void DSTagger::print()
+{
+  auto root = getBestRoots()[0];
+}

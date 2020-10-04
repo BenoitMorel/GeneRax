@@ -4,11 +4,19 @@
 #include <IO/Logger.hpp>
 #include <trees/PLLRootedTree.hpp>  
 #include <stack>
+#include <functional>
+#include <sstream>
+
+
+void defaultUnodePrinter(pll_unode_t *node, 
+    std::stringstream &ss)
+{
+  ss << node->label << ":" << node->length;
+}
 
 
 static void destroyNodeData(void *)
 {
-
 }
 
 void utreeDestroy(pll_utree_t *utree) {
@@ -368,11 +376,32 @@ std::vector<double> PLLUnrootedTree::getMADRelativeDeviations()
   return deviations;
 }
 
-std::string PLLUnrootedTree::getNewickString()
+static void printAux(pll_unode_t *node,
+    std::stringstream &ss,
+    UnodePrinter f)
 {
-  std::string str;
-  LibpllParsers::getUnodeNewickString(getAnyInnerNode(), str);
-  return str;
+  if (node->next) {
+    ss << "(";
+    printAux(node->next->back, ss, f);
+    ss << ",";
+    printAux(node->next->next->back, ss, f);
+    ss << ")";
+  }
+  f(node, ss);
+}
+
+std::string PLLUnrootedTree::getNewickString(UnodePrinter f)
+{
+  std::stringstream ss;
+  auto node = getAnyInnerNode();
+  ss << "(";
+  printAux(node->back, ss, f);
+  ss << ",";
+  printAux(node->next->back, ss, f);
+  ss << ",";
+  printAux(node->next->next->back, ss, f);
+  ss << ");";
+  return ss.str();
 }
 
 

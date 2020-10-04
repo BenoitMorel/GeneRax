@@ -22,6 +22,11 @@ extern "C" {
 class PLLRootedTree;
 
 
+using UnodePrinter = 
+  std::function<void(pll_unode_t *, std::stringstream &)>;
+
+void defaultUnodePrinter(pll_unode_t *node, 
+    std::stringstream &ss);
 
 /**
  *  C++ wrapper around the libpll pll_utree_t structure
@@ -81,7 +86,7 @@ public:
    * Save the tree in newick format in filename
    */
   void save(const std::string &fileName); 
-  std::string getNewickString();
+  std::string getNewickString(UnodePrinter f = defaultUnodePrinter);
 
   /**
    * Replace null branch lengths with minBL
@@ -161,7 +166,6 @@ public:
    *  Return the set of leaves under the input directed node
    */
   static std::unordered_set<unsigned int> getClade(pll_unode_t *node);
-
 
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;
