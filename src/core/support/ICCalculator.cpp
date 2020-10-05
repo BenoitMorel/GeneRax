@@ -6,6 +6,7 @@
 #include <IO/Logger.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <IO/LibpllParsers.hpp>
+#include <trees/DSTagger.hpp>
 
 void printTaxaSet(const TaxaSet &set) {
   for (auto taxa: set) {
@@ -102,6 +103,7 @@ void ICCalculator::_readTrees(const Families &families)
       leaf->clv_index = speciesLabelToSpid[mappings.getSpecies(std::string(leaf->label))];
     }
     _evaluationTrees.push_back(std::move(evaluationTree));
+    DSTagger tagger(*(_evaluationTrees.back()));
   }
 }
 

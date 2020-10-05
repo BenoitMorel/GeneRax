@@ -1,5 +1,7 @@
 #include "DSTagger.hpp"
+#include <IO/Logger.hpp>
 #include <climits>
+#include <sstream>
 
 
 DSTagger::DSTagger(PLLUnrootedTree &tree):_tree(tree),
@@ -9,6 +11,7 @@ DSTagger::DSTagger(PLLUnrootedTree &tree):_tree(tree),
     auto &clv = _clvs[node->node_index];
     _tagNode(node, clv);
   }
+  
   // here we create a fake node with fake children
   // to run the _tagNode function on virtual roots
   pll_unode_t fakeNode; // virtual root
@@ -36,6 +39,7 @@ void DSTagger::_tagNode(pll_unode_t *node, CLV &clv)
 {
   if (!node->next) {
     // leaf case, nothing to do
+    clv.clade.insert(node->clv_index);
     return;
   }
   auto &leftCLV = _clvs[node->next->back->node_index];
@@ -60,7 +64,25 @@ void DSTagger::_tagNode(pll_unode_t *node, CLV &clv)
   }
 }
 
+
 void DSTagger::print()
 {
   auto root = getBestRoots()[0];
+  Logger::info << "DS Tagged:" << std::endl;
+  TaggerUNodePrinter printer(_clvs);
+  Logger::info << _tree.getNewickString(printer, 
+      root,
+      true) << std::endl;
+}
+    
+
+void DSTagger::TaggerUNodePrinter::operator()(pll_unode_t *node, 
+        std::stringstream &ss) const
+{
+  if (!node->next) {
+    ss << node->label;
+  } else {
+    ss << (clvs[node->node_index].isDup ? "D" : "S"); 
+  } 
+  ss << ":" << node->length;
 }

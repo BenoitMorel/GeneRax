@@ -11,7 +11,10 @@
 void defaultUnodePrinter(pll_unode_t *node, 
     std::stringstream &ss)
 {
-  ss << node->label << ":" << node->length;
+  if (node->label) {
+    ss << node->label;
+  }
+  ss << ":" << node->length;
 }
 
 
@@ -390,17 +393,29 @@ static void printAux(pll_unode_t *node,
   f(node, ss);
 }
 
-std::string PLLUnrootedTree::getNewickString(UnodePrinter f)
+std::string PLLUnrootedTree::getNewickString(UnodePrinter f,
+      pll_unode_t *root, 
+      bool rooted)
 {
   std::stringstream ss;
-  auto node = getAnyInnerNode();
-  ss << "(";
-  printAux(node->back, ss, f);
-  ss << ",";
-  printAux(node->next->back, ss, f);
-  ss << ",";
-  printAux(node->next->next->back, ss, f);
-  ss << ");";
+  if (!root) {
+    root = getAnyInnerNode();
+  }
+  if (rooted) {
+    ss << "(";
+    printAux(root, ss, f);
+    ss << ",";
+    printAux(root->back, ss, f);
+    ss << ");";
+  } else {
+    ss << "(";
+    printAux(root->back, ss, f);
+    ss << ",";
+    printAux(root->next->back, ss, f);
+    ss << ",";
+    printAux(root->next->next->back, ss, f);
+    ss << ");";
+  }
   return ss.str();
 }
 

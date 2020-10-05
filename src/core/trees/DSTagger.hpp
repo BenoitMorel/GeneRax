@@ -35,6 +35,14 @@ private:
   std::vector<pll_unode_t *> _bestRoots;
   
   void _tagNode(pll_unode_t *node, CLV &clv);
+
+  
+  struct TaggerUNodePrinter {
+    TaggerUNodePrinter(std::vector<CLV> &clvs):clvs(clvs) { }
+    std::vector<CLV> &clvs;
+    void operator()(pll_unode_t *node, 
+        std::stringstream &ss) const;
+  };
 };
 
 

@@ -86,7 +86,9 @@ public:
    * Save the tree in newick format in filename
    */
   void save(const std::string &fileName); 
-  std::string getNewickString(UnodePrinter f = defaultUnodePrinter);
+  std::string getNewickString(UnodePrinter f = defaultUnodePrinter,
+      pll_unode_t *root = nullptr, 
+      bool rooted = false);
 
   /**
    * Replace null branch lengths with minBL
