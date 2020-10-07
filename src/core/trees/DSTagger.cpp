@@ -33,6 +33,9 @@ DSTagger::DSTagger(PLLUnrootedTree &tree):_tree(tree),
       _bestRoots.push_back(branch);
     }
   }
+  auto root = getRoot();
+  _rootFromNode(root);
+  _rootFromNode(root->back);
 }
 
 void DSTagger::_tagNode(pll_unode_t *node, CLV &clv)
@@ -63,11 +66,21 @@ void DSTagger::_tagNode(pll_unode_t *node, CLV &clv)
     }
   }
 }
+  
+void DSTagger::_rootFromNode(pll_unode_t *node)
+{
+  auto &clv = _clvs[node->node_index];
+  clv.goesUp = true;
+  if (node->next) {
+    _rootFromNode(node->next->back);
+    _rootFromNode(node->next->next->back);
+  }
+}
 
 
 void DSTagger::print()
 {
-  auto root = getBestRoots()[0];
+  auto root = getRoot();
   Logger::info << "DS Tagged:" << std::endl;
   TaggerUNodePrinter printer(_clvs);
   Logger::info << _tree.getNewickString(printer, 

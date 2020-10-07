@@ -13,11 +13,14 @@ class Clade;
 class DSTagger {
 public:
   DSTagger(PLLUnrootedTree &tree);
-  const std::vector<pll_unode_t *> &getBestRoots() const{
-    return _bestRoots;
+  pll_unode_t * &getRoot() {
+    return _bestRoots[0];
   }
   bool isDuplication(unsigned int nodeIndex) const {
     return _clvs[nodeIndex].isDup;
+  }
+  bool goesUp(unsigned int nodeIndex) const {
+    return _clvs[nodeIndex].goesUp;
   }
   void print();
 private:
@@ -28,14 +31,15 @@ private:
     unsigned int score;
     bool isDup;
     Clade clade;
-    CLV(): score(0), isDup(false) {}
+    bool goesUp;
+    CLV(): score(0), isDup(false), goesUp(false) {}
   };
   
   std::vector<CLV> _clvs;
   std::vector<pll_unode_t *> _bestRoots;
-  
+   
   void _tagNode(pll_unode_t *node, CLV &clv);
-
+  void _rootFromNode(pll_unode_t *node);
   
   struct TaggerUNodePrinter {
     TaggerUNodePrinter(std::vector<CLV> &clvs):clvs(clvs) { }

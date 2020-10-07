@@ -47,6 +47,7 @@ private:
 
   void _readTrees(const Families &families);
   void _computeQuartets();
+  void _computeQuartetsForTree(PLLUnrootedTree &tree);
   void _initScores();
   void _computeScores();
   void _processNodePair(pll_unode_t *u, pll_unode_t *v);

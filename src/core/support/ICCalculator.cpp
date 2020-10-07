@@ -118,6 +118,8 @@ void ICCalculator::_getSpidUnderNode(pll_unode_t *node, TaxaSet &taxa)
   }
 }
 
+
+
 void ICCalculator::_computeQuartets()
 {
   Logger::timed << "[IC computation] Computing quartets..." << std::endl; 
@@ -134,27 +136,32 @@ void ICCalculator::_computeQuartets()
     if (++plop % printEvery == 0) {
       Logger::timed << "    Processed " << plop << "/" << _evaluationTrees.size() << " trees" << std::endl;
     }
-    for (auto v: evaluationTree->getInnerNodes()) {
-      TaxaSet subtreeTaxa[3];
-      _getSpidUnderNode(v->back, subtreeTaxa[0]);
-      _getSpidUnderNode(v->next->back, subtreeTaxa[1]);
-      _getSpidUnderNode(v->next->next->back, subtreeTaxa[2]);
-      for (unsigned int i = 0; i < 3; ++i) {
-        for (auto a: subtreeTaxa[i%3]) {
-          for (auto b: subtreeTaxa[i%3]) {
-            if (a == b) {
-              continue;
-            }   
-            for (auto c: subtreeTaxa[(i+1)%3]) {
-              for (auto d: subtreeTaxa[(i+2)%3]) {
-                // cover all equivalent quartets
-                // we need to swap ab|cd-cd|ab and c-d
-                // because of the travserse, we do not need to swap a-b
-                _quartetCounts[_getLookupIndex(a,b,c,d)]++;
-                _quartetCounts[_getLookupIndex(a,b,d,c)]++;
-                _quartetCounts[_getLookupIndex(c,d,a,b)]++;
-                _quartetCounts[_getLookupIndex(d,c,a,b)]++;
-              }
+    _computeQuartetsForTree(*evaluationTree);
+  }
+}
+  
+void ICCalculator::_computeQuartetsForTree(PLLUnrootedTree &evaluationTree)
+{
+  for (auto v: evaluationTree.getInnerNodes()) {
+    TaxaSet subtreeTaxa[3];
+    _getSpidUnderNode(v->back, subtreeTaxa[0]);
+    _getSpidUnderNode(v->next->back, subtreeTaxa[1]);
+    _getSpidUnderNode(v->next->next->back, subtreeTaxa[2]);
+    for (unsigned int i = 0; i < 3; ++i) {
+      for (auto a: subtreeTaxa[i%3]) {
+        for (auto b: subtreeTaxa[i%3]) {
+          if (a == b) {
+            continue;
+          }   
+          for (auto c: subtreeTaxa[(i+1)%3]) {
+            for (auto d: subtreeTaxa[(i+2)%3]) {
+              // cover all equivalent quartets
+              // we need to swap ab|cd-cd|ab and c-d
+              // because of the travserse, we do not need to swap a-b
+              _quartetCounts[_getLookupIndex(a,b,c,d)]++;
+              _quartetCounts[_getLookupIndex(a,b,d,c)]++;
+              _quartetCounts[_getLookupIndex(c,d,a,b)]++;
+              _quartetCounts[_getLookupIndex(d,c,a,b)]++;
             }
           }
         }
@@ -278,8 +285,6 @@ void ICCalculator::_printQuartet(SPID a, SPID b, SPID c, SPID d)
     //Logger::info << " q" << i << "=" << occurences[i] << ",";
   }
   Logger::info << std::endl;
-
-
 }
   
 
@@ -301,6 +306,7 @@ double ICCalculator::_getQic(SPID a, SPID b, SPID c, SPID d)
     return -logScore;
   }
 }
+
 std::string ICCalculator::_getNewickWithScore(std::vector<double> &branchScores, const std::string &scoreName)
 {
   for (auto node: _referenceTree.getPostOrderNodes()) {
