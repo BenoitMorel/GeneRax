@@ -38,6 +38,7 @@ private:
   // scores indexed with branch indices
   std::vector<double> _lqic;
   std::vector<double> _qpic; 
+  std::vector<double> _eqpic; 
 
 
   // debug

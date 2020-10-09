@@ -160,6 +160,12 @@ public:
       std::vector<pll_unode_t *> &branchesPath);
 
 
+  /*
+   *  Return the virtual root in the unrooted tree corresponding to
+   *  the root in the input rooted tree. Both trees should have the 
+   *  same (unrooted) topology and leaf set.
+   */
+   pll_unode_t *getVirtualRoot(PLLRootedTree &referenceTree);
 
   // TODO: DOCUMENT
   std::vector<double> getMADRelativeDeviations();

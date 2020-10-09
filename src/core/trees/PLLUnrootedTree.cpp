@@ -419,4 +419,7 @@ std::string PLLUnrootedTree::getNewickString(UnodePrinter f,
   return ss.str();
 }
 
-
+pll_unode_t *PLLUnrootedTree::getVirtualRoot(PLLRootedTree &referenceTree)
+{
+  return nullptr;
+}

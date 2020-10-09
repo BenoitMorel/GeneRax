@@ -32,6 +32,7 @@ ICCalculator::ICCalculator(const std::string &referenceTreePath,
   Logger::info << "LQIC score: " << std::endl;
   Logger::info << _getNewickWithScore(_lqic, std::string("LQIC")) << std::endl;
   Logger::info << _getNewickWithScore(_qpic, std::string("QPIC")) << std::endl;
+  Logger::info << _getNewickWithScore(_eqpic, std::string("EPIC")) << std::endl;
 }
 
 static double getLogScore(const std::array<unsigned int, 3> &q) 
@@ -47,7 +48,11 @@ static double getLogScore(const std::array<unsigned int, 3> &q)
 		  qic += p * log(p) / log(3);
     }
   }
-  return qic;
+  if (q[0] >= q[1] && q[0] >= q[1]) {
+    return qic;
+  } else {
+    return -qic;
+  }
 }
 
 
@@ -77,6 +82,7 @@ void ICCalculator::_initScores()
   auto branchNumbers = _taxaNumber * 2 - 3;
   _lqic = std::vector<double>(branchNumbers, 1.0);
   _qpic = std::vector<double>(branchNumbers, 1.0);
+  _eqpic = std::vector<double>(branchNumbers, 1.0);
 }
 
 void ICCalculator::_readTrees(const Families &families)
@@ -316,9 +322,14 @@ void ICCalculator::_processNodePair(pll_unode_t *u, pll_unode_t *v)
       }
     }
   }
+  auto qpic = getLogScore(counts);
+  Logger::info << "qpic = " << qpic << std::endl;
   if (branchIndices.size() == 1) {
     auto branchIndex = branchIndices[0];
-    _qpic[branchIndex] =  getLogScore(counts);
+    _qpic[branchIndex] = qpic;
+  }
+  for (auto branchIndex: branchIndices) {
+    _eqpic[branchIndex] = std::min(_eqpic[branchIndex], qpic);
   }
 }
 
@@ -392,12 +403,7 @@ double ICCalculator::_getQic(SPID a, SPID b, SPID c, SPID d)
   for (unsigned int i = 0; i < 3; ++i) {
     counts[i] = _quartetCounts[idx[i]];
   }
-  auto logScore = getLogScore(counts);
-  if (counts[0] >= counts[1] && counts[0] >= counts[2]) {
-    return logScore;
-  } else {
-    return -logScore;
-  }
+  return getLogScore(counts);
 }
 
 std::string ICCalculator::_getNewickWithScore(std::vector<double> &branchScores, const std::string &scoreName)
