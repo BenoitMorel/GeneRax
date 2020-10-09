@@ -7,12 +7,10 @@
 
 using SPID = unsigned int;
 using TaxaSet = std::unordered_set<SPID>;
-struct MetaQuartet {
-  std::array<TaxaSet, 4> sets;
-};
+
+using MetaQuartet = std::array<TaxaSet, 4>;
 
 
-using SPIDSet = std::unordered_set<SPID>;
 
 class ICCalculator {
 public:
@@ -48,6 +46,7 @@ private:
   void _readTrees(const Families &families);
   void _computeQuartets();
   void _computeQuartetsForTree(PLLUnrootedTree &tree);
+  void _computeQuartetsForTreePro(PLLUnrootedTree &tree);
   void _initScores();
   void _computeScores();
   void _processNodePair(pll_unode_t *u, pll_unode_t *v);
@@ -65,7 +64,7 @@ private:
   void _getSpidUnderNode(pll_unode_t *node, TaxaSet &taxa);
 
   void _printQuartet(SPID a, SPID b, SPID c, SPID d);
-
+  void _updateFromMetaquartet(const MetaQuartet &m);
   std::string _getNewickWithScore(std::vector<double> &branchScores, const std::string &scoreName);
 };
 

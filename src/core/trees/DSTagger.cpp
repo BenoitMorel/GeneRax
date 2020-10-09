@@ -5,7 +5,8 @@
 
 
 DSTagger::DSTagger(PLLUnrootedTree &tree):_tree(tree),
-  _clvs(_tree.getDirectedNodesNumber())
+  _isRootDup(false),
+  _clvs(_tree.getDirectedNodesNumber() + 3)
 {
   for (auto node: _tree.getPostOrderNodes()) {
     auto &clv = _clvs[node->node_index];
@@ -31,11 +32,28 @@ DSTagger::DSTagger(PLLUnrootedTree &tree):_tree(tree),
       bestScore = clv.score;
       _bestRoots.clear();
       _bestRoots.push_back(branch);
+      if (clv.isDup) {
+        _isRootDup = true;
+      }
     }
   }
-  auto root = getRoot();
-  _rootFromNode(root);
-  _rootFromNode(root->back);
+  auto rootBranch = getRoot();
+  _clvs[rootBranch->node_index].isRoot = true;
+  _clvs[rootBranch->back->node_index].isRoot = true;
+  
+
+  for (unsigned int i = 0; i < 3; ++i) {
+    _roots[i].node_index = _tree.getDirectedNodesNumber() + i;
+    _roots[i].next = &_roots[(i + 1) % 3];
+    _clvs[_roots[i].node_index].isDup = true;
+  }
+  _roots[0].back = nullptr;
+  _roots[1].back = rootBranch;
+  _roots[2].back = rootBranch->back;
+
+  _rootFromNode(&_roots[0]);
+  //_rootFromNode(rootBranch);
+  //_rootFromNode(rootBranch->back);
 }
 
 void DSTagger::_tagNode(pll_unode_t *node, CLV &clv)
@@ -70,8 +88,17 @@ void DSTagger::_tagNode(pll_unode_t *node, CLV &clv)
 void DSTagger::_rootFromNode(pll_unode_t *node)
 {
   auto &clv = _clvs[node->node_index];
-  clv.goesUp = true;
+  clv.up = node;
+  
   if (node->next) {
+    auto &clv2 = _clvs[node->next->node_index];
+    auto &clv3 = _clvs[node->next->next->node_index];
+    clv2.isRoot = clv.isRoot;
+    clv3.isRoot = clv.isRoot;
+    clv2.isDup = clv.isDup;
+    clv3.isDup = clv.isDup;
+    clv2.up = node;
+    clv3.up = node;
     _rootFromNode(node->next->back);
     _rootFromNode(node->next->next->back);
   }
@@ -99,3 +126,73 @@ void DSTagger::TaggerUNodePrinter::operator()(pll_unode_t *node,
   } 
   ss << ":" << node->length;
 }
+  
+
+static void _fillWithChildren(pll_unode_t *node,
+    TaxaSet &set)
+{
+  if (!node->next) {
+    set.insert(node->clv_index);
+  } else{
+    _fillWithChildren(node->next->back, set);
+    _fillWithChildren(node->next->next->back, set);
+  }
+}
+
+void DSTagger::fillWithChildren(pll_unode_t *node,
+      TaxaSet &set)
+{
+  orientUp(node);
+  _fillWithChildren(node, set);  
+}
+
+std::vector<pll_unode_t *> 
+DSTagger::getSpeciationAncestorNodes(pll_unode_t *node)
+{
+  std::vector<pll_unode_t *> ancestors;
+  auto clv = &_clvs[node->node_index];
+  while (true) { //!clv->isRoot) {
+    orientUp(node);
+    assert(node);
+    if (clv->isRoot) {
+      if (_roots[1].back == node) {
+        node = &_roots[1];
+      } else if (_roots[2].back == node) {
+        node = &_roots[2];
+      } else {
+        assert(false);
+      }
+    } else {
+      node = node->back;
+    }
+    if (!node) { // we reached the root
+      break;
+    }
+    if (!clv->isDup) {
+      ancestors.push_back(node);
+    }
+    clv = &_clvs[node->node_index];
+  }
+  return ancestors;
+}
+
+
+static void _fillWithInternalDescendants(pll_unode_t *node,
+    std::vector<pll_unode_t*> &descendants)
+{
+  if (node->next) {
+    descendants.push_back(node);
+    _fillWithInternalDescendants(node->next->back, descendants);  
+    _fillWithInternalDescendants(node->next->next->back, descendants);
+  }
+}
+
+void DSTagger::fillWithInternalDescendants(pll_unode_t *node,
+      std::vector<pll_unode_t*> &descendants)
+{
+  if (node->next) {
+    _fillWithInternalDescendants(node->next->back, descendants);  
+    _fillWithInternalDescendants(node->next->next->back, descendants);
+  }
+}
+

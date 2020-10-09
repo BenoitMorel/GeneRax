@@ -37,7 +37,6 @@ ICCalculator::ICCalculator(const std::string &referenceTreePath,
 static double getLogScore(const std::array<unsigned int, 3> &q) 
 {
   if (q[0] == 0 && q[1] == 0 && q[2] == 0) {
-    Logger::info << "  HEY NO OCCURENCES => qic = 0" << std::endl;
     return 0.0;
   }
   auto qsum = std::accumulate(q.begin(), q.end(), 0);
@@ -136,13 +135,14 @@ void ICCalculator::_computeQuartets()
     if (++plop % printEvery == 0) {
       Logger::timed << "    Processed " << plop << "/" << _evaluationTrees.size() << " trees" << std::endl;
     }
-    _computeQuartetsForTree(*evaluationTree);
+    _computeQuartetsForTreePro(*evaluationTree);
   }
 }
   
 void ICCalculator::_computeQuartetsForTree(PLLUnrootedTree &evaluationTree)
 {
   for (auto v: evaluationTree.getInnerNodes()) {
+    // iterate over all tripartitions
     TaxaSet subtreeTaxa[3];
     _getSpidUnderNode(v->back, subtreeTaxa[0]);
     _getSpidUnderNode(v->next->back, subtreeTaxa[1]);
@@ -168,6 +168,97 @@ void ICCalculator::_computeQuartetsForTree(PLLUnrootedTree &evaluationTree)
       }
     }
   }
+}
+
+void ICCalculator::_computeQuartetsForTreePro(PLLUnrootedTree &evaluationTree)
+{
+  DSTagger tagger(evaluationTree);
+  for (auto u: evaluationTree.getInnerNodes()) {
+    tagger.orientUp(u);
+    MetaQuartet metaquartet;
+    metaquartet[0].clear();
+    metaquartet[1].clear();
+    tagger.fillWithChildren(u->next->back,metaquartet[0]);
+    tagger.fillWithChildren(u->next->next->back,metaquartet[1]);
+    // ancestors of u are nodes that are above u in the rooted gene
+    // tree, that are not tagged as duplication, and that 
+    // are oriented toward u
+    auto ancestors = tagger.getSpeciationAncestorNodes(u);
+    // a cousin v' of u is an internal node that is not an 
+    // ancestor of u and such that LCA(u,v') is not a duplication
+    std::vector<pll_unode_t *> cousins;
+
+    // in this loop, we iterate through all v nodes that are
+    // ancestors of u (and not duplications). We fill the quartets included in 
+    // the metaquartet induced by u and v. We also fill
+    // the vector of cousins of u 
+    for (unsigned int i = 0; i < ancestors.size(); ++i){
+      auto v = ancestors[i];
+      // Now v is an ancestor of u, oriented toward u
+      // and v is not a duplication node.
+      
+      // fill metaquartet[2] with all nodes that are not
+      // ancestors nor descendants of v, and such that their
+      // LCA with v is not a duplication
+      metaquartet[2].clear();   
+      for (unsigned int j = i + 1; j < ancestors.size();++j) {
+        auto w = ancestors[j];
+        auto wup = w;
+        tagger.orientUp(wup);
+        auto w2 = tagger.getThirdNode(w, wup)->back;
+        tagger.fillWithChildren(w2, metaquartet[2]);
+        tagger.fillWithInternalDescendants(w2, cousins);
+      }
+      // fill metaquartet[3] with all nodes under v2, the
+      // child of v that is not parent of u
+      metaquartet[3].clear();  
+      auto vup = v;
+      tagger.orientUp(vup);
+      auto v2 = tagger.getThirdNode(v, vup)->back;
+      tagger.fillWithChildren(v2, metaquartet[3]);
+      _updateFromMetaquartet(metaquartet);
+    }
+    for (auto v: cousins) {
+      tagger.orientUp(v);
+      metaquartet[2].clear();
+      metaquartet[3].clear();
+      tagger.fillWithChildren(v->next->back, metaquartet[2]);
+      tagger.fillWithChildren(v->next->next->back, metaquartet[3]);
+      _updateFromMetaquartet(metaquartet);
+    }
+  }
+}
+  
+void ICCalculator::_updateFromMetaquartet(const MetaQuartet &m)
+{
+    for (auto a: m[0]) {
+      for (auto b: m[1]) {
+        if (a == b) {
+          // we don't need to do this check with c and
+          // d because u is the only LCA that can 
+          // be a duplication
+          // TODO BENOIT: btw, check that we do not
+          // count equivalent taxa (as defined by astralpro)
+          // twice
+          continue;
+        }
+        for (auto c: m[2]) {
+          for (auto d: m[3]) {
+            _quartetCounts[_getLookupIndex(a,b,c,d)]++;
+            _quartetCounts[_getLookupIndex(a,b,d,c)]++;
+            _quartetCounts[_getLookupIndex(c,d,a,b)]++;
+            _quartetCounts[_getLookupIndex(d,c,a,b)]++;
+            // same but switch a and b
+            _quartetCounts[_getLookupIndex(b,a,c,d)]++;
+            _quartetCounts[_getLookupIndex(b,a,d,c)]++;
+            _quartetCounts[_getLookupIndex(c,d,b,a)]++;
+            _quartetCounts[_getLookupIndex(d,c,b,a)]++;
+            
+          }
+        }
+      }
+    }
+
 }
 
 void ICCalculator::_computeScores()
@@ -205,7 +296,7 @@ void ICCalculator::_processNodePair(pll_unode_t *u, pll_unode_t *v)
   referenceSubtrees[2] = v->next->back;
   referenceSubtrees[3] = v->next->next->back;
  
-  std::array<SPIDSet, 4> referenceMetaQuartet;
+  MetaQuartet referenceMetaQuartet;
   for (unsigned int i = 0; i < 4; ++i) {
     _getSpidUnderNode(referenceSubtrees[i], referenceMetaQuartet[i]);
   }
@@ -278,11 +369,13 @@ void ICCalculator::_printQuartet(SPID a, SPID b, SPID c, SPID d)
     occurences[i] = _quartetCounts[idx[i]];
     sum += occurences[i];
   }
-  double frequencies[3];
+  double frequencies[3] = {0,0,0};
   for (unsigned int i = 0; i < 3; ++i) {
-    frequencies[i] = double(occurences[i]) / double(sum);
-    Logger::info << " q" << i << "=" << frequencies[i] << ",";
-    //Logger::info << " q" << i << "=" << occurences[i] << ",";
+    if (sum) {
+      frequencies[i] = double(occurences[i]) / double(sum);
+    }
+    //Logger::info << " p" << i << "=" << frequencies[i] << ",";
+    Logger::info << " q" << i << "=" << occurences[i] << ",";
   }
   Logger::info << std::endl;
 }
