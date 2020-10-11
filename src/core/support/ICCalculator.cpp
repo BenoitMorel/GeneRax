@@ -323,7 +323,6 @@ void ICCalculator::_processNodePair(pll_unode_t *u, pll_unode_t *v)
     }
   }
   auto qpic = getLogScore(counts);
-  Logger::info << "qpic = " << qpic << std::endl;
   if (branchIndices.size() == 1) {
     auto branchIndex = branchIndices[0];
     _qpic[branchIndex] = qpic;
