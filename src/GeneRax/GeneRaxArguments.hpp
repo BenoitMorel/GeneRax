@@ -47,7 +47,8 @@ public:
    bool filterFamilies;
    std::string exec;
    bool fractionMissing;
-  
+
+
    // species tree search
    bool constrainSpeciesSearch;
    bool rerootSpeciesTree;
@@ -56,6 +57,9 @@ public:
    unsigned int speciesFastRadius;
    int speciesInitialFamiliesSubsamples;
    double minGeneBranchLength;
+   bool quartetSupport;
+   bool slowQuartetSupport;
+   bool supportWithParalogy;
 private:
 
   void init();

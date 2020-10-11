@@ -3,10 +3,8 @@
 #include <vector>
 #include <set>
 #include <trees/PLLUnrootedTree.hpp>
+#include <util/types.hpp>
 class Clade;
-
-using SPID = unsigned int;
-using TaxaSet = std::unordered_set<SPID>;
 
 /**
  *  Apply astral-pro tagging

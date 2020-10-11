@@ -23,6 +23,7 @@
 #include <optimizers/SpeciesTreeOptimizer.hpp>
 #include <trees/SpeciesTree.hpp>
 #include <support/ICCalculator.hpp>
+#include <support/ICCalculatorSlow.hpp>
 
 static void initStartingSpeciesTree(GeneRaxInstance &instance)
 {
@@ -392,12 +393,35 @@ void GeneRaxCore::speciesTreeBLEstimation(GeneRaxInstance &instance)
 void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
 {
   ParallelContext::barrier();
-  if (ParallelContext::getRank() == 0) {
-    Logger::timed << "Start estimating species tree support values" << std::endl;
-    ICCalculator calculator(instance.speciesTree,
-        instance.currentFamilies);
-    Logger::timed << "Finished estimating species tree support values" << std::endl;
+ 
+  // FAST VERSION
+  if (instance.args.slowQuartetSupport) { 
+    if (ParallelContext::getRank() == 0) {
+      Logger::timed 
+        << "Start estimating species tree support values (slow version)" 
+        << std::endl;
+      ICCalculatorSlow calculator(instance.speciesTree,
+          instance.currentFamilies,
+          instance.args.supportWithParalogy);
+      Logger::timed 
+        << "Finished estimating species tree support values (slow version)" 
+        << std::endl;
+    }
   }
+  if (instance.args.quartetSupport) { 
+    if (ParallelContext::getRank() == 0) {
+      Logger::timed 
+        << "Start estimating species tree support values (fast version)" 
+        << std::endl;
+      ICCalculator calculator(instance.speciesTree,
+          instance.currentFamilies,
+          instance.args.supportWithParalogy);
+      Logger::timed 
+        << "Finished estimating species tree support values (fast version)" 
+        << std::endl;
+    }
+  }
+
   ParallelContext::barrier();
 }
 

@@ -41,7 +41,10 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   estimateSpeciesBranchLenghts(false), 
   speciesFastRadius(5),
   speciesInitialFamiliesSubsamples(-1),
-  minGeneBranchLength(0.000001)
+  minGeneBranchLength(0.000001),
+  quartetSupport(false),
+  slowQuartetSupport(false),
+  supportWithParalogy(false)
 {
   if (argc == 1) {
     printHelp();
@@ -133,6 +136,12 @@ void GeneRaxArguments::init() {
       reconciliationSamples = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--gene-min-bl") {
       minGeneBranchLength = atof(argv[++i]);
+    } else if (arg == "--quartet-support") {
+      quartetSupport = true; 
+    } else if (arg == "--quartet-support-slow") {
+      slowQuartetSupport = true;
+    } else if (arg == "--quartet-support-paralogy") {
+      supportWithParalogy = true; 
     } else {
       Logger::error << "Unrecognized argument " << arg << std::endl;
       Logger::error << "Aborting" << std::endl;
