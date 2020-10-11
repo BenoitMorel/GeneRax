@@ -68,6 +68,8 @@ public:
   unsigned int getLeavesNumber() const;
   // #inner
   unsigned int getInnerNodesNumber() const; 
+  
+  std::unordered_set<std::string> getLabels() const;
 
   /*
    * Node access

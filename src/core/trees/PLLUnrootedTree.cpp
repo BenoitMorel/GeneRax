@@ -419,6 +419,17 @@ std::string PLLUnrootedTree::getNewickString(UnodePrinter f,
   return ss.str();
 }
 
+std::unordered_set<std::string> PLLUnrootedTree::getLabels() const
+{
+  std::unordered_set<std::string> res;
+  for (auto node:  getLeaves()) {
+    if (node->label) {
+      res.insert(node->label);
+    }
+  }
+  return res;
+}
+
 pll_unode_t *PLLUnrootedTree::getVirtualRoot(PLLRootedTree &referenceTree)
 {
   return nullptr;
