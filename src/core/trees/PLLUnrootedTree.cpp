@@ -80,7 +80,7 @@ void PLLUnrootedTree::setMissingBranchLengths(double minBL)
   }  
 }
   
-CArrayRange<pll_unode_t*> PLLUnrootedTree::getLeaves()
+CArrayRange<pll_unode_t*> PLLUnrootedTree::getLeaves() const
 {
   return CArrayRange<pll_unode_t*>(_tree->nodes, getLeavesNumber());
 }

@@ -102,7 +102,7 @@ public:
    */
   pll_utree_t *getRawPtr() {return _tree.get();}
   
-  CArrayRange<pll_unode_t*> getLeaves();
+  CArrayRange<pll_unode_t*> getLeaves() const;
 
   /*
    *  C++11 range for accessing internal nodes. 

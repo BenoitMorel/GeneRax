@@ -91,7 +91,7 @@ void ICCalculatorSlow::_readTrees(const Families &families)
   Logger::timed << "[IC computation] Reading trees..." << std::endl; 
   std::unordered_map<std::string, SPID> speciesLabelToSpid;
   
-  for (auto speciesLabel: _rootedReferenceTree.getLabels(true)) {
+  for (auto speciesLabel: _referenceTree.getLabels()) {
     auto spid = static_cast<SPID>(speciesLabelToSpid.size());
     speciesLabelToSpid[speciesLabel] = spid;
     _allSPID.insert(spid);
