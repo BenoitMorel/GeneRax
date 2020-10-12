@@ -123,7 +123,7 @@ public:
    *  internal elements per internal node), such that a node
    *  always comes after its (virtual) children.
    */
-  std::vector<pll_unode_t*> getPostOrderNodes();
+  std::vector<pll_unode_t*> getPostOrderNodes(bool innerOnly = false);
 
   /**
    *  Return a set of all branches (for each node, one and only 

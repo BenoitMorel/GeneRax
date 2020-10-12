@@ -183,10 +183,15 @@ std::unordered_set<pll_unode_t *> PLLUnrootedTree::getBranches()
   return branches;
 }
 
-std::vector<pll_unode_t*> PLLUnrootedTree::getPostOrderNodes()
+std::vector<pll_unode_t*> PLLUnrootedTree::getPostOrderNodes(bool innerOnly)
 {
   std::vector<pll_unode_t*> nodes;
   std::unordered_set<unsigned int> markedNodes;
+  if (innerOnly) {
+    for (auto node: getLeaves()) {
+      markedNodes.insert(node->node_index);
+    }
+  }
   // do the post order traversal from all possible virtual roots 
   for (auto node: getNodes()) {
     fillPostOrder(node, nodes, markedNodes);
@@ -195,7 +200,11 @@ std::vector<pll_unode_t*> PLLUnrootedTree::getPostOrderNodes()
       fillPostOrder(node->next->next, nodes, markedNodes);
     }
   }
-  assert(nodes.size() == getDirectedNodesNumber());
+  if (innerOnly) {
+    assert(nodes.size() == getDirectedNodesNumber() - getLeavesNumber());
+  } else {
+    assert(nodes.size() == getDirectedNodesNumber());
+  }
   return nodes;
 }
 

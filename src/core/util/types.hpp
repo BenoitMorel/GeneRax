@@ -15,4 +15,6 @@ using StringToInt = std::unordered_map<std::string, int>;
 using SPID = unsigned int;
 using TaxaSet = std::unordered_set<SPID>;
 using MetaQuartet = std::array<TaxaSet, 4>;
+using UInt3 = std::array<unsigned int, 3>;
+using UInt4 = std::array<unsigned int, 4>;
 

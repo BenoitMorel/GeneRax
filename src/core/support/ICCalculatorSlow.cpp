@@ -109,7 +109,6 @@ void ICCalculatorSlow::_readTrees(const Families &families)
       leaf->clv_index = speciesLabelToSpid[mappings.getSpecies(std::string(leaf->label))];
     }
     _evaluationTrees.push_back(std::move(evaluationTree));
-    DSTagger tagger(*(_evaluationTrees.back()));
   }
 }
 
