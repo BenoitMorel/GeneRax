@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <IO/Families.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
 #include <trees/PLLRootedTree.hpp>
 #include <trees/PLLUnrootedTree.hpp>
 #include <util/types.hpp>
@@ -26,6 +27,7 @@ private:
   // trees
   PLLRootedTree _rootedReferenceTree;
   PLLUnrootedTree _referenceTree;
+  PerCoreGeneTrees _perCoreGeneTrees;
   TaxaSet _allSPID;
   unsigned int _taxaNumber;
   std::vector<unsigned int> _refNodeIndexToBranchIndex;
@@ -45,7 +47,7 @@ private:
   std::vector<double> _eqpic; 
 
 
-  void _readTrees(const Families &families);
+  void _readTrees();
   void _computeIntersections();
   void _computeQuadriCounts();
 

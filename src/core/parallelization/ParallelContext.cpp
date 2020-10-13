@@ -165,6 +165,19 @@ void ParallelContext::sumUInt(unsigned int &value)
 #endif
 }
 
+void ParallelContext::sumULong(unsigned long &value)
+{
+#ifdef WITH_MPI
+  if (!_mpiEnabled) {
+    return;
+  }
+  unsigned long sum = 0;
+  barrier();
+  MPI_Allreduce(&value, &sum, 1, MPI_UNSIGNED_LONG, MPI_SUM, getComm());
+  value = sum;
+#endif
+}
+
 void ParallelContext::sumVectorDouble(std::vector<double> &value)
 {
 #ifdef WITH_MPI

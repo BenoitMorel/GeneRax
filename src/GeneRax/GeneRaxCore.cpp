@@ -409,7 +409,6 @@ void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
     }
   }
   if (instance.args.quartetSupport) { 
-    if (ParallelContext::getRank() == 0) {
       Logger::timed 
         << "Start estimating species tree support values (fast version)" 
         << std::endl;
@@ -419,7 +418,6 @@ void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
       Logger::timed 
         << "Finished estimating species tree support values (fast version)" 
         << std::endl;
-    }
   }
 
   ParallelContext::barrier();

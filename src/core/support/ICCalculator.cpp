@@ -13,9 +13,10 @@ ICCalculator::ICCalculator(const std::string &referenceTreePath,
       bool paralogy):
   _rootedReferenceTree(referenceTreePath),
   _referenceTree(_rootedReferenceTree),
+  _perCoreGeneTrees(families),
   _taxaNumber(0)
 {
-  _readTrees(families);
+  _readTrees();
   _computeRefBranchIndices();
   _computeIntersections();
   _computeQuadriCounts();
@@ -23,7 +24,7 @@ ICCalculator::ICCalculator(const std::string &referenceTreePath,
   Logger::info << _getNewickWithScore(_eqpic, std::string("EPIC")) << std::endl;
 }
 
-void ICCalculator::_readTrees(const Families &families)
+void ICCalculator::_readTrees()
 {
   Logger::timed << "[IC computation] Reading trees..." << std::endl; 
   std::unordered_map<std::string, SPID> speciesLabelToSpid;
@@ -38,14 +39,15 @@ void ICCalculator::_readTrees(const Families &families)
     leaf->clv_index = speciesLabelToSpid[std::string(leaf->label)]; 
   }
   _taxaNumber = _allSPID.size();
-  for (auto &family: families) {
-    GeneSpeciesMapping mappings;
-    mappings.fill(family.mappingFile, family.startingGeneTree);
-    auto evaluationTree = std::make_unique<PLLUnrootedTree>(family.startingGeneTree);
+  for (auto &geneTreeDesc: _perCoreGeneTrees.getTrees()) {
+    auto &mappings = geneTreeDesc.mapping;
+    auto evaluationTree = geneTreeDesc.geneTree;
     for (auto &leaf: evaluationTree->getLeaves()) {
       leaf->clv_index = speciesLabelToSpid[mappings.getSpecies(std::string(leaf->label))];
     }
-    _evaluationTrees.push_back(std::move(evaluationTree));
+    _evaluationTrees.push_back(
+        std::unique_ptr<PLLUnrootedTree>(evaluationTree));
+    geneTreeDesc.ownTree = false;
   }
 }
 
@@ -94,9 +96,6 @@ void ICCalculator::_computeIntersections()
     fillWithChildren(speciesNode, speciesSets[spid]);
   }
   for (unsigned int famid = 0; famid < _evaluationTrees.size(); ++famid) {
-    if (famid % 100 == 0) {
-      Logger::timed << famid << "/" << _evaluationTrees.size() << std::endl;
-    }
     auto &geneTree = _evaluationTrees[famid];
     for (auto geneNode: geneTree->getPostOrderNodes()) {
       TaxaSet geneSet;
@@ -195,7 +194,7 @@ static UInt3 getTripartition(pll_unode_t *u)
   return UInt3({A, B, C});
 }
 
-static double getLogScore(const std::array<unsigned int, 3> &q) 
+static double getLogScore(const std::array<unsigned long, 3> &q) 
 {
   if (q[0] == 0 && q[1] == 0 && q[2] == 0) {
     return 0.0;
@@ -251,7 +250,7 @@ void ICCalculator::_computeQuadriCounts()
     Logger::timed << i <<"/" << speciesInnerNodes.size() << std::endl;
     auto unode = speciesInnerNodes[i];
     for (unsigned int j = i+1; j < speciesInnerNodes.size(); ++j) {
-      std::array<unsigned int, 3> counts = {0, 0, 0};
+      std::array<unsigned long, 3> counts = {0, 0, 0};
       auto vnode = speciesInnerNodes[j];
       assert(unode->next && vnode->next);
       assert(unode->next != vnode && unode->next->next != vnode);
@@ -276,6 +275,9 @@ void ICCalculator::_computeQuadriCounts()
                 tripartition);
           }
         }
+      }
+      for (unsigned int topology = 0; topology < 3; ++topology) {
+        ParallelContext::sumULong(counts[topology]);
       }
       auto qpic = getLogScore(counts);
       if (branchIndices.size() == 1) {
