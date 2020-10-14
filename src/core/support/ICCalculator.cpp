@@ -127,27 +127,36 @@ unsigned int ICCalculator::_getQuadripartitionCount(
     const std::array<unsigned int, 4> &refQuadriparition,
     const std::array<unsigned int, 3> &evalTripartition)
 {
+  unsigned int res = 0;
+  auto A = 0;
+  auto B = 1;
+  auto C = 2;
+  auto D = 3;
+  /*
   auto &T = evalTripartition;
   auto &M = refQuadriparition;
   const auto &q = _interCounts[famid];
-  unsigned int res = 0;
-  auto A = M[0];
-  auto B = M[1];
-  auto C = M[2];
-  auto D = M[3];
-  for (unsigned int i = 0; i < 3; ++i) { // three tripartitions
-    auto AiBi = q[T[i]][A] * q[T[i]][B];
-    auto CiDi = q[T[i]][C] * q[T[i]][D];
-    for (unsigned int j = 0; j < 3; ++j) {
-      if (i == j) {
-        continue;
-      }
-      unsigned int k = (3 - (i + j));
-      auto CjDk = q[T[j]][C] * q[T[k]][D];
-      auto AjBk = q[T[j]][A] * q[T[k]][B];
-      res += AiBi * CjDk;
-      res += CiDi * AjBk;
+  if (!q[T[0]][A] && !q[T[1]][A] && !q[T[2]][A]) {
+    return 0;
+  }
+  */
+  unsigned int v[3][4];
+  for (unsigned int i = 0; i < 3; ++i) {
+    for (unsigned int j = 0; j < 4; ++j) {
+      v[i][j] = _interCounts[famid][evalTripartition[i]][refQuadriparition[j]];
     }
+  }
+  for (unsigned int i = 0; i < 3; ++i) { // three tripartitions
+    auto AiBi = v[i][A] * v[i][B];
+    auto CiDi = v[i][C] * v[i][D];
+    auto j = (i + 1) % 3;
+    auto k = (i + 2) % 3;
+    auto CjDk = v[j][C] * v[k][D];
+    auto CkDj = v[k][C] * v[j][D];
+    auto AjBk = v[j][A] * v[k][B];
+    auto AkBj = v[k][A] * v[j][B];
+    res += AiBi * (CjDk + CkDj);
+    res += CiDi * (AjBk + AkBj);
   }
   return res;
 }
