@@ -32,7 +32,10 @@ private:
   unsigned int _taxaNumber;
   std::vector<unsigned int> _refNodeIndexToBranchIndex;
   unsigned int _maxBranchIndex;
-  
+ 
+  // parameters
+  bool _paralogy;
+
   // intermediate results
   IntersectionCounts _interCounts;
   QuadriCounts _quadriCounts;

@@ -14,7 +14,8 @@ ICCalculator::ICCalculator(const std::string &referenceTreePath,
   _rootedReferenceTree(referenceTreePath),
   _referenceTree(_rootedReferenceTree),
   _perCoreGeneTrees(families),
-  _taxaNumber(0)
+  _taxaNumber(0),
+  _paralogy(paralogy)
 {
   _readTrees();
   _computeRefBranchIndices();
@@ -97,13 +98,23 @@ void ICCalculator::_computeIntersections()
   }
   for (unsigned int famid = 0; famid < _evaluationTrees.size(); ++famid) {
     auto &geneTree = _evaluationTrees[famid];
+    std::unique_ptr<DSTagger> tagger(nullptr);
+    if (_paralogy) {
+      tagger = std::make_unique<DSTagger>(*geneTree);
+    }
     for (auto geneNode: geneTree->getPostOrderNodes()) {
-      TaxaSet geneSet;
       auto geneid = geneNode->node_index;
+      if (_paralogy && tagger->isDuplication(geneid))  {
+        continue;
+      }
       // TODO: this could be more efficient (see Astral III paper)
-      fillWithChildren(geneNode, geneSet);
+      TaxaSet geneSet;
+      if (_paralogy && tagger->goesUp(geneNode)) {
+        tagger->fillUpTraversal(geneNode, geneSet);
+      } else {
+        fillWithChildren(geneNode->back, geneSet);
+      }
       for (unsigned int spid = 0; spid < speciesNodeCount; ++spid) { 
-        // TODO: this could also be more efficient
         auto interSize = intersectionSize(speciesSets[spid], geneSet);
         _interCounts[famid][geneid][spid] = interSize;
       }
@@ -188,9 +199,9 @@ static UInt4 getQuadripartition(pll_unode_t *u,
     
 static UInt3 getTripartition(pll_unode_t *u)
 {
-  auto A = u->back->node_index;
-  auto B = u->next->back->node_index;
-  auto C = u->next->next->back->node_index;
+  auto A = u->node_index;
+  auto B = u->next->node_index;
+  auto C = u->next->next->node_index;
   return UInt3({A, B, C});
 }
 

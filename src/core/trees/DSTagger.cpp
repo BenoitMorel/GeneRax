@@ -52,8 +52,19 @@ DSTagger::DSTagger(PLLUnrootedTree &tree):_tree(tree),
   _roots[2].back = rootBranch->back;
 
   _rootFromNode(&_roots[0]);
-  //_rootFromNode(rootBranch);
-  //_rootFromNode(rootBranch->back);
+}
+  
+void DSTagger::fillUpTraversal(pll_unode_t *node,
+      TaxaSet &set)
+{
+  auto parents = getSpeciationAncestorNodes(node);
+  for (auto parent: parents) {
+    auto parentUp = parent;
+    orientUp(parentUp);
+    assert(parentUp != parent);
+    auto cousinsParent = getThirdNode(parent, parentUp);
+    fillWithChildren(cousinsParent->back, set);  
+  }
 }
 
 void DSTagger::_tagNode(pll_unode_t *node, CLV &clv)

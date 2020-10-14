@@ -28,11 +28,9 @@ public:
    *  not leading to node, and fill set with all
    *  subnodes clv_index (we assume that 
    *  clv_index contains the SPID)
-   *  If acceptDupParents is set, we skip parents tagged
-   *  as duplications
+   *  We skip parents tagged as duplications
    */
   void fillUpTraversal(pll_unode_t *node,
-      bool acceptDupParents,
       TaxaSet &set);
 
   /**
@@ -66,10 +64,13 @@ public:
    *  returns the node (among the three representing the 
    *  same internal node) pointing toward the root
    */
-  void orientUp(pll_unode_t *&node) {
+  void orientUp(pll_unode_t *&node) const {
     node = _clvs[node->node_index].up;
   }
 
+  bool goesUp(pll_unode_t *node) const {
+    return node == _clvs[node->node_index].up;
+  }
 private:
   PLLUnrootedTree &_tree;
   bool _isRootDup; 
