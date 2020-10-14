@@ -143,7 +143,6 @@ unsigned int ICCalculator::_getQuadripartitionCount(
         continue;
       }
       unsigned int k = (3 - (i + j));
-      assert(k != i && k != j);
       auto CjDk = q[T[j]][C] * q[T[k]][D];
       auto AjBk = q[T[j]][A] * q[T[k]][B];
       res += AiBi * CjDk;
@@ -250,11 +249,10 @@ void ICCalculator::_computeQuadriCounts()
   std::vector<std::vector<UInt3> > tripartitions(familyCount);
   for (unsigned int famid = 0; famid < familyCount; ++famid) {
     auto &geneTree = _evaluationTrees[famid];
-    for (auto geneNode: geneTree->getPostOrderNodes(true)) {
+    for (auto geneNode: geneTree->getInnerNodes()) { 
       tripartitions[famid].push_back(getTripartition(geneNode));
     }
   }
-  
 
 
   for (unsigned int i = 0; i < speciesInnerNodes.size(); ++i) {
