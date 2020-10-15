@@ -27,6 +27,7 @@ private:
   // trees
   PLLRootedTree _rootedReferenceTree;
   PLLUnrootedTree _referenceTree;
+  pll_unode_t *_referenceRoot;
   PerCoreGeneTrees _perCoreGeneTrees;
   TaxaSet _allSPID;
   unsigned int _taxaNumber;
@@ -49,6 +50,8 @@ private:
   std::vector<double> _qpic; 
   std::vector<double> _eqpic; 
 
+  // _isPartitionInFamily[famid][spid]
+  std::vector<std::vector<bool> > _isPartitionInFamily;
 
   void _readTrees();
   void _computeIntersections();
@@ -60,4 +63,5 @@ private:
     const std::array<unsigned int, 3> &evalTripartition);
   void _computeRefBranchIndices();
   std::string _getNewickWithScore(std::vector<double> &branchScores, const std::string &scoreName);
+
 };

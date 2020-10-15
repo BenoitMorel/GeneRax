@@ -66,6 +66,9 @@ public:
    * labels
    */
   std::unordered_set<std::string> getLabels(bool leavesOnly) const;
+  
+  static void getLeafLabelsUnder(pll_rnode_t *node,
+      std::unordered_set<std::string> &labels);
 
   /**
    *  Get a mapping from label to integer 

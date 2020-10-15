@@ -7,12 +7,14 @@
 #include <IO/GeneSpeciesMapping.hpp>
 #include <IO/LibpllParsers.hpp>
 #include <trees/DSTagger.hpp>
+#include <sstream>
 
 ICCalculator::ICCalculator(const std::string &referenceTreePath,
       const Families &families,
       bool paralogy):
   _rootedReferenceTree(referenceTreePath),
   _referenceTree(_rootedReferenceTree),
+  _referenceRoot(_referenceTree.getVirtualRoot(_rootedReferenceTree)),
   _perCoreGeneTrees(families),
   _taxaNumber(0),
   _paralogy(paralogy)
@@ -98,6 +100,7 @@ void ICCalculator::_computeIntersections()
   }
   for (unsigned int famid = 0; famid < _evaluationTrees.size(); ++famid) {
     auto &geneTree = _evaluationTrees[famid];
+    
     std::unique_ptr<DSTagger> tagger(nullptr);
     if (_paralogy) {
       tagger = std::make_unique<DSTagger>(*geneTree);
@@ -309,20 +312,41 @@ void ICCalculator::_computeQuadriCounts()
   }
 }
 
+struct ScorePrinter
+{
+  ScorePrinter(const std::string& prefix,
+      const std::vector<double> &score,
+      const std::vector<unsigned int> &refNodeIndexToBranchIndex):
+    prefix(prefix),
+    score(score),
+    refNodeIndexToBranchIndex(refNodeIndexToBranchIndex)
+  {}
+  std::string prefix;
+  const std::vector<double> &score;
+  const std::vector<unsigned int> &refNodeIndexToBranchIndex;
+  void operator()(pll_unode_t *node, 
+      std::stringstream &ss)
+  {
+    if (node->next && node->back->next) {
+      auto idx = refNodeIndexToBranchIndex[node->node_index];
+      ss << prefix << score[idx];
+    } else {
+      if (!node->next && node->label) {
+        ss << node->label;
+      }
+    }
+    ss << ":" << node->length;
+  }
+};
+
 std::string ICCalculator::_getNewickWithScore(std::vector<double> &branchScores, const std::string &scoreName)
 {
-  for (auto node: _referenceTree.getPostOrderNodes()) {
-    if (!node->next || !node->back->next) {
-      continue;
-    }
-    auto branchIndex = _refNodeIndexToBranchIndex[node->node_index];
-    auto score = branchScores[branchIndex];
-    auto scoreStr = scoreName + std::string(" = ") + std::to_string(score);
-    free(node->label);
-    node->label = (char *)calloc(scoreStr.size() + 1, sizeof(char));
-    strcpy(node->label, scoreStr.c_str());
-  }
-  return _referenceTree.getNewickString(); 
+  ScorePrinter printer(scoreName  + " = ", 
+      branchScores, 
+      _refNodeIndexToBranchIndex);
+  return _referenceTree.getNewickString(printer,
+      _referenceRoot,
+      true); 
 }
 
 

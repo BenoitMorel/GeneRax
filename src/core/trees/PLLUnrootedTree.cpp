@@ -439,7 +439,46 @@ std::unordered_set<std::string> PLLUnrootedTree::getLabels() const
   return res;
 }
 
+static pll_unode_t *searchForSet(pll_unode_t *node, 
+    std::unordered_set<std::string> &currentNodeSet,
+    const std::unordered_set<std::string> &set)
+{
+  if (!node->next) {
+    if (node->label) {
+      currentNodeSet.insert(std::string(node->label));
+    }
+  } else {
+    auto left = node->next->back;
+    auto right = node->next->next->back;
+    std::unordered_set<std::string> rightNodeSet;
+    auto res1 = searchForSet(left, currentNodeSet, set);
+    if (res1) {
+      return res1;
+    }
+    auto res2 = searchForSet(right, rightNodeSet, set);
+    if (res2) {
+      return res2;
+    }
+    for (auto &elem: rightNodeSet) {
+      currentNodeSet.insert(elem);
+    }
+  }
+  return (currentNodeSet == set) ? node : nullptr;
+}
+
+
 pll_unode_t *PLLUnrootedTree::getVirtualRoot(PLLRootedTree &referenceTree)
 {
-  return nullptr;
+  std::unordered_set<std::string> leftRLeaves;
+  PLLRootedTree::getLeafLabelsUnder(referenceTree.getRoot()->left, leftRLeaves);
+  // find a leaf that is not in leftLeaves
+  pll_unode_t *virtualRoot = nullptr;
+  for (auto leaf: getLeaves()) {
+    if (leftRLeaves.find(std::string(leaf->label)) == leftRLeaves.end()) {
+      virtualRoot = leaf->back;
+      break;
+    }
+  }
+  std::unordered_set<std::string> temp;
+  return searchForSet(virtualRoot, temp, leftRLeaves);
 }

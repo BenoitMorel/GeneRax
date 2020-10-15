@@ -172,6 +172,20 @@ pll_rnode_t *PLLRootedTree::getAnyInnerNode() const
   return getNode(getLeavesNumber());
 }
   
+void PLLRootedTree::getLeafLabelsUnder(pll_rnode_t *node,
+    std::unordered_set<std::string> &labels)
+{
+  if (node->left) {
+    getLeafLabelsUnder(node->left, labels);
+    getLeafLabelsUnder(node->right, labels);
+  } else {
+    if (node->label) {
+      labels.insert(std::string(node->label));
+    }
+  }
+}
+
+
 std::unordered_set<std::string> PLLRootedTree::getLabels(bool leavesOnly) const
 {
   std::unordered_set<std::string> res;
