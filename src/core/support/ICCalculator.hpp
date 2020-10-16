@@ -30,6 +30,7 @@ private:
   pll_unode_t *_referenceRoot;
   PerCoreGeneTrees _perCoreGeneTrees;
   TaxaSet _allSPID;
+  std::vector<unsigned int> _speciesSubtreeSizes;
   unsigned int _taxaNumber;
   std::vector<unsigned int> _refNodeIndexToBranchIndex;
   unsigned int _maxBranchIndex;
@@ -49,6 +50,7 @@ private:
 
   std::vector<double> _qpic; 
   std::vector<double> _eqpic; 
+  std::vector<double> _localPP; 
 
   // _isPartitionInFamily[famid][spid]
   std::vector<std::vector<bool> > _isPartitionInFamily;

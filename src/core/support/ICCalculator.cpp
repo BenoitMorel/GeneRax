@@ -1,3 +1,4 @@
+#define __STDCPP_WANT_MATH_SPEC_FUNCS__ 1
 #include "ICCalculator.hpp"
 
 #include <array>
@@ -8,6 +9,8 @@
 #include <IO/LibpllParsers.hpp>
 #include <trees/DSTagger.hpp>
 #include <sstream>
+#include <cmath>
+#include <maths/incbeta.h>
 
 ICCalculator::ICCalculator(const std::string &referenceTreePath,
       const Families &families,
@@ -25,6 +28,7 @@ ICCalculator::ICCalculator(const std::string &referenceTreePath,
   _computeQuadriCounts();
   Logger::info << _getNewickWithScore(_qpic, std::string("QPIC")) << std::endl;
   Logger::info << _getNewickWithScore(_eqpic, std::string("EPIC")) << std::endl;
+  //Logger::info << _getNewickWithScore(_localPP, std::string("localPP")) << std::endl;
 }
 
 void ICCalculator::_readTrees()
@@ -94,9 +98,11 @@ void ICCalculator::_computeIntersections()
     }
   }
   std::vector<TaxaSet> speciesSets(speciesNodeCount);
+  _speciesSubtreeSizes.resize(_referenceTree.getDirectedNodesNumber());
   for (auto speciesNode: _referenceTree.getPostOrderNodes()) {
     auto spid = speciesNode->node_index;
     fillWithChildren(speciesNode, speciesSets[spid]);
+    _speciesSubtreeSizes[spid] = speciesSets[spid].size();
   }
   for (unsigned int famid = 0; famid < _evaluationTrees.size(); ++famid) {
     auto &geneTree = _evaluationTrees[famid];
@@ -235,6 +241,36 @@ static double getLogScore(const std::array<unsigned long, 3> &q)
     return -qic;
   }
 }
+static double computeH(double z, double zsum, double lambda)
+{
+  Logger::info << "computeH " << z << " " << zsum << " " << lambda << std::endl;
+  auto term1 = std::beta(z + 1.0, zsum - z  + 2.0 * lambda);
+  auto term2 = incbeta(z + 1.0, zsum - z + 2.0 * lambda, 1.0/3.0);
+  Logger::info << "term1 and term2:  " << term1 << " " << term2 << std::endl;
+  return term1 * (1.0 - term2);
+}
+
+static double computeLocalPP(const std::array<unsigned long, 3> &counts,
+    unsigned long ratio)
+{
+  // We use notations from astral-pro paper
+  std::array<double, 3> z;
+  for (unsigned int i = 0; i < 3; ++i) {
+    z[i] = double(counts[i]) / double(ratio);
+  }
+  std::array<double, 3> h;
+  double lambda = 0.5; // value from astral-pro paper
+  auto zsum = std::accumulate(z.begin(), z.end(), 0);
+  for (unsigned int i = 0; i < 3; ++i) {
+    h[i] = computeH(z[i], zsum, lambda);
+    Logger::info << i << " " << h[i] << std::endl;
+  }
+  double den = h[0];
+  den += pow(2.0, z[1] - z[0]) * h[1];
+  den += pow(2.0, z[2] - z[0]) * h[2];
+  Logger::info << h[0] << "/" << den << std::endl;
+  return h[0] / den;
+}
 
 
 void ICCalculator::_computeQuadriCounts()
@@ -243,6 +279,7 @@ void ICCalculator::_computeQuadriCounts()
   auto branchNumbers = _referenceTree.getLeavesNumber() * 2 - 3;
   _qpic = std::vector<double>(branchNumbers, 1.0);
   _eqpic = std::vector<double>(branchNumbers, 1.0);
+  _localPP = std::vector<double>(branchNumbers, 1.0);
   unsigned int speciesNodeCount = _referenceTree.getDirectedNodesNumber();
   auto familyCount = _evaluationTrees.size();
   _quadriCounts.clear();
@@ -304,6 +341,14 @@ void ICCalculator::_computeQuadriCounts()
       if (branchIndices.size() == 1) {
         auto branchIndex = branchIndices[0];
         _qpic[branchIndex] = qpic;
+        /*
+        unsigned long ratio = 1;
+        ratio *= _speciesSubtreeSizes[unode->next->back->node_index];
+        ratio *= _speciesSubtreeSizes[unode->next->next->back->node_index];
+        ratio *= _speciesSubtreeSizes[vnode->next->back->node_index];
+        ratio *= _speciesSubtreeSizes[vnode->next->next->back->node_index];
+        _localPP[branchIndex] = computeLocalPP(counts, ratio);
+        */
       }
       for (auto branchIndex: branchIndices) {
         _eqpic[branchIndex] = std::min(_eqpic[branchIndex], qpic);
@@ -311,6 +356,7 @@ void ICCalculator::_computeQuadriCounts()
     }
   }
 }
+
 
 struct ScorePrinter
 {
