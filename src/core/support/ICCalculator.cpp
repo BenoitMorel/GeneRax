@@ -131,6 +131,48 @@ void ICCalculator::_computeIntersections()
   }
 }
 
+unsigned int ICCalculator::_getQuadripartitionCountPro(
+    unsigned int famid,
+    const std::array<unsigned int, 4> &refQuadriparition,
+    const std::array<unsigned int, 3> &evalTripartition)
+{
+  unsigned int res = 0;
+  auto A = 0;
+  auto B = 1;
+  auto C = 2;
+  auto D = 3;
+  /*
+  auto &T = evalTripartition;
+  auto &M = refQuadriparition;
+  const auto &q = _interCounts[famid];
+  if (!q[T[0]][A] && !q[T[1]][A] && !q[T[2]][A]) {
+    return 0;
+  }
+  */
+  unsigned int v[3][4];
+  for (unsigned int i = 0; i < 3; ++i) {
+    for (unsigned int j = 0; j < 4; ++j) {
+      v[i][j] = _interCounts[famid][evalTripartition[i]][refQuadriparition[j]];
+    }
+  }
+  auto x1a = v[0][A]; 
+  auto x1b = v[0][B]; 
+  auto x1c = v[0][C]; 
+  auto x1d = v[0][D]; 
+  auto x2a = v[1][A]; 
+  auto x2b = v[1][B]; 
+  auto x2c = v[1][C]; 
+  auto x2d = v[1][D]; 
+  auto ya = v[2][A]; 
+  auto yb = v[2][B]; 
+  auto yc = v[2][C]; 
+  auto yd = v[2][D]; 
+
+  // balanced anchors
+  res += x1a*x1b*x2c*x2d + x1c*x1d*x2a*x2b + x1a*x1b*(x2c*yd+yc*x2d) + x1c*x1d*(x2a*yb+ya*x2b) + x2a*x2b*(x1c*yd+yc*x1d) + x2c*x2d*(x1a*yb+ya*x1b);
+  return res;
+}
+   
 unsigned int ICCalculator::_getQuadripartitionCount(
     unsigned int famid,
     const std::array<unsigned int, 4> &refQuadriparition,
@@ -214,12 +256,16 @@ static UInt4 getQuadripartition(pll_unode_t *u,
   return res;
 }
     
-static UInt3 getTripartition(pll_unode_t *u)
+UInt3 getTripartition(pll_unode_t *u,
+    DSTagger *tagger)
 {
-  auto A = u->node_index;
-  auto B = u->next->node_index;
-  auto C = u->next->next->node_index;
-  return UInt3({A, B, C});
+  if (tagger) {
+    tagger->orientUp(u);
+  }
+  auto y = u->node_index;
+  auto x1 = u->next->node_index;
+  auto x2 = u->next->next->node_index;
+  return UInt3({x1, x2, y});
 }
 
 static double getLogScore(const std::array<unsigned long, 3> &q) 
@@ -298,8 +344,12 @@ void ICCalculator::_computeQuadriCounts()
   std::vector<std::vector<UInt3> > tripartitions(familyCount);
   for (unsigned int famid = 0; famid < familyCount; ++famid) {
     auto &geneTree = _evaluationTrees[famid];
+    std::unique_ptr<DSTagger> tagger(nullptr);
+    if (_paralogy) {
+      tagger = std::make_unique<DSTagger>(*geneTree);
+    }
     for (auto geneNode: geneTree->getInnerNodes()) { 
-      tripartitions[famid].push_back(getTripartition(geneNode));
+      tripartitions[famid].push_back(getTripartition(geneNode, tagger.get())); 
     }
   }
 
@@ -328,9 +378,15 @@ void ICCalculator::_computeQuadriCounts()
       for (unsigned int famid = 0; famid < familyCount; ++famid) {
         for (auto &tripartition: tripartitions[famid]) {
           for (unsigned int topology = 0; topology < 3; ++topology) {
-            counts[topology] += _getQuadripartitionCount(famid,
-                quadripartitions[topology], 
-                tripartition);
+            if(_paralogy) {
+              counts[topology] += _getQuadripartitionCountPro(famid,
+                  quadripartitions[topology], 
+                  tripartition);
+            } else {
+              counts[topology] += _getQuadripartitionCount(famid,
+                  quadripartitions[topology], 
+                  tripartition);
+            }
           }
         }
       }

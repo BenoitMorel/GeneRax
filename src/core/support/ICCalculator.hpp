@@ -63,6 +63,10 @@ private:
     unsigned int famid,
     const std::array<unsigned int, 4> &refQuadriparition,
     const std::array<unsigned int, 3> &evalTripartition);
+  unsigned int _getQuadripartitionCountPro(
+    unsigned int famid,
+    const std::array<unsigned int, 4> &refQuadriparition,
+    const std::array<unsigned int, 3> &evalTripartition);
   void _computeRefBranchIndices();
   std::string _getNewickWithScore(std::vector<double> &branchScores, const std::string &scoreName);
 
