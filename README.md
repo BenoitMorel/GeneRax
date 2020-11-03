@@ -47,3 +47,8 @@ To build the sources:
 
 See the wiki (https://github.com/BenoitMorel/GeneRax/wiki)
 
+## Issues and questions
+
+We just created a new google group for GeneRax related questions: https://groups.google.com/g/generaxusers
+When reporting an issue, please send us at least the command line you ran, the logs file and the families file. The more information we get, the quicker we can solve the problems :-)
+
