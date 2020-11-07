@@ -1,3 +1,5 @@
+![alt text](doc/generax_logo.png?raw=true "GeneRax")
+
 News: we just created a new GeneRax google groups for asking questions and reporting issues:  https://groups.google.com/g/generaxusers
 
 # GeneRax 
