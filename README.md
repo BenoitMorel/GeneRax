@@ -1,3 +1,5 @@
+News: we just created a new GeneRax google groups for asking questions and reporting issues:  https://groups.google.com/g/generaxusers
+
 # GeneRax 
 
 GeneRax is a parallel tool for species tree-aware maximum likelihood based gene family tree inference under gene duplication, transfer, and loss.
@@ -46,4 +48,9 @@ To build the sources:
 ## Running
 
 See the wiki (https://github.com/BenoitMorel/GeneRax/wiki)
+
+## Issues and questions
+
+For questions, issues or feedback, please post on our google group: https://groups.google.com/g/generaxusers
+When reporting an issue, please send us at least the command line you ran, the logs file and the families file. The more information we get, the quicker we can solve the problems :-)
 
