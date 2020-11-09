@@ -28,7 +28,7 @@ ICCalculator::ICCalculator(const std::string &referenceTreePath,
   _computeQuadriCounts();
   Logger::info << _getNewickWithScore(_qpic, std::string("QPIC")) << std::endl;
   Logger::info << _getNewickWithScore(_eqpic, std::string("EPIC")) << std::endl;
-  //Logger::info << _getNewickWithScore(_localPP, std::string("localPP")) << std::endl;
+  Logger::info << _getNewickWithScore(_localPP, std::string("localPP")) << std::endl;
 }
 
 void ICCalculator::_readTrees()
@@ -289,10 +289,10 @@ static double getLogScore(const std::array<unsigned long, 3> &q)
 }
 static double computeH(double z, double zsum, double lambda)
 {
-  Logger::info << "computeH " << z << " " << zsum << " " << lambda << std::endl;
+  //Logger::info << "computeH " << z << " " << zsum << " " << lambda << std::endl;
   auto term1 = std::beta(z + 1.0, zsum - z  + 2.0 * lambda);
   auto term2 = incbeta(z + 1.0, zsum - z + 2.0 * lambda, 1.0/3.0);
-  Logger::info << "term1 and term2:  " << term1 << " " << term2 << std::endl;
+  //Logger::info << "term1 and term2:  " << term1 << " " << term2 << std::endl;
   return term1 * (1.0 - term2);
 }
 
@@ -301,20 +301,28 @@ static double computeLocalPP(const std::array<unsigned long, 3> &counts,
 {
   // We use notations from astral-pro paper
   std::array<double, 3> z;
+  Logger::info << "z = ";
   for (unsigned int i = 0; i < 3; ++i) {
     z[i] = double(counts[i]) / double(ratio);
+    Logger::info << z[i] << " ";
   }
+  Logger::info << std::endl;
   std::array<double, 3> h;
   double lambda = 0.5; // value from astral-pro paper
   auto zsum = std::accumulate(z.begin(), z.end(), 0);
+  Logger::info << "normalized: " << std::endl;
   for (unsigned int i = 0; i < 3; ++i) {
     h[i] = computeH(z[i], zsum, lambda);
-    Logger::info << i << " " << h[i] << std::endl;
+    Logger::info << z[i] / zsum << " ";
+    //Logger::info << i << " " << h[i] << std::endl;
   }
+  Logger::info << std::endl;
+  return z[0] / zsum;
   double den = h[0];
   den += pow(2.0, z[1] - z[0]) * h[1];
   den += pow(2.0, z[2] - z[0]) * h[2];
-  Logger::info << h[0] << "/" << den << std::endl;
+  //Logger::info << h[0] << "/" << den << std::endl;
+  Logger::info << "pp=" << h[0] / den << std::endl;
   return h[0] / den;
 }
 
@@ -357,7 +365,11 @@ void ICCalculator::_computeQuadriCounts()
   for (unsigned int i = 0; i < speciesInnerNodes.size(); ++i) {
     Logger::timed << i <<"/" << speciesInnerNodes.size() << std::endl;
     auto unode = speciesInnerNodes[i];
-    for (unsigned int j = i+1; j < speciesInnerNodes.size(); ++j) {
+    for (unsigned int j = 0; j < speciesInnerNodes.size(); ++j) {
+    //for (unsigned int j = i+1; j < speciesInnerNodes.size(); ++j) {
+      if (i == j) {
+        continue;
+      }
       std::array<unsigned long, 3> counts = {0, 0, 0};
       auto vnode = speciesInnerNodes[j];
       assert(unode->next && vnode->next);
@@ -397,14 +409,12 @@ void ICCalculator::_computeQuadriCounts()
       if (branchIndices.size() == 1) {
         auto branchIndex = branchIndices[0];
         _qpic[branchIndex] = qpic;
-        /*
         unsigned long ratio = 1;
         ratio *= _speciesSubtreeSizes[unode->next->back->node_index];
         ratio *= _speciesSubtreeSizes[unode->next->next->back->node_index];
         ratio *= _speciesSubtreeSizes[vnode->next->back->node_index];
         ratio *= _speciesSubtreeSizes[vnode->next->next->back->node_index];
         _localPP[branchIndex] = computeLocalPP(counts, ratio);
-        */
       }
       for (auto branchIndex: branchIndices) {
         _eqpic[branchIndex] = std::min(_eqpic[branchIndex], qpic);
