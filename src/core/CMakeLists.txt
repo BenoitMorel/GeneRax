@@ -41,6 +41,7 @@ set(jointsearch-core_SOURCES
   trees/PLLUnrootedTree.cpp
   trees/PLLRootedTree.cpp
   trees/PLLTreeInfo.cpp
+  trees/PolytomySolver.cpp
   trees/JointTree.cpp
   trees/SpeciesTree.cpp
   util/Scenario.cpp
