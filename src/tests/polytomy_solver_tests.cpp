@@ -3,7 +3,7 @@
 #include <trees/PLLUnrootedTree.hpp>
 #include <trees/PolytomySolver.hpp>
 
-void test_simple_interface()
+void test_simple_interface_1()
 {
   PLLRootedTree speciesTree("((A,B)E,(C,D)F)G;", false);
   std::map<std::string, unsigned int> speciesLabelsToSolve;
@@ -11,6 +11,42 @@ void test_simple_interface()
   speciesLabelsToSolve.insert({std::string("B"), 2});
   speciesLabelsToSolve.insert({std::string("C"), 1});
   speciesLabelsToSolve.insert({std::string("E"), 1});
+  PolytomySolver::solveSimpleInterface(speciesTree,
+      speciesLabelsToSolve);
+}
+
+void test_simple_interface_2()
+{
+  PLLRootedTree speciesTree("((A,B)E,(C,D)F)G;", false);
+  std::map<std::string, unsigned int> speciesLabelsToSolve;
+  speciesLabelsToSolve.insert({std::string("A"), 2});
+  speciesLabelsToSolve.insert({std::string("B"), 2});
+  speciesLabelsToSolve.insert({std::string("C"), 2});
+  speciesLabelsToSolve.insert({std::string("D"), 2});
+  PolytomySolver::solveSimpleInterface(speciesTree,
+      speciesLabelsToSolve);
+}
+
+void test_simple_interface_3()
+{
+  PLLRootedTree speciesTree("((A,B)E,(C,D)F)G;", false);
+  std::map<std::string, unsigned int> speciesLabelsToSolve;
+  speciesLabelsToSolve.insert({std::string("E"), 1});
+  speciesLabelsToSolve.insert({std::string("F"), 1});
+  speciesLabelsToSolve.insert({std::string("G"), 1});
+  PolytomySolver::solveSimpleInterface(speciesTree,
+      speciesLabelsToSolve);
+}
+
+void test_simple_interface_4()
+{
+  PLLRootedTree speciesTree("((A,B)E,(C,D)F)G;", false);
+  std::map<std::string, unsigned int> speciesLabelsToSolve;
+  speciesLabelsToSolve.insert({std::string("A"), 2});
+  speciesLabelsToSolve.insert({std::string("B"), 2});
+  speciesLabelsToSolve.insert({std::string("C"), 1});
+  speciesLabelsToSolve.insert({std::string("D"), 1});
+  speciesLabelsToSolve.insert({std::string("F"), 1});
   PolytomySolver::solveSimpleInterface(speciesTree,
       speciesLabelsToSolve);
 }
@@ -40,7 +76,10 @@ void test_1()
 
 int main(int, char**)
 {
-  test_simple_interface();
+  test_simple_interface_1();
+  test_simple_interface_2();
+  test_simple_interface_3();
+  test_simple_interface_4();
   return 0;
 }
 

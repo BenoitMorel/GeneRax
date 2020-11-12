@@ -13,11 +13,5 @@ public:
       std::map<std::string, unsigned int> &speciesLabelsToSolve
       );
 
-  static void solve(
-      PLLRootedTree &speciesTree,
-      PLLUnrootedTree &geneTree,
-      const std::vector<unsigned int> &geneToSpecies
-      );
-
 
 };

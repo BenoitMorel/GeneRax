@@ -6,40 +6,6 @@
 const double BL_THRESHOLD = 0.000001;
 
 
-void PolytomySolver::solve(
-      PLLRootedTree &speciesTree,
-      PLLUnrootedTree &geneTree,
-      const std::vector<unsigned int> &geneToSpeciesIn
-      )
-{
-  std::cout << "Species tree: " << speciesTree.getNewickString() << std::endl;
-  std::cout << "Gene tree: " << geneTree.getNewickString() << std::endl;
-  
-  auto postOrder = geneTree.getPostOrderNodes();
-
-  // we copy because we want to fill the 
-  // internal nodes values with most parsimonuous mapping
-  std::vector<unsigned int> geneToSpecies(
-      geneTree.getDirectedNodesNumber(), 0);
-  // when dealing with a 
-  std::vector<bool> marked(geneTree.getDirectedNodesNumber(), false);
-  
-  for (auto geneNode: geneTree.getPostOrderNodes()) {
-    auto gid = geneNode->node_index;
-    // leaf case
-    if (!geneNode->next) {
-      geneToSpecies[gid] = geneToSpeciesIn[gid];
-      continue;
-    }
-    // polytomy case
-    if (geneNode->length <= BL_THRESHOLD) {
-       
-    }
-
-  }
-
-
-}
   
 struct Entry {
   unsigned int m1;
@@ -133,7 +99,7 @@ void computeDupLoss(pll_rnode_t *node,
   auto &c = entries[node->node_index];
   if (!node->left) {
     // LEAF
-    if (k > c.nbs) {
+    if (k >= c.nbs) {
       c.losses = k - c.nbs;
     } else {
       c.dups = c.nbs -k;
@@ -205,7 +171,8 @@ void PolytomySolver::solveSimpleInterface(
     if (!node->left) {
       // LEAF CASE
       if (c.nbs == 0) {
-        m1 = m2 = ym = 1;
+        m1 = m2 = 0;
+        ym = 0;
       } else {
         m1 = m2 = c.nbs;
         ym = 0;
@@ -219,20 +186,17 @@ void PolytomySolver::solveSimpleInterface(
           m1, m2, ym);
       m1 += c.nbs;
       m2 += c.nbs;
-      // if this happens, read the corresponding
-      // pseudo code in the paper again
-      assert (m1 > c.nbs); 
-      assert (m2 > c.nbs); 
+      //assert (m1 > c.nbs); 
+      //assert (m2 > c.nbs); 
     }
-    std::cout << label << "\t" << m1 << "\t" << m2 << "\t" << ym << std::endl;
+    //std::cout << label << "\t" << m1 << "\t" << m2 << "\t" << ym << std::endl;
   }
-  std::cout << "compute dup loss " << std::endl;
   computeDupLoss(speciesTree.getRoot(), cells, 1);
   computeAncestralCopies(speciesTree.getRoot(), cells, 1);
   for (auto node: speciesTree.getPostOrderNodes()) {
     auto spid = node->node_index;
     auto &c = cells[spid];
-    std::cout << node->label << "\tdup=" << c.dups << "\tloss=" << c.losses << "\tac=" << c.ac << std::endl;
+    //std::cout << node->label << "\tdup=" << c.dups << "\tloss=" << c.losses << "\tnbs=" << c.nbs << "\tac=" << c.ac << std::endl;
   }
   
   for (auto node: speciesTree.getPostOrderNodes()) {
@@ -279,12 +243,14 @@ void PolytomySolver::solveSimpleInterface(
         c.subtrees.push_back(specTrees[i]);
       }
     }
-    std::cout << node->label << " ";
-    for (auto &s: c.subtrees) {
-      std::cout << s << " ";
-    }
-    std::cout << std::endl;
   }
+  auto root = speciesTree.getRoot();
+  auto &rootCell = cells[root->node_index];
+  std::cout << root->label << " ";
+  for (auto &s: rootCell.subtrees) {
+    std::cout << s << " ";
+  }
+  std::cout << std::endl;
 
 
 
