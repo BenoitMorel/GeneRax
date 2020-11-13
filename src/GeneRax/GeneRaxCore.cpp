@@ -287,16 +287,9 @@ void GeneRaxCore::initFolders(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
   std::string results = FileSystem::joinPaths(instance.args.output, "results");
-  std::string proposals = FileSystem::joinPaths(instance.args.output, "proposals");
   FileSystem::mkdir(results, true);
-  if (instance.args.optimizeSpeciesTree) {
-    FileSystem::mkdir(proposals, true);
-  }
   for (auto &family: instance.currentFamilies) {
     FileSystem::mkdir(FileSystem::joinPaths(results, family.name), true);
-    if (instance.args.optimizeSpeciesTree) {
-      FileSystem::mkdir(FileSystem::joinPaths(proposals, family.name), true);
-    }
   }
 }
 

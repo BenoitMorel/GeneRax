@@ -8,7 +8,7 @@
 #include <fstream>
 #include <NJ/MiniNJ.hpp>
 #include <NJ/NeighborJoining.hpp>
-
+#include <cstdio>
 
 SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile, 
     const Families &initialFamilies, 
@@ -664,6 +664,8 @@ void SpeciesTreeOptimizer::_computeAllGeneClades()
     }
   }
   assert(ParallelContext::isIntEqual(_geneClades.size()));
+  ParallelContext::barrier();
+  std::remove(getCladesSetPath(_outputDir, ParallelContext::getRank()).c_str());
   Logger::timed << "Number number of supported bipartitions: " << _geneClades.size()  << std::endl;
 }
 
