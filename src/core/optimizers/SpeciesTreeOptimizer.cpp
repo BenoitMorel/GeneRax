@@ -1,5 +1,6 @@
 #include "SpeciesTreeOptimizer.hpp"
 
+#include <util/Paths.hpp>
 #include <optimizers/DTLOptimizer.hpp>
 #include <IO/FileSystem.hpp>
 #include <routines/Routines.hpp>
@@ -299,7 +300,8 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
   _bestRecLL = computeRecLikelihood();
   auto hash1 = _speciesTree->getNodeIndexHash(); 
   TransferFrequencies frequencies;
-  std::string speciesTreeFile(FileSystem::joinPaths(_outputDir, "speciesTreeTemp.newick"));
+  auto  speciesTreeFile = 
+    Paths::getSpeciesTreeFile(_outputDir, "speciesTreeTemp.newick");
   saveCurrentSpeciesTreePath(speciesTreeFile, true);
   ParallelContext::barrier();
   Logger::timed << "Start inferring transfers..." << std::endl;

@@ -24,10 +24,13 @@
 #include <trees/SpeciesTree.hpp>
 #include <support/ICCalculator.hpp>
 #include <support/ICCalculatorSlow.hpp>
+#include <util/Paths.hpp>
 
 static void initStartingSpeciesTree(GeneRaxInstance &instance)
 {
-  instance.speciesTree = FileSystem::joinPaths(instance.args.output, "starting_species_tree.newick");
+  instance.speciesTree = Paths::getSpeciesTreeFile(
+      instance.args.output, 
+      "starting_species_tree.newick");
   std::unique_ptr<PLLRootedTree> speciesTree(nullptr);
   if (instance.args.speciesTreeAlgorithm == SpeciesTreeAlgorithm::User) {
     unsigned int canRead = 1;
@@ -73,6 +76,7 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   instance.args.printCommand();
   instance.args.printSummary();
   instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
+  initFolders(instance);
   bool needAlignments = instance.args.optimizeGeneTrees;
   if (instance.args.filterFamilies) {
     Logger::timed << "Filtering invalid families..." << std::endl;
@@ -290,6 +294,9 @@ void GeneRaxCore::initFolders(GeneRaxInstance &instance)
   FileSystem::mkdir(results, true);
   for (auto &family: instance.currentFamilies) {
     FileSystem::mkdir(FileSystem::joinPaths(results, family.name), true);
+  }
+  for (auto dir: Paths::getDirectoriesToCreate(instance.args.output)) {
+    FileSystem::mkdir(dir, true);
   }
 }
 
