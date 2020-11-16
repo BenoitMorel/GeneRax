@@ -17,11 +17,18 @@ std::vector<std::vector<UInt3> >;
 
 class ICCalculator {
 public:
+  /**
+   *  @param referenceTreePath 
+   *  @param families information about evaluation trees
+   *  @param paralogy if set to true, only consider speciation-driven quartets
+   */
   ICCalculator(const std::string &referenceTreePath,
       const Families &families,
-      bool paralogy);
+      bool paralogy = true);
   
-  
+  void computeScores(const std::string &outputQPIC,
+      const std::string &outputEQPIC,
+      const std::string &outputSupport);
   
 private:
   // trees

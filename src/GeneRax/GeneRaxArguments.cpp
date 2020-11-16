@@ -43,7 +43,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   speciesInitialFamiliesSubsamples(-1),
   minGeneBranchLength(0.000001),
   quartetSupport(false),
-  supportWithParalogy(false)
+  quartetSupportAllQuartets(false)
 {
   if (argc == 1) {
     printHelp();
@@ -137,8 +137,8 @@ void GeneRaxArguments::init() {
       minGeneBranchLength = atof(argv[++i]);
     } else if (arg == "--quartet-support") {
       quartetSupport = true; 
-    } else if (arg == "--quartet-support-paralogy") {
-      supportWithParalogy = true; 
+    } else if (arg == "--quartet-support-all-quartets") {
+      quartetSupportAllQuartets = true; 
     } else {
       Logger::error << "Unrecognized argument " << arg << std::endl;
       Logger::error << "Aborting" << std::endl;

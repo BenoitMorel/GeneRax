@@ -392,20 +392,45 @@ void GeneRaxCore::speciesTreeBLEstimation(GeneRaxInstance &instance)
 void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
 {
  
-  // FAST VERSION
+  ParallelContext::barrier();
   if (instance.args.quartetSupport) { 
-    ParallelContext::barrier();
+    Logger::timed 
+      << "Start estimating species tree support values" 
+      << std::endl;
+    ICCalculator calculator(instance.speciesTree,
+        instance.initialFamilies,
+        true);
+    auto qpicOutput = Paths::getSpeciesTreeFile(instance.args.output,
+        "species_tree_qpic.newick");
+    auto eqpicOutput = Paths::getSpeciesTreeFile(instance.args.output,
+        "species_tree_eqpic.newick");
+    auto supportOutput = Paths::getSpeciesTreeFile(instance.args.output,
+        "species_tree_quartet_support.newick");
+    calculator.computeScores(qpicOutput, eqpicOutput, supportOutput);
+    Logger::timed 
+      << "Finished estimating species tree support values" 
+      << std::endl;
+  }
+  ParallelContext::barrier();
+  if (instance.args.quartetSupportAllQuartets) { 
     Logger::timed 
       << "Start estimating species tree support values" 
       << std::endl;
     ICCalculator calculator(instance.speciesTree,
         instance.currentFamilies,
-        instance.args.supportWithParalogy);
+        false);
+    auto qpicOutput = Paths::getSpeciesTreeFile(instance.args.output,
+        "species_tree_qpic_allquartets.newick");
+    auto eqpicOutput = Paths::getSpeciesTreeFile(instance.args.output,
+        "species_tree_eqpic_allquartets.newick");
+    auto supportOutput = Paths::getSpeciesTreeFile(instance.args.output,
+        "species_tree_quartet_support_allquartets.newick");
+    calculator.computeScores(qpicOutput, eqpicOutput, supportOutput);
     Logger::timed 
       << "Finished estimating species tree support values" 
       << std::endl;
-    ParallelContext::barrier();
   }
+  ParallelContext::barrier();
 
 }
 

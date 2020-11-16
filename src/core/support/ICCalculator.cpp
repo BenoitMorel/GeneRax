@@ -11,6 +11,7 @@
 #include <sstream>
 #include <cmath>
 #include <maths/incbeta.h>
+#include <IO/ParallelOfstream.hpp>
 
 ICCalculator::ICCalculator(const std::string &referenceTreePath,
       const Families &families,
@@ -22,14 +23,28 @@ ICCalculator::ICCalculator(const std::string &referenceTreePath,
   _taxaNumber(0),
   _paralogy(paralogy)
 {
+}
+
+void ICCalculator::computeScores(const std::string &outputQPIC,
+    const std::string &outputEQPIC,
+    const std::string &outputSupport)
+{
   _readTrees();
   _computeRefBranchIndices();
   _computeIntersections();
   _computeQuadriCounts();
-  Logger::info << _getNewickWithScore(_qpic, std::string("QPIC")) << std::endl;
-  Logger::info << _getNewickWithScore(_eqpic, std::string("EPIC")) << std::endl;
-  Logger::info << _getNewickWithScore(_localPP, std::string("localPP")) << std::endl;
+
+  Logger::info << "Writing species tree with QPIC scores in " << outputQPIC << std::endl;
+  Logger::info << "Writing species tree with EQPIC scores in " << outputEQPIC << std::endl;
+  Logger::info << "Writing species tree with quartet support scores in " << outputSupport << std::endl;
+  ParallelOfstream osQPIC(outputQPIC);
+  osQPIC << _getNewickWithScore(_qpic, std::string()) << std::endl;
+  ParallelOfstream osEQPIC(outputEQPIC);
+  osEQPIC << _getNewickWithScore(_eqpic, std::string()) << std::endl;
+  ParallelOfstream osSupport(outputSupport);
+  osSupport << _getNewickWithScore(_localPP, std::string()) << std::endl;
 }
+
 
 void ICCalculator::_readTrees()
 {
@@ -289,10 +304,8 @@ static double getLogScore(const std::array<unsigned long, 3> &q)
 }
 static double computeH(double z, double zsum, double lambda)
 {
-  //Logger::info << "computeH " << z << " " << zsum << " " << lambda << std::endl;
   auto term1 = std::beta(z + 1.0, zsum - z  + 2.0 * lambda);
   auto term2 = incbeta(z + 1.0, zsum - z + 2.0 * lambda, 1.0/3.0);
-  //Logger::info << "term1 and term2:  " << term1 << " " << term2 << std::endl;
   return term1 * (1.0 - term2);
 }
 
@@ -301,28 +314,20 @@ static double computeLocalPP(const std::array<unsigned long, 3> &counts,
 {
   // We use notations from astral-pro paper
   std::array<double, 3> z;
-  Logger::info << "z = ";
   for (unsigned int i = 0; i < 3; ++i) {
     z[i] = double(counts[i]) / double(ratio);
-    Logger::info << z[i] << " ";
   }
-  Logger::info << std::endl;
+
   std::array<double, 3> h;
   double lambda = 0.5; // value from astral-pro paper
   auto zsum = std::accumulate(z.begin(), z.end(), 0);
-  Logger::info << "normalized: " << std::endl;
   for (unsigned int i = 0; i < 3; ++i) {
     h[i] = computeH(z[i], zsum, lambda);
-    Logger::info << z[i] / zsum << " ";
-    //Logger::info << i << " " << h[i] << std::endl;
   }
-  Logger::info << std::endl;
   return z[0] / zsum;
   double den = h[0];
   den += pow(2.0, z[1] - z[0]) * h[1];
   den += pow(2.0, z[2] - z[0]) * h[2];
-  //Logger::info << h[0] << "/" << den << std::endl;
-  Logger::info << "pp=" << h[0] / den << std::endl;
   return h[0] / den;
 }
 
@@ -348,7 +353,6 @@ void ICCalculator::_computeQuadriCounts()
   for (auto node: _referenceTree.getInnerNodes()) {
     speciesInnerNodes.push_back(node);
   }
-  
   std::vector<std::vector<UInt3> > tripartitions(familyCount);
   for (unsigned int famid = 0; famid < familyCount; ++famid) {
     auto &geneTree = _evaluationTrees[famid];
@@ -363,7 +367,6 @@ void ICCalculator::_computeQuadriCounts()
 
 
   for (unsigned int i = 0; i < speciesInnerNodes.size(); ++i) {
-    Logger::timed << i <<"/" << speciesInnerNodes.size() << std::endl;
     auto unode = speciesInnerNodes[i];
     for (unsigned int j = 0; j < speciesInnerNodes.size(); ++j) {
     //for (unsigned int j = i+1; j < speciesInnerNodes.size(); ++j) {
@@ -453,7 +456,7 @@ struct ScorePrinter
 
 std::string ICCalculator::_getNewickWithScore(std::vector<double> &branchScores, const std::string &scoreName)
 {
-  ScorePrinter printer(scoreName  + " = ", 
+  ScorePrinter printer(scoreName.size() ? (scoreName  + " = ") : "", 
       branchScores, 
       _refNodeIndexToBranchIndex);
   return _referenceTree.getNewickString(printer,
