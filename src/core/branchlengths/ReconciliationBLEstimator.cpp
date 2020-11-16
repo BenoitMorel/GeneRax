@@ -6,6 +6,49 @@
 #include <maths/ModelParameters.hpp>
 #include <parallelization/PerCoreGeneTrees.hpp>
 
+static void getAverageDepthRec(pll_rnode_t *node,
+    double currentDepth,
+    double &sumDepths,
+    unsigned int &count)
+{
+  currentDepth += node->length;
+  if (!node->left) {
+    count++;
+    sumDepths += currentDepth;
+  } else {
+    getAverageDepthRec(node->left, currentDepth, sumDepths, count);
+    getAverageDepthRec(node->right, currentDepth, sumDepths, count);
+  }
+}
+
+static double getAverageDepth(pll_rnode_t *node)
+{
+  double sumDepths = 0.0;
+  unsigned int count = 0;
+  // we do not want to count this node's length
+  getAverageDepthRec(node, -node->length, sumDepths, count); 
+  assert(count != 0);
+  return sumDepths / (double(count));
+}
+
+static void balanceRoot(PLLRootedTree &tree) 
+{
+  auto root = tree.getRoot();
+  auto left = root->left;
+  auto right = root->right;
+  auto initialLength = left->length + right->length;
+  auto leftDepth = getAverageDepth(left);
+  auto rightDepth = getAverageDepth(right);
+  auto diff = leftDepth - rightDepth;
+  left->length -= diff / 2.0;
+  right->length += diff / 2.0;
+  double epsilon = 0.0000001;
+  left->length = std::min(std::max(epsilon, left->length), 
+      initialLength - epsilon);
+  right->length = std::min(std::max(epsilon, right->length), 
+      initialLength - epsilon);
+}
+
 
 /**
  *  Fills branch lengths between speciation or leaf events that are direct
@@ -151,6 +194,7 @@ void ReconciliationBLEstimator::estimate(
       }
       speciesTree.getNode(i)->length = length;
     }
+    balanceRoot(speciesTree);
     Logger::timed << "[BL estimation] Inferred branch lengths:\n" << speciesTree.getNewickString() << std::endl;
     if (ParallelContext::getRank() == 0) {
       speciesTree.save(speciesTreeFile);
