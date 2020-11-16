@@ -43,7 +43,6 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   speciesInitialFamiliesSubsamples(-1),
   minGeneBranchLength(0.000001),
   quartetSupport(false),
-  slowQuartetSupport(false),
   supportWithParalogy(false)
 {
   if (argc == 1) {
@@ -138,8 +137,6 @@ void GeneRaxArguments::init() {
       minGeneBranchLength = atof(argv[++i]);
     } else if (arg == "--quartet-support") {
       quartetSupport = true; 
-    } else if (arg == "--quartet-support-slow") {
-      slowQuartetSupport = true;
     } else if (arg == "--quartet-support-paralogy") {
       supportWithParalogy = true; 
     } else {

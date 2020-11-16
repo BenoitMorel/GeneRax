@@ -58,7 +58,6 @@ public:
    int speciesInitialFamiliesSubsamples;
    double minGeneBranchLength;
    bool quartetSupport;
-   bool slowQuartetSupport;
    bool supportWithParalogy;
 private:
 
