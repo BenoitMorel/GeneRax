@@ -19,7 +19,9 @@ void fillDistancesRec(pll_unode_t *currentNode,
     double bootstrapValue = (nullptr == currentNode->label) ? 0.0 : std::atof(currentNode->label);
     currentDistance += bootstrapValue;
   } else {
-    if (currentNode->length > 0.0000011) {
+    // do not account for internal nodes which have too small
+    // branch lengths
+    if (currentNode->length == 0.0 || currentNode->length > 0.0000011) {
       currentDistance += 1.0;
     }
   }

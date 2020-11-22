@@ -142,7 +142,7 @@ void estimateBLForFamily(const Scenario &scenario,
 
 double getFamilyWeight(const FamilyInfo &info) 
 {
-  if (info.alignmentFile == "" || info.libpllModel == "") {
+  if (info.alignmentFile == "" || info.libpllModel == "" || info.libpllModel == "true") {
     return 1.0;
   }
   auto alignmentLength = LibpllParsers::getMSAEntropy(info.alignmentFile,
