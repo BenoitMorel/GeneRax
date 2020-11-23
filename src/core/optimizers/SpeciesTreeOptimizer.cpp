@@ -99,7 +99,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
       if (index++ % 2 == 0) {
         transferSearch();
       } else {
-        sprSearch(1);
+        sprSearch(sprRadius);
       }
       if (_hardToFindBetter) {
         rootSearch(3);

@@ -42,7 +42,7 @@ void ICCalculator::computeScores(const std::string &outputQPIC,
   ParallelOfstream osEQPIC(outputEQPIC);
   osEQPIC << _getNewickWithScore(_eqpic, std::string()) << std::endl;
   ParallelOfstream osSupport(outputSupport);
-  osSupport << _getNewickWithScore(_localPP, std::string()) << std::endl;
+  osSupport << _getNewickWithScore(_localSupport, std::string()) << std::endl;
 }
 
 
@@ -302,14 +302,8 @@ static double getLogScore(const std::array<unsigned long, 3> &q)
     return -qic;
   }
 }
-static double computeH(double z, double zsum, double lambda)
-{
-  auto term1 = std::beta(z + 1.0, zsum - z  + 2.0 * lambda);
-  auto term2 = incbeta(z + 1.0, zsum - z + 2.0 * lambda, 1.0/3.0);
-  return term1 * (1.0 - term2);
-}
 
-static double computeLocalPP(const std::array<unsigned long, 3> &counts,
+static double computeLocalSupport(const std::array<unsigned long, 3> &counts,
     unsigned long ratio)
 {
   // We use notations from astral-pro paper
@@ -317,18 +311,8 @@ static double computeLocalPP(const std::array<unsigned long, 3> &counts,
   for (unsigned int i = 0; i < 3; ++i) {
     z[i] = double(counts[i]) / double(ratio);
   }
-
-  std::array<double, 3> h;
-  double lambda = 0.5; // value from astral-pro paper
   auto zsum = std::accumulate(z.begin(), z.end(), 0);
-  for (unsigned int i = 0; i < 3; ++i) {
-    h[i] = computeH(z[i], zsum, lambda);
-  }
   return z[0] / zsum;
-  double den = h[0];
-  den += pow(2.0, z[1] - z[0]) * h[1];
-  den += pow(2.0, z[2] - z[0]) * h[2];
-  return h[0] / den;
 }
 
 
@@ -338,7 +322,7 @@ void ICCalculator::_computeQuadriCounts()
   auto branchNumbers = _referenceTree.getLeavesNumber() * 2 - 3;
   _qpic = std::vector<double>(branchNumbers, 1.0);
   _eqpic = std::vector<double>(branchNumbers, 1.0);
-  _localPP = std::vector<double>(branchNumbers, 1.0);
+  _localSupport = std::vector<double>(branchNumbers, 1.0);
   unsigned int speciesNodeCount = _referenceTree.getDirectedNodesNumber();
   auto familyCount = _evaluationTrees.size();
   _quadriCounts.clear();
@@ -419,7 +403,8 @@ void ICCalculator::_computeQuadriCounts()
         ratio *= _speciesSubtreeSizes[unode->next->next->back->node_index];
         ratio *= _speciesSubtreeSizes[vnode->next->back->node_index];
         ratio *= _speciesSubtreeSizes[vnode->next->next->back->node_index];
-        _localPP[branchIndex] = computeLocalPP(counts, ratio);
+        
+        _localSupport[branchIndex] = computeLocalSupport(counts, ratio);
       }
       for (auto branchIndex: branchIndices) {
         _eqpic[branchIndex] = std::min(_eqpic[branchIndex], qpic);

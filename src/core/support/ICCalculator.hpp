@@ -57,7 +57,7 @@ private:
 
   std::vector<double> _qpic; 
   std::vector<double> _eqpic; 
-  std::vector<double> _localPP; 
+  std::vector<double> _localSupport; 
 
   // _isPartitionInFamily[famid][spid]
   std::vector<std::vector<bool> > _isPartitionInFamily;
