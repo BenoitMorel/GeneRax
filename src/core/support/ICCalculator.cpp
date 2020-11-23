@@ -405,8 +405,10 @@ void ICCalculator::_computeQuadriCounts()
           }
         }
       }
-      for (unsigned int topology = 0; topology < 3; ++topology) {
-        ParallelContext::sumULong(counts[topology]);
+      if (branchIndices.size() == 1) {
+        for (unsigned int topology = 0; topology < 3; ++topology) {
+          ParallelContext::sumULong(counts[topology]);
+        }
       }
       auto qpic = getLogScore(counts);
       if (branchIndices.size() == 1) {

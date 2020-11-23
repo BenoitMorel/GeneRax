@@ -15,7 +15,7 @@ class DSTagger {
 public:
   DSTagger(PLLUnrootedTree &tree);
   pll_unode_t * &getRoot() {
-    return _bestRoots[0];
+    return _bestRoots[_bestRoots.size() / 2];
   }
   bool isDuplication(unsigned int nodeIndex) const {
     return _clvs[nodeIndex].isDup;
