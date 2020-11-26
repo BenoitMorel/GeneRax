@@ -23,6 +23,7 @@ ICCalculator::ICCalculator(const std::string &referenceTreePath,
   _taxaNumber(0),
   _paralogy(paralogy)
 {
+  Logger::info << "Account for paralogy: " << paralogy << std::endl;
 }
 
 void ICCalculator::computeScores(const std::string &outputQPIC,
@@ -310,9 +311,11 @@ static double computeLocalSupport(const std::array<unsigned long, 3> &counts,
   std::array<double, 3> z;
   for (unsigned int i = 0; i < 3; ++i) {
     z[i] = double(counts[i]) / double(ratio);
+    assert(z[i] >= 0);
   }
-  auto zsum = std::accumulate(z.begin(), z.end(), 0);
-  return z[0] / zsum;
+  auto zsum = std::accumulate(z.begin(), z.end(), 0.0);
+  auto res = z[0] / zsum;
+  return res;
 }
 
 
@@ -389,10 +392,8 @@ void ICCalculator::_computeQuadriCounts()
           }
         }
       }
-      if (branchIndices.size() == 1) {
-        for (unsigned int topology = 0; topology < 3; ++topology) {
-          ParallelContext::sumULong(counts[topology]);
-        }
+      for (unsigned int topology = 0; topology < 3; ++topology) {
+        ParallelContext::sumULong(counts[topology]);
       }
       auto qpic = getLogScore(counts);
       if (branchIndices.size() == 1) {

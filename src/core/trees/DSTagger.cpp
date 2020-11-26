@@ -45,7 +45,7 @@ DSTagger::DSTagger(PLLUnrootedTree &tree):_tree(tree),
   for (unsigned int i = 0; i < 3; ++i) {
     _roots[i].node_index = _tree.getDirectedNodesNumber() + i;
     _roots[i].next = &_roots[(i + 1) % 3];
-    _clvs[_roots[i].node_index].isDup = true;
+    _clvs[_roots[i].node_index].isDup = _isRootDup;
   }
   _roots[0].back = nullptr;
   _roots[1].back = rootBranch;
@@ -166,6 +166,9 @@ DSTagger::getSpeciationAncestorNodes(pll_unode_t *node)
     orientUp(node);
     assert(node);
     if (clv->isRoot) {
+      if (_isRootDup) {
+        break;
+      }
       if (_roots[1].back == node) {
         node = &_roots[1];
       } else if (_roots[2].back == node) {
@@ -179,10 +182,10 @@ DSTagger::getSpeciationAncestorNodes(pll_unode_t *node)
     if (!node) { // we reached the root
       break;
     }
+    clv = &_clvs[node->node_index];
     if (!clv->isDup) {
       ancestors.push_back(node);
     }
-    clv = &_clvs[node->node_index];
   }
   return ancestors;
 }
