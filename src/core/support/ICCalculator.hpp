@@ -29,7 +29,13 @@ public:
   void computeScores(const std::string &outputQPIC,
       const std::string &outputEQPIC,
       const std::string &outputSupport);
-  
+
+  static void computeScores(PLLRootedTree &tree,
+      const Families &families,
+      bool paralogy,
+      const std::string &tempPrefix,
+      std::vector<double> &idToSupport);
+
 private:
   // trees
   PLLRootedTree _rootedReferenceTree;

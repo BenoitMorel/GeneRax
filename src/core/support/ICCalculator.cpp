@@ -472,4 +472,34 @@ void ICCalculator::_computeRefBranchIndices()
     assert(v != static_cast<unsigned int>(-1));
   }
 }
+  
+void ICCalculator::computeScores(PLLRootedTree &tree,
+      const Families &families,
+      bool paralogy,
+      const std::string &tempPrefix,
+      std::vector<double> &idToSupport)
+{
+  bool master = ParallelContext::getRank() == 0;
+  std::string tempInputTree = tempPrefix + "input.newick";
+  std::string tempOutputQPIC = tempPrefix + "qpic.newick";
+  std::string tempOutputEQPIC = tempPrefix + "eqpic.newick";
+  std::string tempOutputSupport = tempPrefix + "support.newick";
+  if  (master){
+    tree.save(tempInputTree);
+  }
+  ParallelContext::barrier();
+  ICCalculator calculator(tempInputTree);
+  calculator.computeScores(tempOutputQPIC, 
+      tempOutputEQPIC, 
+      tempOutputSupport);
+  ParallelContext::barrier();
+  idToSupport.resize(tree.getNodesNumber());
+  PLLRootedTree treeWithSupport(tempOutputSupport, true);
+  auto mapping = treeWithSupport.getNodeIndexMapping();
+  for (auto supportedNode: treeWithSupport.getInnerNodes()) {
+    auto nodeIndex = mapping[supportedNode->node_index];
+    idToSupport[nodeIndex] = atof(supportedNode->label);
+
+  }
+}
 

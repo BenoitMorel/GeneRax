@@ -402,3 +402,35 @@ std::vector<std::string> PLLRootedTree::getDeterministicIdToLabel() const
   std::sort(labels.begin(), labels.end());
   return labels;
 }
+  
+std::vector<unsigned int> 
+PLLRootedTree::getNodeIndexMapping(PLLRootedTree &otherTree)
+{
+  assert(otherTree.getNodesNumber() == getNodesNumber());
+  std::map<std::string, pll_rnode_t*> otherTreeLabelToNode;
+  for (auto node: otherTree.getLeaves()) {
+    std::string label(node->label);
+    otherTreeLabelToNode[label] = node;
+  }
+  std::vector<unsigned int> mapping(getNodesNumber(), 0);
+  for (auto node: this->getPostOrderNodes()) {
+    pll_rnode_t *otherNode = nullptr;
+    if (!node->left) {
+      // leaf case
+      std::string label(node->label);
+      otherNode = otherTreeLabelToNode[label];
+    } else {
+      auto leftId = node->left->node_index;
+      auto rightId = node->right->node_index;
+      auto otherLeft = otherTree.getNode(mapping[leftId]);
+      auto otherRight = otherTree.getNode(mapping[rightId]);
+      assert(otherLeft->parent == otherRight->parent);
+      otherNode = otherLeft->parent;
+    }
+    mapping[node->node_index] = otherNode->node_index;
+  }
+  return mapping;
+}
+
+
+

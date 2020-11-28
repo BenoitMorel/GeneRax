@@ -140,6 +140,13 @@ public:
    */
   StringToUint getDeterministicLabelToId() const;
   std::vector<std::string> getDeterministicIdToLabel() const;
+
+  /**
+   *  Return a mapping from the nodes IDs of this tree
+   *  and the input tree. Both trees must have the same
+   *  leaf labels and topology.
+   */
+  std::vector<unsigned int> getNodeIndexMapping(PLLRootedTree &otherTree);
 private:
   std::unique_ptr<pll_rtree_t, void(*)(pll_rtree_t*)> _tree;
   
