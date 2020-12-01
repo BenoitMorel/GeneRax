@@ -74,7 +74,10 @@ public:
   static bool canApplySPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int regraft);
   static unsigned int applySPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int regraft);
   static void reverseSPRMove(SpeciesTree &speciesTree, unsigned int prune, unsigned int applySPRMoveReturnValue);
-  static void getPossiblePrunes(SpeciesTree &speciesTree, std::vector<unsigned int> &prunes);
+  static void getPossiblePrunes(SpeciesTree &speciesTree, 
+      std::vector<unsigned int> &prunes, 
+      std::vector<double> support, 
+      double maxSupport);
   static void getPossibleRegrafts(SpeciesTree &speciesTree, 
       unsigned int prune, 
       unsigned int radius, 

@@ -30,10 +30,17 @@ void ICCalculator::computeScores(const std::string &outputQPIC,
     const std::string &outputEQPIC,
     const std::string &outputSupport)
 {
+  Logger::timed << "Read trees" << std::endl;
   _readTrees();
   _computeRefBranchIndices();
+  ParallelContext::barrier();
+  Logger::timed << "COmpute intersections" << std::endl;
   _computeIntersections();
+  ParallelContext::barrier();
+  Logger::timed << "COmpute quadricounts" << std::endl;
   _computeQuadriCounts();
+  ParallelContext::barrier();
+  Logger::timed << "End of support computation" << std::endl;
 
   Logger::info << "Writing species tree with QPIC scores in " << outputQPIC << std::endl;
   Logger::info << "Writing species tree with EQPIC scores in " << outputEQPIC << std::endl;
@@ -362,6 +369,13 @@ void ICCalculator::_computeQuadriCounts()
       }
       std::array<unsigned long, 3> counts = {0, 0, 0};
       auto vnode = speciesInnerNodes[j];
+      /*
+      if (!(vnode->back == unode || vnode->next->back == unode 
+          || vnode->next->next->back == unode))
+      {
+        continue;
+      }
+      */
       assert(unode->next && vnode->next);
       assert(unode->next != vnode && unode->next->next != vnode);
       assert(vnode->next != unode && vnode->next->next != unode);
@@ -369,6 +383,9 @@ void ICCalculator::_computeQuadriCounts()
       _referenceTree.orientTowardEachOther(&unode, 
           &vnode,
           branchPath);
+      if (branchPath.size() > 3) {
+        continue;
+      }
       std::vector<unsigned int> branchIndices;
       for (auto branch: branchPath) {
         branchIndices.push_back(_refNodeIndexToBranchIndex[branch->node_index]);
@@ -488,18 +505,23 @@ void ICCalculator::computeScores(PLLRootedTree &tree,
     tree.save(tempInputTree);
   }
   ParallelContext::barrier();
-  ICCalculator calculator(tempInputTree);
+  ICCalculator calculator(tempInputTree, families, paralogy);
   calculator.computeScores(tempOutputQPIC, 
       tempOutputEQPIC, 
       tempOutputSupport);
   ParallelContext::barrier();
   idToSupport.resize(tree.getNodesNumber());
-  PLLRootedTree treeWithSupport(tempOutputSupport, true);
-  auto mapping = treeWithSupport.getNodeIndexMapping();
+  //PLLRootedTree treeWithSupport(tempOutputSupport, true);
+  PLLRootedTree treeWithSupport(tempOutputEQPIC, true);
+  Logger::timed << "Tree with support:" << std::endl;
+  Logger::info << treeWithSupport.getNewickString() << std::endl;
+  PLLRootedTree treeWithSupport2(tempOutputQPIC, true);
+  Logger::timed << "Tree with support (qpic):" << std::endl;
+  Logger::info << treeWithSupport2.getNewickString() << std::endl;
+  auto mapping = treeWithSupport.getNodeIndexMapping(tree);
   for (auto supportedNode: treeWithSupport.getInnerNodes()) {
     auto nodeIndex = mapping[supportedNode->node_index];
     idToSupport[nodeIndex] = atof(supportedNode->label);
-
   }
 }
 

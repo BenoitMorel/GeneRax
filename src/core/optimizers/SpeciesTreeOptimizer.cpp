@@ -10,6 +10,7 @@
 #include <NJ/MiniNJ.hpp>
 #include <NJ/NeighborJoining.hpp>
 #include <cstdio>
+#include <support/ICCalculator.hpp>
 
 SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile, 
     const Families &initialFamilies, 
@@ -107,7 +108,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
       hash1 = _speciesTree->getHash();
     }
     while(testAndSwap(hash1, hash2));
-    rootSearch();
+    rootSearch(5);
     break;
   }
   setOptimizationCriteria(ReconciliationLikelihood);
@@ -400,22 +401,60 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
   return _bestRecLL;
 }
 
+std::vector<double> SpeciesTreeOptimizer::_getSupport()
+{
+  std::string temp = FileSystem::joinPaths(_outputDir, "tmp");
+  std::vector<double> idToSupport;
+  ICCalculator::computeScores(_speciesTree->getTree(),
+      _initialFamilies,
+      true,
+      temp,
+      idToSupport);
+  for (auto node: _speciesTree->getTree().getLeaves()) {
+    idToSupport[node->node_index] = 1.0;
+  }
+  return idToSupport;
+}
+
 double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
 {
+  Logger::timed << "Before SPR Round radius=" << radius << std::endl;
   Logger::timed << "Start SPR Round radius=" << radius << std::endl;
   _bestRecLL = computeRecLikelihood();
   auto hash1 = _speciesTree->getNodeIndexHash(); 
 
+  auto supportValues = std::vector<double>();//_getSupport();
+  double maxSupport = 0.2; // ignored for now
   std::vector<unsigned int> prunes;
-  SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, prunes);
+  SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, 
+      prunes,
+      supportValues,
+      maxSupport);
   for (auto prune: prunes) {
     std::vector<unsigned int> regrafts;
     SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
     for (auto regraft: regrafts) {
-      if (testPruning(prune, regraft)) {
+      bool test = false;
+      test |= supportValues[prune] < maxSupport;
+      test |= supportValues[_speciesTree->getNode(prune)->parent->node_index] < maxSupport;
+      test |= supportValues[regraft] < maxSupport;
+      if (test && testPruning(prune, regraft)) {
         Logger::timed << "\tbetter tree (LL=" 
           << _bestRecLL << ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() << ")"<< std::endl;
-        Logger::info << _speciesTree->getNode(prune)->label << " " << _speciesTree->getNode(regraft)->label << std::endl;
+        auto pruneNode = _speciesTree->getNode(prune);
+        Logger::info << pruneNode->label 
+          << " " << _speciesTree->getNode(regraft)->label 
+          << " " << supportValues[prune]  
+          << " " << supportValues[pruneNode->parent->node_index]; 
+          if (pruneNode->left) {
+            Logger::info <<  " (" 
+              << supportValues[pruneNode->left->node_index] 
+              << ","
+              << supportValues[pruneNode->right->node_index] 
+              << ")";
+          }
+          Logger::info << " " << supportValues[regraft] 
+          << std::endl;
         hash1 = _speciesTree->getNodeIndexHash(); 
         assert(ParallelContext::isIntEqual(hash1));
         _bestRecLL = veryLocalSearch(prune);

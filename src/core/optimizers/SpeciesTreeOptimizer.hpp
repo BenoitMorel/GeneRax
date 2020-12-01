@@ -119,4 +119,5 @@ private:
   void setOptimizationCriteria(OptimizationCriteria criteria) {
     _optimizationCriteria = criteria;
   }
+  std::vector<double> _getSupport();
 };

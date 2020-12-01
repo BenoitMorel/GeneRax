@@ -39,7 +39,9 @@ static void testSPRMoves()
   SpeciesTree speciesTree(initialTreeStr, false);
   unsigned int radius = 10;
   std::vector<unsigned int> prunes;
-  SpeciesTreeOperator::getPossiblePrunes(speciesTree, prunes);
+  std::vector<double> fake1;
+  double fake2 = 0.0;
+  SpeciesTreeOperator::getPossiblePrunes(speciesTree, prunes, fake1, fake2);
   for (auto prune: prunes) {
     std::vector<unsigned int> regrafts;
     SpeciesTreeOperator::getPossibleRegrafts(speciesTree, prune, radius, regrafts);

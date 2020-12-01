@@ -230,13 +230,24 @@ static void recursiveGetNodes(pll_rnode_t *node,
 
 }
   
-void SpeciesTreeOperator::getPossiblePrunes(SpeciesTree &speciesTree, std::vector<unsigned int> &prunes)
+void SpeciesTreeOperator::getPossiblePrunes(SpeciesTree &speciesTree, 
+    std::vector<unsigned int> &prunes,
+    std::vector<double> supportValues,
+    double maxSupport)
 {
   for (auto pruneNode: speciesTree.getTree().getNodes()) {
     if (pruneNode == speciesTree.getTree().getRoot()) {
       continue;
     }
-    prunes.push_back(pruneNode->node_index); 
+    bool ok = true;
+    if (supportValues.size() && pruneNode->parent) {
+      double parentSupport = supportValues[pruneNode->parent->node_index];
+      ok &= (parentSupport <= maxSupport);
+    }
+    ok = true;
+    if (ok) {
+      prunes.push_back(pruneNode->node_index); 
+    }
   }
 }
   
