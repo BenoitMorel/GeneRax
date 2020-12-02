@@ -186,7 +186,7 @@ protected:
 
   virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
   
-  void updateCLVs();
+  void updateCLVs(bool invalidate = true);
   virtual void enableMADRooting(bool enable);
   virtual pll_unode_t *computeMLRoot();
 protected:
@@ -496,7 +496,7 @@ double AbstractReconciliationModel<REAL>::computeLogLikelihood()
   if (_info.rootedGeneTree) {
     setRoot(computeMLRoot());
     while (root != getRoot()) {
-      updateCLVs();
+      updateCLVs(false);
       computeLikelihoods();
       root = getRoot();
       setRoot(computeMLRoot());
@@ -607,21 +607,23 @@ void AbstractReconciliationModel<REAL>::updateCLVsRec(pll_unode_t *node)
 }
 
 template <class REAL>
-void AbstractReconciliationModel<REAL>::updateCLVs()
+void AbstractReconciliationModel<REAL>::updateCLVs(bool invalidate)
 {
-  switch (_likelihoodMode) {
-    case PartialLikelihoodMode::PartialGenes:
-      invalidateAllSpeciesCLVs();
-    break;
-    case PartialLikelihoodMode::PartialSpecies:
-      invalidateAllCLVs();
-    break;
-    case PartialLikelihoodMode::NoPartial:
-      invalidateAllSpeciesCLVs();
-      invalidateAllCLVs();
-    break;
+  if (invalidate) {
+    switch (_likelihoodMode) {
+      case PartialLikelihoodMode::PartialGenes:
+        invalidateAllSpeciesCLVs();
+      break;
+      case PartialLikelihoodMode::PartialSpecies:
+        invalidateAllCLVs();
+      break;
+      case PartialLikelihoodMode::NoPartial:
+        invalidateAllSpeciesCLVs();
+        invalidateAllCLVs();
+      break;
+    }
+    markInvalidatedNodes();
   }
-  markInvalidatedNodes();
   std::vector<pll_unode_t *> roots;
   getRoots(roots, _geneIds);
   for (auto root: roots) {
