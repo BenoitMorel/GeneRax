@@ -434,16 +434,20 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
     std::vector<unsigned int> regrafts;
     SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
     for (auto regraft: regrafts) {
+      /*
       bool test = false;
       test |= supportValues[prune] < maxSupport;
       test |= supportValues[_speciesTree->getNode(prune)->parent->node_index] < maxSupport;
       test |= supportValues[regraft] < maxSupport;
-      if (test && testPruning(prune, regraft)) {
+      */
+      if (testPruning(prune, regraft)) {
         Logger::timed << "\tbetter tree (LL=" 
           << _bestRecLL << ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() << ")"<< std::endl;
         auto pruneNode = _speciesTree->getNode(prune);
+        
         Logger::info << pruneNode->label 
           << " " << _speciesTree->getNode(regraft)->label 
+        /*
           << " " << supportValues[prune]  
           << " " << supportValues[pruneNode->parent->node_index]; 
           if (pruneNode->left) {
@@ -454,6 +458,7 @@ double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
               << ")";
           }
           Logger::info << " " << supportValues[regraft] 
+          */
           << std::endl;
         hash1 = _speciesTree->getNodeIndexHash(); 
         assert(ParallelContext::isIntEqual(hash1));
