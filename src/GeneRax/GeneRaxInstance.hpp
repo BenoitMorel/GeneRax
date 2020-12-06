@@ -15,6 +15,7 @@ struct GeneRaxInstance {
   Families currentFamilies;
   RecModelInfo recModelInfo;
   Parameters rates;
+  ModelParameters modelParameters;
   double totalLibpllLL;
   double totalRecLL;
   long elapsedRates;

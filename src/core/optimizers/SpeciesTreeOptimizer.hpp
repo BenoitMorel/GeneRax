@@ -86,11 +86,9 @@ private:
   AverageStream _averageGeneRootDiff;
   bool _hardToFindBetter;
   OptimizationCriteria _optimizationCriteria;
-  DistanceInfo _distanceInfo;
 private:
   void _computeAllGeneClades();
   unsigned int _unsupportedCladesNumber();
-  void _computeDistanceInfo();
   ModelParameters computeOptimizedRates(); 
   void updateEvaluations();
   void rootSearchAux(SpeciesTree &speciesTree, 

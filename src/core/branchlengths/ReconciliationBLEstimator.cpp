@@ -161,14 +161,10 @@ double getFamilyWeight(const FamilyInfo &info)
 void ReconciliationBLEstimator::estimate(
       const std::string &speciesTreeFile,
       const Families &families, 
-      const RecModelInfo &recModelInfo,
-      const Parameters &rates)
+      const ModelParameters &modelParameters)
 {
     PLLRootedTree speciesTree(speciesTreeFile, true);
     PerCoreGeneTrees geneTrees(families);
-    ModelParameters modelParameters(rates, 
-        families.size(),
-        recModelInfo);
     const unsigned int samples = 0;
     const bool optimizeRates = false;
     std::vector<Scenario> scenarios;
@@ -200,7 +196,6 @@ void ReconciliationBLEstimator::estimate(
       speciesTree.getNode(i)->length = length;
     }
     balanceRoot(speciesTree);
-    Logger::timed << "[BL estimation] Inferred branch lengths:\n" << speciesTree.getNewickString() << std::endl;
     if (ParallelContext::getRank() == 0) {
       speciesTree.save(speciesTreeFile);
     }

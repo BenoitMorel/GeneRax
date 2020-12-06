@@ -44,7 +44,6 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
     setGeneTreesFromFamilies(initialFamilies);
   }
-  _computeDistanceInfo();
   _modelRates = ModelParameters(startingRates, 
       _geneTrees->getTrees().size(),
       recModelInfo);
@@ -585,11 +584,6 @@ std::string SpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, boo
 void SpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly)
 {
   _speciesTree->saveToFile(str, masterRankOnly);
-  NeighborJoining::applyNJ(
-      _distanceInfo.distanceMatrix,
-      _distanceInfo.speciesIdToSpeciesString,
-      _distanceInfo.speciesStringToSpeciesId,
-      &_speciesTree->getTree());
 }
 
 
@@ -724,22 +718,3 @@ unsigned int SpeciesTreeOptimizer::_unsupportedCladesNumber()
   return speciesClades.size() - intersectionSize;
 }
   
-void SpeciesTreeOptimizer::_computeDistanceInfo()
-{
-  Logger::timed << "Computing distance matrix from gene tree..." << std::endl;
-  bool minMode = true;
-  bool reweight = true;
-  bool useBL = false;
-  bool useBootstrap = false;
-  bool ustar = false;
-  MiniNJ::computeDistanceMatrix(_initialFamilies,
-      minMode, 
-      reweight,
-      useBL,
-      useBootstrap,
-      ustar,
-      _distanceInfo.distanceMatrix,
-      _distanceInfo.speciesIdToSpeciesString,
-      _distanceInfo.speciesStringToSpeciesId);
-  Logger::timed << "Distance matrix computed" << std::endl;
-}

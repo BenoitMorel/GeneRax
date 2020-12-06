@@ -94,6 +94,9 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   }
   instance.currentFamilies = instance.initialFamilies;
   initFolders(instance);
+  instance.modelParameters = ModelParameters(instance.rates, 
+      instance.currentFamilies.size(),
+      instance.getRecModelInfo());
   Logger::info << "End of instance initialization" << std::endl;
 }
 
@@ -208,8 +211,12 @@ void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
     bool perSpeciesDTLRates = instance.args.perSpeciesDTLRates && (i >= instance.args.maxSPRRadius - 1); // only apply per-species optimization at the two last rounds
     optimizeRatesAndGeneTrees(instance, perSpeciesDTLRates, enableLibpll, i);
   }
+  ModelParameters modelRates(instance.rates,
+      1,
+      instance.getRecModelInfo());
+  instance.readModelParameters(modelRates);
+  instance.modelParameters = modelRates;
 }
-
 
 
 void GeneRaxCore::reconcile(GeneRaxInstance &instance)
@@ -217,29 +224,15 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
   assert(ParallelContext::isRandConsistent());
   if (instance.args.reconcile || instance.args.reconciliationSamples > 0) {
     Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
-    ModelParameters modelRates(instance.rates,
-        1,
-        instance.getRecModelInfo());
-    instance.readModelParameters(modelRates);
-    bool optimizeRates = true;
+    bool optimizeRates = false;
     Routines::inferReconciliation(instance.speciesTree, 
         instance.currentFamilies, 
-        modelRates, 
+        instance.modelParameters, 
         instance.args.output, 
         instance.args.reconcile,
         instance.args.reconciliationSamples, 
         optimizeRates);
     if (instance.args.buildSuperMatrix) {
-      /*
-      std::string outputSuperMatrix = FileSystem::joinPaths(
-          instance.args.output, "superMatrix.fasta");
-      Routines::computeSuperMatrixFromOrthoGroups(instance.speciesTree,
-        instance.currentFamilies,
-        instance.args.output, 
-        outputSuperMatrix,
-        true,
-        true);
-        */
       std::string outputSuperMatrixAll = FileSystem::joinPaths(
           instance.args.output, "superMatrixAll.fasta");
       Routines::computeSuperMatrixFromOrthoGroups(instance.speciesTree,
@@ -383,8 +376,7 @@ void GeneRaxCore::speciesTreeBLEstimation(GeneRaxInstance &instance)
   ReconciliationBLEstimator::estimate(
       instance.speciesTree,
       instance.currentFamilies,
-      instance.recModelInfo,
-      instance.rates);
+      instance.modelParameters);
   ParallelContext::barrier();
   Logger::timed << "Finished estimating species tree branch lengths" << std::endl;
 }

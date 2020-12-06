@@ -1,7 +1,6 @@
 #include <string>
 #include <IO/Families.hpp>
-class RecModelInfo;
-class Parameters;
+class ModelParameters;
 
 
 
@@ -11,8 +10,7 @@ public:
 
   static void estimate(const std::string &speciesTreeFile,
       const Families &families, 
-      const RecModelInfo &recModelInfo,
-      const Parameters &rates);
+      const ModelParameters &parameters);
 
   
 
