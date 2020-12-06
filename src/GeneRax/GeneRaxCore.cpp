@@ -81,9 +81,9 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
     Logger::timed << "Filtering invalid families..." << std::endl;
     Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, false);
   }
-  Logger::info << "Starting species tree initialization..." << std::endl;
+  Logger::timed << "Starting species tree initialization..." << std::endl;
   initStartingSpeciesTree(instance);
-  Logger::info << "End of species tree initialization" << std::endl;
+  Logger::timed << "End of species tree initialization" << std::endl;
   if (instance.args.filterFamilies) {
     Logger::timed << "Filtering invalid families based on the starting species tree..." << std::endl;
     Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, true);
