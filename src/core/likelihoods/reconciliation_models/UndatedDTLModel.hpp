@@ -364,6 +364,17 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     proba += values[3];
     proba += values[4];
   }
+  if (this->_mlEventProba) {
+    if (!isGeneLeaf) {
+      pll_unode_t *transferedGene = 0;
+      pll_unode_t *stayingGene = 0;
+      pll_rnode_t *recievingSpecies = 0;
+      values[5] = values[6] = REAL(); // invalidate these ones
+      getBestTransfer(geneNode, speciesNode, isVirtualRoot, 
+          transferedGene, stayingGene, recievingSpecies, values[5], stochastic);
+    }
+    proba = *std::max_element(values.begin(), values.end());
+  }
   if (event) {
     assert(scenario);
     pll_unode_t *transferedGene = 0;
