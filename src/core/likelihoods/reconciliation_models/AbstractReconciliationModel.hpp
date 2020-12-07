@@ -826,11 +826,12 @@ bool AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario, bool
   pll_unode_t *geneRoot = 0;
   pll_rnode_t *speciesRoot = 0;
   auto ll1 = computeLogLikelihood();
-  auto saveMLEventProba = _mlEventProba;
-  _mlEventProba = true;
-  auto ll2 = computeLogLikelihood();
-  _mlEventProba = saveMLEventProba;
-  Logger::info << "hey " << ll1 << " " << ll2 << std::endl;
+  if(!stochastic) {
+    auto saveMLEventProba = _mlEventProba;
+    _mlEventProba = true;
+    auto ll2 = computeLogLikelihood();
+    _mlEventProba = saveMLEventProba;
+  }
   computeMLRoot(geneRoot, speciesRoot);
   assert(geneRoot);
   assert(speciesRoot);
