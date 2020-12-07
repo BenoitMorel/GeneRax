@@ -192,7 +192,6 @@ protected:
 protected:
   RecModelInfo _info;
   pll_unode_t *_geneRoot;
-  bool _mlEventProba;
   unsigned int _allSpeciesNodesCount;
   std::vector <pll_rnode_t *> _speciesNodesToUpdate;
   std::vector <pll_rnode_t *> _allSpeciesNodes;
@@ -248,7 +247,6 @@ private:
   PLLUnrootedTree *_pllUnrootedTree;
   bool _madRootingEnabled;
   std::vector<double> _madProbabilities;
-
 };
 
 
@@ -260,7 +258,6 @@ AbstractReconciliationModel<REAL>::AbstractReconciliationModel(
     const RecModelInfo &recModelInfo):
   _info(recModelInfo),
   _geneRoot(0),
-  _mlEventProba(false),
   _maxGeneId(1),
   _likelihoodMode(PartialLikelihoodMode::PartialGenes),
   _speciesTree(speciesTree),
@@ -825,13 +822,6 @@ bool AbstractReconciliationModel<REAL>::inferMLScenario(Scenario &scenario, bool
 
   pll_unode_t *geneRoot = 0;
   pll_rnode_t *speciesRoot = 0;
-  auto ll1 = computeLogLikelihood();
-  if(!stochastic) {
-    auto saveMLEventProba = _mlEventProba;
-    _mlEventProba = true;
-    auto ll2 = computeLogLikelihood();
-    _mlEventProba = saveMLEventProba;
-  }
   computeMLRoot(geneRoot, speciesRoot);
   assert(geneRoot);
   assert(speciesRoot);
