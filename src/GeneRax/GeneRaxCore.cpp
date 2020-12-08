@@ -391,6 +391,7 @@ void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
       << std::endl;
     ICCalculator calculator(instance.speciesTree,
         instance.initialFamilies,
+        instance.args.eqpicRadius,
         true);
     auto qpicOutput = Paths::getSpeciesTreeFile(instance.args.output,
         "species_tree_qpic.newick");
@@ -402,14 +403,20 @@ void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
     Logger::timed 
       << "Finished estimating species tree support values" 
       << std::endl;
+    ParallelContext::barrier();
+    FileSystem::copy(eqpicOutput, instance.speciesTree, true);
+     
   }
   ParallelContext::barrier();
+
+
   if (instance.args.quartetSupportAllQuartets) { 
     Logger::timed 
       << "Start estimating species tree support values" 
       << std::endl;
     ICCalculator calculator(instance.speciesTree,
         instance.currentFamilies,
+        instance.args.eqpicRadius,
         false);
     auto qpicOutput = Paths::getSpeciesTreeFile(instance.args.output,
         "species_tree_qpic_allquartets.newick");

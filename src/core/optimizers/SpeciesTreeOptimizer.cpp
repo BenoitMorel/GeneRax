@@ -404,9 +404,12 @@ std::vector<double> SpeciesTreeOptimizer::_getSupport()
 {
   std::string temp = FileSystem::joinPaths(_outputDir, "tmp");
   std::vector<double> idToSupport;
+  bool paralogyAware = true;
+  unsigned int eqpicRadius = 3;
   ICCalculator::computeScores(_speciesTree->getTree(),
       _initialFamilies,
-      true,
+      paralogyAware,
+      eqpicRadius,
       temp,
       idToSupport);
   for (auto node: _speciesTree->getTree().getLeaves()) {

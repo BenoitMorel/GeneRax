@@ -59,6 +59,7 @@ public:
    double minGeneBranchLength;
    bool quartetSupport;
    bool quartetSupportAllQuartets;
+   int eqpicRadius;
 private:
 
   void init();

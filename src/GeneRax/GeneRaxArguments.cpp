@@ -43,7 +43,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   speciesInitialFamiliesSubsamples(-1),
   minGeneBranchLength(0.000001),
   quartetSupport(false),
-  quartetSupportAllQuartets(false)
+  quartetSupportAllQuartets(false),
+  eqpicRadius(3)
 {
   if (argc == 1) {
     printHelp();
@@ -118,6 +119,7 @@ void GeneRaxArguments::init() {
     } else if (arg == "--optimize-species-tree") {
       optimizeSpeciesTree = true;
       estimateSpeciesBranchLenghts = true;
+      quartetSupport = true;
     } else if (arg == "--estimate-species-bl") {
       estimateSpeciesBranchLenghts = true;
     } else if (arg == "--fraction-missing") {
@@ -137,8 +139,12 @@ void GeneRaxArguments::init() {
       minGeneBranchLength = atof(argv[++i]);
     } else if (arg == "--quartet-support") {
       quartetSupport = true; 
+    } else if (arg == "--no-quartet-support") {
+      quartetSupport = false; 
     } else if (arg == "--quartet-support-all-quartets") {
       quartetSupportAllQuartets = true; 
+    } else if (arg == "--eqpic-radius") {
+      eqpicRadius = atoi(argv[++i]); 
     } else {
       Logger::error << "Unrecognized argument " << arg << std::endl;
       Logger::error << "Aborting" << std::endl;

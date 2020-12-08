@@ -20,11 +20,13 @@ public:
   /**
    *  @param referenceTreePath 
    *  @param families information about evaluation trees
+   *  @param eqpicRadius max size of the branch path to consider for eqpic computation
    *  @param paralogy if set to true, only consider speciation-driven quartets
    */
   ICCalculator(const std::string &referenceTreePath,
       const Families &families,
-      bool paralogy = true);
+      int eqpicRadius,
+      bool paralogy);
   
   void computeScores(const std::string &outputQPIC,
       const std::string &outputEQPIC,
@@ -33,6 +35,7 @@ public:
   static void computeScores(PLLRootedTree &tree,
       const Families &families,
       bool paralogy,
+      int eqpicRadius,
       const std::string &tempPrefix,
       std::vector<double> &idToSupport);
 
@@ -50,7 +53,7 @@ private:
  
   // parameters
   bool _paralogy;
-
+  int _eqpicRadius;
   // intermediate results
   IntersectionCounts _interCounts;
   QuadriCounts _quadriCounts;

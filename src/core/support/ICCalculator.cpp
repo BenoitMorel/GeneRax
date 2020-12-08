@@ -15,13 +15,15 @@
 
 ICCalculator::ICCalculator(const std::string &referenceTreePath,
       const Families &families,
+      int eqpicRadius,
       bool paralogy):
   _rootedReferenceTree(referenceTreePath),
   _referenceTree(_rootedReferenceTree),
   _referenceRoot(_referenceTree.getVirtualRoot(_rootedReferenceTree)),
   _perCoreGeneTrees(families),
   _taxaNumber(0),
-  _paralogy(paralogy)
+  _paralogy(paralogy),
+  _eqpicRadius(eqpicRadius)
 {
   Logger::info << "Account for paralogy: " << paralogy << std::endl;
 }
@@ -362,20 +364,13 @@ void ICCalculator::_computeQuadriCounts()
 
   for (unsigned int i = 0; i < speciesInnerNodes.size(); ++i) {
     auto unode = speciesInnerNodes[i];
-    for (unsigned int j = 0; j < speciesInnerNodes.size(); ++j) {
-    //for (unsigned int j = i+1; j < speciesInnerNodes.size(); ++j) {
+    //for (unsigned int j = 0; j < speciesInnerNodes.size(); ++j) {
+    for (unsigned int j = i+1; j < speciesInnerNodes.size(); ++j) {
       if (i == j) {
         continue;
       }
       std::array<unsigned long, 3> counts = {0, 0, 0};
       auto vnode = speciesInnerNodes[j];
-      /*
-      if (!(vnode->back == unode || vnode->next->back == unode 
-          || vnode->next->next->back == unode))
-      {
-        continue;
-      }
-      */
       assert(unode->next && vnode->next);
       assert(unode->next != vnode && unode->next->next != vnode);
       assert(vnode->next != unode && vnode->next->next != unode);
@@ -383,7 +378,7 @@ void ICCalculator::_computeQuadriCounts()
       _referenceTree.orientTowardEachOther(&unode, 
           &vnode,
           branchPath);
-      if (branchPath.size() > 3) {
+      if (static_cast<int>(branchPath.size()) > _eqpicRadius) {
         continue;
       }
       std::vector<unsigned int> branchIndices;
@@ -493,6 +488,7 @@ void ICCalculator::_computeRefBranchIndices()
 void ICCalculator::computeScores(PLLRootedTree &tree,
       const Families &families,
       bool paralogy,
+      int eqpicRadius,
       const std::string &tempPrefix,
       std::vector<double> &idToSupport)
 {
@@ -505,7 +501,7 @@ void ICCalculator::computeScores(PLLRootedTree &tree,
     tree.save(tempInputTree);
   }
   ParallelContext::barrier();
-  ICCalculator calculator(tempInputTree, families, paralogy);
+  ICCalculator calculator(tempInputTree, families, eqpicRadius, paralogy);
   calculator.computeScores(tempOutputQPIC, 
       tempOutputEQPIC, 
       tempOutputSupport);
