@@ -86,4 +86,5 @@ private:
   void _computeRefBranchIndices();
   std::string _getNewickWithScore(std::vector<double> &branchScores, const std::string &scoreName);
 
+
 };

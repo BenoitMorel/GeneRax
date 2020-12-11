@@ -45,6 +45,10 @@ public:
       return "EVAL";
     case SpeciesSearchStrategy::HYBRID:
       return "HYBRID";
+    case SpeciesSearchStrategy::REROOT:
+      return "REROOT";
+    case SpeciesSearchStrategy::EVAL:
+      return "EVAL";
     }
     exit(41);
   }
@@ -57,6 +61,10 @@ public:
       return SpeciesSearchStrategy::TRANSFERS;
     }  else if (str == "HYBRID") {
       return SpeciesSearchStrategy::HYBRID;
+    }  else if (str == "REROOT") {
+      return SpeciesSearchStrategy::REROOT;
+    }  else if (str == "EVAL") {
+      return SpeciesSearchStrategy::EVAL;
     } else {
       Logger::info << "Invalid species strategy " << str << std::endl;
       exit(41);

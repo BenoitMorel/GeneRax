@@ -520,4 +520,4 @@ void ICCalculator::computeScores(PLLRootedTree &tree,
     idToSupport[nodeIndex] = atof(supportedNode->label);
   }
 }
-
+    

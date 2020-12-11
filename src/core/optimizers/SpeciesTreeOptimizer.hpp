@@ -118,4 +118,14 @@ private:
     _optimizationCriteria = criteria;
   }
   std::vector<double> _getSupport();
+  
+  struct RootLoglikelihoods {
+    void reset() {
+      idToLL.clear();
+    }
+    void saveValue(pll_rnode_t *t, double ll);
+    void fillTree(PLLRootedTree &tree);
+    
+    std::unordered_map<std::string, double> idToLL;
+  };
 };

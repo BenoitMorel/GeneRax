@@ -37,7 +37,7 @@ enum class GeneSearchStrategy {
  * Species tree search mode
  */
 enum class SpeciesSearchStrategy {
-  SPR, TRANSFERS, HYBRID
+  SPR, TRANSFERS, HYBRID, REROOT, EVAL
 };
 
 /*

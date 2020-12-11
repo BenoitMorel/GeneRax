@@ -68,6 +68,9 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
 {
   setOptimizationCriteria(criteria);
   _bestRecLL = computeRecLikelihood();
+  size_t hash1 = 0;
+  size_t hash2 = 0;
+  unsigned int index = 0;
   switch (strategy) {
   case SpeciesSearchStrategy::SPR:
     for (unsigned int radius = 1; radius <= sprRadius; ++radius) {
@@ -87,9 +90,6 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
      *  SPR search, until one does not find
      *  a better tree. Run each at least once.
      */
-    size_t hash1 = 0;
-    size_t hash2 = 0;
-    unsigned int index = 0;
     if (_hardToFindBetter) {
       optimizeDTLRates();
       _bestRecLL = computeRecLikelihood();
@@ -108,6 +108,13 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     }
     while(testAndSwap(hash1, hash2));
     rootSearch(5);
+    break;
+  case SpeciesSearchStrategy::REROOT:
+    rootSearch(5);
+    break;
+  case SpeciesSearchStrategy::EVAL:
+    optimizeDTLRates();
+    Logger::info << "Reconciliation likelihood: " << computeRecLikelihood() << std::endl;
     break;
   }
   setOptimizationCriteria(ReconciliationLikelihood);
@@ -720,4 +727,50 @@ unsigned int SpeciesTreeOptimizer::_unsupportedCladesNumber()
       _geneClades);
   return speciesClades.size() - intersectionSize;
 }
+
+static std::string getSubtreeID(pll_rnode_t *subtree)
+{
+  if (!subtree->left) {
+    return std::string(subtree->label);
+  }
+  std::string res("(");
+  std::string id1 = getSubtreeID(subtree->left);
+  std::string id2 = getSubtreeID(subtree->right);
+  if  (id1 > id2) {
+    std::swap(id1, id2);
+  }
+  return std::string("(") + id1 + "," + id2 + ")";
+}
+    
+void SpeciesTreeOptimizer::RootLoglikelihoods::saveValue(pll_rnode_t *subtree, double ll) 
+{
+  auto id = getSubtreeID(subtree); 
+  idToLL[id] = ll;
+}
+
+void SpeciesTreeOptimizer::RootLoglikelihoods::fillTree(PLLRootedTree &tree)
+{
+  for (auto node: tree.getNodes()) {
+    auto id = getSubtreeID(node);
+    std::string label;
+    if(node->label) {
+      label = std::string(node->label);
+      free(node->label);
+      node->label = nullptr;
+      label += "-";
+    }
+    if (idToLL.find(id) != idToLL.end()) {
+      // we have a likelihood value
+      double value = idToLL[id];
+      label += std::to_string(value);
+      node->label = (char*)malloc(label.size() + 1);
+      memcpy(node->label, label.c_str(), label.size());
+      node->label[label.size()] = 0;
+    }
+  }
+}
+
+
+
+
   
