@@ -119,7 +119,7 @@ private:
   }
   std::vector<double> _getSupport();
   
-  struct RootLoglikelihoods {
+  struct RootLikelihoods {
     void reset() {
       idToLL.clear();
     }
@@ -128,4 +128,5 @@ private:
     
     std::unordered_map<std::string, double> idToLL;
   };
+  RootLikelihoods _rootLikelihoods;
 };

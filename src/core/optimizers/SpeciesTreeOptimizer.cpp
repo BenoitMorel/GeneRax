@@ -148,6 +148,9 @@ void SpeciesTreeOptimizer::rootSearchAux(SpeciesTree &speciesTree,
       SpeciesTreeOperator::changeRoot(speciesTree, direction);
       optimizeGeneRoots();
       double ll = computeRecLikelihood();
+      auto root = speciesTree.getRoot();
+      _rootLikelihoods.saveValue(root->left, ll);
+      _rootLikelihoods.saveValue(root->right, ll);
       visits++;
       unsigned int plop = 0;
       if (ll > bestLL) {
@@ -177,6 +180,12 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
   std::vector<unsigned int> movesHistory;
   std::vector<unsigned int> bestMovesHistory;
   double bestLL = computeRecLikelihood();
+  
+  _rootLikelihoods.reset();
+  auto root = _speciesTree->getRoot();
+  _rootLikelihoods.saveValue(root->left, bestLL);
+  _rootLikelihoods.saveValue(root->right, bestLL);
+  
   unsigned int visits = 1;
   movesHistory.push_back(0);
   rootSearchAux(*_speciesTree, 
@@ -201,6 +210,15 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
     SpeciesTreeOperator::changeRoot(*_speciesTree, bestMovesHistory[i]);
   }
   optimizeGeneRoots();
+  {
+    auto newick = _speciesTree->getTree().getNewickString();
+    PLLRootedTree tree(newick, false); 
+    _rootLikelihoods.fillTree(tree);
+    auto out = Paths::getSpeciesTreeFile(_outputDir, 
+        "species_tree_llr.newick");
+    Logger::info << "Saving root candidates likelihood ratio into " << out << std::endl;
+    tree.save(out);
+  }
   return bestLL;
 }
 
@@ -742,26 +760,36 @@ static std::string getSubtreeID(pll_rnode_t *subtree)
   return std::string("(") + id1 + "," + id2 + ")";
 }
     
-void SpeciesTreeOptimizer::RootLoglikelihoods::saveValue(pll_rnode_t *subtree, double ll) 
+void SpeciesTreeOptimizer::RootLikelihoods::saveValue(pll_rnode_t *subtree, double ll) 
 {
   auto id = getSubtreeID(subtree); 
   idToLL[id] = ll;
 }
 
-void SpeciesTreeOptimizer::RootLoglikelihoods::fillTree(PLLRootedTree &tree)
+void SpeciesTreeOptimizer::RootLikelihoods::fillTree(PLLRootedTree &tree)
 {
+  std::vector<double> nodeIdToLL(tree.getNodesNumber(), 0.0);
+  double bestLL = -std::numeric_limits<double>::infinity();
   for (auto node: tree.getNodes()) {
     auto id = getSubtreeID(node);
-    std::string label;
-    if(node->label) {
-      label = std::string(node->label);
-      free(node->label);
-      node->label = nullptr;
-      label += "-";
-    }
     if (idToLL.find(id) != idToLL.end()) {
       // we have a likelihood value
-      double value = idToLL[id];
+      auto value = idToLL[id];
+      nodeIdToLL[node->node_index] = value;
+      bestLL = std::max<double>(value, bestLL);
+    }
+  }
+  for (auto node: tree.getNodes()) {
+    bool hasValue = nodeIdToLL[node->node_index] != 0.0;
+    std::string label;
+    if (hasValue) {
+      double value = nodeIdToLL[node->node_index] - bestLL;
+      if(!node->left && node->label) {
+        label = std::string(node->label);
+        free(node->label);
+        node->label = nullptr;
+        label += "_";
+      }
       label += std::to_string(value);
       node->label = (char*)malloc(label.size() + 1);
       memcpy(node->label, label.c_str(), label.size());
