@@ -53,7 +53,6 @@ public:
    bool rerootSpeciesTree;
    bool estimateSpeciesBranchLenghts;
    unsigned int speciesSPRRadius;
-   int speciesInitialFamiliesSubsamples;
    double minGeneBranchLength;
    bool quartetSupport;
    bool quartetSupportAllQuartets;

@@ -187,9 +187,6 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
     return;
   }
   Logger::info << "Saving tree to " << instance.speciesTree << std::endl;
-  if (instance.args.speciesInitialFamiliesSubsamples > 0) {
-    speciesTreeSearchAux(instance, instance.args.speciesInitialFamiliesSubsamples);
-  }
   speciesTreeSearchAux(instance, -1);
 }
 

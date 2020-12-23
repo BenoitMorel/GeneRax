@@ -38,7 +38,6 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   rerootSpeciesTree(false),
   estimateSpeciesBranchLenghts(false), 
   speciesSPRRadius(1),
-  speciesInitialFamiliesSubsamples(-1),
   minGeneBranchLength(0.000001),
   quartetSupport(false),
   quartetSupportAllQuartets(false),
@@ -132,8 +131,6 @@ void GeneRaxArguments::init() {
       estimateSpeciesBranchLenghts = true;
     } else if (arg == "--si-quartet-support") {
       quartetSupport = true; 
-    } else if (arg == "--si-no-quartet-support") {
-      quartetSupport = false; 
     } else if (arg == "--si-eqpic-radius") {
       eqpicRadius = atoi(argv[++i]); 
     /**
@@ -150,17 +147,10 @@ void GeneRaxArguments::init() {
       quartetSupportAllQuartets = true; 
     } else if (arg == "--use-transfer-frequencies") {
       useTransferFrequencies = true;
-    /**
-     *  WTF
-     */
-    } else if (arg == "--species-initial-samples") {
-      speciesInitialFamiliesSubsamples = static_cast<unsigned int>(atoi(argv[++i]));
-      estimateSpeciesBranchLenghts = true;
-      quartetSupport = true;
     } else {
       Logger::info << "Unrecognized argument " << arg << std::endl;
       Logger::info << "Aborting" << std::endl;
-      ParalleContext::abort(1);
+      ParallelContext::abort(1);
     }
   }
   execPath = std::string(argv[0]);
