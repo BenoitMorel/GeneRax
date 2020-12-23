@@ -10,7 +10,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   argv(iargv),
   speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
   strategy(GeneSearchStrategy::SPR),
-  speciesStrategy(SpeciesSearchStrategy::HYBRID),
+  speciesStrategy(SpeciesSearchStrategy::SKIP),
   reconciliationModelStr("UndatedDTL"),
   output("GeneRax"),
   perFamilyDTLRates(false),
@@ -25,7 +25,6 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   dupRate(0.2),
   lossRate(0.2),
   transferRate(0.2),
-  optimizeGeneTrees(true),
   reconcile(true),
   buildSuperMatrix(false),
   reconciliationSamples(0),
@@ -37,7 +36,6 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   fractionMissing(false),
   constrainSpeciesSearch(false),
   rerootSpeciesTree(false),
-  optimizeSpeciesTree(false),
   estimateSpeciesBranchLenghts(false), 
   speciesSPRRadius(1),
   speciesInitialFamiliesSubsamples(-1),
@@ -56,6 +54,9 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
 void GeneRaxArguments::init() {
   for (int i = 1; i < argc; ++i) {
     std::string arg(argv[i]);
+    /**
+     * General parameters
+     */
     if (arg == "-h" || arg == "--help") {
       printHelp();
       ParallelContext::abort(0);
@@ -64,17 +65,17 @@ void GeneRaxArguments::init() {
     } else if (arg == "-s" || arg == "--species-tree") {
       speciesTree = std::string(argv[++i]);
       speciesTreeAlgorithm = Enums::strToSpeciesTree(speciesTree);
-    } else if (arg == "--strategy") {
-      strategy = ArgumentsHelper::strToStrategy(std::string(argv[++i]));
-      if (strategy == GeneSearchStrategy::EVAL) {
-        recRadius = maxSPRRadius = 0;
-      }
-    } else if (arg == "--species-strategy") {
-      speciesStrategy = ArgumentsHelper::strToSpeciesSearchStrategy(std::string(argv[++i]));
-    } else if (arg == "-r" || arg == "--rec-model") {
-      reconciliationModelStr = std::string(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
       output = std::string(argv[++i]);
+    } else if (arg == "--seed") {
+      seed = atoi(argv[++i]);
+    } else if (arg == "--skip-family-filtering") {
+      filterFamilies = false;
+    /**
+     *  Model parameters
+     */
+    } else if (arg == "-r" || arg == "--rec-model") {
+      reconciliationModelStr = std::string(argv[++i]);
     } else if (arg == "--per-family-rates") {
       perFamilyDTLRates = true;
     } else if (arg == "--unrooted-gene-tree") {
@@ -83,14 +84,10 @@ void GeneRaxArguments::init() {
       madRooting = true;
     } else if (arg == "--prune-species-tree") {
       pruneSpeciesTree = true;
-    } else if (arg == "--support-threshold") {
-      supportThreshold = static_cast<double>(atof(argv[++i]));
     } else if (arg == "--rec-radius") {
       recRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--per-species-rates") {
       perSpeciesDTLRates = true;
-    } else if (arg == "--use-transfer-frequencies") {
-      useTransferFrequencies = true;
     } else if (arg == "--dup-rate") {
       dupRate = atof(argv[++i]);
       userDTLRates = true;
@@ -100,55 +97,70 @@ void GeneRaxArguments::init() {
     } else if (arg == "--transfer-rate") {
       transferRate = atof(argv[++i]);
       userDTLRates = true;
-    } else if (arg == "--max-spr-radius") {
-      maxSPRRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--rec-weight") {
       recWeight = atof(argv[++i]);
-    } else if (arg == "--seed") {
-      seed = atoi(argv[++i]);
-    } else if (arg == "--skip-family-filtering") {
-      filterFamilies = false;
-    } else if (arg == "--species-spr-radius") {
-      speciesSPRRadius = static_cast<unsigned int>(atoi(argv[++i]));
-    } else if (arg == "--species-initial-samples") {
-      speciesInitialFamiliesSubsamples = static_cast<unsigned int>(atoi(argv[++i]));
-    } else if (arg == "--constrained-species-search") {
-      constrainSpeciesSearch = true;
-    } else if (arg == "--reroot-species-tree") {
-      rerootSpeciesTree = true;
-    } else if (arg == "--optimize-species-tree") {
-      optimizeSpeciesTree = true;
-      estimateSpeciesBranchLenghts = true;
-      quartetSupport = true;
-    } else if (arg == "--estimate-species-bl") {
-      estimateSpeciesBranchLenghts = true;
-    } else if (arg == "--fraction-missing") {
-      fractionMissing = true;
-    } else if (arg == "--do-not-optimize-gene-trees") {
-      optimizeGeneTrees = false;
+    } else if (arg == "--reconciliation-samples") {
+      reconciliationSamples = static_cast<unsigned int>(atoi(argv[++i]));
+    /**
+     * Gene tree correction
+     */
+    } else if (arg == "--strategy") {
+      strategy = ArgumentsHelper::strToStrategy(std::string(argv[++i]));
+      if (strategy == GeneSearchStrategy::EVAL) {
+        recRadius = maxSPRRadius = 0;
+      }
     } else if (arg == "--reconcile") {
       reconcile = true;
     } else if (arg == "--do-not-reconcile") {
       reconcile = false;
+    } else if (arg == "--support-threshold") {
+      supportThreshold = static_cast<double>(atof(argv[++i]));
+    } else if (arg == "--max-spr-radius") {
+      maxSPRRadius = static_cast<unsigned int>(atoi(argv[++i]));
+    /**
+     *  Species tree inference
+     */
+    } else if (arg == "--si-strategy") {
+      speciesStrategy = ArgumentsHelper::strToSpeciesSearchStrategy(std::string(argv[++i]));
+    } else if (arg == "--si-spr-radius") {
+      speciesSPRRadius = static_cast<unsigned int>(atoi(argv[++i]));
+    } else if (arg == "--si-constrained-search") {
+      constrainSpeciesSearch = true;
+    } else if (arg == "--si-reroot") {
+      rerootSpeciesTree = true;
+    } else if (arg == "--si-estimate-bl") {
+      estimateSpeciesBranchLenghts = true;
+    } else if (arg == "--si-quartet-support") {
+      quartetSupport = true; 
+    } else if (arg == "--si-no-quartet-support") {
+      quartetSupport = false; 
+    } else if (arg == "--si-eqpic-radius") {
+      eqpicRadius = atoi(argv[++i]); 
+    /**
+     *  Experimental and debug
+     */
+    } else if (arg == "--fraction-missing") {
+      fractionMissing = true;
     } else if (arg == "--build-supermatrix") {
       reconcile = true;
       buildSuperMatrix = true;
-    } else if (arg == "--reconciliation-samples") {
-      reconciliationSamples = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--gene-min-bl") {
       minGeneBranchLength = atof(argv[++i]);
-    } else if (arg == "--quartet-support") {
-      quartetSupport = true; 
-    } else if (arg == "--no-quartet-support") {
-      quartetSupport = false; 
     } else if (arg == "--quartet-support-all-quartets") {
       quartetSupportAllQuartets = true; 
-    } else if (arg == "--eqpic-radius") {
-      eqpicRadius = atoi(argv[++i]); 
+    } else if (arg == "--use-transfer-frequencies") {
+      useTransferFrequencies = true;
+    /**
+     *  WTF
+     */
+    } else if (arg == "--species-initial-samples") {
+      speciesInitialFamiliesSubsamples = static_cast<unsigned int>(atoi(argv[++i]));
+      estimateSpeciesBranchLenghts = true;
+      quartetSupport = true;
     } else {
-      Logger::error << "Unrecognized argument " << arg << std::endl;
-      Logger::error << "Aborting" << std::endl;
-      ParallelContext::abort(1);
+      Logger::info << "Unrecognized argument " << arg << std::endl;
+      Logger::info << "Aborting" << std::endl;
+      ParalleContext::abort(1);
     }
   }
   execPath = std::string(argv[0]);
@@ -167,7 +179,7 @@ static void assertFileExists(const std::string &file)
 
 void GeneRaxArguments::checkInputs() {
   bool ok = true;
-  if (!speciesTree.size() && !optimizeSpeciesTree) {
+  if (!speciesTree.size() && speciesStrategy != SpeciesSearchStrategy::SKIP) {
     Logger::info << "[Error] You need to provide a species tree or to optimize it." << std::endl;
     ok = false;
   }

@@ -76,7 +76,7 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   instance.args.printSummary();
   instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
   initFolders(instance);
-  bool needAlignments = instance.args.optimizeGeneTrees;
+  bool needAlignments = instance.args.strategy != GeneSearchStrategy::SKIP;
   if (instance.args.filterFamilies) {
     Logger::timed << "Filtering invalid families..." << std::endl;
     Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, false);
@@ -147,7 +147,6 @@ void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
 static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
 {
   Families saveFamilies = instance.currentFamilies;
-
   if (samples > 0) {
     auto rng = std::default_random_engine {};
     std::shuffle(instance.currentFamilies.begin(), instance.currentFamilies.end(), rng);
@@ -184,7 +183,7 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
 void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
-  if (!instance.args.optimizeSpeciesTree) {
+  if (instance.args.speciesStrategy == SpeciesSearchStrategy::SKIP) {
     return;
   }
   Logger::info << "Saving tree to " << instance.speciesTree << std::endl;
@@ -198,7 +197,7 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
 void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
-  if (!instance.args.optimizeGeneTrees) {
+  if (instance.args.strategy == GeneSearchStrategy::SKIP) {
     return;
   }
   for (unsigned int i = 1; i <= instance.args.recRadius; ++i) { 

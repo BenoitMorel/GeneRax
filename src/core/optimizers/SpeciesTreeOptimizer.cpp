@@ -116,6 +116,8 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     optimizeDTLRates();
     Logger::info << "Reconciliation likelihood: " << computeRecLikelihood() << std::endl;
     break;
+  case SpeciesSearchStrategy::SKIP:
+    assert(false);
   }
   setOptimizationCriteria(ReconciliationLikelihood);
 }

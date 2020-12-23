@@ -20,6 +20,8 @@ public:
       return "SPR";
     case GeneSearchStrategy::EVAL:
       return "EVAL";
+    case GeneSearchStrategy::SKIP:
+      return "SKIP";
     }
     exit(41);
   }
@@ -30,6 +32,8 @@ public:
       return GeneSearchStrategy::SPR;
     }  else if (str == "EVAL") {
       return GeneSearchStrategy::EVAL;
+    }  else if (str == "SKIP") {
+      return GeneSearchStrategy::SKIP;
     } else {
       Logger::info << "Invalid strategy " << str << std::endl;
       exit(41);
@@ -49,6 +53,8 @@ public:
       return "REROOT";
     case SpeciesSearchStrategy::EVAL:
       return "EVAL";
+    case SpeciesSearchStrategy::SKIP:
+      return "SKIP";
     }
     exit(41);
   }
@@ -65,6 +71,8 @@ public:
       return SpeciesSearchStrategy::REROOT;
     }  else if (str == "EVAL") {
       return SpeciesSearchStrategy::EVAL;
+    }  else if (str == "SKIP") {
+      return SpeciesSearchStrategy::SKIP;
     } else {
       Logger::info << "Invalid species strategy " << str << std::endl;
       exit(41);

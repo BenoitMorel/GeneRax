@@ -37,7 +37,6 @@ public:
    double dupRate;
    double lossRate;
    double transferRate;
-   bool optimizeGeneTrees;
    bool reconcile;
    bool buildSuperMatrix;
    unsigned int reconciliationSamples;
@@ -52,7 +51,6 @@ public:
    // species tree search
    bool constrainSpeciesSearch;
    bool rerootSpeciesTree;
-   bool optimizeSpeciesTree;
    bool estimateSpeciesBranchLenghts;
    unsigned int speciesSPRRadius;
    int speciesInitialFamiliesSubsamples;
