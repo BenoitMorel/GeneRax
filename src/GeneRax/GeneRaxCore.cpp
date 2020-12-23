@@ -57,7 +57,7 @@ static void initStartingSpeciesTree(GeneRaxInstance &instance)
   ParallelContext::barrier();
   if (ParallelContext::getRank() == 0) {
     SpeciesTree copy(instance.speciesTree); 
-    instance.speciesTree = FileSystem::joinPaths(instance.args.output, "inferred_species_tree.newick");
+    instance.speciesTree = Paths::getSpeciesTreeFile(instance.args.output, "inferred_species_tree.newick");
     copy.getTree().save(instance.speciesTree);
   }
   ParallelContext::barrier();
@@ -125,24 +125,6 @@ void GeneRaxCore::printStats(GeneRaxInstance &instance)
   }
 }
 
-void GeneRaxCore::rerootSpeciesTree(GeneRaxInstance &instance)
-{
-  if (instance.args.rerootSpeciesTree) {
-    Logger::info << "Rerooting the species tree..." << std::endl;
-    Logger::info << "Reroot species tree..." << std::endl;
-    Parameters startingRates = instance.getUserParameters();
-    SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, 
-        instance.currentFamilies, 
-        instance.getRecModelInfo(), 
-        startingRates, 
-        instance.args.userDTLRates, 
-        instance.args.output, 
-        instance.args.constrainSpeciesSearch);
-    speciesTreeOptimizer.optimizeDTLRates();
-    speciesTreeOptimizer.rootSearch();
-    instance.speciesTree = speciesTreeOptimizer.saveCurrentSpeciesTreeId();
-  }
-}
 
 static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
 {

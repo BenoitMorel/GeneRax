@@ -606,7 +606,7 @@ double SpeciesTreeOptimizer::optimizeDTLRates()
   
 std::string SpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
 {
-  std::string res = FileSystem::joinPaths(_outputDir, name);
+  std::string res = Paths::getSpeciesTreeFile(_outputDir, name);
   saveCurrentSpeciesTreePath(res, masterRankOnly);
   return res;
 }

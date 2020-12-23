@@ -30,7 +30,6 @@ public:
    * Infer a species tree if species tree inference is enabled
    */
   static void speciesTreeSearch(GeneRaxInstance &instance);
-  static void rerootSpeciesTree(GeneRaxInstance &instance);
 
   /**
    *  Apply a gene tree search based on the joint likelihood, 
