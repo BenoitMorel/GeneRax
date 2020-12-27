@@ -25,40 +25,42 @@ ICCalculator::ICCalculator(const std::string &referenceTreePath,
   _paralogy(paralogy),
   _eqpicRadius(eqpicRadius)
 {
-  Logger::info << "Account for paralogy: " << paralogy << std::endl;
 }
 
 void ICCalculator::computeScores(const std::string &outputQPIC,
     const std::string &outputEQPIC,
     const std::string &outputSupport)
 {
-  Logger::timed << "Read trees" << std::endl;
+  std::string outputSupportTriplets = outputSupport + ".three";
+  Logger::timed << "[Quartet support] Read trees" << std::endl;
   _readTrees();
   _computeRefBranchIndices();
   ParallelContext::barrier();
-  Logger::timed << "COmpute intersections" << std::endl;
+  Logger::timed << "[Quartet support] Compute intersections" << std::endl;
   _computeIntersections();
   ParallelContext::barrier();
-  Logger::timed << "COmpute quadricounts" << std::endl;
+  Logger::timed << "[Quartet support] Compute quadricounts" << std::endl;
   _computeQuadriCounts();
   ParallelContext::barrier();
-  Logger::timed << "End of support computation" << std::endl;
+  Logger::timed << "[Quartet support] End of support computation" << std::endl;
 
-  Logger::info << "Writing species tree with QPIC scores in " << outputQPIC << std::endl;
-  Logger::info << "Writing species tree with EQPIC scores in " << outputEQPIC << std::endl;
-  Logger::info << "Writing species tree with quartet support scores in " << outputSupport << std::endl;
+  Logger::info << "[Quartet support] Writing species tree with QPIC scores in " << outputQPIC << std::endl;
+  Logger::info << "[Quartet support] Writing species tree with EQPIC scores in " << outputEQPIC << std::endl;
+  Logger::info << "[Quartet support] Writing species tree with quartet support scores in " << outputSupport << std::endl;
+  Logger::info << "[Quartet support] Writing species tree with quartet support score triplets in " << outputSupportTriplets << std::endl;
   ParallelOfstream osQPIC(outputQPIC);
   osQPIC << _getNewickWithScore(_qpic, std::string()) << std::endl;
   ParallelOfstream osEQPIC(outputEQPIC);
   osEQPIC << _getNewickWithScore(_eqpic, std::string()) << std::endl;
   ParallelOfstream osSupport(outputSupport);
-  osSupport << _getNewickWithScore(_localSupport, std::string()) << std::endl;
+  osSupport << _getNewickWithScore(_localSupport1, std::string()) << std::endl;
+  ParallelOfstream osSupportTriplet(outputSupportTriplets);
+  osSupportTriplet << _getNewickWithThreeScores() << std::endl;
 }
 
 
 void ICCalculator::_readTrees()
 {
-  Logger::timed << "[IC computation] Reading trees..." << std::endl; 
   std::unordered_map<std::string, SPID> speciesLabelToSpid;
   
   for (auto speciesLabel: _referenceTree.getLabels()) {
@@ -109,7 +111,6 @@ static unsigned int intersectionSize(const TaxaSet &s1, const TaxaSet &s2)
 
 void ICCalculator::_computeIntersections()
 {
-  Logger::timed << "[IC Computation] Precomputing intersections..." <<std::endl;
   auto speciesNodeCount = _referenceTree.getDirectedNodesNumber();
   auto familyCount= _evaluationTrees.size();
   _interCounts.clear();
@@ -313,28 +314,14 @@ static double getLogScore(const std::array<unsigned long, 3> &q)
   }
 }
 
-static double computeLocalSupport(const std::array<unsigned long, 3> &counts,
-    unsigned long ratio)
-{
-  // We use notations from astral-pro paper
-  std::array<double, 3> z;
-  for (unsigned int i = 0; i < 3; ++i) {
-    z[i] = double(counts[i]) / double(ratio);
-    assert(z[i] >= 0);
-  }
-  auto zsum = std::accumulate(z.begin(), z.end(), 0.0);
-  auto res = z[0] / zsum;
-  return res;
-}
-
-
 void ICCalculator::_computeQuadriCounts()
 {
-  Logger::timed << "Computing scores..." << std::endl;
   auto branchNumbers = _referenceTree.getLeavesNumber() * 2 - 3;
   _qpic = std::vector<double>(branchNumbers, 1.0);
   _eqpic = std::vector<double>(branchNumbers, 1.0);
-  _localSupport = std::vector<double>(branchNumbers, 1.0);
+  _localSupport1 = std::vector<double>(branchNumbers, 1.0);
+  _localSupport2 = std::vector<double>(branchNumbers, 1.0);
+  _localSupport3 = std::vector<double>(branchNumbers, 1.0);
   unsigned int speciesNodeCount = _referenceTree.getDirectedNodesNumber();
   auto familyCount = _evaluationTrees.size();
   _quadriCounts.clear();
@@ -411,13 +398,10 @@ void ICCalculator::_computeQuadriCounts()
       if (branchIndices.size() == 1) {
         auto branchIndex = branchIndices[0];
         _qpic[branchIndex] = qpic;
-        unsigned long ratio = 1;
-        ratio *= _speciesSubtreeSizes[unode->next->back->node_index];
-        ratio *= _speciesSubtreeSizes[unode->next->next->back->node_index];
-        ratio *= _speciesSubtreeSizes[vnode->next->back->node_index];
-        ratio *= _speciesSubtreeSizes[vnode->next->next->back->node_index];
-        
-        _localSupport[branchIndex] = computeLocalSupport(counts, ratio);
+        auto sum = double(std::accumulate(counts.begin(), counts.end(), 0));
+        _localSupport1[branchIndex] = double(counts[0]) / sum;
+        _localSupport2[branchIndex] = double(counts[1]) / sum;
+        _localSupport3[branchIndex] = double(counts[2]) / sum;
       }
       for (auto branchIndex: branchIndices) {
         _eqpic[branchIndex] = std::min(_eqpic[branchIndex], qpic);
@@ -454,6 +438,52 @@ struct ScorePrinter
   }
 };
 
+struct ThreeScoresPrinter
+{
+  ThreeScoresPrinter(const std::string& prefix,
+      const std::vector<double> &score1,
+      const std::vector<double> &score2,
+      const std::vector<double> &score3,
+      const std::vector<unsigned int> &refNodeIndexToBranchIndex):
+    prefix(prefix),
+    score1(score1),
+    score2(score2),
+    score3(score3),
+    refNodeIndexToBranchIndex(refNodeIndexToBranchIndex)
+  {}
+  std::string prefix;
+  const std::vector<double> &score1;
+  const std::vector<double> &score2;
+  const std::vector<double> &score3;
+  const std::vector<unsigned int> &refNodeIndexToBranchIndex;
+  void operator()(pll_unode_t *node, 
+      std::stringstream &ss)
+  {
+    if (node->next && node->back->next) {
+      auto idx = refNodeIndexToBranchIndex[node->node_index];
+      ss << prefix
+        << score1[idx] << "|"
+        << score2[idx] << "| "
+        << score3[idx];
+    } else {
+      if (!node->next && node->label) {
+        ss << node->label;
+      }
+    }
+    ss << ":" << node->length;
+  }
+};
+
+std::string ICCalculator::_getNewickWithThreeScores()
+{
+  ThreeScoresPrinter printer("", 
+      _localSupport1,
+      _localSupport2,
+      _localSupport3,
+      _refNodeIndexToBranchIndex);
+  return _referenceTree.getNewickString(printer, _referenceRoot, true); 
+}
+
 std::string ICCalculator::_getNewickWithScore(std::vector<double> &branchScores, const std::string &scoreName)
 {
   ScorePrinter printer(scoreName.size() ? (scoreName  + " = ") : "", 
@@ -467,7 +497,6 @@ std::string ICCalculator::_getNewickWithScore(std::vector<double> &branchScores,
 
 void ICCalculator::_computeRefBranchIndices()
 {
-  Logger::timed << "[IC computation] Assigning branch indices..." << std::endl; 
   unsigned int currBranchIndex = 0;
   auto branches = _referenceTree.getBranches();
   _refNodeIndexToBranchIndex.resize(branches.size() * 2);

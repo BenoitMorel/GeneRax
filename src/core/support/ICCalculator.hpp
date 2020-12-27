@@ -66,8 +66,10 @@ private:
 
   std::vector<double> _qpic; 
   std::vector<double> _eqpic; 
-  std::vector<double> _localSupport; 
-
+  std::vector<double> _localSupport1; 
+  std::vector<double> _localSupport2; 
+  std::vector<double> _localSupport3; 
+  
   // _isPartitionInFamily[famid][spid]
   std::vector<std::vector<bool> > _isPartitionInFamily;
 
@@ -84,6 +86,7 @@ private:
     const std::array<unsigned int, 4> &refQuadriparition,
     const std::array<unsigned int, 3> &evalTripartition);
   void _computeRefBranchIndices();
+  std::string _getNewickWithThreeScores();
   std::string _getNewickWithScore(std::vector<double> &branchScores, const std::string &scoreName);
 
 
