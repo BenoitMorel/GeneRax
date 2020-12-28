@@ -22,7 +22,7 @@ enum class RecModel {
  *  DTLRates numerical optimization methods
  */
 enum class RecOpt {
-  Grid, Simplex, Gradient
+  Grid, Simplex, Gradient, None
 };
 
 

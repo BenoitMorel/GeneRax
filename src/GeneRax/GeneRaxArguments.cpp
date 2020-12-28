@@ -87,15 +87,17 @@ void GeneRaxArguments::init() {
       recRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--per-species-rates") {
       perSpeciesDTLRates = true;
+    } else if (arg == "--dtl-rates-optimization") {
+      if (ArgumentsHelper::strToRecOpt(argv[++i]) == 
+          RecOpt::None) {
+        userDTLRates = true;
+      }
     } else if (arg == "--dup-rate") {
       dupRate = atof(argv[++i]);
-      userDTLRates = true;
     } else if (arg == "--loss-rate") {
       lossRate = atof(argv[++i]);
-      userDTLRates = true;
     } else if (arg == "--transfer-rate") {
       transferRate = atof(argv[++i]);
-      userDTLRates = true;
     } else if (arg == "--rec-weight") {
       recWeight = atof(argv[++i]);
     } else if (arg == "--reconciliation-samples") {

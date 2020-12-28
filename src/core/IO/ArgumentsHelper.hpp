@@ -122,22 +122,26 @@ public:
   static std::string recOptToStr(RecOpt recOpt) {
     switch(recOpt) {
     case RecOpt::Grid:
-      return "grid";
+      return "GRID";
     case RecOpt::Simplex:
-      return "simplex";
+      return "SIMPLEX";
     case RecOpt::Gradient:
-      return "gradient";
+      return "GRADIENT";
+    case RecOpt::None:
+      return "NONE";
     }
     exit(41);
   }
 
   static RecOpt strToRecOpt(const std::string &str) {
-    if (str == "grid") {
+    if (str == "GRID") {
       return RecOpt::Grid;
-    } else if (str == "simplex") {
+    } else if (str == "SIMPLEX") {
       return RecOpt::Simplex;
-    } else if (str == "gradient") {
+    } else if (str == "GRADIENT") {
       return RecOpt::Gradient;
+    } else if (str == "NONE") {
+      return RecOpt::None;
     } else {
       Logger::info << "Invalid reconciliation optimization method " << str << std::endl;
       exit(41);
