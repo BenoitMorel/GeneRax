@@ -87,7 +87,7 @@ void GeneRaxArguments::init() {
       recRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--per-species-rates") {
       perSpeciesDTLRates = true;
-    } else if (arg == "--dtl-rates-optimization") {
+    } else if (arg == "--dtl-rates-opt") {
       if (ArgumentsHelper::strToRecOpt(argv[++i]) == 
           RecOpt::None) {
         userDTLRates = true;
