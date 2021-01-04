@@ -27,10 +27,24 @@ public:
       const Families &families,
       int eqpicRadius,
       bool paralogy);
-  
-  void computeScores(const std::string &outputQPIC,
+
+  /*
+   *  Export computed scores in newick format
+   *  SupportTriplets corresponds to the three alternative
+   *  quartet topology frequencies.
+   *  Support corresponds to the frequency of the quartets
+   *  present in the species tree
+   *
+   *  @param outputQPIC filepath to the qpic newick output
+   *  @param outputEQPIC filepath to the eqpic newick output
+   *  @param outputSupport filepath to the support newick output
+   *  @param outputSupportTriplets filepath to the qpic newick output
+   *
+   */
+  void exportScores(const std::string &outputQPIC,
       const std::string &outputEQPIC,
-      const std::string &outputSupport);
+      const std::string &outputSupport,
+      const std::string &outputSupportTriplets);
 
   static void computeScores(PLLRootedTree &tree,
       const Families &families,

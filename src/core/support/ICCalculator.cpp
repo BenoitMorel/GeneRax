@@ -27,11 +27,11 @@ ICCalculator::ICCalculator(const std::string &referenceTreePath,
 {
 }
 
-void ICCalculator::computeScores(const std::string &outputQPIC,
+void ICCalculator::exportScores(const std::string &outputQPIC,
     const std::string &outputEQPIC,
-    const std::string &outputSupport)
+    const std::string &outputSupport,
+    const std::string &outputSupportTriplets)
 {
-  std::string outputSupportTriplets = outputSupport + ".three";
   Logger::timed << "[Quartet support] Read trees" << std::endl;
   _readTrees();
   _computeRefBranchIndices();
@@ -526,17 +526,18 @@ void ICCalculator::computeScores(PLLRootedTree &tree,
   std::string tempOutputQPIC = tempPrefix + "qpic.newick";
   std::string tempOutputEQPIC = tempPrefix + "eqpic.newick";
   std::string tempOutputSupport = tempPrefix + "support.newick";
+  std::string tempOutputSupportTriplets = tempPrefix + "supportTriplets.newick";
   if  (master){
     tree.save(tempInputTree);
   }
   ParallelContext::barrier();
   ICCalculator calculator(tempInputTree, families, eqpicRadius, paralogy);
-  calculator.computeScores(tempOutputQPIC, 
+  calculator.exportScores(tempOutputQPIC, 
       tempOutputEQPIC, 
-      tempOutputSupport);
+      tempOutputSupport,
+      tempOutputSupportTriplets);
   ParallelContext::barrier();
   idToSupport.resize(tree.getNodesNumber());
-  //PLLRootedTree treeWithSupport(tempOutputSupport, true);
   PLLRootedTree treeWithSupport(tempOutputEQPIC, true);
   Logger::timed << "Tree with support:" << std::endl;
   Logger::info << treeWithSupport.getNewickString() << std::endl;

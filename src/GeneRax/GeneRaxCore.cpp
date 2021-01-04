@@ -377,7 +377,13 @@ void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
         "species_tree_eqpic.newick");
     auto supportOutput = Paths::getSpeciesTreeFile(instance.args.output,
         "species_tree_quartet_support.newick");
-    calculator.computeScores(qpicOutput, eqpicOutput, supportOutput);
+    auto supportTripletOutput = Paths::getSpeciesTreeFile(
+        instance.args.output,
+        "species_tree_quartet_support_triplet.newick");
+    calculator.exportScores(qpicOutput, 
+        eqpicOutput, 
+        supportOutput,
+        supportTripletOutput);
     Logger::timed 
       << "Finished estimating species tree support values" 
       << std::endl;
@@ -402,7 +408,13 @@ void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
         "species_tree_eqpic_allquartets.newick");
     auto supportOutput = Paths::getSpeciesTreeFile(instance.args.output,
         "species_tree_quartet_support_allquartets.newick");
-    calculator.computeScores(qpicOutput, eqpicOutput, supportOutput);
+    auto supportTripletOutput = Paths::getSpeciesTreeFile(
+        instance.args.output,
+        "species_tree_quartet_support_triplet_allquartets.newick");
+    calculator.exportScores(qpicOutput, 
+        eqpicOutput, 
+        supportOutput,
+        supportTripletOutput);
     Logger::timed 
       << "Finished estimating species tree support values" 
       << std::endl;
