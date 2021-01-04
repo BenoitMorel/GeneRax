@@ -4,6 +4,7 @@
 #include <parallelization/ParallelContext.hpp>
 #include <algorithm>
 #include <vector>
+#include <util/Constants.hpp>
 
 GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   argc(iargc),
@@ -37,7 +38,9 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   constrainSpeciesSearch(false),
   rerootSpeciesTree(false),
   estimateSpeciesBranchLenghts(false), 
-  speciesSPRRadius(1),
+  speciesSPRRadius(DEFAULT_SPECIES_SPR_RADIUS),
+  speciesSmallRootRadius(DEFAULT_SPECIES_SMALL_ROOT_RADIUS),
+  speciesBigRootRadius(DEFAULT_SPECIES_BIG_ROOT_RADIUS),
   minGeneBranchLength(0.000001),
   quartetSupport(false),
   quartetSupportAllQuartets(false),
@@ -125,6 +128,10 @@ void GeneRaxArguments::init() {
       speciesStrategy = ArgumentsHelper::strToSpeciesSearchStrategy(std::string(argv[++i]));
     } else if (arg == "--si-spr-radius") {
       speciesSPRRadius = static_cast<unsigned int>(atoi(argv[++i]));
+    } else if (arg == "--si-small-root-radius") {
+      speciesSmallRootRadius = static_cast<unsigned int>(atoi(argv[++i]));
+    } else if (arg == "--si-big-root-radius") {
+      speciesBigRootRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--si-constrained-search") {
       constrainSpeciesSearch = true;
     } else if (arg == "--si-reroot") {

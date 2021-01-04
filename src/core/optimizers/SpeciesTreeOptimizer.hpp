@@ -10,7 +10,7 @@
 #include <memory>
 #include <maths/ModelParameters.hpp>
 #include <trees/Clade.hpp>
-
+#include <util/Constants.hpp>
 
 
 struct EvaluatedMove {
@@ -25,6 +25,17 @@ struct DistanceInfo {
   StringToUint speciesStringToSpeciesId;
 };
 
+struct SpeciesTreeSearchParams {
+  SpeciesTreeSearchParams():
+    sprRadius(DEFAULT_SPECIES_SPR_RADIUS),
+    rootSmallRadius(DEFAULT_SPECIES_SMALL_ROOT_RADIUS),
+    rootBigRadius(DEFAULT_SPECIES_BIG_ROOT_RADIUS)
+  {}
+  unsigned int sprRadius;
+  unsigned int rootSmallRadius;
+  unsigned int rootBigRadius;
+};
+
 struct MovesBlackList;
 
 class SpeciesTreeOptimizer: public SpeciesTree::Listener {
@@ -35,7 +46,7 @@ public:
       const Parameters &startingRates,
       bool userDTLRates,
       const std::string &outputDir,
-      bool constrainSearch);
+      const SpeciesTreeSearchParams &searchParams);
   
   // forbid copy
   SpeciesTreeOptimizer(const SpeciesTreeOptimizer &) = delete;
@@ -52,7 +63,6 @@ public:
   virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
   void optimize(SpeciesSearchStrategy strategy,
-      unsigned int sprRadius,
       OptimizationCriteria criteria = ReconciliationLikelihood);
   
   double optimizeDTLRates();
@@ -80,7 +90,7 @@ private:
   bool _userDTLRates;
   ModelParameters _modelRates;
   CladeSet _geneClades;
-  bool _constrainSearch;
+  SpeciesTreeSearchParams _searchParams;
   unsigned int _okForClades;
   unsigned int _koForClades;
   AverageStream _averageGeneRootDiff;

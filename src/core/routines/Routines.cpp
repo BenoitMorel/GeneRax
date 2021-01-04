@@ -66,17 +66,16 @@ Routines::computeSupportedCladeTree(Families &families,
   Logger::info << "Random species tree generated!" << std::endl;
   RecModelInfo info;
   bool userRates = true;
-  bool constrainSearch = false;
   Logger::info << "Starting Clade tree search" << std::endl;
+  SpeciesTreeSearchParams searchParams;
   SpeciesTreeOptimizer speciesTreeOptimizer(speciesTreePath, 
       families, 
       info, 
       info.getDefaultGlobalParameters(), 
       userRates, 
       outputDir, 
-      constrainSearch);
+      searchParams);
   speciesTreeOptimizer.optimize(SpeciesSearchStrategy::HYBRID,
-    1,
     SpeciesTreeOptimizer::SupportedClades);
   return std::make_unique<PLLRootedTree>(
       speciesTreeOptimizer.getSpeciesTree().getTree().getNewickString(), false);

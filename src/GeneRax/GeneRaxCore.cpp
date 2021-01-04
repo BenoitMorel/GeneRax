@@ -137,20 +137,21 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
 
   ParallelContext::barrier();
   Parameters startingRates = instance.getUserParameters();
+  SpeciesTreeSearchParams searchParams;
+  searchParams.sprRadius = instance.args.speciesSPRRadius;
   SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, 
       instance.currentFamilies, 
       instance.getRecModelInfo(), 
       startingRates, 
       instance.args.userDTLRates, 
       instance.args.output, 
-      instance.args.constrainSpeciesSearch);
+      searchParams);
   if (instance.args.speciesSPRRadius > 0) {
     Logger::info << std::endl;
     Logger::timed << "Start optimizing the species tree with fixed gene trees (on " 
       << instance.currentFamilies.size() << " families " << std::endl;
   }
-  speciesTreeOptimizer.optimize(instance.args.speciesStrategy,
-      instance.args.speciesSPRRadius);
+  speciesTreeOptimizer.optimize(instance.args.speciesStrategy);
   instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
   instance.speciesTree = speciesTreeOptimizer.saveCurrentSpeciesTreeId();
   instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
