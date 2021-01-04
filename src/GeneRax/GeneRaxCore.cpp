@@ -155,8 +155,8 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
   instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
   instance.speciesTree = speciesTreeOptimizer.saveCurrentSpeciesTreeId();
   instance.totalRecLL = speciesTreeOptimizer.getReconciliationLikelihood();
-  Logger::timed << "End of optimizing the species tree" << std::endl;
-  Logger::info << "Reconciliatoin likelihood = " << instance.totalRecLL << std::endl;
+  Logger::info << std::endl;
+  Logger::timed << "[Species search] End of optimizing the species tree" << std::endl;
   instance.speciesTree = speciesTreeOptimizer.saveCurrentSpeciesTreeId();
 
   instance.currentFamilies = saveFamilies;
@@ -350,14 +350,12 @@ void GeneRaxCore::speciesTreeBLEstimation(GeneRaxInstance &instance)
   if (!instance.args.estimateSpeciesBranchLenghts) {
     return;
   }
-  Logger::timed << "Start estimating species tree branch lengths" << std::endl;
   ParallelContext::barrier();
   ReconciliationBLEstimator::estimate(
       instance.speciesTree,
       instance.currentFamilies,
       instance.modelParameters);
   ParallelContext::barrier();
-  Logger::timed << "Finished estimating species tree branch lengths" << std::endl;
 }
 
 void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
@@ -365,9 +363,6 @@ void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
  
   ParallelContext::barrier();
   if (instance.args.quartetSupport) { 
-    Logger::timed 
-      << "Start estimating species tree support values" 
-      << std::endl;
     ICCalculator calculator(instance.speciesTree,
         instance.initialFamilies,
         instance.args.eqpicRadius,
@@ -385,9 +380,6 @@ void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
         eqpicOutput, 
         supportOutput,
         supportTripletOutput);
-    Logger::timed 
-      << "Finished estimating species tree support values" 
-      << std::endl;
     ParallelContext::barrier();
     FileSystem::copy(eqpicOutput, instance.speciesTree, true);
      

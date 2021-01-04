@@ -32,22 +32,18 @@ void ICCalculator::exportScores(const std::string &outputQPIC,
     const std::string &outputSupport,
     const std::string &outputSupportTriplets)
 {
-  Logger::timed << "[Quartet support] Read trees" << std::endl;
+  Logger::info << std::endl;
+  Logger::timed << "[Species tree support] Read trees" << std::endl;
   _readTrees();
   _computeRefBranchIndices();
   ParallelContext::barrier();
-  Logger::timed << "[Quartet support] Compute intersections" << std::endl;
+  Logger::timed << "[Species tree support] Compute intersections" << std::endl;
   _computeIntersections();
   ParallelContext::barrier();
-  Logger::timed << "[Quartet support] Compute quadricounts" << std::endl;
+  Logger::timed << "[Species tree support] Compute quadricounts" << std::endl;
   _computeQuadriCounts();
   ParallelContext::barrier();
-  Logger::timed << "[Quartet support] End of support computation" << std::endl;
-
-  Logger::info << "[Quartet support] Writing species tree with QPIC scores in " << outputQPIC << std::endl;
-  Logger::info << "[Quartet support] Writing species tree with EQPIC scores in " << outputEQPIC << std::endl;
-  Logger::info << "[Quartet support] Writing species tree with quartet support scores in " << outputSupport << std::endl;
-  Logger::info << "[Quartet support] Writing species tree with quartet support score triplets in " << outputSupportTriplets << std::endl;
+  Logger::timed << "[Species tree support] End of support computation" << std::endl;
   ParallelOfstream osQPIC(outputQPIC);
   osQPIC << _getNewickWithScore(_qpic, std::string()) << std::endl;
   ParallelOfstream osEQPIC(outputEQPIC);

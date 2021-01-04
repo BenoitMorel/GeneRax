@@ -177,7 +177,8 @@ void SpeciesTreeOptimizer::rootSearchAux(SpeciesTree &speciesTree,
 
 double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
 {
-  Logger::timed << "Root search with depth=" << maxDepth << std::endl;
+  Logger::info << std::endl;
+  Logger::timed << "[Species search] Root search with depth=" << maxDepth << std::endl;
   std::vector<unsigned int> movesHistory;
   std::vector<unsigned int> bestMovesHistory;
   double bestLL = computeRecLikelihood();
@@ -217,9 +218,9 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
     _rootLikelihoods.fillTree(tree);
     auto out = Paths::getSpeciesTreeFile(_outputDir, 
         "species_tree_llr.newick");
-    Logger::info << "Saving root candidates likelihood ratio into " << out << std::endl;
     tree.save(out);
   }
+  Logger::timed << "[Species search] After root search: LL=" << bestLL << std::endl;
   return bestLL;
 }
 
@@ -376,7 +377,7 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
       }
     }
   }
-  Logger::timed << "[Species search] Inferred transfers:" << transfers << std::endl;
+  Logger::timed << "[Species search] Start new transfer-guided round. Inferred transfers:" << transfers << std::endl;
   std::sort(transferMoves.begin(), transferMoves.end());
   unsigned int index = 0;
   const unsigned int stopAfterFailures = 50u;
@@ -458,7 +459,7 @@ std::vector<double> SpeciesTreeOptimizer::_getSupport()
 
 double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
 {
-  Logger::timed << "Start SPR Round radius=" << radius << std::endl;
+  Logger::timed << "[Species search] Start SPR Round radius=" << radius << std::endl;
   _bestRecLL = computeRecLikelihood();
   auto hash1 = _speciesTree->getNodeIndexHash(); 
 
@@ -525,7 +526,7 @@ double SpeciesTreeOptimizer::transferSearch()
 {
   auto bestLL = computeRecLikelihood();
   Logger::info << std::endl;
-  Logger::timed << "[Species search]" << " Starting species transfer search, bestLL=" 
+  Logger::timed << "[Species search]" << " Starting species tree transfer-guided search, bestLL=" 
     << bestLL <<  ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() 
     << ")" <<std::endl;
   double newLL = bestLL;
@@ -545,7 +546,7 @@ double SpeciesTreeOptimizer::transferSearch()
   if (index == 1) {
       newLL = bestLL = _bestRecLL = optimizeDTLRates();
   }
-  Logger::timed << "After transfer search: " << newLL << std::endl;
+  Logger::timed << "[Species search] After transfer search: LL=" << newLL << std::endl;
   saveCurrentSpeciesTreeId();
   return newLL;
 }
@@ -554,14 +555,14 @@ double SpeciesTreeOptimizer::sprSearch(unsigned int radius)
 {
   double bestLL = computeRecLikelihood();
   Logger::info << std::endl;
-  Logger::timed << "[Species search]" << " Starting species SPR search, radius=" 
+  Logger::timed << "[Species search]" << " Starting species tree local SPR search, radius=" 
     << radius << ", bestLL=" << bestLL  << ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() << ")" <<std::endl;
   double newLL = bestLL;
   do {
     bestLL = newLL;
     newLL = fastSPRRound(radius);
   } while (newLL - bestLL > 0.001);
-  Logger::timed << "After normal search: " << bestLL << std::endl;
+  Logger::timed << "After normal search: LL=" << bestLL << std::endl;
   saveCurrentSpeciesTreeId();
   //Logger::info << "  Accepted: " << _okForClades << std::endl;
   //Logger::info << "  Rejected: " << _koForClades << std::endl;
@@ -702,7 +703,7 @@ std::string getCladesSetPath(const std::string &outputDir,
 
 void SpeciesTreeOptimizer::_computeAllGeneClades()
 {
-  Logger::timed << "Computing gene clades..." << std::endl;
+  //Logger::timed << "Computing gene clades..." << std::endl;
   ParallelContext::barrier();
   
   // Compute local clades
@@ -734,7 +735,7 @@ void SpeciesTreeOptimizer::_computeAllGeneClades()
   assert(ParallelContext::isIntEqual(_geneClades.size()));
   ParallelContext::barrier();
   std::remove(getCladesSetPath(_outputDir, ParallelContext::getRank()).c_str());
-  Logger::timed << "Number number of supported bipartitions: " << _geneClades.size()  << std::endl;
+  //Logger::timed << "Number number of supported bipartitions: " << _geneClades.size()  << std::endl;
 }
 
 
