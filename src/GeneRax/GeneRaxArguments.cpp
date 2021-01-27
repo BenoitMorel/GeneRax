@@ -134,8 +134,6 @@ void GeneRaxArguments::init() {
       speciesBigRootRadius = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--si-constrained-search") {
       constrainSpeciesSearch = true;
-    } else if (arg == "--si-reroot") {
-      rerootSpeciesTree = true;
     } else if (arg == "--si-estimate-bl") {
       estimateSpeciesBranchLenghts = true;
     } else if (arg == "--si-quartet-support") {
@@ -241,13 +239,21 @@ void GeneRaxArguments::printCommand() {
 
 void GeneRaxArguments::printSummary() {
   std::string boolStr[2] = {std::string("OFF"), std::string("ON")};
-  Logger::info << "Parameters summary: " << std::endl;
-  Logger::info << "Families information: " << families << std::endl;
-  Logger::info << "Species tree: " << speciesTree << std::endl;
-  Logger::info << "Species Strategy: " << ArgumentsHelper::speciesStrategyToStr(speciesStrategy) << std::endl;
-  Logger::info << "Strategy: " << ArgumentsHelper::strategyToStr(strategy) << std::endl;
-  Logger::info << "Reconciliation model: " << reconciliationModelStr << std::endl;
-  Logger::info << "DTL rates: "; 
+  Logger::info << "General information:" << std::endl;
+  Logger::info << "- Output prefix: " << output << std::endl;
+  Logger::info << "- Families information: " << families << std::endl;
+  Logger::info << "- Species tree: " << speciesTree << std::endl;
+#ifdef WITH_MPI
+  Logger::info << "- MPI Ranks: " << ParallelContext::getSize() << std::endl;
+#else
+  Logger::info << "- You are running GeneRax without MPI (no parallelization)" << std::endl;
+#endif
+  Logger::info << "- Random seed: " << seed << std::endl;
+  Logger::info << "- Reconciliation model: " << reconciliationModelStr << std::endl;
+  if (reconciliationSamples) {
+    Logger::info << "- Reconciliation samples: " << reconciliationSamples << std::endl;
+  }
+  Logger::info << "- DTL rates: "; 
   if (perSpeciesDTLRates) {
     Logger::info << "per species rates" << std::endl;
   } else if (perFamilyDTLRates) {
@@ -255,25 +261,24 @@ void GeneRaxArguments::printSummary() {
   } else {
     Logger::info << "global rates" << std::endl;
   }
-  Logger::info << "Prefix: " << output << std::endl;
-  Logger::info << "Unrooted reconciliation likelihood: " << boolStr[!rootedGeneTree] << std::endl;
-  Logger::info << "Prune species tree: " << boolStr[pruneSpeciesTree] << std::endl;
-  Logger::info << "Reconciliation radius: " << recRadius << std::endl;
-#ifdef WITH_MPI
-  Logger::info << "MPI Ranks: " << ParallelContext::getSize() << std::endl;
-#else
-  Logger::info << "You are running GeneRax without MPI (no parallelization)" << std::endl;
-#endif
-  Logger::info << "Max gene SPR radius: " << maxSPRRadius << std::endl;
-  Logger::info << "Gene support threshold: " << supportThreshold << std::endl;
-  Logger::info << "Reconciliation likelihood weight: " << recWeight << std::endl;
-  Logger::info << "Random seed: " << seed << std::endl;
-  Logger::info << "Infer ML reconciliation: " << boolStr[reconcile] << std::endl;
-  if (buildSuperMatrix) {
-    Logger::info << "Infer supermatrix: " << boolStr[buildSuperMatrix] << std::endl;
-  }
-  if (reconciliationSamples) {
-    Logger::info << "Reconciliation samples to infer: " << reconciliationSamples << std::endl;
-  }
+  Logger::info << "- Infer ML reconciliation: " << boolStr[reconcile] << std::endl;
+  Logger::info << "- Unrooted reconciliation likelihood: " << boolStr[!rootedGeneTree] << std::endl;
+  Logger::info << "- Prune species tree mode: " << boolStr[pruneSpeciesTree] << std::endl;
   Logger::info << std::endl;
+
+  if (speciesStrategy != SpeciesSearchStrategy::SKIP) {
+    Logger::info << "Species tree inference information:" << std::endl;
+    Logger::info << "- Species tree Strategy: " << ArgumentsHelper::speciesStrategyToStr(speciesStrategy) << std::endl;
+    Logger::info << "- Quartet branch supports estimation: " <<  boolStr[quartetSupport] << std::endl;
+    Logger::info << "- Branch length estimation" <<  boolStr[estimateSpeciesBranchLenghts] << std::endl;
+    Logger::info << "- SPR radius: " <<  speciesSPRRadius << std::endl;
+    Logger::info << std::endl;
+  } 
+    
+  if (strategy != GeneSearchStrategy::SKIP) {
+    Logger::info << "Gene tree correction information:" << std::endl;  
+    Logger::info << "- Gene tree strategy: " << ArgumentsHelper::strategyToStr(strategy) << std::endl;
+    Logger::info << "- Max gene SPR radius: " << maxSPRRadius << std::endl;
+    Logger::info << std::endl;
+  }
 }
