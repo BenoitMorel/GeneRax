@@ -73,7 +73,8 @@ private:
  
 private:
   std::vector<pll_rnode_s *> &getSpeciesNodesToUpdate() {
-    return this->_speciesNodesToUpdate;
+    //return this->_speciesNodesToUpdate;
+    return this->_allSpeciesNodes;
   }
 
 };
@@ -106,8 +107,7 @@ void UndatedDLModel<REAL>::setRates(const RatesVector &rates)
   _PL = lossRates;
   _PS = std::vector<double>(this->_allSpeciesNodesCount, 1.0);
   this->_geneRoot = 0;
-  for (auto speciesNode: this->_allSpeciesNodes) {
-    auto e = speciesNode->node_index;
+  for (unsigned int e = 0; e < this->_allSpeciesNodesCount; ++e) {
     double sum = _PD[e] + _PL[e] + _PS[e];
     _PD[e] /= sum;
     _PL[e] /= sum;

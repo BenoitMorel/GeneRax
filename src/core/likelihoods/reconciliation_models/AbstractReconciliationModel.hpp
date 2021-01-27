@@ -13,10 +13,10 @@
 
 
 
-//#define IS_PROBA(x) ((REAL(0.0) <= REAL(x) && REAL(x)  <= REAL(1.0)))
-//#define ASSERT_PROBA(x) assert(IS_PROBA(x));
-#define IS_PROBA(x) true
-#define ASSERT_PROBA(x) assert(true);
+#define IS_PROBA(x) (x == x) //(REAL(0.0) <= REAL(x) && REAL(x)  <= REAL(1.0)))
+#define ASSERT_PROBA(x) assert(IS_PROBA(x));
+//#define IS_PROBA(x) true
+//#define ASSERT_PROBA(x) assert(true);
 
 double log(ScaledValue v);
 
@@ -394,7 +394,7 @@ void AbstractReconciliationModel<REAL>::onSpeciesTreeChange(const std::unordered
     for (auto node: *nodesToInvalidate) {
       while (node) {
         _invalidatedSpeciesNodes.insert(node);
-        node = getSpeciesParent(node);
+        node = node->parent;
       }
     }
     _invalidatedSpeciesNodes.insert(nodesToInvalidate->begin(), nodesToInvalidate->end());
@@ -451,7 +451,7 @@ void AbstractReconciliationModel<REAL>::beforeComputeLogLikelihood()
     fillPrunedNodesPostOrder(getPrunedRoot(), _speciesNodesToUpdate, &_invalidatedSpeciesNodes);
   } else {
     _speciesNodesToUpdate.clear();
-  } 
+  }
   _allSpeciesNodesInvalid = false;
   _invalidatedSpeciesNodes.clear();
   //assert(!_speciesNodesToUpdate.size() || _speciesNodesToUpdate.back() == getPrunedRoot());
