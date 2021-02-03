@@ -44,7 +44,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   minGeneBranchLength(0.000001),
   quartetSupport(false),
   quartetSupportAllQuartets(false),
-  eqpicRadius(3)
+  eqpicRadius(std::numeric_limits<int>::max())
 {
   if (argc == 1) {
     printHelp();
