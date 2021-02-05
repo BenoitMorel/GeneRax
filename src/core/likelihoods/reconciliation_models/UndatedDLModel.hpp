@@ -66,8 +66,7 @@ private:
   std::vector<double> _PS; // Speciation probability, per species branch
   std::vector<double> _uE; // Extinction probability, per species branch
   
-  // uq[geneId][speciesId] = probability of a gene node rooted at a species node
-  // to produce the subtree of this gene node
+  // uq[cladeId][speciesId] 
   typedef std::vector<REAL> DLCLV;
   std::vector<DLCLV> _dlclvs;
  
