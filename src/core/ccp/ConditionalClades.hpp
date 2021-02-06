@@ -15,6 +15,10 @@ struct CladeSplit {
   CID left;
   CID right;
   double frequency;
+  CladeSplit():
+    frequency(0.0)
+  {
+  }
 };
 
 using CladeSplits = std::vector<CladeSplit>;
@@ -27,8 +31,11 @@ public:
   void printContent() const; 
   unsigned int getCladesNumber() const {return _cladeToCID.size();}
   const CladeSplits &getCladeSplits(CID cid) const {return _allCladeSplits[cid];} 
+  bool isLeaf(CID cid) const;
+  std::string getLeafLabel(CID cid) const;
 private:
   std::vector<std::string> _idToLeaf;
+  std::unordered_map<unsigned int, std::string> _CIDToLeaf;
   std::vector<CladeSplits> _allCladeSplits;
   CladeToCID _cladeToCID;
   CIDToClade _CIDToClade;

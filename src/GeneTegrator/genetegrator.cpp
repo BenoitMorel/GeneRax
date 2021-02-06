@@ -14,7 +14,8 @@ void run(const GeneTegratorArguments &args)
     ConditionalClades ccp(family.startingGeneTree);    
     GeneSpeciesMapping mapping;
     mapping.fill(family.mappingFile, family.startingGeneTree);
-    UndatedDLMultiModel<double> model(speciesTree,
+    //UndatedDLMultiModel<ScaledValue> model(speciesTree,
+    UndatedDLMultiModel<ScaledValue> model(speciesTree,
         mapping,
         ccp);
     double ll = model.computeLogLikelihood();

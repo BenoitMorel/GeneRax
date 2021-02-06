@@ -147,7 +147,13 @@ void ConditionalClades::_fillCCP(CladeCounts &cladeCounts,
       }
       // Check that frequencies sum to one
       assert(fabs(1.0 - sumFrequencies) < 0.000001);
-    }
+    } else {
+      // leaf clade
+      unsigned int pos = 0;
+      // todo: make it faster with a bitset
+      for (pos = 0; !clade[pos]; ++pos) {}
+      _CIDToLeaf[CID] = _idToLeaf[pos];
+    } 
   }
 }
 
@@ -169,5 +175,16 @@ void ConditionalClades::printContent() const
       std::cerr << " -> " << cladeSplit.frequency << std::endl;
     }
   }
+}
+  
+bool ConditionalClades::isLeaf(CID cid) const
+{
+  return getCladeSplits(cid).size() == 0;
+}
+  
+std::string ConditionalClades::getLeafLabel(CID cid) const
+{
+  assert(isLeaf(cid));
+  return _CIDToLeaf.at(cid);
 }
 
