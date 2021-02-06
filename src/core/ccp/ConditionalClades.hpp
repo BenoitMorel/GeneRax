@@ -9,26 +9,34 @@ using CladeCounts = std::unordered_map<CCPClade, unsigned int>;
 using SubcladeCounts = std::unordered_map<CCPClade, CladeCounts>;
 using OrderedClades = std::set<CCPClade>;
 
+using CID = unsigned int;
+struct CladeSplit {
+  CID parent;
+  CID left;
+  CID right;
+  double frequency;
+};
+
+using CladeSplits = std::vector<CladeSplit>;
+using CladeToCID = std::unordered_map<CCPClade, CID>;
+using CIDToClade = std::vector<CCPClade>;
+
 class ConditionalClades {
 public:
   ConditionalClades(const std::string &newickFile);
-  
-  std::set<CCPClade>::reverse_iterator begin() {
-    return _internalClades.rbegin();
-  }
-
-  std::set<CCPClade>::reverse_iterator end() {
-    return _internalClades.rend();
-  }
-  
-  void printContent(); 
-
+  void printContent() const; 
+  unsigned int getCladesNumber() const {return _cladeToCID.size();}
+  const CladeSplits &getCladeSplits(CID cid) const {return _allCladeSplits[cid];} 
 private:
   std::vector<std::string> _idToLeaf;
-
-  CladeCounts _cladeCounts;
-  SubcladeCounts _subcladeCounts;
-  OrderedClades _internalClades;
+  std::vector<CladeSplits> _allCladeSplits;
+  CladeToCID _cladeToCID;
+  CIDToClade _CIDToClade;
+  
+private:
+  void _fillCCP(CladeCounts &cladeCounts,
+      SubcladeCounts &subcladeCounts,
+      OrderedClades &orderedClades);
 };
 
 

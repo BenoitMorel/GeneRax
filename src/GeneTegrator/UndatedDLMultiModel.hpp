@@ -16,7 +16,7 @@ public:
 private:
   
   const ConditionalClades &_ccp;
-  
+  const PLLRootedTree &_speciesTree; 
   double _PS;
   double _PD;
   double _PL;
@@ -32,11 +32,15 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
     const GeneSpeciesMapping &geneSpeciesMapping, 
     const ConditionalClades &ccp):
   _ccp(ccp),
+  _speciesTree(speciesTree),
   _PS(0.7),
   _PD(0.15),
   _PL(0.15),
   _uE(speciesTree.getNodesNumber(), REAL())
 {
+  std::vector<REAL> zeros(speciesTree.getNodesNumber());
+  _dlclvs = std::vector<std::vector<REAL> >(
+      _ccp.getCladesNumber(), zeros);
 
 }
 

@@ -18,7 +18,7 @@ void run(const GeneTegratorArguments &args)
         mapping,
         ccp);
     double ll = model.computeLogLikelihood();
-    Logger::info << "ll=" << ll;
+    Logger::info << "ll=" << ll << std::endl;
     sumLL += ll;
   }
   Logger::info << "total ll = " << sumLL << std::endl;

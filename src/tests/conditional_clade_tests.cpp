@@ -5,6 +5,7 @@
 void test(const std::string &newickFile)
 {
   ConditionalClades cc(newickFile);
+  cc.printContent();
 }
 
 int main(int argc, char** argv)

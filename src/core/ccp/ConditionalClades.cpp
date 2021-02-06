@@ -41,7 +41,7 @@ static void addSubclade(const CCPClade &clade,
 }
    
 void printClade(const CCPClade &clade, 
-    std::vector<std::string> &idToLeaf)
+    const std::vector<std::string> &idToLeaf)
 {
   std::cerr << "{";
   bool first = true;
@@ -63,6 +63,10 @@ ConditionalClades::ConditionalClades(const std::string &newickFile)
   std::string line;
   std::unordered_map<std::string, unsigned int> leafToId;
   CCPClade emptyClade;
+  CCPClade fullClade;
+  CladeCounts cladeCounts;
+  SubcladeCounts subcladeCounts;
+  OrderedClades orderedClades;
   while (std::getline(infile, line)) {
     // todo: support empty lines
     // tododetect duplicated trees
@@ -74,8 +78,9 @@ ConditionalClades::ConditionalClades(const std::string &newickFile)
         _idToLeaf.push_back(leaf);
       }
       emptyClade = CCPClade(tree.getLeavesNumber(), false);
+      fullClade = CCPClade(tree.getLeavesNumber(), true);
+      orderedClades.insert(fullClade);
     }
-    std::cerr << "Treating tree " << tree.getNewickString() << std::endl;
     std::vector<CCPClade> nodeIndexToClade(tree.getDirectedNodesNumber(), 
         emptyClade);
     for (auto node: tree.getPostOrderNodes()) {
@@ -92,36 +97,77 @@ ConditionalClades::ConditionalClades(const std::string &newickFile)
           clade[i] = leftClade[i] || rightClade[i];
         }
         if (leftClade > rightClade) {
-          addSubclade(clade, leftClade, _subcladeCounts);
+          addSubclade(clade, leftClade, subcladeCounts);
         } else {
-          addSubclade(clade, rightClade, _subcladeCounts);
+          addSubclade(clade, rightClade, subcladeCounts);
         }
-        _internalClades.insert(clade);
       }
-      addClade(clade, _cladeCounts);
+      orderedClades.insert(clade);
+
+      addClade(clade, cladeCounts);
+      
+      // root clade
+      addClade(fullClade, cladeCounts);
+      addSubclade(fullClade, clade, subcladeCounts);
     }
   }
-  printContent();
+  _fillCCP(cladeCounts, subcladeCounts, orderedClades);
+}
+  
+void ConditionalClades::_fillCCP(CladeCounts &cladeCounts,
+      SubcladeCounts &subcladeCounts,
+      OrderedClades &orderedClades)
+{
+  _allCladeSplits.clear();
+  _allCladeSplits.resize(orderedClades.size());
+  for (auto it = orderedClades.begin(); it != orderedClades.end(); ++it) {
+    auto &clade = *it;
+    auto cladeCount = cladeCounts[clade];
+    unsigned int CID = _CIDToClade.size();
+    auto &cladeSplits = _allCladeSplits[CID];
+    _CIDToClade.push_back(clade);
+    _cladeToCID[clade] = CID;
+    auto subcladeCountIt = subcladeCounts.find(clade);
+    if (subcladeCountIt != subcladeCounts.end()) {
+      // internal clade
+      double sumFrequencies = 0.0;
+      for (auto &subcladeCount: subcladeCountIt->second) {
+        auto &cladeLeft = subcladeCount.first;
+        auto cladeRight = getComplementary(clade, cladeLeft);
+        auto CIDLeft = _cladeToCID[cladeLeft];
+        auto CIDRight = _cladeToCID[cladeRight];
+        double frequency = double(subcladeCount.second) / double(cladeCount); 
+        sumFrequencies += frequency;
+        CladeSplit split;
+        split.parent = CID;
+        split.left = CIDLeft;
+        split.right = CIDRight;
+        split.frequency = frequency;
+        cladeSplits.push_back(split);
+      }
+      // Check that frequencies sum to one
+      assert(fabs(1.0 - sumFrequencies) < 0.000001);
+    }
+  }
 }
 
-void ConditionalClades::printContent()
+void ConditionalClades::printContent() const
 {
-  for (auto it = begin(); it != end(); ++it) {
-    auto &clade = *it;
-    auto &localCladeCounts = _subcladeCounts[clade];
+
+  for (unsigned int CID = 0; CID < _allCladeSplits.size(); ++CID) {
+    auto &clade = _CIDToClade[CID];
+    auto &cladeSplits = _allCladeSplits[CID];
     printClade(clade, _idToLeaf);
-    std::cerr << std::endl;
-    std::cerr << "Count = " << _cladeCounts[clade] << std::endl;
-    for (auto &localCladeCount: localCladeCounts) {
+    std::cout << std::endl;
+    double sumFrequencies = 0.0;
+    for (auto &cladeSplit: cladeSplits) {
       std::cerr << "  ";
-      auto &cladeLeft = localCladeCount.first;
-      auto cladeRight = getComplementary(clade, cladeLeft);
-      printClade(cladeLeft, _idToLeaf);
+      printClade(_CIDToClade[cladeSplit.left], _idToLeaf);
       std::cerr << "|";
-      printClade(cladeRight, _idToLeaf);
-      std::cerr << " -> " << localCladeCount.second << std::endl;
+      printClade(_CIDToClade[cladeSplit.right], _idToLeaf);
+      sumFrequencies += cladeSplit.frequency;
+      std::cerr << " -> " << cladeSplit.frequency << std::endl;
     }
-    std::cerr << std::endl;
   }
 }
 
