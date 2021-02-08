@@ -97,6 +97,9 @@ public:
    */
   void setMissingBranchLengths(double minBL = 0.1); 
 
+  
+  size_t getUnrootedTreeHash();
+
   /**
    *  Direct access to the libpll structure
    */

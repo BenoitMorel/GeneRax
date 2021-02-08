@@ -1,6 +1,8 @@
+#pragma once
+
 #include <IO/GeneSpeciesMapping.hpp>
 #include <trees/PLLRootedTree.hpp>
-#include <ccp/ConditionalClades.hpp>
+#include "ConditionalClades.hpp"
 #include <maths/ScaledValue.hpp>
 
 double log(ScaledValue v);
@@ -10,7 +12,7 @@ class UndatedDLMultiModel {
 public: 
   UndatedDLMultiModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
-      const ConditionalClades &geneDistribution);
+      const std::string &geneTreesFile);
 
   virtual ~UndatedDLMultiModel() {}
 
@@ -19,9 +21,9 @@ public:
 private:
   
   
-  const PLLRootedTree &_speciesTree;
-  const GeneSpeciesMapping &_geneSpeciesMapping;
-  const ConditionalClades &_ccp;
+  PLLRootedTree &_speciesTree;
+  GeneSpeciesMapping _geneSpeciesMapping;
+  ConditionalClades _ccp;
   std::vector<pll_rnode_t *> _allSpeciesNodes;
   std::vector<double> _PD; // Duplication probability, per species branch
   std::vector<double> _PL; // Loss probability, per species branch
@@ -30,6 +32,7 @@ private:
   using DLCLV = std::vector<REAL>;
   std::vector<DLCLV> _dlclvs;
 
+  REAL getLikelihoodFactor() const;
   virtual void _recomputeSpeciesProbabilities();
   void computeProbability(CID cid, 
     pll_rnode_t *speciesNode, 
@@ -45,20 +48,26 @@ static double solveSecondDegreePolynome(double a, double b, double c)
 template <class REAL>
 UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree, 
     const GeneSpeciesMapping &geneSpeciesMapping, 
-    const ConditionalClades &ccp):
+    const std::string &geneTreesFile):
   _speciesTree(speciesTree),
   _geneSpeciesMapping(geneSpeciesMapping),
-  _ccp(ccp),
+  _ccp(geneTreesFile),
   _allSpeciesNodes(speciesTree.getPostOrderNodes()),
-  _PD(speciesTree.getNodesNumber(), 0.10),
-  _PL(speciesTree.getNodesNumber(), 0.10),
-  _PS(speciesTree.getNodesNumber(), 0.8),
+  _PD(speciesTree.getNodesNumber(), 0.2),
+  _PL(speciesTree.getNodesNumber(), 0.2),
+  _PS(speciesTree.getNodesNumber(), 1.0),
   _uE(speciesTree.getNodesNumber(), 0.0)
 {
   std::vector<REAL> zeros(speciesTree.getNodesNumber());
   _dlclvs = std::vector<std::vector<REAL> >(
       _ccp.getCladesNumber(), zeros);
 
+  for (unsigned int e = 0; e < _speciesTree.getNodesNumber(); ++e) {
+    double sum = _PD[e] + _PL[e] + _PS[e];
+    _PD[e] /= sum;
+    _PL[e] /= sum;
+    _PS[e] /= sum;
+  }
 }
 
 
@@ -79,7 +88,7 @@ double UndatedDLMultiModel<REAL>::computeLogLikelihood()
   for (auto speciesNode: _allSpeciesNodes) {
     res += _dlclvs[rootCID][speciesNode->node_index];
   }
-  return log(res);
+  return log(res) - log(getLikelihoodFactor());
 }
 
 template <class REAL>
@@ -154,7 +163,17 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
     proba += temp;
   }
   // DL event
-  //proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
+  proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
 }
   
+template <class REAL>
+REAL UndatedDLMultiModel<REAL>::getLikelihoodFactor() const
+{
+  REAL factor(0.0);
+  for (auto speciesNode: _allSpeciesNodes) {
+    auto e = speciesNode->node_index;
+    factor += (REAL(1.0) - REAL(_uE[e]));
+  }
+  return factor;
+}
 

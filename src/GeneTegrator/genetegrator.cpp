@@ -2,27 +2,19 @@
 #include <parallelization/ParallelContext.hpp>
 #include <IO/Logger.hpp>
 #include <IO/FamiliesFileParser.hpp>
-#include "UndatedDLMultiModel.hpp"
-#include <trees/PLLRootedTree.hpp>
+#include "GTSpeciesTreeOptimizer.hpp"
+
+
 
 void run(const GeneTegratorArguments &args)
 {
   auto families = FamiliesFileParser::parseFamiliesFile(args.families);
-  PLLRootedTree speciesTree(args.speciesTree);
-  double sumLL = 0.0;
-  for (auto &family: families) {
-    ConditionalClades ccp(family.startingGeneTree);    
-    GeneSpeciesMapping mapping;
-    mapping.fill(family.mappingFile, family.startingGeneTree);
-    //UndatedDLMultiModel<ScaledValue> model(speciesTree,
-    UndatedDLMultiModel<ScaledValue> model(speciesTree,
-        mapping,
-        ccp);
-    double ll = model.computeLogLikelihood();
-    Logger::info << "ll=" << ll << std::endl;
-    sumLL += ll;
-  }
-  Logger::info << "total ll = " << sumLL << std::endl;
+  GTSpeciesTreeOptimizer speciesTreeOptimizer(
+      args.speciesTree,
+      families,
+      args.output);
+  auto ll = speciesTreeOptimizer.computeLogLikelihood();
+  std::cout << "total ll=" << ll << std::endl;
 }
 
 int internal_main(int argc, char** argv, void* comm)

@@ -6,30 +6,40 @@
 #include <iostream>
 
 
+
+
 static CCPClade getComplementary(const CCPClade &clade,
     const CCPClade &subclade)
 {
+#ifdef GENESISIMPLEM
+  CCPClade complementary(subclade);
+  complementary.negate();
+  complementary &= clade;
+#else
   CCPClade complementary(clade);
   for (unsigned int i = 0; i < clade.size(); ++i) {
     complementary[i] = clade[i] && !subclade[i];
   }
+#endif
   return complementary;
 }
 
 static void addClade(const CCPClade &clade,
-    CladeCounts &cladeCounts)
+    CladeCounts &cladeCounts,
+    unsigned int count)
 {
   auto cladeCountsIt = cladeCounts.find(clade);
   if (cladeCountsIt == cladeCounts.end()) {
-    cladeCounts.insert({clade, 1});
+    cladeCounts.insert({clade, count});
   } else {
-    cladeCountsIt->second++;
+    cladeCountsIt->second += count;
   }
 }
 
 static void addSubclade(const CCPClade &clade,
     const CCPClade &subclade,
-    SubcladeCounts &subcladeCounts)
+    SubcladeCounts &subcladeCounts,
+    unsigned int count)
 {
   auto subcladeCountsIt = subcladeCounts.find(clade);
   if (subcladeCountsIt == subcladeCounts.end()) {
@@ -37,7 +47,7 @@ static void addSubclade(const CCPClade &clade,
     subcladeCounts.insert({clade, CladeCounts()});
     subcladeCountsIt = subcladeCounts.find(clade);
   }
-  addClade(subclade, subcladeCountsIt->second);
+  addClade(subclade, subcladeCountsIt->second, count);
 }
    
 void printClade(const CCPClade &clade, 
@@ -57,6 +67,15 @@ void printClade(const CCPClade &clade,
   std::cerr << "}";
 }
 
+struct WeightedTree {
+  WeightedTree(std::shared_ptr<PLLUnrootedTree> tree, 
+      unsigned int count): tree(tree), count(count) {}
+
+  std::shared_ptr<PLLUnrootedTree> tree;
+  unsigned int count;
+};
+
+
 ConditionalClades::ConditionalClades(const std::string &newickFile)
 {
   std::ifstream infile(newickFile);
@@ -67,10 +86,30 @@ ConditionalClades::ConditionalClades(const std::string &newickFile)
   CladeCounts cladeCounts;
   SubcladeCounts subcladeCounts;
   OrderedClades orderedClades;
+  std::unordered_map<size_t, WeightedTree> weightedTrees;
   while (std::getline(infile, line)) {
     // todo: support empty lines
-    // tododetect duplicated trees
+#undef CCPCOMPRESS 
+    // BEFORE ENABLING CCPCOMPRESS: check no collision
+    // with hash or add an == operator for unrooted trees
+#ifdef CCPCOMPRESS
+    auto tree = std::make_shared<PLLUnrootedTree>(line, false);
+    auto hash = tree->getUnrootedTreeHash();
+    if (weightedTrees.find(hash) == weightedTrees.end()) {
+      WeightedTree weightedTree(tree, 1);
+      weightedTrees.insert({hash, weightedTree});
+    } else {
+      weightedTrees.at(hash).count++;
+    }
+  }
+  std::cout << "Number of different trees: " << weightedTrees.size() << std::endl;
+  for (auto pair: weightedTrees) {
+    auto &tree = *(pair.second.tree);
+    auto treeCount = pair.second.count;
+#else
     PLLUnrootedTree tree(line, false);
+    unsigned int treeCount = 1;
+#endif
     if (leafToId.size() == 0) {
       // first tree, initiate mappings
       for (auto leaf: tree.getLabels()) {
@@ -88,27 +127,36 @@ ConditionalClades::ConditionalClades(const std::string &newickFile)
       auto &clade = nodeIndexToClade[nodeIndex];
       if (!node->next) { // leaf
         auto id = leafToId[node->label];
+#ifdef GENESISIMPLEM
+        clade.set(id);
+#else
         clade[id] = true; 
+#endif
       } else {
         auto &leftClade = nodeIndexToClade[node->next->back->node_index];
         auto &rightClade = nodeIndexToClade[node->next->next->back->node_index];
-        // todo: WE NEED A PROPER BITSET!!!
+#ifdef GENESISIMPLEM
+        clade = leftClade | rightClade;
+#else
         for (unsigned int i = 0; i < clade.size(); ++i) {
           clade[i] = leftClade[i] || rightClade[i];
         }
-        if (leftClade > rightClade) {
-          addSubclade(clade, leftClade, subcladeCounts);
+#endif
+        if (leftClade < rightClade) {
+          addSubclade(clade, leftClade, subcladeCounts, treeCount);
         } else {
-          addSubclade(clade, rightClade, subcladeCounts);
+          addSubclade(clade, rightClade, subcladeCounts, treeCount);
         }
       }
       orderedClades.insert(clade);
 
-      addClade(clade, cladeCounts);
+      addClade(clade, cladeCounts, treeCount);
       
       // root clade
-      addClade(fullClade, cladeCounts);
-      addSubclade(fullClade, clade, subcladeCounts);
+      addClade(fullClade, cladeCounts, treeCount);
+      // todo should we check that a clade/complementary is only
+      // added once to the root??
+      addSubclade(fullClade, clade, subcladeCounts, treeCount);
     }
   }
   _fillCCP(cladeCounts, subcladeCounts, orderedClades);

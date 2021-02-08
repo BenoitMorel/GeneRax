@@ -482,3 +482,70 @@ pll_unode_t *PLLUnrootedTree::getVirtualRoot(PLLRootedTree &referenceTree)
   std::unordered_set<std::string> temp;
   return searchForSet(virtualRoot, temp, leftRLeaves);
 }
+
+static size_t leafHash(pll_unode_t *leaf) {
+  assert(leaf);
+  std::hash<std::string> hash_fn;
+  return hash_fn(std::string(leaf->label));
+}
+
+static size_t getTreeHashRec(pll_unode_t *node, size_t i) {
+  assert(node);
+  if (i == 0) 
+    i = 1;
+  if (!node->next) {
+    return leafHash(node);
+  }
+  auto hash1 = getTreeHashRec(node->next->back, i + 1);
+  auto hash2 = getTreeHashRec(node->next->next->back, i + 1);
+  std::hash<size_t> hash_fn;
+  auto m = std::min(hash1, hash2);
+  auto M = std::max(hash1, hash2);
+  return hash_fn(m * i + M);
+
+}
+
+static pll_unode_t *findMinimumHashLeafRec(pll_unode_t * root, size_t &hashValue)
+{
+  assert(root);
+  if (!root->next) {
+    hashValue = leafHash(root);
+    return root;
+  }
+  auto n1 = root->next->back;
+  auto n2 = root->next->next->back;
+  size_t hash1, hash2;
+  auto min1 = findMinimumHashLeafRec(n1, hash1);
+  auto min2 = findMinimumHashLeafRec(n2, hash2);
+  if (hash1 < hash2) {
+    hashValue = hash1;
+    return min1;
+  } else {
+    hashValue = hash2;
+    return min2;
+  }
+}
+
+static pll_unode_t *findMinimumHashLeaf(pll_unode_t * root) 
+{
+  assert(root);
+  auto n1 = root;
+  auto n2 = root->back;
+  size_t hash1 = 0;
+  size_t hash2 = 0;
+  auto min1 = findMinimumHashLeafRec(n1, hash1);
+  auto min2 = findMinimumHashLeafRec(n2, hash2);
+  if (hash1 < hash2) {
+    return min1;
+  } else {
+    return min2;
+  }
+}
+
+size_t PLLUnrootedTree::getUnrootedTreeHash()
+{
+  auto minHashLeaf = findMinimumHashLeaf(getAnyInnerNode());
+  auto res = getTreeHashRec(minHashLeaf, 0) + getTreeHashRec(minHashLeaf->back, 0);
+  return res;
+}
+

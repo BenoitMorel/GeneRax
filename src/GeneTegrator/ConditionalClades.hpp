@@ -3,8 +3,14 @@
 #include <string>
 #include <unordered_map>
 #include <set>
-
+#include "bitvector.hpp"
+//#define BOOSTIMPLEM
+#define GENESISIMPLEM
+#ifdef GENESISIMPLEM
+using CCPClade = genesis::utils::Bitvector;
+#else
 using CCPClade = std::vector<bool>;
+#endif
 using CladeCounts = std::unordered_map<CCPClade, unsigned int>;
 using SubcladeCounts = std::unordered_map<CCPClade, CladeCounts>;
 using OrderedClades = std::set<CCPClade>;

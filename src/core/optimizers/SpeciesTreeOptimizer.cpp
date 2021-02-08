@@ -622,7 +622,9 @@ double SpeciesTreeOptimizer::computeRecLikelihood()
   switch (_optimizationCriteria) {
   case ReconciliationLikelihood: 
     for (auto &evaluation: _evaluations) {
-      res += evaluation->evaluate();
+      auto ll = evaluation->evaluate();
+      res += ll;
+      std::cout << ll << std::endl;
     }
     ParallelContext::sumDouble(res);
     break;
