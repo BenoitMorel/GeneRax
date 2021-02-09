@@ -67,14 +67,27 @@ void printClade(const CCPClade &clade,
   std::cerr << "}";
 }
 
-struct WeightedTree {
-  WeightedTree(std::shared_ptr<PLLUnrootedTree> tree, 
-      unsigned int count): tree(tree), count(count) {}
 
+struct TreeWraper {
   std::shared_ptr<PLLUnrootedTree> tree;
-  unsigned int count;
+  bool operator ==(const TreeWraper &other) const
+  {
+    return PLLUnrootedTree::areIsomorphic(*tree, *(other.tree));
+  }
 };
 
+namespace std
+{
+  template<>
+    struct hash<TreeWraper>
+    {
+      size_t
+        operator()(const TreeWraper& tree) const
+        {
+          return tree.tree->getUnrootedTreeHash();
+        }
+    };
+}
 
 ConditionalClades::ConditionalClades(const std::string &newickFile)
 {
@@ -89,26 +102,26 @@ ConditionalClades::ConditionalClades(const std::string &newickFile)
   CladeCounts cladeCounts;
   SubcladeCounts subcladeCounts;
   OrderedClades orderedClades;
-  std::unordered_map<size_t, WeightedTree> weightedTrees;
+  std::unordered_map<TreeWraper, unsigned int> weightedTrees;
   while (std::getline(infile, line)) {
     // todo: support empty lines
-#undef CCPCOMPRESS 
+//#undef CCPCOMPRESS 
+#define CCPCOMPRESS 
     // BEFORE ENABLING CCPCOMPRESS: check no collision
     // with hash or add an == operator for unrooted trees
 #ifdef CCPCOMPRESS
-    auto tree = std::make_shared<PLLUnrootedTree>(line, false);
-    auto hash = tree->getUnrootedTreeHash();
-    if (weightedTrees.find(hash) == weightedTrees.end()) {
-      WeightedTree weightedTree(tree, 1);
-      weightedTrees.insert({hash, weightedTree});
+    TreeWraper wraper;
+    wraper.tree = std::make_shared<PLLUnrootedTree>(line, false);
+    if (weightedTrees.find(wraper) == weightedTrees.end()) {
+      weightedTrees.insert({wraper, 1});
     } else {
-      weightedTrees.at(hash).count++;
+      weightedTrees.at(wraper)++;
     }
   }
   std::cout << "Number of different trees: " << weightedTrees.size() << std::endl;
   for (auto pair: weightedTrees) {
-    auto &tree = *(pair.second.tree);
-    auto treeCount = pair.second.count;
+    auto &tree = *(pair.first.tree);
+    auto treeCount = pair.second;
 #else
     PLLUnrootedTree tree(line, false);
     unsigned int treeCount = 1;

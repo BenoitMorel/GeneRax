@@ -56,7 +56,11 @@ public:
   PLLUnrootedTree(PLLUnrootedTree &&) = delete;
   PLLUnrootedTree & operator = (PLLUnrootedTree &&) = delete;
 
-
+  bool operator ==(const PLLUnrootedTree &other) const
+  {
+    return areIsomorphic(*this, other);
+  }
+  
   /*
    * Tree dimension
    */
@@ -74,8 +78,8 @@ public:
   /*
    * Node access
    */
-  pll_unode_t *getAnyInnerNode();
-  pll_unode_t *getNode(unsigned int node_index);
+  pll_unode_t *getAnyInnerNode() const;
+  pll_unode_t *getNode(unsigned int node_index) const;
 
  
   
@@ -98,7 +102,7 @@ public:
   void setMissingBranchLengths(double minBL = 0.1); 
 
   
-  size_t getUnrootedTreeHash();
+  size_t getUnrootedTreeHash() const;
 
   /**
    *  Direct access to the libpll structure
@@ -180,12 +184,13 @@ public:
    */
   static std::unordered_set<unsigned int> getClade(pll_unode_t *node);
 
-  static bool areIsomorphic(PLLUnrootedTree &t1,
-    PLLUnrootedTree &t2);
+  static bool areIsomorphic(const PLLUnrootedTree &t1,
+    const PLLUnrootedTree &t2);
 
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;
 };
+
 
 
 

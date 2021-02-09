@@ -116,12 +116,12 @@ unsigned int PLLUnrootedTree::getInnerNodesNumber() const
   return _tree->inner_count;
 }
   
-pll_unode_t *PLLUnrootedTree::getNode(unsigned int node_index)
+pll_unode_t *PLLUnrootedTree::getNode(unsigned int node_index) const
 {
   return _tree->nodes[node_index];
 }
 
-pll_unode_t *PLLUnrootedTree::getAnyInnerNode()
+pll_unode_t *PLLUnrootedTree::getAnyInnerNode() const
 {
   return getNode(getLeavesNumber());
 }
@@ -542,7 +542,7 @@ static pll_unode_t *findMinimumHashLeaf(pll_unode_t * root)
   }
 }
 
-size_t PLLUnrootedTree::getUnrootedTreeHash()
+size_t PLLUnrootedTree::getUnrootedTreeHash() const
 {
   auto minHashLeaf = findMinimumHashLeaf(getAnyInnerNode());
   auto res = getTreeHashRec(minHashLeaf, 0) + getTreeHashRec(minHashLeaf->back, 0);
@@ -596,8 +596,8 @@ static bool areIsomorphicAux(pll_unode_t *node1,
     && areIsomorphicAux(r1, r2, leftFirst1, leftFirst2);
 }
 
-bool PLLUnrootedTree::areIsomorphic(PLLUnrootedTree &t1,
-    PLLUnrootedTree &t2)
+bool PLLUnrootedTree::areIsomorphic(const PLLUnrootedTree &t1,
+    const PLLUnrootedTree &t2)
 {
   if (t1.getNodesNumber() != t2.getNodesNumber()) {
     return false;
