@@ -6,7 +6,7 @@
 GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
-  output("GeneRax"),
+  output("GeneTegrator"),
   seed(123)
 {
   for (int i = 1; i < argc; ++i) {
@@ -18,6 +18,8 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
       families = std::string(argv[++i]);
     } else if (arg == "-s" || arg == "--species-tree") {
       speciesTree = std::string(argv[++i]);
+    } else if (arg == "-p" || arg == "--prefix") {
+      output = std::string(argv[++i]);
     }
   }
 }

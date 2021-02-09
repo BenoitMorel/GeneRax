@@ -624,7 +624,6 @@ double SpeciesTreeOptimizer::computeRecLikelihood()
     for (auto &evaluation: _evaluations) {
       auto ll = evaluation->evaluate();
       res += ll;
-      std::cout << ll << std::endl;
     }
     ParallelContext::sumDouble(res);
     break;

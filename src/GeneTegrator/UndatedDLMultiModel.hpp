@@ -75,6 +75,7 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
 template <class REAL>
 double UndatedDLMultiModel<REAL>::computeLogLikelihood()
 {
+  _allSpeciesNodes = _speciesTree.getPostOrderNodes();
   _recomputeSpeciesProbabilities();
   for (CID cid = 0; cid < _ccp.getCladesNumber(); ++cid) {
     for (auto speciesNode: _allSpeciesNodes) {
