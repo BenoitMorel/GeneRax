@@ -1,6 +1,6 @@
 #include "GTSpeciesTreeOptimizer.hpp" 
 #include <IO/Logger.hpp>
-
+#include <parallelization/PerCoreGeneTrees.hpp>
 
 GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
     const std::string speciesTreeFile, 
@@ -8,7 +8,10 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
     const std::string &outputDir):
   _speciesTree(speciesTreeFile)
 {
-  for (auto &family: families) {
+  PerCoreGeneTrees perCoreGeneTrees(families, false);
+  for (const auto &geneTree: perCoreGeneTrees.getTrees()) {
+    auto &family = families[geneTree.familyIndex];
+  //for (auto &family: families) {
     GeneSpeciesMapping mapping;
     mapping.fill(family.mappingFile, family.startingGeneTree);
     _evaluations.push_back(std::make_shared<MultiEvaluation>(
@@ -16,6 +19,8 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
         mapping,
         family.startingGeneTree));
   }
+
+  ParallelContext::barrier();
 }
   
 double GTSpeciesTreeOptimizer::computeLogLikelihood()
@@ -26,7 +31,7 @@ double GTSpeciesTreeOptimizer::computeLogLikelihood()
     Logger::info << "ll=" << ll << std::endl;
     sumLL += ll;
   }
+  ParallelContext::sumDouble(sumLL);
   return sumLL;
-  Logger::info << "total ll = " << sumLL << std::endl;
 }
 

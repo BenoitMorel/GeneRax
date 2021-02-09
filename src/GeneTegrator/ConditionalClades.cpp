@@ -78,6 +78,9 @@ struct WeightedTree {
 
 ConditionalClades::ConditionalClades(const std::string &newickFile)
 {
+
+  // todo: maybe everything would be faster if we would
+  // replace the CCPClade with their IDs sooner
   std::ifstream infile(newickFile);
   std::string line;
   std::unordered_map<std::string, unsigned int> leafToId;

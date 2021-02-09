@@ -14,7 +14,7 @@ void run(const GeneTegratorArguments &args)
       families,
       args.output);
   auto ll = speciesTreeOptimizer.computeLogLikelihood();
-  std::cout << "total ll=" << ll << std::endl;
+  Logger::info << "total ll=" << ll << std::endl;
 }
 
 int internal_main(int argc, char** argv, void* comm)
