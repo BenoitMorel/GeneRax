@@ -39,6 +39,7 @@ public:
   const CladeSplits &getCladeSplits(CID cid) const {return _allCladeSplits[cid];} 
   bool isLeaf(CID cid) const;
   std::string getLeafLabel(CID cid) const;
+  unsigned int getRootsNumber() const;
 private:
   std::vector<std::string> _idToLeaf;
   std::unordered_map<unsigned int, std::string> _CIDToLeaf;

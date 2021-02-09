@@ -88,7 +88,13 @@ double UndatedDLMultiModel<REAL>::computeLogLikelihood()
   for (auto speciesNode: _allSpeciesNodes) {
     res += _dlclvs[rootCID][speciesNode->node_index];
   }
-  return log(res) - log(getLikelihoodFactor());
+  // the root correction makes sure that UndatedDLMultiModel and
+  // UndatedDL model are equivalent when there is one tree per
+  // family: the UndatedDLMultiModel integrates over all possible
+  // roots and adds a 1/numberOfGeneRoots weight that is not
+  // present un the UndatedDL, so we multiply back here
+  REAL rootCorrection(double(_ccp.getRootsNumber()));
+  return log(res) - log(getLikelihoodFactor()) + log(rootCorrection);
 }
 
 template <class REAL>

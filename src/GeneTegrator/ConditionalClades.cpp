@@ -238,4 +238,9 @@ std::string ConditionalClades::getLeafLabel(CID cid) const
   assert(isLeaf(cid));
   return _CIDToLeaf.at(cid);
 }
+  
+unsigned int ConditionalClades::getRootsNumber() const
+{
+  return _allCladeSplits.back().size() / 2; 
+}
 
