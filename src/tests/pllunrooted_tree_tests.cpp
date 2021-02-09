@@ -119,6 +119,46 @@ void testMADRooting()
   assert(c2.find(indices["D"]) != c2.end());
 }
 
+void testIsomorphism()
+{
+  std::vector<std::shared_ptr<PLLUnrootedTree> > class1;
+  std::vector<std::shared_ptr<PLLUnrootedTree> > unclassed;
+  class1.push_back(std::make_shared<PLLUnrootedTree>(
+        "((A,B),(C,D),(E,F));", false));
+  class1.push_back(std::make_shared<PLLUnrootedTree>(
+        "((F,E),(D,C),(A,B));", false));
+  class1.push_back(std::make_shared<PLLUnrootedTree>(
+        "(E, F, ((A,B),(C,D)));", false));
+  unclassed.push_back(std::make_shared<PLLUnrootedTree>(
+        "((A,B), (C, D), E);", false));
+  unclassed.push_back(std::make_shared<PLLUnrootedTree>(
+        "((A,B), (C, E), (D,F));", false));
+  unclassed.push_back(std::make_shared<PLLUnrootedTree>(
+        "((A,C), (B, D), (E,F));", false));
+  unclassed.push_back(std::make_shared<PLLUnrootedTree>(
+        "((A,B), (C, D), (E,GO));", false));
+  for (auto t1: class1) {
+    for (auto t2: class1) {
+      if (!PLLUnrootedTree::areIsomorphic(*t1, *t2)) {
+        std::cerr << "Error: trees:" << std::endl;
+        std::cerr << t1->getNewickString() << std::endl;
+        std::cerr << t2->getNewickString() << std::endl;
+        std::cerr << "Should be isomorphic" << std::endl;
+        assert(false);
+      }
+    }
+    for (auto t2: unclassed) {
+      if (PLLUnrootedTree::areIsomorphic(*t1, *t2)) {
+        std::cerr << "Error: trees:" << std::endl;
+        std::cerr << t1->getNewickString() << std::endl;
+        std::cerr << t2->getNewickString() << std::endl;
+        std::cerr << "Should NOT be isomorphic" << std::endl;
+        assert(false);
+      }
+    }
+  } 
+}
+
 
 int main(int, char**)
 {
@@ -128,6 +168,7 @@ int main(int, char**)
   testDistances(true);
   testDistances(false);
   testMADRooting();
+  testIsomorphism();
   std::cout << "Test PLLUnrootedTree ok!" << std::endl;
   return 0;
 }

@@ -549,3 +549,67 @@ size_t PLLUnrootedTree::getUnrootedTreeHash()
   return res;
 }
 
+
+
+static const char *orderChildren(pll_unode_t *node,
+    std::vector<bool> &leftFirst)
+{
+  if (!node->next) {
+    return node->label;
+  }
+  const char *label1 = orderChildren(node->next->back, leftFirst);
+  const char *label2 = orderChildren(node->next->next->back, leftFirst);
+  if (strcmp(label1, label2) < 0) {
+    leftFirst[node->node_index] = true;
+    return label1;
+  } else {
+    leftFirst[node->node_index] = false;
+    return label2;
+  }
+}
+
+static bool areIsomorphicAux(pll_unode_t *node1,
+    pll_unode_t *node2,
+    const std::vector<bool> &leftFirst1,
+    const std::vector<bool> &leftFirst2)
+{
+  if (!node1->next || !node2->next) {
+    // at least one is a leaf
+    if (node1->next || node2->next) {
+      // only one is a leaf 
+      return false;
+    }
+    return strcmp(node1->label, node2->label) == 0;
+  }
+  // both are internal nodes
+  auto l1 = node1->next->back;
+  auto r1 = node1->next->next->back;
+  auto l2 = node2->next->back;
+  auto r2 = node2->next->next->back;
+  if (!leftFirst1[node1->node_index]) {
+    std::swap(l1, r1);
+  }
+  if (!leftFirst2[node2->node_index]) {
+    std::swap(l2, r2);
+  }
+  return areIsomorphicAux(l1, l2, leftFirst1, leftFirst2) 
+    && areIsomorphicAux(r1, r2, leftFirst1, leftFirst2);
+}
+
+bool PLLUnrootedTree::areIsomorphic(PLLUnrootedTree &t1,
+    PLLUnrootedTree &t2)
+{
+  if (t1.getNodesNumber() != t2.getNodesNumber()) {
+    return false;
+  }
+  auto startingLeaf1 = findMinimumHashLeaf(t1.getAnyInnerNode())->back;
+  auto startingLeaf2 = findMinimumHashLeaf(t2.getAnyInnerNode())->back;
+  std::vector<bool> leftFirst1(t1.getDirectedNodesNumber(), true);;
+  std::vector<bool> leftFirst2(t2.getDirectedNodesNumber(), true);;
+  orderChildren(startingLeaf1, leftFirst1);
+  orderChildren(startingLeaf2, leftFirst2);
+  return areIsomorphicAux(startingLeaf1, 
+      startingLeaf2, 
+      leftFirst1, 
+      leftFirst2);
+}

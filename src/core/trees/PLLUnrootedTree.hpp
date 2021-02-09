@@ -180,6 +180,9 @@ public:
    */
   static std::unordered_set<unsigned int> getClade(pll_unode_t *node);
 
+  static bool areIsomorphic(PLLUnrootedTree &t1,
+    PLLUnrootedTree &t2);
+
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;
 };
