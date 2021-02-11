@@ -89,7 +89,9 @@ namespace std
     };
 }
 
-ConditionalClades::ConditionalClades(const std::string &newickFile)
+ConditionalClades::ConditionalClades(const std::string &newickFile):
+  _inputTrees(0),
+  _uniqueInputTrees(0)
 {
 
   // todo: maybe everything would be faster if we would
@@ -106,10 +108,6 @@ ConditionalClades::ConditionalClades(const std::string &newickFile)
   while (std::getline(infile, line)) {
     // todo: support empty lines
 //#undef CCPCOMPRESS 
-#define CCPCOMPRESS 
-    // BEFORE ENABLING CCPCOMPRESS: check no collision
-    // with hash or add an == operator for unrooted trees
-#ifdef CCPCOMPRESS
     TreeWraper wraper;
     wraper.tree = std::make_shared<PLLUnrootedTree>(line, false);
     if (weightedTrees.find(wraper) == weightedTrees.end()) {
@@ -117,15 +115,14 @@ ConditionalClades::ConditionalClades(const std::string &newickFile)
     } else {
       weightedTrees.at(wraper)++;
     }
+    _inputTrees++;
   }
+  _uniqueInputTrees = weightedTrees.size();
   std::cout << "Number of different trees: " << weightedTrees.size() << std::endl;
+  
   for (auto pair: weightedTrees) {
     auto &tree = *(pair.first.tree);
     auto treeCount = pair.second;
-#else
-    PLLUnrootedTree tree(line, false);
-    unsigned int treeCount = 1;
-#endif
     if (leafToId.size() == 0) {
       // first tree, initiate mappings
       for (auto leaf: tree.getLabels()) {

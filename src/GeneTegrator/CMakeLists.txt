@@ -6,6 +6,6 @@ set(genetegrator_SOURCES genetegrator.cpp
   GTSpeciesTreeOptimizer.cpp
   )
 add_program(genetegrator "${genetegrator_SOURCES}")
-#target_link_libraries(genetegrator mpi-scheduler) 
+target_link_libraries(genetegrator mpi-scheduler) 
 
 

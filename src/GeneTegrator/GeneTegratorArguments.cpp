@@ -6,6 +6,7 @@
 GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
+  speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
   output("GeneTegrator"),
   seed(123)
 {
@@ -18,6 +19,7 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
       families = std::string(argv[++i]);
     } else if (arg == "-s" || arg == "--species-tree") {
       speciesTree = std::string(argv[++i]);
+      speciesTreeAlgorithm = Enums::strToSpeciesTree(speciesTree);
     } else if (arg == "-p" || arg == "--prefix") {
       output = std::string(argv[++i]);
     }

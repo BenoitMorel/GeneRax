@@ -40,13 +40,16 @@ public:
   bool isLeaf(CID cid) const;
   std::string getLeafLabel(CID cid) const;
   unsigned int getRootsNumber() const;
+  unsigned int getInputTreesNumber() const {return _inputTrees;}
+  unsigned int getUniqueInputTreesNumber() const {return _uniqueInputTrees;}
 private:
   std::vector<std::string> _idToLeaf;
   std::unordered_map<unsigned int, std::string> _CIDToLeaf;
   std::vector<CladeSplits> _allCladeSplits;
   CladeToCID _cladeToCID;
   CIDToClade _CIDToClade;
-  
+  unsigned int _inputTrees;
+  unsigned int _uniqueInputTrees;
 private:
   void _fillCCP(CladeCounts &cladeCounts,
       SubcladeCounts &subcladeCounts,

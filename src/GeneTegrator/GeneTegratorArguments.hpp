@@ -16,6 +16,7 @@ public:
    char ** argv;
    std::string families;
    std::string speciesTree;
+   SpeciesTreeAlgorithm speciesTreeAlgorithm;
    std::string output;
    int seed;
 
