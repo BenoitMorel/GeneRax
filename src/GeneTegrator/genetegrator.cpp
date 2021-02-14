@@ -8,9 +8,26 @@
 #include <routines/Routines.hpp>
 #include <routines/SlavesMain.hpp>
 
+
+void filterInvalidFamilies(Families &families)
+{
+  Logger::timed << "Filtering families" << std::endl;
+  Families validFamilies;
+  for (const auto &family: families) {
+    std::ifstream is(family.startingGeneTree);
+    if (!is || is.peek() == std::ifstream::traits_type::eof()) {
+      Logger::info << "Invalid family " << family.name << std::endl;
+      continue;
+    }
+    validFamilies.push_back(family);  
+  }
+  families = validFamilies;
+}
+
 void initStartingSpeciesTree(GeneTegratorArguments &args,
     Families &families)
 {
+  Logger::timed << "Initializing starting species tree..." << std::endl;
   auto startingSpeciesTree = Paths::getSpeciesTreeFile(
       args.output, 
       "starting_species_tree.newick");
@@ -54,6 +71,7 @@ void run( GeneTegratorArguments &args)
   FileSystem::mkdir(args.output, true);
   FileSystem::mkdir(args.output + "/species_trees", true);
   auto families = FamiliesFileParser::parseFamiliesFile(args.families);
+  filterInvalidFamilies(families);
   initStartingSpeciesTree(args, families);
   GTSpeciesTreeOptimizer speciesTreeOptimizer(
       args.speciesTree,
