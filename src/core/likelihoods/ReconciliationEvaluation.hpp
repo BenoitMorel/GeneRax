@@ -81,7 +81,6 @@ public:
 
   RecModel getRecModel() const {return _recModelInfo.model;}
   
-  void rollbackToLastState();
 private:
   PLLRootedTree &_speciesTree;
   PLLUnrootedTree &_initialGeneTree;

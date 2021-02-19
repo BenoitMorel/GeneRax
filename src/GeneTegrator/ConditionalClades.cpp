@@ -118,7 +118,7 @@ ConditionalClades::ConditionalClades(const std::string &newickFile):
     _inputTrees++;
   }
   _uniqueInputTrees = weightedTrees.size();
-  std::cout << "Number of different trees: " << weightedTrees.size() << std::endl;
+  //std::cout << "Number of different trees: " << weightedTrees.size() << std::endl;
   
   for (auto pair: weightedTrees) {
     auto &tree = *(pair.first.tree);

@@ -32,7 +32,6 @@ public:
   // overloaded from parent
   virtual void setRates(const RatesVector &rates);
   
-  virtual void rollbackToLastState();
 protected:
   // overloaded from parent
   virtual void setInitialGeneTree(PLLUnrootedTree &tree);
@@ -450,11 +449,6 @@ REAL UndatedDTLModel<REAL>::getLikelihoodFactor() const
       
 }
 
-
-template <class REAL>
-void UndatedDTLModel<REAL>::rollbackToLastState()
-{
-}
 
 template <class REAL>
 void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode, 

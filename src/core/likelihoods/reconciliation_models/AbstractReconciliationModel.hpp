@@ -44,12 +44,6 @@ public:
    */
   virtual double computeLogLikelihood() = 0;
 
-  /**
-   * If implemented, rollback to the state before the
-   * last "computeLogLikelihood(false)" call
-   */
-  virtual void rollbackToLastState() = 0;
-
   virtual bool isParsimony() const = 0;
 
   /**
@@ -88,7 +82,6 @@ public:
    * the likelihoods of all possible originations. Else, the only
    * possible origination is at the species tree root.
    */
-  virtual bool sumOverAllOriginations() const = 0;
 };
 
 
@@ -118,8 +111,6 @@ public:
   // overload from parent 
   virtual bool isParsimony() const {return false;}
   // overload from parent 
-  virtual void rollbackToLastState() {assert(false);}
-  // overload from parent
   virtual void setRoot(pll_unode_t * root) {_geneRoot = root;}
   // overload from parent
   virtual pll_unode_t *getRoot() {return _geneRoot;}
@@ -135,8 +126,6 @@ public:
   virtual void setPartialLikelihoodMode(PartialLikelihoodMode mode) {_likelihoodMode = mode;};
   // overload from parents
   virtual void setFractionMissingGenes(const std::string &fractionMissingFile);
-  // overload from parents
-  virtual bool sumOverAllOriginations() const {return true;}
 protected:
   // called by the constructor
   virtual void initSpeciesTree();
@@ -688,7 +677,6 @@ void AbstractReconciliationModel<REAL>::computeMLRoot(pll_unode_t *&bestGeneRoot
   REAL max = isParsimony() ? 
     REAL(-std::numeric_limits<double>::infinity()) 
     : REAL();
-  assert(sumOverAllOriginations());
   for (auto root: roots) {
     for (auto speciesNode: _allSpeciesNodes) {
       REAL ll = getGeneRootLikelihood(root, speciesNode);

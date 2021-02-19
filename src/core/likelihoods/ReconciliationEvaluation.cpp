@@ -173,8 +173,3 @@ void ReconciliationEvaluation::setPartialLikelihoodMode(PartialLikelihoodMode mo
   _evaluators->setPartialLikelihoodMode(mode);
 }
   
-void ReconciliationEvaluation::rollbackToLastState() 
-{
-  _evaluators->rollbackToLastState();
-}
-

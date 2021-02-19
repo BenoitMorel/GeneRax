@@ -56,7 +56,6 @@ protected:
       Scenario::Event *event = nullptr,
       bool stochastic = false);
   virtual bool isParsimony() const {return true;}
-  virtual bool sumOverAllOriginations() const {return false;}
 private:
   // parsimony costs
   double _costD;
