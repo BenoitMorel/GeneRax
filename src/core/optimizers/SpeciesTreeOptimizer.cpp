@@ -581,7 +581,7 @@ ModelParameters SpeciesTreeOptimizer::computeOptimizedRates()
   double ll = computeRecLikelihood();
   settings.optimizationMinImprovement = std::max(3.0, ll / 1000.0);
   rates =  DTLOptimizer::optimizeModelParameters(_evaluations, !_firstOptimizeRatesCall, rates, settings);
-  _firstOptimizeRatesCall = true;
+  _firstOptimizeRatesCall = false;
   return rates;
 }
   
