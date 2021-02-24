@@ -112,7 +112,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     rootSearch(_searchParams.rootBigRadius);
     break;
   case SpeciesSearchStrategy::EVAL:
-    optimizeDTLRates();
+    _bestRecLL = optimizeDTLRates(true);
     Logger::info << "Reconciliation likelihood: " << computeRecLikelihood() << std::endl;
     break;
   case SpeciesSearchStrategy::SKIP:
@@ -569,29 +569,31 @@ double SpeciesTreeOptimizer::sprSearch(unsigned int radius)
   return newLL;
 }
   
-ModelParameters SpeciesTreeOptimizer::computeOptimizedRates() 
+ModelParameters SpeciesTreeOptimizer::computeOptimizedRates(bool thorough) 
 {
   if (_userDTLRates || _optimizationCriteria == SupportedClades) {
     return _modelRates;
   }
   auto rates = _modelRates;
   OptimizationSettings settings;
-  settings.lineSearchMinImprovement = 10.0;
-  settings.minAlpha = 0.01;
   double ll = computeRecLikelihood();
-  settings.optimizationMinImprovement = std::max(3.0, ll / 1000.0);
+  if (!thorough) {
+    settings.lineSearchMinImprovement = 10.0;
+    settings.minAlpha = 0.01;
+    settings.optimizationMinImprovement = std::max(3.0, ll / 1000.0);
+  }
   rates =  DTLOptimizer::optimizeModelParameters(_evaluations, !_firstOptimizeRatesCall, rates, settings);
   _firstOptimizeRatesCall = false;
   return rates;
 }
   
-double SpeciesTreeOptimizer::optimizeDTLRates()
+double SpeciesTreeOptimizer::optimizeDTLRates(bool thorough)
 {
   if (_userDTLRates || _optimizationCriteria == SupportedClades) {
     return computeRecLikelihood();
   }
   Logger::timed << "[Species search] Start rates optimization " << std::endl;
-  _modelRates = computeOptimizedRates();
+  _modelRates = computeOptimizedRates(thorough);
   unsigned int i = 0;
   for (auto &evaluation: _evaluations) {
     evaluation->setRates(_modelRates.getRates(i++));

@@ -65,7 +65,7 @@ public:
   void optimize(SpeciesSearchStrategy strategy,
       OptimizationCriteria criteria = ReconciliationLikelihood);
   
-  double optimizeDTLRates();
+  double optimizeDTLRates(bool thorough = false);
   
   double rootSearch(unsigned int maxDepth = 1000000);
 
@@ -99,7 +99,7 @@ private:
 private:
   void _computeAllGeneClades();
   unsigned int _unsupportedCladesNumber();
-  ModelParameters computeOptimizedRates(); 
+  ModelParameters computeOptimizedRates(bool thorough); 
   void updateEvaluations();
   void rootSearchAux(SpeciesTree &speciesTree, 
       PerCoreGeneTrees &geneTrees, 
