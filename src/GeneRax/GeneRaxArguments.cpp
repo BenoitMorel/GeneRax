@@ -23,7 +23,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   perSpeciesDTLRates(false),
   useTransferFrequencies(false),
   userDTLRates(false),
-  dupRate(0.2),
+  noDup(false),
+  dupRate(0.0),
   lossRate(0.2),
   transferRate(0.2),
   reconcile(true),
@@ -95,6 +96,9 @@ void GeneRaxArguments::init() {
           RecOpt::None) {
         userDTLRates = true;
       }
+    } else if (arg == "--no-dup") {
+      dupRate = 0.0;
+      noDup = true;
     } else if (arg == "--dup-rate") {
       dupRate = atof(argv[++i]);
     } else if (arg == "--loss-rate") {

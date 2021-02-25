@@ -161,6 +161,9 @@ void UndatedDTLModel<REAL>::setRates(const RatesVector &rates)
   _PT = transferRates;
   _PS.resize(this->_allSpeciesNodesCount);
   for (unsigned int e = 0; e < this->_allSpeciesNodesCount; ++e) {
+    if (this->_info.noDup) {
+      _PD[e] = 0.0;
+    }
     auto sum = _PD[e] + _PL[e] + _PT[e] + 1.0;
     _PD[e] /= sum;
     _PL[e] /= sum;

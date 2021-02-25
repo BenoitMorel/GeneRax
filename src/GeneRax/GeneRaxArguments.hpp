@@ -34,6 +34,7 @@ public:
    bool perSpeciesDTLRates;
    bool useTransferFrequencies;
    bool userDTLRates;
+   bool noDup;
    double dupRate;
    double lossRate;
    double transferRate;

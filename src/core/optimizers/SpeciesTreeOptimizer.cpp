@@ -51,7 +51,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   saveCurrentSpeciesTreeId();
   _computeAllGeneClades();
   _hardToFindBetter |= _unsupportedCladesNumber() <= std::max<unsigned int>(
-      _speciesTree->getTree().getNodesNumber() / 10, 1);
+      _speciesTree->getTree().getNodesNumber() / 4, 1);
   if (_hardToFindBetter) {
     Logger::info << "Hard-to-find-better mode" << std::endl;
   }

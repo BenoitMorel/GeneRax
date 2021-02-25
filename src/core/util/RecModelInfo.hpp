@@ -15,7 +15,10 @@ struct RecModelInfo {
   // if the reconciliaiton model accounts for polytomies, branches
   // with a lenghts <= branchLengthThreshold are be contracted
   double branchLengthThreshold;
-  
+ 
+  // disable duplications
+  bool noDup;
+
   std::string fractionMissingFile;
   
   
@@ -24,7 +27,8 @@ struct RecModelInfo {
     perFamilyRates(true),
     pruneSpeciesTree(true),
     rootedGeneTree(true),
-    branchLengthThreshold(-1.0)
+    branchLengthThreshold(-1.0),
+    noDup(false)
   {
 
   }
@@ -34,12 +38,14 @@ struct RecModelInfo {
       bool pruneSpeciesTree,
       bool rootedGeneTree,
       double branchLengthThreshold,
+      bool noDup,
       const std::string &fractionMissingFile):
     model(model),
     perFamilyRates(perFamilyRates),
     pruneSpeciesTree(pruneSpeciesTree),
     rootedGeneTree(rootedGeneTree),
     branchLengthThreshold(branchLengthThreshold),
+    noDup(noDup),
     fractionMissingFile(fractionMissingFile)
   {
 
@@ -52,6 +58,7 @@ struct RecModelInfo {
     pruneSpeciesTree = bool(atoi(argv[i++]));
     branchLengthThreshold = double(atof(argv[i++]));
     rootedGeneTree = bool(atoi(argv[i++]));
+    noDup = bool(atoi(argv[i++]));
     fractionMissingFile = std::string(argv[i++]);
     if (fractionMissingFile == "NONE") {
       fractionMissingFile = std::string();
@@ -65,6 +72,7 @@ struct RecModelInfo {
     argv.push_back(std::to_string(static_cast<int>(perFamilyRates)));
     argv.push_back(std::to_string(static_cast<int>(pruneSpeciesTree)));
     argv.push_back(std::to_string(static_cast<int>(rootedGeneTree)));
+    argv.push_back(std::to_string(static_cast<int>(noDup)));
     argv.push_back(std::to_string(branchLengthThreshold));
     if (fractionMissingFile.size()) {
       argv.push_back(fractionMissingFile);
@@ -76,7 +84,7 @@ struct RecModelInfo {
 
   static int getArgc() 
   {
-    return 6;
+    return 7;
   }
 
   unsigned int modelFreeParameters() const {
@@ -91,6 +99,9 @@ struct RecModelInfo {
     Parameters res(modelFreeParameters());
     for (unsigned int i = 0; i < res.dimensions(); ++i) {
       res[i] = 0.1;
+    }
+    if (noDup) {
+      res[0] = 0.0;
     }
     return res;
   }
