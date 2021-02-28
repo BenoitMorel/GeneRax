@@ -109,7 +109,8 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     rootSearch(_searchParams.rootBigRadius);
     break;
   case SpeciesSearchStrategy::REROOT:
-    rootSearch(_searchParams.rootBigRadius);
+    rootSearch(_searchParams.rootBigRadius,
+        true);
     break;
   case SpeciesSearchStrategy::EVAL:
     _bestRecLL = optimizeDTLRates(true);
@@ -134,7 +135,8 @@ void SpeciesTreeOptimizer::rootSearchAux(SpeciesTree &speciesTree,
     std::vector<unsigned int> &bestMovesHistory, 
     double &bestLL, 
     unsigned int &visits,
-    unsigned int maxDepth)
+    unsigned int maxDepth, 
+    bool optimizeParams)
 {
   if (movesHistory.size() > maxDepth) {
     return;
@@ -149,16 +151,22 @@ void SpeciesTreeOptimizer::rootSearchAux(SpeciesTree &speciesTree,
       SpeciesTreeOperator::changeRoot(speciesTree, direction);
       optimizeGeneRoots();
       double ll = computeRecLikelihood();
+      if (optimizeParams) {
+        _firstOptimizeRatesCall = true;
+        double llopt = optimizeDTLRates();
+        Logger::timed << movesHistory.size() << "\t" << ll << " " << llopt << " " << bestLL - llopt << std::endl;
+        ll = llopt;
+      }
       auto root = speciesTree.getRoot();
       _rootLikelihoods.saveValue(root->left, ll);
       _rootLikelihoods.saveValue(root->right, ll);
       visits++;
-      unsigned int plop = 0;
+      unsigned int additionalDepth = 0;
       if (ll > bestLL) {
         bestLL = ll;
         bestMovesHistory = movesHistory; 
         Logger::info << "Found better root " << ll << std::endl;
-        plop = 3;
+        additionalDepth = 3;
       }
       rootSearchAux(speciesTree, 
           geneTrees, 
@@ -167,7 +175,8 @@ void SpeciesTreeOptimizer::rootSearchAux(SpeciesTree &speciesTree,
           bestMovesHistory, 
           bestLL, 
           visits,
-          maxDepth + plop);
+          maxDepth + additionalDepth,
+          optimizeParams);
       SpeciesTreeOperator::revertChangeRoot(speciesTree, direction);
       rollbackCallback();
       movesHistory.pop_back();
@@ -175,13 +184,18 @@ void SpeciesTreeOptimizer::rootSearchAux(SpeciesTree &speciesTree,
   }
 }
 
-double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
+double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth,
+    bool optimizeParams)
 {
   Logger::info << std::endl;
   Logger::timed << "[Species search] Root search with depth=" << maxDepth << std::endl;
   std::vector<unsigned int> movesHistory;
   std::vector<unsigned int> bestMovesHistory;
   double bestLL = computeRecLikelihood();
+  if (optimizeParams) {
+    _firstOptimizeRatesCall = true;
+    bestLL = optimizeDTLRates();
+  }
   
   _rootLikelihoods.reset();
   auto root = _speciesTree->getRoot();
@@ -189,7 +203,7 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
   _rootLikelihoods.saveValue(root->right, bestLL);
   
   unsigned int visits = 1;
-  movesHistory.push_back(0);
+  movesHistory.push_back(1);
   rootSearchAux(*_speciesTree, 
       *_geneTrees, 
       _modelRates.info.model, 
@@ -197,8 +211,9 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
       bestMovesHistory, 
       bestLL, 
       visits, 
-      maxDepth); 
-  movesHistory[0] = 1;
+      maxDepth,
+      optimizeParams); 
+  movesHistory[0] = 0;
   rootSearchAux(*_speciesTree, 
       *_geneTrees, 
       _modelRates.info.model, 
@@ -206,7 +221,8 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
       bestMovesHistory, 
       bestLL, 
       visits,
-      maxDepth); 
+      maxDepth,
+      optimizeParams); 
   //assert (visits == 2 * _speciesTree->getTree().getLeavesNumber() - 3);
   for (unsigned int i = 1; i < bestMovesHistory.size(); ++i) {
     SpeciesTreeOperator::changeRoot(*_speciesTree, bestMovesHistory[i]);
@@ -592,13 +608,13 @@ double SpeciesTreeOptimizer::optimizeDTLRates(bool thorough)
   if (_userDTLRates || _optimizationCriteria == SupportedClades) {
     return computeRecLikelihood();
   }
-  Logger::timed << "[Species search] Start rates optimization " << std::endl;
+  //Logger::timed << "[Species search] Start rates optimization " << std::endl;
   _modelRates = computeOptimizedRates(thorough);
   unsigned int i = 0;
   for (auto &evaluation: _evaluations) {
     evaluation->setRates(_modelRates.getRates(i++));
   }
-  Logger::timed << "[Species search] Rates optimized! (LL=" << computeRecLikelihood() << ")" << std::endl;
+  //Logger::timed << "[Species search] Rates optimized! (LL=" << computeRecLikelihood() << ")" << std::endl;
   if (!_modelRates.info.perFamilyRates) {
     Logger::timed << "[Species search] Best rates: " << _modelRates.rates << std::endl;
   }
