@@ -44,8 +44,11 @@ set(jointsearch-core_SOURCES
   trees/PolyTree.cpp
   trees/JointTree.cpp
   trees/SpeciesTree.cpp
+  treetests/AUTest.cpp
   util/Scenario.cpp
   )
+
+add_subdirectory(gsl)
 
 add_library(jointsearch-core STATIC ${jointsearch-core_SOURCES})
 

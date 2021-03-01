@@ -12,6 +12,7 @@ set(PLL_LIBRARIES
     pllmodoptimize_static
     pllmodtree_static
     pllmodutil_static
+    gsl
    )
 
 
