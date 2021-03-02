@@ -13,6 +13,7 @@ set(PLL_LIBRARIES
     pllmodtree_static
     pllmodutil_static
     gsl
+    lbfgsb
    )
 
 

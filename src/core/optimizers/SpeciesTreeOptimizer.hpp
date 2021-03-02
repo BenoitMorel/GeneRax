@@ -11,7 +11,7 @@
 #include <maths/ModelParameters.hpp>
 #include <trees/Clade.hpp>
 #include <util/Constants.hpp>
-
+#include <treetests/AUTest.hpp>
 
 struct EvaluatedMove {
   unsigned int prune;
@@ -68,7 +68,8 @@ public:
   double optimizeDTLRates(bool thorough = false);
   
   double rootSearch(unsigned int maxDepth = 1000000,
-      bool optimizeParams = false);
+      bool optimizeParams = false, 
+      bool auTest = false);
 
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
@@ -77,6 +78,8 @@ public:
   double getReconciliationLikelihood() const {return _bestRecLL;}
 
   double computeRecLikelihood();
+
+  void getPerFamilyLikelihoods(std::vector<double> &likelihoods);
 
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
@@ -110,7 +113,8 @@ private:
       double &bestLL, 
       unsigned int &visits,
       unsigned int maxDepth,
-      bool optimizeParams);
+      bool optimizeParams,
+      bool auTest);
   bool testPruning(unsigned int prune,
     unsigned int regraft);
   void newBestTreeCallback();
@@ -141,4 +145,5 @@ private:
     std::unordered_map<std::string, double> idToLL;
   };
   RootLikelihoods _rootLikelihoods;
+  std::vector<Likelihoods> _rootPerFamilyLikelihoods;
 };

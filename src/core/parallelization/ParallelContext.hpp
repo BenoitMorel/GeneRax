@@ -50,6 +50,7 @@ public:
   static bool isIntEqual(int value);
   static bool isDoubleEqual(double value);
 
+  static void concatenateDoubleVectors(const std::vector<double> &localVector, std::vector<double> &globalVector);
   static void concatenateIntVectors(const std::vector<int> &localVector, std::vector<int> &globalVector);
   static void concatenateUIntVectors(const std::vector<unsigned int> &localVector, 
     std::vector<unsigned int> &globalVector);

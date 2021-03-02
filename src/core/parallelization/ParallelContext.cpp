@@ -262,6 +262,28 @@ void ParallelContext::allGatherInt(int localValue, std::vector<int> &allValues)
 
 }
 
+void ParallelContext::concatenateDoubleVectors(const std::vector<double> &localVector, std::vector<double> &globalVector)
+{
+  if (!_mpiEnabled) {
+    globalVector = localVector;
+    return;
+  }
+
+#ifdef WITH_MPI
+  globalVector.resize(getSize() * localVector.size(), 0);
+  MPI_Allgather(
+    &localVector[0],
+    static_cast<double>(localVector.size()),
+    MPI_DOUBLE,
+    &(globalVector[0]),
+    static_cast<double>(localVector.size()),
+    MPI_DOUBLE,
+    getComm());
+#else
+  assert(false);
+#endif
+}
+
 void ParallelContext::concatenateIntVectors(const std::vector<int> &localVector, std::vector<int> &globalVector)
 {
   if (!_mpiEnabled) {

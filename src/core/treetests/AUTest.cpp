@@ -7,8 +7,10 @@
 #include <string>
 #include <limits>
 #include <iostream>
-
+#include <iomanip>
+#include <IO/Logger.hpp>
 #include <gsl/mygsl.h>
+#include "optimization.h"
 
 // this was originally for vectorization
 size_t get_safe_upper_limit(size_t s)
@@ -32,6 +34,74 @@ size_t get_safe_upper_limit(size_t s)
  *                                                                                         This routine has six digit accuracy, so it is only useful for absolute
  *                                                                                                                 z values < 6.  For z values >= to 6.0, Normalz() returns 0.0.
  *                                                                                                                  */
+
+std::string to_string(double d, size_t s)
+{
+  std::string res = std::to_string(d);
+  res.resize(s);
+  return res;
+}
+
+/**
+    MLE estimates for AU test
+*/
+class OptimizationAUTest : public Optimization {
+
+public:
+
+    OptimizationAUTest(double d, double c, int nscales, double *bp, double *rr, double *rr_inv) {
+        this->d = d;
+        this->c = c;
+        this->bp = bp;
+        this->rr = rr;
+        this->rr_inv = rr_inv;
+        this->nscales = nscales;
+        
+    }
+
+	/**
+		return the number of dimensions
+	*/
+	virtual int getNDim() { return 2; }
+
+
+	/**
+		the target function which needs to be optimized
+		@param x the input vector x
+		@return the function value at x
+	*/
+	virtual double targetFunk(double x[]) {
+        d = x[1];
+        c = x[2];
+        double res = 0.0;
+        for (int k = 0; k < nscales; k++) {
+            double cdf = gsl_cdf_ugaussian_P(d*rr[k] + c*rr_inv[k]);
+            res += bp[k] * log(1.0 - cdf) + (1.0-bp[k])*log(cdf);
+        }
+        return res;
+    }
+
+    void optimizeDC() {
+        double x[3], lower[3], upper[3];
+        bool bound_check[3];
+        x[1] = d;
+        x[2] = c;
+        lower[1] = lower[2] = 1e-4;
+        upper[1] = upper[2] = 100.0;
+        bound_check[1] = bound_check[2] = false;
+        minimizeMultiDimen(x, 2, lower, upper, bound_check, 1e-4);
+        d = x[1];
+        c = x[2];
+    }
+
+    double d, c;
+    int nscales;
+    double *bp;
+    double *rr;
+    double *rr_inv;
+};
+
+/* BEGIN CODE WAS TAKEN FROM CONSEL PROGRAM */
 
 double Normalz(double z) /*VAR returns cumulative probability from -oo to z VAR normal z value */ {
   double y, x, w;
@@ -147,7 +217,7 @@ int mlecoef(double *cnts, double *rr, double bb, int kk,
   int i,m,loop;
   double coef[2], update[2];
   double d1f, d2f, d11f, d12f, d22f; /* derivatives */
-  double v11, v12, v22; /* inverse of -d??f */
+  double v11 = 0, v12 = 0, v22 = 0; /* inverse of -d??f */
   double a,e;
   double s[kk], r[kk],c[kk], b[kk],z[kk],p[kk],d[kk],g[kk],h[kk];
 
@@ -301,6 +371,21 @@ void performAUTest(std::vector<Likelihoods> likelihoods,
   au_pvalues.resize(ntrees);
   size_t ran_seed = 42;    
   srand(ran_seed); 
+  double maxLL = -std::numeric_limits<double>::max();
+  std::vector<double> totalLikelihoods(ntrees, 0);
+  std::vector<double> treeLikelihoodDiffs(ntrees, 0);
+  std::vector<double> bp(ntrees, 0.0);
+  for (size_t tid = 0; tid < ntrees; ++tid) {
+      double totalLL = 0.0;
+      for (auto ll: likelihoods[tid]) {
+        totalLL += ll;
+      }
+      totalLikelihoods[tid] = totalLL;
+      maxLL = std::max(totalLL, maxLL);
+  }
+  for (size_t tid = 0; tid < ntrees; ++tid) {
+    treeLikelihoodDiffs[tid] = totalLikelihoods[tid] - maxLL;
+  }
 
   /* STEP 1: specify scale factors */
   size_t nscales = 10;
@@ -311,6 +396,7 @@ void performAUTest(std::vector<Likelihoods> likelihoods,
         sqrt(1/1.1), sqrt(1/1.2), sqrt(1/1.3), sqrt(1/1.4)};
         
     /* STEP 2: compute bootstrap proportion */
+    Logger::timed << "AU compute bootstrap proportions" << std::endl;
     
     size_t nptn = likelihoods[0].size();
     size_t maxnptn = get_safe_upper_limit(nptn);
@@ -320,7 +406,6 @@ void performAUTest(std::vector<Likelihoods> likelihoods,
     
 
 
-    int *rstream = nullptr; //randstream;
     size_t boot;
     std::vector<int> boot_sample(maxnptn, 0);
     std::vector<double> boot_sample_dbl(maxnptn);
@@ -360,12 +445,13 @@ void performAUTest(std::vector<Likelihoods> likelihoods,
                     second_max_lh = max_lh;
                     max_lh = tree_lh;
                     max_tid = tid;
-                } else if (tree_lh > second_max_lh)
+                } else if (tree_lh > second_max_lh) {
                     second_max_lh = tree_lh;
+                }
                     
                 treelhs[(tid*nscales+k)*nboot + boot] = tree_lh; 
             }
-            
+            bp[max_tid]++;
             // compute difference from max_lh
             for (size_t tid = 0; tid < ntrees; tid++) { 
                 if (tid != max_tid) {
@@ -384,14 +470,14 @@ void performAUTest(std::vector<Likelihoods> likelihoods,
     } // for scale
 
 
-
+    Logger::timed << "AU weighted least square fit" << std::endl;
     
     /* STEP 3: weighted least square fit */
     
     double *cc = new double[nscales];
     double *w = new double[nscales];
     double *this_bp = new double[nscales];
-    std::cout << "TreeID\tAU\tRSS\td\tc" << std::endl;
+    std::cout << "TreeID\tAU\tRSS\td\tc\tbp\tlldif" << std::endl;
     for (size_t tid = 0; tid < ntrees; tid++) {
         double *this_stat = treelhs + tid*nscales*nboot;
         double xn = this_stat[(nscales/2)*nboot + nboot/2], x;
@@ -431,17 +517,21 @@ void performAUTest(std::vector<Likelihoods> likelihoods,
                 if (!mlefail) {
                     d = coef0[0];
                     c = coef0[1];
-                }
+                } else {
 
+                  std::cout << "mlefail" << std::endl;
+                }
                 se = gsl_ran_ugaussian_pdf(d-c)*sqrt(se);
+               /* 
+                OptimizationAUTest mle(d, c, nscales, this_bp, rr, rr_inv);
+                mle.optimizeDC();
+                d = mle.d;
+                c = mle.c;
+                 */ 
                 
-                // second, perform MLE estimate of d and c
-    //            OptimizationAUTest mle(d, c, nscales, this_bp, rr, rr_inv);
-    //            mle.optimizeDC();
-    //            d = mle.d;
-    //            c = mle.c;
 
                 /* STEP 4: compute p-value according to Eq. 11 */
+                
                 pval = gsl_cdf_ugaussian_Q(d-c);
                 z = -pval;
                 ze = se;
@@ -485,7 +575,9 @@ void performAUTest(std::vector<Likelihoods> likelihoods,
             z0=z;
             ze0=ze;
             idf0 = df;
-            if(fabs(x-th)<1e-10) break;
+            if(fabs(x-th)<1e-10) {
+              break;
+            }
         } // for step
         
         
@@ -494,20 +586,19 @@ void performAUTest(std::vector<Likelihoods> likelihoods,
         }
         
         double pchi2 = (failed) ? 0.0 : computePValueChiSquare(rss, df);
-        std::cout << tid+1 << "\t" << au_pvalues[tid] << "\t" << rss << "\t" << d << "\t" << c;
+       
+        std::cout << tid << "\t" << to_string(au_pvalues[tid], 6) << "\t" << to_string(rss, 6) << "\t" << to_string(d, 6) << "\t" << to_string(c, 6) << "\t" << to_string(bp[tid] / double(nboot * nscales), 6) << "\t" << treeLikelihoodDiffs[tid];
         
         // warning if p-value of chi-square < 0.01 (rss too high)
         if (pchi2 < 0.01) 
-            std::cout << " !!!";
-        std::cout << std::endl;
+            std::cout << " pchi2_error ";
+        if (failed)
+          std::cout << "failed ";
+        Logger::info << std::endl;
     }
     
     delete [] this_bp;
     delete [] w;
     delete [] cc;
-//    delete [] bp;
-//
-#ifdef PLOP
-#endif
 }
 

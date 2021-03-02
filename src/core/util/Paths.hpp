@@ -9,8 +9,9 @@ public:
     return joinPaths(outputDir, file);
   }
 
-  static std::string getTempDir(const std::string &outputDir) {
-    return joinPaths(outputDir, "species_trees");
+  static std::string getTempFile(const std::string &outputDir, 
+      unsigned int index) {
+    return joinPaths(outputDir, "tmp_" + std::to_string(index));
 
   }
   
@@ -27,7 +28,6 @@ public:
   static std::vector<std::string> getDirectoriesToCreate(const std::string &outputDir) {
     std::vector<std::string> dirs;
     dirs.push_back(getSpeciesTreesDir(outputDir));
-    dirs.push_back(getTempDir(outputDir));
     return dirs;
   }
 private:

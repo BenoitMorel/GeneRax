@@ -110,6 +110,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     break;
   case SpeciesSearchStrategy::REROOT:
     rootSearch(_searchParams.rootBigRadius,
+        false,
         true);
     break;
   case SpeciesSearchStrategy::EVAL:
@@ -136,7 +137,8 @@ void SpeciesTreeOptimizer::rootSearchAux(SpeciesTree &speciesTree,
     double &bestLL, 
     unsigned int &visits,
     unsigned int maxDepth, 
-    bool optimizeParams)
+    bool optimizeParams,
+    bool auTest)
 {
   if (movesHistory.size() > maxDepth) {
     return;
@@ -157,6 +159,11 @@ void SpeciesTreeOptimizer::rootSearchAux(SpeciesTree &speciesTree,
         Logger::timed << movesHistory.size() << "\t" << ll << " " << llopt << " " << bestLL - llopt << std::endl;
         ll = llopt;
       }
+      if (auTest) {
+        Likelihoods perFamilyLikelihoods;
+        getPerFamilyLikelihoods(perFamilyLikelihoods);
+        _rootPerFamilyLikelihoods.push_back(perFamilyLikelihoods);
+      }
       auto root = speciesTree.getRoot();
       _rootLikelihoods.saveValue(root->left, ll);
       _rootLikelihoods.saveValue(root->right, ll);
@@ -176,7 +183,7 @@ void SpeciesTreeOptimizer::rootSearchAux(SpeciesTree &speciesTree,
           bestLL, 
           visits,
           maxDepth + additionalDepth,
-          optimizeParams);
+          optimizeParams, auTest);
       SpeciesTreeOperator::revertChangeRoot(speciesTree, direction);
       rollbackCallback();
       movesHistory.pop_back();
@@ -185,7 +192,8 @@ void SpeciesTreeOptimizer::rootSearchAux(SpeciesTree &speciesTree,
 }
 
 double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth,
-    bool optimizeParams)
+    bool optimizeParams,
+    bool auTest)
 {
   Logger::info << std::endl;
   Logger::timed << "[Species search] Root search with depth=" << maxDepth << std::endl;
@@ -196,12 +204,18 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth,
     _firstOptimizeRatesCall = true;
     bestLL = optimizeDTLRates();
   }
-  
-  _rootLikelihoods.reset();
+  if (auTest) {
+    _rootPerFamilyLikelihoods.clear();
+    Likelihoods perFamilyLikelihoods;
+    getPerFamilyLikelihoods(perFamilyLikelihoods);
+    _rootPerFamilyLikelihoods.push_back(perFamilyLikelihoods);
+  }
+  _rootLikelihoods.reset(); 
   auto root = _speciesTree->getRoot();
   _rootLikelihoods.saveValue(root->left, bestLL);
   _rootLikelihoods.saveValue(root->right, bestLL);
-  
+ 
+
   unsigned int visits = 1;
   movesHistory.push_back(1);
   rootSearchAux(*_speciesTree, 
@@ -212,7 +226,8 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth,
       bestLL, 
       visits, 
       maxDepth,
-      optimizeParams); 
+      optimizeParams,
+      auTest); 
   movesHistory[0] = 0;
   rootSearchAux(*_speciesTree, 
       *_geneTrees, 
@@ -222,7 +237,8 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth,
       bestLL, 
       visits,
       maxDepth,
-      optimizeParams); 
+      optimizeParams,
+      auTest); 
   //assert (visits == 2 * _speciesTree->getTree().getLeavesNumber() - 3);
   for (unsigned int i = 1; i < bestMovesHistory.size(); ++i) {
     SpeciesTreeOperator::changeRoot(*_speciesTree, bestMovesHistory[i]);
@@ -237,6 +253,14 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth,
     tree.save(out);
   }
   Logger::timed << "[Species search] After root search: LL=" << bestLL << std::endl;
+ 
+  if (auTest) {
+    std::vector<double> pvalues;
+    if (ParallelContext::getRank() == 0) {
+      performAUTest(_rootPerFamilyLikelihoods, 10000, pvalues);
+    }
+  }
+
   return bestLL;
 }
 
@@ -652,6 +676,36 @@ double SpeciesTreeOptimizer::computeRecLikelihood()
 
 }
 
+
+void SpeciesTreeOptimizer::getPerFamilyLikelihoods(std::vector<double> &likelihoods)
+{
+  assert(_optimizationCriteria != SupportedClades);
+  ParallelContext::barrier();
+  auto localRank = ParallelContext::getRank();
+  std::string localTemp = Paths::getTempFile(_outputDir, localRank);
+  std::ofstream os(localTemp);
+  for (auto &evaluation: _evaluations) {
+    os << evaluation->evaluate() << " ";
+  }
+  os.close();
+  unsigned int totalEvaluationsCount = _evaluations.size();
+  ParallelContext::sumUInt(totalEvaluationsCount);
+  likelihoods.clear();
+  likelihoods.reserve(totalEvaluationsCount);
+  ParallelContext::barrier();
+  for (unsigned int r = 0; r < ParallelContext::getSize(); ++r) {
+    std::string currentTemp = Paths::getTempFile(_outputDir, r);
+    std::ifstream is(currentTemp);
+    double ll;
+    while (is >> ll) {
+      likelihoods.push_back(ll);
+    }
+  }
+  assert(likelihoods.size() == totalEvaluationsCount);
+  ParallelContext::barrier();
+
+}
+
 void SpeciesTreeOptimizer::newBestTreeCallback()
 {
   saveCurrentSpeciesTreeId();
@@ -816,6 +870,8 @@ void SpeciesTreeOptimizer::RootLikelihoods::fillTree(PLLRootedTree &tree)
     }
   }
 }
+
+
 
 
 

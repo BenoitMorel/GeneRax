@@ -4,8 +4,14 @@
 #include <iostream>
 #include <treetests/AUTest.hpp>
 
+double randDouble(double max)
+{
+  return (max / double(RAND_MAX)) * double(rand());
+}
+
 int main(int, char**)
 {
+  srand(42);
   std::cout << "Testing au test..." << std::endl;
   size_t sites = 1000;
   size_t alignments = 3;
@@ -15,13 +21,12 @@ int main(int, char**)
     likelihoods[k].resize(sites);
   }
   for (unsigned int i = 0; i < sites; ++i) {
-    likelihoods[0][i] = -1.0; 
-    if (i < sites / 2) {
-      likelihoods[1][i] = -1.001; 
-    } else {
-      likelihoods[1][i] = -0.999; 
+    likelihoods[0][i] = -randDouble(1.0); 
+    likelihoods[1][i] = -randDouble(1.1); //(double(rand() % 1500));
+    likelihoods[2][i] = -0.5; //(double(rand() % 1500));
+    for (unsigned int k = 0; k < alignments; k++) {
+      likelihoods[k][i] *= 1000.0;
     }
-    likelihoods[2][i] = -1.01;
   }
 
   std::vector<double> pvalues;
