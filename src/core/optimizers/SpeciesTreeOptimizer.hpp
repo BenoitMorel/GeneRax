@@ -11,6 +11,7 @@
 #include <maths/ModelParameters.hpp>
 #include <trees/Clade.hpp>
 #include <util/Constants.hpp>
+#include <util/types.hpp>
 
 
 struct EvaluatedMove {
@@ -37,6 +38,9 @@ struct SpeciesTreeSearchParams {
 };
 
 struct MovesBlackList;
+
+using TreePerFamLL = std::pair<std::string, PerFamLL>;
+using TreePerFamLLVec = std::vector<TreePerFamLL>;
 
 class SpeciesTreeOptimizer: public SpeciesTree::Listener {
 public:
@@ -78,6 +82,13 @@ public:
 
   double computeRecLikelihood();
 
+  void addPerFamilyLikelihoods(const std::string &newick,
+      TreePerFamLLVec &treePerFamLLVec);
+
+  void savePerFamilyLikelihoods(const TreePerFamLLVec &treePerFamLLVec,
+      const std::string &treesOutput,
+      const std::string &llOutput);
+
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
@@ -97,6 +108,7 @@ private:
   AverageStream _averageGeneRootDiff;
   bool _hardToFindBetter;
   OptimizationCriteria _optimizationCriteria;
+  bool _outputConsel;
 private:
   void _computeAllGeneClades();
   unsigned int _unsupportedCladesNumber();
@@ -141,4 +153,5 @@ private:
     std::unordered_map<std::string, double> idToLL;
   };
   RootLikelihoods _rootLikelihoods;
+  TreePerFamLLVec _treePerFamLLVec;  
 };
