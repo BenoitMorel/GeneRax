@@ -35,7 +35,6 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   seed(123),
   filterFamilies(true),
   exec(iargv[0]),
-  fractionMissing(false),
   constrainSpeciesSearch(false),
   rerootSpeciesTree(false),
   estimateSpeciesBranchLenghts(false), 
@@ -148,7 +147,7 @@ void GeneRaxArguments::init() {
      *  Experimental and debug
      */
     } else if (arg == "--fraction-missing") {
-      fractionMissing = true;
+      fractionMissingFile = argv[++i];
     } else if (arg == "--build-supermatrix") {
       reconcile = true;
       buildSuperMatrix = true;
