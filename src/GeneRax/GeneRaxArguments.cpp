@@ -24,7 +24,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   useTransferFrequencies(false),
   userDTLRates(false),
   noDup(false),
-  dupRate(0.0),
+  dupRate(0.2),
   lossRate(0.2),
   transferRate(0.2),
   reconcile(true),
