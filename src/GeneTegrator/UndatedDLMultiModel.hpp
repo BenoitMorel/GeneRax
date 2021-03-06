@@ -22,22 +22,53 @@ private:
   
   
   PLLRootedTree &_speciesTree;
-  GeneSpeciesMapping _geneSpeciesMapping;
   ConditionalClades _ccp;
   std::vector<pll_rnode_t *> _allSpeciesNodes;
+  unsigned int _allSpeciesNodesCount;
   std::vector<double> _PD; // Duplication probability, per species branch
   std::vector<double> _PL; // Loss probability, per species branch
   std::vector<double> _PS; // Speciation probability, per species branch
   std::vector<double> _uE; // Extinction probability, per species branch
   using DLCLV = std::vector<REAL>;
   std::vector<DLCLV> _dlclvs;
+  std::map<std::string, std::string> _geneNameToSpeciesName;
+  std::unordered_map<unsigned int, unsigned int> _geneToSpecies;
+  std::map<std::string, unsigned int> _speciesNameToId;
 
+  /*
+  bool _pruneSpeciesTree;
+  std::vector<pll_rnode_t *> _speciesLeft;
+  std::vector<pll_rnode_t *> _speciesRight;
+  std::vector<pll_rnode_t *> _speciesParent;
+  pll_rnode_t *_prunedRoot;
+  std::vector<unsigned int> _speciesCoverage;
+  */
+
+  /*
+  pll_rnode_t *getSpeciesLeft(pll_rnode_t *node) {
+    return _speciesLeft[node->node_index];}
+  pll_rnode_t *getSpeciesRight(pll_rnode_t *node) {
+    return _speciesRight[node->node_index];}
+  pll_rnode_t *getSpeciesParent(pll_rnode_t *node) {
+    return _speciesParent[node->node_index];}
+  pll_rnode_t *getPrunedRoot() {return _prunedRoot;}
+*/
+
+  /*
+  bool fillPrunedNodesPostOrder(pll_rnode_t *node, 
+    std::vector<pll_rnode_t *> &nodes, 
+    std::unordered_set<pll_rnode_t *> *nodesToAdd = nullptr);
+*/
   REAL getLikelihoodFactor() const;
   virtual void _recomputeSpeciesProbabilities();
   void computeProbability(CID cid, 
     pll_rnode_t *speciesNode, 
     REAL &proba);
 
+  void initSpeciesTree();
+  void mapGenesToSpecies();
+  //void onSpeciesTreeChange();
+  
 };
 
 static double solveSecondDegreePolynome(double a, double b, double c) 
@@ -50,13 +81,15 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
     const GeneSpeciesMapping &geneSpeciesMapping, 
     const std::string &geneTreesFile):
   _speciesTree(speciesTree),
-  _geneSpeciesMapping(geneSpeciesMapping),
   _ccp(geneTreesFile),
   _allSpeciesNodes(speciesTree.getPostOrderNodes()),
+  _allSpeciesNodesCount(_allSpeciesNodes.size()),
   _PD(speciesTree.getNodesNumber(), 0.2),
   _PL(speciesTree.getNodesNumber(), 0.2),
   _PS(speciesTree.getNodesNumber(), 1.0),
-  _uE(speciesTree.getNodesNumber(), 0.0)
+  _uE(speciesTree.getNodesNumber(), 0.0),
+  _geneNameToSpeciesName(geneSpeciesMapping.getMap())
+  //_pruneSpeciesTree(false)
 {
   std::vector<REAL> zeros(speciesTree.getNodesNumber());
   _dlclvs = std::vector<std::vector<REAL> >(
@@ -68,19 +101,64 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
     _PL[e] /= sum;
     _PS[e] /= sum;
   }
+  initSpeciesTree();
 }
 
-
+/*
+template <class REAL>
+void UndatedDLMultiModel<REAL>::onSpeciesTreeChange()
+{
+  _allSpeciesNodes = _speciesTree.getPostOrderNodes();
+  for (auto speciesNode: _allSpeciesNodes) {
+    auto e = speciesNode->node_index;
+    _speciesLeft[e] = speciesNode->left;
+    _speciesRight[e] = speciesNode->right;
+    _speciesParent[e] = speciesNode->parent;
+  }
+  _prunedRoot = _speciesTree.getRoot();
+  if (_pruneSpeciesTree && _speciesCoverage.size()) {
+    std::vector<pll_rnode_t *> pruned(_allSpeciesNodesCount, nullptr);
+    for (auto speciesNode: _allSpeciesNodes) {
+      auto e = speciesNode->node_index;
+      if (!speciesNode->left) {
+        pruned[e] = (_speciesCoverage[e] ? speciesNode : nullptr);   
+      } else {
+        auto left = _speciesLeft[e];
+        auto right = _speciesRight[e];
+        auto prunedLeft = pruned[left->node_index];
+        auto prunedRight = pruned[right->node_index];
+        if (prunedLeft && prunedRight) {
+          _speciesLeft[e] = prunedLeft;
+          _speciesRight[e] = prunedRight;
+          pruned[e] = speciesNode;
+          _speciesParent[prunedLeft->node_index] = speciesNode;
+          _speciesParent[prunedRight->node_index] = speciesNode;
+          _prunedRoot = speciesNode;
+        } else if (!prunedLeft && prunedRight) {
+          pruned[e] = prunedRight;
+        } else if (prunedLeft && !prunedRight) {
+          pruned[e] = prunedLeft;
+        }
+      }
+    }
+    _allSpeciesNodes.clear();
+    fillPrunedNodesPostOrder(getPrunedRoot(), _allSpeciesNodes);
+  }
+}
+*/
 
 template <class REAL>
 double UndatedDLMultiModel<REAL>::computeLogLikelihood()
-{
+{ 
+
   double a = _ccp.getInputTreesNumber();
   double b = _ccp.getUniqueInputTreesNumber();
+  /*
   if (a == b) {
     return 0.0;
   }
-  _allSpeciesNodes = _speciesTree.getPostOrderNodes();
+  */
+  //onSpeciesTreeChange();
   _recomputeSpeciesProbabilities();
   for (CID cid = 0; cid < _ccp.getCladesNumber(); ++cid) {
     for (auto speciesNode: _allSpeciesNodes) {
@@ -130,11 +208,7 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
   bool isSpeciesLeaf = !speciesNode->left;
   auto e = speciesNode->node_index;
   if (_ccp.isLeaf(cid) && isSpeciesLeaf) {
-    std::string speciesLabel = speciesNode->label;
-    std::string geneLabel = _ccp.getLeafLabel(cid);
-    std::string geneSpeciesLabel = _geneSpeciesMapping.getMap().at(geneLabel);
-    // todo do not compare strings...
-    if (geneSpeciesLabel == speciesLabel) {
+    if (_geneToSpecies[cid] == e) {
       proba = REAL(_PS[e]);
     }
     return;
@@ -187,5 +261,59 @@ REAL UndatedDLMultiModel<REAL>::getLikelihoodFactor() const
     factor += (REAL(1.0) - REAL(_uE[e]));
   }
   return factor;
+}
+
+/*
+  template <class REAL>
+bool UndatedDLMultiModel<REAL>::fillPrunedNodesPostOrder(pll_rnode_t *node, 
+    std::vector<pll_rnode_t *> &nodes, 
+    std::unordered_set<pll_rnode_t *> *nodesToAdd)
+{
+  bool addMyself = true;
+  if (nodesToAdd) {
+    addMyself = (nodesToAdd->find(node) != nodesToAdd->end());
+  }
+  if (getSpeciesLeft(node)) {
+    assert(getSpeciesRight(node));
+    addMyself |= fillPrunedNodesPostOrder(getSpeciesLeft(node), nodes, nodesToAdd);
+    addMyself |= fillPrunedNodesPostOrder(getSpeciesRight(node), nodes, nodesToAdd);
+  }
+  if (addMyself) {
+    nodes.push_back(node);
+  }
+  return addMyself;
+}
+*/
+  template <class REAL>
+void UndatedDLMultiModel<REAL>::initSpeciesTree()
+{
+  _allSpeciesNodes = _speciesTree.getPostOrderNodes();
+  _allSpeciesNodesCount = _allSpeciesNodes.size();
+  /*
+  _speciesLeft = std::vector<pll_rnode_t *>(_allSpeciesNodesCount, nullptr);
+  _speciesRight = std::vector<pll_rnode_t *>(_allSpeciesNodesCount, nullptr);
+  _speciesParent = std::vector<pll_rnode_t *>(_allSpeciesNodesCount, nullptr);
+  */
+  mapGenesToSpecies();
+  //onSpeciesTreeChange();
+}
+
+  template <class REAL>
+void UndatedDLMultiModel<REAL>::mapGenesToSpecies()
+{
+  const auto &cidToLeaves = _ccp.getCidToLeaves();
+  _speciesNameToId.clear();
+  for (auto node: _allSpeciesNodes) {
+    if (!node->left) {
+      _speciesNameToId[node->label] = node->node_index;
+    }
+  }
+  for (auto p: cidToLeaves) {
+    auto cid = p.first;
+    const auto &geneName = cidToLeaves.at(cid);
+    const auto &speciesName = _geneNameToSpeciesName[geneName];
+    _geneToSpecies[cid] = _speciesNameToId[speciesName];
+  }
+
 }
 

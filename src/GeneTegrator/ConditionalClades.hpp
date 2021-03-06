@@ -42,6 +42,8 @@ public:
   unsigned int getRootsNumber() const;
   unsigned int getInputTreesNumber() const {return _inputTrees;}
   unsigned int getUniqueInputTreesNumber() const {return _uniqueInputTrees;}
+  const std::unordered_map<unsigned int, std::string> &
+    getCidToLeaves() {return _CIDToLeaf;}
 private:
   std::vector<std::string> _idToLeaf;
   std::unordered_map<unsigned int, std::string> _CIDToLeaf;
