@@ -67,7 +67,7 @@ private:
 
   void initSpeciesTree();
   void mapGenesToSpecies();
-  //void onSpeciesTreeChange();
+  void onSpeciesTreeChange();
   
 };
 
@@ -104,11 +104,12 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
   initSpeciesTree();
 }
 
-/*
 template <class REAL>
 void UndatedDLMultiModel<REAL>::onSpeciesTreeChange()
 {
   _allSpeciesNodes = _speciesTree.getPostOrderNodes();
+}
+  /*
   for (auto speciesNode: _allSpeciesNodes) {
     auto e = speciesNode->node_index;
     _speciesLeft[e] = speciesNode->left;
@@ -153,12 +154,10 @@ double UndatedDLMultiModel<REAL>::computeLogLikelihood()
 
   double a = _ccp.getInputTreesNumber();
   double b = _ccp.getUniqueInputTreesNumber();
-  /*
   if (a == b) {
     return 0.0;
   }
-  */
-  //onSpeciesTreeChange();
+  onSpeciesTreeChange();
   _recomputeSpeciesProbabilities();
   for (CID cid = 0; cid < _ccp.getCladesNumber(); ++cid) {
     for (auto speciesNode: _allSpeciesNodes) {
