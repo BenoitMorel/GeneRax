@@ -18,3 +18,5 @@ using MetaQuartet = std::array<TaxaSet, 4>;
 using UInt3 = std::array<unsigned int, 3>;
 using UInt4 = std::array<unsigned int, 4>;
 
+using PerFamLL = std::vector<double>;
+

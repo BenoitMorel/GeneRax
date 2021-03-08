@@ -9,8 +9,9 @@ public:
     return joinPaths(outputDir, file);
   }
 
-  static std::string getTempDir(const std::string &outputDir) {
-    return joinPaths(outputDir, "species_trees");
+  static std::string getTempFile(const std::string &outputDir, 
+      unsigned int index) {
+    return joinPaths(outputDir, "tmp_" + std::to_string(index));
 
   }
   
@@ -23,11 +24,23 @@ public:
     return joinPaths(getSpeciesTreesDir(outputDir), file);
   }
 
+  static std::string getConselTreeList(const std::string &outputDir,
+      const std::string &prefix)
+  {
+    const std::string basename = prefix + "_consel_treelist.txt";
+    return joinPaths(outputDir, basename);
+  }
+  
+  static std::string getConselLikelihoods(const std::string &outputDir,
+      const std::string &prefix)
+  {
+    const std::string basename = prefix + "_consel_likelihoods.txt";
+    return joinPaths(outputDir, basename);
+  }
 
   static std::vector<std::string> getDirectoriesToCreate(const std::string &outputDir) {
     std::vector<std::string> dirs;
     dirs.push_back(getSpeciesTreesDir(outputDir));
-    dirs.push_back(getTempDir(outputDir));
     return dirs;
   }
 private:
@@ -40,3 +53,4 @@ private:
   }
   
 };
+

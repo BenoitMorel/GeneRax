@@ -11,6 +11,7 @@
 #include <maths/ModelParameters.hpp>
 #include <trees/Clade.hpp>
 #include <util/Constants.hpp>
+#include <util/types.hpp>
 
 
 struct EvaluatedMove {
@@ -37,6 +38,9 @@ struct SpeciesTreeSearchParams {
 };
 
 struct MovesBlackList;
+
+using TreePerFamLL = std::pair<std::string, PerFamLL>;
+using TreePerFamLLVec = std::vector<TreePerFamLL>;
 
 class SpeciesTreeOptimizer: public SpeciesTree::Listener {
 public:
@@ -65,9 +69,11 @@ public:
   void optimize(SpeciesSearchStrategy strategy,
       OptimizationCriteria criteria = ReconciliationLikelihood);
   
-  double optimizeDTLRates();
+  double optimizeDTLRates(bool thorough = false);
   
-  double rootSearch(unsigned int maxDepth = 1000000);
+  double rootSearch(unsigned int maxDepth,
+      bool optimizeParams,
+      bool outputConsel);
 
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
@@ -76,6 +82,13 @@ public:
   double getReconciliationLikelihood() const {return _bestRecLL;}
 
   double computeRecLikelihood();
+
+  void addPerFamilyLikelihoods(const std::string &newick,
+      TreePerFamLLVec &treePerFamLLVec);
+
+  void savePerFamilyLikelihoods(const TreePerFamLLVec &treePerFamLLVec,
+      const std::string &treesOutput,
+      const std::string &llOutput);
 
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
@@ -99,7 +112,7 @@ private:
 private:
   void _computeAllGeneClades();
   unsigned int _unsupportedCladesNumber();
-  ModelParameters computeOptimizedRates(); 
+  ModelParameters computeOptimizedRates(bool thorough); 
   void updateEvaluations();
   void rootSearchAux(SpeciesTree &speciesTree, 
       PerCoreGeneTrees &geneTrees, 
@@ -108,7 +121,9 @@ private:
       std::vector<unsigned int> &bestMovesHistory, 
       double &bestLL, 
       unsigned int &visits,
-      unsigned int maxDepth);
+      unsigned int maxDepth,
+      bool optimizeParams,
+      bool outputConsel);
   bool testPruning(unsigned int prune,
     unsigned int regraft);
   void newBestTreeCallback();
@@ -139,4 +154,5 @@ private:
     std::unordered_map<std::string, double> idToLL;
   };
   RootLikelihoods _rootLikelihoods;
+  TreePerFamLLVec _treePerFamLLVec;  
 };

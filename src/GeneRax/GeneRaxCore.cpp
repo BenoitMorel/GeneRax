@@ -139,6 +139,8 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
   Parameters startingRates = instance.getUserParameters();
   SpeciesTreeSearchParams searchParams;
   searchParams.sprRadius = instance.args.speciesSPRRadius;
+  searchParams.rootSmallRadius = instance.args.speciesSmallRootRadius;
+  searchParams.rootBigRadius = instance.args.speciesBigRootRadius;
   SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, 
       instance.currentFamilies, 
       instance.getRecModelInfo(), 

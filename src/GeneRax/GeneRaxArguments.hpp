@@ -34,6 +34,7 @@ public:
    bool perSpeciesDTLRates;
    bool useTransferFrequencies;
    bool userDTLRates;
+   bool noDup;
    double dupRate;
    double lossRate;
    double transferRate;
@@ -45,7 +46,7 @@ public:
    int seed;
    bool filterFamilies;
    std::string exec;
-   bool fractionMissing;
+   std::string fractionMissingFile;
 
 
    // species tree search

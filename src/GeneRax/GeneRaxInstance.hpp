@@ -40,7 +40,8 @@ struct GeneRaxInstance {
         args.pruneSpeciesTree,
         args.rootedGeneTree,
         args.minGeneBranchLength,
-        fractionMissingFile
+        args.noDup,
+        args.fractionMissingFile
         );
     rates = getUserParameters();
   }
