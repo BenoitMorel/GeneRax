@@ -100,6 +100,7 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
 
 template <class REAL>
 void UndatedDLMultiModel<REAL>::onSpeciesTreeChange()
+{
   _allSpeciesNodes = _speciesTree.getPostOrderNodes();
   for (auto speciesNode: _allSpeciesNodes) {
     auto e = speciesNode->node_index;
