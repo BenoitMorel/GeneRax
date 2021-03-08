@@ -71,8 +71,9 @@ public:
   
   double optimizeDTLRates(bool thorough = false);
   
-  double rootSearch(unsigned int maxDepth = 1000000,
-      bool optimizeParams = false);
+  double rootSearch(unsigned int maxDepth,
+      bool optimizeParams,
+      bool outputConsel);
 
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
@@ -108,7 +109,6 @@ private:
   AverageStream _averageGeneRootDiff;
   bool _hardToFindBetter;
   OptimizationCriteria _optimizationCriteria;
-  bool _outputConsel;
 private:
   void _computeAllGeneClades();
   unsigned int _unsupportedCladesNumber();
@@ -122,7 +122,8 @@ private:
       double &bestLL, 
       unsigned int &visits,
       unsigned int maxDepth,
-      bool optimizeParams);
+      bool optimizeParams,
+      bool outputConsel);
   bool testPruning(unsigned int prune,
     unsigned int regraft);
   void newBestTreeCallback();
