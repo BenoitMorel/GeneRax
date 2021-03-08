@@ -1,6 +1,6 @@
 #pragma once
 
-#include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
+#include <likelihoods/reconciliation_models/GTBaseReconciliationModel.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <IO/Logger.hpp>
@@ -15,12 +15,12 @@
 * In addition, we forbid transfers to parent species
 */
 template <class REAL>
-class UndatedDTLModel: public AbstractReconciliationModel<REAL> {
+class UndatedDTLModel: public GTBaseReconciliationModel<REAL> {
 public:
   UndatedDTLModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMappingp, 
       const RecModelInfo &recModelInfo): 
-    AbstractReconciliationModel<REAL>(speciesTree, 
+    GTBaseReconciliationModel<REAL>(speciesTree, 
         geneSpeciesMappingp, 
         recModelInfo) {}
   UndatedDTLModel(const UndatedDTLModel &) = delete;
@@ -127,7 +127,7 @@ private:
 template <class REAL>
 void UndatedDTLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
 {
-  AbstractReconciliationModel<REAL>::setInitialGeneTree(tree);
+  GTBaseReconciliationModel<REAL>::setInitialGeneTree(tree);
   DTLCLV nullCLV(this->_allSpeciesNodesCount);
   _dtlclvs = std::vector<DTLCLV>(2 * (this->_maxGeneId + 1), nullCLV);
 }

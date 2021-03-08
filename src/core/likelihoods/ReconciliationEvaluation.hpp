@@ -10,7 +10,7 @@
 #include <trees/PLLUnrootedTree.hpp>
 #include <trees/PLLRootedTree.hpp>
 
-class ReconciliationModelInterface;
+class GTBaseReconciliationInterface;
 class Scenario;
 
 /**
@@ -90,9 +90,9 @@ private:
   std::vector<std::vector<double> > _rates;
   // we actually own this pointer, but we do not 
   // wrap it into a unique_ptr to allow forward definition
-  ReconciliationModelInterface *_evaluators;
+  GTBaseReconciliationInterface *_evaluators;
 private:
-  ReconciliationModelInterface *buildRecModelObject(RecModel recModel, bool infinitePrecision);
+  GTBaseReconciliationInterface *buildRecModelObject(RecModel recModel, bool infinitePrecision);
   pll_unode_t *computeMLRoot();
   void updatePrecision(bool infinitePrecision);
 };

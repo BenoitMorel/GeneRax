@@ -5,9 +5,9 @@
 #include <likelihoods/reconciliation_models/UndatedDLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <likelihoods/reconciliation_models/ParsimonyDModel.hpp>
+#include <likelihoods/reconciliation_models/BaseReconciliationModel.hpp>
 #include <cmath>
 #include <IO/FileSystem.hpp>
-#include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 
 double log(ScaledValue v) 
 {
@@ -91,10 +91,10 @@ void ReconciliationEvaluation::invalidateAllSpeciesCLVs()
   _evaluators->invalidateAllSpeciesCLVs();
 }
 
-ReconciliationModelInterface *ReconciliationEvaluation::buildRecModelObject(RecModel recModel, 
+GTBaseReconciliationInterface *ReconciliationEvaluation::buildRecModelObject(RecModel recModel, 
     bool infinitePrecision)
 {
-  ReconciliationModelInterface *res(nullptr);
+  GTBaseReconciliationInterface *res(nullptr);
   switch(recModel) {
   case RecModel::UndatedDL:
     if (infinitePrecision) {

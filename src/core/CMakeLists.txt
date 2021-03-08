@@ -13,6 +13,7 @@ set(jointsearch-core_SOURCES
   IO/ReconciliationWriter.cpp
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ReconciliationEvaluation.cpp
+  likelihoods/reconciliation_models/BaseReconciliationModel.cpp
   maths/Random.cpp
   NJ/MiniNJ.cpp
   NJ/Cherry.cpp

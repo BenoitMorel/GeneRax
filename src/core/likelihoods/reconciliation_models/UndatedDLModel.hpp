@@ -1,6 +1,6 @@
 #pragma once
 
-#include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
+#include <likelihoods/reconciliation_models/GTBaseReconciliationModel.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <IO/Logger.hpp>
@@ -19,12 +19,12 @@
 * allows a lot of algorithmic shortcuts
 */
 template <class REAL>
-class UndatedDLModel: public AbstractReconciliationModel<REAL> {
+class UndatedDLModel: public GTBaseReconciliationModel<REAL> {
 public:
   UndatedDLModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMappingp, 
       const RecModelInfo &recModelInfo): 
-    AbstractReconciliationModel<REAL>(speciesTree, 
+    GTBaseReconciliationModel<REAL>(speciesTree, 
         geneSpeciesMappingp, 
         recModelInfo) {}
   
@@ -82,7 +82,7 @@ private:
 template <class REAL>
 void UndatedDLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
 {
-  AbstractReconciliationModel<REAL>::setInitialGeneTree(tree);
+  GTBaseReconciliationModel<REAL>::setInitialGeneTree(tree);
   assert(this->_allSpeciesNodesCount);
   assert(this->_maxGeneId);
   std::vector<REAL> zeros(this->_allSpeciesNodesCount);

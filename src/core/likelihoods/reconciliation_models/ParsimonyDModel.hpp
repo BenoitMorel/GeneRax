@@ -1,6 +1,6 @@
 #pragma once
 
-#include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
+#include <likelihoods/reconciliation_models/GTBaseReconciliationModel.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <IO/Logger.hpp>
@@ -12,12 +12,12 @@
 
 
 
-class ParsimonyDModel: public AbstractReconciliationModel<double> {
+class ParsimonyDModel: public GTBaseReconciliationModel<double> {
 public:
   ParsimonyDModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMappingp, 
       const RecModelInfo &recModelInfo):
-    AbstractReconciliationModel<double>(speciesTree, 
+    GTBaseReconciliationModel<double>(speciesTree, 
         geneSpeciesMappingp, 
         recModelInfo),
     _costD(-1.0)
@@ -80,7 +80,7 @@ private:
 
 void ParsimonyDModel::setInitialGeneTree(PLLUnrootedTree &tree)
 {
-  AbstractReconciliationModel<double>::setInitialGeneTree(tree);
+  GTBaseReconciliationModel<double>::setInitialGeneTree(tree);
   _dlclvs = std::vector<DLCLV>(2 * (this->_maxGeneId + 1));
 }
 
