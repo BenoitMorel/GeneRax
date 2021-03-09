@@ -110,6 +110,39 @@ protected:
   std::vector<double> _madProbabilities;
 };
 
+static pll_unode_t *getOther(pll_unode_t *ref, pll_unode_t *n1, pll_unode_t *n2)
+{
+  return (ref == n1) ? n2 : n1;
+}
+
+template<class REAL> 
+REAL getRandom(REAL max)
+{
+  return max * Random::getProba();
+}
+template<class C, class REAL>
+int sampleIndex(const C &container)
+{
+  REAL sum = REAL();
+  for (auto value: container) {
+    sum += value;
+  }
+  if (sum == REAL()) {
+    return -1;
+  }
+  REAL stopAt = getRandom(sum);
+  sum = REAL();
+  unsigned int index = 0;
+  for (auto value: container) {
+    sum += value;
+    if (stopAt < sum) {
+      return index;
+    }
+    index++;
+  }
+  assert(false);
+}
+
 
 template <class REAL>
 GTBaseReconciliationModel<REAL>::GTBaseReconciliationModel(

@@ -14,63 +14,11 @@
 
 #define IS_PROBA(x) (x == x) //(REAL(0.0) <= REAL(x) && REAL(x)  <= REAL(1.0)))
 #define ASSERT_PROBA(x) assert(IS_PROBA(x));
-//#define IS_PROBA(x) true
-//#define ASSERT_PROBA(x) assert(true);
 
 double log(ScaledValue v);
 typedef std::vector< std::vector <double> > RatesVector;
 
-static bool fillNodesPostOrder(pll_rnode_t *node, 
-    std::vector<pll_rnode_t *> &nodes, 
-    std::unordered_set<pll_rnode_t *> *nodesToAdd = nullptr)  
-{
-  bool addMyself = true;
-  if (nodesToAdd) {
-    addMyself = (nodesToAdd->find(node) != nodesToAdd->end());
-  }
-  if (node->left) {
-    assert(node->right);
-    addMyself |= fillNodesPostOrder(node->left, nodes, nodesToAdd);
-    addMyself |= fillNodesPostOrder(node->right, nodes, nodesToAdd);
-  }
-  if (addMyself) {
-    nodes.push_back(node);
-  }
-  return addMyself;
-}
 
-static pll_unode_t *getOther(pll_unode_t *ref, pll_unode_t *n1, pll_unode_t *n2)
-{
-  return (ref == n1) ? n2 : n1;
-}
-
-template<class REAL> 
-REAL getRandom(REAL max)
-{
-  return max * Random::getProba();
-}
-template<class C, class REAL>
-int sampleIndex(const C &container)
-{
-  REAL sum = REAL();
-  for (auto value: container) {
-    sum += value;
-  }
-  if (sum == REAL()) {
-    return -1;
-  }
-  REAL stopAt = getRandom(sum);
-  sum = REAL();
-  unsigned int index = 0;
-  for (auto value: container) {
-    sum += value;
-    if (stopAt < sum) {
-      return index;
-    }
-    index++;
-  }
-  assert(false);
-}
 
 /**
  *  Interface and common implementations for 
@@ -92,6 +40,9 @@ public:
   virtual double computeLogLikelihood() = 0;
 
 
+  /**
+   *  Sets the mode used to compute the incremental likelihood function
+   */
   virtual void setPartialLikelihoodMode(PartialLikelihoodMode mode) = 0;
   
   /**
@@ -104,9 +55,18 @@ public:
    **/
   virtual bool inferMLScenario(Scenario &scenario, bool stochastic = false) = 0;
 
-  virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate) = 0;
+  /**
+   *  Should be called after each change in the species tree topology
+   */
+  virtual void onSpeciesTreeChange(
+      const std::unordered_set<pll_rnode_t *> *nodesToInvalidate) = 0;
 
-  virtual void setFractionMissingGenes(const std::string &fractionMissingFile) = 0;
+  /**
+   *  Set the path to the file containing information about
+   *  fraction of missing genes
+   */
+  virtual void setFractionMissingGenes(
+      const std::string &fractionMissingFile) = 0;
 
 };
 

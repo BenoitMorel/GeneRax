@@ -1,5 +1,23 @@
 #include "BaseReconciliationModel.hpp"
 
+static bool fillNodesPostOrder(pll_rnode_t *node, 
+    std::vector<pll_rnode_t *> &nodes, 
+    std::unordered_set<pll_rnode_t *> *nodesToAdd = nullptr)  
+{
+  bool addMyself = true;
+  if (nodesToAdd) {
+    addMyself = (nodesToAdd->find(node) != nodesToAdd->end());
+  }
+  if (node->left) {
+    assert(node->right);
+    addMyself |= fillNodesPostOrder(node->left, nodes, nodesToAdd);
+    addMyself |= fillNodesPostOrder(node->right, nodes, nodesToAdd);
+  }
+  if (addMyself) {
+    nodes.push_back(node);
+  }
+  return addMyself;
+}
 
 
 BaseReconciliationModel::BaseReconciliationModel(
