@@ -6,6 +6,7 @@
 GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
     const std::string speciesTreeFile, 
     const Families &families, 
+    const RecModelInfo &info,
     const std::string &outputDir):
   _speciesTree(std::make_unique<SpeciesTree>(speciesTreeFile)),
   _outputDir(outputDir),
@@ -22,6 +23,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
     _evaluations.push_back(std::make_shared<MultiEvaluation>(
         _speciesTree->getTree(),
         mapping,
+        info,
         family.startingGeneTree));
   }
 

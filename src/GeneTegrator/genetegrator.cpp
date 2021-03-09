@@ -5,6 +5,7 @@
 #include <IO/FamiliesFileParser.hpp>
 #include "GTSpeciesTreeOptimizer.hpp"
 #include <util/Paths.hpp>
+#include <util/RecModelInfo.hpp>
 #include <routines/Routines.hpp>
 #include <routines/SlavesMain.hpp>
 
@@ -73,9 +74,13 @@ void run( GeneTegratorArguments &args)
   auto families = FamiliesFileParser::parseFamiliesFile(args.families);
   filterInvalidFamilies(families);
   initStartingSpeciesTree(args, families);
+  
+  RecModelInfo info;
+  info.pruneSpeciesTree = args.pruneSpeciesTree;
   GTSpeciesTreeOptimizer speciesTreeOptimizer(
       args.speciesTree,
       families,
+      info,
       args.output);
   auto ll = speciesTreeOptimizer.computeRecLikelihood();
   Logger::info << "total ll=" << ll << std::endl;

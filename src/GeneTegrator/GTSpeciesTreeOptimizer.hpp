@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 
+class RecModelInfo;
 using MultiEvaluation = UndatedDLMultiModel<ScaledValue>;
 using MultiEvaluationPtr = 
   std::shared_ptr<MultiEvaluation>;
@@ -16,6 +17,7 @@ class GTSpeciesTreeOptimizer {
 public:
   GTSpeciesTreeOptimizer(const std::string speciesTreeFile, 
       const Families &families, 
+      const RecModelInfo &info,
       const std::string &outputDir);
 
   double computeRecLikelihood();

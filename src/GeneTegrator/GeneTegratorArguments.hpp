@@ -17,6 +17,7 @@ public:
    std::string families;
    std::string speciesTree;
    SpeciesTreeAlgorithm speciesTreeAlgorithm;
+   bool pruneSpeciesTree;
    std::string output;
    int seed;
 

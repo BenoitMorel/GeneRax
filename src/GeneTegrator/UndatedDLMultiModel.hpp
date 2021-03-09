@@ -5,6 +5,8 @@
 #include "ConditionalClades.hpp"
 #include <maths/ScaledValue.hpp>
 
+
+class RecModelInfo;
 double log(ScaledValue v);
 
 template <class REAL>
@@ -12,6 +14,7 @@ class UndatedDLMultiModel {
 public: 
   UndatedDLMultiModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
+      const RecModelInfo &info,
       const std::string &geneTreesFile);
 
   virtual ~UndatedDLMultiModel() {}
@@ -73,6 +76,7 @@ static double solveSecondDegreePolynome(double a, double b, double c)
 template <class REAL>
 UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree, 
     const GeneSpeciesMapping &geneSpeciesMapping, 
+    const RecModelInfo &info,
     const std::string &geneTreesFile):
   _speciesTree(speciesTree),
   _ccp(geneTreesFile),
@@ -83,7 +87,7 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
   _PS(speciesTree.getNodesNumber(), 1.0),
   _uE(speciesTree.getNodesNumber(), 0.0),
   _geneNameToSpeciesName(geneSpeciesMapping.getMap()),
-  _pruneSpeciesTree(false)
+  _pruneSpeciesTree(info.pruneSpeciesTree)
 {
   std::vector<REAL> zeros(speciesTree.getNodesNumber());
   _dlclvs = std::vector<std::vector<REAL> >(
@@ -179,9 +183,9 @@ void UndatedDLMultiModel<REAL>::_recomputeSpeciesProbabilities()
     double a = _PD[e];
     double b = -1.0;
     double c = _PL[e];
-    if (speciesNode->left) {
-      c += _PS[e] * _uE[speciesNode->left->node_index]  * 
-        _uE[speciesNode->right->node_index];
+    if (getSpeciesLeft(speciesNode)) {
+      c += _PS[e] * _uE[getSpeciesLeft(speciesNode)->node_index]  * 
+        _uE[getSpeciesRight(speciesNode)->node_index];
     }
     double proba = solveSecondDegreePolynome(a, b, c);
     _uE[speciesNode->node_index] = proba;
@@ -195,7 +199,7 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
     )
 {
   proba = REAL();
-  bool isSpeciesLeaf = !speciesNode->left;
+  bool isSpeciesLeaf = !getSpeciesLeft(speciesNode);
   auto e = speciesNode->node_index;
   if (_ccp.isLeaf(cid) && isSpeciesLeaf) {
     if (_geneToSpecies[cid] == e) {
@@ -207,8 +211,8 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
   unsigned int f = 0;
   unsigned int g = 0;
   if (!isSpeciesLeaf) {
-    f = speciesNode->left->node_index;
-    g = speciesNode->right->node_index;
+    f = getSpeciesLeft(speciesNode)->node_index;
+    g = getSpeciesRight(speciesNode)->node_index;
   }
   
   for (const auto &cladeSplit: _ccp.getCladeSplits(cid)) {
@@ -295,12 +299,14 @@ void UndatedDLMultiModel<REAL>::mapGenesToSpecies()
       _speciesNameToId[node->label] = node->node_index;
     }
   }
+  this->_speciesCoverage = std::vector<unsigned int>(
+      this->_allSpeciesNodesCount, 0);
   for (auto p: cidToLeaves) {
     auto cid = p.first;
     const auto &geneName = cidToLeaves.at(cid);
     const auto &speciesName = _geneNameToSpeciesName[geneName];
     _geneToSpecies[cid] = _speciesNameToId[speciesName];
+    _speciesCoverage[_geneToSpecies[cid]]++;
   }
-
 }
 
