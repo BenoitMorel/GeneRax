@@ -11,16 +11,9 @@
 static CCPClade getComplementary(const CCPClade &clade,
     const CCPClade &subclade)
 {
-#ifdef GENESISIMPLEM
   CCPClade complementary(subclade);
   complementary.negate();
   complementary &= clade;
-#else
-  CCPClade complementary(clade);
-  for (unsigned int i = 0; i < clade.size(); ++i) {
-    complementary[i] = clade[i] && !subclade[i];
-  }
-#endif
   return complementary;
 }
 
@@ -43,7 +36,6 @@ static void addSubclade(const CCPClade &clade,
 {
   auto subcladeCountsIt = subcladeCounts.find(clade);
   if (subcladeCountsIt == subcladeCounts.end()) {
-    CladeCounts cladeCounts;
     subcladeCounts.insert({clade, CladeCounts()});
     subcladeCountsIt = subcladeCounts.find(clade);
   }
@@ -89,25 +81,16 @@ namespace std
     };
 }
 
-ConditionalClades::ConditionalClades(const std::string &newickFile):
-  _inputTrees(0),
-  _uniqueInputTrees(0)
-{
 
-  // todo: maybe everything would be faster if we would
-  // replace the CCPClade with their IDs sooner
+
+void readTrees(const std::string &newickFile,
+    std::unordered_map<TreeWraper, unsigned int> &weightedTrees,
+    unsigned int &inputTrees,
+    unsigned int &uniqueInputTrees)
+{
   std::ifstream infile(newickFile);
   std::string line;
-  std::unordered_map<std::string, unsigned int> leafToId;
-  CCPClade emptyClade;
-  CCPClade fullClade;
-  CladeCounts cladeCounts;
-  SubcladeCounts subcladeCounts;
-  OrderedClades orderedClades;
-  std::unordered_map<TreeWraper, unsigned int> weightedTrees;
   while (std::getline(infile, line)) {
-    // todo: support empty lines
-//#undef CCPCOMPRESS 
     TreeWraper wraper;
     wraper.tree = std::make_shared<PLLUnrootedTree>(line, false);
     if (weightedTrees.find(wraper) == weightedTrees.end()) {
@@ -115,11 +98,27 @@ ConditionalClades::ConditionalClades(const std::string &newickFile):
     } else {
       weightedTrees.at(wraper)++;
     }
-    _inputTrees++;
+    inputTrees++;
   }
-  _uniqueInputTrees = weightedTrees.size();
-  //std::cout << "Number of different trees: " << weightedTrees.size() << std::endl;
-  
+  uniqueInputTrees = weightedTrees.size();
+
+}
+
+ConditionalClades::ConditionalClades(const std::string &newickFile):
+  _inputTrees(0),
+  _uniqueInputTrees(0)
+{
+
+  // todo: maybe everything would be faster if we would
+  // replace the CCPClade with their IDs sooner
+  std::unordered_map<std::string, unsigned int> leafToId;
+  CCPClade emptyClade;
+  CCPClade fullClade;
+  CladeCounts cladeCounts;
+  SubcladeCounts subcladeCounts;
+  OrderedClades orderedClades;
+  std::unordered_map<TreeWraper, unsigned int> weightedTrees;
+  readTrees(newickFile, weightedTrees, _inputTrees, _uniqueInputTrees); 
   for (auto pair: weightedTrees) {
     auto &tree = *(pair.first.tree);
     auto treeCount = pair.second;
@@ -140,21 +139,11 @@ ConditionalClades::ConditionalClades(const std::string &newickFile):
       auto &clade = nodeIndexToClade[nodeIndex];
       if (!node->next) { // leaf
         auto id = leafToId[node->label];
-#ifdef GENESISIMPLEM
         clade.set(id);
-#else
-        clade[id] = true; 
-#endif
       } else {
         auto &leftClade = nodeIndexToClade[node->next->back->node_index];
         auto &rightClade = nodeIndexToClade[node->next->next->back->node_index];
-#ifdef GENESISIMPLEM
         clade = leftClade | rightClade;
-#else
-        for (unsigned int i = 0; i < clade.size(); ++i) {
-          clade[i] = leftClade[i] || rightClade[i];
-        }
-#endif
         if (leftClade < rightClade) {
           addSubclade(clade, leftClade, subcladeCounts, treeCount);
         } else {
@@ -181,6 +170,8 @@ void ConditionalClades::_fillCCP(CladeCounts &cladeCounts,
 {
   _allCladeSplits.clear();
   _allCladeSplits.resize(orderedClades.size());
+  _CIDToClade.clear();
+  _cladeToCID.clear();
   for (auto it = orderedClades.begin(); it != orderedClades.end(); ++it) {
     auto &clade = *it;
     auto cladeCount = cladeCounts[clade];
