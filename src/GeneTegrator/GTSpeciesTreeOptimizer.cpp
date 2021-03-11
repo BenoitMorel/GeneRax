@@ -15,6 +15,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   saveCurrentSpeciesTreeId("starting_species_tree.newick");
   saveCurrentSpeciesTreeId();
   PerCoreGeneTrees perCoreGeneTrees(families, false);
+  Logger::timed << "Initializing ccps" << std::endl;
   for (const auto &geneTree: perCoreGeneTrees.getTrees()) {
     auto &family = families[geneTree.familyIndex];
   //for (auto &family: families) {
@@ -26,6 +27,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
         info,
         family.startingGeneTree));
   }
+  Logger::timed << "Initializing ccps finished" << std::endl;
 
   ParallelContext::barrier();
 }
@@ -54,7 +56,6 @@ double GTSpeciesTreeOptimizer::sprSearch(unsigned int radius)
   } while (newLL - bestLL > 0.001);
   bestLL = newLL;
   Logger::timed << "After normal search: LL=" << bestLL << std::endl;
-  //saveCurrentSpeciesTreeId();
   return bestLL;
 }
 
@@ -119,6 +120,7 @@ std::string GTSpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, b
 
 void GTSpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly)
 {
+  Logger::info << "Save current species tree" << std::endl;
   _speciesTree->saveToFile(str, masterRankOnly);
 }
 

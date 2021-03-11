@@ -139,14 +139,14 @@ std::unordered_set<std::string> PLLUnrootedTree::getLeavesLabels()
 
 static void fillPostOrder(pll_unode_t *node,
     std::vector<pll_unode_t*> &nodes,
-    std::unordered_set<unsigned int> &markedNodes)
+    std::vector<bool> &markedNodes)
 {
   // we already traversed this node
-  if (markedNodes.find(node->node_index) != markedNodes.end()) {
+  if (markedNodes[node->node_index]) {
     return;
   }
   // mark the node as traversed
-  markedNodes.insert(node->node_index);
+  markedNodes[node->node_index] = true;
   // first process children
   if (node->next) {
     fillPostOrder(node->next->back, nodes, markedNodes);
@@ -186,10 +186,10 @@ std::unordered_set<pll_unode_t *> PLLUnrootedTree::getBranches()
 std::vector<pll_unode_t*> PLLUnrootedTree::getPostOrderNodes(bool innerOnly)
 {
   std::vector<pll_unode_t*> nodes;
-  std::unordered_set<unsigned int> markedNodes;
+  std::vector<bool> markedNodes(getDirectedNodesNumber(), false);
   if (innerOnly) {
     for (auto node: getLeaves()) {
-      markedNodes.insert(node->node_index);
+      markedNodes[node->node_index] = true;
     }
   }
   // do the post order traversal from all possible virtual roots 
