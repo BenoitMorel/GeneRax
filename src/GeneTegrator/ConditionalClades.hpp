@@ -5,12 +5,13 @@
 #include <set>
 #include "bitvector.hpp"
 
+using CID = unsigned int;
+
 using CCPClade = genesis::utils::Bitvector;
-using CladeCounts = std::unordered_map<CCPClade, unsigned int>;
-using SubcladeCounts = std::unordered_map<CCPClade, CladeCounts>;
+using CladeCounts = std::unordered_map<CID, unsigned int>;
+using SubcladeCounts = std::vector<CladeCounts>;
 using OrderedClades = std::set<CCPClade>;
 
-using CID = unsigned int;
 struct CladeSplit {
   CID parent;
   CID left;
@@ -25,7 +26,7 @@ struct CladeSplit {
 using CladeSplits = std::vector<CladeSplit>;
 using CladeToCID = std::unordered_map<CCPClade, CID>;
 using CIDToClade = std::vector<CCPClade>;
-
+using CIDToLeaf = std::unordered_map<unsigned int, std::string>;
 class ConditionalClades {
 public:
   ConditionalClades(const std::string &newickFile);
@@ -41,7 +42,7 @@ public:
     getCidToLeaves() {return _CIDToLeaf;}
 private:
   std::vector<std::string> _idToLeaf;
-  std::unordered_map<unsigned int, std::string> _CIDToLeaf;
+  CIDToLeaf _CIDToLeaf;
   std::vector<CladeSplits> _allCladeSplits;
   CladeToCID _cladeToCID;
   CIDToClade _CIDToClade;
@@ -49,8 +50,7 @@ private:
   unsigned int _uniqueInputTrees;
 private:
   void _fillCCP(CladeCounts &cladeCounts,
-      SubcladeCounts &subcladeCounts,
-      OrderedClades &orderedClades);
+      SubcladeCounts &subcladeCounts);
 };
 
 

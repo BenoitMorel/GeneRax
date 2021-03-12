@@ -1,64 +1,10 @@
   
 #include "ConditionalClades.hpp"
 #include <trees/PLLUnrootedTree.hpp>
+#include <IO/Logger.hpp>
 
 #include <fstream>
 #include <iostream>
-
-
-
-
-static CCPClade getComplementary(const CCPClade &clade,
-    const CCPClade &subclade)
-{
-  CCPClade complementary(subclade);
-  complementary.negate();
-  complementary &= clade;
-  return complementary;
-}
-
-static void addClade(const CCPClade &clade,
-    CladeCounts &cladeCounts,
-    unsigned int count)
-{
-  auto cladeCountsIt = cladeCounts.find(clade);
-  if (cladeCountsIt == cladeCounts.end()) {
-    cladeCounts.insert({clade, count});
-  } else {
-    cladeCountsIt->second += count;
-  }
-}
-
-static void addSubclade(const CCPClade &clade,
-    const CCPClade &subclade,
-    SubcladeCounts &subcladeCounts,
-    unsigned int count)
-{
-  auto subcladeCountsIt = subcladeCounts.find(clade);
-  if (subcladeCountsIt == subcladeCounts.end()) {
-    subcladeCounts.insert({clade, CladeCounts()});
-    subcladeCountsIt = subcladeCounts.find(clade);
-  }
-  addClade(subclade, subcladeCountsIt->second, count);
-}
-   
-void printClade(const CCPClade &clade, 
-    const std::vector<std::string> &idToLeaf)
-{
-  std::cerr << "{";
-  bool first = true;
-  for (unsigned int i = 0; i < clade.size(); ++i) {
-    if (clade[i]) {
-      if (!first) {
-        std::cerr << ",";
-      }
-      std::cerr << idToLeaf[i];
-      first = false;
-    }
-  }
-  std::cerr << "}";
-}
-
 
 struct TreeWraper {
   std::shared_ptr<PLLUnrootedTree> tree;
@@ -81,10 +27,62 @@ namespace std
     };
 }
 
+using WeightedTrees = std::unordered_map<TreeWraper, unsigned int>;
+
+
+
+static CCPClade getComplementary(const CCPClade &clade,
+    const CCPClade &subclade)
+{
+  CCPClade complementary(subclade);
+  complementary.negate();
+  complementary &= clade;
+  return complementary;
+}
+
+static void addClade(CID cid,
+    CladeCounts &cladeCounts,
+    unsigned int count)
+{
+  auto cladeCountsIt = cladeCounts.find(cid);
+  if (cladeCountsIt == cladeCounts.end()) {
+    cladeCounts.insert({cid, count});
+  } else {
+    cladeCountsIt->second += count;
+  }
+}
+
+static void addSubclade(CID cid,
+    CID subcladeCID,
+    SubcladeCounts &subcladeCounts,
+    unsigned int count)
+{
+  addClade(subcladeCID, subcladeCounts[cid], count);
+}
+   
+void printClade(const CCPClade &clade, 
+    const std::vector<std::string> &idToLeaf)
+{
+  std::cerr << "{";
+  bool first = true;
+  for (unsigned int i = 0; i < clade.size(); ++i) {
+    if (clade[i]) {
+      if (!first) {
+        std::cerr << ",";
+      }
+      std::cerr << idToLeaf[i];
+      first = false;
+    }
+  }
+  std::cerr << "}";
+}
+
+
+
 
 
 void readTrees(const std::string &newickFile,
-    std::unordered_map<TreeWraper, unsigned int> &weightedTrees,
+    WeightedTrees &weightedTrees,
     unsigned int &inputTrees,
     unsigned int &uniqueInputTrees)
 {
@@ -101,8 +99,60 @@ void readTrees(const std::string &newickFile,
     inputTrees++;
   }
   uniqueInputTrees = weightedTrees.size();
-
 }
+
+
+static void firstPass(const WeightedTrees &weightedTrees,
+    const std::unordered_map<std::string, unsigned int> &leafToId,
+    CladeToCID &cladeToCID,
+    CIDToClade &cidToClade,
+    CIDToLeaf &cidToLeaf
+    )
+{
+  auto &anyTree = *(weightedTrees.begin()->first.tree);
+  CCPClade emptyClade(anyTree.getLeavesNumber(), false);
+  CCPClade fullClade(anyTree.getLeavesNumber(), true);
+  auto leafNumber = anyTree.getLeavesNumber();
+  std::unordered_set<CCPClade> unorderedClades;
+  unorderedClades.insert(fullClade);
+  for (auto pair: weightedTrees) {
+    auto &tree = *(pair.first.tree);
+    std::vector<CCPClade> nodeIndexToClade(tree.getDirectedNodesNumber(), 
+        emptyClade);
+    for (auto node: tree.getPostOrderNodes()) {
+      auto nodeIndex = node->node_index;
+      auto &clade = nodeIndexToClade[nodeIndex];
+      if (!node->next) { // leaf
+        auto id = leafToId.at(node->label);
+        clade.set(id);
+      } else {
+        auto &leftClade = nodeIndexToClade[node->next->back->node_index];
+        auto &rightClade = nodeIndexToClade[node->next->next->back->node_index];
+        clade = leftClade | rightClade;
+      }
+      unorderedClades.insert(clade);
+    }
+  }
+  OrderedClades orderedClades;
+  for (auto &clade: unorderedClades) {
+    orderedClades.insert(clade);
+  }
+  cidToClade.clear();
+  cladeToCID.clear();
+  for (auto it = orderedClades.begin(); it != orderedClades.end(); ++it) {
+    auto &clade = *it;
+    unsigned int CID = cidToClade.size();
+    cidToClade.push_back(clade);
+    cladeToCID[clade] = CID;
+  }
+  for (auto pair: leafToId) {
+    CCPClade clade(leafNumber, false);
+    clade.set(pair.second);
+    cidToLeaf[cladeToCID[clade]] = pair.first;
+  }
+}
+
+
 
 ConditionalClades::ConditionalClades(const std::string &newickFile):
   _inputTrees(0),
@@ -114,84 +164,91 @@ ConditionalClades::ConditionalClades(const std::string &newickFile):
   std::unordered_map<std::string, unsigned int> leafToId;
   CCPClade emptyClade;
   CCPClade fullClade;
-  CladeCounts cladeCounts;
-  SubcladeCounts subcladeCounts;
-  OrderedClades orderedClades;
-  std::unordered_map<TreeWraper, unsigned int> weightedTrees;
+  WeightedTrees weightedTrees;
   readTrees(newickFile, weightedTrees, _inputTrees, _uniqueInputTrees); 
+  auto &anyTree = *(weightedTrees.begin()->first.tree);
+  for (auto leaf: anyTree.getLabels()) {
+    leafToId.insert({leaf, leafToId.size()});
+    _idToLeaf.push_back(leaf);
+  }
+  emptyClade = CCPClade(anyTree.getLeavesNumber(), false);
+  fullClade = CCPClade(anyTree.getLeavesNumber(), true);
+  
+  firstPass(weightedTrees, 
+      leafToId,
+      _cladeToCID,
+      _CIDToClade,
+      _CIDToLeaf
+      );
+  CladeCounts cladeCounts;
+  SubcladeCounts subcladeCounts(_CIDToClade.size());
+  auto fullCladeCID = _cladeToCID[fullClade];
+  std::vector<CCPClade> nodeIndexToClade(anyTree.getDirectedNodesNumber(), emptyClade); 
+  std::vector<CID> nodeIndexToCID(anyTree.getDirectedNodesNumber());
+  // root clade
+  addClade(fullCladeCID, cladeCounts, 
+      _inputTrees * anyTree.getDirectedNodesNumber());
   for (auto pair: weightedTrees) {
     auto &tree = *(pair.first.tree);
     auto treeCount = pair.second;
-    if (leafToId.size() == 0) {
-      // first tree, initiate mappings
-      for (auto leaf: tree.getLabels()) {
-        leafToId.insert({leaf, leafToId.size()});
-        _idToLeaf.push_back(leaf);
-      }
-      emptyClade = CCPClade(tree.getLeavesNumber(), false);
-      fullClade = CCPClade(tree.getLeavesNumber(), true);
-      orderedClades.insert(fullClade);
-    }
-    std::vector<CCPClade> nodeIndexToClade(tree.getDirectedNodesNumber(), 
-        emptyClade);
     for (auto node: tree.getPostOrderNodes()) {
       auto nodeIndex = node->node_index;
       auto &clade = nodeIndexToClade[nodeIndex];
+      CID cid;
       if (!node->next) { // leaf
         auto id = leafToId[node->label];
+        clade = emptyClade;
         clade.set(id);
+        cid = _cladeToCID[clade];
       } else {
         auto &leftClade = nodeIndexToClade[node->next->back->node_index];
         auto &rightClade = nodeIndexToClade[node->next->next->back->node_index];
+        auto leftCID = nodeIndexToCID[node->next->back->node_index];
+        auto rightCID = nodeIndexToCID[node->next->next->back->node_index];
         clade = leftClade | rightClade;
-        if (leftClade < rightClade) {
-          addSubclade(clade, leftClade, subcladeCounts, treeCount);
+        cid = _cladeToCID[clade];
+        if (leftCID < rightCID) {
+          auto leftCID = _cladeToCID[leftClade];
+          addSubclade(cid, leftCID, subcladeCounts, treeCount);
         } else {
-          addSubclade(clade, rightClade, subcladeCounts, treeCount);
+          auto rightCID = _cladeToCID[rightClade];
+          addSubclade(cid, rightCID, subcladeCounts, treeCount);
         }
       }
-      orderedClades.insert(clade);
-
-      addClade(clade, cladeCounts, treeCount);
+      nodeIndexToCID[node->node_index] = cid;
+      addClade(cid, cladeCounts, treeCount);
       
-      // root clade
-      addClade(fullClade, cladeCounts, treeCount);
+      // root clade todo: do it oustide the loop!
       // todo should we check that a clade/complementary is only
       // added once to the root??
-      addSubclade(fullClade, clade, subcladeCounts, treeCount);
+      addSubclade(fullCladeCID, cid, subcladeCounts, treeCount);
     }
   }
-  _fillCCP(cladeCounts, subcladeCounts, orderedClades);
+  _fillCCP(cladeCounts, subcladeCounts);
 }
   
 void ConditionalClades::_fillCCP(CladeCounts &cladeCounts,
-      SubcladeCounts &subcladeCounts,
-      OrderedClades &orderedClades)
+      SubcladeCounts &subcladeCounts)
 {
   _allCladeSplits.clear();
-  _allCladeSplits.resize(orderedClades.size());
-  _CIDToClade.clear();
-  _cladeToCID.clear();
-  for (auto it = orderedClades.begin(); it != orderedClades.end(); ++it) {
-    auto &clade = *it;
-    auto cladeCount = cladeCounts[clade];
-    unsigned int CID = _CIDToClade.size();
-    auto &cladeSplits = _allCladeSplits[CID];
-    _CIDToClade.push_back(clade);
-    _cladeToCID[clade] = CID;
-    auto subcladeCountIt = subcladeCounts.find(clade);
-    if (subcladeCountIt != subcladeCounts.end()) {
+  auto cladesNumber = _CIDToClade.size();
+  _allCladeSplits.resize(cladesNumber);
+  for (unsigned int cid = 0; cid < cladesNumber; ++cid) {
+    auto &clade = _CIDToClade[cid];
+    auto cladeCount = cladeCounts[cid];
+    auto &cladeSplits = _allCladeSplits[cid];
+    if (subcladeCounts[cid].size()) {
       // internal clade
       double sumFrequencies = 0.0;
-      for (auto &subcladeCount: subcladeCountIt->second) {
-        auto &cladeLeft = subcladeCount.first;
+      for (auto &subcladeCount: subcladeCounts[cid]) {
+        auto CIDLeft = subcladeCount.first;
+        auto cladeLeft = _CIDToClade[CIDLeft];
         auto cladeRight = getComplementary(clade, cladeLeft);
-        auto CIDLeft = _cladeToCID[cladeLeft];
         auto CIDRight = _cladeToCID[cladeRight];
         double frequency = double(subcladeCount.second) / double(cladeCount); 
         sumFrequencies += frequency;
         CladeSplit split;
-        split.parent = CID;
+        split.parent = cid;
         split.left = CIDLeft;
         split.right = CIDRight;
         split.frequency = frequency;
@@ -199,13 +256,7 @@ void ConditionalClades::_fillCCP(CladeCounts &cladeCounts,
       }
       // Check that frequencies sum to one
       assert(fabs(1.0 - sumFrequencies) < 0.000001);
-    } else {
-      // leaf clade
-      unsigned int pos = 0;
-      // todo: make it faster with a bitset
-      for (pos = 0; !clade[pos]; ++pos) {}
-      _CIDToLeaf[CID] = _idToLeaf[pos];
-    } 
+    }
   }
 }
 
