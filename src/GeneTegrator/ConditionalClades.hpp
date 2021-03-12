@@ -40,7 +40,9 @@ public:
   unsigned int getUniqueInputTreesNumber() const {return _uniqueInputTrees;}
   const std::unordered_map<unsigned int, std::string> &
     getCidToLeaves() {return _CIDToLeaf;}
+  bool skip() const {return _skip;} 
 private:
+  bool _skip;
   std::vector<std::string> _idToLeaf;
   CIDToLeaf _CIDToLeaf;
   std::vector<CladeSplits> _allCladeSplits;

@@ -146,10 +146,7 @@ void UndatedDLMultiModel<REAL>::onSpeciesTreeChange()
 template <class REAL>
 double UndatedDLMultiModel<REAL>::computeLogLikelihood()
 { 
-
-  double a = _ccp.getInputTreesNumber();
-  double b = _ccp.getUniqueInputTreesNumber();
-  if (a == b) {
+  if (_ccp.skip()) {
     return 0.0;
   }
   onSpeciesTreeChange();

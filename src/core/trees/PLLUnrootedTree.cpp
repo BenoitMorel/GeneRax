@@ -137,23 +137,6 @@ std::unordered_set<std::string> PLLUnrootedTree::getLeavesLabels()
   return res;
 }
 
-static void fillPostOrder(pll_unode_t *node,
-    std::vector<pll_unode_t*> &nodes,
-    std::vector<bool> &markedNodes)
-{
-  // we already traversed this node
-  if (markedNodes[node->node_index]) {
-    return;
-  }
-  // mark the node as traversed
-  markedNodes[node->node_index] = true;
-  // first process children
-  if (node->next) {
-    fillPostOrder(node->next->back, nodes, markedNodes);
-    fillPostOrder(node->next->next->back, nodes, markedNodes);
-  }
-  nodes.push_back(node);
-}
 
 static bool isBranchIn(pll_unode_t *b, 
     const std::unordered_set<pll_unode_t *> &branches)
@@ -183,22 +166,38 @@ std::unordered_set<pll_unode_t *> PLLUnrootedTree::getBranches()
   return branches;
 }
 
+
+static void fillPostOrder(pll_unode_t *node,
+    std::vector<pll_unode_t*> &nodes,
+    std::vector<char> &markedNodes)
+{
+  // we already traversed this node
+  if (markedNodes[node->node_index]) {
+    return;
+  }
+  // mark the node as traversed
+  markedNodes[node->node_index] = true;
+  // first process children
+  if (node->next) {
+    fillPostOrder(node->next->back, nodes, markedNodes);
+    fillPostOrder(node->next->next->back, nodes, markedNodes);
+  }
+  nodes.push_back(node);
+}
+
+
 std::vector<pll_unode_t*> PLLUnrootedTree::getPostOrderNodes(bool innerOnly)
 {
   std::vector<pll_unode_t*> nodes;
-  std::vector<bool> markedNodes(getDirectedNodesNumber(), false);
+  std::vector<char> markedNodes(getDirectedNodesNumber(), false);
   if (innerOnly) {
     for (auto node: getLeaves()) {
       markedNodes[node->node_index] = true;
     }
   }
   // do the post order traversal from all possible virtual roots 
-  for (auto node: getNodes()) {
-    fillPostOrder(node, nodes, markedNodes);
-    if (node->next) {
-      fillPostOrder(node->next, nodes, markedNodes);
-      fillPostOrder(node->next->next, nodes, markedNodes);
-    }
+  for (auto node: getLeaves()) {
+    fillPostOrder(node->back, nodes, markedNodes);
   }
   if (innerOnly) {
     assert(nodes.size() == getDirectedNodesNumber() - getLeavesNumber());

@@ -107,8 +107,10 @@ public:
         return 0;
       case RecModel::SimpleDS:
         return 1;
+      default:
+        assert(false);
+        return 0;
     }
-    assert(false);
   }
 
   static std::vector<std::string> parameterNames(RecModel m)  {

@@ -30,6 +30,7 @@ macro(add_program program_name program_sources)
     ${MPI_LIBRARIES}
     )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
   if (JOINTSEARCH_BUILD_AS_LIBRARY AND NOT APPLE)
     target_link_libraries(${program_name} gcc_s gcc)
   endif()

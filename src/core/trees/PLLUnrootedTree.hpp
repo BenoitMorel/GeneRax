@@ -131,7 +131,7 @@ public:
    *  always comes after its (virtual) children.
    */
   std::vector<pll_unode_t*> getPostOrderNodes(bool innerOnly = false);
-  
+ 
   /**
    *  Return a set of all branches (for each node, one and only 
    *  one of node and node->back will be inserted in the set)

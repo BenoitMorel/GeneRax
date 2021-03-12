@@ -91,10 +91,11 @@ void readTrees(const std::string &newickFile,
   while (std::getline(infile, line)) {
     TreeWraper wraper;
     wraper.tree = std::make_shared<PLLUnrootedTree>(line, false);
-    if (weightedTrees.find(wraper) == weightedTrees.end()) {
+    auto it = weightedTrees.find(wraper);
+    if (it == weightedTrees.end()) {
       weightedTrees.insert({wraper, 1});
     } else {
-      weightedTrees.at(wraper)++;
+      it->second++;
     }
     inputTrees++;
   }
@@ -106,7 +107,8 @@ static void firstPass(const WeightedTrees &weightedTrees,
     const std::unordered_map<std::string, unsigned int> &leafToId,
     CladeToCID &cladeToCID,
     CIDToClade &cidToClade,
-    CIDToLeaf &cidToLeaf
+    CIDToLeaf &cidToLeaf,
+    std::vector<std::vector<pll_unode_t*> > &postOrderNodes
     )
 {
   auto &anyTree = *(weightedTrees.begin()->first.tree);
@@ -115,11 +117,14 @@ static void firstPass(const WeightedTrees &weightedTrees,
   auto leafNumber = anyTree.getLeavesNumber();
   std::unordered_set<CCPClade> unorderedClades;
   unorderedClades.insert(fullClade);
+  std::vector<pll_unode_t *> nodes;
+  std::vector<char> buffer;
   for (auto pair: weightedTrees) {
     auto &tree = *(pair.first.tree);
     std::vector<CCPClade> nodeIndexToClade(tree.getDirectedNodesNumber(), 
         emptyClade);
-    for (auto node: tree.getPostOrderNodes()) {
+    postOrderNodes.emplace_back(tree.getPostOrderNodes());
+    for (auto node: postOrderNodes.back()) {
       auto nodeIndex = node->node_index;
       auto &clade = nodeIndexToClade[nodeIndex];
       if (!node->next) { // leaf
@@ -155,17 +160,20 @@ static void firstPass(const WeightedTrees &weightedTrees,
 
 
 ConditionalClades::ConditionalClades(const std::string &newickFile):
+  _skip(false),
   _inputTrees(0),
   _uniqueInputTrees(0)
 {
 
-  // todo: maybe everything would be faster if we would
-  // replace the CCPClade with their IDs sooner
   std::unordered_map<std::string, unsigned int> leafToId;
   CCPClade emptyClade;
   CCPClade fullClade;
   WeightedTrees weightedTrees;
   readTrees(newickFile, weightedTrees, _inputTrees, _uniqueInputTrees); 
+  if (_inputTrees == _uniqueInputTrees) {
+    _skip = true;
+    return;
+  }
   auto &anyTree = *(weightedTrees.begin()->first.tree);
   for (auto leaf: anyTree.getLabels()) {
     leafToId.insert({leaf, leafToId.size()});
@@ -174,11 +182,13 @@ ConditionalClades::ConditionalClades(const std::string &newickFile):
   emptyClade = CCPClade(anyTree.getLeavesNumber(), false);
   fullClade = CCPClade(anyTree.getLeavesNumber(), true);
   
+  std::vector<std::vector<pll_unode_t*> > postOrderNodes;
   firstPass(weightedTrees, 
       leafToId,
       _cladeToCID,
       _CIDToClade,
-      _CIDToLeaf
+      _CIDToLeaf,
+      postOrderNodes
       );
   CladeCounts cladeCounts;
   SubcladeCounts subcladeCounts(_CIDToClade.size());
@@ -188,10 +198,11 @@ ConditionalClades::ConditionalClades(const std::string &newickFile):
   // root clade
   addClade(fullCladeCID, cladeCounts, 
       _inputTrees * anyTree.getDirectedNodesNumber());
+  unsigned int weightedTreeIndex = 0;
   for (auto pair: weightedTrees) {
     auto &tree = *(pair.first.tree);
     auto treeCount = pair.second;
-    for (auto node: tree.getPostOrderNodes()) {
+    for (auto node: postOrderNodes[weightedTreeIndex]) {
       auto nodeIndex = node->node_index;
       auto &clade = nodeIndexToClade[nodeIndex];
       CID cid;
@@ -218,11 +229,11 @@ ConditionalClades::ConditionalClades(const std::string &newickFile):
       nodeIndexToCID[node->node_index] = cid;
       addClade(cid, cladeCounts, treeCount);
       
-      // root clade todo: do it oustide the loop!
       // todo should we check that a clade/complementary is only
       // added once to the root??
       addSubclade(fullCladeCID, cid, subcladeCounts, treeCount);
     }
+    weightedTreeIndex++;
   }
   _fillCCP(cladeCounts, subcladeCounts);
 }
