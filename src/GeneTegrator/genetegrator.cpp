@@ -71,6 +71,7 @@ void run( GeneTegratorArguments &args)
   Logger::info << "Mkdir " << args.output << std::endl;
   FileSystem::mkdir(args.output, true);
   FileSystem::mkdir(args.output + "/species_trees", true);
+  Logger::initFileOutput(FileSystem::joinPaths(args.output, "genetegrator"));
   auto families = FamiliesFileParser::parseFamiliesFile(args.families);
   filterInvalidFamilies(families);
   initStartingSpeciesTree(args, families);
