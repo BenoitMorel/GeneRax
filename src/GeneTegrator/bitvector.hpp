@@ -292,6 +292,9 @@ public:
     std::string dump() const;
     std::string dump_int(IntType x) const;
 
+    const std::vector<IntType> &getInternalBuffer() const {return data_;}
+    std::vector<IntType> &getInternalBuffer() {return data_;}
+
     // ---------------------------------------------------------
     //     Internal Members
     // ---------------------------------------------------------
@@ -345,6 +348,7 @@ private:
 
     size_t               size_ = 0;
     std::vector<IntType> data_;
+
 };
 
 // =============================================================================

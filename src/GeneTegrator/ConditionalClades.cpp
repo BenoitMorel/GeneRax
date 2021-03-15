@@ -81,12 +81,12 @@ void printClade(const CCPClade &clade,
 
 
 
-void readTrees(const std::string &newickFile,
+void readTrees(const std::string &inputFile,
     WeightedTrees &weightedTrees,
     unsigned int &inputTrees,
     unsigned int &uniqueInputTrees)
 {
-  std::ifstream infile(newickFile);
+  std::ifstream infile(inputFile);
   std::string line;
   while (std::getline(infile, line)) {
     TreeWraper wraper;
@@ -159,21 +159,20 @@ static void firstPass(const WeightedTrees &weightedTrees,
 
 
 
-ConditionalClades::ConditionalClades(const std::string &newickFile):
-  _skip(false),
+ConditionalClades::ConditionalClades(const std::string &inputFile,
+    bool fromBinary):
   _inputTrees(0),
   _uniqueInputTrees(0)
 {
-
+  if (fromBinary) {
+    unserialize(inputFile);
+    return;
+  }
   std::unordered_map<std::string, unsigned int> leafToId;
   CCPClade emptyClade;
   CCPClade fullClade;
   WeightedTrees weightedTrees;
-  readTrees(newickFile, weightedTrees, _inputTrees, _uniqueInputTrees); 
-  if (_inputTrees == _uniqueInputTrees) {
-    _skip = true;
-    return;
-  }
+  readTrees(inputFile, weightedTrees, _inputTrees, _uniqueInputTrees); 
   auto &anyTree = *(weightedTrees.begin()->first.tree);
   for (auto leaf: anyTree.getLabels()) {
     leafToId.insert({leaf, leafToId.size()});
@@ -200,7 +199,6 @@ ConditionalClades::ConditionalClades(const std::string &newickFile):
       _inputTrees * anyTree.getDirectedNodesNumber());
   unsigned int weightedTreeIndex = 0;
   for (auto pair: weightedTrees) {
-    auto &tree = *(pair.first.tree);
     auto treeCount = pair.second;
     for (auto node: postOrderNodes[weightedTreeIndex]) {
       auto nodeIndex = node->node_index;
@@ -305,5 +303,174 @@ std::string ConditionalClades::getLeafLabel(CID cid) const
 unsigned int ConditionalClades::getRootsNumber() const
 {
   return _allCladeSplits.back().size() / 2; 
+}
+
+static void serializeUInt(unsigned int v,
+    std::ostream &os)
+{
+  os.write(reinterpret_cast<char *>(&v),sizeof(unsigned int));
+}
+
+static unsigned int unserializeUInt(std::istream &is)
+{
+  unsigned int res;
+  is.read(reinterpret_cast<char *>(&res),sizeof(unsigned int));
+  return res;
+}
+
+static void serializeDouble( double v,
+    std::ostream &os)
+{
+  os.write(reinterpret_cast<char *>(&v),sizeof(double));
+}
+
+static double unserializeDouble(std::istream &is)
+{
+  double res;
+  is.read(reinterpret_cast<char *>(&res),sizeof(double));
+  return res;
+}
+
+static void serializeString(const std::string &str,
+    std::ostream &os)
+{
+  unsigned int size = str.size();
+  serializeUInt(str.size(), os);
+  os.write(str.c_str(), size*sizeof(char) );
+}
+
+static std::string unserializeString(std::istream &is)
+{
+  unsigned int size = unserializeUInt(is);
+  std::vector<char> temp(size);
+  is.read(reinterpret_cast<char *>(&temp[0]), size * sizeof(char));
+  return std::string (temp.begin(),temp.end());
+}
+
+static void serializeCCPClade(const CCPClade &clade,
+    std::ostream &os)
+{
+  unsigned int size = clade.size();
+  serializeUInt(size, os);
+  auto &data = clade.getInternalBuffer();
+  unsigned int dataSize = data.size();
+  serializeUInt(dataSize, os);
+  os.write(reinterpret_cast<const char *>(&data[0]),
+      data.size() * sizeof(genesis::utils::Bitvector::IntType));
+}
+
+static CCPClade unserializeCCPClade(std::istream &is)
+{
+  auto size = unserializeUInt(is);
+  CCPClade res(size);
+  auto &data = res.getInternalBuffer();
+  auto dataSize = unserializeUInt(is);
+  data.resize(dataSize);
+  is.read(reinterpret_cast<char *>(&data[0]), 
+      data.size() * sizeof(genesis::utils::Bitvector::IntType));
+  return res;
+}
+
+static void serializeCladeSplit(const CladeSplit &split,
+    std::ostream &os)
+{
+  serializeUInt(split.parent, os); 
+  serializeUInt(split.left, os); 
+  serializeUInt(split.right, os); 
+  serializeDouble(split.frequency, os); 
+}
+
+static CladeSplit unserializeCladeSplit(std::ifstream &is)
+{
+  CladeSplit res;
+  res.parent = unserializeUInt(is);
+  res.left = unserializeUInt(is);
+  res.right = unserializeUInt(is);
+  res.frequency = unserializeDouble(is);
+  return res;
+}
+
+void ConditionalClades::serialize(const std::string &outputFile)
+{
+  std::ofstream os(outputFile, std::ios::binary);
+  serializeUInt(_inputTrees, os);
+  serializeUInt(_uniqueInputTrees, os);
+  // _idToLeaf
+  serializeUInt(_idToLeaf.size(), os);
+  for (const auto &str: _idToLeaf) {
+    serializeString(str, os);
+  }
+  // _CIDToLeaf
+  serializeUInt(_CIDToLeaf.size(), os);
+  for (auto it: _CIDToLeaf) {
+    serializeUInt(it.first, os);
+    serializeString(it.second, os);
+  }
+  // _cladeToCID
+  serializeUInt(_cladeToCID.size(), os);
+  for (auto it: _cladeToCID) {
+    serializeCCPClade(it.first, os);
+    serializeUInt(it.second, os);
+  }
+  // _CIDToClade
+  serializeUInt(_CIDToClade.size(), os);
+  for (auto &clade: _CIDToClade) {
+    serializeCCPClade(clade, os);
+  }
+  // _allCladeSplits
+  serializeUInt(_allCladeSplits.size(), os);
+  for (auto &cladeSplits: _allCladeSplits) {
+    serializeUInt(cladeSplits.size(), os);
+    for (auto &cladeSplit: cladeSplits) {
+      serializeCladeSplit(cladeSplit, os); 
+    }
+  }
+
+  Logger::info << _cladeToCID.size() << std::endl;
+}
+
+void ConditionalClades::unserialize(const std::string &inputFile)
+{
+  std::ifstream is(inputFile, std::ios::binary);
+  _inputTrees = unserializeUInt(is);
+  _uniqueInputTrees = unserializeUInt(is);
+  // _idToLeaf
+  _idToLeaf.resize(unserializeUInt(is));
+  for (unsigned int i = 0; i < _idToLeaf.size(); ++i) {
+    _idToLeaf[i] = unserializeString(is);
+  }
+  // _CIDToLeaf
+  auto cidToLeafSize = unserializeUInt(is);
+  for (unsigned int i = 0; i < cidToLeafSize; ++i) {
+    auto cid = unserializeUInt(is);
+    auto leaf = unserializeString(is);
+    _CIDToLeaf.insert({cid, leaf});
+  }
+  // _cladeToCID
+  auto cladeToCIDSize = unserializeUInt(is);
+  for (unsigned int i = 0; i < cladeToCIDSize; ++i) {
+    auto clade = unserializeCCPClade(is);
+    auto CID = unserializeUInt(is);
+    _cladeToCID.insert({clade, CID});
+  }
+  // _CIDToClade
+  auto cidToCladeSize = unserializeUInt(is);
+  _CIDToClade.resize(cidToCladeSize);
+  for (unsigned int i = 0; i < cidToCladeSize; ++i) {
+    _CIDToClade[i] = unserializeCCPClade(is);
+  }
+  // _allCladeSplits
+  auto allCladesSplitSize = unserializeUInt(is);
+  _allCladeSplits.resize(allCladesSplitSize);
+  for (unsigned int i = 0; i < allCladesSplitSize; ++i) {
+    auto &cladeSplits = _allCladeSplits[i];
+    auto cladeSplitsSize = unserializeUInt(is);
+    cladeSplits.resize(cladeSplitsSize);
+    for (unsigned int j = 0; j < cladeSplitsSize; ++j) {
+      cladeSplits[j] = unserializeCladeSplit(is);
+    }
+  }
+  Logger::info << _cladeToCID.size() << std::endl;
+  Logger::info << std::endl;
 }
 

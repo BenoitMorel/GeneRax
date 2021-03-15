@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <set>
 #include "bitvector.hpp"
+#include <iostream>
 
 using CID = unsigned int;
 
@@ -29,7 +30,9 @@ using CIDToClade = std::vector<CCPClade>;
 using CIDToLeaf = std::unordered_map<unsigned int, std::string>;
 class ConditionalClades {
 public:
-  ConditionalClades(const std::string &newickFile);
+  ConditionalClades() {}
+  ConditionalClades(const std::string &inputFile, 
+      bool fromBinary = false);
   void printContent() const; 
   unsigned int getCladesNumber() const {return _cladeToCID.size();}
   const CladeSplits &getCladeSplits(CID cid) const {return _allCladeSplits[cid];} 
@@ -40,16 +43,18 @@ public:
   unsigned int getUniqueInputTreesNumber() const {return _uniqueInputTrees;}
   const std::unordered_map<unsigned int, std::string> &
     getCidToLeaves() {return _CIDToLeaf;}
-  bool skip() const {return _skip;} 
+  bool skip() const {return _uniqueInputTrees == _inputTrees;} 
+
+  void serialize(const std::string &outputFile);
+  void unserialize(const std::string &inputFile);
 private:
-  bool _skip;
-  std::vector<std::string> _idToLeaf;
-  CIDToLeaf _CIDToLeaf;
-  std::vector<CladeSplits> _allCladeSplits;
-  CladeToCID _cladeToCID;
-  CIDToClade _CIDToClade;
   unsigned int _inputTrees;
   unsigned int _uniqueInputTrees;
+  std::vector<std::string> _idToLeaf;
+  CIDToLeaf _CIDToLeaf;
+  CladeToCID _cladeToCID;
+  CIDToClade _CIDToClade;
+  std::vector<CladeSplits> _allCladeSplits;
 private:
   void _fillCCP(CladeCounts &cladeCounts,
       SubcladeCounts &subcladeCounts);
