@@ -18,14 +18,28 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   Logger::timed << "Initializing ccps" << std::endl;
   for (const auto &geneTree: perCoreGeneTrees.getTrees()) {
     auto &family = families[geneTree.familyIndex];
-  //for (auto &family: families) {
     GeneSpeciesMapping mapping;
     mapping.fill(family.mappingFile, family.startingGeneTree);
-    _evaluations.push_back(std::make_shared<MultiEvaluation>(
+    switch (info.model) {
+    case RecModel::UndatedDL:
+      _evaluations.push_back(
+        std::make_shared<UndatedDLMultiModel<ScaledValue> >(
         _speciesTree->getTree(),
         mapping,
         info,
         family.startingGeneTree));
+      break;
+    case RecModel::UndatedDTL:
+      _evaluations.push_back(std::make_shared<UndatedDTLMultiModel<ScaledValue> >(
+        _speciesTree->getTree(),
+        mapping,
+        info,
+        family.startingGeneTree));
+      break;
+    default:
+      assert(false);
+      break;
+    }
   }
   Logger::timed << "Initializing ccps finished" << std::endl;
 

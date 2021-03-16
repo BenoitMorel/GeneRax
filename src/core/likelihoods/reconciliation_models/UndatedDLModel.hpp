@@ -89,11 +89,6 @@ void UndatedDLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
   _dlclvs = std::vector<std::vector<REAL> >(2 * (this->_maxGeneId + 1),zeros);
 }
 
-static double solveSecondDegreePolynome(double a, double b, double c) 
-{
-  return 2 * c / (-b + sqrt(b * b - 4 * a * c));
-}
-
 template <class REAL>
 void UndatedDLModel<REAL>::setRates(const RatesVector &rates)
 {

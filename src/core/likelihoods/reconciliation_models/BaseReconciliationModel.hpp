@@ -18,6 +18,10 @@
 double log(ScaledValue v);
 typedef std::vector< std::vector <double> > RatesVector;
 
+inline double solveSecondDegreePolynome(double a, double b, double c) 
+{
+  return 2 * c / (-b + sqrt(b * b - 4 * a * c));
+}
 
 
 /**

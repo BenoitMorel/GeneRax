@@ -3,12 +3,13 @@
 #include <trees/SpeciesTree.hpp>
 #include <IO/FamiliesFileParser.hpp>
 #include "UndatedDLMultiModel.hpp"
+#include "UndatedDTLMultiModel.hpp"
 #include <trees/PLLRootedTree.hpp>
 #include <memory>
 #include <vector>
 
 class RecModelInfo;
-using MultiEvaluation = UndatedDLMultiModel<ScaledValue>;
+using MultiEvaluation = ReconciliationModelInterface;
 using MultiEvaluationPtr = 
   std::shared_ptr<MultiEvaluation>;
 using PerCoreMultiEvaluation = std::vector<MultiEvaluationPtr>;

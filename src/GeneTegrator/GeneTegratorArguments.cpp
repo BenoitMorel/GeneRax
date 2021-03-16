@@ -7,6 +7,7 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
   speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
+  reconciliationModelStr("UndatedDTL"),
   pruneSpeciesTree(false),
   output("GeneTegrator"),
   seed(123)
@@ -21,6 +22,8 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
     } else if (arg == "-s" || arg == "--species-tree") {
       speciesTree = std::string(argv[++i]);
       speciesTreeAlgorithm = Enums::strToSpeciesTree(speciesTree);
+    } else if (arg == "-r" || arg == "--rec-model") {
+      reconciliationModelStr = std::string(argv[++i]);
     } else if (arg == "--prune-species-tree") {
       pruneSpeciesTree = true;
     } else if (arg == "-p" || arg == "--prefix") {

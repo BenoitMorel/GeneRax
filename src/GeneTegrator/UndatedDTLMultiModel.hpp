@@ -10,14 +10,14 @@ class RecModelInfo;
 double log(ScaledValue v);
 
 template <class REAL>
-class UndatedDLMultiModel: public BaseReconciliationModel {
+class UndatedDTLMultiModel: public BaseReconciliationModel {
 public: 
-  UndatedDLMultiModel(PLLRootedTree &speciesTree, 
+  UndatedDTLMultiModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
       const RecModelInfo &info,
       const std::string &geneTreesFile);
 
-  virtual ~UndatedDLMultiModel() {}
+  virtual ~UndatedDTLMultiModel() {}
 
   virtual void setRates(const RatesVector &) {};
   virtual double computeLogLikelihood();
@@ -31,10 +31,37 @@ private:
   ConditionalClades _ccp;
   std::vector<double> _PD; // Duplication probability, per species branch
   std::vector<double> _PL; // Loss probability, per species branch
+  std::vector<double> _PT; // Transfer probability, per species branch
   std::vector<double> _PS; // Speciation probability, per species branch
   std::vector<double> _uE; // Extinction probability, per species branch
-  using DLCLV = std::vector<REAL>;
-  std::vector<DLCLV> _dlclvs;
+  double _transferExtinctionSum;
+
+  /**
+   *  All intermediate results needed to compute the reconciliation likelihood
+   *  each gene node has one DTLCLV object
+   *  Each DTLCLV gene  object is a function of the DTLCLVs of the direct children genes
+   */
+  struct DTLCLV {
+    DTLCLV():
+      _survivingTransferSums(REAL())
+    {}
+
+    DTLCLV(unsigned int speciesNumber):
+      _uq(speciesNumber, REAL()),
+      _survivingTransferSums(REAL())
+    {
+    }
+    // probability of a gene node rooted at a species node
+    std::vector<REAL> _uq;
+
+    // sum of transfer probabilities. Can be computed only once
+    // for all species, to reduce computation complexity
+    REAL _survivingTransferSums;
+  };
+  
+  std::vector<DTLCLV> _dtlclvs;
+
+
 
   REAL getLikelihoodFactor() const;
   virtual void recomputeSpeciesProbabilities();
@@ -46,8 +73,9 @@ private:
   
 };
 
+
 template <class REAL>
-UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree, 
+UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(PLLRootedTree &speciesTree, 
     const GeneSpeciesMapping &geneSpeciesMapping, 
     const RecModelInfo &info,
     const std::string &geneTreesFile):
@@ -57,23 +85,25 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
   _ccp(geneTreesFile),
   _PD(speciesTree.getNodesNumber(), 0.2),
   _PL(speciesTree.getNodesNumber(), 0.2),
+  _PT(speciesTree.getNodesNumber(), 0.2),
   _PS(speciesTree.getNodesNumber(), 1.0),
   _uE(speciesTree.getNodesNumber(), 0.0)
 {
   std::vector<REAL> zeros(speciesTree.getNodesNumber());
-  _dlclvs = std::vector<std::vector<REAL> >(
-      _ccp.getCladesNumber(), zeros);
+  DTLCLV nullCLV(this->_allSpeciesNodesCount);
+  _dtlclvs = std::vector<DTLCLV>(2 * (_ccp.getCladesNumber()), nullCLV);
   for (unsigned int e = 0; e < _speciesTree.getNodesNumber(); ++e) {
     double sum = _PD[e] + _PL[e] + _PS[e];
     _PD[e] /= sum;
     _PL[e] /= sum;
+    _PT[e] /= sum;
     _PS[e] /= sum;
   }
   mapGenesToSpecies();
 }
 
 template <class REAL>
-double UndatedDLMultiModel<REAL>::computeLogLikelihood()
+double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
 { 
   if (_ccp.skip()) {
     return 0.0;
@@ -81,45 +111,59 @@ double UndatedDLMultiModel<REAL>::computeLogLikelihood()
   beforeComputeLogLikelihood();
   onSpeciesTreeChange(nullptr);
   for (CID cid = 0; cid < _ccp.getCladesNumber(); ++cid) {
+    auto &clv = _dtlclvs[cid];
+    auto &uq = clv._uq;
     for (auto speciesNode: _allSpeciesNodes) {
       computeProbability(cid, 
           speciesNode, 
-          _dlclvs[cid][speciesNode->node_index]);
+          uq[speciesNode->node_index]);
     }
   }
   auto rootCID = _ccp.getCladesNumber() - 1;
   REAL res = REAL();
   for (auto speciesNode: _allSpeciesNodes) {
-    res += _dlclvs[rootCID][speciesNode->node_index];
+    res += _dtlclvs[rootCID]._uq[speciesNode->node_index];
   }
-  // the root correction makes sure that UndatedDLMultiModel and
-  // UndatedDL model are equivalent when there is one tree per
-  // family: the UndatedDLMultiModel integrates over all possible
+  // the root correction makes sure that UndatedDTLMultiModel and
+  // UndatedDTL model are equivalent when there is one tree per
+  // family: the UndatedDTLMultiModel integrates over all possible
   // roots and adds a 1/numberOfGeneRoots weight that is not
-  // present un the UndatedDL, so we multiply back here
+  // present un the UndatedDTL, so we multiply back here
   REAL rootCorrection(double(_ccp.getRootsNumber()));
   return log(res) - log(getLikelihoodFactor()) + log(rootCorrection);
 }
 
 template <class REAL>
-void UndatedDLMultiModel<REAL>::recomputeSpeciesProbabilities()
+void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
 {
   for (auto speciesNode: _allSpeciesNodes) {
-    auto e = speciesNode->node_index;
-    double a = _PD[e];
-    double b = -1.0;
-    double c = _PL[e];
-    if (getSpeciesLeft(speciesNode)) {
-      c += _PS[e] * _uE[getSpeciesLeft(speciesNode)->node_index]  * 
-        _uE[getSpeciesRight(speciesNode)->node_index];
+    _uE[speciesNode->node_index] = REAL(0.0);
+  }
+  _transferExtinctionSum = REAL();
+  for (unsigned int it = 0; it < 4; ++it) {
+    for (auto speciesNode: _allSpeciesNodes) {
+      auto e = speciesNode->node_index;
+      double proba(_PL[e]);
+      proba += _uE[e] * _uE[e] * _PD[e];
+      proba += _transferExtinctionSum * _PT[e] * _uE[e];
+      if (this->getSpeciesLeft(speciesNode)) {
+        auto leftSpid = this->getSpeciesLeft(speciesNode)->node_index;
+        auto rightSpid = this->getSpeciesRight(speciesNode)->node_index;
+        proba += _uE[leftSpid]  * _uE[rightSpid] * _PS[e];
+      }
+      _uE[e] = proba;
     }
-    double proba = solveSecondDegreePolynome(a, b, c);
-    _uE[speciesNode->node_index] = proba;
+    _transferExtinctionSum = 0.0;
+    for (auto speciesNode: _allSpeciesNodes) {
+      _transferExtinctionSum += _uE[speciesNode->node_index];
+    }
+    _transferExtinctionSum /= this->_allSpeciesNodes.size();
   }
 }
 
+
 template <class REAL>
-void UndatedDLMultiModel<REAL>::computeProbability(CID cid, 
+void UndatedDTLMultiModel<REAL>::computeProbability(CID cid, 
     pll_rnode_t *speciesNode, 
     REAL &proba
     )
@@ -140,40 +184,53 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
     f = getSpeciesLeft(speciesNode)->node_index;
     g = getSpeciesRight(speciesNode)->node_index;
   }
-  
+ 
+  // for internal gene nodes
   for (const auto &cladeSplit: _ccp.getCladeSplits(cid)) {
     auto cidLeft = cladeSplit.left; 
     auto cidRight = cladeSplit.right;
     REAL splitProba = REAL();
     if (not isSpeciesLeaf) {
       // S event;
-      temp = _dlclvs[cidLeft][f] * _dlclvs[cidRight][g] * _PS[e]; 
+      temp = _dtlclvs[cidLeft]._uq[f] * _dtlclvs[cidRight]._uq[g] * _PS[e]; 
       scale(temp);
       splitProba += temp;
-      temp = _dlclvs[cidRight][f] * _dlclvs[cidLeft][g] * _PS[e]; 
+      temp = _dtlclvs[cidRight]._uq[f] * _dtlclvs[cidLeft]._uq[g] * _PS[e]; 
       scale(temp);
       splitProba += temp;
     }
-    temp = _dlclvs[cidLeft][e] * _dlclvs[cidRight][e] * _PD[e];
+    // D event
+    temp = _dtlclvs[cidLeft]._uq[e] * _dtlclvs[cidRight]._uq[e] * _PD[e];
     scale(temp);
     splitProba += temp;
+
+    // T event
+    temp =  _dtlclvs[cidLeft]._survivingTransferSums * _PT[e];
+    temp *= _dtlclvs[cidRight]._uq[e];
+    scale(temp);
+    splitProba += temp;
+   
+    temp =  _dtlclvs[cidRight]._survivingTransferSums * _PT[e];
+    temp *= _dtlclvs[cidLeft]._uq[e];
+    scale(temp);
+    splitProba += temp;
+   
+    // add this split contribution to the total
     proba += splitProba * cladeSplit.frequency;
   }
   if (not isSpeciesLeaf) {
     // SL event
-    temp = _dlclvs[cid][f] * (_uE[g] * _PS[e]);
+    temp = _dtlclvs[cid]._uq[f] * (_uE[g] * _PS[e]);
     scale(temp);
     proba += temp;
-    temp = _dlclvs[cid][g] * (_uE[f] * _PS[e]);
+    temp = _dtlclvs[cid]._uq[g] * (_uE[f] * _PS[e]);
     scale(temp);
     proba += temp;
   }
-  // DL event
-  proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
 }
   
 template <class REAL>
-REAL UndatedDLMultiModel<REAL>::getLikelihoodFactor() const
+REAL UndatedDTLMultiModel<REAL>::getLikelihoodFactor() const
 {
   REAL factor(0.0);
   for (auto speciesNode: _allSpeciesNodes) {
@@ -185,7 +242,7 @@ REAL UndatedDLMultiModel<REAL>::getLikelihoodFactor() const
 
 
   template <class REAL>
-void UndatedDLMultiModel<REAL>::mapGenesToSpecies()
+void UndatedDTLMultiModel<REAL>::mapGenesToSpecies()
 {
   const auto &cidToLeaves = _ccp.getCidToLeaves();
   _speciesNameToId.clear();
@@ -205,4 +262,5 @@ void UndatedDLMultiModel<REAL>::mapGenesToSpecies()
     _speciesCoverage[_geneToSpecies[cid]]++;
   }
 }
+
 

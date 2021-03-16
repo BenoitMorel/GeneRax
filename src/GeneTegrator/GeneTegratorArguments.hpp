@@ -16,6 +16,7 @@ public:
    char ** argv;
    std::string families;
    std::string speciesTree;
+   std::string reconciliationModelStr;
    SpeciesTreeAlgorithm speciesTreeAlgorithm;
    bool pruneSpeciesTree;
    std::string output;
