@@ -113,11 +113,15 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
   for (CID cid = 0; cid < _ccp.getCladesNumber(); ++cid) {
     auto &clv = _dtlclvs[cid];
     auto &uq = clv._uq;
+    auto sum = REAL();
     for (auto speciesNode: _allSpeciesNodes) {
       computeProbability(cid, 
           speciesNode, 
           uq[speciesNode->node_index]);
+      sum += uq[speciesNode->node_index];
     }
+    sum /= this->_allSpeciesNodes.size();
+    clv._survivingTransferSums = sum;
   }
   auto rootCID = _ccp.getCladesNumber() - 1;
   REAL res = REAL();
@@ -205,6 +209,7 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
     splitProba += temp;
 
     // T event
+    
     temp =  _dtlclvs[cidLeft]._survivingTransferSums * _PT[e];
     temp *= _dtlclvs[cidRight]._uq[e];
     scale(temp);
