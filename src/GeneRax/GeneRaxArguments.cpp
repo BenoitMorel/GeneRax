@@ -60,6 +60,9 @@ void GeneRaxArguments::init() {
       if (strategy == GeneSearchStrategy::EVAL) {
         recRadius = maxSPRRadius = 0;
       }
+      if (strategy == GeneSearchStrategy::RECONCILE) {
+        optimizeGeneTrees = false;
+      }
     } else if (arg == "--species-strategy") {
       speciesStrategy = ArgumentsHelper::strToSpeciesSearchStrategy(std::string(argv[++i]));
     } else if (arg == "-r" || arg == "--rec-model") {

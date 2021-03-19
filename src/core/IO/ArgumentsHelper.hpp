@@ -20,6 +20,8 @@ public:
       return "SPR";
     case GeneSearchStrategy::EVAL:
       return "EVAL";
+    case GeneSearchStrategy::RECONCILE:
+      return "RECONCILE";
     }
     exit(41);
   }
@@ -30,6 +32,8 @@ public:
       return GeneSearchStrategy::SPR;
     }  else if (str == "EVAL") {
       return GeneSearchStrategy::EVAL;
+    }  else if (str == "RECONCILE") {
+      return GeneSearchStrategy::RECONCILE;
     } else {
       Logger::info << "Invalid strategy " << str << std::endl;
       exit(41);
