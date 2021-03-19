@@ -92,12 +92,18 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
         return ERROR_NOT_ENOUGH_GENES;
       }
       if (alignmentLabels.size() && alignmentLabels != geneTreeLabels) {
+        std::cerr << "Absent in the gene tree: ";
         for (auto &l: alignmentLabels) {
-          std::cerr << l << " ";
+          if (geneTreeLabels.find(l) == geneTreeLabels.end()) {
+            std::cerr << l << " ";
+          }
         }
         std::cerr << std::endl;
+        std::cerr << "Absent in the alignment: ";
         for (auto &l: geneTreeLabels) {
-          std::cerr << l << " ";
+          if (alignmentLabels.find(l) == alignmentLabels.end()) {
+            std::cerr << l << " ";
+          }
         }
         std::cerr << std::endl;
         std::cerr << std::endl;
