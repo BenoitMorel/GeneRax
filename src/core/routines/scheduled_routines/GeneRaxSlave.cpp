@@ -118,6 +118,9 @@ int GeneRaxSlave::optimizeGeneTreesMain(int argc, char** argv, void* comm)
   std::string startingGeneTreeFile(argv[i++]);
   std::string mappingFile(getArg(argv[i++]));
   std::string alignmentFile(argv[i++]);
+  if (alignmentFile == "NOALIGNMENT") {
+    alignmentFile = "";
+  }
   std::string speciesTreeFile(argv[i++]);
   std::string libpllModel(argv[i++]);
   std::string ratesFile(argv[i++]);
