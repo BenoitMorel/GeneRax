@@ -23,7 +23,8 @@ public:
    */
   static void initRandomGeneTrees(GeneRaxInstance &instance);
   
-  
+  static void generateFakeAlignments(GeneRaxInstance &instance);
+
   static void printStats(GeneRaxInstance &instance);
 
   /**

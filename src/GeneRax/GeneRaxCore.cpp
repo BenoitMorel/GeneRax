@@ -116,6 +116,34 @@ void GeneRaxCore::initRandomGeneTrees(GeneRaxInstance &instance)
   }
 }
   
+void GeneRaxCore::generateFakeAlignments(GeneRaxInstance &instance)
+{
+  if (!instance.args.generateFakeAlignments) {
+    return;
+  }
+  Logger::timed << "Generating fake alignments" << std::endl;
+  std::string fakeDir = FileSystem::joinPaths(instance.args.output, "fake_msas");
+  FileSystem::mkdir(fakeDir, true);
+  ParallelContext::barrier();
+  PerCoreGeneTrees perCoreTrees(instance.currentFamilies);
+  std::unordered_set<std::string> coreFamilies;
+  for (const auto &perCoreTree: perCoreTrees.getTrees()) {
+    coreFamilies.insert(perCoreTree.name);
+  }
+  for (auto &family: instance.currentFamilies) {
+    family.alignmentFile = FileSystem::joinPaths(fakeDir, family.name);
+    family.libpllModel = "GTR";
+    if (coreFamilies.find(family.name) != coreFamilies.end()) {
+      // generate the MSA
+      PLLUnrootedTree tree(family.startingGeneTree);
+      std::ofstream os(family.alignmentFile);
+      for (auto leaf: tree.getLeaves()) {
+        os << ">" << leaf->label << std::endl << "ACGT" << std::endl;
+      }
+    }
+  }
+}
+  
 void GeneRaxCore::printStats(GeneRaxInstance &instance)
 {
   if (instance.args.filterFamilies) {

@@ -51,6 +51,9 @@ public:
    unsigned int speciesFastRadius;
    unsigned int speciesSlowRadius;
    int speciesInitialFamiliesSubsamples;
+   
+   // hacky stuff
+   bool generateFakeAlignments;
 private:
 
   void init();
