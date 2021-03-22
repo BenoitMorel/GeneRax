@@ -76,7 +76,8 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   instance.args.printSummary();
   instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
   initFolders(instance);
-  bool needAlignments = instance.args.strategy != GeneSearchStrategy::SKIP;
+  bool needAlignments = instance.args.strategy != GeneSearchStrategy::SKIP
+    && instance.args.strategy != GeneSearchStrategy::RECONCILE;
   if (instance.args.filterFamilies) {
     Logger::timed << "Filtering invalid families..." << std::endl;
     Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, false);
@@ -107,6 +108,34 @@ void GeneRaxCore::initRandomGeneTrees(GeneRaxInstance &instance)
   bool randoms = Routines::createRandomTrees(instance.args.output, instance.currentFamilies); 
   if (randoms) {
     initialGeneTreeSearch(instance);
+  }
+}
+  
+void GeneRaxCore::generateFakeAlignments(GeneRaxInstance &instance)
+{
+  if (!instance.args.generateFakeAlignments) {
+    return;
+  }
+  Logger::timed << "Generating fake alignments" << std::endl;
+  std::string fakeDir = FileSystem::joinPaths(instance.args.output, "fake_msas");
+  FileSystem::mkdir(fakeDir, true);
+  ParallelContext::barrier();
+  PerCoreGeneTrees perCoreTrees(instance.currentFamilies);
+  std::unordered_set<std::string> coreFamilies;
+  for (const auto &perCoreTree: perCoreTrees.getTrees()) {
+    coreFamilies.insert(perCoreTree.name);
+  }
+  for (auto &family: instance.currentFamilies) {
+    family.alignmentFile = FileSystem::joinPaths(fakeDir, family.name);
+    family.libpllModel = "GTR";
+    if (coreFamilies.find(family.name) != coreFamilies.end()) {
+      // generate the MSA
+      PLLUnrootedTree tree(family.startingGeneTree);
+      std::ofstream os(family.alignmentFile);
+      for (auto leaf: tree.getLeaves()) {
+        os << ">" << leaf->label << std::endl << "ACGT" << std::endl;
+      }
+    }
   }
 }
   
@@ -179,7 +208,8 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
 void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
-  if (instance.args.strategy == GeneSearchStrategy::SKIP) {
+  if (instance.args.strategy == GeneSearchStrategy::SKIP ||
+      instance.args.strategy == GeneSearchStrategy::RECONCILE) {
     return;
   }
   for (unsigned int i = 1; i <= instance.args.recRadius; ++i) { 
@@ -204,6 +234,42 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
   if (instance.args.reconcile || instance.args.reconciliationSamples > 0) {
+    if (instance.args.strategy == GeneSearchStrategy::RECONCILE) {
+      Logger::timed << "Optimizing DTL rates before the reconciliation..." << std::endl;
+      // we haven't optimized the DTL rates yet, so we do it now
+      if (!instance.args.perFamilyDTLRates) {
+        Routines::optimizeRates(instance.args.userDTLRates, 
+          instance.speciesTree, 
+          instance.recModelInfo,
+          instance.currentFamilies, 
+          instance.args.perSpeciesDTLRates, 
+          instance.rates, 
+          instance.elapsedRates);
+      } else {
+        long elapsed = 0;
+        bool enableLibpll = false;
+        unsigned int sprRadius = 0;
+        Routines::optimizeGeneTrees(
+            instance.currentFamilies, 
+            instance.recModelInfo,
+            instance.rates, 
+            instance.args.output, 
+            "results", 
+            instance.args.execPath, 
+            instance.speciesTree, 
+            RecOpt::Grid,
+            false,
+            instance.args.supportThreshold, 
+            instance.args.recWeight, 
+            true, 
+            enableLibpll, 
+            sprRadius, 
+            instance.currentIteration++, 
+            ParallelContext::allowSchedulerSplitImplementation(), 
+            elapsed);
+      }
+    }
+        
     Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
     bool optimizeRates = false;
     Routines::inferReconciliation(instance.speciesTree, 

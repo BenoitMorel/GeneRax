@@ -75,7 +75,11 @@ void GeneRaxMaster::optimizeGeneTrees(Families &families,
     os << "optimizeGeneTrees" << " ";
     os << family.startingGeneTree << " ";
     os << toArg(family.mappingFile) << " ";
-    os << family.alignmentFile << " ";
+    if (family.alignmentFile != "") {
+      os << family.alignmentFile << " ";
+    } else {
+      os << "NOALIGNMENT" << " ";
+    }
     os << speciesTreePath << " ";
     os << family.libpllModel  << " ";
     os << ratesFile << " ";

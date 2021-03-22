@@ -44,7 +44,8 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   minGeneBranchLength(0.000001),
   quartetSupport(false),
   quartetSupportAllQuartets(false),
-  eqpicRadius(std::numeric_limits<int>::max())
+  eqpicRadius(std::numeric_limits<int>::max()),
+  generateFakeAlignments(false)
 {
   if (argc == 1) {
     printHelp();
@@ -67,6 +68,11 @@ void GeneRaxArguments::init() {
     } else if (arg == "-s" || arg == "--species-tree") {
       speciesTree = std::string(argv[++i]);
       speciesTreeAlgorithm = Enums::strToSpeciesTree(speciesTree);
+    } else if (arg == "--strategy") {
+      strategy = ArgumentsHelper::strToStrategy(std::string(argv[++i]));
+      if (strategy == GeneSearchStrategy::EVAL) {
+        recRadius = maxSPRRadius = 0;
+      }
     } else if (arg == "-p" || arg == "--prefix") {
       output = std::string(argv[++i]);
     } else if (arg == "--seed") {
@@ -157,6 +163,10 @@ void GeneRaxArguments::init() {
       quartetSupportAllQuartets = true; 
     } else if (arg == "--use-transfer-frequencies") {
       useTransferFrequencies = true;
+    } else if (arg == "--reconciliation-samples") {
+      reconciliationSamples = static_cast<unsigned int>(atoi(argv[++i]));
+    } else if (arg == "--generate-fake-alignments") {
+      generateFakeAlignments = true;
     } else {
       Logger::info << "Unrecognized argument " << arg << std::endl;
       Logger::info << "Aborting" << std::endl;

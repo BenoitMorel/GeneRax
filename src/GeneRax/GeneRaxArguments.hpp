@@ -60,6 +60,9 @@ public:
    bool quartetSupport;
    bool quartetSupportAllQuartets;
    int eqpicRadius;
+   
+   // hacky stuff
+   bool generateFakeAlignments;
 private:
 
   void init();
