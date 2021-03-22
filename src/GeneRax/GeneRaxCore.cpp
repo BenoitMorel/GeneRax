@@ -298,7 +298,8 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
     Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
     if (instance.args.strategy == GeneSearchStrategy::RECONCILE) {
       // we haven't optimized the DTL rates yet, so we do it now
-      Routines::optimizeRates(instance.args.userDTLRates, 
+      if (!instance.args.perFamilyDTLRates) {
+        Routines::optimizeRates(instance.args.userDTLRates, 
           instance.speciesTree, 
           instance.recModel,
           instance.args.rootedGeneTree, 
@@ -307,7 +308,30 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
           instance.args.perSpeciesDTLRates, 
           instance.rates, 
           instance.elapsedRates);
-
+      } else {
+        long elapsed = 0;
+        bool enableLibpll = false;
+        unsigned int sprRadius = 0;
+        Routines::optimizeGeneTrees(
+            instance.currentFamilies, 
+            instance.recModel, 
+            instance.rates, 
+            instance.args.output, 
+            "results", 
+            instance.args.execPath, 
+            instance.speciesTree, 
+            RecOpt::Grid, 
+            instance.args.perFamilyDTLRates, 
+            instance.args.rootedGeneTree, 
+            instance.args.supportThreshold, 
+            instance.args.recWeight, 
+            true, 
+            enableLibpll, 
+            sprRadius, 
+            instance.currentIteration++, 
+            ParallelContext::allowSchedulerSplitImplementation(), 
+            elapsed);
+      }
     }
         
     ModelParameters modelRates(instance.rates, instance.recModel, false, 1);
