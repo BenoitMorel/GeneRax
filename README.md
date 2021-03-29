@@ -1,4 +1,8 @@
-News: we just created a new GeneRax google groups for asking questions and reporting issues:  https://groups.google.com/g/generaxusers
+![alt text](doc/generax_logo.png?raw=true "GeneRax")
+
+News: 
+* 03.2021: GeneRax 2 is released, allowing rooted species tree inference from gene trees.  
+* 11.2020: we just created a new GeneRax google groups for asking questions and reporting issues:  https://groups.google.com/g/generaxusers
 
 # GeneRax 
 
@@ -11,6 +15,10 @@ It accounts for sequence substitutions, gene duplication, gene loss and horizont
 When using GeneRax, please cite: https://academic.oup.com/mbe/article/doi/10.1093/molbev/msaa141/5851843
 
 GeneRax is also available on [`bioconda`](https://anaconda.org/bioconda/generax) 
+
+# SpeciesRax
+
+SpeciesRax is part of the GeneRax tool and is available since GeneRax v2.0.0. SpeciesRax infers a rooted species tree from a set of unrooted gene trees. Preprint and wiki coming soon!
 
 ## Requirement
 

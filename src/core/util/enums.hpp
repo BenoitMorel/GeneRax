@@ -30,7 +30,7 @@ enum class RecOpt {
  * Gene tree search mode
  */
 enum class GeneSearchStrategy {
-  SPR, EVAL, SKIP
+  SPR, EVAL, SKIP, RECONCILE
 };
 
 /**
