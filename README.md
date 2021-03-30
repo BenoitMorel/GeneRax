@@ -1,7 +1,7 @@
 ![alt text](doc/generax_logo.png?raw=true "GeneRax")
 
 News: 
-* 03.2021: GeneRax 2 is released, allowing rooted species tree inference from gene trees.  
+* 03.2021: GeneRax 2 is released, allowing rooted species tree inference from gene trees (I am still working on updating the bioconda package) 
 * 11.2020: we just created a new GeneRax google groups for asking questions and reporting issues:  https://groups.google.com/g/generaxusers
 
 # GeneRax 
