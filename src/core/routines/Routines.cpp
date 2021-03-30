@@ -147,11 +147,6 @@ void Routines::optimizeRates(bool userDTLRates,
   }
   auto start = Logger::getElapsedSec();
   PerCoreGeneTrees geneTrees(families);
-  bool ok = geneTrees.checkMappings(speciesTreeFile); 
-  if (!ok) {
-    Logger::info << "INVALID MAPPINGS" << std::endl;
-    ParallelContext::abort(42);
-  }
   PLLRootedTree speciesTree(speciesTreeFile);
   PerCoreEvaluations evaluations;
   buildEvaluations(geneTrees, speciesTree, recModelInfo, evaluations);

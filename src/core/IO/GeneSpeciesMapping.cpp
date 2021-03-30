@@ -29,6 +29,8 @@ void GeneSpeciesMapping::fill(const GeneSpeciesMapping &mapping)
   
 bool GeneSpeciesMapping::check(pll_utree_t *geneTree, pll_rtree_t *speciesTree)
 {
+
+  assert(false);
   std::unordered_set<std::string> geneLeaves;
   std::unordered_set<std::string> speciesLeaves;
   LibpllParsers::fillLeavesFromUtree(geneTree, geneLeaves); 
