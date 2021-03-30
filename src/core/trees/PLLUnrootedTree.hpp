@@ -18,6 +18,7 @@ extern "C" {
 #include <util/types.hpp>
 #include <util/CArrayRange.hpp>
 #include <maths/Random.hpp>
+#include <functional>
 
 class PLLRootedTree;
 
