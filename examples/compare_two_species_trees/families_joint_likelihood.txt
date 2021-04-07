@@ -1,0 +1,11 @@
+[FAMILIES]
+- Phy003AEDB_CUCME
+starting_gene_tree = data/plants/families/Phy003AEDB_CUCME/gene_trees/raxml-ng.LG.geneTree.newick
+alignment = data/plants/families/Phy003AEDB_CUCME/alignment.msa
+mapping = data/plants/families/Phy003AEDB_CUCME/mappings/mapping.link
+subst_model = LG+G
+- Phy003AED5_CUCME
+starting_gene_tree = data/plants/families/Phy003AED5_CUCME/gene_trees/raxml-ng.LG.geneTree.newick
+alignment = data/plants/families/Phy003AED5_CUCME/alignment.msa
+mapping = data/plants/families/Phy003AED5_CUCME/mappings/mapping.link
+subst_model = LG+G
