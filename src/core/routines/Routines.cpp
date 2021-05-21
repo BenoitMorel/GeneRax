@@ -249,7 +249,7 @@ void Routines::inferReconciliation(
     inferAndGetReconciliationScenarios(speciesTree, 
         geneTrees, 
         initialModelRates,
-        reconciliationSamples,
+        0,
         optimizeRates, 
         scenarios);
     assert(scenarios.size() == geneTrees.getTrees().size());
