@@ -16,6 +16,7 @@ int generax_main(int argc, char** argv, void* comm)
   GeneRaxInstance instance(argc, argv);
   GeneRaxCore::initInstance(instance);
   GeneRaxCore::initRandomGeneTrees(instance);
+  GeneRaxCore::initSpeciesTree(instance);
   GeneRaxCore::generateFakeAlignments(instance);
   GeneRaxCore::printStats(instance);
   GeneRaxCore::speciesTreeSearch(instance);

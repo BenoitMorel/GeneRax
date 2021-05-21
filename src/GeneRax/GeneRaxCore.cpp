@@ -82,17 +82,6 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
     Logger::timed << "Filtering invalid families..." << std::endl;
     Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, false);
   }
-  Logger::timed << "Starting species tree initialization..." << std::endl;
-  initStartingSpeciesTree(instance);
-  Logger::timed << "End of species tree initialization" << std::endl;
-  if (instance.args.filterFamilies) {
-    Logger::timed << "Filtering invalid families based on the starting species tree..." << std::endl;
-    Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, true);
-  }
-  if (!instance.initialFamilies.size()) {
-    Logger::info << "[Error] No valid families! Aborting GeneRax" << std::endl;
-    ParallelContext::abort(10);
-  }
   instance.currentFamilies = instance.initialFamilies;
   initFolders(instance);
   instance.modelParameters = ModelParameters(instance.rates, 
@@ -109,6 +98,24 @@ void GeneRaxCore::initRandomGeneTrees(GeneRaxInstance &instance)
   if (randoms) {
     initialGeneTreeSearch(instance);
   }
+}
+
+void GeneRaxCore::initSpeciesTree(GeneRaxInstance &instance) 
+{
+  Logger::timed << "Starting species tree initialization..." << std::endl;
+  initStartingSpeciesTree(instance);
+  Logger::timed << "End of species tree initialization" << std::endl;
+  if (instance.args.filterFamilies) {
+    Logger::timed << "Filtering invalid families based on the starting species tree..." << std::endl;
+    bool needAlignments = instance.args.strategy != GeneSearchStrategy::SKIP
+      && instance.args.strategy != GeneSearchStrategy::RECONCILE;
+    Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, true);
+  }
+  if (!instance.initialFamilies.size()) {
+    Logger::info << "[Error] No valid families! Aborting GeneRax" << std::endl;
+    ParallelContext::abort(10);
+  }
+  
 }
   
 void GeneRaxCore::generateFakeAlignments(GeneRaxInstance &instance)
