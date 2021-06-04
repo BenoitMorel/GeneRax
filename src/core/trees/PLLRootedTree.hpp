@@ -87,7 +87,7 @@ public:
    */
   void setMissingBranchLengths(double minBL = 1.0); 
 
-  void setMissingLabels();
+  void ensureUniqueLabels();
 
   /**
    *  Direct access to the libpll structure

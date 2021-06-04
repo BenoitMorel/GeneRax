@@ -59,14 +59,14 @@ static pll_rtree_t *buildUtree(const std::string &str, bool isFile)
 PLLRootedTree::PLLRootedTree(const std::string &str, bool isFile):
   _tree(buildUtree(str, isFile), rtreeDestroy)
 {
-  setMissingLabels();
+  ensureUniqueLabels();
   setMissingBranchLengths();
 }
 
 PLLRootedTree::PLLRootedTree(const std::unordered_set<std::string> &labels):
   _tree(buildRandomTree(labels), rtreeDestroy)
 {
-  setMissingLabels();
+  ensureUniqueLabels();
   setMissingBranchLengths();
 }
 
@@ -92,7 +92,7 @@ void PLLRootedTree::setMissingBranchLengths(double minBL)
   }
 }
 
-void PLLRootedTree::setMissingLabels() 
+void PLLRootedTree::ensureUniqueLabels() 
 {
   auto labels = getLabels(true);
   unsigned int i = 0;
@@ -109,6 +109,7 @@ void PLLRootedTree::setMissingLabels()
       free(node->label);
       node->label = static_cast<char*>(malloc(sizeof(char) * (newLabel.size() + 1)));
       std::strcpy(node->label, newLabel.c_str());
+      labels.insert(newLabel);
     }
   }
 }
