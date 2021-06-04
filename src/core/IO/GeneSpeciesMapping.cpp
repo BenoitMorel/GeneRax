@@ -78,6 +78,15 @@ void GeneSpeciesMapping::buildFromMappingFile(const std::string &mappingFile)
     buildFromTreerecsMapping(f);
   }
 }
+
+static bool isBlanck(const std::string &s) 
+{
+  return s.empty() 
+    || std::all_of(s.begin(), 
+        s.end(), 
+        [](char c){return std::isspace(c);});
+}
+
   
 
 void GeneSpeciesMapping::buildFromPhyldogMapping(std::ifstream &f)
@@ -88,6 +97,9 @@ void GeneSpeciesMapping::buildFromPhyldogMapping(std::ifstream &f)
   */
   std::string line;
   while (getline(f, line)) {
+    if (isBlanck(line)) {
+      continue;
+    }
     std::stringstream ss(line);
     std::string species;
     std::string gene;
@@ -107,6 +119,9 @@ void GeneSpeciesMapping::buildFromTreerecsMapping(std::ifstream &f)
   */
   std::string line;
   while (getline(f, line)) {
+    if (isBlanck(line)) {
+      continue;
+    }
     std::stringstream ss(line);
     std::string species;
     std::string gene;
