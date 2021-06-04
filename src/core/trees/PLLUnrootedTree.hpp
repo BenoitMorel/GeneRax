@@ -110,14 +110,14 @@ public:
    *  Only includes one of the three pll elements per node
    *  in the tree
    */
-  CArrayRange<pll_unode_t*> getInnerNodes();
+  CArrayRange<pll_unode_t*> getInnerNodes() const;
 
   /*
    *  C++11 range for accessing nodes. 
    *  For internal nodes, Only includes one of the three pll elements per node
    *  in the tree
    */
-  CArrayRange<pll_unode_t*> getNodes();
+  CArrayRange<pll_unode_t*> getNodes() const;
 
   /**
    *  Create a vector of all nodes (including all three pll
@@ -178,6 +178,7 @@ public:
    */
   static std::unordered_set<unsigned int> getClade(pll_unode_t *node);
 
+  bool isBinary() const;
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;
 };

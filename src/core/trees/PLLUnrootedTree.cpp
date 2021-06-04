@@ -85,12 +85,12 @@ CArrayRange<pll_unode_t*> PLLUnrootedTree::getLeaves() const
   return CArrayRange<pll_unode_t*>(_tree->nodes, getLeavesNumber());
 }
 
-CArrayRange<pll_unode_t*> PLLUnrootedTree::getNodes()
+CArrayRange<pll_unode_t*> PLLUnrootedTree::getNodes() const
 {
   return CArrayRange<pll_unode_t*>(_tree->nodes, getNodesNumber());
 }
 
-CArrayRange<pll_unode_t*> PLLUnrootedTree::getInnerNodes()
+CArrayRange<pll_unode_t*> PLLUnrootedTree::getInnerNodes() const
 {
   return CArrayRange<pll_unode_t*>(_tree->nodes + getLeavesNumber(), getInnerNodesNumber());
 }
@@ -482,3 +482,15 @@ pll_unode_t *PLLUnrootedTree::getVirtualRoot(PLLRootedTree &referenceTree)
   std::unordered_set<std::string> temp;
   return searchForSet(virtualRoot, temp, leftRLeaves);
 }
+
+bool PLLUnrootedTree::isBinary() const
+{
+  for (auto node: getInnerNodes()) {
+    assert(node->next);
+    if (node->next->next->next != node) {
+      return false;
+    }
+  }
+  return true;
+}
+
