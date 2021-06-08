@@ -42,7 +42,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
     }
   }
   Logger::timed << "Initializing ccps finished" << std::endl;
-
+  _speciesTree->addListener(this);
   ParallelContext::barrier();
 }
   
@@ -103,6 +103,14 @@ double GTSpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
   }
   return _bestRecLL;
 }
+
+void GTSpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
+{
+  for (auto &evaluation: _evaluations) {
+    evaluation->onSpeciesTreeChange(nodesToInvalidate);
+  }
+}
+
 bool GTSpeciesTreeOptimizer::testPruning(unsigned int prune,
     unsigned int regraft)
 {
@@ -128,13 +136,16 @@ void GTSpeciesTreeOptimizer::newBestTreeCallback(double newLL)
 std::string GTSpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
 {
   std::string res = Paths::getSpeciesTreeFile(_outputDir, name);
+  
   saveCurrentSpeciesTreePath(res, masterRankOnly);
   return res;
 }
 
 void GTSpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly)
 {
-  Logger::info << "Save current species tree" << std::endl;
   _speciesTree->saveToFile(str, masterRankOnly);
+  if (masterRankOnly) {
+    ParallelContext::barrier();
+  }
 }
 

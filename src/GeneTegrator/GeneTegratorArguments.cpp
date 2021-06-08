@@ -6,8 +6,8 @@
 GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
-  speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
   reconciliationModelStr("UndatedDTL"),
+  speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
   pruneSpeciesTree(false),
   output("GeneTegrator"),
   seed(123)

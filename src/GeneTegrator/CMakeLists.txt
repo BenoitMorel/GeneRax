@@ -1,7 +1,5 @@
 
 set(genetegrator_SOURCES genetegrator.cpp 
-  bitvector.cpp
-  ConditionalClades.cpp
   GeneTegratorArguments.cpp
   GTSpeciesTreeOptimizer.cpp
   )

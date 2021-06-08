@@ -2,7 +2,7 @@
 
 #include <IO/GeneSpeciesMapping.hpp>
 #include <trees/PLLRootedTree.hpp>
-#include "ConditionalClades.hpp"
+#include <ccp/ConditionalClades.hpp>
 #include <maths/ScaledValue.hpp>
 #include <likelihoods/reconciliation_models/BaseReconciliationModel.hpp>
 
@@ -109,7 +109,12 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
     return 0.0;
   }
   beforeComputeLogLikelihood();
-  onSpeciesTreeChange(nullptr);
+  for (CID cid = 0; cid < _ccp.getCladesNumber(); ++cid) {
+    auto &clv = _dtlclvs[cid];
+    auto &uq = clv._uq;
+    clv._survivingTransferSums = REAL();
+    std::fill(uq.begin(), uq.end(), REAL());
+  }  
   for (CID cid = 0; cid < _ccp.getCladesNumber(); ++cid) {
     auto &clv = _dtlclvs[cid];
     auto &uq = clv._uq;
@@ -134,7 +139,8 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
   // roots and adds a 1/numberOfGeneRoots weight that is not
   // present un the UndatedDTL, so we multiply back here
   REAL rootCorrection(double(_ccp.getRootsNumber()));
-  return log(res) - log(getLikelihoodFactor()) + log(rootCorrection);
+  auto ret = log(res) - log(getLikelihoodFactor()) + log(rootCorrection);
+  return ret;
 }
 
 template <class REAL>

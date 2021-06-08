@@ -474,3 +474,8 @@ void ConditionalClades::unserialize(const std::string &inputFile)
   Logger::info << std::endl;
 }
 
+void ConditionalClades::printStats() const
+{
+  std::cerr << "Leaves " << _CIDToLeaf.size() << " clades: " << _cladeToCID.size() <<  " unique trees " << _uniqueInputTrees << std::endl;
+
+}

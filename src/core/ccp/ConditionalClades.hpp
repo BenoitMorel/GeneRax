@@ -34,6 +34,7 @@ public:
   ConditionalClades(const std::string &inputFile, 
       bool fromBinary = false);
   void printContent() const; 
+  void printStats() const;
   unsigned int getCladesNumber() const {return _cladeToCID.size();}
   const CladeSplits &getCladeSplits(CID cid) const {return _allCladeSplits[cid];} 
   bool isLeaf(CID cid) const;
@@ -43,7 +44,8 @@ public:
   unsigned int getUniqueInputTreesNumber() const {return _uniqueInputTrees;}
   const std::unordered_map<unsigned int, std::string> &
     getCidToLeaves() {return _CIDToLeaf;}
-  bool skip() const {return _uniqueInputTrees == _inputTrees;} 
+  bool skip() const {return false;}
+  //bool skip() const {return  _uniqueInputTrees == _inputTrees;} 
 
   void serialize(const std::string &outputFile);
   void unserialize(const std::string &inputFile);

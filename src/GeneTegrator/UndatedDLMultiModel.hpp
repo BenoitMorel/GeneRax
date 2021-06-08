@@ -2,7 +2,7 @@
 
 #include <IO/GeneSpeciesMapping.hpp>
 #include <trees/PLLRootedTree.hpp>
-#include "ConditionalClades.hpp"
+#include <ccp/ConditionalClades.hpp>
 #include <maths/ScaledValue.hpp>
 #include <likelihoods/reconciliation_models/BaseReconciliationModel.hpp>
 
@@ -60,7 +60,7 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
   _PS(speciesTree.getNodesNumber(), 1.0),
   _uE(speciesTree.getNodesNumber(), 0.0)
 {
-  std::vector<REAL> zeros(speciesTree.getNodesNumber());
+  std::vector<REAL> zeros(speciesTree.getNodesNumber(), REAL());
   _dlclvs = std::vector<std::vector<REAL> >(
       _ccp.getCladesNumber(), zeros);
   for (unsigned int e = 0; e < _speciesTree.getNodesNumber(); ++e) {
@@ -79,7 +79,9 @@ double UndatedDLMultiModel<REAL>::computeLogLikelihood()
     return 0.0;
   }
   beforeComputeLogLikelihood();
-  onSpeciesTreeChange(nullptr);
+  std::vector<REAL> zeros(_speciesTree.getNodesNumber(), REAL());
+  _dlclvs = std::vector<std::vector<REAL> >(
+      _ccp.getCladesNumber(), zeros);
   for (CID cid = 0; cid < _ccp.getCladesNumber(); ++cid) {
     for (auto speciesNode: _allSpeciesNodes) {
       computeProbability(cid, 

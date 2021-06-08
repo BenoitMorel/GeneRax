@@ -14,7 +14,7 @@ using MultiEvaluationPtr =
   std::shared_ptr<MultiEvaluation>;
 using PerCoreMultiEvaluation = std::vector<MultiEvaluationPtr>;
 
-class GTSpeciesTreeOptimizer {
+class GTSpeciesTreeOptimizer: public SpeciesTree::Listener {
 public:
   GTSpeciesTreeOptimizer(const std::string speciesTreeFile, 
       const Families &families, 
@@ -23,6 +23,8 @@ public:
 
   double computeRecLikelihood();
   double sprSearch(unsigned int radius);
+
+  void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
