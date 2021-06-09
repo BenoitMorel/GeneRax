@@ -1,5 +1,6 @@
 #pragma once
 
+#include <search/SpeciesRootSearch.hpp>
 #include <trees/SpeciesTree.hpp>
 #include <IO/FamiliesFileParser.hpp>
 #include "UndatedDLMultiModel.hpp"
@@ -14,6 +15,23 @@ using MultiEvaluationPtr =
   std::shared_ptr<MultiEvaluation>;
 using PerCoreMultiEvaluation = std::vector<MultiEvaluationPtr>;
 
+class GTSpeciesTreeLikelihoodEvaluator: public SpeciesTreeLikelihoodEvaluator {
+public:
+  GTSpeciesTreeLikelihoodEvaluator(PerCoreMultiEvaluation &evaluations):
+    _evaluations(evaluations)
+  {}
+  virtual ~GTSpeciesTreeLikelihoodEvaluator() {}
+  virtual double computeLikelihood();
+  virtual void forceGeneRootOptimization() {}
+  virtual void pushRollback() {}
+  virtual void popAndApplyRollback() {}
+  virtual void addPerFamilyLikelihoods(const std::string &newick,
+    TreePerFamLLVec &treePerFamLLVec) {}
+private:
+  PerCoreMultiEvaluation &_evaluations;
+};
+
+
 class GTSpeciesTreeOptimizer: public SpeciesTree::Listener {
 public:
   GTSpeciesTreeOptimizer(const std::string speciesTreeFile, 
@@ -23,6 +41,8 @@ public:
 
   double computeRecLikelihood();
   double sprSearch(unsigned int radius);
+  double rootSearch(unsigned int maxDepth,
+      bool outputConsel);
 
   void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
@@ -39,3 +59,6 @@ private:
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
 };
+
+
+

@@ -115,7 +115,6 @@ private:
   ModelParameters computeOptimizedRates(bool thorough); 
   void updateEvaluations();
   void rootSearchAux(SpeciesTree &speciesTree, 
-      PerCoreGeneTrees &geneTrees, 
       RecModel model, 
       std::vector<unsigned int> &movesHistory, 
       std::vector<unsigned int> &bestMovesHistory, 

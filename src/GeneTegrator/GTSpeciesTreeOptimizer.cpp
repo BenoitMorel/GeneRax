@@ -3,6 +3,17 @@
 #include <parallelization/PerCoreGeneTrees.hpp>
 #include <util/Paths.hpp>
 
+double GTSpeciesTreeLikelihoodEvaluator::computeLikelihood()
+{
+  double sumLL = 0.0;
+  for (auto &evaluation: _evaluations) {
+    auto ll = evaluation->computeLogLikelihood();
+    sumLL += ll;
+  }
+  ParallelContext::sumDouble(sumLL);
+  return sumLL;
+}
+
 GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
     const std::string speciesTreeFile, 
     const Families &families, 
@@ -45,7 +56,8 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   _speciesTree->addListener(this);
   ParallelContext::barrier();
 }
-  
+
+
 double GTSpeciesTreeOptimizer::computeRecLikelihood()
 {
   double sumLL = 0.0;
@@ -147,5 +159,22 @@ void GTSpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, 
   if (masterRankOnly) {
     ParallelContext::barrier();
   }
+}
+  
+double GTSpeciesTreeOptimizer::rootSearch(unsigned int maxDepth,
+      bool outputConsel)
+{
+  GTSpeciesTreeLikelihoodEvaluator evaluator(_evaluations);
+  RootLikelihoods rootLikelihoods;
+  TreePerFamLLVec treePerFamLLVec;
+  SpeciesRootSearch::rootSearch(
+      *_speciesTree,
+      evaluator,
+      maxDepth,
+      rootLikelihoods,
+      treePerFamLLVec,
+      false);
+  saveCurrentSpeciesTreeId();
+  return computeRecLikelihood();
 }
 

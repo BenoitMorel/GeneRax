@@ -128,7 +128,6 @@ SpeciesTreeOptimizer::~SpeciesTreeOptimizer()
 }
   
 void SpeciesTreeOptimizer::rootSearchAux(SpeciesTree &speciesTree, 
-    PerCoreGeneTrees &geneTrees, 
     RecModel model, 
     std::vector<unsigned int> &movesHistory, 
     std::vector<unsigned int> &bestMovesHistory, 
@@ -173,7 +172,6 @@ void SpeciesTreeOptimizer::rootSearchAux(SpeciesTree &speciesTree,
         additionalDepth = 3;
       }
       rootSearchAux(speciesTree, 
-          geneTrees, 
           model, 
           movesHistory, 
           bestMovesHistory, 
@@ -215,7 +213,6 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth,
   unsigned int visits = 1;
   movesHistory.push_back(1);
   rootSearchAux(*_speciesTree, 
-      *_geneTrees, 
       _modelRates.info.model, 
       movesHistory, 
       bestMovesHistory, 
@@ -226,7 +223,6 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth,
       outputConsel); 
   movesHistory[0] = 0;
   rootSearchAux(*_speciesTree, 
-      *_geneTrees, 
       _modelRates.info.model, 
       movesHistory, 
       bestMovesHistory, 
@@ -709,6 +705,7 @@ void SpeciesTreeOptimizer::updateEvaluations()
 void SpeciesTreeOptimizer::beforeTestCallback()
 {
   if (_modelRates.info.rootedGeneTree) {
+    Logger::error << "TODO: SpeciesTreeOptimizer: stack this" << std::endl;
     for (unsigned int i = 0; i < _evaluations.size(); ++i) {
       _previousGeneRoots[i] = _evaluations[i]->getRoot();
     }
