@@ -25,8 +25,7 @@ public:
   virtual void forceGeneRootOptimization() {}
   virtual void pushRollback() {}
   virtual void popAndApplyRollback() {}
-  virtual void addPerFamilyLikelihoods(const std::string &newick,
-    TreePerFamLLVec &treePerFamLLVec) {}
+  virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);
 private:
   PerCoreMultiEvaluation &_evaluations;
 };
@@ -41,8 +40,7 @@ public:
 
   double computeRecLikelihood();
   double sprSearch(unsigned int radius);
-  double rootSearch(unsigned int maxDepth,
-      bool outputConsel);
+  double rootSearch(unsigned int maxDepth);
 
   void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 

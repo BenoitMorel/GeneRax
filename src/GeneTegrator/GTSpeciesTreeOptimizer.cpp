@@ -14,6 +14,19 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihood()
   return sumLL;
 }
 
+void GTSpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
+    PerFamLL &perFamLL)
+{
+  ParallelContext::barrier();
+  std::vector<double> localLL;
+  for (auto &evaluation: _evaluations) {
+    localLL.push_back(evaluation->computeLogLikelihood());
+  }
+  ParallelContext::concatenateHetherogeneousDoubleVectors(
+      localLL, perFamLL);
+  ParallelContext::barrier();
+}
+
 GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
     const std::string speciesTreeFile, 
     const Families &families, 
@@ -161,19 +174,13 @@ void GTSpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, 
   }
 }
   
-double GTSpeciesTreeOptimizer::rootSearch(unsigned int maxDepth,
-      bool outputConsel)
+double GTSpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
 {
   GTSpeciesTreeLikelihoodEvaluator evaluator(_evaluations);
-  RootLikelihoods rootLikelihoods;
-  TreePerFamLLVec treePerFamLLVec;
   SpeciesRootSearch::rootSearch(
       *_speciesTree,
       evaluator,
-      maxDepth,
-      rootLikelihoods,
-      treePerFamLLVec,
-      false);
+      maxDepth);
   saveCurrentSpeciesTreeId();
   return computeRecLikelihood();
 }

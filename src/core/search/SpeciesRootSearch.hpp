@@ -46,13 +46,10 @@ public:
   virtual void popAndApplyRollback() = 0;
 
   /**
-   *  Add the current per family likelihoods 
-   *  to treePerFamLLVec, to the tree newick
-   *  
-   *  todo: change this interface
+   * Fill perFamLL with the per-family (over all parallel
+   * ranks) log-likelihoods
    */
-  virtual void addPerFamilyLikelihoods(const std::string &newick,
-    TreePerFamLLVec &treePerFamLLVec) = 0;
+  virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL) = 0;
 };
 
 
@@ -60,12 +57,18 @@ public:
 
 class SpeciesRootSearch {
 public:
+  /**
+   *  Search for the ML root for the current
+   *  species tree topology
+   *  
+   *  rootLikelihoods and treePerFamLLVec 
+   *  will only be filled if not NULL
+   */
   static double rootSearch(
       SpeciesTree &speciesTree,
       SpeciesTreeLikelihoodEvaluator &evaluation,
       unsigned int maxDepth,
-      RootLikelihoods &rootLikelihoods,
-      TreePerFamLLVec &treePerFamLLVec, 
-      bool outputConsel);
+      RootLikelihoods *rootLikelihoods = nullptr,
+      TreePerFamLLVec *treePerFamLLVec = nullptr); 
 };
 
