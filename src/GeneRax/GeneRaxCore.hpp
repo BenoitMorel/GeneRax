@@ -23,6 +23,11 @@ public:
    */
   static void initRandomGeneTrees(GeneRaxInstance &instance);
   
+  /**
+   *  Initialize the species tree
+   */
+  static void initSpeciesTree(GeneRaxInstance &instance);
+  
   static void generateFakeAlignments(GeneRaxInstance &instance);
 
   static void printStats(GeneRaxInstance &instance);

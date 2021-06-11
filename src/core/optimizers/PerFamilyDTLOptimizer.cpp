@@ -41,6 +41,7 @@ void PerFamilyDTLOptimizer::findBestRatesDL(JointTree &jointTree,
     double loss = minLoss + (maxLoss - minLoss) * double(j) / double(steps);
     Parameters rates(dup, loss);
     rates.ensurePositivity();
+    jointTree.setRates(rates);
     double newLL = jointTree.computeReconciliationLoglk();
     if (!isValidLikelihood(newLL)) {
       continue;
@@ -119,6 +120,7 @@ void PerFamilyDTLOptimizer::optimizeDTLRates(JointTree &jointTree, RecOpt method
 void PerFamilyDTLOptimizer::optimizeDLRates(JointTree &jointTree, RecOpt method) {
   switch(method) {
   case RecOpt::Grid:
+    Logger::info << "GRIIID" << std::endl;
     optimizeDLRatesWindow(jointTree);
     break;
   case RecOpt::Simplex:
@@ -139,9 +141,9 @@ void PerFamilyDTLOptimizer::optimizeDLRatesWindow(JointTree &jointTree) {
   double bestDup = 0.0;
   double bestLoss = 0.0;
   double minDup = 0.0;
-  double maxDup = 10.0;
+  double maxDup = 2.0;
   double minLoss = 0.0;
-  double maxLoss = 10.0;
+  double maxLoss = 2.0;
   unsigned int steps = 10;
   double epsilon = 0.001;
   do {

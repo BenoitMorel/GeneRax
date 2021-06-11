@@ -85,12 +85,12 @@ CArrayRange<pll_unode_t*> PLLUnrootedTree::getLeaves() const
   return CArrayRange<pll_unode_t*>(_tree->nodes, getLeavesNumber());
 }
 
-CArrayRange<pll_unode_t*> PLLUnrootedTree::getNodes()
+CArrayRange<pll_unode_t*> PLLUnrootedTree::getNodes() const
 {
   return CArrayRange<pll_unode_t*>(_tree->nodes, getNodesNumber());
 }
 
-CArrayRange<pll_unode_t*> PLLUnrootedTree::getInnerNodes()
+CArrayRange<pll_unode_t*> PLLUnrootedTree::getInnerNodes() const
 {
   return CArrayRange<pll_unode_t*>(_tree->nodes + getLeavesNumber(), getInnerNodesNumber());
 }
@@ -612,3 +612,15 @@ bool PLLUnrootedTree::areIsomorphic(const PLLUnrootedTree &t1,
       leftFirst1, 
       leftFirst2);
 }
+
+bool PLLUnrootedTree::isBinary() const
+{
+  for (auto node: getInnerNodes()) {
+    assert(node->next);
+    if (node->next->next->next != node) {
+      return false;
+    }
+  }
+  return true;
+}
+

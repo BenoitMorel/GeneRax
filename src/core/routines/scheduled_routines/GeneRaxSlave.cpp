@@ -67,8 +67,8 @@ static void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
       madRooting,
       supportThreshold,
       recWeight,
-      recModelInfo.perFamilyRates,
       false, //check
+      recModelInfo.perFamilyRates,
       ratesVector
       );
   jointTree->enableReconciliation(enableRec);

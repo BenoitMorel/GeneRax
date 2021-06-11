@@ -14,6 +14,7 @@ enum FamilyErrorCode {
   ERROR_READ_ALIGNMENT,
   ERROR_INVALID_LABEL,
   ERROR_READ_GENE_TREE,
+  ERROR_GENE_TREE_POLYTOMY,
   ERROR_NOT_ENOUGH_GENES,
   ERROR_GENE_TREE_SEQUENCES_MISMATCH,
   ERROR_ALIGNEMENT_FILE_EXISTENCE,
@@ -31,6 +32,7 @@ static std::string getErrorMessage(FamilyErrorCode error) {
   case ERROR_READ_ALIGNMENT: return "Cannot read alignment file (file exists but is invalid)";
   case ERROR_INVALID_LABEL: return "Some labels in the MSAs contain invalid characters";
   case ERROR_READ_GENE_TREE: return "Cannot read starting gene tree file (file exists but is invalid)";
+  case ERROR_GENE_TREE_POLYTOMY: return "Gene tree is not strictly binary";
   case ERROR_NOT_ENOUGH_GENES : return "The gene family should contain at least 3 sequences";
   case ERROR_GENE_TREE_SEQUENCES_MISMATCH : return "Mismatch between gene tree leaves and sequence labels";
   case ERROR_ALIGNEMENT_FILE_EXISTENCE : return "Input alignment file does not exist";
@@ -77,17 +79,19 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
     if (!FileSystem::exists(family.startingGeneTree)) {
       return ERROR_GENE_TREE_FILE_EXISTENCE;
     }  
-    pll_utree_t * utree = 0;
+    std::unique_ptr<PLLUnrootedTree> geneTree; 
     try {
-      utree = LibpllParsers::readNewickFromFile(family.startingGeneTree);
+      geneTree = std::make_unique<PLLUnrootedTree>(
+        family.startingGeneTree);
     } catch (const LibpllException &e) {
       std::cerr << e.what() << std::endl;
     } catch (...) {}
-    if (!utree) {
+    if (!geneTree) {
       return ERROR_READ_GENE_TREE;
+    } else if (!geneTree->isBinary()) {
+      return ERROR_GENE_TREE_POLYTOMY;
     } else {
-      LibpllParsers::fillLeavesFromUtree(utree, geneTreeLabels);
-      pll_utree_destroy(utree, 0);
+      geneTreeLabels = geneTree->getLabels();
       if (geneTreeLabels.size() < 3) {
         return ERROR_NOT_ENOUGH_GENES;
       }
