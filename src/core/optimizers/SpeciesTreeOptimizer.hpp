@@ -9,6 +9,8 @@
 #include <IO/Families.hpp>
 #include <memory>
 #include <maths/ModelParameters.hpp>
+#include <likelihoods/ReconciliationEvaluation.hpp>
+#include <search/SpeciesRootSearch.hpp>
 #include <trees/Clade.hpp>
 #include <util/Constants.hpp>
 #include <util/types.hpp>
@@ -39,8 +41,26 @@ struct SpeciesTreeSearchParams {
 
 struct MovesBlackList;
 
-using TreePerFamLL = std::pair<std::string, PerFamLL>;
-using TreePerFamLLVec = std::vector<TreePerFamLL>;
+
+class SpeciesTreeLikelihoodEvaluator: public SpeciesTreeLikelihoodEvaluatorInterface {
+public:
+  SpeciesTreeLikelihoodEvaluator(PerCoreEvaluations &evaluations,
+      bool rootedGeneTrees):
+    _evaluations(evaluations),
+    _rootedGeneTrees(rootedGeneTrees)
+  {}
+  virtual ~SpeciesTreeLikelihoodEvaluator() {}
+  virtual double computeLikelihood();
+  virtual void forceGeneRootOptimization();
+  virtual void pushRollback();
+  virtual void popAndApplyRollback();
+  virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);
+private:
+  PerCoreEvaluations &_evaluations;
+  std::stack<std::vector<pll_unode_t*> > _previousGeneRoots;
+  bool _rootedGeneTrees;
+};
+
 
 class SpeciesTreeOptimizer: public SpeciesTree::Listener {
 public:
@@ -114,15 +134,6 @@ private:
   unsigned int _unsupportedCladesNumber();
   ModelParameters computeOptimizedRates(bool thorough); 
   void updateEvaluations();
-  void rootSearchAux(SpeciesTree &speciesTree, 
-      RecModel model, 
-      std::vector<unsigned int> &movesHistory, 
-      std::vector<unsigned int> &bestMovesHistory, 
-      double &bestLL, 
-      unsigned int &visits,
-      unsigned int maxDepth,
-      bool optimizeParams,
-      bool outputConsel);
   bool testPruning(unsigned int prune,
     unsigned int regraft);
   void newBestTreeCallback();
@@ -143,15 +154,4 @@ private:
   }
   std::vector<double> _getSupport();
   
-  struct RootLikelihoods {
-    void reset() {
-      idToLL.clear();
-    }
-    void saveValue(pll_rnode_t *t, double ll);
-    void fillTree(PLLRootedTree &tree);
-    
-    std::unordered_map<std::string, double> idToLL;
-  };
-  RootLikelihoods _rootLikelihoods;
-  TreePerFamLLVec _treePerFamLLVec;  
 };

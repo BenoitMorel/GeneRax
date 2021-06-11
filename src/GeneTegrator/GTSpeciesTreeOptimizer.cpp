@@ -24,7 +24,6 @@ void GTSpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
   }
   ParallelContext::concatenateHetherogeneousDoubleVectors(
       localLL, perFamLL);
-  ParallelContext::barrier();
 }
 
 GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(

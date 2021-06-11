@@ -18,9 +18,9 @@ struct RootLikelihoods {
   std::unordered_map<std::string, double> idToLL;
 };
 
-class SpeciesTreeLikelihoodEvaluator {
+class SpeciesTreeLikelihoodEvaluatorInterface {
 public:
-  virtual ~SpeciesTreeLikelihoodEvaluator() {};
+  virtual ~SpeciesTreeLikelihoodEvaluatorInterface() {};
   /**
    *  Compute the likelihood of the current species tree
    */
@@ -66,7 +66,7 @@ public:
    */
   static double rootSearch(
       SpeciesTree &speciesTree,
-      SpeciesTreeLikelihoodEvaluator &evaluation,
+      SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
       unsigned int maxDepth,
       RootLikelihoods *rootLikelihoods = nullptr,
       TreePerFamLLVec *treePerFamLLVec = nullptr); 

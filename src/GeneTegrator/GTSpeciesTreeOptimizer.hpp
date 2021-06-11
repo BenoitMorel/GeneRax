@@ -15,7 +15,7 @@ using MultiEvaluationPtr =
   std::shared_ptr<MultiEvaluation>;
 using PerCoreMultiEvaluation = std::vector<MultiEvaluationPtr>;
 
-class GTSpeciesTreeLikelihoodEvaluator: public SpeciesTreeLikelihoodEvaluator {
+class GTSpeciesTreeLikelihoodEvaluator: public SpeciesTreeLikelihoodEvaluatorInterface {
 public:
   GTSpeciesTreeLikelihoodEvaluator(PerCoreMultiEvaluation &evaluations):
     _evaluations(evaluations)

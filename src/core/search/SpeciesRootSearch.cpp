@@ -59,7 +59,7 @@ void RootLikelihoods::fillTree(PLLRootedTree &tree)
 
 
 static void rootSearchAux(SpeciesTree &speciesTree, 
-    SpeciesTreeLikelihoodEvaluator &evaluator,
+    SpeciesTreeLikelihoodEvaluatorInterface &evaluator,
     std::vector<unsigned int> &movesHistory, 
     std::vector<unsigned int> &bestMovesHistory, 
     double &bestLL, 
@@ -119,7 +119,7 @@ static void rootSearchAux(SpeciesTree &speciesTree,
 
 double SpeciesRootSearch::rootSearch(
     SpeciesTree &speciesTree,
-    SpeciesTreeLikelihoodEvaluator &evaluator,
+    SpeciesTreeLikelihoodEvaluatorInterface &evaluator,
     unsigned int maxDepth,
     RootLikelihoods *rootLikelihoods,
     TreePerFamLLVec *treePerFamLLVec)
@@ -165,7 +165,7 @@ double SpeciesRootSearch::rootSearch(
     SpeciesTreeOperator::changeRoot(speciesTree, bestMovesHistory[i]);
   }
   evaluator.forceGeneRootOptimization();
-  {
+  if (rootLikelihoods) {
     auto newick = speciesTree.getTree().getNewickString();
     PLLRootedTree tree(newick, false); 
     rootLikelihoods->fillTree(tree);
