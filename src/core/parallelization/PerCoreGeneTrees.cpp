@@ -112,4 +112,13 @@ bool PerCoreGeneTrees::checkMappings(const std::string &speciesTreeFile)
   return ok;
 }
 
+void PerCoreGeneTrees::getPerCoreFamilies(const Families &allFamilies,
+      Families &perCoreFamilies)
+{
+  perCoreFamilies.clear();
+  PerCoreGeneTrees geneTrees(allFamilies);
+  for (const auto &geneTree: geneTrees.getTrees()) {
+    perCoreFamilies.push_back(allFamilies[geneTree.familyIndex]);
+  }
+}
 

@@ -43,8 +43,6 @@ public:
   static void computeDistanceMatrix(const Families &families,
       bool minMode, 
       bool reweight,
-      bool useBL,
-      bool useBootstrap,
       bool ustar,
       DistanceMatrix &distanceMatrix,
       std::vector<std::string> &speciesIdToSpeciesString,

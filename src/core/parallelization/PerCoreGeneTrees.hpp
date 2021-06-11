@@ -63,6 +63,10 @@ public:
    *  @return true if the mappings are valid.
    */
   bool checkMappings(const std::string &speciesTreeFile);
+
+  static void getPerCoreFamilies(const Families &allFamilies,
+      Families &perCoreFamilies);
+
 private:
   std::vector<GeneTree> _geneTrees;
   std::vector<unsigned int> _treeSizes;
