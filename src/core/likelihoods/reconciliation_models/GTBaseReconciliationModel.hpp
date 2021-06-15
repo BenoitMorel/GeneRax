@@ -76,6 +76,9 @@ public:
    */
   void getRoots(std::vector<pll_unode_t *> &roots,
     const std::vector<unsigned int> &geneIds);
+  pll_unode_t *getGeneNode(unsigned int nodeIndex) const {
+    return _allNodes[nodeIndex];
+  }
   pll_unode_t *getLeft(pll_unode_t *node, bool virtualRoot) const;  
   pll_unode_t *getRight(pll_unode_t *node, bool virtualRoot) const;
   pll_unode_t *getGeneSon(pll_unode_t *node, bool left, bool virtualRoot = false) const;
@@ -542,13 +545,7 @@ bool GTBaseReconciliationModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode
       bool isVirtualRoot, 
       bool stochastic) 
 {
-  pll_unode_t *leftGeneNode = 0;     
-  pll_unode_t *rightGeneNode = 0;     
   bool isGeneLeaf = !geneNode->next;
-  if (!isGeneLeaf) {
-    leftGeneNode = this->getLeft(geneNode, isVirtualRoot);
-    rightGeneNode = this->getRight(geneNode, isVirtualRoot);
-  }
   REAL temp;
   Scenario::Event event;
   computeProbability(geneNode, speciesNode, temp, isVirtualRoot, &scenario, &event, stochastic);
@@ -557,24 +554,19 @@ bool GTBaseReconciliationModel<REAL>::backtrace(pll_unode_t *geneNode, pll_rnode
   // safety check
   switch(event.type) {
   case ReconciliationEventType::EVENT_S:
-    if (!event.cross) {
-      ok &= backtrace(leftGeneNode, this->getSpeciesLeft(speciesNode), scenario, false, stochastic); 
-      ok &= backtrace(rightGeneNode, this->getSpeciesRight(speciesNode), scenario, false, stochastic); 
-    } else {
-      ok &= backtrace(leftGeneNode, this->getSpeciesRight(speciesNode), scenario, false, stochastic); 
-      ok &= backtrace(rightGeneNode, this->getSpeciesLeft(speciesNode), scenario, false, stochastic); 
-    }
+    ok &= backtrace(getGeneNode(event.leftGeneIndex), this->getSpeciesLeft(speciesNode), scenario, false, stochastic); 
+    ok &= backtrace(getGeneNode(event.rightGeneIndex), this->getSpeciesRight(speciesNode), scenario, false, stochastic); 
     break;
   case ReconciliationEventType::EVENT_D:
-    ok &= backtrace(leftGeneNode, speciesNode, scenario, false, stochastic); 
-    ok &= backtrace(rightGeneNode, speciesNode, scenario, false, stochastic); 
+    ok &= backtrace(getGeneNode(event.leftGeneIndex), speciesNode, scenario, false, stochastic); 
+    ok &= backtrace(getGeneNode(event.rightGeneIndex), speciesNode, scenario, false, stochastic); 
     break;
   case ReconciliationEventType::EVENT_SL:
     ok &= backtrace(geneNode, event.pllDestSpeciesNode, scenario, isVirtualRoot, stochastic); 
     break;
   case ReconciliationEventType::EVENT_T:
     ok &= backtrace(event.pllTransferedGeneNode, event.pllDestSpeciesNode, scenario, false, stochastic);
-    ok &= backtrace(getOther(event.pllTransferedGeneNode, leftGeneNode, rightGeneNode),
+    ok &= backtrace(getOther(event.pllTransferedGeneNode, getGeneNode(event.leftGeneIndex), getGeneNode(event.rightGeneIndex)),
         speciesNode, scenario, false, stochastic);
     break;
   case ReconciliationEventType::EVENT_TL:

@@ -66,24 +66,26 @@ public:
       type(ReconciliationEventType::EVENT_S), 
       geneNode(INVALID_NODE_ID), 
       speciesNode(INVALID_NODE_ID), 
-      transferedGeneNode(INVALID_NODE_ID), 
       destSpeciesNode(INVALID_NODE_ID),
       pllTransferedGeneNode(nullptr),
-      pllDestSpeciesNode(nullptr),
-      cross(false)
+      pllDestSpeciesNode(nullptr)
     {}
     ReconciliationEventType type;
     unsigned int geneNode;
     unsigned int speciesNode;
-    unsigned int transferedGeneNode;  // for transfers only 
     unsigned int destSpeciesNode;     // for transfers only
-    
+   
+    // left and gene indices:
+    // - for speciation: left gene goes to left species
+    // - for transfer: left gene goes to source species
+    // - for duplication, the order doesn't matter
+    // - for other events, those members are irrelevant
+    unsigned int leftGeneIndex;
+    unsigned int rightGeneIndex;
+
     // temporary variables for event inference
     pll_unode_t *pllTransferedGeneNode;
     pll_rnode_t *pllDestSpeciesNode;
-    bool cross; // used to decide which gene (left/right) goes to which species (left/right)
-                // if set to true, left goes to right and right goes to left
-                // if set to false, left goes to left and right goes to right
     
    
     /**
@@ -123,7 +125,6 @@ public:
   void addTransfer(ReconciliationEventType type, 
     unsigned int geneNode, 
     unsigned int speciesNode, 
-    unsigned int transferedGeneNode,
     unsigned int destSpeciesNode);
 
   /**

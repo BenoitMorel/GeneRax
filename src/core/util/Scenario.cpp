@@ -29,20 +29,18 @@ void Scenario::addEvent(ReconciliationEventType type,
     unsigned int destSpeciesNode) 
 {
   
-  addTransfer(type, geneNode, speciesNode, INVALID_NODE_ID, destSpeciesNode);
+  addTransfer(type, geneNode, speciesNode, destSpeciesNode);
 }
   
 void Scenario::addTransfer(ReconciliationEventType type, 
   unsigned int geneNode, 
   unsigned int speciesNode, 
-    unsigned int transferedGeneNode,
   unsigned int destSpeciesNode)
 {
   Event event;
   event.type = type;
   event.geneNode = geneNode;
   event.speciesNode = speciesNode;
-  event.transferedGeneNode = transferedGeneNode;
   event.destSpeciesNode = destSpeciesNode;
   addEvent(event);
 }
@@ -270,10 +268,10 @@ OrthoGroup *Scenario::getLargestOrthoGroupRec(pll_unode_t *geneNode, bool isVirt
       return rightOrthoGroup;
     case ReconciliationEventType::EVENT_T:
       // only keep the non transfered gene
-      if (event.transferedGeneNode == left->node_index) {
+      if (event.rightGeneIndex == left->node_index) {
         delete leftOrthoGroup;
         return  rightOrthoGroup;
-      } else if (event.transferedGeneNode == right->node_index) {
+      } else if (event.rightGeneIndex == right->node_index) {
         delete rightOrthoGroup;
         return leftOrthoGroup;
       } else {
@@ -346,10 +344,10 @@ void Scenario::getAllOrthoGroupRec(pll_unode_t *geneNode,
     case ReconciliationEventType::EVENT_T:
       // save the orthoGroup from the transfered gene,
       // and keep filling the orthoGroup on the non transfered gene
-      if (event.transferedGeneNode == left->node_index) {
+      if (event.rightGeneIndex == left->node_index) {
         appendOrtho(currentOrthoGroup, rightOrthoGroup);
         orthoGroups.push_back(leftOrthoGroup);
-      } else if (event.transferedGeneNode == right->node_index) {
+      } else if (event.rightGeneIndex == right->node_index) {
         appendOrtho(currentOrthoGroup, leftOrthoGroup);
         orthoGroups.push_back(rightOrthoGroup);
       } else {

@@ -114,7 +114,7 @@ static void writeEventRecPhyloXML(pll_unode_t *geneTree,
   os << indent << "<eventsRec>" << std::endl;
   bool previousWasTransfer = previousEvent->type 
     == ReconciliationEventType::EVENT_T || previousEvent->type == ReconciliationEventType::EVENT_TL;
-  if (previousWasTransfer && geneTree->node_index == previousEvent->transferedGeneNode && event.type 
+  if (previousWasTransfer && geneTree->node_index == previousEvent->rightGeneIndex && event.type 
       != ReconciliationEventType::EVENT_L) {
     auto previousEventSpeciesOut = speciesTree->nodes[previousEvent->destSpeciesNode];
     os << indent << "\t<transferBack destinationSpecies=\"" << previousEventSpeciesOut->label << "\"/>" << std::endl;

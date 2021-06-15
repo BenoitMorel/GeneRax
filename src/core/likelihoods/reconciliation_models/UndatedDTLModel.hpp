@@ -391,14 +391,18 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     switch(maxValueIndex) {
     case 0:
       event->type = ReconciliationEventType::EVENT_S;
-      event->cross = false;
+      event->leftGeneIndex = leftGeneNode->node_index;
+      event->rightGeneIndex = rightGeneNode->node_index;
       break;
     case 1:
       event->type = ReconciliationEventType::EVENT_S;
-      event->cross = true;
+      event->leftGeneIndex = rightGeneNode->node_index;
+      event->rightGeneIndex = leftGeneNode->node_index;
       break;
     case 2:
       event->type = ReconciliationEventType::EVENT_D;
+      event->leftGeneIndex = leftGeneNode->node_index;
+      event->rightGeneIndex = rightGeneNode->node_index;
       break;
     case 3:
       event->type = ReconciliationEventType::EVENT_SL;
@@ -412,7 +416,8 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
       break;
     case 5:
       event->type = ReconciliationEventType::EVENT_T;
-      event->transferedGeneNode = transferedGene->node_index;
+      event->leftGeneIndex = stayingGene->node_index;
+      event->rightGeneIndex = transferedGene->node_index;
       event->destSpeciesNode = recievingSpecies->node_index;
       event->pllTransferedGeneNode = transferedGene;
       event->pllDestSpeciesNode = recievingSpecies;
