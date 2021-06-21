@@ -6,7 +6,7 @@
 double GTSpeciesTreeLikelihoodEvaluator::computeLikelihood()
 {
   double sumLL = 0.0;
-  for (auto &evaluation: _evaluations) {
+  for (auto &evaluation: *_evaluations) {
     auto ll = evaluation->computeLogLikelihood();
     sumLL += ll;
   }
@@ -19,11 +19,20 @@ void GTSpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
 {
   ParallelContext::barrier();
   std::vector<double> localLL;
-  for (auto &evaluation: _evaluations) {
+  for (auto &evaluation: *_evaluations) {
     localLL.push_back(evaluation->computeLogLikelihood());
   }
   ParallelContext::concatenateHetherogeneousDoubleVectors(
       localLL, perFamLL);
+}
+
+void GTSpeciesTreeLikelihoodEvaluator::countEvents()
+{
+  for (auto &evaluation: *_evaluations) {
+    Scenario scenario;
+    bool stochastic = true;
+    evaluation->inferMLScenario(scenario, stochastic);
+  }
 }
 
 GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
@@ -67,6 +76,8 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   Logger::timed << "Initializing ccps finished" << std::endl;
   _speciesTree->addListener(this);
   ParallelContext::barrier();
+  _evaluator.setEvaluations(_evaluations);
+  Logger::timed << "Initial ll=" << computeRecLikelihood() << std::endl;
 }
 
 
@@ -175,10 +186,9 @@ void GTSpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, 
   
 double GTSpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
 {
-  GTSpeciesTreeLikelihoodEvaluator evaluator(_evaluations);
   SpeciesRootSearch::rootSearch(
       *_speciesTree,
-      evaluator,
+      _evaluator,
       maxDepth);
   saveCurrentSpeciesTreeId();
   return computeRecLikelihood();

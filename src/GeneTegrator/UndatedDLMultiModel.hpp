@@ -36,11 +36,17 @@ private:
   using DLCLV = std::vector<REAL>;
   std::vector<DLCLV> _dlclvs;
 
+  struct ReconciliationCell {
+    Scenario::Event event;
+    REAL maxProba;
+  };
+
   REAL getLikelihoodFactor() const;
   virtual void recomputeSpeciesProbabilities();
   void computeProbability(CID cid, 
     pll_rnode_t *speciesNode, 
-    REAL &proba);
+    REAL &proba,
+    ReconciliationCell *recCell = nullptr);
 
   void mapGenesToSpecies();
   
@@ -123,12 +129,21 @@ void UndatedDLMultiModel<REAL>::recomputeSpeciesProbabilities()
 template <class REAL>
 void UndatedDLMultiModel<REAL>::computeProbability(CID cid, 
     pll_rnode_t *speciesNode, 
-    REAL &proba
+    REAL &proba,
+    ReconciliationCell *recCell
     )
 {
   proba = REAL();
   bool isSpeciesLeaf = !getSpeciesLeft(speciesNode);
   auto e = speciesNode->node_index;
+  REAL maxProba = REAL();
+  if (recCell) {
+    recCell->event.geneNode = cid; 
+    recCell->event.speciesNode = e;
+    recCell->event.type = ReconciliationEventType::EVENT_None; 
+    maxProba = recCell->maxProba;
+  }
+  // terminal gene and species nodes
   if (_ccp.isLeaf(cid) && isSpeciesLeaf) {
     if (_geneToSpecies[cid] == e) {
       proba = REAL(_PS[e]);
@@ -146,32 +161,64 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
   for (const auto &cladeSplit: _ccp.getCladeSplits(cid)) {
     auto cidLeft = cladeSplit.left; 
     auto cidRight = cladeSplit.right;
-    REAL splitProba = REAL();
+    auto freq = cladeSplit.frequency;
     if (not isSpeciesLeaf) {
       // S event;
-      temp = _dlclvs[cidLeft][f] * _dlclvs[cidRight][g] * _PS[e]; 
+      temp = _dlclvs[cidLeft][f] * _dlclvs[cidRight][g] * (_PS[e] * freq); 
       scale(temp);
-      splitProba += temp;
-      temp = _dlclvs[cidRight][f] * _dlclvs[cidLeft][g] * _PS[e]; 
+      proba += temp;
+      if (recCell && proba > maxProba) {
+        recCell->event.type = ReconciliationEventType::EVENT_S;
+        recCell->event.leftGeneIndex = cidLeft;
+        recCell->event.rightGeneIndex = cidRight;
+        return;
+      }
+      temp = _dlclvs[cidRight][f] * _dlclvs[cidLeft][g] * (_PS[e] * freq); 
       scale(temp);
-      splitProba += temp;
+      proba += temp;
+      if (recCell && proba > maxProba) {
+        recCell->event.type = ReconciliationEventType::EVENT_S;
+        recCell->event.leftGeneIndex = cidRight;
+        recCell->event.rightGeneIndex = cidLeft;
+        return;
+      }
     }
-    temp = _dlclvs[cidLeft][e] * _dlclvs[cidRight][e] * _PD[e];
+    temp = _dlclvs[cidLeft][e] * _dlclvs[cidRight][e] * (_PD[e] * freq);
     scale(temp);
-    splitProba += temp;
-    proba += splitProba * cladeSplit.frequency;
+    proba += temp;
+    if (recCell && proba > maxProba) {
+      recCell->event.type = ReconciliationEventType::EVENT_D;
+      recCell->event.leftGeneIndex = cidLeft;
+      recCell->event.rightGeneIndex = cidRight;
+      return;
+    }
   }
   if (not isSpeciesLeaf) {
     // SL event
     temp = _dlclvs[cid][f] * (_uE[g] * _PS[e]);
     scale(temp);
     proba += temp;
+    if (recCell && proba > maxProba) {
+      recCell->event.type = ReconciliationEventType::EVENT_SL;
+      recCell->event.destSpeciesNode = f;
+      return;
+    }
+    
     temp = _dlclvs[cid][g] * (_uE[f] * _PS[e]);
     scale(temp);
     proba += temp;
+    if (recCell && proba > maxProba) {
+      recCell->event.type = ReconciliationEventType::EVENT_SL;
+      recCell->event.destSpeciesNode = g;
+      return;
+    }
   }
   // DL event
-  proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
+  //proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
+  if (recCell) {
+    // we haven't sampled any event...
+    assert(false);
+  }
 }
   
 template <class REAL>

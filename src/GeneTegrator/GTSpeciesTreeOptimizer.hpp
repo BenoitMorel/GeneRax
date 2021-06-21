@@ -17,17 +17,20 @@ using PerCoreMultiEvaluation = std::vector<MultiEvaluationPtr>;
 
 class GTSpeciesTreeLikelihoodEvaluator: public SpeciesTreeLikelihoodEvaluatorInterface {
 public:
-  GTSpeciesTreeLikelihoodEvaluator(PerCoreMultiEvaluation &evaluations):
-    _evaluations(evaluations)
+  GTSpeciesTreeLikelihoodEvaluator()
   {}
+  void setEvaluations(PerCoreMultiEvaluation &evaluations) {
+    _evaluations = &evaluations;
+  }
   virtual ~GTSpeciesTreeLikelihoodEvaluator() {}
   virtual double computeLikelihood();
   virtual void forceGeneRootOptimization() {}
   virtual void pushRollback() {}
   virtual void popAndApplyRollback() {}
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);
+  virtual void countEvents();
 private:
-  PerCoreMultiEvaluation &_evaluations;
+  PerCoreMultiEvaluation *_evaluations;
 };
 
 
@@ -47,6 +50,7 @@ public:
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   PerCoreMultiEvaluation _evaluations;
+  GTSpeciesTreeLikelihoodEvaluator _evaluator;
   std::string _outputDir;
   double _bestRecLL;
 
