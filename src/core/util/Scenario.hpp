@@ -141,6 +141,10 @@ public:
   void gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents) const;
   void countTransfers(const StringToUint &labelToId,
       MatrixUint &count);
+
+  unsigned int getEventCount(ReconciliationEventType type) const {
+    return _eventsCount[static_cast<unsigned int>(type)];
+  }
   /**
    * The following methods help blacklisting pairs of gene and species nodes.
    * The motivation is that both ML and sampling reconciliation inference algorithm

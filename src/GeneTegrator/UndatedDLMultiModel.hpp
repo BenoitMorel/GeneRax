@@ -21,12 +21,14 @@ public:
 
   virtual void setRates(const RatesVector &) {};
   virtual double computeLogLikelihood();
-  virtual bool inferMLScenario(Scenario &, bool stochastic = false) {
-    (void)stochastic;
-    return false;}
+  virtual bool inferMLScenario(Scenario &, bool stochastic = false);
   
+
 private:
-  
+  bool backtrace(unsigned int cid, 
+      pll_rnode_t *speciesRoot,
+      Scenario &scenario,
+      bool stochastic); 
   
   ConditionalClades _ccp;
   std::vector<double> _PD; // Duplication probability, per species branch
@@ -201,6 +203,7 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
     if (recCell && proba > maxProba) {
       recCell->event.type = ReconciliationEventType::EVENT_SL;
       recCell->event.destSpeciesNode = f;
+      recCell->event.pllDestSpeciesNode = getSpeciesLeft(speciesNode);
       return;
     }
     
@@ -210,12 +213,14 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
     if (recCell && proba > maxProba) {
       recCell->event.type = ReconciliationEventType::EVENT_SL;
       recCell->event.destSpeciesNode = g;
+      recCell->event.pllDestSpeciesNode = getSpeciesRight(speciesNode);
       return;
     }
   }
   // DL event
   //proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
   if (recCell) {
+    std::cerr << "cerr " << proba << " " << maxProba << " " << (proba > maxProba) << std::endl;
     // we haven't sampled any event...
     assert(false);
   }
@@ -254,4 +259,60 @@ void UndatedDLMultiModel<REAL>::mapGenesToSpecies()
     _speciesCoverage[_geneToSpecies[cid]]++;
   }
 }
+ 
+template <class REAL>
+bool UndatedDLMultiModel<REAL>::inferMLScenario(Scenario &scenario, 
+    bool stochastic) {
+  // TODO: sample the species root!
+  auto rootCID = _ccp.getCladesNumber() - 1;
+  auto speciesRoot = _speciesTree.getRoot();
+  return backtrace(rootCID, 
+      speciesRoot,
+      scenario, stochastic);
+}
+
+static double dRand()
+{
+  return  (double)rand() / RAND_MAX;
+}
+
+template <class REAL>
+bool UndatedDLMultiModel<REAL>::backtrace(unsigned int cid, 
+    pll_rnode_t *speciesNode,
+    Scenario &scenario,
+    bool stochastic)
+{
+  REAL proba;
+  computeProbability(cid, speciesNode, proba);
+  ReconciliationCell recCell;
+  recCell.maxProba = proba * dRand();
+  computeProbability(cid, speciesNode, proba, &recCell);
+  scenario.addEvent(recCell.event);
+  bool ok = true;
+  switch(recCell.event.type) {
+  case ReconciliationEventType::EVENT_S:
+    ok &= backtrace(recCell.event.leftGeneIndex, this->getSpeciesLeft(speciesNode), scenario, stochastic); 
+    ok &= backtrace(recCell.event.rightGeneIndex, this->getSpeciesRight(speciesNode), scenario, stochastic); 
+    break;
+  case ReconciliationEventType::EVENT_D:
+    ok &= backtrace(recCell.event.leftGeneIndex, speciesNode, scenario, stochastic); 
+    ok &= backtrace(recCell.event.rightGeneIndex, speciesNode, scenario, stochastic); 
+    break;
+  case ReconciliationEventType::EVENT_SL:
+    ok &= backtrace(cid, recCell.event.pllDestSpeciesNode, scenario, stochastic); 
+    break;
+  case ReconciliationEventType::EVENT_T:
+    assert(false);
+    break;
+  case ReconciliationEventType::EVENT_TL:
+    assert(false);
+    break;
+  case ReconciliationEventType::EVENT_None:
+    break;
+  default:
+    ok  = false;
+  }
+  return ok;
+}
+
 
