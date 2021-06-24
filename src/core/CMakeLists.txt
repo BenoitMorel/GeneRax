@@ -36,6 +36,7 @@ set(jointsearch-core_SOURCES
   search/Moves.cpp
   search/Rollbacks.cpp
   search/SearchUtils.cpp
+  search/SpeciesSearchCommon.cpp
   search/SpeciesRootSearch.cpp
   search/SPRSearch.cpp
   support/ICCalculator.cpp

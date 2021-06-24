@@ -92,7 +92,6 @@ public:
   double optimizeDTLRates(bool thorough = false);
   
   double rootSearch(unsigned int maxDepth,
-      bool optimizeParams,
       bool outputConsel);
 
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
@@ -102,9 +101,6 @@ public:
   double getReconciliationLikelihood() const {return _bestRecLL;}
 
   double computeRecLikelihood();
-
-  void addPerFamilyLikelihoods(const std::string &newick,
-      TreePerFamLLVec &treePerFamLLVec);
 
   void savePerFamilyLikelihoods(const TreePerFamLLVec &treePerFamLLVec,
       const std::string &treesOutput,

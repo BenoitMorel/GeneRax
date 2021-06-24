@@ -79,9 +79,9 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     break;
   case SpeciesSearchStrategy::TRANSFERS:
     transferSearch();
-    rootSearch(_searchParams.rootBigRadius, false, false);
+    rootSearch(_searchParams.rootBigRadius, false);
     transferSearch();
-    rootSearch(_searchParams.rootBigRadius, false, true);
+    rootSearch(_searchParams.rootBigRadius, true);
     break;
   case SpeciesSearchStrategy::HYBRID:
     /**
@@ -92,7 +92,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     if (_hardToFindBetter) {
       optimizeDTLRates();
       _bestRecLL = computeRecLikelihood();
-      rootSearch(_searchParams.rootSmallRadius, false, false);
+      rootSearch(_searchParams.rootSmallRadius, false);
     }
     do {
       if (index++ % 2 == 0) {
@@ -101,15 +101,15 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
         sprSearch(_searchParams.sprRadius);
       }
       if (_hardToFindBetter) {
-        rootSearch(_searchParams.rootSmallRadius, false, false);
+        rootSearch(_searchParams.rootSmallRadius, false);
       }
       hash1 = _speciesTree->getHash();
     }
     while(testAndSwap(hash1, hash2));
-    rootSearch(_searchParams.rootBigRadius, false, true);
+    rootSearch(_searchParams.rootBigRadius, true);
     break;
   case SpeciesSearchStrategy::REROOT:
-    rootSearch(_searchParams.rootBigRadius, false, true);
+    rootSearch(_searchParams.rootBigRadius, true);
     break;
   case SpeciesSearchStrategy::EVAL:
     _bestRecLL = optimizeDTLRates(true);
@@ -128,7 +128,6 @@ SpeciesTreeOptimizer::~SpeciesTreeOptimizer()
 }
   
 double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth,
-    bool optimizeParams,
     bool outputConsel)
 {
   Logger::info << std::endl;
