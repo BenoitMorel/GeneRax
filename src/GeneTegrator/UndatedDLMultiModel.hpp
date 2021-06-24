@@ -4,13 +4,13 @@
 #include <trees/PLLRootedTree.hpp>
 #include <ccp/ConditionalClades.hpp>
 #include <maths/ScaledValue.hpp>
-#include <likelihoods/reconciliation_models/BaseReconciliationModel.hpp>
+#include "MultiModel.hpp"
 
 class RecModelInfo;
 double log(ScaledValue v);
 
 template <class REAL>
-class UndatedDLMultiModel: public BaseReconciliationModel {
+class UndatedDLMultiModel: public MultiModel<REAL> {
 public: 
   UndatedDLMultiModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
@@ -21,16 +21,10 @@ public:
 
   virtual void setRates(const RatesVector &) {};
   virtual double computeLogLikelihood();
-  virtual bool inferMLScenario(Scenario &, bool stochastic = false);
   
 
 private:
-  bool backtrace(unsigned int cid, 
-      pll_rnode_t *speciesRoot,
-      Scenario &scenario,
-      bool stochastic); 
   
-  ConditionalClades _ccp;
   std::vector<double> _PD; // Duplication probability, per species branch
   std::vector<double> _PL; // Loss probability, per species branch
   std::vector<double> _PS; // Speciation probability, per species branch
@@ -38,19 +32,13 @@ private:
   using DLCLV = std::vector<REAL>;
   std::vector<DLCLV> _dlclvs;
 
-  struct ReconciliationCell {
-    Scenario::Event event;
-    REAL maxProba;
-  };
-
   REAL getLikelihoodFactor() const;
   virtual void recomputeSpeciesProbabilities();
-  void computeProbability(CID cid, 
+  virtual void computeProbability(CID cid, 
     pll_rnode_t *speciesNode, 
     REAL &proba,
-    ReconciliationCell *recCell = nullptr);
+    ReconciliationCell<REAL> *recCell = nullptr);
 
-  void mapGenesToSpecies();
   
 };
 
@@ -59,10 +47,10 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
     const GeneSpeciesMapping &geneSpeciesMapping, 
     const RecModelInfo &info,
     const std::string &geneTreesFile):
-  BaseReconciliationModel(speciesTree,
+  MultiModel<REAL>(speciesTree,
       geneSpeciesMapping,
-      info),
-  _ccp(geneTreesFile),
+      info,
+      geneTreesFile),
   _PD(speciesTree.getNodesNumber(), 0.2),
   _PL(speciesTree.getNodesNumber(), 0.2),
   _PS(speciesTree.getNodesNumber(), 1.0),
@@ -70,36 +58,35 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
 {
   std::vector<REAL> zeros(speciesTree.getNodesNumber(), REAL());
   _dlclvs = std::vector<std::vector<REAL> >(
-      _ccp.getCladesNumber(), zeros);
-  for (unsigned int e = 0; e < _speciesTree.getNodesNumber(); ++e) {
+      this->_ccp.getCladesNumber(), zeros);
+  for (unsigned int e = 0; e < this->_speciesTree.getNodesNumber(); ++e) {
     double sum = _PD[e] + _PL[e] + _PS[e];
     _PD[e] /= sum;
     _PL[e] /= sum;
     _PS[e] /= sum;
   }
-  mapGenesToSpecies();
 }
 
 template <class REAL>
 double UndatedDLMultiModel<REAL>::computeLogLikelihood()
 { 
-  if (_ccp.skip()) {
+  if (this->_ccp.skip()) {
     return 0.0;
   }
-  beforeComputeLogLikelihood();
-  std::vector<REAL> zeros(_speciesTree.getNodesNumber(), REAL());
+  this->beforeComputeLogLikelihood();
+  std::vector<REAL> zeros(this->_speciesTree.getNodesNumber(), REAL());
   _dlclvs = std::vector<std::vector<REAL> >(
-      _ccp.getCladesNumber(), zeros);
-  for (CID cid = 0; cid < _ccp.getCladesNumber(); ++cid) {
-    for (auto speciesNode: _allSpeciesNodes) {
+      this->_ccp.getCladesNumber(), zeros);
+  for (CID cid = 0; cid < this->_ccp.getCladesNumber(); ++cid) {
+    for (auto speciesNode: this->_allSpeciesNodes) {
       computeProbability(cid, 
           speciesNode, 
           _dlclvs[cid][speciesNode->node_index]);
     }
   }
-  auto rootCID = _ccp.getCladesNumber() - 1;
+  auto rootCID = this->_ccp.getCladesNumber() - 1;
   REAL res = REAL();
-  for (auto speciesNode: _allSpeciesNodes) {
+  for (auto speciesNode: this->_allSpeciesNodes) {
     res += _dlclvs[rootCID][speciesNode->node_index];
   }
   // the root correction makes sure that UndatedDLMultiModel and
@@ -107,21 +94,21 @@ double UndatedDLMultiModel<REAL>::computeLogLikelihood()
   // family: the UndatedDLMultiModel integrates over all possible
   // roots and adds a 1/numberOfGeneRoots weight that is not
   // present un the UndatedDL, so we multiply back here
-  REAL rootCorrection(double(_ccp.getRootsNumber()));
+  REAL rootCorrection(double(this->_ccp.getRootsNumber()));
   return log(res) - log(getLikelihoodFactor()) + log(rootCorrection);
 }
 
 template <class REAL>
 void UndatedDLMultiModel<REAL>::recomputeSpeciesProbabilities()
 {
-  for (auto speciesNode: _allSpeciesNodes) {
+  for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
     double a = _PD[e];
     double b = -1.0;
     double c = _PL[e];
-    if (getSpeciesLeft(speciesNode)) {
-      c += _PS[e] * _uE[getSpeciesLeft(speciesNode)->node_index]  * 
-        _uE[getSpeciesRight(speciesNode)->node_index];
+    if (this->getSpeciesLeft(speciesNode)) {
+      c += _PS[e] * _uE[this->getSpeciesLeft(speciesNode)->node_index]  * 
+        _uE[this->getSpeciesRight(speciesNode)->node_index];
     }
     double proba = solveSecondDegreePolynome(a, b, c);
     _uE[speciesNode->node_index] = proba;
@@ -132,11 +119,11 @@ template <class REAL>
 void UndatedDLMultiModel<REAL>::computeProbability(CID cid, 
     pll_rnode_t *speciesNode, 
     REAL &proba,
-    ReconciliationCell *recCell
+    ReconciliationCell<REAL> *recCell
     )
 {
   proba = REAL();
-  bool isSpeciesLeaf = !getSpeciesLeft(speciesNode);
+  bool isSpeciesLeaf = !this->getSpeciesLeft(speciesNode);
   auto e = speciesNode->node_index;
   REAL maxProba = REAL();
   if (recCell) {
@@ -146,8 +133,8 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
     maxProba = recCell->maxProba;
   }
   // terminal gene and species nodes
-  if (_ccp.isLeaf(cid) && isSpeciesLeaf) {
-    if (_geneToSpecies[cid] == e) {
+  if (this->_ccp.isLeaf(cid) && isSpeciesLeaf) {
+    if (this->_geneToSpecies[cid] == e) {
       proba = REAL(_PS[e]);
     }
     return;
@@ -156,11 +143,11 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
   unsigned int f = 0;
   unsigned int g = 0;
   if (!isSpeciesLeaf) {
-    f = getSpeciesLeft(speciesNode)->node_index;
-    g = getSpeciesRight(speciesNode)->node_index;
+    f = this->getSpeciesLeft(speciesNode)->node_index;
+    g = this->getSpeciesRight(speciesNode)->node_index;
   }
   
-  for (const auto &cladeSplit: _ccp.getCladeSplits(cid)) {
+  for (const auto &cladeSplit: this->_ccp.getCladeSplits(cid)) {
     auto cidLeft = cladeSplit.left; 
     auto cidRight = cladeSplit.right;
     auto freq = cladeSplit.frequency;
@@ -185,6 +172,7 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
         return;
       }
     }
+    // D events
     temp = _dlclvs[cidLeft][e] * _dlclvs[cidRight][e] * (_PD[e] * freq);
     scale(temp);
     proba += temp;
@@ -203,7 +191,7 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
     if (recCell && proba > maxProba) {
       recCell->event.type = ReconciliationEventType::EVENT_SL;
       recCell->event.destSpeciesNode = f;
-      recCell->event.pllDestSpeciesNode = getSpeciesLeft(speciesNode);
+      recCell->event.pllDestSpeciesNode = this->getSpeciesLeft(speciesNode);
       return;
     }
     
@@ -213,7 +201,7 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
     if (recCell && proba > maxProba) {
       recCell->event.type = ReconciliationEventType::EVENT_SL;
       recCell->event.destSpeciesNode = g;
-      recCell->event.pllDestSpeciesNode = getSpeciesRight(speciesNode);
+      recCell->event.pllDestSpeciesNode = this->getSpeciesRight(speciesNode);
       return;
     }
   }
@@ -230,7 +218,7 @@ template <class REAL>
 REAL UndatedDLMultiModel<REAL>::getLikelihoodFactor() const
 {
   REAL factor(0.0);
-  for (auto speciesNode: _allSpeciesNodes) {
+  for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
     factor += (REAL(1.0) - REAL(_uE[e]));
   }
@@ -238,81 +226,5 @@ REAL UndatedDLMultiModel<REAL>::getLikelihoodFactor() const
 }
 
 
-  template <class REAL>
-void UndatedDLMultiModel<REAL>::mapGenesToSpecies()
-{
-  const auto &cidToLeaves = _ccp.getCidToLeaves();
-  _speciesNameToId.clear();
-  this->_geneToSpecies.resize(_ccp.getCladesNumber());
-  for (auto node: _allSpeciesNodes) {
-    if (!node->left) {
-      _speciesNameToId[node->label] = node->node_index;
-    }
-  }
-  this->_speciesCoverage = std::vector<unsigned int>(
-      this->_allSpeciesNodesCount, 0);
-  for (auto p: cidToLeaves) {
-    auto cid = p.first;
-    const auto &geneName = cidToLeaves.at(cid);
-    const auto &speciesName = _geneNameToSpeciesName[geneName];
-    _geneToSpecies[cid] = _speciesNameToId[speciesName];
-    _speciesCoverage[_geneToSpecies[cid]]++;
-  }
-}
  
-template <class REAL>
-bool UndatedDLMultiModel<REAL>::inferMLScenario(Scenario &scenario, 
-    bool stochastic) {
-  // TODO: sample the species root!
-  auto rootCID = _ccp.getCladesNumber() - 1;
-  auto speciesRoot = _speciesTree.getRoot();
-  return backtrace(rootCID, 
-      speciesRoot,
-      scenario, stochastic);
-}
-
-static double dRand()
-{
-  return  (double)rand() / RAND_MAX;
-}
-
-template <class REAL>
-bool UndatedDLMultiModel<REAL>::backtrace(unsigned int cid, 
-    pll_rnode_t *speciesNode,
-    Scenario &scenario,
-    bool stochastic)
-{
-  REAL proba;
-  computeProbability(cid, speciesNode, proba);
-  ReconciliationCell recCell;
-  recCell.maxProba = proba * dRand();
-  computeProbability(cid, speciesNode, proba, &recCell);
-  scenario.addEvent(recCell.event);
-  bool ok = true;
-  switch(recCell.event.type) {
-  case ReconciliationEventType::EVENT_S:
-    ok &= backtrace(recCell.event.leftGeneIndex, this->getSpeciesLeft(speciesNode), scenario, stochastic); 
-    ok &= backtrace(recCell.event.rightGeneIndex, this->getSpeciesRight(speciesNode), scenario, stochastic); 
-    break;
-  case ReconciliationEventType::EVENT_D:
-    ok &= backtrace(recCell.event.leftGeneIndex, speciesNode, scenario, stochastic); 
-    ok &= backtrace(recCell.event.rightGeneIndex, speciesNode, scenario, stochastic); 
-    break;
-  case ReconciliationEventType::EVENT_SL:
-    ok &= backtrace(cid, recCell.event.pllDestSpeciesNode, scenario, stochastic); 
-    break;
-  case ReconciliationEventType::EVENT_T:
-    assert(false);
-    break;
-  case ReconciliationEventType::EVENT_TL:
-    assert(false);
-    break;
-  case ReconciliationEventType::EVENT_None:
-    break;
-  default:
-    ok  = false;
-  }
-  return ok;
-}
-
 

@@ -77,7 +77,8 @@ public:
    
     // left and gene indices:
     // - for speciation: left gene goes to left species
-    // - for transfer: left gene goes to source species
+    // - for transfer: left gene goes to source species and right gene 
+    // goes to recieving species
     // - for duplication, the order doesn't matter
     // - for other events, those members are irrelevant
     unsigned int leftGeneIndex;

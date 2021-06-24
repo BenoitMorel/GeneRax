@@ -4,13 +4,13 @@
 #include <trees/PLLRootedTree.hpp>
 #include <ccp/ConditionalClades.hpp>
 #include <maths/ScaledValue.hpp>
-#include <likelihoods/reconciliation_models/BaseReconciliationModel.hpp>
+#include "MultiModel.hpp"
 
 class RecModelInfo;
 double log(ScaledValue v);
 
 template <class REAL>
-class UndatedDTLMultiModel: public BaseReconciliationModel {
+class UndatedDTLMultiModel: public MultiModel<REAL> {
 public: 
   UndatedDTLMultiModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
@@ -21,14 +21,10 @@ public:
 
   virtual void setRates(const RatesVector &) {};
   virtual double computeLogLikelihood();
-  virtual bool inferMLScenario(Scenario &, bool stochastic = false) {
-    (void)stochastic;
-    return false;}
   
 private:
   
   
-  ConditionalClades _ccp;
   std::vector<double> _PD; // Duplication probability, per species branch
   std::vector<double> _PL; // Loss probability, per species branch
   std::vector<double> _PT; // Transfer probability, per species branch
@@ -65,11 +61,14 @@ private:
 
   REAL getLikelihoodFactor() const;
   virtual void recomputeSpeciesProbabilities();
-  void computeProbability(CID cid, 
+  virtual void computeProbability(CID cid, 
     pll_rnode_t *speciesNode, 
-    REAL &proba);
+    REAL &proba,
+    ReconciliationCell<REAL> *recCell = nullptr);
+  void sampleTransferEvent(unsigned int cid,
+    REAL survivingTransferSum,
+    pll_rnode_t *&destSpeciesNode);
 
-  void mapGenesToSpecies();
   
 };
 
@@ -79,10 +78,10 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(PLLRootedTree &speciesTree,
     const GeneSpeciesMapping &geneSpeciesMapping, 
     const RecModelInfo &info,
     const std::string &geneTreesFile):
-  BaseReconciliationModel(speciesTree,
+  MultiModel<REAL>(speciesTree,
       geneSpeciesMapping,
-      info),
-  _ccp(geneTreesFile),
+      info,
+      geneTreesFile),
   _PD(speciesTree.getNodesNumber(), 0.2),
   _PL(speciesTree.getNodesNumber(), 0.2),
   _PT(speciesTree.getNodesNumber(), 0.2),
@@ -91,35 +90,36 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(PLLRootedTree &speciesTree,
 {
   std::vector<REAL> zeros(speciesTree.getNodesNumber());
   DTLCLV nullCLV(this->_allSpeciesNodesCount);
-  _dtlclvs = std::vector<DTLCLV>(2 * (_ccp.getCladesNumber()), nullCLV);
-  for (unsigned int e = 0; e < _speciesTree.getNodesNumber(); ++e) {
+  _dtlclvs = std::vector<DTLCLV>(2 * (this->_ccp.getCladesNumber()), nullCLV);
+  for (unsigned int e = 0; e < this->_speciesTree.getNodesNumber(); ++e) {
     double sum = _PD[e] + _PL[e] + _PS[e];
     _PD[e] /= sum;
     _PL[e] /= sum;
     _PT[e] /= sum;
     _PS[e] /= sum;
   }
-  mapGenesToSpecies();
 }
+
+
 
 template <class REAL>
 double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
 { 
-  if (_ccp.skip()) {
+  if (this->_ccp.skip()) {
     return 0.0;
   }
-  beforeComputeLogLikelihood();
-  for (CID cid = 0; cid < _ccp.getCladesNumber(); ++cid) {
+  this->beforeComputeLogLikelihood();
+  for (CID cid = 0; cid < this->_ccp.getCladesNumber(); ++cid) {
     auto &clv = _dtlclvs[cid];
     auto &uq = clv._uq;
     clv._survivingTransferSums = REAL();
     std::fill(uq.begin(), uq.end(), REAL());
   }  
-  for (CID cid = 0; cid < _ccp.getCladesNumber(); ++cid) {
+  for (CID cid = 0; cid < this->_ccp.getCladesNumber(); ++cid) {
     auto &clv = _dtlclvs[cid];
     auto &uq = clv._uq;
     auto sum = REAL();
-    for (auto speciesNode: _allSpeciesNodes) {
+    for (auto speciesNode: this->_allSpeciesNodes) {
       computeProbability(cid, 
           speciesNode, 
           uq[speciesNode->node_index]);
@@ -128,9 +128,9 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
     sum /= this->_allSpeciesNodes.size();
     clv._survivingTransferSums = sum;
   }
-  auto rootCID = _ccp.getCladesNumber() - 1;
+  auto rootCID = this->_ccp.getCladesNumber() - 1;
   REAL res = REAL();
-  for (auto speciesNode: _allSpeciesNodes) {
+  for (auto speciesNode: this->_allSpeciesNodes) {
     res += _dtlclvs[rootCID]._uq[speciesNode->node_index];
   }
   // the root correction makes sure that UndatedDTLMultiModel and
@@ -138,20 +138,38 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
   // family: the UndatedDTLMultiModel integrates over all possible
   // roots and adds a 1/numberOfGeneRoots weight that is not
   // present un the UndatedDTL, so we multiply back here
-  REAL rootCorrection(double(_ccp.getRootsNumber()));
+  REAL rootCorrection(double(this->_ccp.getRootsNumber()));
   auto ret = log(res) - log(getLikelihoodFactor()) + log(rootCorrection);
   return ret;
 }
 
 template <class REAL>
+void UndatedDTLMultiModel<REAL>::sampleTransferEvent(unsigned int cid,
+    REAL survivingTransferSum,
+    pll_rnode_t *&destSpeciesNode)
+{
+  REAL max = survivingTransferSum * ((double)rand() / RAND_MAX);
+  max *= this->_allSpeciesNodes.size();
+  REAL sum = REAL();
+  for (auto speciesNode: this->_allSpeciesNodes) {
+    sum += _dtlclvs[cid]._uq[speciesNode->node_index];
+    if (sum > max) {
+      destSpeciesNode = speciesNode;
+      return;
+    }
+  }
+  assert(false);
+}
+
+template <class REAL>
 void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
 {
-  for (auto speciesNode: _allSpeciesNodes) {
+  for (auto speciesNode: this->_allSpeciesNodes) {
     _uE[speciesNode->node_index] = REAL(0.0);
   }
   _transferExtinctionSum = REAL();
   for (unsigned int it = 0; it < 4; ++it) {
-    for (auto speciesNode: _allSpeciesNodes) {
+    for (auto speciesNode: this->_allSpeciesNodes) {
       auto e = speciesNode->node_index;
       double proba(_PL[e]);
       proba += _uE[e] * _uE[e] * _PD[e];
@@ -164,7 +182,7 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
       _uE[e] = proba;
     }
     _transferExtinctionSum = 0.0;
-    for (auto speciesNode: _allSpeciesNodes) {
+    for (auto speciesNode: this->_allSpeciesNodes) {
       _transferExtinctionSum += _uE[speciesNode->node_index];
     }
     _transferExtinctionSum /= this->_allSpeciesNodes.size();
@@ -175,14 +193,22 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
 template <class REAL>
 void UndatedDTLMultiModel<REAL>::computeProbability(CID cid, 
     pll_rnode_t *speciesNode, 
-    REAL &proba
+    REAL &proba,
+    ReconciliationCell<REAL> *recCell
     )
 {
   proba = REAL();
-  bool isSpeciesLeaf = !getSpeciesLeft(speciesNode);
+  bool isSpeciesLeaf = !this->getSpeciesLeft(speciesNode);
   auto e = speciesNode->node_index;
-  if (_ccp.isLeaf(cid) && isSpeciesLeaf) {
-    if (_geneToSpecies[cid] == e) {
+  REAL maxProba = REAL();
+  if (recCell) {
+    recCell->event.geneNode = cid; 
+    recCell->event.speciesNode = e;
+    recCell->event.type = ReconciliationEventType::EVENT_None; 
+    maxProba = recCell->maxProba;
+  }
+  if (this->_ccp.isLeaf(cid) && isSpeciesLeaf) {
+    if (this->_geneToSpecies[cid] == e) {
       proba = REAL(_PS[e]);
     }
     return;
@@ -191,52 +217,104 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
   unsigned int f = 0;
   unsigned int g = 0;
   if (!isSpeciesLeaf) {
-    f = getSpeciesLeft(speciesNode)->node_index;
-    g = getSpeciesRight(speciesNode)->node_index;
+    f = this->getSpeciesLeft(speciesNode)->node_index;
+    g = this->getSpeciesRight(speciesNode)->node_index;
   }
  
   // for internal gene nodes
-  for (const auto &cladeSplit: _ccp.getCladeSplits(cid)) {
+  for (const auto &cladeSplit: this->_ccp.getCladeSplits(cid)) {
     auto cidLeft = cladeSplit.left; 
     auto cidRight = cladeSplit.right;
-    REAL splitProba = REAL();
+    auto freq = cladeSplit.frequency;
     if (not isSpeciesLeaf) {
       // S event;
-      temp = _dtlclvs[cidLeft]._uq[f] * _dtlclvs[cidRight]._uq[g] * _PS[e]; 
+      temp = _dtlclvs[cidLeft]._uq[f] * _dtlclvs[cidRight]._uq[g] * (_PS[e] * freq); 
       scale(temp);
-      splitProba += temp;
-      temp = _dtlclvs[cidRight]._uq[f] * _dtlclvs[cidLeft]._uq[g] * _PS[e]; 
+      proba += temp;
+      if (recCell && proba > maxProba) {
+        recCell->event.type = ReconciliationEventType::EVENT_S;
+        recCell->event.leftGeneIndex = cidLeft;
+        recCell->event.rightGeneIndex = cidRight;
+        return;
+      }
+      temp = _dtlclvs[cidRight]._uq[f] * _dtlclvs[cidLeft]._uq[g] * (_PS[e] * freq); 
       scale(temp);
-      splitProba += temp;
+      proba += temp;
+      if (recCell && proba > maxProba) {
+        recCell->event.type = ReconciliationEventType::EVENT_S;
+        recCell->event.leftGeneIndex = cidRight;
+        recCell->event.rightGeneIndex = cidLeft;
+        return;
+      }
     }
     // D event
-    temp = _dtlclvs[cidLeft]._uq[e] * _dtlclvs[cidRight]._uq[e] * _PD[e];
+    temp = _dtlclvs[cidLeft]._uq[e] * _dtlclvs[cidRight]._uq[e] * (_PD[e] * freq);
     scale(temp);
-    splitProba += temp;
+    proba += temp;
+    if (recCell && proba > maxProba) {
+      recCell->event.type = ReconciliationEventType::EVENT_D;
+      recCell->event.leftGeneIndex = cidLeft;
+      recCell->event.rightGeneIndex = cidRight;
+      return;
+    }
+
 
     // T event
     
-    temp =  _dtlclvs[cidLeft]._survivingTransferSums * _PT[e];
+    temp =  _dtlclvs[cidLeft]._survivingTransferSums * (_PT[e] * freq);
     temp *= _dtlclvs[cidRight]._uq[e];
     scale(temp);
-    splitProba += temp;
+    proba += temp;
+    if (recCell && proba > maxProba) {
+      recCell->event.type = ReconciliationEventType::EVENT_T;
+      sampleTransferEvent(cidLeft, 
+          _dtlclvs[cidLeft]._survivingTransferSums,
+          recCell->event.pllDestSpeciesNode);
+      recCell->event.destSpeciesNode = 
+        recCell->event.pllDestSpeciesNode->node_index;
+      recCell->event.leftGeneIndex = cidRight; 
+      recCell->event.rightGeneIndex = cidLeft; 
+      return;
+    }
    
-    temp =  _dtlclvs[cidRight]._survivingTransferSums * _PT[e];
+    temp =  _dtlclvs[cidRight]._survivingTransferSums * (_PT[e] * freq);
     temp *= _dtlclvs[cidLeft]._uq[e];
     scale(temp);
-    splitProba += temp;
+    proba += temp;
+    if (recCell && proba > maxProba) {
+      recCell->event.type = ReconciliationEventType::EVENT_T;
+      sampleTransferEvent(cidRight, 
+          _dtlclvs[cidRight]._survivingTransferSums,
+          recCell->event.pllDestSpeciesNode);
+      recCell->event.destSpeciesNode = 
+        recCell->event.pllDestSpeciesNode->node_index;
+      recCell->event.leftGeneIndex = cidLeft; 
+      recCell->event.rightGeneIndex = cidRight; 
+      return;
+    }
    
     // add this split contribution to the total
-    proba += splitProba * cladeSplit.frequency;
   }
   if (not isSpeciesLeaf) {
     // SL event
     temp = _dtlclvs[cid]._uq[f] * (_uE[g] * _PS[e]);
     scale(temp);
     proba += temp;
+    if (recCell && proba > maxProba) {
+      recCell->event.type = ReconciliationEventType::EVENT_SL;
+      recCell->event.destSpeciesNode = f;
+      recCell->event.pllDestSpeciesNode = this->getSpeciesLeft(speciesNode);
+      return;
+    }
     temp = _dtlclvs[cid]._uq[g] * (_uE[f] * _PS[e]);
     scale(temp);
     proba += temp;
+    if (recCell && proba > maxProba) {
+      recCell->event.type = ReconciliationEventType::EVENT_SL;
+      recCell->event.destSpeciesNode = g;
+      recCell->event.pllDestSpeciesNode = this->getSpeciesRight(speciesNode);
+      return;
+    }
   }
 }
   
@@ -244,34 +322,12 @@ template <class REAL>
 REAL UndatedDTLMultiModel<REAL>::getLikelihoodFactor() const
 {
   REAL factor(0.0);
-  for (auto speciesNode: _allSpeciesNodes) {
+  for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
     factor += (REAL(1.0) - REAL(_uE[e]));
   }
   return factor;
 }
 
-
-  template <class REAL>
-void UndatedDTLMultiModel<REAL>::mapGenesToSpecies()
-{
-  const auto &cidToLeaves = _ccp.getCidToLeaves();
-  _speciesNameToId.clear();
-  this->_geneToSpecies.resize(_ccp.getCladesNumber());
-  for (auto node: _allSpeciesNodes) {
-    if (!node->left) {
-      _speciesNameToId[node->label] = node->node_index;
-    }
-  }
-  this->_speciesCoverage = std::vector<unsigned int>(
-      this->_allSpeciesNodesCount, 0);
-  for (auto p: cidToLeaves) {
-    auto cid = p.first;
-    const auto &geneName = cidToLeaves.at(cid);
-    const auto &speciesName = _geneNameToSpeciesName[geneName];
-    _geneToSpecies[cid] = _speciesNameToId[speciesName];
-    _speciesCoverage[_geneToSpecies[cid]]++;
-  }
-}
 
 
