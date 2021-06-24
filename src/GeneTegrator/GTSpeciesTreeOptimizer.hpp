@@ -24,7 +24,8 @@ public:
   }
   virtual ~GTSpeciesTreeLikelihoodEvaluator() {}
   virtual double computeLikelihood();
-  virtual void forceGeneRootOptimization() {}
+  virtual double computeLikelihoodFast();
+  virtual bool providesFastLikelihoodImpl() const {return false;}
   virtual void pushRollback() {}
   virtual void popAndApplyRollback() {}
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);
@@ -54,7 +55,6 @@ private:
   std::string _outputDir;
   double _bestRecLL;
 
-  double fastSPRRound(unsigned int radius);
   bool testPruning(unsigned int prune,
     unsigned int regraft);
   void newBestTreeCallback(double newLL);

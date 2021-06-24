@@ -4,6 +4,7 @@
 
 #include <likelihoods/ReconciliationEvaluation.hpp>
 #include <util/types.hpp>
+#include <maths/AverageStream.hpp>
 
 class SpeciesTree; 
 
@@ -22,16 +23,22 @@ class SpeciesTreeLikelihoodEvaluatorInterface {
 public:
   virtual ~SpeciesTreeLikelihoodEvaluatorInterface() {};
   /**
-   *  Compute the likelihood of the current species tree
+   *  Exact likelihood computation
    */
   virtual double computeLikelihood() = 0;
 
   /**
-   *  In case we compute the likelihood on rooted trees,
-   *  force gene tree root optimization for the next
-   *  computeLikelihood call
+   *  Fast but approximated version of the likelihood
+   *  computation
    */
-  virtual void forceGeneRootOptimization() = 0;
+  virtual double computeLikelihoodFast() = 0;
+
+  /**
+   *  Returns true if computeLikelihood and computeLikelihoodFast
+   *  have different implementations
+   */
+  virtual bool providesFastLikelihoodImpl() const = 0;
+
 
   /**
    *  Save in a stack what needs to be saved in case 
@@ -52,5 +59,35 @@ public:
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL) = 0;
 };
 
+class SpeciesSearchCommon {
+public:
+  /**
+   *  Test a SPR move. 
+   *  If it improves the likelihood, keep it and return true.
+   *  Else, rollback it and return false.
+   */
+  static bool testSPR(SpeciesTree &speciesTree,
+    SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
+    unsigned int prune,
+    unsigned int regraft,
+    AverageStream &averageFastDiff,
+    double bestLL,
+    double &testedTreeLL
+    );
 
+  /**
+   *  Try SPR moves with a small radius around the species
+   *  node with id spid. If a move improves the likelihood, 
+   *  apply it, and recursively search further. Otherwise, 
+   *  rollback the tested moves.
+   *  Returns true if one better tree has been found
+   */
+  static bool veryLocalSearch(SpeciesTree &speciesTree,
+    SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
+    AverageStream &averageFastDiff,
+    unsigned int spid,
+    double previousBestLL,
+    double &newBestLL);
+  
+};
 

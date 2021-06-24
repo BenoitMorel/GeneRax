@@ -11,6 +11,7 @@
 #include <NJ/NeighborJoining.hpp>
 #include <cstdio>
 #include <support/ICCalculator.hpp>
+#include <search/SpeciesSPRSearch.hpp>
 
 SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile, 
     const Families &initialFamilies, 
@@ -134,11 +135,9 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth,
   Logger::timed << "[Species search] Root search with depth=" << maxDepth << std::endl;
   TreePerFamLLVec treePerFamLLVec;  
   RootLikelihoods rootLikelihoods;
-  SpeciesTreeLikelihoodEvaluator evaluator(_evaluations,
-      _modelRates.info.rootedGeneTree);
   SpeciesRootSearch::rootSearch(
       *_speciesTree,
-      evaluator,
+      _evaluator,
       maxDepth,
       &rootLikelihoods,
       (outputConsel ? &treePerFamLLVec : nullptr)
@@ -364,7 +363,14 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
         hash1 = _speciesTree->getNodeIndexHash(); 
         assert(ParallelContext::isIntEqual(hash1));
         if (_hardToFindBetter) {
-          veryLocalSearch(transferMove.prune);
+          if (SpeciesSearchCommon::veryLocalSearch(*_speciesTree,
+              _evaluator,
+              _averageGeneRootDiff,
+              transferMove.prune,
+              _lastRecLL,
+              _lastRecLL)) {
+            newBestTreeCallback();
+          }
         }
       } else {
         failures++;
@@ -402,70 +408,7 @@ std::vector<double> SpeciesTreeOptimizer::_getSupport()
   return idToSupport;
 }
 
-double SpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
-{
-  Logger::timed << "[Species search] Start SPR Round radius=" << radius << std::endl;
-  _bestRecLL = computeRecLikelihood();
-  auto hash1 = _speciesTree->getNodeIndexHash(); 
 
-  auto supportValues = std::vector<double>();//_getSupport();
-  double maxSupport = 0.2; // ignored for now
-  std::vector<unsigned int> prunes;
-  SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, 
-      prunes,
-      supportValues,
-      maxSupport);
-  for (auto prune: prunes) {
-    std::vector<unsigned int> regrafts;
-    SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
-    for (auto regraft: regrafts) {
-      if (testPruning(prune, regraft)) {
-        auto pruneNode = _speciesTree->getNode(prune);
-        Logger::timed << "\tbetter tree (LL=" 
-          << _bestRecLL << ", hash=" 
-          << _speciesTree->getHash() 
-          << " us=" 
-          << _unsupportedCladesNumber() 
-          << ") "
-          << pruneNode->label 
-          << " -> " 
-          << _speciesTree->getNode(regraft)->label
-          << std::endl;
-        hash1 = _speciesTree->getNodeIndexHash(); 
-        assert(ParallelContext::isIntEqual(hash1));
-        _bestRecLL = veryLocalSearch(prune);
-      }
-    }
-  }
-  return _bestRecLL;
-}
-
-double SpeciesTreeOptimizer::veryLocalSearch(unsigned int spid)
-{
-  const unsigned int radius = 2;
-  std::vector<unsigned int> prunes;
-  prunes.push_back(spid);
-  unsigned int trials = 0;
-  for (auto prune: prunes) {
-    std::vector<unsigned int> regrafts;
-    SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, 
-        prune, 
-        radius, 
-        regrafts);
-    for (auto regraft: regrafts) {
-      trials++;
-      if (testPruning(prune, regraft)) {
-        Logger::timed << "\tfound better* (LL=" 
-            << _bestRecLL << ", hash=" << 
-            _speciesTree->getHash() << " wrong_clades=" 
-            << _unsupportedCladesNumber() << ")"<< std::endl;
-        Logger::info << _speciesTree->getNode(prune)->label << " " << _speciesTree->getNode(regraft)->label << std::endl;
-        return veryLocalSearch(prune);
-      }
-    }
-  }
-  return _bestRecLL;
-}
 
 double SpeciesTreeOptimizer::transferSearch()
 {
@@ -499,19 +442,16 @@ double SpeciesTreeOptimizer::transferSearch()
 double SpeciesTreeOptimizer::sprSearch(unsigned int radius)
 {
   double bestLL = computeRecLikelihood();
-  Logger::info << std::endl;
-  Logger::timed << "[Species search]" << " Starting species tree local SPR search, radius=" 
-    << radius << ", bestLL=" << bestLL  << ", hash=" << _speciesTree->getHash() << " wrong_clades=" << _unsupportedCladesNumber() << ")" <<std::endl;
-  double newLL = bestLL;
-  do {
-    bestLL = newLL;
-    newLL = fastSPRRound(radius);
-  } while (newLL - bestLL > 0.001);
-  Logger::timed << "After normal search: LL=" << bestLL << std::endl;
-  saveCurrentSpeciesTreeId();
-  //Logger::info << "  Accepted: " << _okForClades << std::endl;
-  //Logger::info << "  Rejected: " << _koForClades << std::endl;
-  return newLL;
+  if (SpeciesSPRSearch::SPRSearch(*_speciesTree,
+      _evaluator,
+      _averageGeneRootDiff,
+      radius,
+      bestLL,
+      _lastRecLL)) {
+    newBestTreeCallback();
+  }
+  Logger::timed << "After normal search: LL=" << _bestRecLL << std::endl;
+  return _bestRecLL;
 }
   
 ModelParameters SpeciesTreeOptimizer::computeOptimizedRates(bool thorough) 
@@ -607,6 +547,7 @@ void SpeciesTreeOptimizer::updateEvaluations()
   }
   _previousGeneRoots.resize(_evaluations.size());
   std::fill(_previousGeneRoots.begin(), _previousGeneRoots.end(), nullptr);
+  _evaluator.init(_evaluations, _modelRates.info.rootedGeneTree);
 }
   
 void SpeciesTreeOptimizer::beforeTestCallback()
@@ -742,14 +683,29 @@ void SpeciesTreeOptimizer::savePerFamilyLikelihoods(
 
 
 double SpeciesTreeLikelihoodEvaluator::computeLikelihood()
+{ 
+  if (_rootedGeneTrees) {
+    for (auto evaluation: *_evaluations) {
+      evaluation->setRoot(nullptr);
+    }
+  }
+  return computeLikelihoodFast();
+}
+
+double SpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
 {
   double sumLL = 0.0;
-  for (auto &evaluation: _evaluations) {
+  for (auto &evaluation: *_evaluations) {
     auto ll = evaluation->evaluate();
     sumLL += ll;
   }
   ParallelContext::sumDouble(sumLL);
   return sumLL;
+}
+  
+bool SpeciesTreeLikelihoodEvaluator::providesFastLikelihoodImpl() const 
+{
+  return _rootedGeneTrees; 
 }
 
 void SpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
@@ -757,7 +713,7 @@ void SpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
 {
   ParallelContext::barrier();
   std::vector<double> localLL;
-  for (auto &evaluation: _evaluations) {
+  for (auto &evaluation: *_evaluations) {
     localLL.push_back(evaluation->evaluate());
   }
   ParallelContext::concatenateHetherogeneousDoubleVectors(
@@ -768,7 +724,7 @@ void SpeciesTreeLikelihoodEvaluator::pushRollback()
 {
   if (_rootedGeneTrees) {
     _previousGeneRoots.push(std::vector<pll_unode_t *>());
-    for (auto evaluation: _evaluations) {
+    for (auto evaluation: *_evaluations) {
       _previousGeneRoots.top().push_back(evaluation->getRoot());
     }
   }
@@ -777,21 +733,13 @@ void SpeciesTreeLikelihoodEvaluator::pushRollback()
 void SpeciesTreeLikelihoodEvaluator::popAndApplyRollback() 
 {
   if (_rootedGeneTrees) {
-    for (unsigned int i = 0; i < _evaluations.size(); ++i) {
-      _evaluations[i]->setRoot(_previousGeneRoots.top()[i]);
+    for (unsigned int i = 0; i < _evaluations->size(); ++i) {
+      (*_evaluations)[i]->setRoot(_previousGeneRoots.top()[i]);
     }
     _previousGeneRoots.pop();
   }
-
 }
   
-void SpeciesTreeLikelihoodEvaluator::forceGeneRootOptimization() 
-{
-  for (auto evaluation: _evaluations) {
-    evaluation->setRoot(nullptr);
-  }
-
-}
 
 
 

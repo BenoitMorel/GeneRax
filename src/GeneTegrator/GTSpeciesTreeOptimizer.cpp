@@ -2,8 +2,14 @@
 #include <IO/Logger.hpp>
 #include <parallelization/PerCoreGeneTrees.hpp>
 #include <util/Paths.hpp>
+#include <search/SpeciesSPRSearch.hpp>
 
 double GTSpeciesTreeLikelihoodEvaluator::computeLikelihood()
+{
+  return computeLikelihoodFast();
+}
+
+double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
 {
   double sumLL = 0.0;
   for (auto &evaluation: *_evaluations) {
@@ -108,49 +114,19 @@ double GTSpeciesTreeOptimizer::computeRecLikelihood()
 double GTSpeciesTreeOptimizer::sprSearch(unsigned int radius)
 {
   double bestLL = computeRecLikelihood();
-  Logger::info << std::endl;
-  Logger::timed << "[Species search]" << " Starting species tree local SPR search, radius=" 
-    << radius << ", bestLL=" << bestLL  << ", hash=" << _speciesTree->getHash() << ")" <<std::endl;
-  double newLL = bestLL;
-  do {
-    bestLL = newLL;
-    newLL = fastSPRRound(radius);
-  } while (newLL - bestLL > 0.001);
-  bestLL = newLL;
+  AverageStream useless;
+  if (SpeciesSPRSearch::SPRSearch(*_speciesTree,
+      _evaluator,
+      useless,
+      radius,
+      bestLL,
+      bestLL)) {
+    newBestTreeCallback(bestLL);
+  }
   Logger::timed << "After normal search: LL=" << bestLL << std::endl;
   return bestLL;
 }
 
-double GTSpeciesTreeOptimizer::fastSPRRound(unsigned int radius)
-{
-  Logger::timed << "[Species search] Start SPR Round radius=" << radius << std::endl;
-  _bestRecLL = computeRecLikelihood();
-  auto hash1 = _speciesTree->getNodeIndexHash(); 
-  auto supportValues = std::vector<double>();//_getSupport();
-  double maxSupport = 0.2; // ignored for now
-  std::vector<unsigned int> prunes;
-  SpeciesTreeOperator::getPossiblePrunes(*_speciesTree, 
-      prunes,
-      supportValues,
-      maxSupport);
-  for (auto prune: prunes) {
-    std::vector<unsigned int> regrafts;
-    SpeciesTreeOperator::getPossibleRegrafts(*_speciesTree, prune, radius, regrafts);
-    for (auto regraft: regrafts) {
-      if (testPruning(prune, regraft)) {
-        Logger::timed << "\tbetter tree (LL=" 
-          << _bestRecLL << ", hash=" 
-          << _speciesTree->getHash() 
-          << ") "
-          << std::endl;
-        hash1 = _speciesTree->getNodeIndexHash(); 
-        assert(ParallelContext::isIntEqual(hash1));
-        //_bestRecLL = veryLocalSearch(prune);
-      }
-    }
-  }
-  return _bestRecLL;
-}
 
 void GTSpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
 {

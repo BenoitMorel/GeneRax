@@ -27,7 +27,6 @@ static void rootSearchAux(SpeciesTree &speciesTree,
     movesHistory.push_back(direction);
     evaluator.pushRollback();
     SpeciesTreeOperator::changeRoot(speciesTree, direction);
-    evaluator.forceGeneRootOptimization();
     double ll = evaluator.computeLikelihood();
     if (treePerFamLLVec) {
       auto newick = speciesTree.getTree().getNewickString();
@@ -110,7 +109,6 @@ double SpeciesRootSearch::rootSearch(
   for (unsigned int i = 1; i < bestMovesHistory.size(); ++i) {
     SpeciesTreeOperator::changeRoot(speciesTree, bestMovesHistory[i]);
   }
-  evaluator.forceGeneRootOptimization();
   if (rootLikelihoods) {
     auto newick = speciesTree.getTree().getNewickString();
     PLLRootedTree tree(newick, false); 

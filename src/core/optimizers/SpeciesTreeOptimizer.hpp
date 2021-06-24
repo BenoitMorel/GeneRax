@@ -44,19 +44,22 @@ struct MovesBlackList;
 
 class SpeciesTreeLikelihoodEvaluator: public SpeciesTreeLikelihoodEvaluatorInterface {
 public:
-  SpeciesTreeLikelihoodEvaluator(PerCoreEvaluations &evaluations,
-      bool rootedGeneTrees):
-    _evaluations(evaluations),
-    _rootedGeneTrees(rootedGeneTrees)
-  {}
+  SpeciesTreeLikelihoodEvaluator() {}
+  void init(PerCoreEvaluations &evaluations,
+      bool rootedGeneTrees) 
+  {
+    _evaluations = &evaluations;
+    _rootedGeneTrees = rootedGeneTrees;
+  }
   virtual ~SpeciesTreeLikelihoodEvaluator() {}
   virtual double computeLikelihood();
-  virtual void forceGeneRootOptimization();
+  virtual double computeLikelihoodFast();
+  virtual bool providesFastLikelihoodImpl() const;
   virtual void pushRollback();
   virtual void popAndApplyRollback();
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);
 private:
-  PerCoreEvaluations &_evaluations;
+  PerCoreEvaluations *_evaluations;
   std::stack<std::vector<pll_unode_t*> > _previousGeneRoots;
   bool _rootedGeneTrees;
 };
@@ -110,6 +113,7 @@ private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
   PerCoreEvaluations _evaluations; 
+  SpeciesTreeLikelihoodEvaluator _evaluator;
   std::vector<pll_unode_t*> _previousGeneRoots;
   Families _initialFamilies;
   std::string _outputDir;
@@ -143,8 +147,6 @@ private:
   double transferRound(MovesBlackList &blacklist, 
       bool &maxImprovementsReached);
   double sprSearch(unsigned int radius);
-  double fastSPRRound(unsigned int radius);
-  double veryLocalSearch(unsigned int spid);
   void setOptimizationCriteria(OptimizationCriteria criteria) {
     _optimizationCriteria = criteria;
   }
