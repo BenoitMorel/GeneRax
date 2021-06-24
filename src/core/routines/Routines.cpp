@@ -505,8 +505,8 @@ void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
 }
   
 
-void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
-    Families &families,
+void Routines::getTransfersFrequencies(PLLRootedTree &speciesTree,
+    PerCoreGeneTrees &geneTrees,
     const ModelParameters &modelParameters,
     unsigned int reconciliationSamples,
     TransferFrequencies &transferFrequencies)
@@ -527,18 +527,16 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
         recModelInfo);
   }
   transfersModelParameter.info.rootedGeneTree = false;
-  SpeciesTree speciesTree(speciesTreeFile);
-  PerCoreGeneTrees geneTrees(families);
   std::vector<Scenario> scenarios;
-  inferAndGetReconciliationScenarios(speciesTree.getTree(), 
+  inferAndGetReconciliationScenarios(speciesTree, 
       geneTrees, 
       transfersModelParameter,
       reconciliationSamples,
       optimizeRates, 
       scenarios);
   
-  const auto labelToId = speciesTree.getTree().getDeterministicLabelToId();
-  const auto idToLabel = speciesTree.getTree().getDeterministicIdToLabel();
+  const auto labelToId = speciesTree.getDeterministicLabelToId();
+  const auto idToLabel = speciesTree.getDeterministicIdToLabel();
   const unsigned int labelsNumber = idToLabel.size();
   const VectorUint zeros(labelsNumber, 0);
   transferFrequencies.count = MatrixUint(labelsNumber, zeros);

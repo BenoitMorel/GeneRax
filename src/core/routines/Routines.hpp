@@ -88,8 +88,8 @@ public:
     PerSpeciesEvents &events,
     bool forceTransfers);
 
-  static void getTransfersFrequencies(const std::string &speciesTreeFile,
-    Families &families,
+  static void getTransfersFrequencies(PLLRootedTree &speciesTree,
+    PerCoreGeneTrees &geneTrees,
     const ModelParameters &modelRates,
     unsigned int reconciliationSamples,
     TransferFrequencies &frequencies);

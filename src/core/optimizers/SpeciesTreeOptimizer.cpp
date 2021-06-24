@@ -276,8 +276,8 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
     Paths::getSpeciesTreeFile(_outputDir, "speciesTreeTemp.newick");
   saveCurrentSpeciesTreePath(speciesTreeFile, true);
   ParallelContext::barrier();
-  Routines::getTransfersFrequencies(speciesTreeFile,
-    _initialFamilies,
+  Routines::getTransfersFrequencies(_speciesTree->getTree(),
+    *_geneTrees,
     _modelRates,
     reconciliationSamples,
     frequencies);
@@ -413,6 +413,7 @@ std::vector<double> SpeciesTreeOptimizer::_getSupport()
 
 double SpeciesTreeOptimizer::transferSearch()
 {
+#ifdef NEWSEARCH
   double bestLL = computeRecLikelihood();
   if (SpeciesTransferSearch::transferSearch(
         *_speciesTree,
@@ -424,8 +425,7 @@ double SpeciesTreeOptimizer::transferSearch()
   }
   Logger::timed << "After normal search: LL=" << _bestRecLL << std::endl;
   return _bestRecLL;
-  
-  /*
+#else
   auto bestLL = computeRecLikelihood();
   Logger::info << std::endl;
   Logger::timed << "[Species search]" << " Starting species tree transfer-guided search, bestLL=" 
@@ -451,7 +451,7 @@ double SpeciesTreeOptimizer::transferSearch()
   Logger::timed << "[Species search] After transfer search: LL=" << newLL << std::endl;
   saveCurrentSpeciesTreeId();
   return newLL;
-  */
+#endif
 }
 
 double SpeciesTreeOptimizer::sprSearch(unsigned int radius)
