@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <support/ICCalculator.hpp>
 #include <search/SpeciesSPRSearch.hpp>
+#include <search/SpeciesTransferSearch.hpp>
 
 SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile, 
     const Families &initialFamilies, 
@@ -412,6 +413,19 @@ std::vector<double> SpeciesTreeOptimizer::_getSupport()
 
 double SpeciesTreeOptimizer::transferSearch()
 {
+  double bestLL = computeRecLikelihood();
+  if (SpeciesTransferSearch::transferSearch(
+        *_speciesTree,
+      _evaluator,
+      _averageGeneRootDiff,
+      bestLL,
+      _lastRecLL)) {
+    newBestTreeCallback();
+  }
+  Logger::timed << "After normal search: LL=" << _bestRecLL << std::endl;
+  return _bestRecLL;
+  
+  /*
   auto bestLL = computeRecLikelihood();
   Logger::info << std::endl;
   Logger::timed << "[Species search]" << " Starting species tree transfer-guided search, bestLL=" 
@@ -437,6 +451,7 @@ double SpeciesTreeOptimizer::transferSearch()
   Logger::timed << "[Species search] After transfer search: LL=" << newLL << std::endl;
   saveCurrentSpeciesTreeId();
   return newLL;
+  */
 }
 
 double SpeciesTreeOptimizer::sprSearch(unsigned int radius)

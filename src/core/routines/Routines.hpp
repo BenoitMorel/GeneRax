@@ -13,10 +13,6 @@ class Parameters;
 class ModelParameters;
 class PLLRootedTree;
 class PerCoreGeneTrees;
-struct TransferFrequencies {
-  MatrixUint count;
-  std::vector<std::string> idToLabel;
-};
 
 
 class Routines {

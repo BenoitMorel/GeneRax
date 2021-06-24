@@ -39,6 +39,7 @@ set(jointsearch-core_SOURCES
   search/SpeciesSearchCommon.cpp
   search/SpeciesRootSearch.cpp
   search/SpeciesSPRSearch.cpp
+  search/SpeciesTransferSearch.cpp
   search/SPRSearch.cpp
   support/ICCalculator.cpp
   trees/Clade.cpp

@@ -19,4 +19,8 @@ using UInt3 = std::array<unsigned int, 3>;
 using UInt4 = std::array<unsigned int, 4>;
 
 using PerFamLL = std::vector<double>;
+struct TransferFrequencies {
+  MatrixUint count;
+  std::vector<std::string> idToLabel;
+};
 
