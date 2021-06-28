@@ -58,6 +58,9 @@ public:
   virtual void pushRollback();
   virtual void popAndApplyRollback();
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);
+  virtual void getTransferInformation(PLLRootedTree &speciesTree,
+    TransferFrequencies &frequencies,
+    PerSpeciesEvents &perSpeciesEvents);
 private:
   PerCoreEvaluations *_evaluations;
   std::stack<std::vector<pll_unode_t*> > _previousGeneRoots;

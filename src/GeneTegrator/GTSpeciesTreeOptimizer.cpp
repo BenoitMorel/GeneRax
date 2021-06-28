@@ -19,6 +19,13 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
   ParallelContext::sumDouble(sumLL);
   return sumLL;
 }
+  
+void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &speciesTree,
+    TransferFrequencies &frequencies,
+    PerSpeciesEvents &perSpeciesEvents)
+{
+  assert(false);
+}
 
 void GTSpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
     PerFamLL &perFamLL)

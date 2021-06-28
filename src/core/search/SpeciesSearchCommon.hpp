@@ -4,6 +4,7 @@
 
 #include <likelihoods/ReconciliationEvaluation.hpp>
 #include <util/types.hpp>
+#include <util/Scenario.hpp>
 #include <maths/AverageStream.hpp>
 
 class SpeciesTree; 
@@ -51,7 +52,11 @@ public:
    * of a species tree operation
    */
   virtual void popAndApplyRollback() = 0;
-
+  
+  virtual void getTransferInformation(PLLRootedTree &speciesTree,
+    TransferFrequencies &frequencies,
+    PerSpeciesEvents &perSpeciesEvents) = 0;
+  
   /**
    * Fill perFamLL with the per-family (over all parallel
    * ranks) log-likelihoods

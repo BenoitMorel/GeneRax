@@ -272,9 +272,6 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
   _bestRecLL = computeRecLikelihood();
   auto hash1 = _speciesTree->getNodeIndexHash(); 
   TransferFrequencies frequencies;
-  auto  speciesTreeFile = 
-    Paths::getSpeciesTreeFile(_outputDir, "speciesTreeTemp.newick");
-  saveCurrentSpeciesTreePath(speciesTreeFile, true);
   ParallelContext::barrier();
   Routines::getTransfersFrequencies(_speciesTree->getTree(),
     *_geneTrees,
@@ -283,7 +280,7 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
     frequencies);
   PerSpeciesEvents perSpeciesEvents;
   const bool forceTransfers = true;
-  Routines::getPerSpeciesEvents(speciesTreeFile,
+  Routines::getPerSpeciesEvents(_speciesTree->getTree(),
     _initialFamilies,
     _modelRates,
     reconciliationSamples,
@@ -721,6 +718,13 @@ double SpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
 bool SpeciesTreeLikelihoodEvaluator::providesFastLikelihoodImpl() const 
 {
   return _rootedGeneTrees; 
+}
+
+void SpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &speciesTree,
+    TransferFrequencies &frequencies,
+    PerSpeciesEvents &perSpeciesEvents)
+{
+  assert(false);
 }
 
 void SpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
