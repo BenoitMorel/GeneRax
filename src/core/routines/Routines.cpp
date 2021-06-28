@@ -308,7 +308,7 @@ void Routines::inferReconciliation(
     bool forceTransfers = false;
     PerSpeciesEvents events;
     getPerSpeciesEvents(speciesTree,
-      families,
+      geneTrees,
       initialModelRates,
       reconciliationSamples,
       events,
@@ -463,7 +463,7 @@ void Routines::getLabelsFromTransferKey(const std::string &key, std::string &lab
 
 
 void Routines::getPerSpeciesEvents(PLLRootedTree &speciesTree,
-  Families &families,
+  PerCoreGeneTrees &geneTrees,
   const ModelParameters &modelParameters,
   unsigned int reconciliationSamples,
   PerSpeciesEvents &events,
@@ -472,7 +472,6 @@ void Routines::getPerSpeciesEvents(PLLRootedTree &speciesTree,
   events = PerSpeciesEvents(speciesTree.getNodesNumber());
   std::vector<Scenario> scenarios;
   bool optimizeRates = false;
-  PerCoreGeneTrees geneTrees(families);
   ModelParameters transfersModelParameter;
   if (Enums::accountsForTransfers(modelParameters.info.model)
       || !forceTransfers) {

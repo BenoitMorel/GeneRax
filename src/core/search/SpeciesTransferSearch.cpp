@@ -68,25 +68,11 @@ static bool transferRound(SpeciesTree &speciesTree,
   unsigned int minTransfers = 1;
   auto hash1 = speciesTree.getNodeIndexHash(); 
   TransferFrequencies frequencies;
-  /*
-  auto  speciesTreeFile = 
-    Paths::getSpeciesTreeFile(_outputDir, "speciesTreeTemp.newick");
-  saveCurrentSpeciesTreePath(speciesTreeFile, true);
-  ParallelContext::barrier();
-  Routines::getTransfersFrequencies(speciesTreeFile,
-    _initialFamilies,
-    _modelRates,
-    reconciliationSamples,
-    frequencies);
   PerSpeciesEvents perSpeciesEvents;
-  const bool forceTransfers = true;
-  Routines::getPerSpeciesEvents(speciesTreeFile,
-    _initialFamilies,
-    _modelRates,
-    reconciliationSamples,
-    perSpeciesEvents,
-    forceTransfers);
-  unsigned int speciesNumber = _speciesTree->getTree().getNodesNumber();
+  evaluation.getTransferInformation(speciesTree.getTree(),
+      frequencies,
+      perSpeciesEvents);
+  unsigned int speciesNumber = speciesTree.getTree().getNodesNumber();
   std::vector<double> speciesFrequencies;
   for (unsigned int e = 0; e < speciesNumber; ++e) {
     auto &speciesEvents = perSpeciesEvents.events[e];
@@ -95,7 +81,7 @@ static bool transferRound(SpeciesTree &speciesTree,
   unsigned int transfers = 0;
   ParallelContext::barrier();
   std::unordered_map<std::string, unsigned int> labelsToIds;
-  _speciesTree->getLabelsToId(labelsToIds);
+  speciesTree.getLabelsToId(labelsToIds);
   std::vector<TransferMove> transferMoves;
   for (unsigned int from = 0; from < frequencies.count.size(); ++from) {
     for (unsigned int to = 0; to < frequencies.count.size(); ++to) {
@@ -106,10 +92,10 @@ static bool transferRound(SpeciesTree &speciesTree,
       if (count < minTransfers) {
         continue;
       }
-      if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, prune, regraft)) {
+      if (SpeciesTreeOperator::canApplySPRMove(speciesTree, prune, regraft)) {
         TransferMove move(prune, regraft, count);
         double factor = 1.0;
-        if (_modelRates.info.pruneSpeciesTree) {
+        if (evaluation.pruneSpeciesTree()) {
           factor /= (1.0 + sqrt(speciesFrequencies[prune]));
           factor /= (1.0 + sqrt(speciesFrequencies[regraft]));
         }
@@ -134,34 +120,37 @@ static bool transferRound(SpeciesTree &speciesTree,
     if (alreadyPruned.find(transferMove.prune) != alreadyPruned.end()) {
       continue;
     }
-    if (SpeciesTreeOperator::canApplySPRMove(*_speciesTree, transferMove.prune, transferMove.regraft)) {
+    if (SpeciesTreeOperator::canApplySPRMove(speciesTree, transferMove.prune, transferMove.regraft)) {
       blacklist.blacklist(transferMove);
       trials++;
-      if (testPruning(transferMove.prune, transferMove.regraft)) {
+      double testedLL = 0.0;
+      if (SpeciesSearchCommon::testSPR(speciesTree, evaluation, 
+            transferMove.prune, transferMove.regraft, averageFastDiff, 
+            newBestLL, testedLL)) {
+        newBestLL = testedLL;
         failures = 0;
         improvements++;
         alreadyPruned.insert(transferMove.prune);
-        auto pruneNode = _speciesTree->getNode(transferMove.prune);
+        auto pruneNode = speciesTree.getNode(transferMove.prune);
         Logger::timed << "\tbetter tree (transfers:" 
           << transferMove.transfers 
           << ", trial: " 
           << trials 
           << ", ll=" 
-          << _bestRecLL 
+          << newBestLL 
           << ", hash=" 
-          << _speciesTree->getHash() 
-          << " us=" 
-          << _unsupportedCladesNumber() 
+          << speciesTree.getHash() 
           << ") "  
           << pruneNode->label 
           << " -> " 
-          << _speciesTree->getNode(transferMove.regraft)->label
+          << speciesTree.getNode(transferMove.regraft)->label
           << std::endl;
         // we enough improvements to recompute the new transfers
-        hash1 = _speciesTree->getNodeIndexHash(); 
+        hash1 = speciesTree.getNodeIndexHash(); 
         assert(ParallelContext::isIntEqual(hash1));
+        /*       
         if (_hardToFindBetter) {
-          if (SpeciesSearchCommon::veryLocalSearch(*_speciesTree,
+          if (SpeciesSearchCommon::veryLocalSearch(speciesTree,
               _evaluator,
               _averageGeneRootDiff,
               transferMove.prune,
@@ -170,6 +159,7 @@ static bool transferRound(SpeciesTree &speciesTree,
             newBestTreeCallback();
           }
         }
+        */
       } else {
         failures++;
       }
@@ -177,16 +167,20 @@ static bool transferRound(SpeciesTree &speciesTree,
       maxImprovementsReached = improvements > stopAfterImprovements;
       stop |= maxImprovementsReached;
       if (stop) {
+        if (!maxImprovementsReached) {
+          Logger::info << "Todo: implement hardToFindBetter " << std::endl;
+        }
+        /*
         if (!_hardToFindBetter && !maxImprovementsReached) {
           Logger::timed << "[Species search] Switch to hardToFindBetter mode" << std::endl;
           _hardToFindBetter = true;
         }
-        return _bestRecLL;
+        */
+        return improvements > 1;
       }
     }  
   }
-  return _bestRecLL;
-  */
+  return improvements > 1;
 }
 
 
@@ -211,7 +205,7 @@ bool SpeciesTransferSearch::transferSearch(
       Logger::info << "TODO: OPTIMIZE RATES" << std::endl;
       //newBestLL = hack.optimizeDTLRates();
     }
-    stop = transferRound(speciesTree, evaluation, averageFastDiff, 
+    stop = !transferRound(speciesTree, evaluation, averageFastDiff, 
         previousBestLL, newBestLL, blacklist, maxImprovementsReached);
     if (!stop) {
       better = true;

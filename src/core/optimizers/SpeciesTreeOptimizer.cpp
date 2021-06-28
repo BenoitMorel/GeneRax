@@ -272,20 +272,10 @@ double SpeciesTreeOptimizer::transferRound(MovesBlackList &blacklist,
   _bestRecLL = computeRecLikelihood();
   auto hash1 = _speciesTree->getNodeIndexHash(); 
   TransferFrequencies frequencies;
-  ParallelContext::barrier();
-  Routines::getTransfersFrequencies(_speciesTree->getTree(),
-    *_geneTrees,
-    _modelRates,
-    reconciliationSamples,
-    frequencies);
   PerSpeciesEvents perSpeciesEvents;
-  const bool forceTransfers = true;
-  Routines::getPerSpeciesEvents(_speciesTree->getTree(),
-    _initialFamilies,
-    _modelRates,
-    reconciliationSamples,
-    perSpeciesEvents,
-    forceTransfers);
+  _evaluator.getTransferInformation(_speciesTree->getTree(),
+      frequencies,
+      perSpeciesEvents);
   unsigned int speciesNumber = _speciesTree->getTree().getNodesNumber();
   std::vector<double> speciesFrequencies;
   for (unsigned int e = 0; e < speciesNumber; ++e) {
@@ -410,6 +400,7 @@ std::vector<double> SpeciesTreeOptimizer::_getSupport()
 
 double SpeciesTreeOptimizer::transferSearch()
 {
+#define NEWSEARCH
 #ifdef NEWSEARCH
   double bestLL = computeRecLikelihood();
   if (SpeciesTransferSearch::transferSearch(
@@ -559,7 +550,11 @@ void SpeciesTreeOptimizer::updateEvaluations()
   }
   _previousGeneRoots.resize(_evaluations.size());
   std::fill(_previousGeneRoots.begin(), _previousGeneRoots.end(), nullptr);
-  _evaluator.init(_evaluations, _modelRates.info.rootedGeneTree);
+  _evaluator.init(_evaluations, 
+      *_geneTrees,
+      _modelRates,
+      _modelRates.info.rootedGeneTree,
+      _modelRates.info.pruneSpeciesTree);
 }
   
 void SpeciesTreeOptimizer::beforeTestCallback()
@@ -724,7 +719,20 @@ void SpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &speci
     TransferFrequencies &frequencies,
     PerSpeciesEvents &perSpeciesEvents)
 {
-  assert(false);
+  ParallelContext::barrier();
+  unsigned int reconciliationSamples = 0; // use ML reconciliation
+  Routines::getTransfersFrequencies(speciesTree,
+    *_geneTrees,
+    *_modelRates,
+    reconciliationSamples,
+    frequencies);
+  const bool forceTransfers = true;
+  Routines::getPerSpeciesEvents(speciesTree,
+    *_geneTrees,
+    *_modelRates,
+    reconciliationSamples,
+    perSpeciesEvents,
+    forceTransfers);
 }
 
 void SpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(

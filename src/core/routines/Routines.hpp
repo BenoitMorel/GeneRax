@@ -82,7 +82,7 @@ public:
     long &sumElapsed);
 
   static void getPerSpeciesEvents(PLLRootedTree &speciesTree,
-    Families &families,
+    PerCoreGeneTrees &geneTrees,
     const ModelParameters &modelRates,
     unsigned int reconciliationSamples,
     PerSpeciesEvents &events,

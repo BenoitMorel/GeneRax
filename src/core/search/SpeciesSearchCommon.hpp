@@ -62,6 +62,11 @@ public:
    * ranks) log-likelihoods
    */
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL) = 0;
+  
+  /**
+   *  Are we in prune species tree mode?
+   */
+  virtual bool pruneSpeciesTree() const = 0;
 };
 
 class SpeciesSearchCommon {

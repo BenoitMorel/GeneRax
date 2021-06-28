@@ -46,10 +46,16 @@ class SpeciesTreeLikelihoodEvaluator: public SpeciesTreeLikelihoodEvaluatorInter
 public:
   SpeciesTreeLikelihoodEvaluator() {}
   void init(PerCoreEvaluations &evaluations,
-      bool rootedGeneTrees) 
+      PerCoreGeneTrees &geneTrees,
+      ModelParameters &modelRates,
+      bool rootedGeneTrees,
+      bool pruneSpeciesTree) 
   {
     _evaluations = &evaluations;
+    _geneTrees = &geneTrees;
+    _modelRates = &modelRates;
     _rootedGeneTrees = rootedGeneTrees;
+    _pruneSpeciesTree = pruneSpeciesTree;
   }
   virtual ~SpeciesTreeLikelihoodEvaluator() {}
   virtual double computeLikelihood();
@@ -61,10 +67,14 @@ public:
   virtual void getTransferInformation(PLLRootedTree &speciesTree,
     TransferFrequencies &frequencies,
     PerSpeciesEvents &perSpeciesEvents);
+  virtual bool pruneSpeciesTree() const {return _pruneSpeciesTree;}
 private:
+  PerCoreGeneTrees *_geneTrees;
   PerCoreEvaluations *_evaluations;
+  ModelParameters *_modelRates;
   std::stack<std::vector<pll_unode_t*> > _previousGeneRoots;
   bool _rootedGeneTrees;
+  bool _pruneSpeciesTree;
 };
 
 

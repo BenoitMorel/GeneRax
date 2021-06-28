@@ -33,6 +33,7 @@ public:
   virtual void getTransferInformation(PLLRootedTree &speciesTree,
     TransferFrequencies &frequencies,
     PerSpeciesEvents &perSpeciesEvents);
+  virtual bool pruneSpeciesTree() const {assert(false); return false;}
 private:
   PerCoreMultiEvaluation *_evaluations;
 };
