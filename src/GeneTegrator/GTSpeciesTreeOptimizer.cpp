@@ -3,6 +3,7 @@
 #include <parallelization/PerCoreGeneTrees.hpp>
 #include <util/Paths.hpp>
 #include <search/SpeciesSPRSearch.hpp>
+#include <search/SpeciesTransferSearch.hpp>
 
 double GTSpeciesTreeLikelihoodEvaluator::computeLikelihood()
 {
@@ -21,10 +22,35 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
 }
   
 void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &speciesTree,
-    TransferFrequencies &frequencies,
+    TransferFrequencies &transferFrequencies,
     PerSpeciesEvents &perSpeciesEvents)
 {
-  assert(false);
+  assert(_info.model == RecModel::UndatedDTL);
+  std::vector<Scenario> scenarios(_evaluations->size());
+  for (unsigned int i = 0; i < scenarios.size(); ++i) {
+    (*_evaluations)[i]->inferMLScenario(scenarios[i], true);
+  }
+  // this messed up the parallel seed
+  ParallelContext::makeRandConsistent();
+  
+  // this is duplicated code from Routines...
+  const auto labelToId = speciesTree.getDeterministicLabelToId();
+  const auto idToLabel = speciesTree.getDeterministicIdToLabel();
+  const unsigned int labelsNumber = idToLabel.size();
+  const VectorUint zeros(labelsNumber, 0);
+  transferFrequencies.count = MatrixUint(labelsNumber, zeros);
+  transferFrequencies.idToLabel = idToLabel;
+  for (unsigned int i = 0; i < _evaluations->size(); ++i) {
+    auto &scenario = scenarios[i];
+    scenario.countTransfers(labelToId, 
+        transferFrequencies.count);
+  }
+  for (unsigned int i = 0; i < labelsNumber; ++i) {
+    ParallelContext::sumVectorUInt(transferFrequencies.count[i]); 
+  }
+  ParallelContext::barrier();
+  assert(ParallelContext::isRandConsistent());
+  perSpeciesEvents = PerSpeciesEvents(speciesTree.getNodesNumber());
 }
 
 void GTSpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
@@ -66,6 +92,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
     const RecModelInfo &info,
     const std::string &outputDir):
   _speciesTree(std::make_unique<SpeciesTree>(speciesTreeFile)),
+  _info(info),
   _outputDir(outputDir),
   _bestRecLL(-std::numeric_limits<double>::infinity())
 {
@@ -101,7 +128,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   Logger::timed << "Initializing ccps finished" << std::endl;
   _speciesTree->addListener(this);
   ParallelContext::barrier();
-  _evaluator.setEvaluations(_evaluations);
+  _evaluator.setEvaluations(_info, _evaluations);
   Logger::timed << "Initial ll=" << computeRecLikelihood() << std::endl;
   _evaluator.countEvents();
 }
@@ -190,3 +217,18 @@ double GTSpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
   return computeRecLikelihood();
 }
 
+double GTSpeciesTreeOptimizer::transferSearch()
+{
+  double bestLL = computeRecLikelihood();
+  AverageStream useless;
+  if (SpeciesTransferSearch::transferSearch(
+        *_speciesTree,
+      _evaluator,
+      useless,
+      bestLL,
+      bestLL)) {
+    newBestTreeCallback(bestLL);
+  }
+  Logger::timed << "After normal search: LL=" << bestLL << std::endl;
+  return bestLL;
+}

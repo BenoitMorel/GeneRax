@@ -75,15 +75,12 @@ bool MultiModel<REAL>::inferMLScenario(Scenario &scenario,
   // TODO: sample the species root!
   auto rootCID = this->_ccp.getCladesNumber() - 1;
   auto speciesRoot = this->_speciesTree.getRoot();
+  scenario.setSpeciesTree(this->_speciesTree.getRawPtr());
   return backtrace(rootCID, 
       speciesRoot,
       scenario, stochastic);
 }
 
-static double dRand()
-{
-  return  (double)rand() / RAND_MAX;
-}
 
 template <class REAL>
 bool MultiModel<REAL>::backtrace(unsigned int cid, 
@@ -94,7 +91,7 @@ bool MultiModel<REAL>::backtrace(unsigned int cid,
   REAL proba;
   computeProbability(cid, speciesNode, proba);
   ReconciliationCell<REAL> recCell;
-  recCell.maxProba = proba * dRand();
+  recCell.maxProba = proba * Random::getProba();
   computeProbability(cid, speciesNode, proba, &recCell);
   scenario.addEvent(recCell.event);
   bool ok = true;

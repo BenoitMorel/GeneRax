@@ -453,6 +453,14 @@ bool ParallelContext::isRandConsistent()
   return isIntEqual(Random::getInt());
 }
 
+void ParallelContext::makeRandConsistent()
+{
+  auto seed = Random::getInt();
+  ParallelContext::broadcastInt(0, seed);
+  Random::setSeed(seed);
+  assert(isRandConsistent());
+}
+
 bool ParallelContext::isIntEqual(int value)
 {
 #ifdef WITH_MPI

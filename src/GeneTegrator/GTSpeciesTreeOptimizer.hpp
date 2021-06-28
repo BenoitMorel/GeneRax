@@ -19,7 +19,9 @@ class GTSpeciesTreeLikelihoodEvaluator: public SpeciesTreeLikelihoodEvaluatorInt
 public:
   GTSpeciesTreeLikelihoodEvaluator()
   {}
-  void setEvaluations(PerCoreMultiEvaluation &evaluations) {
+  void setEvaluations(const RecModelInfo &info, 
+      PerCoreMultiEvaluation &evaluations) {
+    _info = info;
     _evaluations = &evaluations;
   }
   virtual ~GTSpeciesTreeLikelihoodEvaluator() {}
@@ -33,8 +35,9 @@ public:
   virtual void getTransferInformation(PLLRootedTree &speciesTree,
     TransferFrequencies &frequencies,
     PerSpeciesEvents &perSpeciesEvents);
-  virtual bool pruneSpeciesTree() const {assert(false); return false;}
+  virtual bool pruneSpeciesTree() const {return _info.pruneSpeciesTree;}
 private:
+  RecModelInfo _info;
   PerCoreMultiEvaluation *_evaluations;
 };
 
@@ -49,13 +52,14 @@ public:
   double computeRecLikelihood();
   double sprSearch(unsigned int radius);
   double rootSearch(unsigned int maxDepth);
-
+  double transferSearch();
   void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   PerCoreMultiEvaluation _evaluations;
   GTSpeciesTreeLikelihoodEvaluator _evaluator;
+  RecModelInfo _info;
   std::string _outputDir;
   double _bestRecLL;
 

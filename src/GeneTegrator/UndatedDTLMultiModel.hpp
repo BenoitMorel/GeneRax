@@ -148,7 +148,7 @@ void UndatedDTLMultiModel<REAL>::sampleTransferEvent(unsigned int cid,
     REAL survivingTransferSum,
     pll_rnode_t *&destSpeciesNode)
 {
-  REAL max = survivingTransferSum * ((double)rand() / RAND_MAX);
+  REAL max = survivingTransferSum * Random::getProba();
   max *= this->_allSpeciesNodes.size();
   REAL sum = REAL();
   for (auto speciesNode: this->_allSpeciesNodes) {

@@ -47,6 +47,7 @@ public:
   static void allGatherInt(int localValue, std::vector<int> &allValues);
 
   static bool isRandConsistent();
+  static void makeRandConsistent();
   static bool isIntEqual(int value);
   static bool isDoubleEqual(double value);
 

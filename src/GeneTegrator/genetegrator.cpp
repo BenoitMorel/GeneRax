@@ -87,6 +87,7 @@ void run( GeneTegratorArguments &args)
   auto ll = speciesTreeOptimizer.computeRecLikelihood();
   Logger::info << "total ll=" << ll << std::endl;
   ll = speciesTreeOptimizer.rootSearch(3);
+  ll = speciesTreeOptimizer.transferSearch();
   ll = speciesTreeOptimizer.sprSearch(1);
   
   Logger::info << "total ll=" << ll << std::endl;
