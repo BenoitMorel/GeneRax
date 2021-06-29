@@ -92,7 +92,7 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(PLLRootedTree &speciesTree,
   DTLCLV nullCLV(this->_allSpeciesNodesCount);
   _dtlclvs = std::vector<DTLCLV>(2 * (this->_ccp.getCladesNumber()), nullCLV);
   for (unsigned int e = 0; e < this->_speciesTree.getNodesNumber(); ++e) {
-    double sum = _PD[e] + _PL[e] + _PS[e];
+    double sum = _PD[e] + _PL[e] + _PT[e] + _PS[e];
     _PD[e] /= sum;
     _PL[e] /= sum;
     _PT[e] /= sum;
