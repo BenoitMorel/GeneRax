@@ -1,6 +1,5 @@
 #include "GTSpeciesTreeOptimizer.hpp" 
 #include <IO/Logger.hpp>
-#include <parallelization/PerCoreGeneTrees.hpp>
 #include <util/Paths.hpp>
 #include <search/SpeciesSPRSearch.hpp>
 #include <search/SpeciesTransferSearch.hpp>
@@ -25,14 +24,6 @@ void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &spe
     TransferFrequencies &transferFrequencies,
     PerSpeciesEvents &perSpeciesEvents)
 {
-  assert(_info.model == RecModel::UndatedDTL);
-  std::vector<Scenario> scenarios(_evaluations->size());
-  for (unsigned int i = 0; i < scenarios.size(); ++i) {
-    (*_evaluations)[i]->inferMLScenario(scenarios[i], true);
-  }
-  // this messed up the parallel seed
-  ParallelContext::makeRandConsistent();
-  
   // this is duplicated code from Routines...
   const auto labelToId = speciesTree.getDeterministicLabelToId();
   const auto idToLabel = speciesTree.getDeterministicIdToLabel();
@@ -40,17 +31,34 @@ void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &spe
   const VectorUint zeros(labelsNumber, 0);
   transferFrequencies.count = MatrixUint(labelsNumber, zeros);
   transferFrequencies.idToLabel = idToLabel;
-  for (unsigned int i = 0; i < _evaluations->size(); ++i) {
-    auto &scenario = scenarios[i];
+  perSpeciesEvents = PerSpeciesEvents(speciesTree.getNodesNumber());
+  auto infoCopy = _info;
+  for (const auto &geneTree: _geneTrees->getTrees()) {
+    auto &family = (*_families)[geneTree.familyIndex];
+    GeneSpeciesMapping mapping;
+    mapping.fill(family.mappingFile, family.startingGeneTree);
+    UndatedDTLMultiModel<ScaledValue> evaluation(
+        speciesTree,
+        mapping,
+        infoCopy,
+        family.startingGeneTree);
+    Scenario scenario;
+    // warning, this might make the random state 
+    // inconsistent between the MPI ranks
+    // ParallelContext::makeRandConsistent() needs to be called 
+    // right after the loop
+    evaluation.computeLogLikelihood();
+    evaluation.inferMLScenario(scenario, true);
     scenario.countTransfers(labelToId, 
         transferFrequencies.count);
+    scenario.gatherReconciliationStatistics(perSpeciesEvents);
   }
+  ParallelContext::makeRandConsistent();
   for (unsigned int i = 0; i < labelsNumber; ++i) {
     ParallelContext::sumVectorUInt(transferFrequencies.count[i]); 
   }
-  ParallelContext::barrier();
+  perSpeciesEvents.parallelSum();
   assert(ParallelContext::isRandConsistent());
-  perSpeciesEvents = PerSpeciesEvents(speciesTree.getNodesNumber());
 }
 
 void GTSpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
@@ -92,15 +100,15 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
     const RecModelInfo &info,
     const std::string &outputDir):
   _speciesTree(std::make_unique<SpeciesTree>(speciesTreeFile)),
+  _geneTrees(families, false),
   _info(info),
   _outputDir(outputDir),
   _bestRecLL(-std::numeric_limits<double>::infinity())
 {
   saveCurrentSpeciesTreeId("starting_species_tree.newick");
   saveCurrentSpeciesTreeId();
-  PerCoreGeneTrees perCoreGeneTrees(families, false);
   Logger::timed << "Initializing ccps" << std::endl;
-  for (const auto &geneTree: perCoreGeneTrees.getTrees()) {
+  for (const auto &geneTree: _geneTrees.getTrees()) {
     auto &family = families[geneTree.familyIndex];
     GeneSpeciesMapping mapping;
     mapping.fill(family.mappingFile, family.startingGeneTree);
@@ -128,7 +136,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   Logger::timed << "Initializing ccps finished" << std::endl;
   _speciesTree->addListener(this);
   ParallelContext::barrier();
-  _evaluator.setEvaluations(_info, _evaluations);
+  _evaluator.setEvaluations(_info, families, _evaluations, _geneTrees);
   Logger::timed << "Initial ll=" << computeRecLikelihood() << std::endl;
   _evaluator.countEvents();
 }

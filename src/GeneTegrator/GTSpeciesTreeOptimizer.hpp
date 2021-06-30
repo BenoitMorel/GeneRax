@@ -6,6 +6,7 @@
 #include "UndatedDLMultiModel.hpp"
 #include "UndatedDTLMultiModel.hpp"
 #include <trees/PLLRootedTree.hpp>
+#include <parallelization/PerCoreGeneTrees.hpp>
 #include <memory>
 #include <vector>
 
@@ -20,9 +21,13 @@ public:
   GTSpeciesTreeLikelihoodEvaluator()
   {}
   void setEvaluations(const RecModelInfo &info, 
-      PerCoreMultiEvaluation &evaluations) {
+      const Families &families,
+      PerCoreMultiEvaluation &evaluations,
+      PerCoreGeneTrees &geneTrees) {
     _info = info;
+    _families = &families;
     _evaluations = &evaluations;
+    _geneTrees = &geneTrees;
   }
   virtual ~GTSpeciesTreeLikelihoodEvaluator() {}
   virtual double computeLikelihood();
@@ -38,7 +43,9 @@ public:
   virtual bool pruneSpeciesTree() const {return _info.pruneSpeciesTree;}
 private:
   RecModelInfo _info;
+  const Families *_families;
   PerCoreMultiEvaluation *_evaluations;
+  PerCoreGeneTrees *_geneTrees;
 };
 
 
@@ -57,6 +64,7 @@ public:
 
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
+  PerCoreGeneTrees _geneTrees;
   PerCoreMultiEvaluation _evaluations;
   GTSpeciesTreeLikelihoodEvaluator _evaluator;
   RecModelInfo _info;
