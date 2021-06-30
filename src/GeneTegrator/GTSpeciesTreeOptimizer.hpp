@@ -36,7 +36,6 @@ public:
   virtual void pushRollback() {}
   virtual void popAndApplyRollback() {}
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);
-  virtual void countEvents();
   virtual void getTransferInformation(PLLRootedTree &speciesTree,
     TransferFrequencies &frequencies,
     PerSpeciesEvents &perSpeciesEvents);

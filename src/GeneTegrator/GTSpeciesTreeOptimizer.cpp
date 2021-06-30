@@ -73,26 +73,6 @@ void GTSpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
       localLL, perFamLL);
 }
 
-void GTSpeciesTreeLikelihoodEvaluator::countEvents()
-{
-  std::vector<unsigned int> events(
-      static_cast<unsigned int>(ReconciliationEventType::EVENT_Invalid),
-      0);
-  for (auto &evaluation: *_evaluations) {
-    Scenario scenario;
-    bool stochastic = true;
-    evaluation->inferMLScenario(scenario, stochastic);
-    for (unsigned int i = 0; i < events.size(); ++i) {
-      events[i] += scenario.getEventCount(
-          static_cast<ReconciliationEventType>(i));
-    }
-  }
-  ParallelContext::sumVectorUInt(events);
-  Logger::info << "S=" << events[(unsigned int)ReconciliationEventType::EVENT_S] << std::endl;
-  Logger::info << "SL=" << events[(unsigned int)ReconciliationEventType::EVENT_SL] << std::endl;
-  Logger::info << "D=" << events[(unsigned int)ReconciliationEventType::EVENT_D] << std::endl;
-  Logger::info << "T=" << events[(unsigned int)ReconciliationEventType::EVENT_T] << std::endl;
-}
 
 GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
     const std::string speciesTreeFile, 
@@ -138,7 +118,6 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   ParallelContext::barrier();
   _evaluator.setEvaluations(_info, families, _evaluations, _geneTrees);
   Logger::timed << "Initial ll=" << computeRecLikelihood() << std::endl;
-  _evaluator.countEvents();
 }
 
 
