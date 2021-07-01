@@ -623,4 +623,14 @@ bool PLLUnrootedTree::isBinary() const
   }
   return true;
 }
+  
+pll_unode_t *PLLUnrootedTree::findLeaf(const std::string &label)
+{
+  for (auto leaf: getLeaves()) {
+    if (label == leaf->label) {
+      return leaf;
+    }
+  }
+  return nullptr;
+}
 

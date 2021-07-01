@@ -190,6 +190,11 @@ public:
 
   bool isBinary() const;
 
+  /**
+   *  Return the leaf node that has the label label,
+   *  or null pointer if such leaf does not exist
+   */
+  pll_unode_t *findLeaf(const std::string &label);
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;
 };
