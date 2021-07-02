@@ -48,6 +48,8 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
 {
   std::unordered_set<std::string> alignmentLabels;
   std::unordered_set<std::string> geneTreeLabels;
+  bool geneTreeProvided = family.startingGeneTree != "__random__" && family.startingGeneTree.size();
+  bool mappingFileProvided = family.mappingFile.size();
   // sequences
   if (checkAlignments) {
     try {
@@ -69,13 +71,13 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
       return ERROR_NOT_ENOUGH_GENES;
     }
   }
-  if (family.mappingFile.size()) {
+  if (mappingFileProvided) {
     if (!FileSystem::exists(family.mappingFile)) {
       return ERROR_MAPPING_FILE_EXISTENCE;
     }
-    }
+  }
   // gene tree. Only check if one is given!
-  if (family.startingGeneTree != "__random__" && family.startingGeneTree.size()) {
+  if (geneTreeProvided) {
     if (!FileSystem::exists(family.startingGeneTree)) {
       return ERROR_GENE_TREE_FILE_EXISTENCE;
     }  
@@ -118,13 +120,17 @@ static FamilyErrorCode filterFamily(const FamilyInfo &family, const std::unorder
     if (alignmentLabels.size() == 0 && geneTreeLabels.size() == 0) {
       return ERROR_NO_ALI_NO_TREE;
     }
-    GeneSpeciesMapping mapping;
+  }
+  GeneSpeciesMapping mapping;
+  if (mappingFileProvided || geneTreeProvided) {
     mapping.fill(family.mappingFile, family.startingGeneTree);
-    if (speciesTreeLabels.size()) {
-      auto &labels = (alignmentLabels.size() ? alignmentLabels : geneTreeLabels);
-      if (!mapping.check(labels, speciesTreeLabels)) {
-        return ERROR_MAPPING_MISMATCH;
-      }
+  } else {
+    mapping.fillFromGeneLabels(alignmentLabels);
+  }
+  if (speciesTreeLabels.size()) {
+    auto &labels = (alignmentLabels.size() ? alignmentLabels : geneTreeLabels);
+    if (!mapping.check(labels, speciesTreeLabels)) {
+      return ERROR_MAPPING_MISMATCH;
     }
   }
   return ERROR_OK;

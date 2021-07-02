@@ -44,6 +44,8 @@ public:
 
   PLLUnrootedTree(PLLRootedTree &rootedTree);
 
+  static std::unique_ptr<PLLUnrootedTree> buildFromStrOrFile(const std::string &strOrFile);
+
   /**
    *  Construct a random tree from a set of taxa labels
    */

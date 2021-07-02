@@ -25,7 +25,7 @@ public:
   GeneSpeciesMapping() {}
   
   void fill(const std::string &mappingFile, const std::string &geneTreeStrOrFile); 
-
+  void fillFromGeneLabels(const std::unordered_set<std::string> &labels); 
   bool check(pll_utree_t *geneTree, pll_rtree_t *speciesTree);
   bool check(const std::unordered_set<std::string> &genes, const std::unordered_set<std::string> &species);
   void fill(const GeneSpeciesMapping &mapping);

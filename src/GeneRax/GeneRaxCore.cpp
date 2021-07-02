@@ -49,7 +49,7 @@ static void initStartingSpeciesTree(GeneRaxInstance &instance)
     // add labels to internal nodes
     LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
   } else {
-    Routines::computeInitialSpeciesTree(instance.initialFamilies,
+    Routines::computeInitialSpeciesTree(instance.currentFamilies,
         instance.args.output,
         instance.args.speciesTreeAlgorithm)->save(instance.speciesTree);
 
@@ -80,7 +80,9 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
     && instance.args.strategy != GeneSearchStrategy::RECONCILE;
   if (instance.args.filterFamilies) {
     Logger::timed << "Filtering invalid families..." << std::endl;
-    Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, false);
+    bool checkSpeciesTree = (instance.args.speciesTreeAlgorithm 
+        == SpeciesTreeAlgorithm::User);
+    Family::filterFamilies(instance.initialFamilies, instance.args.speciesTree, needAlignments, checkSpeciesTree);
     if (!instance.initialFamilies.size()) {
       Logger::info << "[Error] No valid families! Aborting GeneRax" << std::endl;
       ParallelContext::abort(10);

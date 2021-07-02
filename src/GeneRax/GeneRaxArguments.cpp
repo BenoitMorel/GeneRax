@@ -181,14 +181,15 @@ static void assertFileExists(const std::string &file)
 {
   std::ifstream f(file);
   if (!f) {
-    Logger::error << "File " << file << " does not exist. Aborting." << std::endl;
-    ParallelContext::abort(1);
+    Logger::info << "File " << file << " does not exist. Aborting." << std::endl;
+    ParallelContext::abort(0);
   }
 }
 
 
 void GeneRaxArguments::checkInputs() {
   bool ok = true;
+  assertFileExists(families); 
   if (!speciesTree.size() && speciesStrategy != SpeciesSearchStrategy::SKIP) {
     Logger::info << "[Error] You need to provide a species tree or to optimize it." << std::endl;
     ok = false;
