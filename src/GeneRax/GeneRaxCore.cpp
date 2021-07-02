@@ -80,7 +80,9 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
     && instance.args.strategy != GeneSearchStrategy::RECONCILE;
   if (instance.args.filterFamilies) {
     Logger::timed << "Filtering invalid families..." << std::endl;
-    Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, false);
+    bool checkSpeciesTree = (instance.args.speciesTreeAlgorithm 
+        == SpeciesTreeAlgorithm::User);
+    Family::filterFamilies(instance.initialFamilies, instance.args.speciesTree, needAlignments, checkSpeciesTree);
     if (!instance.initialFamilies.size()) {
       Logger::info << "[Error] No valid families! Aborting GeneRax" << std::endl;
       ParallelContext::abort(10);

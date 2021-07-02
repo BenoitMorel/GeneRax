@@ -49,6 +49,20 @@ PLLUnrootedTree::PLLUnrootedTree(PLLRootedTree &rootedTree):
     _tree->nodes[_tree->tip_count + _tree->inner_count - 1];
   pll_utree_reset_template_indices(root, _tree->tip_count);
 }
+  
+std::unique_ptr<PLLUnrootedTree> PLLUnrootedTree::buildFromStrOrFile(const std::string &strOrFile)
+{
+  std::unique_ptr<PLLUnrootedTree> res;
+  try {
+    res = std::make_unique<PLLUnrootedTree>(strOrFile, true);
+  } catch (...) {
+    try {
+      res = std::make_unique<PLLUnrootedTree>(strOrFile, false);
+    } catch (...) {
+    }
+  }
+  return res;
+}
 
 
 PLLUnrootedTree::PLLUnrootedTree(const std::vector<const char*> &labels,

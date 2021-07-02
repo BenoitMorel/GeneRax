@@ -6,6 +6,7 @@
 #include <IO/LibpllParsers.hpp>
 #include <IO/Logger.hpp>
 #include <IO/FileSystem.hpp>
+#include <trees/PLLUnrootedTree.hpp>
 extern "C" {
 #include <pll.h>
 }
@@ -135,21 +136,21 @@ void GeneSpeciesMapping::buildFromTrees(const std::string &geneTreeStrOrFile)
 {
   std::string str = geneTreeStrOrFile;
   FileSystem::replaceWithContentIfFile(str);
-  pll_utree_t *tree = LibpllParsers::readNewickFromStr(str);
-  auto nodes = tree->tip_count + tree->inner_count;
-  for (unsigned int i = 0; i < nodes; ++i) {
-    auto node = tree->nodes[i];
-    if (node->next) 
-      continue;
-    std::string label(node->label);
+  auto tree = PLLUnrootedTree::buildFromStrOrFile(geneTreeStrOrFile); 
+  auto labels = tree->getLabels();
+  fillFromGeneLabels(labels);
+}
+
+void GeneSpeciesMapping::fillFromGeneLabels(const std::unordered_set<std::string> &labels)
+{
+  for (const auto &label: labels) {
     std::string species;
     std::string gene;
     auto pos = label.find_first_of('_');
     species = label.substr(0, pos);
     gene = label; //label.substr(pos + 1);
     _map[gene] = species;
-  } 
-  pll_utree_destroy(tree, nullptr);
+  }
 }
   
 std::unordered_set<std::string> GeneSpeciesMapping::getCoveredSpecies() const
