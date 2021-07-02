@@ -69,7 +69,7 @@ private:
   RecModelInfo _info;
   std::string _outputDir;
   double _bestRecLL;
-
+  SpeciesSearchState _searchState;
   bool testPruning(unsigned int prune,
     unsigned int regraft);
   void newBestTreeCallback(double newLL);

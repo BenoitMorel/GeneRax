@@ -14,7 +14,7 @@
 #include <trees/Clade.hpp>
 #include <util/Constants.hpp>
 #include <util/types.hpp>
-
+#include <search/SpeciesSearchCommon.hpp>
 
 struct EvaluatedMove {
   unsigned int prune;
@@ -139,16 +139,13 @@ private:
   SpeciesTreeSearchParams _searchParams;
   unsigned int _okForClades;
   unsigned int _koForClades;
-  AverageStream _averageGeneRootDiff;
-  bool _hardToFindBetter;
+  SpeciesSearchState _searchState;
   OptimizationCriteria _optimizationCriteria;
 private:
   void _computeAllGeneClades();
   unsigned int _unsupportedCladesNumber();
   ModelParameters computeOptimizedRates(bool thorough); 
   void updateEvaluations();
-  bool testPruning(unsigned int prune,
-    unsigned int regraft);
   void newBestTreeCallback();
   void beforeTestCallback();
   void rollbackCallback();
@@ -157,8 +154,6 @@ private:
   void reGenerateEvaluations();
   void optimizeGeneRoots();
   double transferSearch();
-  double transferRound(MovesBlackList &blacklist, 
-      bool &maxImprovementsReached);
   double sprSearch(unsigned int radius);
   void setOptimizationCriteria(OptimizationCriteria criteria) {
     _optimizationCriteria = criteria;

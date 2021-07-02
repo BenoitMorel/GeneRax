@@ -135,10 +135,9 @@ double GTSpeciesTreeOptimizer::computeRecLikelihood()
 double GTSpeciesTreeOptimizer::sprSearch(unsigned int radius)
 {
   double bestLL = computeRecLikelihood();
-  AverageStream useless;
   if (SpeciesSPRSearch::SPRSearch(*_speciesTree,
       _evaluator,
-      useless,
+      _searchState,
       radius,
       bestLL,
       bestLL)) {
@@ -207,11 +206,10 @@ double GTSpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
 double GTSpeciesTreeOptimizer::transferSearch()
 {
   double bestLL = computeRecLikelihood();
-  AverageStream useless;
   if (SpeciesTransferSearch::transferSearch(
-        *_speciesTree,
+      *_speciesTree,
       _evaluator,
-      useless,
+      _searchState,
       bestLL,
       bestLL)) {
     newBestTreeCallback(bestLL);

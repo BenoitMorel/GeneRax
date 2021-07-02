@@ -3,13 +3,14 @@
 class SpeciesTree;
 class SpeciesTreeLikelihoodEvaluatorInterface;
 class AverageStream;
+class SpeciesSearchState;
 
 class SpeciesTransferSearch {
 public:
   
   static bool transferSearch(SpeciesTree &speciesTree,
     SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
-    AverageStream &averageFastDiff,
+    SpeciesSearchState &searchState,
     double previousBestLL,
     double &newBestLL);
 

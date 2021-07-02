@@ -58,7 +58,7 @@ bool SpeciesSearchCommon::testSPR(SpeciesTree &speciesTree,
     SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
     unsigned int prune,
     unsigned int regraft,
-    AverageStream &averageFastDiff,
+    SpeciesSearchState &searchState,
     double bestLL,
     double &testedTreeLL
     )
@@ -71,10 +71,10 @@ bool SpeciesSearchCommon::testSPR(SpeciesTree &speciesTree,
   if (evaluation.providesFastLikelihoodImpl()) {
     // first test with approximative likelihood
     approxLL = evaluation.computeLikelihoodFast();
-    if (averageFastDiff.isSignificant()) {
+    if (searchState.averageApproxError.isSignificant()) {
       //  Decide whether we can already
       // discard the move
-      auto epsilon = 2.0 * averageFastDiff.getAverage();
+      auto epsilon = 2.0 * searchState.averageApproxError.getAverage();
       runExactTest &= (approxLL + epsilon > bestLL );
     } 
   }
@@ -82,7 +82,7 @@ bool SpeciesSearchCommon::testSPR(SpeciesTree &speciesTree,
     // we test the move with exact likelihood
     testedTreeLL = evaluation.computeLikelihood();
     if (evaluation.providesFastLikelihoodImpl()) {
-      averageFastDiff.addValue(testedTreeLL - approxLL);
+      searchState.averageApproxError.addValue(testedTreeLL - approxLL);
     }
     if (testedTreeLL > bestLL) {
       // Better tree found! Do not rollback, and return
@@ -97,7 +97,7 @@ bool SpeciesSearchCommon::testSPR(SpeciesTree &speciesTree,
 
 bool SpeciesSearchCommon::veryLocalSearch(SpeciesTree &speciesTree,
     SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
-    AverageStream &averageFastDiff,
+    SpeciesSearchState &searchState,
     unsigned int spid,
     double previousBestLL,
     double &newBestLL)
@@ -115,12 +115,12 @@ bool SpeciesSearchCommon::veryLocalSearch(SpeciesTree &speciesTree,
         regrafts);
     for (auto regraft: regrafts) {
       double testedLL = 0.0;
-      if (testSPR(speciesTree, evaluation, prune, regraft, averageFastDiff, previousBestLL, testedLL)) {
+      if (testSPR(speciesTree, evaluation, prune, regraft, searchState, previousBestLL, testedLL)) {
         newBestLL = testedLL;
         Logger::timed << "\tfound better* (LL=" 
             << newBestLL << ", hash=" << 
             speciesTree.getHash() << ")" << std::endl;
-        veryLocalSearch(speciesTree, evaluation, averageFastDiff,
+        veryLocalSearch(speciesTree, evaluation, searchState,
             prune, newBestLL, newBestLL);
         return true;
       }

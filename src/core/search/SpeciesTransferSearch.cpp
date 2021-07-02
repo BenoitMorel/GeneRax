@@ -57,14 +57,14 @@ struct MovesBlackList {
 
 static bool transferRound(SpeciesTree &speciesTree,
   SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
-  AverageStream &averageFastDiff,
+  SpeciesSearchState &searchState,
   double previousBestLL,
   double &newBestLL,
   MovesBlackList &blacklist,
   bool &maxImprovementsReached)
 {
+  newBestLL = previousBestLL;
   maxImprovementsReached = false;
-  unsigned int reconciliationSamples = 0;
   unsigned int minTransfers = 1;
   auto hash1 = speciesTree.getNodeIndexHash(); 
   TransferFrequencies frequencies;
@@ -125,7 +125,7 @@ static bool transferRound(SpeciesTree &speciesTree,
       trials++;
       double testedLL = 0.0;
       if (SpeciesSearchCommon::testSPR(speciesTree, evaluation, 
-            transferMove.prune, transferMove.regraft, averageFastDiff, 
+            transferMove.prune, transferMove.regraft, searchState, 
             newBestLL, testedLL)) {
         newBestLL = testedLL;
         failures = 0;
@@ -148,18 +148,16 @@ static bool transferRound(SpeciesTree &speciesTree,
         // we enough improvements to recompute the new transfers
         hash1 = speciesTree.getNodeIndexHash(); 
         assert(ParallelContext::isIntEqual(hash1));
-        /*       
-        if (_hardToFindBetter) {
+        if (!searchState.farFromPlausible) {
           if (SpeciesSearchCommon::veryLocalSearch(speciesTree,
-              _evaluator,
-              _averageGeneRootDiff,
+              evaluation,
+              searchState,
               transferMove.prune,
-              _lastRecLL,
-              _lastRecLL)) {
-            newBestTreeCallback();
+              newBestLL,
+              testedLL)) {
+            newBestLL = testedLL;
           }
         }
-        */
       } else {
         failures++;
       }
@@ -167,15 +165,11 @@ static bool transferRound(SpeciesTree &speciesTree,
       maxImprovementsReached = improvements > stopAfterImprovements;
       stop |= maxImprovementsReached;
       if (stop) {
-        if (!maxImprovementsReached) {
-          Logger::info << "Todo: implement hardToFindBetter " << std::endl;
+        if (searchState.farFromPlausible && !maxImprovementsReached) {
+          Logger::timed << 
+            "[Species search] Switch to hardToFindBetter mode" << std::endl;
+          searchState.farFromPlausible = false;
         }
-        /*
-        if (!_hardToFindBetter && !maxImprovementsReached) {
-          Logger::timed << "[Species search] Switch to hardToFindBetter mode" << std::endl;
-          _hardToFindBetter = true;
-        }
-        */
         return improvements > 1;
       }
     }  
@@ -187,7 +181,7 @@ static bool transferRound(SpeciesTree &speciesTree,
 bool SpeciesTransferSearch::transferSearch(
   SpeciesTree &speciesTree,
   SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
-  AverageStream &averageFastDiff,
+  SpeciesSearchState &searchState,
   double previousBestLL,
   double &newBestLL)
 {
@@ -205,7 +199,7 @@ bool SpeciesTransferSearch::transferSearch(
       Logger::info << "TODO: OPTIMIZE RATES" << std::endl;
       //newBestLL = hack.optimizeDTLRates();
     }
-    stop = !transferRound(speciesTree, evaluation, averageFastDiff, 
+    stop = !transferRound(speciesTree, evaluation, searchState, 
         previousBestLL, newBestLL, blacklist, maxImprovementsReached);
     if (!stop) {
       better = true;

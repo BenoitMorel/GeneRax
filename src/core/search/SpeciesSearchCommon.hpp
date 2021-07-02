@@ -20,6 +20,11 @@ struct RootLikelihoods {
   std::unordered_map<std::string, double> idToLL;
 };
 
+/**
+ *  Interface for classes that are used by the search
+ *  algorithms to evaluate the reconciliation likelihood and 
+ *  to describe the reconciliation model.
+ */
 class SpeciesTreeLikelihoodEvaluatorInterface {
 public:
   virtual ~SpeciesTreeLikelihoodEvaluatorInterface() {};
@@ -69,6 +74,45 @@ public:
   virtual bool pruneSpeciesTree() const = 0;
 };
 
+/**
+ *  Structure that describes the current state of the
+ *  species tree search, to decide which strategy to adopt:
+ *  for instance, when the tree is far from being plausible,
+ *  we apply a less thorough but faster search strategy.
+ */
+struct SpeciesSearchState {
+public:
+  SpeciesSearchState(): farFromPlausible(true) {}
+  /**
+   *  Set to true when the tree is far from being plausible
+   *  (in the early stage of the search after starting from
+   *  a random tree for instance).
+   *  
+   *  When set to true, the search strategy can choose to
+   *  apply less thorough optimizations and to favor speed
+   *  over small tree improvments.
+   *
+   *  Both the search algorithm functions and their caller 
+   *  can update this variable.
+   */
+  bool farFromPlausible;
+
+  /**
+   *  Stores the average difference between the average and
+   *  the exact likelihood values. This average is updated
+   *  in a streaming fashion everytime that both the average
+   *  and exact likelihood are computed during the search
+   *  (see for instance SpeciesSearchCommon::testSPR)
+   *  It is then used to decide if the approximated likelihood
+   *  score is good enough to try estimating the exact score.
+   *  
+   *  This is only relevant when 
+   *  SpeciesTreeLikelihoodEvaluatorInterface::providesFastLikelihoodImpl
+   *  is set to true
+   */
+  AverageStream averageApproxError;
+};
+
 class SpeciesSearchCommon {
 public:
   /**
@@ -80,7 +124,7 @@ public:
     SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
     unsigned int prune,
     unsigned int regraft,
-    AverageStream &averageFastDiff,
+    SpeciesSearchState &searchState,
     double bestLL,
     double &testedTreeLL
     );
@@ -94,7 +138,7 @@ public:
    */
   static bool veryLocalSearch(SpeciesTree &speciesTree,
     SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
-    AverageStream &averageFastDiff,
+    SpeciesSearchState &searchState,
     unsigned int spid,
     double previousBestLL,
     double &newBestLL);

@@ -5,7 +5,7 @@
 
 bool SpeciesSPRSearch::SPRRound(SpeciesTree &speciesTree,
   SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
-  AverageStream &averageFastDiff,
+  SpeciesSearchState &searchState,
   unsigned int radius,
   double previousBestLL,
   double &newBestLL)
@@ -27,7 +27,7 @@ bool SpeciesSPRSearch::SPRRound(SpeciesTree &speciesTree,
     for (auto regraft: regrafts) {
       double testedLL = 0.0;
       if (SpeciesSearchCommon::testSPR(speciesTree, evaluation, 
-            prune, regraft, averageFastDiff, newBestLL, testedLL)) {
+            prune, regraft, searchState, newBestLL, testedLL)) {
         better = true;
         newBestLL = testedLL;
         auto pruneNode = speciesTree.getNode(prune);
@@ -43,7 +43,7 @@ bool SpeciesSPRSearch::SPRRound(SpeciesTree &speciesTree,
         assert(ParallelContext::isIntEqual(hash1));
         if (SpeciesSearchCommon::veryLocalSearch(speciesTree,
             evaluation,
-            averageFastDiff,
+            searchState,
             prune,
             newBestLL,
             testedLL)) {
@@ -57,7 +57,7 @@ bool SpeciesSPRSearch::SPRRound(SpeciesTree &speciesTree,
 
 bool SpeciesSPRSearch::SPRSearch(SpeciesTree &speciesTree,
   SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
-  AverageStream &averageFastDiff,
+  SpeciesSearchState &searchState,
   unsigned int radius,
   double previousBestLL,
   double &newBestLL)
@@ -68,7 +68,7 @@ bool SpeciesSPRSearch::SPRSearch(SpeciesTree &speciesTree,
     << radius << ", bestLL=" << previousBestLL  
     << ", hash=" << speciesTree.getHash() << ")" <<std::endl;
   bool better = false;
-  while (SPRRound(speciesTree, evaluation, averageFastDiff,
+  while (SPRRound(speciesTree, evaluation, searchState,
         radius, previousBestLL, newBestLL)) {
     previousBestLL = newBestLL;
     better = true;
