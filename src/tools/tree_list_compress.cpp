@@ -72,7 +72,40 @@ public:
     }
   }
 
+  void dumpCompressed(const std::string &output) {
+    std::ofstream os(output, std::ios::binary);
+    // write magic string
+    std::string magic = "magicctl";
+    os.write(magic.c_str(), magic.size());
+    // write labels
+    unsigned int leafNumber = _idToLabel.size();
+    writeUInt(leafNumber, os);
+    for (auto &label: _idToLabel) {
+      writeString(label, os);
+    }
+    // write subtree identifiers
+    writeUInt(_subtreeChildren.size(), os);
+    for (unsigned int i = 0; i < _subtreeChildren.size(); ++i) {
+      writeUInt(i, os);
+      writeUInt(_subtreeChildren[i].first, os);
+      writeUInt(_subtreeChildren[i].second, os);
+    }
+  }
+
+  void loadCompressed(const std::string &inputFile) {
+    std::ifstream is(inputFile, std::ios::binary);
+  }
+
 private:
+  static void writeUInt(unsigned int i, std::ofstream &os) {
+    os.write((char *)&i, sizeof(unsigned int));
+  }
+
+  static void writeString(const std::string &str, std::ofstream &os) {
+    writeUInt(str.size(), os);
+    os.write(str.c_str(), str.size());
+  }
+  
   // todo: we could cache the aux newicks
   std::string getNewickAux(unsigned int id) {
     if (id < _idToLabel.size()) {
@@ -152,7 +185,8 @@ int main(int argc, char** argv)
   std::string treeListFile(argv[1]);  
   std::string output(argv[2]);
   CompressedTreeList treeList(treeListFile);
-  treeList.dumpUncompressed(output);
+  treeList.dumpUncompressed("plop1nobl.newick");
+  treeList.dumpCompressed(output);
 
   return 0;
 }
