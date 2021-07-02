@@ -49,7 +49,7 @@ static void initStartingSpeciesTree(GeneRaxInstance &instance)
     // add labels to internal nodes
     LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
   } else {
-    Routines::computeInitialSpeciesTree(instance.initialFamilies,
+    Routines::computeInitialSpeciesTree(instance.currentFamilies,
         instance.args.output,
         instance.args.speciesTreeAlgorithm)->save(instance.speciesTree);
 

@@ -6,6 +6,7 @@
 #include <IO/Families.hpp>
 #include <trees/PLLUnrootedTree.hpp>
 #include <algorithm>
+#include <parallelization//ParallelContext.hpp>
 
 void fillDistancesRec(pll_unode_t *currentNode, 
     bool useBL,
@@ -47,6 +48,10 @@ static void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
     bool ustar)
 {
   unsigned int speciesNumber = distances.size();
+  if (speciesNumber < 3) {
+    Logger::error << "Found less than 3 species, please check that the genes cover at least 3 species or that the gene-species mappings are correct" << std::endl;
+    ParallelContext::abort(1);
+  }
   std::vector<double>zeros(speciesNumber, 0.0);
   DistanceMatrix distancesToAdd(speciesNumber, zeros);
   DistanceMatrix distancesDenominatorToAdd(speciesNumber, zeros);
