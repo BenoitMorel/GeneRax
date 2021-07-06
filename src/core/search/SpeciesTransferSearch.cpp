@@ -202,7 +202,6 @@ bool SpeciesTransferSearch::transferSearch(
     }
     stop = !transferRound(speciesTree, evaluation, searchState, 
         newBestLL, newBestLL, blacklist, maxImprovementsReached);
-    Logger::info << "end of loop: " << newBestLL << " " << evaluation.computeLikelihood() << std::endl;
     if (!stop) {
       better = true;
     }

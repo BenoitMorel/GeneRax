@@ -56,6 +56,7 @@ public:
       const std::string &outputDir);
 
   double computeRecLikelihood();
+  void optimize();
   double sprSearch(unsigned int radius);
   double rootSearch(unsigned int maxDepth);
   double transferSearch();

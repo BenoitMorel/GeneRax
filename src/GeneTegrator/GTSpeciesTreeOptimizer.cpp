@@ -4,6 +4,11 @@
 #include <search/SpeciesSPRSearch.hpp>
 #include <search/SpeciesTransferSearch.hpp>
 
+static bool testAndSwap(size_t &hash1, size_t &hash2) {
+  std::swap(hash1, hash2);
+  return hash1 != hash2;
+}
+
 double GTSpeciesTreeLikelihoodEvaluator::computeLikelihood()
 {
   return computeLikelihoodFast();
@@ -120,6 +125,36 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   Logger::timed << "Initial ll=" << computeRecLikelihood() << std::endl;
 }
 
+void GTSpeciesTreeOptimizer::optimize()
+{
+  size_t hash1 = 0;
+  size_t hash2 = 0;
+  unsigned int index = 0;
+  /**
+   *  Alternate transfer search and normal
+   *  SPR search, until one does not find
+   *  a better tree. Run each at least once.
+   */
+  //if (!_searchState.farFromPlausible) {
+    _bestRecLL = computeRecLikelihood();
+    rootSearch(3);
+    //optimizeDTLRates();
+  //}
+  do {
+    if (index++ % 2 == 0) {
+      transferSearch();
+    } else {
+      sprSearch(1);
+    }
+    if (!_searchState.farFromPlausible) {
+      rootSearch(3);
+    }
+    hash1 = _speciesTree->getHash();
+  }
+  while(testAndSwap(hash1, hash2));
+  rootSearch(-1);
+
+}
 
 double GTSpeciesTreeOptimizer::computeRecLikelihood()
 {

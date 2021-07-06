@@ -86,11 +86,15 @@ void run( GeneTegratorArguments &args)
       args.output);
   auto ll = speciesTreeOptimizer.computeRecLikelihood();
   Logger::info << "total ll=" << ll << std::endl;
+  
+  speciesTreeOptimizer.optimize();
+  /*
   ll = speciesTreeOptimizer.rootSearch(3);
   ll = speciesTreeOptimizer.transferSearch();
   ll = speciesTreeOptimizer.sprSearch(1);
   
   Logger::info << "total ll=" << ll << std::endl;
+  */
 }
 
 int genetegrator_main(int argc, char** argv, void* comm)
