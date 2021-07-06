@@ -170,11 +170,11 @@ static bool transferRound(SpeciesTree &speciesTree,
             "[Species search] Switch to hardToFindBetter mode" << std::endl;
           searchState.farFromPlausible = false;
         }
-        return improvements > 1;
+        return improvements > 0;
       }
     }  
   }
-  return improvements > 1;
+  return improvements > 0;
 }
 
 
