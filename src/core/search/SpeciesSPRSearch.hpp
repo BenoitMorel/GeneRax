@@ -11,16 +11,12 @@ public:
   static bool SPRRound(SpeciesTree &speciesTree,
     SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
     SpeciesSearchState &searchState,
-    unsigned int radius,
-    double previousBestLL,
-    double &newBestLL);
+    unsigned int radius);
   
   static bool SPRSearch(SpeciesTree &speciesTree,
     SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
     SpeciesSearchState &searchState,
-    unsigned int radius,
-    double previousBestLL,
-    double &newBestLL);
+    unsigned int radius);
 
 };
 

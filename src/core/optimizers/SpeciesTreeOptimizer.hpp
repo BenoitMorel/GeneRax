@@ -114,7 +114,7 @@ public:
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
   const SpeciesTree &getSpeciesTree() const {return *_speciesTree;} 
 
-  double getReconciliationLikelihood() const {return _bestRecLL;}
+  double getReconciliationLikelihood() const {return _searchState.bestLL;}
 
   double computeRecLikelihood();
 
@@ -130,8 +130,6 @@ private:
   std::vector<pll_unode_t*> _previousGeneRoots;
   Families _initialFamilies;
   std::string _outputDir;
-  double _lastRecLL;
-  double _bestRecLL;
   bool _firstOptimizeRatesCall;
   bool _userDTLRates;
   ModelParameters _modelRates;
@@ -146,13 +144,9 @@ private:
   unsigned int _unsupportedCladesNumber();
   ModelParameters computeOptimizedRates(bool thorough); 
   void updateEvaluations();
-  void newBestTreeCallback();
-  void beforeTestCallback();
-  void rollbackCallback();
   std::string getSpeciesTreePath(const std::string &speciesId);
   void setGeneTreesFromFamilies(const Families &families);
   void reGenerateEvaluations();
-  void optimizeGeneRoots();
   double transferSearch();
   double sprSearch(unsigned int radius);
   void setOptimizationCriteria(OptimizationCriteria criteria) {

@@ -10,9 +10,7 @@ public:
   
   static bool transferSearch(SpeciesTree &speciesTree,
     SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
-    SpeciesSearchState &searchState,
-    double previousBestLL,
-    double &newBestLL);
+    SpeciesSearchState &searchState);
 
 
 };

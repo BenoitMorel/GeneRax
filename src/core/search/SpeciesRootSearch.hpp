@@ -2,6 +2,8 @@
 
 #include <search/SpeciesSearchCommon.hpp>
 
+class SpeciesSearchState;
+
 class SpeciesRootSearch {
 public:
   /**
@@ -14,6 +16,7 @@ public:
   static double rootSearch(
       SpeciesTree &speciesTree,
       SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
+      SpeciesSearchState &searchState,
       unsigned int maxDepth,
       RootLikelihoods *rootLikelihoods = nullptr,
       TreePerFamLLVec *treePerFamLLVec = nullptr); 

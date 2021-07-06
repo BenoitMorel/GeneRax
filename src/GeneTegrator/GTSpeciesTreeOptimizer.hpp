@@ -55,7 +55,6 @@ public:
       const RecModelInfo &info,
       const std::string &outputDir);
 
-  double computeRecLikelihood();
   void optimize();
   double sprSearch(unsigned int radius);
   double rootSearch(unsigned int maxDepth);
@@ -69,11 +68,7 @@ private:
   GTSpeciesTreeLikelihoodEvaluator _evaluator;
   RecModelInfo _info;
   std::string _outputDir;
-  double _bestRecLL;
   SpeciesSearchState _searchState;
-  bool testPruning(unsigned int prune,
-    unsigned int regraft);
-  void newBestTreeCallback(double newLL);
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
 };

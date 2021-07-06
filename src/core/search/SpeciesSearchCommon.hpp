@@ -76,14 +76,34 @@ public:
 
 /**
  *  Structure that describes the current state of the
- *  species tree search, to decide which strategy to adopt:
- *  for instance, when the tree is far from being plausible,
- *  we apply a less thorough but faster search strategy.
+ *  species tree search
  */
 struct SpeciesSearchState {
 public:
-  SpeciesSearchState(): farFromPlausible(true) {}
+  SpeciesSearchState(SpeciesTree &speciesTree,
+      const std::string &pathToBestSpeciesTree): 
+    speciesTree(speciesTree),
+    pathToBestSpeciesTree(pathToBestSpeciesTree),
+    farFromPlausible(true)
+    {}
+  
   /**
+   *  Reference to the current species tree
+   */
+  SpeciesTree &speciesTree;
+  
+  /**
+   *  The search algorithm will save the current species tree
+   *  at this location after each likelihood improvement
+   */
+  std::string pathToBestSpeciesTree;
+
+  /**
+   *  The likelihood of the best species tree
+   */
+  double bestLL;
+        
+   /**
    *  Set to true when the tree is far from being plausible
    *  (in the early stage of the search after starting from
    *  a random tree for instance).
@@ -111,6 +131,9 @@ public:
    *  is set to true
    */
   AverageStream averageApproxError;
+
+
+  void betterTreeCallback(double ll);
 };
 
 class SpeciesSearchCommon {
@@ -122,12 +145,9 @@ public:
    */
   static bool testSPR(SpeciesTree &speciesTree,
     SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
-    unsigned int prune,
-    unsigned int regraft,
     SpeciesSearchState &searchState,
-    double bestLL,
-    double &testedTreeLL
-    );
+    unsigned int prune,
+    unsigned int regraft);
 
   /**
    *  Try SPR moves with a small radius around the species
@@ -139,9 +159,7 @@ public:
   static bool veryLocalSearch(SpeciesTree &speciesTree,
     SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
     SpeciesSearchState &searchState,
-    unsigned int spid,
-    double previousBestLL,
-    double &newBestLL);
+    unsigned int spid);
   
 };
 

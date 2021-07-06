@@ -14,6 +14,17 @@
 #include <search/SpeciesSPRSearch.hpp>
 #include <search/SpeciesTransferSearch.hpp>
 
+static std::unique_ptr<SpeciesTree> makeSpeciesTree(const std::string &speciesTreeFile,
+    const Families &initialFamilies)
+{
+  if (speciesTreeFile == "random") {
+    return std::make_unique<SpeciesTree>(initialFamilies);
+  } else {
+    return std::make_unique<SpeciesTree>(speciesTreeFile);
+  }
+
+}
+
 SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile, 
     const Families &initialFamilies, 
     const RecModelInfo &recModelInfo,
@@ -21,30 +32,25 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
     bool userDTLRates,
     const std::string &outputDir,
     const SpeciesTreeSearchParams &searchParams):
-  _speciesTree(nullptr),
+  _speciesTree(makeSpeciesTree(speciesTreeFile,
+        initialFamilies)),
   _geneTrees(nullptr),
   _initialFamilies(initialFamilies),
   _outputDir(outputDir),
-  _lastRecLL(-std::numeric_limits<double>::infinity()),
-  _bestRecLL(-std::numeric_limits<double>::infinity()),
   _firstOptimizeRatesCall(true),
   _userDTLRates(userDTLRates),
   _modelRates(startingRates, 1, recModelInfo),
   _searchParams(searchParams),
   _okForClades(0),
   _koForClades(0),
+  _searchState(*_speciesTree, 
+      Paths::getSpeciesTreeFile(_outputDir, "inferred_species_tree.newick")),
   _optimizationCriteria(ReconciliationLikelihood)
 {
 
   _modelRates.info.perFamilyRates = false; // we set it back a few
                                            // lines later
-  if (speciesTreeFile == "random") {
-    _speciesTree = std::make_unique<SpeciesTree>(initialFamilies);
-    setGeneTreesFromFamilies(initialFamilies);
-  } else {
-    _speciesTree = std::make_unique<SpeciesTree>(speciesTreeFile);
-    setGeneTreesFromFamilies(initialFamilies);
-  }
+  setGeneTreesFromFamilies(initialFamilies);
   _modelRates = ModelParameters(startingRates, 
       _geneTrees->getTrees().size(),
       recModelInfo);
@@ -68,7 +74,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
       OptimizationCriteria criteria)
 {
   setOptimizationCriteria(criteria);
-  _bestRecLL = computeRecLikelihood();
+  computeRecLikelihood();
   size_t hash1 = 0;
   size_t hash2 = 0;
   unsigned int index = 0;
@@ -93,7 +99,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
      */
     if (!_searchState.farFromPlausible) {
       optimizeDTLRates();
-      _bestRecLL = computeRecLikelihood();
+      computeRecLikelihood();
       rootSearch(_searchParams.rootSmallRadius, false);
     }
     do {
@@ -114,7 +120,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
     rootSearch(_searchParams.rootBigRadius, true);
     break;
   case SpeciesSearchStrategy::EVAL:
-    _bestRecLL = optimizeDTLRates(true);
+    optimizeDTLRates(true);
     Logger::info << "Reconciliation likelihood: " << computeRecLikelihood() << std::endl;
     break;
   case SpeciesSearchStrategy::SKIP:
@@ -139,6 +145,7 @@ double SpeciesTreeOptimizer::rootSearch(unsigned int maxDepth,
   SpeciesRootSearch::rootSearch(
       *_speciesTree,
       _evaluator,
+      _searchState,
       maxDepth,
       &rootLikelihoods,
       (outputConsel ? &treePerFamLLVec : nullptr)
@@ -194,32 +201,23 @@ std::vector<double> SpeciesTreeOptimizer::_getSupport()
 
 double SpeciesTreeOptimizer::transferSearch()
 {
-  double bestLL = computeRecLikelihood();
-  if (SpeciesTransferSearch::transferSearch(
-        *_speciesTree,
-      _evaluator,
-      _searchState,
-      bestLL,
-      _lastRecLL)) {
-    newBestTreeCallback();
-  }
-  Logger::timed << "After normal search: LL=" << _bestRecLL << std::endl;
-  return _bestRecLL;
+  SpeciesTransferSearch::transferSearch(
+      *_speciesTree,
+    _evaluator,
+    _searchState);
+  Logger::timed << "After normal search: LL=" << _searchState.bestLL << std::endl;
+  return _searchState.bestLL;
 }
 
 double SpeciesTreeOptimizer::sprSearch(unsigned int radius)
 {
-  double bestLL = computeRecLikelihood();
-  if (SpeciesSPRSearch::SPRSearch(*_speciesTree,
-      _evaluator,
-      _searchState,
-      radius,
-      bestLL,
-      _lastRecLL)) {
-    newBestTreeCallback();
-  }
-  Logger::timed << "After normal search: LL=" << _bestRecLL << std::endl;
-  return _bestRecLL;
+  SpeciesSPRSearch::SPRSearch(*_speciesTree,
+    _evaluator,
+    _searchState,
+    radius);
+  Logger::timed << "After normal search: LL=" 
+    << _searchState.bestLL << std::endl;
+  return _searchState.bestLL;
 }
   
 ModelParameters SpeciesTreeOptimizer::computeOptimizedRates(bool thorough) 
@@ -290,12 +288,6 @@ double SpeciesTreeOptimizer::computeRecLikelihood()
 
 }
 
-void SpeciesTreeOptimizer::newBestTreeCallback()
-{
-  saveCurrentSpeciesTreeId();
-  _bestRecLL = _lastRecLL;
-}
-  
 void SpeciesTreeOptimizer::setGeneTreesFromFamilies(const Families &families)
 {
   _geneTrees = std::make_unique<PerCoreGeneTrees>(families, true);
@@ -322,31 +314,7 @@ void SpeciesTreeOptimizer::updateEvaluations()
       _modelRates.info.pruneSpeciesTree);
 }
   
-void SpeciesTreeOptimizer::beforeTestCallback()
-{
-  if (_modelRates.info.rootedGeneTree) {
-    for (unsigned int i = 0; i < _evaluations.size(); ++i) {
-      _previousGeneRoots[i] = _evaluations[i]->getRoot();
-    }
-  }
-}
 
-void SpeciesTreeOptimizer::rollbackCallback()
-{
-  if (_modelRates.info.rootedGeneTree) {
-    for (unsigned int i = 0; i < _evaluations.size(); ++i) {
-      _evaluations[i]->setRoot(_previousGeneRoots[i]);
-    }
-  }
-}
-  
-void SpeciesTreeOptimizer::optimizeGeneRoots()
-{
-  for (unsigned int i = 0; i < _evaluations.size(); ++i) {
-    _evaluations[i]->setRoot(nullptr);
-  }
-  
-}
 
 void SpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
 {
@@ -364,9 +332,7 @@ std::string getCladesSetPath(const std::string &outputDir,
 
 void SpeciesTreeOptimizer::_computeAllGeneClades()
 {
-  //Logger::timed << "Computing gene clades..." << std::endl;
   ParallelContext::barrier();
-  
   // Compute local clades
   auto speciesLabelToInt = _speciesTree->getTree().getLabelToIntMap();
   CladeSet allClades; 
@@ -396,7 +362,6 @@ void SpeciesTreeOptimizer::_computeAllGeneClades()
   assert(ParallelContext::isIntEqual(_geneClades.size()));
   ParallelContext::barrier();
   std::remove(getCladesSetPath(_outputDir, ParallelContext::getRank()).c_str());
-  //Logger::timed << "Number number of supported bipartitions: " << _geneClades.size()  << std::endl;
 }
 
 

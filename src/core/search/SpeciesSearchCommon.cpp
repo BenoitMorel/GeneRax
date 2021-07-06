@@ -54,13 +54,20 @@ void RootLikelihoods::fillTree(PLLRootedTree &tree)
     }
   }
 }
+
+void SpeciesSearchState::betterTreeCallback(double ll)
+{
+  Logger::info << "betterTreeCallback " << ll << std::endl;
+  bool masterRankOnly = true;
+  speciesTree.saveToFile(pathToBestSpeciesTree, masterRankOnly);
+  bestLL = ll;
+}
+
 bool SpeciesSearchCommon::testSPR(SpeciesTree &speciesTree,
     SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
-    unsigned int prune,
-    unsigned int regraft,
     SpeciesSearchState &searchState,
-    double bestLL,
-    double &testedTreeLL
+    unsigned int prune,
+    unsigned int regraft
     )
 {
   evaluation.pushRollback();
@@ -75,16 +82,17 @@ bool SpeciesSearchCommon::testSPR(SpeciesTree &speciesTree,
       //  Decide whether we can already
       // discard the move
       auto epsilon = 2.0 * searchState.averageApproxError.getAverage();
-      runExactTest &= (approxLL + epsilon > bestLL );
+      runExactTest &= (approxLL + epsilon > searchState.bestLL );
     } 
   }
   if (runExactTest) {
     // we test the move with exact likelihood
-    testedTreeLL = evaluation.computeLikelihood();
+    double testedTreeLL = evaluation.computeLikelihood();
     if (evaluation.providesFastLikelihoodImpl()) {
       searchState.averageApproxError.addValue(testedTreeLL - approxLL);
     }
-    if (testedTreeLL > bestLL) {
+    if (testedTreeLL > searchState.bestLL) {
+      searchState.betterTreeCallback(testedTreeLL);
       // Better tree found! Do not rollback, and return
       return true;
     }
@@ -98,15 +106,12 @@ bool SpeciesSearchCommon::testSPR(SpeciesTree &speciesTree,
 bool SpeciesSearchCommon::veryLocalSearch(SpeciesTree &speciesTree,
     SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
     SpeciesSearchState &searchState,
-    unsigned int spid,
-    double previousBestLL,
-    double &newBestLL)
+    unsigned int spid)
 {
 
   const unsigned int radius = 2;
   std::vector<unsigned int> prunes;
   prunes.push_back(spid);
-  unsigned int trials = 0;
   for (auto prune: prunes) {
     std::vector<unsigned int> regrafts;
     SpeciesTreeOperator::getPossibleRegrafts(speciesTree, 
@@ -114,14 +119,12 @@ bool SpeciesSearchCommon::veryLocalSearch(SpeciesTree &speciesTree,
         radius, 
         regrafts);
     for (auto regraft: regrafts) {
-      double testedLL = 0.0;
-      if (testSPR(speciesTree, evaluation, prune, regraft, searchState, previousBestLL, testedLL)) {
-        newBestLL = testedLL;
+      if (testSPR(speciesTree, evaluation, searchState, prune, regraft)) {
         Logger::timed << "\tfound better* (LL=" 
-            << newBestLL << ", hash=" << 
+            << searchState.bestLL << ", hash=" << 
             speciesTree.getHash() << ")" << std::endl;
         veryLocalSearch(speciesTree, evaluation, searchState,
-            prune, newBestLL, newBestLL);
+            prune);
         return true;
       }
     }

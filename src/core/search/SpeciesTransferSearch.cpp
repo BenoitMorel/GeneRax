@@ -58,12 +58,9 @@ struct MovesBlackList {
 static bool transferRound(SpeciesTree &speciesTree,
   SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
   SpeciesSearchState &searchState,
-  double previousBestLL,
-  double &newBestLL,
   MovesBlackList &blacklist,
   bool &maxImprovementsReached)
 {
-  newBestLL = previousBestLL;
   maxImprovementsReached = false;
   unsigned int minTransfers = 1;
   auto hash1 = speciesTree.getNodeIndexHash(); 
@@ -123,11 +120,8 @@ static bool transferRound(SpeciesTree &speciesTree,
     if (SpeciesTreeOperator::canApplySPRMove(speciesTree, transferMove.prune, transferMove.regraft)) {
       blacklist.blacklist(transferMove);
       trials++;
-      double testedLL = 0.0;
       if (SpeciesSearchCommon::testSPR(speciesTree, evaluation, 
-            transferMove.prune, transferMove.regraft, searchState, 
-            newBestLL, testedLL)) {
-        newBestLL = testedLL;
+            searchState, transferMove.prune, transferMove.regraft)) {
         failures = 0;
         improvements++;
         alreadyPruned.insert(transferMove.prune);
@@ -137,7 +131,7 @@ static bool transferRound(SpeciesTree &speciesTree,
           << ", trial: " 
           << trials 
           << ", ll=" 
-          << newBestLL 
+          << searchState.bestLL 
           << ", hash=" 
           << speciesTree.getHash() 
           << ") "  
@@ -149,15 +143,10 @@ static bool transferRound(SpeciesTree &speciesTree,
         hash1 = speciesTree.getNodeIndexHash(); 
         assert(ParallelContext::isIntEqual(hash1));
         if (!searchState.farFromPlausible) {
-          if (SpeciesSearchCommon::veryLocalSearch(speciesTree,
+          SpeciesSearchCommon::veryLocalSearch(speciesTree,
               evaluation,
               searchState,
-              transferMove.prune,
-              newBestLL,
-              testedLL)) {
-            newBestLL = testedLL;
-            Logger::info << "veryLocalSearch success " << newBestLL << std::endl;
-          }
+              transferMove.prune);
         }
       } else {
         failures++;
@@ -182,14 +171,11 @@ static bool transferRound(SpeciesTree &speciesTree,
 bool SpeciesTransferSearch::transferSearch(
   SpeciesTree &speciesTree,
   SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
-  SpeciesSearchState &searchState,
-  double previousBestLL,
-  double &newBestLL)
+  SpeciesSearchState &searchState)
 {
-  newBestLL = previousBestLL;
   Logger::info << std::endl;
   Logger::timed << "[Species search]" 
-    << " Starting species tree transfer-guided search, bestLL=" << previousBestLL 
+    << " Starting species tree transfer-guided search, bestLL=" << searchState.bestLL
     <<  ", hash=" << speciesTree.getHash() << ")" << std::endl;
   MovesBlackList blacklist;
   bool maxImprovementsReached = true;
@@ -198,15 +184,14 @@ bool SpeciesTransferSearch::transferSearch(
   while (!stop) {
     if (maxImprovementsReached) {
       Logger::info << "TODO: OPTIMIZE RATES" << std::endl;
-      //newBestLL = hack.optimizeDTLRates();
     }
     stop = !transferRound(speciesTree, evaluation, searchState, 
-        newBestLL, newBestLL, blacklist, maxImprovementsReached);
+        blacklist, maxImprovementsReached);
     if (!stop) {
       better = true;
     }
   } 
-  Logger::timed << "[Species search] After transfer search: LL=" << newBestLL << std::endl;
+  Logger::timed << "[Species search] After transfer search: LL=" << searchState.bestLL << std::endl;
   return better;
 }
 

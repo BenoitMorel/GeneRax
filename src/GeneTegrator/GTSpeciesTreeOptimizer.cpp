@@ -88,7 +88,8 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   _geneTrees(families, false),
   _info(info),
   _outputDir(outputDir),
-  _bestRecLL(-std::numeric_limits<double>::infinity())
+  _searchState(*_speciesTree, 
+      Paths::getSpeciesTreeFile(_outputDir, "inferred_species_tree.newick"))
 {
   saveCurrentSpeciesTreeId("starting_species_tree.newick");
   saveCurrentSpeciesTreeId();
@@ -122,7 +123,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   _speciesTree->addListener(this);
   ParallelContext::barrier();
   _evaluator.setEvaluations(_info, families, _evaluations, _geneTrees);
-  Logger::timed << "Initial ll=" << computeRecLikelihood() << std::endl;
+  Logger::timed << "Initial ll=" << _evaluator.computeLikelihood() << std::endl;
 }
 
 void GTSpeciesTreeOptimizer::optimize()
@@ -135,11 +136,10 @@ void GTSpeciesTreeOptimizer::optimize()
    *  SPR search, until one does not find
    *  a better tree. Run each at least once.
    */
-  //if (!_searchState.farFromPlausible) {
-    _bestRecLL = computeRecLikelihood();
+  if (!_searchState.farFromPlausible) {
     rootSearch(3);
     //optimizeDTLRates();
-  //}
+  }
   do {
     if (index++ % 2 == 0) {
       transferSearch();
@@ -155,31 +155,14 @@ void GTSpeciesTreeOptimizer::optimize()
   rootSearch(-1);
 
 }
-
-double GTSpeciesTreeOptimizer::computeRecLikelihood()
-{
-  double sumLL = 0.0;
-  for (auto &evaluation: _evaluations) {
-    auto ll = evaluation->computeLogLikelihood();
-    sumLL += ll;
-  }
-  ParallelContext::sumDouble(sumLL);
-  return sumLL;
-}
-
 double GTSpeciesTreeOptimizer::sprSearch(unsigned int radius)
 {
-  double bestLL = computeRecLikelihood();
-  if (SpeciesSPRSearch::SPRSearch(*_speciesTree,
+  SpeciesSPRSearch::SPRSearch(*_speciesTree,
       _evaluator,
       _searchState,
-      radius,
-      bestLL,
-      bestLL)) {
-    newBestTreeCallback(bestLL);
-  }
-  Logger::timed << "After normal search: LL=" << bestLL << std::endl;
-  return bestLL;
+      radius);
+  Logger::timed << "After normal search: LL=" << _searchState.bestLL << std::endl;
+  return _searchState.bestLL;
 }
 
 
@@ -190,32 +173,11 @@ void GTSpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<pll_rn
   }
 }
 
-bool GTSpeciesTreeOptimizer::testPruning(unsigned int prune,
-    unsigned int regraft)
-{
-  // Apply the move
-  auto rollback = SpeciesTreeOperator::applySPRMove(*_speciesTree, prune, regraft);
-  double newLL = computeRecLikelihood();
-  if (newLL > _bestRecLL) {
-    // Better tree found! keep it and return
-    // without rollbacking
-    newBestTreeCallback(newLL);
-    return true;
-  }
-  SpeciesTreeOperator::reverseSPRMove(*_speciesTree, prune, rollback);
-  return false;
-}
 
-void GTSpeciesTreeOptimizer::newBestTreeCallback(double newLL)
-{
-  saveCurrentSpeciesTreeId();
-  _bestRecLL = newLL;
-}
 
 std::string GTSpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
 {
   std::string res = Paths::getSpeciesTreeFile(_outputDir, name);
-  
   saveCurrentSpeciesTreePath(res, masterRankOnly);
   return res;
 }
@@ -233,22 +195,18 @@ double GTSpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
   SpeciesRootSearch::rootSearch(
       *_speciesTree,
       _evaluator,
+      _searchState,
       maxDepth);
-  saveCurrentSpeciesTreeId();
-  return computeRecLikelihood();
+  return _searchState.bestLL;
 }
 
 double GTSpeciesTreeOptimizer::transferSearch()
 {
-  double bestLL = computeRecLikelihood();
-  if (SpeciesTransferSearch::transferSearch(
-      *_speciesTree,
-      _evaluator,
-      _searchState,
-      bestLL,
-      bestLL)) {
-    newBestTreeCallback(bestLL);
-  }
-  Logger::timed << "After normal search: LL=" << bestLL << std::endl;
-  return bestLL;
+  SpeciesTransferSearch::transferSearch(
+    *_speciesTree,
+    _evaluator,
+    _searchState);
+  Logger::timed << "After normal search: LL=" 
+    << _searchState.bestLL << std::endl;
+  return _searchState.bestLL;
 }
