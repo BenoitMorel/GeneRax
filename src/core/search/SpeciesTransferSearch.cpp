@@ -156,6 +156,7 @@ static bool transferRound(SpeciesTree &speciesTree,
               newBestLL,
               testedLL)) {
             newBestLL = testedLL;
+            Logger::info << "veryLocalSearch success " << newBestLL << std::endl;
           }
         }
       } else {
@@ -200,7 +201,8 @@ bool SpeciesTransferSearch::transferSearch(
       //newBestLL = hack.optimizeDTLRates();
     }
     stop = !transferRound(speciesTree, evaluation, searchState, 
-        previousBestLL, newBestLL, blacklist, maxImprovementsReached);
+        newBestLL, newBestLL, blacklist, maxImprovementsReached);
+    Logger::info << "end of loop: " << newBestLL << " " << evaluation.computeLikelihood() << std::endl;
     if (!stop) {
       better = true;
     }
