@@ -57,7 +57,6 @@ void RootLikelihoods::fillTree(PLLRootedTree &tree)
 
 void SpeciesSearchState::betterTreeCallback(double ll)
 {
-  Logger::info << "betterTreeCallback " << ll << std::endl;
   bool masterRankOnly = true;
   speciesTree.saveToFile(pathToBestSpeciesTree, masterRankOnly);
   bestLL = ll;

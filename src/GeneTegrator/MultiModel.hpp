@@ -31,6 +31,7 @@ public:
   virtual bool inferMLScenario(Scenario &scenario, 
     bool stochastic = false);
 
+  virtual unsigned int getSize() {return _ccp.getCladesNumber();}
 protected:
   void mapGenesToSpecies();
   virtual void computeProbability(CID cid, 

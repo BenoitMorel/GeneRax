@@ -85,7 +85,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
     const RecModelInfo &info,
     const std::string &outputDir):
   _speciesTree(std::make_unique<SpeciesTree>(speciesTreeFile)),
-  _geneTrees(families, false),
+  _geneTrees(families, false, true),
   _info(info),
   _outputDir(outputDir),
   _searchState(*_speciesTree, 
@@ -119,6 +119,20 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
       break;
     }
   }
+  unsigned int cladesNumber = 0;
+  unsigned int worstFamily = 0;
+  for (auto &evaluation: _evaluations) {
+    cladesNumber += evaluation->getSize();
+    worstFamily = std::max(worstFamily, evaluation->getSize());
+  }
+  unsigned int totalCladesNumber = cladesNumber;
+  unsigned int maxCladesNumber = cladesNumber;
+  ParallelContext::maxUInt(worstFamily);
+  ParallelContext::maxUInt(maxCladesNumber);
+  ParallelContext::sumUInt(totalCladesNumber);
+  double averageCladesNumber = double(totalCladesNumber) / double(ParallelContext::getSize());
+  Logger::info << "Load balancing: " << maxCladesNumber << " " << averageCladesNumber <<  "(" << worstFamily << ")"  << std::endl;
+
   Logger::timed << "Initializing ccps finished" << std::endl;
   _speciesTree->addListener(this);
   ParallelContext::barrier();
@@ -131,15 +145,16 @@ void GTSpeciesTreeOptimizer::optimize()
   size_t hash1 = 0;
   size_t hash2 = 0;
   unsigned int index = 0;
+  _searchState.bestLL = _evaluator.computeLikelihood();
   /**
    *  Alternate transfer search and normal
    *  SPR search, until one does not find
    *  a better tree. Run each at least once.
    */
-  if (!_searchState.farFromPlausible) {
+  //if (!_searchState.farFromPlausible) {
     rootSearch(3);
     //optimizeDTLRates();
-  }
+  //}
   do {
     if (index++ % 2 == 0) {
       transferSearch();

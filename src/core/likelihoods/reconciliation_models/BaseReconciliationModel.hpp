@@ -72,6 +72,7 @@ public:
   virtual void setFractionMissingGenes(
       const std::string &fractionMissingFile) = 0;
 
+  virtual unsigned int getSize() {return 0;}
 };
 
 class BaseReconciliationModel: public ReconciliationModelInterface {
