@@ -45,6 +45,10 @@ public:
    */
   virtual bool providesFastLikelihoodImpl() const = 0;
 
+  /**
+   *  Optimize model rates, such as DTL rates.
+   */
+  virtual void optimizeModelRates() = 0;
 
   /**
    *  Save in a stack what needs to be saved in case 

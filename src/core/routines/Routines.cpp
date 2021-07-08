@@ -44,41 +44,10 @@ Routines::computeInitialSpeciesTree(Families &families,
     return std::make_unique<PLLRootedTree>(
         std::make_unique<SpeciesTree>(families)->getTree().getNewickString(), 
         false);
-  case SpeciesTreeAlgorithm::Clades:
-    FileSystem::mkdir(cladeOutput, true);
-    return computeSupportedCladeTree(families, cladeOutput);
   case SpeciesTreeAlgorithm::User:
     assert(false);
   }
   return nullptr;
-}
-
-std::unique_ptr<PLLRootedTree> 
-Routines::computeSupportedCladeTree(Families &families, 
-    const std::string &outputDir)
-{
-  ParallelContext::barrier();
-  Logger::info << "Generating random species tree..." << std::endl;
-  auto randomSpeciesTree = std::make_unique<SpeciesTree>(families);
-  auto speciesTreePath = FileSystem::joinPaths(outputDir, "random_starting_tree.newick");
-  randomSpeciesTree->saveToFile(speciesTreePath, true);
-  ParallelContext::barrier();
-  Logger::info << "Random species tree generated!" << std::endl;
-  RecModelInfo info;
-  bool userRates = true;
-  Logger::info << "Starting Clade tree search" << std::endl;
-  SpeciesTreeSearchParams searchParams;
-  SpeciesTreeOptimizer speciesTreeOptimizer(speciesTreePath, 
-      families, 
-      info, 
-      info.getDefaultGlobalParameters(), 
-      userRates, 
-      outputDir, 
-      searchParams);
-  speciesTreeOptimizer.optimize(SpeciesSearchStrategy::HYBRID,
-    SpeciesTreeOptimizer::SupportedClades);
-  return std::make_unique<PLLRootedTree>(
-      speciesTreeOptimizer.getSpeciesTree().getTree().getNewickString(), false);
 }
 
 void Routines::runRaxmlOptimization(Families &families,

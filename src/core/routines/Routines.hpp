@@ -26,10 +26,6 @@ public:
       const std::string globalOutputDir,
       SpeciesTreeAlgorithm algo);
 
-  static std::unique_ptr<PLLRootedTree> computeSupportedCladeTree(
-      Families &family,
-      const std::string &outputDir);
-
   /*
    *  Schedule gene tree inference using
    *  sequences only, with raxml-ng algorithm.

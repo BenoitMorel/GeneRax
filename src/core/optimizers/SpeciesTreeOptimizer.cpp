@@ -44,8 +44,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _okForClades(0),
   _koForClades(0),
   _searchState(*_speciesTree, 
-      Paths::getSpeciesTreeFile(_outputDir, "inferred_species_tree.newick")),
-  _optimizationCriteria(ReconciliationLikelihood)
+      Paths::getSpeciesTreeFile(_outputDir, "inferred_species_tree.newick"))
 {
 
   _modelRates.info.perFamilyRates = false; // we set it back a few
@@ -70,10 +69,8 @@ static bool testAndSwap(size_t &hash1, size_t &hash2) {
   return hash1 != hash2;
 }
 
-void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
-      OptimizationCriteria criteria)
+void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy)
 {
-  setOptimizationCriteria(criteria);
   computeRecLikelihood();
   size_t hash1 = 0;
   size_t hash2 = 0;
@@ -126,7 +123,6 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy,
   case SpeciesSearchStrategy::SKIP:
     assert(false);
   }
-  setOptimizationCriteria(ReconciliationLikelihood);
 }
 
 
@@ -222,7 +218,7 @@ double SpeciesTreeOptimizer::sprSearch(unsigned int radius)
   
 ModelParameters SpeciesTreeOptimizer::computeOptimizedRates(bool thorough) 
 {
-  if (_userDTLRates || _optimizationCriteria == SupportedClades) {
+  if (_userDTLRates) {
     return _modelRates;
   }
   auto rates = _modelRates;
@@ -240,7 +236,7 @@ ModelParameters SpeciesTreeOptimizer::computeOptimizedRates(bool thorough)
   
 double SpeciesTreeOptimizer::optimizeDTLRates(bool thorough)
 {
-  if (_userDTLRates || _optimizationCriteria == SupportedClades) {
+  if (_userDTLRates) {
     return computeRecLikelihood();
   }
   //Logger::timed << "[Species search] Start rates optimization " << std::endl;
@@ -272,18 +268,11 @@ void SpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bo
 double SpeciesTreeOptimizer::computeRecLikelihood()
 {
   double res = 0.0;
-  switch (_optimizationCriteria) {
-  case ReconciliationLikelihood: 
-    for (auto &evaluation: _evaluations) {
-      auto ll = evaluation->evaluate();
-      res += ll;
-    }
-    ParallelContext::sumDouble(res);
-    break;
-  case SupportedClades:
-    res = -static_cast<double>(_unsupportedCladesNumber());
-    break;
+  for (auto &evaluation: _evaluations) {
+    auto ll = evaluation->evaluate();
+    res += ll;
   }
+  ParallelContext::sumDouble(res);
   return res;
 
 }
@@ -443,6 +432,11 @@ double SpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
 bool SpeciesTreeLikelihoodEvaluator::providesFastLikelihoodImpl() const 
 {
   return _rootedGeneTrees; 
+}
+  
+void SpeciesTreeLikelihoodEvaluator::optimizeModelRates()
+{
+  Logger::info << "DTL RATES OPTIMIZATION IS NOT IMPLEMENTED" << std::endl;
 }
 
 void SpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &speciesTree,

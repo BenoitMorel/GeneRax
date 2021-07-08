@@ -61,6 +61,7 @@ public:
   virtual double computeLikelihood();
   virtual double computeLikelihoodFast();
   virtual bool providesFastLikelihoodImpl() const;
+  virtual void optimizeModelRates();
   virtual void pushRollback();
   virtual void popAndApplyRollback();
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);
@@ -95,15 +96,9 @@ public:
   SpeciesTreeOptimizer & operator = (SpeciesTreeOptimizer &&) = delete;
   virtual ~SpeciesTreeOptimizer(); 
    
-  enum OptimizationCriteria {
-    ReconciliationLikelihood = 0,
-    SupportedClades
-  };
-
   virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
-  void optimize(SpeciesSearchStrategy strategy,
-      OptimizationCriteria criteria = ReconciliationLikelihood);
+  void optimize(SpeciesSearchStrategy strategy);
   
   double optimizeDTLRates(bool thorough = false);
   
@@ -138,7 +133,6 @@ private:
   unsigned int _okForClades;
   unsigned int _koForClades;
   SpeciesSearchState _searchState;
-  OptimizationCriteria _optimizationCriteria;
 private:
   void _computeAllGeneClades();
   unsigned int _unsupportedCladesNumber();
@@ -149,9 +143,6 @@ private:
   void reGenerateEvaluations();
   double transferSearch();
   double sprSearch(unsigned int radius);
-  void setOptimizationCriteria(OptimizationCriteria criteria) {
-    _optimizationCriteria = criteria;
-  }
   std::vector<double> _getSupport();
   
 };

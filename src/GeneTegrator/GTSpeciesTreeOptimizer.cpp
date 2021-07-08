@@ -24,6 +24,11 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
   ParallelContext::sumDouble(sumLL);
   return sumLL;
 }
+
+void GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates()
+{
+  Logger::info << "DTL RATES OPTIMIZATION IS NOT IMPLEMENTED" << std::endl;
+}
   
 void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &speciesTree,
     TransferFrequencies &transferFrequencies,

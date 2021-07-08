@@ -183,7 +183,7 @@ bool SpeciesTransferSearch::transferSearch(
   bool better = false;
   while (!stop) {
     if (maxImprovementsReached) {
-      Logger::info << "TODO: OPTIMIZE RATES" << std::endl;
+      evaluation.optimizeModelRates();
     }
     stop = !transferRound(speciesTree, evaluation, searchState, 
         blacklist, maxImprovementsReached);
