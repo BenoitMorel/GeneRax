@@ -63,7 +63,7 @@ void initStartingSpeciesTree(GeneTegratorArguments &args,
     copy.getTree().save(args.speciesTree);
   }
   ParallelContext::barrier();
-
+  Logger::timed << "Finished starting species tree initialization" << std::endl;
 }
 
 void run( GeneTegratorArguments &args)
@@ -74,6 +74,10 @@ void run( GeneTegratorArguments &args)
   Logger::initFileOutput(FileSystem::joinPaths(args.output, "genetegrator"));
   auto families = FamiliesFileParser::parseFamiliesFile(args.families);
   filterInvalidFamilies(families);
+  if (families.size() == 0) {
+    Logger::info << "No valid family, aborting" << std::endl;
+    ParallelContext::abort(0);
+  }
   initStartingSpeciesTree(args, families);
   
   RecModelInfo info;

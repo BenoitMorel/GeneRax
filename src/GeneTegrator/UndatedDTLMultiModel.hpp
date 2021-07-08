@@ -19,7 +19,7 @@ public:
 
   virtual ~UndatedDTLMultiModel() {}
 
-  virtual void setRates(const RatesVector &) {};
+  virtual void setRates(const RatesVector &);
   virtual double computeLogLikelihood();
   
 private:
@@ -98,6 +98,32 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(PLLRootedTree &speciesTree,
     _PT[e] /= sum;
     _PS[e] /= sum;
   }
+}
+ 
+template <class REAL>
+void UndatedDTLMultiModel<REAL>::setRates(const RatesVector &rates) 
+{
+  auto &dupRates = rates[0];
+  auto &lossRates = rates[1];
+  auto &transferRates = rates[2];
+  assert(this->_allSpeciesNodesCount == dupRates.size());
+  assert(this->_allSpeciesNodesCount == lossRates.size());
+  assert(this->_allSpeciesNodesCount == transferRates.size());
+  _PD = dupRates;
+  _PL = lossRates;
+  _PT = transferRates;
+  _PS.resize(this->_allSpeciesNodesCount);
+  for (unsigned int e = 0; e < this->_allSpeciesNodesCount; ++e) {
+    if (this->_info.noDup) {
+      _PD[e] = 0.0;
+    }
+    auto sum = _PD[e] + _PL[e] + _PT[e] + 1.0;
+    _PD[e] /= sum;
+    _PL[e] /= sum;
+    _PT[e] /= sum;
+    _PS[e] = 1.0 / sum;
+  } 
+  recomputeSpeciesProbabilities();
 }
 
 
