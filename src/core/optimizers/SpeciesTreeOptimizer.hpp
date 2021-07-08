@@ -49,19 +49,21 @@ public:
       PerCoreGeneTrees &geneTrees,
       ModelParameters &modelRates,
       bool rootedGeneTrees,
-      bool pruneSpeciesTree) 
+      bool pruneSpeciesTree,
+      bool userDTLRates) 
   {
     _evaluations = &evaluations;
     _geneTrees = &geneTrees;
     _modelRates = &modelRates;
     _rootedGeneTrees = rootedGeneTrees;
     _pruneSpeciesTree = pruneSpeciesTree;
+    _userDTLRates = userDTLRates;
   }
   virtual ~SpeciesTreeLikelihoodEvaluator() {}
   virtual double computeLikelihood();
   virtual double computeLikelihoodFast();
   virtual bool providesFastLikelihoodImpl() const;
-  virtual void optimizeModelRates();
+  virtual void optimizeModelRates(bool thorough = false);
   virtual void pushRollback();
   virtual void popAndApplyRollback();
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);
@@ -76,6 +78,7 @@ private:
   std::stack<std::vector<pll_unode_t*> > _previousGeneRoots;
   bool _rootedGeneTrees;
   bool _pruneSpeciesTree;
+  bool _userDTLRates;
 };
 
 
@@ -99,8 +102,6 @@ public:
   virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
   void optimize(SpeciesSearchStrategy strategy);
-  
-  double optimizeDTLRates(bool thorough = false);
   
   double rootSearch(unsigned int maxDepth,
       bool outputConsel);
@@ -136,7 +137,6 @@ private:
 private:
   void _computeAllGeneClades();
   unsigned int _unsupportedCladesNumber();
-  ModelParameters computeOptimizedRates(bool thorough); 
   void updateEvaluations();
   std::string getSpeciesTreePath(const std::string &speciesId);
   void setGeneTreesFromFamilies(const Families &families);

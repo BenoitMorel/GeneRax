@@ -25,7 +25,7 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
   return sumLL;
 }
 
-void GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates()
+void GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
 {
   Logger::info << "DTL RATES OPTIMIZATION IS NOT IMPLEMENTED" << std::endl;
 }

@@ -78,7 +78,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy)
   switch (strategy) {
   case SpeciesSearchStrategy::SPR:
     for (unsigned int radius = 1; radius <= _searchParams.sprRadius; ++radius) {
-      optimizeDTLRates();
+      _evaluator.optimizeModelRates();
       sprSearch(radius);
     }
     break;
@@ -95,7 +95,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy)
      *  a better tree. Run each at least once.
      */
     if (!_searchState.farFromPlausible) {
-      optimizeDTLRates();
+      _evaluator.optimizeModelRates();
       computeRecLikelihood();
       rootSearch(_searchParams.rootSmallRadius, false);
     }
@@ -117,7 +117,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy)
     rootSearch(_searchParams.rootBigRadius, true);
     break;
   case SpeciesSearchStrategy::EVAL:
-    optimizeDTLRates(true);
+      _evaluator.optimizeModelRates(true);
     Logger::info << "Reconciliation likelihood: " << computeRecLikelihood() << std::endl;
     break;
   case SpeciesSearchStrategy::SKIP:
@@ -215,43 +215,9 @@ double SpeciesTreeOptimizer::sprSearch(unsigned int radius)
     << _searchState.bestLL << std::endl;
   return _searchState.bestLL;
 }
-  
-ModelParameters SpeciesTreeOptimizer::computeOptimizedRates(bool thorough) 
-{
-  if (_userDTLRates) {
-    return _modelRates;
-  }
-  auto rates = _modelRates;
-  OptimizationSettings settings;
-  double ll = computeRecLikelihood();
-  if (!thorough) {
-    settings.lineSearchMinImprovement = 10.0;
-    settings.minAlpha = 0.01;
-    settings.optimizationMinImprovement = std::max(3.0, ll / 1000.0);
-  }
-  rates =  DTLOptimizer::optimizeModelParameters(_evaluations, !_firstOptimizeRatesCall, rates, settings);
-  _firstOptimizeRatesCall = false;
-  return rates;
-}
-  
-double SpeciesTreeOptimizer::optimizeDTLRates(bool thorough)
-{
-  if (_userDTLRates) {
-    return computeRecLikelihood();
-  }
-  //Logger::timed << "[Species search] Start rates optimization " << std::endl;
-  _modelRates = computeOptimizedRates(thorough);
-  unsigned int i = 0;
-  for (auto &evaluation: _evaluations) {
-    evaluation->setRates(_modelRates.getRates(i++));
-  }
-  //Logger::timed << "[Species search] Rates optimized! (LL=" << computeRecLikelihood() << ")" << std::endl;
-  if (!_modelRates.info.perFamilyRates) {
-    Logger::timed << "[Species search] Best rates: " << _modelRates.rates << std::endl;
-  }
-  return computeRecLikelihood();
-}
-  
+ 
+
+
 std::string SpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
 {
   std::string res = Paths::getSpeciesTreeFile(_outputDir, name);
@@ -300,7 +266,8 @@ void SpeciesTreeOptimizer::updateEvaluations()
       *_geneTrees,
       _modelRates,
       _modelRates.info.rootedGeneTree,
-      _modelRates.info.pruneSpeciesTree);
+      _modelRates.info.pruneSpeciesTree,
+      _userDTLRates);
 }
   
 
@@ -434,9 +401,29 @@ bool SpeciesTreeLikelihoodEvaluator::providesFastLikelihoodImpl() const
   return _rootedGeneTrees; 
 }
   
-void SpeciesTreeLikelihoodEvaluator::optimizeModelRates()
+void SpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
 {
-  Logger::info << "DTL RATES OPTIMIZATION IS NOT IMPLEMENTED" << std::endl;
+  if (_userDTLRates) {
+    return;
+  }
+  auto rates = *_modelRates;
+  OptimizationSettings settings;
+  double ll = computeLikelihood();
+  if (!thorough) {
+    settings.lineSearchMinImprovement = 10.0;
+    settings.minAlpha = 0.01;
+    settings.optimizationMinImprovement = std::max(3.0, ll / 1000.0);
+  }
+  bool _firstOptimizeRatesCall = false;
+  *_modelRates =  DTLOptimizer::optimizeModelParameters(*_evaluations, !_firstOptimizeRatesCall, *_modelRates, settings);
+  _firstOptimizeRatesCall = false;
+  unsigned int i = 0;
+  for (auto &evaluation: *_evaluations) {
+    evaluation->setRates(_modelRates->getRates(i++));
+  }
+  if (!_modelRates->info.perFamilyRates) {
+    Logger::timed << "[Species search] Best rates: " << _modelRates->rates << std::endl;
+  }
 }
 
 void SpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &speciesTree,
