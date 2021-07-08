@@ -78,7 +78,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy)
   switch (strategy) {
   case SpeciesSearchStrategy::SPR:
     for (unsigned int radius = 1; radius <= _searchParams.sprRadius; ++radius) {
-      _evaluator.optimizeModelRates();
+      _searchState.bestLL = _evaluator.optimizeModelRates();
       sprSearch(radius);
     }
     break;
@@ -95,7 +95,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy)
      *  a better tree. Run each at least once.
      */
     if (!_searchState.farFromPlausible) {
-      _evaluator.optimizeModelRates();
+      _searchState.bestLL = _evaluator.optimizeModelRates();
       computeRecLikelihood();
       rootSearch(_searchParams.rootSmallRadius, false);
     }
@@ -117,7 +117,7 @@ void SpeciesTreeOptimizer::optimize(SpeciesSearchStrategy strategy)
     rootSearch(_searchParams.rootBigRadius, true);
     break;
   case SpeciesSearchStrategy::EVAL:
-      _evaluator.optimizeModelRates(true);
+    _searchState.bestLL = _evaluator.optimizeModelRates(true);
     Logger::info << "Reconciliation likelihood: " << computeRecLikelihood() << std::endl;
     break;
   case SpeciesSearchStrategy::SKIP:
@@ -401,10 +401,10 @@ bool SpeciesTreeLikelihoodEvaluator::providesFastLikelihoodImpl() const
   return _rootedGeneTrees; 
 }
   
-void SpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
+double SpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
 {
   if (_userDTLRates) {
-    return;
+    return computeLikelihood();
   }
   auto rates = *_modelRates;
   OptimizationSettings settings;
@@ -424,6 +424,7 @@ void SpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
   if (!_modelRates->info.perFamilyRates) {
     Logger::timed << "[Species search] Best rates: " << _modelRates->rates << std::endl;
   }
+  return computeLikelihood();
 }
 
 void SpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &speciesTree,

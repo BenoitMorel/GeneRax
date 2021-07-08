@@ -103,6 +103,14 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(PLLRootedTree &speciesTree,
 template <class REAL>
 void UndatedDTLMultiModel<REAL>::setRates(const RatesVector &rates) 
 {
+  assert(rates.size() == 3);
+  /*
+  for (auto &r: rates) {
+    for (auto &v: r) {
+      std::cerr << v << " ";
+    }
+    std::cerr << std::endl;
+  }*/
   auto &dupRates = rates[0];
   auto &lossRates = rates[1];
   auto &transferRates = rates[2];

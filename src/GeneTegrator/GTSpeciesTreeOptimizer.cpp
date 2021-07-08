@@ -1,5 +1,6 @@
 #include "GTSpeciesTreeOptimizer.hpp" 
 #include <IO/Logger.hpp>
+#include <optimizers/DTLOptimizer.hpp>
 #include <util/Paths.hpp>
 #include <search/SpeciesSPRSearch.hpp>
 #include <search/SpeciesTransferSearch.hpp>
@@ -25,9 +26,98 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
   return sumLL;
 }
 
-void GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
+
+class GTEvaluatorFunction: public FunctionToOptimize
 {
-  Logger::info << "DTL RATES OPTIMIZATION IS NOT IMPLEMENTED" << std::endl;
+public:
+  GTEvaluatorFunction(ReconciliationModelInterface &evaluation,
+      RecModelInfo &info,
+      unsigned int speciesNodeNumber):
+    _evaluation(evaluation),
+    _info(info),
+    _speciesNodeNumber(speciesNodeNumber){}
+
+  virtual double evaluate(Parameters &parameters) {
+    parameters.ensurePositivity();
+    unsigned int freeParameters = Enums::freeParameters(_info.model);
+    if (!freeParameters) {
+      return _evaluation.computeLogLikelihood();
+    }
+    assert(parameters.dimensions());
+    assert(0 == parameters.dimensions() % freeParameters);
+    std::vector<std::vector<double> > rates;
+    rates.resize(freeParameters);
+    for (auto &r: rates) {
+      r.resize(_speciesNodeNumber);
+    }
+    // this handles both per-species and global rates
+    for (unsigned int d = 0; d < rates.size(); ++d) {
+      for (unsigned int e = 0; e < _speciesNodeNumber; ++e) {
+        (rates[d])[e] = parameters[(e * rates.size() + d) % parameters.dimensions()];
+      }
+    }
+    _evaluation.setRates(rates);
+    
+    double res = _evaluation.computeLogLikelihood();
+    parameters.setScore(res);
+    return res;
+  }
+
+private:
+  ReconciliationModelInterface &_evaluation;
+  RecModelInfo &_info;
+  unsigned int _speciesNodeNumber;
+};
+
+class GTMultiEvaluatorsFunction: public FunctionToOptimize
+{
+public:
+  GTMultiEvaluatorsFunction(PerCoreMultiEvaluation &evaluations,
+      RecModelInfo &info, 
+      unsigned int speciesNodeNumber)
+  {
+    for (auto &evaluation: evaluations) {
+      _functions.push_back(std::make_shared<GTEvaluatorFunction>(*evaluation, 
+            info,
+            speciesNodeNumber));
+    }
+  }
+
+  virtual double evaluate(Parameters &parameters) {
+    double res = 0.0;
+    for (auto &function: _functions) {
+      res += function->evaluate(parameters);
+    }
+    ParallelContext::sumDouble(res);
+    parameters.setScore(res);
+    Logger::info << "ev " << parameters << std::endl;
+    return res;
+  }
+private:
+  std::vector<std::shared_ptr<GTEvaluatorFunction>> _functions;
+};
+
+double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
+{
+  auto rates = *_modelRates;
+  OptimizationSettings settings;
+  double ll = computeLikelihood();
+  if (!thorough) {
+    settings.lineSearchMinImprovement = 10.0;
+    settings.minAlpha = 0.01;
+    settings.optimizationMinImprovement = std::max(3.0, ll / 1000.0);
+  }
+  GTMultiEvaluatorsFunction function(*_evaluations, 
+      _modelRates->info, 
+      _speciesTree->getNodesNumber());
+  _modelRates->rates = DTLOptimizer::optimizeParameters(
+      function, 
+      _modelRates->rates, 
+      settings);
+  //if (!_modelRates->info.perFamilyRates) {
+    Logger::timed << "[Species search] Best rates: " << _modelRates->rates << std::endl;
+  //}
+  return _modelRates->rates.getScore();
 }
   
 void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &speciesTree,
@@ -42,7 +132,7 @@ void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &spe
   transferFrequencies.count = MatrixUint(labelsNumber, zeros);
   transferFrequencies.idToLabel = idToLabel;
   perSpeciesEvents = PerSpeciesEvents(speciesTree.getNodesNumber());
-  auto infoCopy = _info;
+  auto infoCopy = _modelRates->info;
   for (const auto &geneTree: _geneTrees->getTrees()) {
     auto &family = (*_families)[geneTree.familyIndex];
     GeneSpeciesMapping mapping;
@@ -91,11 +181,25 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
     const std::string &outputDir):
   _speciesTree(std::make_unique<SpeciesTree>(speciesTreeFile)),
   _geneTrees(families, false, true),
-  _info(info),
   _outputDir(outputDir),
   _searchState(*_speciesTree, 
       Paths::getSpeciesTreeFile(_outputDir, "inferred_species_tree.newick"))
 {
+  Parameters startingRates;
+  switch (info.model) {
+  case RecModel::UndatedDL:
+    startingRates = Parameters(0.2, 0.2);
+    break;
+  case RecModel::UndatedDTL:
+    startingRates = Parameters(0.2, 0.2, 0.1);
+    break;
+  default:
+    assert(false);
+    break;
+  }
+  _modelRates = ModelParameters(startingRates, 
+      1, //_geneTrees.getTrees().size(), 
+      info);
   saveCurrentSpeciesTreeId("starting_species_tree.newick");
   saveCurrentSpeciesTreeId();
   Logger::timed << "Initializing ccps" << std::endl;
@@ -141,7 +245,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   Logger::timed << "Initializing ccps finished" << std::endl;
   _speciesTree->addListener(this);
   ParallelContext::barrier();
-  _evaluator.setEvaluations(_info, families, _evaluations, _geneTrees);
+  _evaluator.setEvaluations(_speciesTree->getTree(), _modelRates, families, _evaluations, _geneTrees);
   Logger::timed << "Initial ll=" << _evaluator.computeLikelihood() << std::endl;
 }
 

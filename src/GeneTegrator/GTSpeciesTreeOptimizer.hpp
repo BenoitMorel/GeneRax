@@ -9,6 +9,7 @@
 #include <parallelization/PerCoreGeneTrees.hpp>
 #include <memory>
 #include <vector>
+#include <maths/ModelParameters.hpp>
 
 class RecModelInfo;
 using MultiEvaluation = ReconciliationModelInterface;
@@ -20,11 +21,13 @@ class GTSpeciesTreeLikelihoodEvaluator: public SpeciesTreeLikelihoodEvaluatorInt
 public:
   GTSpeciesTreeLikelihoodEvaluator()
   {}
-  void setEvaluations(const RecModelInfo &info, 
+  void setEvaluations(PLLRootedTree &speciesTree,
+      ModelParameters &modelRates, 
       const Families &families,
       PerCoreMultiEvaluation &evaluations,
       PerCoreGeneTrees &geneTrees) {
-    _info = info;
+    _speciesTree = &speciesTree;
+    _modelRates = &modelRates;
     _families = &families;
     _evaluations = &evaluations;
     _geneTrees = &geneTrees;
@@ -33,16 +36,17 @@ public:
   virtual double computeLikelihood();
   virtual double computeLikelihoodFast();
   virtual bool providesFastLikelihoodImpl() const {return false;}
-  virtual void optimizeModelRates(bool thorough = false);
+  virtual double optimizeModelRates(bool thorough = false);
   virtual void pushRollback() {}
   virtual void popAndApplyRollback() {}
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);
   virtual void getTransferInformation(PLLRootedTree &speciesTree,
     TransferFrequencies &frequencies,
     PerSpeciesEvents &perSpeciesEvents);
-  virtual bool pruneSpeciesTree() const {return _info.pruneSpeciesTree;}
+  virtual bool pruneSpeciesTree() const {return _modelRates->info.pruneSpeciesTree;}
 private:
-  RecModelInfo _info;
+  PLLRootedTree *_speciesTree;
+  ModelParameters *_modelRates;
   const Families *_families;
   PerCoreMultiEvaluation *_evaluations;
   PerCoreGeneTrees *_geneTrees;
@@ -67,7 +71,7 @@ private:
   PerCoreGeneTrees _geneTrees;
   PerCoreMultiEvaluation _evaluations;
   GTSpeciesTreeLikelihoodEvaluator _evaluator;
-  RecModelInfo _info;
+  ModelParameters _modelRates;
   std::string _outputDir;
   SpeciesSearchState _searchState;
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);

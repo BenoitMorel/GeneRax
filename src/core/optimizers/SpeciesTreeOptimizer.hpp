@@ -63,7 +63,7 @@ public:
   virtual double computeLikelihood();
   virtual double computeLikelihoodFast();
   virtual bool providesFastLikelihoodImpl() const;
-  virtual void optimizeModelRates(bool thorough = false);
+  virtual double optimizeModelRates(bool thorough = false);
   virtual void pushRollback();
   virtual void popAndApplyRollback();
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);

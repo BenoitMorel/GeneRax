@@ -48,7 +48,7 @@ public:
   /**
    *  Optimize model rates, such as DTL rates.
    */
-  virtual void optimizeModelRates(bool thorough = false) = 0;
+  virtual double optimizeModelRates(bool thorough = false) = 0;
 
   /**
    *  Save in a stack what needs to be saved in case 
