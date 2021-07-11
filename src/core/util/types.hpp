@@ -4,6 +4,7 @@
 #include <unordered_set>
 #include <array>
 
+
 using VectorDouble = std::vector<double>;
 using MatrixDouble = std::vector<VectorDouble>;
 using DistanceMatrix = MatrixDouble;
@@ -17,7 +18,7 @@ using TaxaSet = std::unordered_set<SPID>;
 using MetaQuartet = std::array<TaxaSet, 4>;
 using UInt3 = std::array<unsigned int, 3>;
 using UInt4 = std::array<unsigned int, 4>;
-
+using PairUInt = std::pair<unsigned int, unsigned int>;
 using PerFamLL = std::vector<double>;
 struct TransferFrequencies {
   MatrixUint count;

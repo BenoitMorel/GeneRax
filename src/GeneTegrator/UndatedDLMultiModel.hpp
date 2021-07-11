@@ -10,7 +10,7 @@ class RecModelInfo;
 double log(ScaledValue v);
 
 template <class REAL>
-class UndatedDLMultiModel: public MultiModel<REAL> {
+class UndatedDLMultiModel: public MultiModelTemplate<REAL> {
 public: 
   UndatedDLMultiModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
@@ -47,7 +47,7 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
     const GeneSpeciesMapping &geneSpeciesMapping, 
     const RecModelInfo &info,
     const std::string &geneTreesFile):
-  MultiModel<REAL>(speciesTree,
+  MultiModelTemplate<REAL>(speciesTree,
       geneSpeciesMapping,
       info,
       geneTreesFile),

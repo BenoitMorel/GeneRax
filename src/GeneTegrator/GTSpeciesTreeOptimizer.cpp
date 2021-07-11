@@ -231,8 +231,8 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   unsigned int cladesNumber = 0;
   unsigned int worstFamily = 0;
   for (auto &evaluation: _evaluations) {
-    cladesNumber += evaluation->getSize();
-    worstFamily = std::max(worstFamily, evaluation->getSize());
+    cladesNumber += evaluation->getCCP().getCladesNumber();
+    worstFamily = std::max(worstFamily, evaluation->getCCP().getCladesNumber());
   }
   unsigned int totalCladesNumber = cladesNumber;
   unsigned int maxCladesNumber = cladesNumber;
@@ -247,6 +247,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   ParallelContext::barrier();
   _evaluator.setEvaluations(_speciesTree->getTree(), _modelRates, families, _evaluations, _geneTrees);
   Logger::timed << "Initial ll=" << _evaluator.computeLikelihood() << std::endl;
+  printFamilyDimensions("temp.txt");
 }
 
 void GTSpeciesTreeOptimizer::optimize()
@@ -334,3 +335,32 @@ double GTSpeciesTreeOptimizer::transferSearch()
     << _searchState.bestLL << std::endl;
   return _searchState.bestLL;
 }
+  
+void GTSpeciesTreeOptimizer::printFamilyDimensions(const std::string &outputFile)
+{
+  std::vector<unsigned int> localTreeSizes;
+  std::vector<unsigned int> localCcpSizes;
+  std::vector<unsigned int> treeSizes;
+  std::vector<unsigned int> ccpSizes;
+  for (auto &evaluation: _evaluations) {
+    auto &ccp = evaluation->getCCP();
+    localTreeSizes.push_back(ccp.getLeafNumber());
+    localCcpSizes.push_back(ccp.getCladesNumber());
+  }
+  ParallelContext::concatenateHetherogeneousUIntVectors(
+      localTreeSizes, treeSizes);
+  ParallelContext::concatenateHetherogeneousUIntVectors(
+      localCcpSizes, ccpSizes);
+  std::vector<PairUInt> dims(treeSizes.size());
+  for (unsigned int i = 0; i < treeSizes.size(); ++i) {
+    dims[i].first = treeSizes[i];
+    dims[i].second = ccpSizes[i];
+  }
+  std::sort(dims.begin(), dims.end());
+  ParallelOfstream os(outputFile);
+  for (auto &dim: dims) {
+    os << dim.first << "," << dim.second << std::endl;
+  }
+}
+
+

@@ -13,7 +13,7 @@ struct ReconciliationCell {
   REAL maxProba;
 };
 
-template<class REAL>
+
 class MultiModel: public BaseReconciliationModel {
 public:
   MultiModel(PLLRootedTree &speciesTree,
@@ -28,12 +28,47 @@ public:
     mapGenesToSpecies();
   }
   virtual ~MultiModel() {}
+
+  const ConditionalClades &getCCP() const {return _ccp;}
+protected:
+  void mapGenesToSpecies() {
+    const auto &cidToLeaves = _ccp.getCidToLeaves();
+    this->_speciesNameToId.clear();
+    this->_geneToSpecies.resize(_ccp.getCladesNumber());
+    for (auto node: this->_allSpeciesNodes) {
+      if (!node->left) {
+        this->_speciesNameToId[node->label] = node->node_index;
+      }
+    }
+    this->_speciesCoverage = std::vector<unsigned int>(
+        this->_allSpeciesNodesCount, 0);
+    for (auto p: cidToLeaves) {
+      auto cid = p.first;
+      const auto &geneName = cidToLeaves.at(cid);
+      const auto &speciesName = this->_geneNameToSpeciesName[geneName];
+      this->_geneToSpecies[cid] = this->_speciesNameToId[speciesName];
+      this->_speciesCoverage[this->_geneToSpecies[cid]]++;
+    }
+
+  }
+  ConditionalClades _ccp;
+};
+
+template<class REAL>
+class MultiModelTemplate: public MultiModel {
+public:
+  MultiModelTemplate(PLLRootedTree &speciesTree,
+      const GeneSpeciesMapping &geneSpeciesMapping, 
+      const RecModelInfo &info,
+      const std::string &geneTreesFile):
+    MultiModel(speciesTree,
+        geneSpeciesMapping,
+        info,
+        geneTreesFile){}
+  virtual ~MultiModelTemplate() {}
   virtual bool inferMLScenario(Scenario &scenario, 
     bool stochastic = false);
-
-  virtual unsigned int getSize() {return _ccp.getCladesNumber();}
-protected:
-  void mapGenesToSpecies();
+private:
   virtual void computeProbability(CID cid, 
     pll_rnode_t *speciesNode, 
     REAL &proba,
@@ -42,36 +77,11 @@ protected:
       pll_rnode_t *speciesRoot,
       Scenario &scenario,
       bool stochastic); 
-
-
-
-  ConditionalClades _ccp;
 };
 
-template <class REAL>
-void MultiModel<REAL>::mapGenesToSpecies()
-{
-  const auto &cidToLeaves = _ccp.getCidToLeaves();
-  this->_speciesNameToId.clear();
-  this->_geneToSpecies.resize(_ccp.getCladesNumber());
-  for (auto node: this->_allSpeciesNodes) {
-    if (!node->left) {
-      this->_speciesNameToId[node->label] = node->node_index;
-    }
-  }
-  this->_speciesCoverage = std::vector<unsigned int>(
-      this->_allSpeciesNodesCount, 0);
-  for (auto p: cidToLeaves) {
-    auto cid = p.first;
-    const auto &geneName = cidToLeaves.at(cid);
-    const auto &speciesName = this->_geneNameToSpeciesName[geneName];
-    this->_geneToSpecies[cid] = this->_speciesNameToId[speciesName];
-    this->_speciesCoverage[this->_geneToSpecies[cid]]++;
-  }
-}
 
 template <class REAL>
-bool MultiModel<REAL>::inferMLScenario(Scenario &scenario, 
+bool MultiModelTemplate<REAL>::inferMLScenario(Scenario &scenario, 
     bool stochastic) {
   // TODO: sample the species root!
   auto rootCID = this->_ccp.getCladesNumber() - 1;
@@ -84,7 +94,7 @@ bool MultiModel<REAL>::inferMLScenario(Scenario &scenario,
 
 
 template <class REAL>
-bool MultiModel<REAL>::backtrace(unsigned int cid, 
+bool MultiModelTemplate<REAL>::backtrace(unsigned int cid, 
     pll_rnode_t *speciesNode,
     Scenario &scenario,
     bool stochastic)

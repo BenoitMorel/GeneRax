@@ -12,7 +12,7 @@
 #include <maths/ModelParameters.hpp>
 
 class RecModelInfo;
-using MultiEvaluation = ReconciliationModelInterface;
+using MultiEvaluation = MultiModel;
 using MultiEvaluationPtr = 
   std::shared_ptr<MultiEvaluation>;
 using PerCoreMultiEvaluation = std::vector<MultiEvaluationPtr>;
@@ -66,6 +66,7 @@ public:
   double transferSearch();
   void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
 
+  void printFamilyDimensions(const std::string &outputFile);
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   PerCoreGeneTrees _geneTrees;

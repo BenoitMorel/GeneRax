@@ -339,6 +339,39 @@ void ParallelContext::concatenateHetherogeneousDoubleVectors(
   assert(false);
 #endif
 }
+
+void ParallelContext::concatenateHetherogeneousUIntVectors(
+      const std::vector<unsigned int> &localVector, 
+      std::vector<unsigned int> &globalVector)
+{
+  if (!_mpiEnabled) {
+    globalVector = localVector;
+    return;
+  }
+#ifdef WITH_MPI
+  std::vector<int> vectorSizes(static_cast<int>(getSize()));
+  allGatherInt(localVector.size(), vectorSizes);
+  auto totalSize = std::accumulate(vectorSizes.begin(), 
+      vectorSizes.end(),
+      0);
+  globalVector.resize(totalSize);
+  std::vector<int> displ(totalSize);
+  for (int i = 1; i < totalSize; ++i) {
+    displ[i] = displ[i-1] + vectorSizes[i-1];
+  }
+  MPI_Gatherv(&localVector[0],  // send buffer 
+      localVector.size(),       // send count
+      MPI_UNSIGNED,              // send type
+      &globalVector[0],         // receive buffer 
+      &vectorSizes[0],          // receive counts
+      &displ[0],                // per rank offset 
+      MPI_UNSIGNED,              // receive type
+      0,                       // root rank
+      getComm());
+#else
+  assert(false);
+#endif
+}
   
 void ParallelContext::broadcastInt(unsigned int fromRank, int &value)
 {
