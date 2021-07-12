@@ -19,8 +19,9 @@ public:
 
   virtual ~UndatedDLMultiModel() {}
 
-  virtual void setRates(const RatesVector &) {};
+  virtual void setRates(const RatesVector &);
   virtual double computeLogLikelihood();
+  virtual pll_rnode_t *sampleSpeciesNode();
   
 
 private:
@@ -65,6 +66,29 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
     _PL[e] /= sum;
     _PS[e] /= sum;
   }
+}
+
+template <class REAL>
+void UndatedDLMultiModel<REAL>::setRates(const RatesVector &rates) 
+{
+  assert(rates.size() == 2);
+  auto &dupRates = rates[0];
+  auto &lossRates = rates[1];
+  assert(this->_allSpeciesNodesCount == dupRates.size());
+  assert(this->_allSpeciesNodesCount == lossRates.size());
+  _PD = dupRates;
+  _PL = lossRates;
+  _PS.resize(this->_allSpeciesNodesCount);
+  for (unsigned int e = 0; e < this->_allSpeciesNodesCount; ++e) {
+    if (this->_info.noDup) {
+      _PD[e] = 0.0;
+    }
+    auto sum = _PD[e] + _PL[e] + 1.0;
+    _PD[e] /= sum;
+    _PL[e] /= sum;
+    _PS[e] = 1.0 / sum;
+  } 
+  recomputeSpeciesProbabilities();
 }
 
 template <class REAL>
@@ -223,6 +247,25 @@ REAL UndatedDLMultiModel<REAL>::getLikelihoodFactor() const
     factor += (REAL(1.0) - REAL(_uE[e]));
   }
   return factor;
+}
+
+
+template <class REAL>
+pll_rnode_t *UndatedDLMultiModel<REAL>::sampleSpeciesNode()
+{
+  auto rootCID = this->_ccp.getCladesNumber() - 1;
+  auto &uq = _dlclvs[rootCID];
+  auto totalLL = std::accumulate(uq.begin(), uq.end(), REAL());
+  REAL toSample = totalLL * Random::getProba();
+  REAL sumLL = REAL();
+  for (auto speciesNode: this->_allSpeciesNodes) {
+     sumLL += uq[speciesNode->node_index];
+     if (sumLL > toSample) {
+        return speciesNode;
+     }
+  }
+  assert(false);
+  return nullptr;
 }
 
 

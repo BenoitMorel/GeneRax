@@ -21,6 +21,7 @@ public:
 
   virtual void setRates(const RatesVector &);
   virtual double computeLogLikelihood();
+  virtual pll_rnode_t *sampleSpeciesNode();
   
 private:
   
@@ -104,13 +105,6 @@ template <class REAL>
 void UndatedDTLMultiModel<REAL>::setRates(const RatesVector &rates) 
 {
   assert(rates.size() == 3);
-  /*
-  for (auto &r: rates) {
-    for (auto &v: r) {
-      std::cerr << v << " ";
-    }
-    std::cerr << std::endl;
-  }*/
   auto &dupRates = rates[0];
   auto &lossRates = rates[1];
   auto &transferRates = rates[2];
@@ -363,5 +357,21 @@ REAL UndatedDTLMultiModel<REAL>::getLikelihoodFactor() const
   return factor;
 }
 
-
+template <class REAL>
+pll_rnode_t *UndatedDTLMultiModel<REAL>::sampleSpeciesNode()
+{
+  auto rootCID = this->_ccp.getCladesNumber() - 1;
+  auto &uq = _dtlclvs[rootCID]._uq;
+  auto totalLL = std::accumulate(uq.begin(), uq.end(), REAL());
+  REAL toSample = totalLL * Random::getProba();
+  REAL sumLL = REAL();
+  for (auto speciesNode: this->_allSpeciesNodes) {
+     sumLL += uq[speciesNode->node_index];
+     if (sumLL > toSample) {
+        return speciesNode;
+     }
+  }
+  assert(false);
+  return nullptr;
+}
 

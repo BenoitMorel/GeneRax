@@ -68,6 +68,9 @@ public:
   virtual ~MultiModelTemplate() {}
   virtual bool inferMLScenario(Scenario &scenario, 
     bool stochastic = false);
+protected:
+  virtual pll_rnode_t *sampleSpeciesNode() = 0;
+
 private:
   virtual void computeProbability(CID cid, 
     pll_rnode_t *speciesNode, 
@@ -83,10 +86,8 @@ private:
 template <class REAL>
 bool MultiModelTemplate<REAL>::inferMLScenario(Scenario &scenario, 
     bool stochastic) {
-  // TODO: sample the species root!
   auto rootCID = this->_ccp.getCladesNumber() - 1;
-  auto speciesRoot = this->_speciesTree.getRoot();
-  scenario.setSpeciesTree(this->_speciesTree.getRawPtr());
+  auto speciesRoot = sampleSpeciesNode();
   return backtrace(rootCID, 
       speciesRoot,
       scenario, stochastic);
