@@ -1,3 +1,7 @@
+[submodule "ext/coraxlib"]
+  path = ext/coraxlib
+  branch = master
+  url = https://codeberg.org/Exelixis-Lab/coraxlib.git
 [submodule "ext/pll-modules"]
 	path = ext/pll-modules
   branch = dev_nobison
