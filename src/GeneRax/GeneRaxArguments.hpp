@@ -18,13 +18,11 @@ public:
    int argc;
    char ** argv;
    std::string execPath;
-   std::string families;
+   std::string familyFilePath;
    std::string speciesTree;
-   SpeciesTreeAlgorithm speciesTreeAlgorithm;
-   GeneSearchStrategy strategy;
-   SpeciesSearchStrategy speciesStrategy;
+   GeneSearchStrategy geneSearchStrategy;
    std::string reconciliationModelStr;
-   std::string output;
+   std::string outputPath;
    bool perFamilyDTLRates;
    bool rootedGeneTree;
    bool madRooting;
@@ -32,7 +30,6 @@ public:
    double supportThreshold;
    unsigned int recRadius;
    bool perSpeciesDTLRates;
-   bool useTransferFrequencies;
    bool userDTLRates;
    bool noDup;
    double dupRate;
@@ -40,7 +37,7 @@ public:
    double transferRate;
    bool reconcile;
    bool buildSuperMatrix;
-   unsigned int reconciliationSamples;
+   unsigned int reconciliationSampleNumber;
    unsigned int maxSPRRadius;
    double recWeight;
    int seed;
@@ -50,6 +47,8 @@ public:
 
 
    // species tree search
+   SpeciesTreeAlgorithm speciesTreeAlgorithm;
+   SpeciesSearchStrategy speciesStrategy;
    bool constrainSpeciesSearch;
    bool rerootSpeciesTree;
    bool estimateSpeciesBranchLenghts;

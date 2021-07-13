@@ -28,7 +28,7 @@
 static void initStartingSpeciesTree(GeneRaxInstance &instance)
 {
   instance.speciesTree = Paths::getSpeciesTreeFile(
-      instance.args.output, 
+      instance.args.outputPath, 
       "starting_species_tree.newick");
   std::unique_ptr<PLLRootedTree> speciesTree(nullptr);
   if (instance.args.speciesTreeAlgorithm == SpeciesTreeAlgorithm::User) {
@@ -50,14 +50,14 @@ static void initStartingSpeciesTree(GeneRaxInstance &instance)
     LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
   } else {
     Routines::computeInitialSpeciesTree(instance.currentFamilies,
-        instance.args.output,
+        instance.args.outputPath,
         instance.args.speciesTreeAlgorithm)->save(instance.speciesTree);
 
   }
   ParallelContext::barrier();
   if (ParallelContext::getRank() == 0) {
     SpeciesTree copy(instance.speciesTree); 
-    instance.speciesTree = Paths::getSpeciesTreeFile(instance.args.output, "inferred_species_tree.newick");
+    instance.speciesTree = Paths::getSpeciesTreeFile(instance.args.outputPath, "inferred_species_tree.newick");
     copy.getTree().save(instance.speciesTree);
   }
   ParallelContext::barrier();
@@ -66,18 +66,18 @@ static void initStartingSpeciesTree(GeneRaxInstance &instance)
 void GeneRaxCore::initInstance(GeneRaxInstance &instance) 
 {
   Random::setSeed(static_cast<unsigned int>(instance.args.seed));
-  FileSystem::mkdir(instance.args.output, true);
-  Logger::initFileOutput(FileSystem::joinPaths(instance.args.output, "generax"));
+  FileSystem::mkdir(instance.args.outputPath, true);
+  Logger::initFileOutput(FileSystem::joinPaths(instance.args.outputPath, "generax"));
   // assert twice, before of a bug I had at the 
   // second rand() call with openmpi
   assert(ParallelContext::isRandConsistent());
   assert(ParallelContext::isRandConsistent());
   instance.args.printCommand();
   instance.args.printSummary();
-  instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
+  instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.familyFilePath);
   initFolders(instance);
-  bool needAlignments = instance.args.strategy != GeneSearchStrategy::SKIP
-    && instance.args.strategy != GeneSearchStrategy::RECONCILE;
+  bool needAlignments = instance.args.geneSearchStrategy != GeneSearchStrategy::SKIP
+    && instance.args.geneSearchStrategy != GeneSearchStrategy::RECONCILE;
   if (instance.args.filterFamilies) {
     Logger::timed << "Filtering invalid families..." << std::endl;
     bool checkSpeciesTree = (instance.args.speciesTreeAlgorithm 
@@ -100,7 +100,7 @@ void GeneRaxCore::initRandomGeneTrees(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
   instance.currentFamilies = instance.initialFamilies;
-  bool randoms = Routines::createRandomTrees(instance.args.output, instance.currentFamilies); 
+  bool randoms = Routines::createRandomTrees(instance.args.outputPath, instance.currentFamilies); 
   if (randoms) {
     initialGeneTreeSearch(instance);
   }
@@ -113,8 +113,8 @@ void GeneRaxCore::initSpeciesTree(GeneRaxInstance &instance)
   Logger::timed << "End of species tree initialization" << std::endl;
   if (instance.args.filterFamilies) {
     Logger::timed << "Filtering invalid families based on the starting species tree..." << std::endl;
-    bool needAlignments = instance.args.strategy != GeneSearchStrategy::SKIP
-      && instance.args.strategy != GeneSearchStrategy::RECONCILE;
+    bool needAlignments = instance.args.geneSearchStrategy != GeneSearchStrategy::SKIP
+      && instance.args.geneSearchStrategy != GeneSearchStrategy::RECONCILE;
     Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, true);
   }
   if (!instance.initialFamilies.size()) {
@@ -130,7 +130,7 @@ void GeneRaxCore::generateFakeAlignments(GeneRaxInstance &instance)
     return;
   }
   Logger::timed << "Generating fake alignments" << std::endl;
-  std::string fakeDir = FileSystem::joinPaths(instance.args.output, "fake_msas");
+  std::string fakeDir = FileSystem::joinPaths(instance.args.outputPath, "fake_msas");
   FileSystem::mkdir(fakeDir, true);
   ParallelContext::barrier();
   PerCoreGeneTrees perCoreTrees(instance.currentFamilies);
@@ -155,9 +155,9 @@ void GeneRaxCore::generateFakeAlignments(GeneRaxInstance &instance)
 void GeneRaxCore::printStats(GeneRaxInstance &instance)
 {
   if (instance.args.filterFamilies) {
-    std::string coverageFile = FileSystem::joinPaths(instance.args.output,
+    std::string coverageFile = FileSystem::joinPaths(instance.args.outputPath,
       std::string("perSpeciesCoverage.txt"));
-    std::string fractionMissingFile = FileSystem::joinPaths(instance.args.output,
+    std::string fractionMissingFile = FileSystem::joinPaths(instance.args.outputPath,
       std::string("fractionMissing.txt"));
     Logger::timed << "Gathering statistics about the families..." << std::endl;
     Family::printStats(instance.currentFamilies, 
@@ -188,7 +188,7 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
       instance.getRecModelInfo(), 
       startingRates, 
       instance.args.userDTLRates, 
-      instance.args.output, 
+      instance.args.outputPath, 
       searchParams);
   if (instance.args.speciesSPRRadius > 0) {
     Logger::info << std::endl;
@@ -221,8 +221,8 @@ void GeneRaxCore::speciesTreeSearch(GeneRaxInstance &instance)
 void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
-  if (instance.args.strategy == GeneSearchStrategy::SKIP ||
-      instance.args.strategy == GeneSearchStrategy::RECONCILE) {
+  if (instance.args.geneSearchStrategy == GeneSearchStrategy::SKIP ||
+      instance.args.geneSearchStrategy == GeneSearchStrategy::RECONCILE) {
     return;
   }
   for (unsigned int i = 1; i <= instance.args.recRadius; ++i) { 
@@ -246,8 +246,9 @@ void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
 void GeneRaxCore::reconcile(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
-  if (instance.args.reconcile || instance.args.reconciliationSamples > 0) {
-    if (instance.args.strategy == GeneSearchStrategy::RECONCILE) {
+  if (instance.args.reconcile || 
+      instance.args.reconciliationSampleNumber > 0) {
+    if (instance.args.geneSearchStrategy == GeneSearchStrategy::RECONCILE) {
       Logger::timed << "Optimizing DTL rates before the reconciliation..." << std::endl;
       // we haven't optimized the DTL rates yet, so we do it now
       if (!instance.args.perFamilyDTLRates) {
@@ -266,7 +267,7 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
             instance.currentFamilies, 
             instance.recModelInfo,
             instance.rates, 
-            instance.args.output, 
+            instance.args.outputPath, 
             "results", 
             instance.args.execPath, 
             instance.speciesTree, 
@@ -288,16 +289,16 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
     Routines::inferReconciliation(instance.speciesTree, 
         instance.currentFamilies, 
         instance.modelParameters, 
-        instance.args.output, 
+        instance.args.outputPath, 
         instance.args.reconcile,
-        instance.args.reconciliationSamples, 
+        instance.args.reconciliationSampleNumber, 
         optimizeRates);
     if (instance.args.buildSuperMatrix) {
       std::string outputSuperMatrixAll = FileSystem::joinPaths(
-          instance.args.output, "superMatrixAll.fasta");
+          instance.args.outputPath, "superMatrixAll.fasta");
       Routines::computeSuperMatrixFromOrthoGroups(instance.speciesTree,
         instance.currentFamilies,
-        instance.args.output, 
+        instance.args.outputPath, 
         outputSuperMatrixAll,
         false,
         true);
@@ -309,7 +310,7 @@ void GeneRaxCore::terminate(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
   Logger::timed << "Terminating the instance.." << std::endl;
-  ParallelOfstream os(FileSystem::joinPaths(instance.args.output, "stats.txt"));
+  ParallelOfstream os(FileSystem::joinPaths(instance.args.outputPath, "stats.txt"));
   os << "JointLL: " << instance.totalLibpllLL + instance.totalRecLL << std::endl;
   os << "LibpllLL: " << instance.totalLibpllLL << std::endl;
   os << "RecLL: " << instance.totalRecLL;
@@ -334,7 +335,7 @@ void GeneRaxCore::terminate(GeneRaxInstance &instance)
   Logger::timed << "Time spent on optimizing rates: " << instance.elapsedRates << "s" << std::endl;
   Logger::timed << "Time spent on optimizing gene trees: " << instance.elapsedSPR << "s" << std::endl;
 #endif
-  Logger::timed << "Results directory: " << instance.args.output << std::endl;
+  Logger::timed << "Results directory: " << instance.args.outputPath << std::endl;
   Logger::timed << "End of GeneRax execution" << std::endl;
 }
 
@@ -342,12 +343,12 @@ void GeneRaxCore::terminate(GeneRaxInstance &instance)
 void GeneRaxCore::initFolders(GeneRaxInstance &instance) 
 {
   assert(ParallelContext::isRandConsistent());
-  std::string results = FileSystem::joinPaths(instance.args.output, "results");
+  std::string results = FileSystem::joinPaths(instance.args.outputPath, "results");
   FileSystem::mkdir(results, true);
   for (auto &family: instance.currentFamilies) {
     FileSystem::mkdir(FileSystem::joinPaths(results, family.name), true);
   }
-  for (auto dir: Paths::getDirectoriesToCreate(instance.args.output)) {
+  for (auto dir: Paths::getDirectoriesToCreate(instance.args.outputPath)) {
     FileSystem::mkdir(dir, true);
   }
 }
@@ -359,7 +360,7 @@ void GeneRaxCore::initialGeneTreeSearch(GeneRaxInstance &instance)
   Logger::timed << "[Initialization] Initial optimization of the starting random gene trees" << std::endl;
   Logger::timed << "[Initialization] All the families will first be optimized with sequences only" << std::endl;
   Logger::mute();
-  Routines::runRaxmlOptimization(instance.currentFamilies, instance.args.output, 
+  Routines::runRaxmlOptimization(instance.currentFamilies, instance.args.outputPath, 
       instance.args.execPath, instance.currentIteration++, 
       ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
   Logger::unmute();
@@ -405,7 +406,7 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
   Routines::optimizeGeneTrees(instance.currentFamilies, 
       instance.recModelInfo, 
       instance.rates, 
-      instance.args.output, 
+      instance.args.outputPath, 
       "results", 
       instance.args.execPath, 
       instance.speciesTree, 
@@ -448,14 +449,14 @@ void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
         instance.initialFamilies,
         instance.args.eqpicRadius,
         true);
-    auto qpicOutput = Paths::getSpeciesTreeFile(instance.args.output,
+    auto qpicOutput = Paths::getSpeciesTreeFile(instance.args.outputPath,
         "species_tree_qpic.newick");
-    auto eqpicOutput = Paths::getSpeciesTreeFile(instance.args.output,
+    auto eqpicOutput = Paths::getSpeciesTreeFile(instance.args.outputPath,
         "species_tree_eqpic.newick");
-    auto supportOutput = Paths::getSpeciesTreeFile(instance.args.output,
+    auto supportOutput = Paths::getSpeciesTreeFile(instance.args.outputPath,
         "species_tree_quartet_support.newick");
     auto supportTripletOutput = Paths::getSpeciesTreeFile(
-        instance.args.output,
+        instance.args.outputPath,
         "species_tree_quartet_support_triplet.newick");
     calculator.exportScores(qpicOutput, 
         eqpicOutput, 
@@ -476,14 +477,14 @@ void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
         instance.currentFamilies,
         instance.args.eqpicRadius,
         false);
-    auto qpicOutput = Paths::getSpeciesTreeFile(instance.args.output,
+    auto qpicOutput = Paths::getSpeciesTreeFile(instance.args.outputPath,
         "species_tree_qpic_allquartets.newick");
-    auto eqpicOutput = Paths::getSpeciesTreeFile(instance.args.output,
+    auto eqpicOutput = Paths::getSpeciesTreeFile(instance.args.outputPath,
         "species_tree_eqpic_allquartets.newick");
-    auto supportOutput = Paths::getSpeciesTreeFile(instance.args.output,
+    auto supportOutput = Paths::getSpeciesTreeFile(instance.args.outputPath,
         "species_tree_quartet_support_allquartets.newick");
     auto supportTripletOutput = Paths::getSpeciesTreeFile(
-        instance.args.output,
+        instance.args.outputPath,
         "species_tree_quartet_support_triplet_allquartets.newick");
     calculator.exportScores(qpicOutput, 
         eqpicOutput, 
