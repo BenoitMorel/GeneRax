@@ -4,6 +4,7 @@
 #include <IO/FileSystem.hpp>
 #include <IO/FamiliesFileParser.hpp>
 #include "GTSpeciesTreeOptimizer.hpp"
+#include "TrimFamilies.hpp"
 #include <util/Paths.hpp>
 #include <util/RecModelInfo.hpp>
 #include <routines/Routines.hpp>
@@ -23,6 +24,20 @@ void filterInvalidFamilies(Families &families)
     validFamilies.push_back(family);  
   }
   families = validFamilies;
+}
+
+void trimFamilies(Families &families) 
+{
+  unsigned int minSpecies = 4;
+  double trimRatio = 0.95;
+  Logger::timed << "Families: " << families.size() << std::endl;
+  Logger::timed << "Triming families covering less than " << minSpecies << " species " << std::endl;
+  TrimFamilies::trimMinSpeciesCoverage(families, minSpecies);
+  Logger::timed << "Families: " << families.size() << std::endl;
+  Logger::timed << "Trimming families with too many clades (keeping " 
+    << trimRatio * 100.0 << "\% of the families) " << std::endl;
+  TrimFamilies::trimHighCladesNumber(families, trimRatio);
+  Logger::timed << "Families: " << families.size() << std::endl;
 }
 
 void initStartingSpeciesTree(GeneTegratorArguments &args,
@@ -78,6 +93,10 @@ void run( GeneTegratorArguments &args)
     Logger::info << "No valid family, aborting" << std::endl;
     ParallelContext::abort(0);
   }
+  Logger::info << "Number of families before trimming: " << families.size() << std::endl;
+  trimFamilies(families);
+  Logger::info << "Number of families after trimming: " << families.size() << std::endl;
+
   initStartingSpeciesTree(args, families);
   
   RecModelInfo info;

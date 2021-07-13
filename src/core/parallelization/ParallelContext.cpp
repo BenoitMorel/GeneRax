@@ -359,14 +359,13 @@ void ParallelContext::concatenateHetherogeneousUIntVectors(
   for (int i = 1; i < totalSize; ++i) {
     displ[i] = displ[i-1] + vectorSizes[i-1];
   }
-  MPI_Gatherv(&localVector[0],  // send buffer 
+  MPI_Allgatherv(&localVector[0],  // send buffer 
       localVector.size(),       // send count
       MPI_UNSIGNED,              // send type
       &globalVector[0],         // receive buffer 
       &vectorSizes[0],          // receive counts
       &displ[0],                // per rank offset 
       MPI_UNSIGNED,              // receive type
-      0,                       // root rank
       getComm());
 #else
   assert(false);
