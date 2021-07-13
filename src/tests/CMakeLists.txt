@@ -8,4 +8,4 @@ add_program(pllunrooted_tree_tests "pllunrooted_tree_tests.cpp")
 add_program(polytomy_solver_tests "polytomy_solver_tests.cpp")
 add_program(polytree_tests "polytree_tests.cpp")
 add_program(conditional_clade_tests "conditional_clade_tests.cpp")
-
+add_program_corax(test_coraxlib "test_coraxlib.cpp")
