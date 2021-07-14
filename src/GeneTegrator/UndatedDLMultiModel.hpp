@@ -66,6 +66,7 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
     _PL[e] /= sum;
     _PS[e] /= sum;
   }
+  this->onSpeciesTreeChange(nullptr);
 }
 
 template <class REAL>
