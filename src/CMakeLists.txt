@@ -5,15 +5,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wextra")
 
 add_subdirectory(core)
   
-set(PLL_LIBRARIES 
-    pllmodalgorithm_static
-    pllmodbinary_static
-    pllmodmsa_static
-    pllmodoptimize_static
-    pllmodtree_static
-    pllmodutil_static
-   )
-
 
 
 
@@ -25,7 +16,7 @@ macro(add_program program_name program_sources)
   endif()
   target_link_libraries(${program_name} 
     jointsearch-core
-    ${PLL_LIBRARIES}
+    ${CORAX_LIBRARIES}
     ${MPI_LIBRARIES}
     )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")

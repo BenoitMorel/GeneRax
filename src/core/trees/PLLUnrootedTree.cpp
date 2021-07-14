@@ -67,7 +67,7 @@ std::unique_ptr<PLLUnrootedTree> PLLUnrootedTree::buildFromStrOrFile(const std::
 
 PLLUnrootedTree::PLLUnrootedTree(const std::vector<const char*> &labels,
     unsigned int seed):
-  _tree(pllmod_utree_create_random(static_cast<unsigned int>(labels.size()), &labels[0], seed), utreeDestroy)
+  _tree(pll_utree_random_create(static_cast<unsigned int>(labels.size()), &labels[0], seed), utreeDestroy)
 {
 
 }

@@ -67,7 +67,7 @@ void GeneRaxArguments::init() {
     } else if (arg == "-s" || arg == "--species-tree") {
       speciesTree = std::string(argv[++i]);
       speciesTreeAlgorithm = Enums::strToSpeciesTree(speciesTree);
-    } else if (arg == "--geneSearchStrategy") {
+    } else if (arg == "--strategy") {
       geneSearchStrategy = ArgumentsHelper::strToStrategy(std::string(argv[++i]));
       if (geneSearchStrategy == GeneSearchStrategy::EVAL) {
         recRadius = maxSPRRadius = 0;

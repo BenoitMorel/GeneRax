@@ -1,9 +1,8 @@
 #include <search/Rollbacks.hpp>
 #include <trees/JointTree.hpp>
 
-
 void SavedBranch::restore() {
-  pllmod_utree_set_length(branch_, length_);
+  pll_utree_set_length(branch_, length_);
 }
 
 void SPRRollback::applyRollback() {

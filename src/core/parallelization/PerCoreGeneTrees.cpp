@@ -8,6 +8,7 @@
 #include <numeric>
 #include <iostream>
 #include <sstream>
+#include <trees/PLLRootedTree.hpp>
 
 template <typename T>
 std::vector<size_t> sort_indexes_descending(const std::vector<T> &v) {

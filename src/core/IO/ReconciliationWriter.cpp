@@ -1,9 +1,8 @@
 #include "ReconciliationWriter.hpp"
 
 #include <IO/ParallelOfstream.hpp>
-extern "C" {
-#include <pll.h>
-}
+#include <corax/corax_common.h>
+#include <trees/PLLRootedTree.hpp>
 
 static void printEvent(const Scenario::Event &event, pll_rtree_t *speciesTree, pll_unode_t *node, ParallelOfstream &os)
 {

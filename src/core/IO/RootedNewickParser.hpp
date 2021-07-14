@@ -1,5 +1,6 @@
 #pragma once
 
+#include <trees/PLLRootedTree.hpp>
 
 #include <IO/NewickParserCommon.hpp>
 /**

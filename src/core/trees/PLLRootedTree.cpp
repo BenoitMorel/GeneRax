@@ -1,11 +1,150 @@
 #include "PLLRootedTree.hpp"
 
-#include <IO/LibpllParsers.hpp>
 #include <IO/Logger.hpp>
 #include <set>
 #include <cstring>
 #include <maths/Random.hpp>
 
+static void * xmalloc(size_t size)
+{ 
+  void * t;
+  t = malloc(size);
+  return t;
+} 
+  
+static char * xstrdup(const char * s)
+{ 
+  size_t len = strlen(s);
+  char * p = (char *)xmalloc(len+1);
+  return strcpy(p,s);
+} 
+
+
+static void dealloc_data(pll_rnode_t * node, void (*cb_destroy)(void *))
+{
+  if (node->data)
+  {
+    if (cb_destroy)
+      cb_destroy(node->data);
+  }
+}
+
+void pll_rtree_destroy(pll_rtree_t * tree,
+                                  void (*cb_destroy)(void *))
+{
+  unsigned int i;
+  pll_rnode_t * node;
+
+  /* deallocate all nodes */
+  for (i = 0; i < tree->tip_count + tree->inner_count; ++i)
+  {
+    node = tree->nodes[i];
+    dealloc_data(node, cb_destroy);
+
+    if (node->label)
+      free(node->label);
+
+    free(node);
+  }
+
+  /* deallocate tree structure */
+  free(tree->nodes);
+  free(tree);
+}
+
+
+static void fill_nodes_recursive(pll_unode_t * node,
+                                 pll_unode_t ** array,
+                                 unsigned int array_size,
+                                 unsigned int * tip_index,
+                                 unsigned int * inner_index,
+                                 unsigned int level)
+{
+  unsigned int index;
+  if (!node->next)
+  {
+    /* tip node */
+    index = *tip_index;
+    *tip_index += 1;
+  }
+  else
+  {
+    /* inner node */
+    pll_unode_t * snode = level ? node->next : node;
+    do 
+    {
+      fill_nodes_recursive(snode->back, array, array_size, tip_index, 
+                           inner_index, level+1);
+      snode = snode->next;
+    }
+    while (snode != node);
+
+    index = *inner_index;
+    *inner_index += 1;
+  }
+
+  assert(index < array_size);
+  array[index] = node;
+}
+
+static unsigned int utree_count_nodes_recursive(pll_unode_t * node, 
+                                                unsigned int * tip_count,
+                                                unsigned int * inner_count,
+                                                unsigned int level)
+{
+  if (!node->next)
+  {
+    *tip_count += 1;
+    return 1;
+  }
+  else
+  {
+    unsigned int count = 0;
+
+    pll_unode_t * snode = level ? node->next : node;
+	do 
+	{
+	  count += utree_count_nodes_recursive(snode->back, tip_count, inner_count, level+1);
+	  snode = snode->next;
+	}
+	while (snode != node);
+
+    *inner_count += 1;
+	
+	return count + 1;
+  }
+}
+
+static unsigned int utree_count_nodes(pll_unode_t * root, unsigned int * tip_count,
+                                      unsigned int * inner_count)
+{
+  unsigned int count = 0;
+  
+  if (tip_count)
+    *tip_count = 0; 
+  
+  if (inner_count)
+    *inner_count = 0; 
+
+  if (!root->next && !root->back->next)
+    return 0;
+
+  if (!root->next)
+    root = root->back;
+    
+  count = utree_count_nodes_recursive(root, tip_count, inner_count, 0);
+  
+  if (tip_count && inner_count)
+    assert(count == *tip_count + *inner_count); 
+
+  return count;
+}
+
+
+static int unode_is_rooted(const pll_unode_t * root)
+{
+  return (root->next && root->next->next == root) ? 1 : 0;
+}
 
 void PLLRootedTree::setSon(pll_rnode_t *parent, pll_rnode_t *newSon, bool left)
 {
@@ -433,5 +572,128 @@ PLLRootedTree::getNodeIndexMapping(PLLRootedTree &otherTree)
   return mapping;
 }
 
+static pll_utree_t * utree_wraptree(pll_unode_t * root,
+                                    unsigned int tip_count,
+                                    unsigned int inner_count,
+                                    int binary)
+{
+  unsigned int node_count;
+  
+  pll_utree_t * tree = (pll_utree_t *)malloc(sizeof(pll_utree_t));
+  
+  if (!root->next)
+    root = root->back;
 
+  if (binary)
+  {
+    if (tip_count == 0)
+    {
+      node_count = utree_count_nodes(root, &tip_count, &inner_count);
+    }
+    else
+    {
+      inner_count = tip_count - 2;
+      node_count = tip_count + inner_count;
+    }
+  }
+  else
+  {
+    if (tip_count == 0 || inner_count == 0)
+      node_count = utree_count_nodes(root, &tip_count, &inner_count);
+    else
+      node_count = tip_count + inner_count;
+  }
+
+  tree->nodes = (pll_unode_t **)malloc(node_count*sizeof(pll_unode_t *));
+  unsigned int tip_index = 0;
+  unsigned int inner_index = tip_count;
+
+  fill_nodes_recursive(root, tree->nodes, node_count, &tip_index, &inner_index, 0);
+ 
+  assert(tip_index == tip_count);
+  assert(inner_index == tip_count + inner_count);
+
+  tree->tip_count = tip_count;
+  tree->inner_count = inner_count;
+  tree->edge_count = node_count - 1;
+  tree->binary = (inner_count == tip_count - (unode_is_rooted(root) ? 1 : 2));
+  tree->vroot = root;
+
+  return tree;
+}
+
+
+static pll_unode_t * rtree_unroot(pll_rnode_t * root, pll_unode_t * back)
+{
+  pll_unode_t * uroot = (pll_unode_t *)calloc(1,sizeof(pll_unode_t));
+  uroot->back = back;
+  uroot->label = (root->label) ? xstrdup(root->label) : NULL;
+  uroot->length = uroot->back->length;
+
+  if (!root->left)
+  {
+    uroot->next = NULL;
+    return uroot;
+  }
+
+  uroot->next = (pll_unode_t *)calloc(1,sizeof(pll_unode_t));
+
+  uroot->next->next = (pll_unode_t *)calloc(1,sizeof(pll_unode_t));
+  uroot->next->next->next = uroot;
+
+  uroot->next->length = root->left->length;
+  uroot->next->back = rtree_unroot(root->left, uroot->next);
+  uroot->next->next->length = root->right->length;
+  uroot->next->next->back = rtree_unroot(root->right, uroot->next->next);
+
+  return uroot;
+}
+
+pll_utree_t * pll_rtree_unroot(pll_rtree_t * tree)
+{
+  pll_rnode_t * root = tree->root;
+
+  pll_rnode_t * new_root;
+
+  pll_unode_t * uroot = (pll_unode_t*)calloc(1,sizeof(pll_unode_t));
+
+  uroot->next = (pll_unode_t *)calloc(1,sizeof(pll_unode_t));
+
+  uroot->next->next = (pll_unode_t *)calloc(1,sizeof(pll_unode_t));
+
+  uroot->next->next->next = uroot;
+  uroot->length = root->left->length + root->right->length;
+
+  /* get the first root child that has descendants and make  it the new root */
+  if (root->left->left)
+  {
+    new_root = root->left;
+    uroot->back = rtree_unroot(root->right,uroot);
+    /* TODO: Need to clean uroot in case of error */
+    if (!uroot->back) return NULL;
+  }
+  else
+  {
+    new_root = root->right;
+    uroot->back = rtree_unroot(root->left,uroot);
+    /* TODO: Need to clean uroot in case of error*/
+    if (!uroot->back) return NULL;
+  }
+
+  uroot->label = (new_root->label) ? xstrdup(new_root->label) : NULL;
+
+  uroot->next->label = uroot->label;
+  uroot->next->length = new_root->left->length;
+  uroot->next->back = rtree_unroot(new_root->left, uroot->next);
+  /* TODO: Need to clean uroot in case of error*/
+  if (!uroot->next->back) return NULL;
+
+  uroot->next->next->label = uroot->label;
+  uroot->next->next->length = new_root->right->length;
+  uroot->next->next->back = rtree_unroot(new_root->right, uroot->next->next);
+  /* TODO: Need to clean uroot in case of error*/
+  if (!uroot->next->next->back) return NULL;
+
+  return pll_utree_wraptree(uroot,0);
+}
 

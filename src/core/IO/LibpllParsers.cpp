@@ -9,9 +9,105 @@
 #include <array>
 #include <IO/Logger.hpp>
 #include <IO/RootedNewickParser.hpp>
+#include <corax/corax_common.h>
 
-extern "C" {
-#include <pll.h>
+
+static char * rtree_export_newick_recursive(const pll_rnode_t * root,
+                                  char * (*cb_serialize)(const pll_rnode_t *))
+{
+  char * newick;
+  int size_alloced;
+  assert(root != NULL);
+
+  if (!(root->left) || !(root->right))
+  {
+    if (cb_serialize)
+    {
+      newick = cb_serialize(root);
+      size_alloced = (int) strlen(newick);
+    }
+    else
+    {
+      size_alloced = asprintf(&newick, "%s:%f", root->label, root->length);
+    }
+  }
+  else
+  {
+    char * subtree1 = rtree_export_newick_recursive(root->left,cb_serialize);
+    char * subtree2 = rtree_export_newick_recursive(root->right,cb_serialize);
+    if (cb_serialize)
+    {
+      char * temp = cb_serialize(root);
+      size_alloced = asprintf(&newick,
+                              "(%s,%s)%s",
+                              subtree1,
+                              subtree2,
+                              temp);
+      free(temp);
+    }
+    else
+    {
+      size_alloced = asprintf(&newick,
+                              "(%s,%s)%s:%f",
+                              subtree1,
+                              subtree2,
+                              root->label ? root->label : "",
+                              root->length);
+    }
+    free(subtree1);
+    free(subtree2);
+  }
+  return newick;
+}
+
+
+char * pll_rtree_export_newick(const pll_rnode_t * root,
+                                   char * (*cb_serialize)(const pll_rnode_t *))
+{
+  char * newick;
+  int size_alloced;
+  if (!root) return NULL;
+
+  if (!(root->left) || !(root->right))
+  {
+    if (cb_serialize)
+    {
+      newick = cb_serialize(root);
+      size_alloced = (int) strlen(newick);
+    }
+    else
+    {
+      size_alloced = asprintf(&newick, "%s:%f", root->label, root->length);
+    }
+  }
+  else
+  {
+    char * subtree1 = rtree_export_newick_recursive(root->left,cb_serialize);
+    char * subtree2 = rtree_export_newick_recursive(root->right,cb_serialize);
+    if (cb_serialize)
+    {
+      char * temp = cb_serialize(root);
+      size_alloced = asprintf(&newick,
+                              "(%s,%s)%s",
+                              subtree1,
+                              subtree2,
+                              temp);
+      free(temp);
+    }
+    else
+    {
+      size_alloced = asprintf(&newick,
+                              "(%s,%s)%s:%f;",
+                              subtree1,
+                              subtree2,
+                              root->label ? root->label : "",
+                              root->length);
+    }
+    free(subtree1);
+    free(subtree2);
+  }
+
+  return newick;
 }
 
 LibpllException::~LibpllException()

@@ -6,7 +6,6 @@ add_definitions(-D_USE_MATH_DEFINES)
 set(MPISCHEDULER_BUILD_AS_LIBRARY True)
 set(MPISCHEDULER_STATIC_SCHEDULED_MAIN True)
 # Dependencies
-add_subdirectory(pll-modules)
 add_subdirectory(MPIScheduler)
 # the two following lines disable corax tests build
 set(CORAX_TESTS_ENABLED OFF)

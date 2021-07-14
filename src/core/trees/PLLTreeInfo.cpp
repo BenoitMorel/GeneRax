@@ -5,9 +5,7 @@
 #include <IO/Logger.hpp>
 #include <maths/Random.hpp>
 
-extern "C" {
-  #include <pllmod_common.h>
-}
+#include <corax/corax.h>
 const double DEFAULT_BL = 0.1;
 
 static unsigned int getBestLibpllAttribute() {
@@ -131,7 +129,7 @@ pllmod_treeinfo_t *PLLTreeInfo::buildTreeInfo(const Model &model,
   params_to_optimize |= PLLMOD_OPT_PARAM_BRANCHES_ITERATIVE;
   std::vector<unsigned int> params_indices(model.num_ratecats(), 0); 
   auto treeinfo = pllmod_treeinfo_create(utree.getAnyInnerNode(), 
-      utree.getLeavesNumber(), 1, PLLMOD_COMMON_BRLEN_SCALED);
+      utree.getLeavesNumber(), 1, PLL_BRLEN_SCALED);
   if (!treeinfo || !treeinfo->root)
     throw LibpllException("Cannot create treeinfo");
   pllmod_treeinfo_init_partition(treeinfo, 0, partition,

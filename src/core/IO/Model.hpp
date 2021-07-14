@@ -6,15 +6,7 @@
 
 #include <algorithm>
 #include <unordered_map>
-extern "C" {
-#include <pll.h>
-#include <pllmod_algorithm.h>
-#include <pll_binary.h>
-#include <pll_msa.h>
-#include <pll_optimize.h>
-#include <pll_tree.h>
-#include <pllmod_util.h>  
-}
+#include <corax/corax.h>
 #include <IO/RaxmlTypes.hpp>
 #include <memory>
 

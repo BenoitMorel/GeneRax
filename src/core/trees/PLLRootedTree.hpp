@@ -1,15 +1,7 @@
 #pragma once
 
-extern "C" {
-#include <pll.h>
-#include <pllmod_algorithm.h>
-#include <pll_binary.h>
-#include <pll_msa.h>
-#include <pll_optimize.h>
-#include <pll_tree.h>
-#include <pllmod_util.h>  
-}
-
+#include <corax/corax.h>
+#include <IO/LibpllParsers.hpp>
 #include <string>
 #include <memory>
 #include <vector>
@@ -19,6 +11,39 @@ extern "C" {
 #include <util/enums.hpp>
 #include <util/types.hpp>
 
+
+typedef struct pll_rnode_s
+{
+  char * label;
+  double length;
+  unsigned int node_index;
+  unsigned int clv_index;
+  int scaler_index;
+  unsigned int pmatrix_index;
+  struct pll_rnode_s * left;
+  struct pll_rnode_s * right;
+  struct pll_rnode_s * parent;
+
+  void * data;
+} pll_rnode_t;
+
+typedef struct pll_rtree_s
+{
+  unsigned int tip_count;
+  unsigned int inner_count;
+  unsigned int edge_count;
+
+  pll_rnode_t ** nodes;
+
+  pll_rnode_t * root;
+
+} pll_rtree_t;
+
+void pll_rtree_destroy(pll_rtree_t * tree,
+                                  void (*cb_destroy)(void *));
+
+
+pll_utree_t * pll_rtree_unroot(pll_rtree_t * tree);
 
 /**
  *  C++ wrapper around the libpll pll_rtree_t structure

@@ -7,8 +7,6 @@
 #include <iomanip>
 #include <fstream>
 
-
-
 const std::vector<int> ALL_MODEL_PARAMS = {PLLMOD_OPT_PARAM_FREQUENCIES, PLLMOD_OPT_PARAM_SUBST_RATES,
                                       PLLMOD_OPT_PARAM_PINV, PLLMOD_OPT_PARAM_ALPHA,
                                       PLLMOD_OPT_PARAM_FREE_RATES, PLLMOD_OPT_PARAM_RATE_WEIGHTS,
@@ -931,7 +929,7 @@ void assign(Model& model, const pll_partition_t * partition)
       model.base_freqs(i, doubleVector(partition->frequencies[i],
                                        partition->frequencies[i] + partition->states));
 
-      size_t n_subst_rates = pllmod_util_subst_rate_count(partition->states);
+      size_t n_subst_rates = pll_subst_rate_count(partition->states);
       model.subst_rates(i, doubleVector(partition->subst_params[i],
                                         partition->subst_params[i] + n_subst_rates));
     }

@@ -6,14 +6,15 @@
 #include <util/types.hpp>
 #include <memory>
 #include <unordered_set>
-extern "C" {
-#include <pll.h>
-}
+#include <corax/corax_common.h>
+#include <trees/PLLRootedTree.hpp>
 
+/*
 typedef struct pll_utree_s pll_utree_t;
 typedef struct pll_unode_s pll_unode_t;
 typedef struct pll_rtree_s pll_rtree_t;
 typedef struct pll_rnode_s pll_rnode_t;
+*/
 class ParallelOfstream;
 typedef std::unordered_set<std::string> OrthoGroup;
 typedef std::shared_ptr<OrthoGroup> OrthoGroupPtr;

@@ -15,6 +15,9 @@ typedef struct pll_rtree_s pll_rtree_t;
 typedef struct pll_rnode_s pll_rnode_t;
 typedef unsigned long long pll_state_t;
 
+char * pll_rtree_export_newick(const pll_rnode_t * root,
+                                   char * (*cb_serialize)(const pll_rnode_t *));
+
 struct PLLSequence {
   PLLSequence(char *label_, char *seq_, unsigned int len_):
     label(label_),

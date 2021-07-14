@@ -2,10 +2,7 @@
 // Created by BenoitMorel on 23/01/18.
 //
 
-extern "C" {
-  #include <pllmod_common.h>
-}
-
+#include <corax/corax.h>
 #include "LibpllEvaluation.hpp"
 #include <map>
 #include <fstream>
@@ -168,7 +165,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, 
         tolerance);
 
     /* normalize scalers and scale the branches accordingly */
-    if (treeinfo->brlen_linkage == PLLMOD_COMMON_BRLEN_SCALED &&
+    if (treeinfo->brlen_linkage == PLL_BRLEN_SCALED &&
         treeinfo->partition_count > 1)
       pllmod_treeinfo_normalize_brlen_scalers(treeinfo);
 
@@ -198,7 +195,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, 
   }
 
   /* optimize brlen scalers, if needed */
-  if (treeinfo->brlen_linkage == PLLMOD_COMMON_BRLEN_SCALED &&
+  if (treeinfo->brlen_linkage == PLL_BRLEN_SCALED &&
       treeinfo->partition_count > 1)
   {
     new_loglh = -1 * pllmod_algo_opt_onedim_treeinfo(treeinfo,
