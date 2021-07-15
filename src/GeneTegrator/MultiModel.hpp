@@ -88,6 +88,7 @@ bool MultiModelTemplate<REAL>::inferMLScenario(Scenario &scenario,
     bool stochastic) {
   auto rootCID = this->_ccp.getCladesNumber() - 1;
   auto speciesRoot = sampleSpeciesNode();
+  scenario.setVirtualRootIndex(rootCID);
   scenario.setSpeciesTree(this->_speciesTree.getRawPtr());
   return backtrace(rootCID, 
       speciesRoot,

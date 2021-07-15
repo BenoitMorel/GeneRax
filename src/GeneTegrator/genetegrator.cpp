@@ -108,6 +108,7 @@ void run( GeneTegratorArguments &args)
       info,
       args.output);
   speciesTreeOptimizer.optimize();
+  speciesTreeOptimizer.reconcile();
 }
 
 int genetegrator_main(int argc, char** argv, void* comm)

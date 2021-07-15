@@ -1,4 +1,5 @@
 #include "GTSpeciesTreeOptimizer.hpp" 
+#include <IO/FileSystem.hpp>
 #include <IO/Logger.hpp>
 #include <optimizers/DTLOptimizer.hpp>
 #include <util/Paths.hpp>
@@ -363,4 +364,22 @@ void GTSpeciesTreeOptimizer::printFamilyDimensions(const std::string &outputFile
   }
 }
 
+void GTSpeciesTreeOptimizer::reconcile()
+{
+  auto recDir = FileSystem::joinPaths(_outputDir, "reconciliations");
+  Logger::info << "mkdir " << recDir << std::endl;
+  FileSystem::mkdir(recDir, true);
+  ParallelContext::barrier();
+  auto &families = _geneTrees.getTrees();
+  for (unsigned int i = 0; i < families.size(); ++i) {
+    auto out = FileSystem::joinPaths(recDir, families[i].name + ".xml");
+    auto &evaluation = _evaluations[i];
+    evaluation->computeLogLikelihood();
+    Scenario scenario;
+    evaluation->inferMLScenario(scenario, true);
+    scenario.saveReconciliation(out, ReconciliationFormat::RecPhyloXML, false);
+
+  }
+  
+}
 
