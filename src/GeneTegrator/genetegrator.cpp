@@ -28,7 +28,7 @@ void filterInvalidFamilies(Families &families)
 
 void trimFamilies(Families &families) 
 {
-  unsigned int minSpecies = 4;
+  unsigned int minSpecies = 3;
   double trimRatio = 0.95;
   Logger::timed << "Families: " << families.size() << std::endl;
   Logger::timed << "Triming families covering less than " << minSpecies << " species " << std::endl;
