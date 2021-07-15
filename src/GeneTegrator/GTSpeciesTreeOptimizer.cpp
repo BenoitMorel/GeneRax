@@ -103,6 +103,8 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
   auto rates = *_modelRates;
   OptimizationSettings settings;
   double ll = computeLikelihood();
+  Logger::info << "Disable rates optimization" << std::endl;
+  return ll;
   if (!thorough) {
     settings.lineSearchMinImprovement = 10.0;
     settings.minAlpha = 0.01;
@@ -371,15 +373,20 @@ void GTSpeciesTreeOptimizer::reconcile()
   FileSystem::mkdir(recDir, true);
   ParallelContext::barrier();
   auto &families = _geneTrees.getTrees();
-  for (unsigned int i = 0; i < families.size(); ++i) {
-    auto out = FileSystem::joinPaths(recDir, families[i].name + ".xml");
-    auto &evaluation = _evaluations[i];
-    evaluation->computeLogLikelihood();
-    Scenario scenario;
-    evaluation->inferMLScenario(scenario, true);
-    scenario.saveReconciliation(out, ReconciliationFormat::RecPhyloXML, false);
+  unsigned int samples = 5;
 
+  for (unsigned int i = 0; i < families.size(); ++i) {
+    for (unsigned int sample = 0; sample < samples; ++ sample) {
+      auto out = FileSystem::joinPaths(recDir, families[i].name + std::to_string(sample) + ".xml");
+      auto &evaluation = _evaluations[i];
+      evaluation->computeLogLikelihood();
+      Scenario scenario;
+      evaluation->inferMLScenario(scenario, true);
+      scenario.saveReconciliation(out, ReconciliationFormat::RecPhyloXML, false);
+    }
   }
+
+  ParallelContext::makeRandConsistent();
   
 }
 
