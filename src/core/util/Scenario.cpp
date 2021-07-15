@@ -155,7 +155,6 @@ void Scenario::saveReconciliation(ParallelOfstream &os, ReconciliationFormat for
     break;
   case ReconciliationFormat::RecPhyloXML:
     ReconciliationWriter::saveReconciliationRecPhyloXML(_speciesTree, 
-        _geneRoot, 
         _virtualRootIndex, 
         _geneIdToEvents, 
         os);

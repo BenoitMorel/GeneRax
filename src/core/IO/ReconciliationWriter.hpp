@@ -19,8 +19,7 @@ public:
       ParallelOfstream &os);
 
   static void saveReconciliationRecPhyloXML(pll_rtree_t *speciesTree,  
-      pll_unode_t *geneRoot, 
-      unsigned int virtualRootIndex,
+      unsigned int geneNode, 
       std::vector<std::vector<Scenario::Event> > &geneToEvent, 
       ParallelOfstream &os);
   

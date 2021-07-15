@@ -297,6 +297,9 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
 
   if (isSpeciesLeaf and isGeneLeaf and e == this->_geneToSpecies[gid]) {
     proba = REAL(_PS[e]);
+    if (event) {
+      event->label = std::string(geneNode->label);
+    }
     return;
   }
   typedef std::array<REAL, 7>  ValuesArray;

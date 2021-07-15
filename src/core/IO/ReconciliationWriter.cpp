@@ -101,7 +101,7 @@ static void saveSpeciesTreeRecPhyloXML(pll_rtree_t *speciesTree, ParallelOfstrea
   os << "</spTree>" << std::endl;
 }
 
-static void writeEventRecPhyloXML(pll_unode_t *geneTree,
+static void writeEventRecPhyloXML(unsigned int geneIndex,
     pll_rtree_t *speciesTree, 
     Scenario::Event  &event,
     const Scenario::Event *previousEvent,
@@ -113,7 +113,7 @@ static void writeEventRecPhyloXML(pll_unode_t *geneTree,
   os << indent << "<eventsRec>" << std::endl;
   bool previousWasTransfer = previousEvent->type 
     == ReconciliationEventType::EVENT_T || previousEvent->type == ReconciliationEventType::EVENT_TL;
-  if (previousWasTransfer && geneTree->node_index == previousEvent->rightGeneIndex && event.type 
+  if (previousWasTransfer && geneIndex == previousEvent->rightGeneIndex && event.type 
       != ReconciliationEventType::EVENT_L) {
     auto previousEventSpeciesOut = speciesTree->nodes[previousEvent->destSpeciesNode];
     os << indent << "\t<transferBack destinationSpecies=\"" << previousEventSpeciesOut->label << "\"/>" << std::endl;
@@ -121,7 +121,6 @@ static void writeEventRecPhyloXML(pll_unode_t *geneTree,
   
   switch(event.type) {
   case ReconciliationEventType::EVENT_None:
-    assert(geneTree->next == 0);
     assert(species->left == 0 && species->right == 0);
     os << indent << "\t<leaf speciesLocation=\"" << species->label << "\"/>" <<  std::endl;
     break;
@@ -145,24 +144,20 @@ static void writeEventRecPhyloXML(pll_unode_t *geneTree,
   os << indent << "</eventsRec>" << std::endl;
 }
 
-static void recursivelySaveGeneTreeRecPhyloXML(pll_unode_t *geneTree, 
-    bool isVirtualRoot,
+static void recursivelySaveGeneTreeRecPhyloXML(unsigned int geneIndex, 
     pll_rtree_t *speciesTree, 
     std::vector<std::vector<Scenario::Event> > &geneToEvents,
     const Scenario::Event *previousEvent,
     std::string &indent,
     ParallelOfstream &os)
 {
-  if (!geneTree) {
-    return;
-  }
-  auto &events = geneToEvents[geneTree->node_index];
+  auto &events = geneToEvents[geneIndex];
   for (unsigned int i = 0; i < events.size() - 1; ++i) {
     os << indent << "<clade>" << std::endl;
     indent += "\t";
     auto &event = events[i];
-    os << indent << "<name>" << (geneTree->label ? geneTree->label : "NULL") << "</name>" << std::endl;
-    writeEventRecPhyloXML(geneTree, speciesTree, event, previousEvent, indent, os);  
+    os << indent << "<name>" << "" << "</name>" << std::endl;
+    writeEventRecPhyloXML(geneIndex, speciesTree, event, previousEvent, indent, os);  
     previousEvent = &event;
     if (event.type == ReconciliationEventType::EVENT_SL || event.type == ReconciliationEventType::EVENT_TL) {
       Scenario::Event loss;
@@ -178,7 +173,7 @@ static void recursivelySaveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
       indent += "\t";
       os << indent << "<clade>" << std::endl;
       os << indent << "<name>loss</name>" << std::endl;
-      writeEventRecPhyloXML(geneTree, speciesTree, loss, previousEvent, indent, os);
+      writeEventRecPhyloXML(geneIndex, speciesTree, loss, previousEvent, indent, os);
       indent.pop_back();
       os << indent << "</clade>" << std::endl;
     } else {
@@ -188,27 +183,15 @@ static void recursivelySaveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
 
   os << indent << "<clade>" << std::endl;
   indent += "\t";
-  Scenario::Event &event = geneToEvents[geneTree->node_index].back();
-  os << indent << "<name>" << (geneTree->label ? geneTree->label : "NULL") << "</name>" << std::endl;
-  writeEventRecPhyloXML(geneTree, speciesTree, event, previousEvent, indent, os);  
+  Scenario::Event &event = geneToEvents[geneIndex].back();
+  //os << indent << "<name>" << (geneTree->label ? geneTree->label : "NULL") << "</name>" << std::endl;
+  os << indent << "<name>" << event.label << "</name>" << std::endl;
+  writeEventRecPhyloXML(geneIndex, speciesTree, event, previousEvent, indent, os);  
 
 
-  if (geneTree->next) {
-    pll_unode_t *left = nullptr;
-    pll_unode_t *right = nullptr;
-    if (isVirtualRoot) {
-      
-      assert(geneTree->next);
-      assert(geneTree->next->back);
-      left = geneTree->next;
-      right = geneTree->next->back;
-    } else {
-      left = geneTree->next->back;
-      right = geneTree->next->next->back;
-    }
-    
-    recursivelySaveGeneTreeRecPhyloXML(left, false, speciesTree, geneToEvents, &event, indent, os);
-    recursivelySaveGeneTreeRecPhyloXML(right, false, speciesTree, geneToEvents, &event, indent, os);
+  if (!event.isLeaf()) {
+    recursivelySaveGeneTreeRecPhyloXML(event.leftGeneIndex, speciesTree, geneToEvents, &event, indent, os);
+    recursivelySaveGeneTreeRecPhyloXML(event.rightGeneIndex, speciesTree, geneToEvents, &event, indent, os);
   }
   for (unsigned int i = 0; i < events.size() - 1; ++i) {
     indent.pop_back();
@@ -218,8 +201,7 @@ static void recursivelySaveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
   os << indent << "</clade>" << std::endl;
 }
 
-static void saveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
-    unsigned int virtualRootIndex,
+static void saveGeneTreeRecPhyloXML(unsigned int geneIndex,
     pll_rtree_t *speciesTree,
     std::vector<std::vector<Scenario::Event> > &geneToEvents, 
     ParallelOfstream &os)
@@ -227,20 +209,15 @@ static void saveGeneTreeRecPhyloXML(pll_unode_t *geneTree,
   os << "<recGeneTree>" << std::endl;
   os << "<phylogeny rooted=\"true\">" << std::endl;
   std::string indent;
-  Scenario::Event noEvent;
-  noEvent.type = ReconciliationEventType::EVENT_None;
-  pll_unode_t virtualRoot;
-  virtualRoot.next = geneTree;
-  virtualRoot.node_index = virtualRootIndex;
-  virtualRoot.label = 0;
-  recursivelySaveGeneTreeRecPhyloXML(&virtualRoot, true, speciesTree, geneToEvents, &noEvent, indent, os); 
+  Scenario::Event previousEvent;
+  previousEvent.type = ReconciliationEventType::EVENT_None;
+  recursivelySaveGeneTreeRecPhyloXML(geneIndex, speciesTree, geneToEvents, &previousEvent, indent, os); 
   os << "</phylogeny>" << std::endl;
   os << "</recGeneTree>" << std::endl;
 }
 
 void ReconciliationWriter::saveReconciliationRecPhyloXML(pll_rtree_t *speciesTree, 
-    pll_unode_t *geneRoot, 
-    unsigned int virtualRootIndex,
+    unsigned int geneIndex, 
     std::vector<std::vector<Scenario::Event> > &geneToEvents, 
     ParallelOfstream &os)
 {
@@ -249,7 +226,7 @@ void ReconciliationWriter::saveReconciliationRecPhyloXML(pll_rtree_t *speciesTre
   os << "\txsi:schemaLocation=\"http://www.recg.org ./recGeneTreeXML.xsd\"" << std::endl;
   os << "\txmlns=\"http://www.recg.org\">" << std::endl;
   saveSpeciesTreeRecPhyloXML(speciesTree, os);
-  saveGeneTreeRecPhyloXML(geneRoot, virtualRootIndex, speciesTree, geneToEvents, os);
+  saveGeneTreeRecPhyloXML(geneIndex, speciesTree, geneToEvents, os);
   os << "</recPhylo>";
 
 }

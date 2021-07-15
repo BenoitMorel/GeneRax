@@ -89,11 +89,13 @@ public:
     pll_unode_t *pllTransferedGeneNode;
     pll_rnode_t *pllDestSpeciesNode;
     
-   
+    std::string label;
+
     /**
      *  Is this event valid? (if not, something went wrong)
      */
     bool isValid() const { return speciesNode != INVALID_NODE_ID; }
+    bool isLeaf() const { return type == ReconciliationEventType::EVENT_None;}
   };
 
 

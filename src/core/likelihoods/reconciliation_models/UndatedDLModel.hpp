@@ -182,6 +182,9 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
 
   proba = REAL();
   if (isSpeciesLeaf and isGeneLeaf) {
+    if (event) {
+      event->label = std::string(geneNode->label);
+    }
     // present
     if (e == this->_geneToSpecies[gid]) {
       proba = REAL(_PS[e]);
