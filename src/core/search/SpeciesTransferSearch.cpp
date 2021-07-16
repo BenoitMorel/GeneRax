@@ -80,11 +80,14 @@ static bool transferRound(SpeciesTree &speciesTree,
   std::unordered_map<std::string, unsigned int> labelsToIds;
   speciesTree.getLabelsToId(labelsToIds);
   std::vector<TransferMove> transferMoves;
+  Logger::info << "WARNING, CREATING FILE yoyo.txt" << std::endl;
+  ParallelOfstream os("yoyo.txt");
   for (unsigned int from = 0; from < frequencies.count.size(); ++from) {
     for (unsigned int to = 0; to < frequencies.count.size(); ++to) {
       auto regraft = labelsToIds[frequencies.idToLabel[from]];
       auto prune = labelsToIds[frequencies.idToLabel[to]];
       auto count = frequencies.count[from][to];
+      os << frequencies.idToLabel[from] << " " << frequencies.idToLabel[to] << " f1 = " << speciesFrequencies[regraft] << " f2=" << speciesFrequencies[prune] << " t = " << count << std::endl;
       transfers += count;
       if (count < minTransfers) {
         continue;
