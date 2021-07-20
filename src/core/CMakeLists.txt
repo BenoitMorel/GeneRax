@@ -3,6 +3,7 @@ set(jointsearch-core_SOURCES
   branchlengths/ReconciliationBLEstimator.cpp
   ccp/bitvector.cpp
   ccp/ConditionalClades.cpp
+  ccp/SpeciesSplits.cpp
   IO/NewickParserCommon.cpp
   IO/RootedNewickParser.cpp
   IO/Families.cpp
