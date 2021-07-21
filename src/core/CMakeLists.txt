@@ -4,6 +4,7 @@ set(jointsearch-core_SOURCES
   ccp/bitvector.cpp
   ccp/ConditionalClades.cpp
   ccp/SpeciesSplits.cpp
+  ccp/SpeciesSplitScore.cpp
   IO/NewickParserCommon.cpp
   IO/RootedNewickParser.cpp
   IO/Families.cpp

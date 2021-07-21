@@ -35,7 +35,8 @@ public:
   unsigned int nonDistinctSplitsNumber() const;
 
   const SplitCounts &getSplitCounts() const {return _splitCounts;}
-
+  const CCPClade &getClade(CID cid) const {return _cidToClade[cid];}
+  const std::unordered_map<std::string, unsigned int> &getLabelToSpid() const {return _labelToSpid;}
 private: 
   std::vector<std::string> _spidToLabel;
   std::unordered_map<std::string, unsigned int> _labelToSpid;
