@@ -28,6 +28,8 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
       pruneSpeciesTree = true;
     } else if (arg == "-p" || arg == "--prefix") {
       output = std::string(argv[++i]);
+    } else if (arg == "--seed") {
+      seed = atoi(argv[++i]);
     }
   }
 }

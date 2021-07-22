@@ -132,7 +132,7 @@ void GeneRaxArguments::init() {
     /**
      *  Species tree inference
      */
-    } else if (arg == "--si-geneSearchStrategy") {
+    } else if (arg == "--si-strategy") {
       speciesStrategy = ArgumentsHelper::strToSpeciesSearchStrategy(std::string(argv[++i]));
     } else if (arg == "--si-spr-radius") {
       speciesSPRRadius = static_cast<unsigned int>(atoi(argv[++i]));
