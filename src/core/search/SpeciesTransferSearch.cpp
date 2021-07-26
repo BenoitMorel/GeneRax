@@ -123,11 +123,13 @@ static bool transferRound(SpeciesTree &speciesTree,
     if (SpeciesTreeOperator::canApplySPRMove(speciesTree, transferMove.prune, transferMove.regraft)) {
       blacklist.blacklist(transferMove);
       trials++;
+      /*
       Logger::info << "Test "   
           << speciesTree.getNode(transferMove.prune)->label
           << " -> " 
           << speciesTree.getNode(transferMove.regraft)->label
           << std::endl;
+          */
       if (SpeciesSearchCommon::testSPR(speciesTree, evaluation, 
             searchState, transferMove.prune, transferMove.regraft)) {
         failures = 0;

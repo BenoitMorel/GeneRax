@@ -156,13 +156,6 @@ bool Bitvector::operator < (const Bitvector &other) const
 
 Bitvector& Bitvector::operator |= (Bitvector const& rhs)
 {
-    if( size_ != rhs.size_ ) {
-        throw std::runtime_error(
-            "Cannot use operator `|` or `|=` on Bitvectors of different size. "
-            "Use bitwise_or() instead."
-        );
-    }
-
     for (size_t i = 0; i < data_.size(); ++i) {
         data_[i] |= rhs.data_[i];
     }

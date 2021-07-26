@@ -5,6 +5,7 @@
 #include <vector>
 #include <ccp/ConditionalClades.hpp>
 #include <utility>
+#include <map>
 
 class PLLUnrootedTree;
 class GeneSpeciesMapping;
@@ -19,7 +20,10 @@ struct PairHash
   }
 };
 
-using SplitCounts = std::unordered_map<Split, unsigned int, PairHash>;
+using SplitCountsMap = std::map<Split, unsigned int>;
+//using SplitCountsMap = std::unordered_map<Split, unsigned int, PairHash>;
+using SplitCount = std::pair<Split, unsigned int>;
+using SplitCountVector = std::vector<SplitCount>;
 
 class SpeciesSplits {
 public:
@@ -31,10 +35,16 @@ public:
   void addGeneTree(const std::string &newickFile,
       const GeneSpeciesMapping &mapping);
 
-  unsigned int distinctSplitsNumber() const {return _splitCounts.size();}
+  void computeVector();
+
+  void dump(const std::string &outputPath);
+  void load(const std::string &inputPath);
+
+  unsigned int distinctSplitsNumber() const {return _splitCountVector.size();}
   unsigned int nonDistinctSplitsNumber() const;
 
-  const SplitCounts &getSplitCounts() const {return _splitCounts;}
+  const SplitCountVector &getSplitCounts() const {return _splitCountVector;}
+  const CIDToClade &getClades() const {return _cidToClade;}
   const CCPClade &getClade(CID cid) const {return _cidToClade[cid];}
   const std::unordered_map<std::string, unsigned int> &getLabelToSpid() const {return _labelToSpid;}
 private: 
@@ -44,7 +54,8 @@ private:
   CladeToCID _cladeToCid;
   CIDToClade _cidToClade;
   std::vector<unsigned int> _cidToSpeciesNumber;
-  SplitCounts _splitCounts;
+  SplitCountsMap _splitCountsMap;
+  SplitCountVector _splitCountVector;
 
   void _treatNodeSplit(unsigned int nodeId,
       unsigned int leftNodeId,

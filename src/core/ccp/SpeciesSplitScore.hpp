@@ -28,14 +28,14 @@ public:
   SpeciesSplitScore(PLLRootedTree &rootedSpeciesTree,
       const SpeciesSplits &splits);
   
+  void updateSpeciesTree(PLLRootedTree &rootedSpeciesTree);
   double getScore();
 private:
   const SpeciesSplits &_splits;
-  PLLUnrootedTree _speciesTree;
+  std::unique_ptr<PLLUnrootedTree> _speciesTree;
   std::vector<unsigned int> _bidToNodeIndex;
   std::vector<BID> _nodeIndexToBid;
   BranchSet _emptyBranchSet;
-  // _path[leaf->node_inde
   std::vector<std::vector<BranchSet> > _paths;
   std::unordered_map<std::string, unsigned int> _labelToSpid;
   void fillPathsRec(unsigned int fromSpid, 

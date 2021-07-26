@@ -159,7 +159,7 @@ static bool isBranchIn(pll_unode_t *b,
     || branches.find(b->back) != branches.end();
 }
 
-std::unordered_set<pll_unode_t *> PLLUnrootedTree::getBranches()
+std::unordered_set<pll_unode_t *> PLLUnrootedTree::getBranches() const
 {
   std::unordered_set<pll_unode_t *> branches;
   for (auto node: getNodes()) {
@@ -180,6 +180,77 @@ std::unordered_set<pll_unode_t *> PLLUnrootedTree::getBranches()
   return branches;
 }
 
+struct ToSort {
+  pll_unode_t *node;
+  std::string label;
+  unsigned int distanceToLeaf;
+ 
+  ToSort() {}
+  ToSort(pll_unode_t *inode, 
+      const std::string &ilabel,
+      unsigned int idistanceToLeaf): node(inode),
+  label(ilabel),
+  distanceToLeaf(idistanceToLeaf) {}
+  ToSort(const ToSort &s): node(s.node),
+    label(s.label),
+    distanceToLeaf(s.distanceToLeaf) {}
+};
+
+static void fillBranchesRec(pll_unode_t * node,
+    std::vector<ToSort> &toSortVector,
+    ToSort &toSort)
+{
+  if (!node->next) {
+    toSort = ToSort(node, std::string(node->label), 0);
+    toSortVector.push_back(toSort);
+    return;
+  }
+  ToSort toSort1;
+  fillBranchesRec(node->next->back, toSortVector, toSort1);
+  ToSort toSort2;
+  fillBranchesRec(node->next->next->back, toSortVector, toSort2);
+  if (toSort1.label > toSort2.label) {
+    toSort = ToSort(node, toSort1.label, toSort1.distanceToLeaf + 1);
+  } else {
+    toSort = ToSort(node, toSort2.label, toSort2.distanceToLeaf + 1);
+  }
+  toSortVector.push_back(toSort);
+}
+
+struct less_than_key
+{
+  inline bool operator() (const ToSort& t1, const ToSort& t2)
+  {
+    if (t1.label == t2.label) {
+      return t1.distanceToLeaf < t2.distanceToLeaf;
+    } 
+    return t1.label < t2.label;
+  }
+};
+
+std::vector<pll_unode_t *> PLLUnrootedTree::getBranchesDeterministic() const
+{
+  // find a deterministic root
+  pll_unode_t *root = getNode(0);
+  std::string rootLabel(root->label);
+  for (auto leaf: getLeaves()) {
+    std::string label(leaf->label);
+    if (rootLabel > label) {
+      rootLabel = label;
+      root = leaf;
+    }
+  }
+  std::vector<ToSort> toSortVector;
+  ToSort toSort;
+  fillBranchesRec(root->back, toSortVector, toSort);
+  assert(toSortVector.size() == getLeavesNumber() * 2 - 3);
+  std::sort(toSortVector.begin(), toSortVector.end(), less_than_key());
+  std::vector<pll_unode_t *> res;
+  for (const auto &toSort: toSortVector) {
+    res.push_back(toSort.node);
+  }
+  return res;
+}
 
 static void fillPostOrder(pll_unode_t *node,
     std::vector<pll_unode_t*> &nodes,

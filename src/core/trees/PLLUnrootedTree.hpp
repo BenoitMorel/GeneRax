@@ -131,7 +131,8 @@ public:
    *  Return a set of all branches (for each node, one and only 
    *  one of node and node->back will be inserted in the set)
    */
-  std::unordered_set<pll_unode_t *> getBranches();
+  std::unordered_set<pll_unode_t *> getBranches() const;
+  std::vector<pll_unode_t *> getBranchesDeterministic() const;
 
   /**
    *  Compute a matrix of pairwise distances.

@@ -1,5 +1,7 @@
 #include "SpeciesSplitScore.hpp"
 #include <ccp/SpeciesSplitScore.hpp>
+#include <IO/Logger.hpp>
+#include <parallelization/ParallelContext.hpp>
 
 static const unsigned int INVALID_BID = static_cast<unsigned int>(-1);
 void SpeciesSplitScore::fillPathsRec(unsigned int fromSpid, 
@@ -22,48 +24,73 @@ void SpeciesSplitScore::fillPathsRec(unsigned int fromSpid,
 SpeciesSplitScore::SpeciesSplitScore(PLLRootedTree &rootedSpeciesTree,
     const SpeciesSplits &splits):
   _splits(splits),
-  _speciesTree(rootedSpeciesTree),
-  _nodeIndexToBid(_speciesTree.getDirectedNodesNumber(), INVALID_BID),
-  _emptyBranchSet(_speciesTree.getLeavesNumber() - 3),
+  _speciesTree(std::make_unique<PLLUnrootedTree>(rootedSpeciesTree)),
+  _bidToNodeIndex(_speciesTree->getLeavesNumber() - 3),
+  _nodeIndexToBid(_speciesTree->getDirectedNodesNumber(), INVALID_BID),
+  _emptyBranchSet(_speciesTree->getLeavesNumber() - 3),
   _labelToSpid(splits.getLabelToSpid())
 {
+  std::vector<BranchSet> emptySets(_speciesTree->getLeavesNumber(), _emptyBranchSet);
+  _paths.resize(_speciesTree->getLeavesNumber());
+  std::fill(_paths.begin(), _paths.end(), emptySets);
+}
+  
+void SpeciesSplitScore::updateSpeciesTree(PLLRootedTree &rootedSpeciesTree)
+{
+  _speciesTree = std::make_unique<PLLUnrootedTree>(rootedSpeciesTree);
   // map internal branches to branch ids
-  for (auto node: _speciesTree.getBranches()) {
-    if (node->next) {
-      unsigned int spid = _bidToNodeIndex.size();
-      _bidToNodeIndex.push_back(node->node_index);
+  unsigned int spid = 0;
+  for (auto node: _speciesTree->getBranchesDeterministic()) {
+    if (node->next && node->back->next) {
+      _bidToNodeIndex[spid] = (node->node_index);
       _nodeIndexToBid[node->node_index] = spid;
       _nodeIndexToBid[node->back->node_index] = spid;
+      spid++;
     }
   }
-  std::vector<BranchSet> emptySets(_speciesTree.getLeavesNumber(), _emptyBranchSet);
-  _paths.resize(_speciesTree.getLeavesNumber());
-  std::fill(_paths.begin(), _paths.end(), emptySets);
-  for (auto leaf: _speciesTree.getLeaves()) {
+  
+  // compute branch paths between each pair of species leaves
+  for (auto leaf: _speciesTree->getLeaves()) {
     BranchSet path = _emptyBranchSet;
     fillPathsRec(_labelToSpid[leaf->label], leaf->back->next->back, path);
     fillPathsRec(_labelToSpid[leaf->label], leaf->back->next->next->back, path);
   }
+
 }
 
 double SpeciesSplitScore::getScore()
 {
+  static const bool weightCladeSize = true;
+  static const bool weightBranchNumber = true;
+  static const bool useDenominator = true;
+  // compute the score
   std::vector<double> score(_bidToNodeIndex.size(), 0.0);
   std::vector<double> denominator(_bidToNodeIndex.size(), 0.0);
-  for (const auto &splitCount: _splits.getSplitCounts()) {
-    auto cid1 = splitCount.first.first;
-    auto cid2 = splitCount.first.second;
-    auto count = splitCount.second;
+  const auto &counts = _splits.getSplitCounts();
+  auto begin = ParallelContext::getBegin(counts.size());
+  auto end = ParallelContext::getEnd(counts.size());
+  for (unsigned int i = begin; i < end; ++i) {
+    auto cid1 = counts[i].first.first;
+    auto cid2 = counts[i].first.second;
+    const auto &clade1 = _splits.getClade(cid1);
+    const auto &clade2 = _splits.getClade(cid2);
+    auto count = counts[i].second;
     auto leftBranchSet = getRelevantBranches(cid1);
     auto rightBranchSet = getRelevantBranches(cid2);
     auto branchIntersection = leftBranchSet & rightBranchSet;
-    auto splitWeight = count;
+    double splitWeight = count;
+    if (weightCladeSize) {
+      splitWeight *= (clade1.count() + clade2.count());
+    }
     if (branchIntersection.count() == 0) {
       // disjoint branch sets: the clade agrees with the species tree
       auto link = getAnyBranchPath(_splits.getClade(cid1), _splits.getClade(cid2));
       auto branchUnion = leftBranchSet | rightBranchSet;
       auto nonUnion = ~branchUnion;
       auto compatibleBranches = link & nonUnion;
+      if (weightBranchNumber) {
+        splitWeight /= pow(double(compatibleBranches.count()), 2.0);
+      }
       for (unsigned int bid = 0; bid < compatibleBranches.size(); ++bid) {
         if (compatibleBranches[bid]) {
           score[bid] += splitWeight;
@@ -72,16 +99,28 @@ double SpeciesSplitScore::getScore()
       } 
     } else {
       // non empty intersection: the clade disagrees with the species tree
+      if (weightBranchNumber) {
+        splitWeight /= double(branchIntersection.count());
+      }
       for (unsigned int bid = 0; bid < branchIntersection.size(); ++bid) {
-        denominator[bid] += splitWeight;
+        if (branchIntersection[bid]) {
+          denominator[bid] += splitWeight;
+        }
       }
     }
   }
-
   double res = 0;
   for (unsigned int i = 0; i < _bidToNodeIndex.size(); ++i) {
-    if (denominator[i] != 0.0) {
-      res += score[i] / denominator[i];
+    ParallelContext::sumDouble(score[i]);
+    
+    if (useDenominator) {
+      ParallelContext::sumDouble(denominator[i]);
+      if (denominator[i] != 0.0) {
+        auto ratio = score[i] / denominator[i];
+        res += log(0.0001 + ratio);
+      }
+    } else  {
+      res += score[i];
     }
   }
   return res;
@@ -98,7 +137,7 @@ BranchSet SpeciesSplitScore::getRelevantBranches(unsigned int cid)
   for (unsigned int bid = 0; bid < clade.size(); ++bid) {
     if (clade[bid]) {
       if (previousBid != INVALID_BID) {
-        res = (res | _paths[previousBid][bid]);
+        res |= _paths[previousBid][bid];
       }
       previousBid = bid;
     }

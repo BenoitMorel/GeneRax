@@ -7,7 +7,11 @@ const unsigned int INVALID_NODE_ID = static_cast<unsigned int>(-1);
 SpeciesSplits::SpeciesSplits(const std::unordered_set<std::string> &speciesLabels):
   _speciesNumber(speciesLabels.size())
 {
+  std::set<std::string> orderedLabels;
   for (auto &label: speciesLabels) {
+    orderedLabels.insert(label);
+  }
+  for (auto &label: orderedLabels) {
     unsigned int spid = _labelToSpid.size();
     _labelToSpid.insert({label, spid});
     _spidToLabel.push_back(label);
@@ -82,6 +86,14 @@ void SpeciesSplits::addGeneTree(PLLUnrootedTree &geneTree,
   }
 }
 
+
+void SpeciesSplits::computeVector()
+{
+  _splitCountVector.clear();
+  for (auto &split: _splitCountsMap) {
+    _splitCountVector.push_back({split.first, split.second});
+  }
+}
   
 void SpeciesSplits::addGeneTree(const std::string &newickFile,
       const GeneSpeciesMapping &mapping)
@@ -111,11 +123,25 @@ void SpeciesSplits::_addSplit(Split &split)
   if (split.first > split.second) {
     std::swap<CID>(split.first, split.second);
   }
-  auto it = _splitCounts.find(split);
-  if (it != _splitCounts.end()) {
+  auto it = _splitCountsMap.find(split);
+  if (it != _splitCountsMap.end()) {
     it->second++;
   } else {
-    _splitCounts.insert({split, 1});
+    _splitCountsMap.insert({split, 1});
   }
 }
+  
+void SpeciesSplits::dump(const std::string &outputPath)
+{
+  assert(false); // not implemented
+  std::ofstream os(outputPath, std::ios::out | std::ios::binary);
+  os << _speciesNumber;
 
+}
+
+void SpeciesSplits::load(const std::string &inputPath)
+{
+  assert(false); // not implemented
+  std::ifstream is(inputPath, std::ios::binary);
+  is >> _speciesNumber;
+}

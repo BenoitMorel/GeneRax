@@ -90,7 +90,7 @@ bool SpeciesSearchCommon::testSPR(SpeciesTree &speciesTree,
     if (evaluation.providesFastLikelihoodImpl()) {
       searchState.averageApproxError.addValue(testedTreeLL - approxLL);
     }
-    if (testedTreeLL > searchState.bestLL) {
+    if (testedTreeLL > searchState.bestLL + 0.00000001) {
       searchState.betterTreeCallback(testedTreeLL);
       // Better tree found! Do not rollback, and return
       return true;
