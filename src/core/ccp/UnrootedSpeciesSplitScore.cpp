@@ -1,10 +1,10 @@
-#include "SpeciesSplitScore.hpp"
-#include <ccp/SpeciesSplitScore.hpp>
+#include "UnrootedSpeciesSplitScore.hpp"
+#include <ccp/UnrootedSpeciesSplitScore.hpp>
 #include <IO/Logger.hpp>
 #include <parallelization/ParallelContext.hpp>
 
 static const unsigned int INVALID_BID = static_cast<unsigned int>(-1);
-void SpeciesSplitScore::fillPathsRec(unsigned int fromSpid, 
+void UnrootedSpeciesSplitScore::fillPathsRec(unsigned int fromSpid, 
     pll_unode_t *node,
     BranchSet &path)
 {
@@ -21,7 +21,7 @@ void SpeciesSplitScore::fillPathsRec(unsigned int fromSpid,
   path.unset(bid);
 }
 
-SpeciesSplitScore::SpeciesSplitScore(PLLRootedTree &rootedSpeciesTree,
+UnrootedSpeciesSplitScore::UnrootedSpeciesSplitScore(PLLRootedTree &rootedSpeciesTree,
     const SpeciesSplits &splits):
   _splits(splits),
   _speciesTree(std::make_unique<PLLUnrootedTree>(rootedSpeciesTree)),
@@ -35,7 +35,7 @@ SpeciesSplitScore::SpeciesSplitScore(PLLRootedTree &rootedSpeciesTree,
   std::fill(_paths.begin(), _paths.end(), emptySets);
 }
   
-void SpeciesSplitScore::updateSpeciesTree(PLLRootedTree &rootedSpeciesTree)
+void UnrootedSpeciesSplitScore::updateSpeciesTree(PLLRootedTree &rootedSpeciesTree)
 {
   _speciesTree = std::make_unique<PLLUnrootedTree>(rootedSpeciesTree);
   // map internal branches to branch ids
@@ -58,11 +58,12 @@ void SpeciesSplitScore::updateSpeciesTree(PLLRootedTree &rootedSpeciesTree)
 
 }
 
-double SpeciesSplitScore::getScore()
+double UnrootedSpeciesSplitScore::getScoreHack()
 {
-  static const bool weightCladeSize = true;
-  static const bool weightBranchNumber = true;
+  static const bool weightCladeSize = false;//true; // does not matter that much
+  static const bool weightBranchNumber = true; // important
   static const bool useDenominator = true;
+  static const double branchPow = 2.0;
   // compute the score
   std::vector<double> score(_bidToNodeIndex.size(), 0.0);
   std::vector<double> denominator(_bidToNodeIndex.size(), 0.0);
@@ -89,7 +90,64 @@ double SpeciesSplitScore::getScore()
       auto nonUnion = ~branchUnion;
       auto compatibleBranches = link & nonUnion;
       if (weightBranchNumber) {
-        splitWeight /= pow(double(compatibleBranches.count()), 2.0);
+        splitWeight /= pow(double(compatibleBranches.count()), branchPow);
+      }
+      for (unsigned int bid = 0; bid < compatibleBranches.size(); ++bid) {
+        if (compatibleBranches[bid]) {
+          score[bid] += splitWeight;
+        }
+      } 
+    } else {
+      // non empty intersection: the clade disagrees with the species tree
+      for (unsigned int bid = 0; bid < branchIntersection.size(); ++bid) {
+        denominator[bid] += splitWeight;
+      }
+    }
+  }
+  double res = 0;
+  for (unsigned int i = 0; i < _bidToNodeIndex.size(); ++i) {
+    ParallelContext::sumDouble(score[i]);
+    ParallelContext::sumDouble(denominator[i]);
+    auto ratio = score[i] / denominator[i];
+    res += log(0.0001 + ratio);
+  }
+  return res;
+}
+
+double UnrootedSpeciesSplitScore::getScore()
+{
+  return getScoreHack();
+  static const bool weightCladeSize = false;//true; // does not matter that much
+  static const bool weightBranchNumber = true; // important
+  static const bool useDenominator = true;
+  static const double branchPow = 2.0;
+  // compute the score
+  std::vector<double> score(_bidToNodeIndex.size(), 0.0);
+  std::vector<double> denominator(_bidToNodeIndex.size(), 0.0);
+  const auto &counts = _splits.getSplitCounts();
+  auto begin = ParallelContext::getBegin(counts.size());
+  auto end = ParallelContext::getEnd(counts.size());
+  for (unsigned int i = begin; i < end; ++i) {
+    auto cid1 = counts[i].first.first;
+    auto cid2 = counts[i].first.second;
+    const auto &clade1 = _splits.getClade(cid1);
+    const auto &clade2 = _splits.getClade(cid2);
+    auto count = counts[i].second;
+    auto leftBranchSet = getRelevantBranches(cid1);
+    auto rightBranchSet = getRelevantBranches(cid2);
+    auto branchIntersection = leftBranchSet & rightBranchSet;
+    double splitWeight = count;
+    if (weightCladeSize) {
+      splitWeight *= (clade1.count() + clade2.count());
+    }
+    if (branchIntersection.count() == 0) {
+      // disjoint branch sets: the clade agrees with the species tree
+      auto link = getAnyBranchPath(_splits.getClade(cid1), _splits.getClade(cid2));
+      auto branchUnion = leftBranchSet | rightBranchSet;
+      auto nonUnion = ~branchUnion;
+      auto compatibleBranches = link & nonUnion;
+      if (weightBranchNumber) {
+        splitWeight /= pow(double(compatibleBranches.count()), branchPow);
       }
       for (unsigned int bid = 0; bid < compatibleBranches.size(); ++bid) {
         if (compatibleBranches[bid]) {
@@ -99,9 +157,6 @@ double SpeciesSplitScore::getScore()
       } 
     } else {
       // non empty intersection: the clade disagrees with the species tree
-      if (weightBranchNumber) {
-        splitWeight /= double(branchIntersection.count());
-      }
       for (unsigned int bid = 0; bid < branchIntersection.size(); ++bid) {
         if (branchIntersection[bid]) {
           denominator[bid] += splitWeight;
@@ -112,22 +167,22 @@ double SpeciesSplitScore::getScore()
   double res = 0;
   for (unsigned int i = 0; i < _bidToNodeIndex.size(); ++i) {
     ParallelContext::sumDouble(score[i]);
-    
+    ParallelContext::sumDouble(denominator[i]);
     if (useDenominator) {
-      ParallelContext::sumDouble(denominator[i]);
       if (denominator[i] != 0.0) {
         auto ratio = score[i] / denominator[i];
         res += log(0.0001 + ratio);
       }
     } else  {
-      res += score[i];
+      auto ratio = score[i];
+      res += log(0.0001 + ratio);
     }
   }
   return res;
 }
 
 
-BranchSet SpeciesSplitScore::getRelevantBranches(unsigned int cid)
+BranchSet UnrootedSpeciesSplitScore::getRelevantBranches(unsigned int cid)
 {
   // todo: this could be precomputed in a much more efficient way
   // (traverse the clades recursively to build the branch sets)
@@ -145,7 +200,7 @@ BranchSet SpeciesSplitScore::getRelevantBranches(unsigned int cid)
   return res; 
 }
 
-BranchSet SpeciesSplitScore::getAnyBranchPath(const CCPClade &c1, const CCPClade &c2)
+BranchSet UnrootedSpeciesSplitScore::getAnyBranchPath(const CCPClade &c1, const CCPClade &c2)
 {
   unsigned int bid1 = 0;
   unsigned int bid2 = 0;

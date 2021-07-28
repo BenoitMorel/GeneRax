@@ -27,7 +27,8 @@ using SplitCountVector = std::vector<SplitCount>;
 
 class SpeciesSplits {
 public:
-  SpeciesSplits(const std::unordered_set<std::string> &speciesLabels);
+  SpeciesSplits(const std::unordered_set<std::string> &speciesLabels,
+      bool acceptTrivialClade);
 
   void addGeneTree(PLLUnrootedTree &geneTree,
       const GeneSpeciesMapping &mapping);
@@ -37,9 +38,6 @@ public:
 
   void computeVector();
 
-  void dump(const std::string &outputPath);
-  void load(const std::string &inputPath);
-
   unsigned int distinctSplitsNumber() const {return _splitCountVector.size();}
   unsigned int nonDistinctSplitsNumber() const;
 
@@ -47,7 +45,8 @@ public:
   const CIDToClade &getClades() const {return _cidToClade;}
   const CCPClade &getClade(CID cid) const {return _cidToClade[cid];}
   const std::unordered_map<std::string, unsigned int> &getLabelToSpid() const {return _labelToSpid;}
-private: 
+private:
+  bool _acceptTrivialClade;
   std::vector<std::string> _spidToLabel;
   std::unordered_map<std::string, unsigned int> _labelToSpid;
   unsigned int _speciesNumber;

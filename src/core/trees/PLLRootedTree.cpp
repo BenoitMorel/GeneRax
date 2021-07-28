@@ -412,10 +412,16 @@ void PLLRootedTree::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> 
   
 pll_rnode_t *PLLRootedTree::getLCA(pll_rnode_t *n1, pll_rnode_t *n2)
 {
+  return getLCA(n1->node_index, n2->node_index);
+}
+  
+pll_rnode_t *PLLRootedTree::getLCA(unsigned int nodeIndex1, unsigned int nodeIndex2)
+{
   if (!_lcaCache) {
     buildLCACache();
   }
-  return _lcaCache->lcas[n1->node_index][n2->node_index];
+  return _lcaCache->lcas[nodeIndex1][nodeIndex2];
+  
 }
   
 bool PLLRootedTree::areParents(pll_rnode_t *n1, pll_rnode_t *n2)

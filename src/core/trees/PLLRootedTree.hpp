@@ -141,6 +141,7 @@ public:
    * First call is O(n^2), and all next calls O(1)
    */
   pll_rnode_t *getLCA(pll_rnode_t *n1, pll_rnode_t *n2);
+  pll_rnode_t *getLCA(unsigned int nodeIndex1, unsigned int nodeIndex2);
 
   /**
    * Return true if either one of n1 or n2 is parent of another

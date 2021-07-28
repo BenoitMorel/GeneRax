@@ -4,7 +4,9 @@
 
 const unsigned int INVALID_NODE_ID = static_cast<unsigned int>(-1);
 
-SpeciesSplits::SpeciesSplits(const std::unordered_set<std::string> &speciesLabels):
+SpeciesSplits::SpeciesSplits(const std::unordered_set<std::string> &speciesLabels,
+    bool acceptTrivialClade):
+  _acceptTrivialClade(acceptTrivialClade),
   _speciesNumber(speciesLabels.size())
 {
   std::set<std::string> orderedLabels;
@@ -114,11 +116,11 @@ unsigned int SpeciesSplits::nonDistinctSplitsNumber() const
 void SpeciesSplits::_addSplit(Split &split)
 {
   // Add non-trivial splits
-  if (_cidToSpeciesNumber[split.first] < 2) {
-    return;
-  }
-  if (_cidToSpeciesNumber[split.second] < 2) {
-    return;
+  if (!_acceptTrivialClade) {
+    if (_cidToSpeciesNumber[split.first] < 2 || 
+        _cidToSpeciesNumber[split.second] < 2) {
+      return;
+    }
   }
   if (split.first > split.second) {
     std::swap<CID>(split.first, split.second);
@@ -131,17 +133,3 @@ void SpeciesSplits::_addSplit(Split &split)
   }
 }
   
-void SpeciesSplits::dump(const std::string &outputPath)
-{
-  assert(false); // not implemented
-  std::ofstream os(outputPath, std::ios::out | std::ios::binary);
-  os << _speciesNumber;
-
-}
-
-void SpeciesSplits::load(const std::string &inputPath)
-{
-  assert(false); // not implemented
-  std::ifstream is(inputPath, std::ios::binary);
-  is >> _speciesNumber;
-}
