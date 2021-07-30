@@ -5,7 +5,7 @@
 #include <set>
 #include <cstring>
 #include <maths/Random.hpp>
-
+#include <parallelization/ParallelContext.hpp>
 
 void PLLRootedTree::setSon(pll_rnode_t *parent, pll_rnode_t *newSon, bool left)
 {
@@ -433,5 +433,20 @@ PLLRootedTree::getNodeIndexMapping(PLLRootedTree &otherTree)
   return mapping;
 }
 
+using LabelNodeIndex = std::pair<std::string, unsigned int>;
 
+bool PLLRootedTree::areNodeIndicesParallelConsistent() const
+{
+  bool ok = true;
+  std::vector<LabelNodeIndex> toSort;
+  for (auto node: getPostOrderNodes()) {
+    toSort.push_back(LabelNodeIndex(node->label, node->node_index));
+    ok &= ParallelContext::isIntEqual(node->node_index);
+  }
+  std::sort(toSort.begin(), toSort.end());
+  for (auto t: toSort) {
+    ok &= ParallelContext::isIntEqual(t.second);
+  }
+  return ok;
+}
 

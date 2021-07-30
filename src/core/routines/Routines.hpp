@@ -85,6 +85,11 @@ public:
     Parameters &rates,
     long &sumElapsed);
 
+  static void exportPerSpeciesRates(const std::string &speciesTreeFile,
+      Parameters &rates,
+      const RecModelInfo &recModelInfo,
+      const std::string &outputFile);
+  
   static void getPerSpeciesEvents(const std::string &speciesTreeFile,
     Families &families,
     const ModelParameters &modelRates,

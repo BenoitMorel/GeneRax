@@ -384,6 +384,13 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
         perSpeciesDTLRates, 
         instance.rates, 
         instance.elapsedRates);
+    if (perSpeciesDTLRates) {
+      auto rateFile = FileSystem::joinPaths(instance.args.output, "per_species_rates.txt");
+      Routines::exportPerSpeciesRates(instance.speciesTree,
+          instance.rates,
+          instance.recModelInfo,
+          rateFile);
+    }
     if (!instance.args.perFamilyDTLRates && !instance.args.perSpeciesDTLRates) {
       auto paramNames = Enums::parameterNames(instance.recModelInfo.model);
       Logger::info << "\t";
