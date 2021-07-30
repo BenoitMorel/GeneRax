@@ -173,6 +173,8 @@ public:
    *  leaf labels and topology.
    */
   std::vector<unsigned int> getNodeIndexMapping(PLLRootedTree &otherTree);
+
+  bool areNodeIndicesParallelConsistent() const;
 private:
   std::unique_ptr<pll_rtree_t, void(*)(pll_rtree_t*)> _tree;
   

@@ -103,6 +103,27 @@ void Routines::optimizeGeneTrees(Families &families,
       inPlace);
 }
 
+void Routines::exportPerSpeciesRates(const std::string &speciesTreeFile,
+    Parameters &rates,
+    const RecModelInfo &recModelInfo,
+    const std::string &outputFile)
+{
+  Logger::info << "Exporting per-species rates into " << outputFile << std::endl;
+  ParallelOfstream os(outputFile);
+  PLLRootedTree speciesTree(speciesTreeFile);
+  auto freeParameters = recModelInfo.modelFreeParameters();
+  auto speciesNodesNumber = speciesTree.getNodesNumber();
+  assert(speciesNodesNumber * freeParameters == rates.dimensions());
+  for (auto node: speciesTree.getNodes()) {
+    auto e = node->node_index;
+    os << node->label;
+    for (unsigned int i = 0; i < freeParameters; ++i) {
+      os << " " << rates[e * freeParameters + i];
+    }
+    os << "\n";
+  }
+}
+
 void Routines::optimizeRates(bool userDTLRates, 
     const std::string &speciesTreeFile,
     const RecModelInfo &recModelInfo,
@@ -117,9 +138,11 @@ void Routines::optimizeRates(bool userDTLRates,
   auto start = Logger::getElapsedSec();
   PerCoreGeneTrees geneTrees(families);
   PLLRootedTree speciesTree(speciesTreeFile);
+  speciesTree.ensureUniqueLabels();
   PerCoreEvaluations evaluations;
   buildEvaluations(geneTrees, speciesTree, recModelInfo, evaluations);
   if (perSpeciesRates) {
+    assert(speciesTree.areNodeIndicesParallelConsistent());
     rates = DTLOptimizer::optimizeParametersPerSpecies(evaluations, speciesTree.getNodesNumber());
   } else {
     rates = DTLOptimizer::optimizeParametersGlobalDTL(evaluations);

@@ -4,6 +4,7 @@
 #include <set>
 #include <cstring>
 #include <maths/Random.hpp>
+#include <parallelization/ParallelContext.hpp>
 
 static void * xmalloc(size_t size)
 { 
@@ -578,6 +579,7 @@ PLLRootedTree::getNodeIndexMapping(PLLRootedTree &otherTree)
   return mapping;
 }
 
+<<<<<<< HEAD
 static pll_utree_t * utree_wraptree(pll_unode_t * root,
                                     unsigned int tip_count,
                                     unsigned int inner_count,
@@ -701,5 +703,22 @@ pll_utree_t * pll_rtree_unroot(pll_rtree_t * tree)
   if (!uroot->next->next->back) return NULL;
 
   return pll_utree_wraptree(uroot,0);
+=======
+using LabelNodeIndex = std::pair<std::string, unsigned int>;
+
+bool PLLRootedTree::areNodeIndicesParallelConsistent() const
+{
+  bool ok = true;
+  std::vector<LabelNodeIndex> toSort;
+  for (auto node: getPostOrderNodes()) {
+    toSort.push_back(LabelNodeIndex(node->label, node->node_index));
+    ok &= ParallelContext::isIntEqual(node->node_index);
+  }
+  std::sort(toSort.begin(), toSort.end());
+  for (auto t: toSort) {
+    ok &= ParallelContext::isIntEqual(t.second);
+  }
+  return ok;
+>>>>>>> master
 }
 

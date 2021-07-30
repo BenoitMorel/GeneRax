@@ -77,13 +77,19 @@ public:
     Parameters &rates,
     long &sumElapsed);
 
-  static void getPerSpeciesEvents(PLLRootedTree &speciesTree,
-    PerCoreGeneTrees &geneTrees,
+  static void getPerSpeciesEvents(const std::string &speciesTreeFile,
+    Families &families,
     const ModelParameters &modelRates,
     unsigned int reconciliationSamples,
     PerSpeciesEvents &events,
     bool forceTransfers);
 
+  
+  static void exportPerSpeciesRates(const std::string &speciesTreeFile,
+      Parameters &rates,
+      const RecModelInfo &recModelInfo,
+      const std::string &outputFile);
+  
   static void getTransfersFrequencies(PLLRootedTree &speciesTree,
     PerCoreGeneTrees &geneTrees,
     const ModelParameters &modelRates,
