@@ -386,7 +386,7 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
         instance.rates, 
         instance.elapsedRates);
     if (perSpeciesDTLRates) {
-      auto rateFile = FileSystem::joinPaths(instance.args.output, "per_species_rates.txt");
+      auto rateFile = FileSystem::joinPaths(instance.args.outputPath, "per_species_rates.txt");
       Routines::exportPerSpeciesRates(instance.speciesTree,
           instance.rates,
           instance.recModelInfo,

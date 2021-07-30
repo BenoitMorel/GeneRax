@@ -77,8 +77,8 @@ public:
     Parameters &rates,
     long &sumElapsed);
 
-  static void getPerSpeciesEvents(const std::string &speciesTreeFile,
-    Families &families,
+  static void getPerSpeciesEvents(PLLRootedTree &speciesTree,
+    PerCoreGeneTrees &geneTrees,
     const ModelParameters &modelRates,
     unsigned int reconciliationSamples,
     PerSpeciesEvents &events,

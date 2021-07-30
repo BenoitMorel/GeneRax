@@ -579,7 +579,6 @@ PLLRootedTree::getNodeIndexMapping(PLLRootedTree &otherTree)
   return mapping;
 }
 
-<<<<<<< HEAD
 static pll_utree_t * utree_wraptree(pll_unode_t * root,
                                     unsigned int tip_count,
                                     unsigned int inner_count,
@@ -703,8 +702,10 @@ pll_utree_t * pll_rtree_unroot(pll_rtree_t * tree)
   if (!uroot->next->next->back) return NULL;
 
   return pll_utree_wraptree(uroot,0);
-=======
-using LabelNodeIndex = std::pair<std::string, unsigned int>;
+}
+  
+  
+ using LabelNodeIndex = std::pair<std::string, unsigned int>;
 
 bool PLLRootedTree::areNodeIndicesParallelConsistent() const
 {
@@ -719,6 +720,5 @@ bool PLLRootedTree::areNodeIndicesParallelConsistent() const
     ok &= ParallelContext::isIntEqual(t.second);
   }
   return ok;
->>>>>>> master
 }
 
