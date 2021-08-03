@@ -115,9 +115,9 @@ void GeneRaxCore::initSpeciesTree(GeneRaxInstance &instance)
     Logger::timed << "Filtering invalid families based on the starting species tree..." << std::endl;
     bool needAlignments = instance.args.strategy != GeneSearchStrategy::SKIP
       && instance.args.strategy != GeneSearchStrategy::RECONCILE;
-    Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, true);
+    Family::filterFamilies(instance.currentFamilies, instance.speciesTree, needAlignments, true);
   }
-  if (!instance.initialFamilies.size()) {
+  if (!instance.currentFamilies.size()) {
     Logger::info << "[Error] No valid families! Aborting GeneRax" << std::endl;
     ParallelContext::abort(10);
   }
@@ -452,7 +452,7 @@ void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
   ParallelContext::barrier();
   if (instance.args.quartetSupport) { 
     ICCalculator calculator(instance.speciesTree,
-        instance.initialFamilies,
+        instance.currentFamilies,
         instance.args.eqpicRadius,
         true);
     auto qpicOutput = Paths::getSpeciesTreeFile(instance.args.output,
