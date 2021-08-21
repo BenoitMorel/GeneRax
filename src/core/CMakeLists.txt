@@ -20,6 +20,7 @@ set(jointsearch-core_SOURCES
   likelihoods/ReconciliationEvaluation.cpp
   likelihoods/reconciliation_models/BaseReconciliationModel.cpp
   maths/Random.cpp
+  NJ/BME.cpp
   NJ/MiniNJ.cpp
   NJ/Cherry.cpp
   NJ/CherryPro.cpp
