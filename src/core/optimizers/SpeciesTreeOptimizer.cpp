@@ -13,7 +13,6 @@
 #include <support/ICCalculator.hpp>
 #include <search/SpeciesSPRSearch.hpp>
 #include <search/SpeciesTransferSearch.hpp>
-#include <NJ/BME.hpp>
 
 static std::unique_ptr<SpeciesTree> makeSpeciesTree(const std::string &speciesTreeFile,
     const Families &initialFamilies)
@@ -230,14 +229,6 @@ void SpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bo
 {
   _speciesTree->saveToFile(str, masterRankOnly);
   ParallelContext::barrier();
-  printBME();
-}
-
-void SpeciesTreeOptimizer::printBME()
-{
-  PLLUnrootedTree speciesTree(_speciesTree->getTree());
-  auto bme = BME::computeBME(speciesTree, _initialFamilies);
-  Logger::info << "BME: " << bme << std::endl;
 }
 
 double SpeciesTreeOptimizer::computeRecLikelihood()

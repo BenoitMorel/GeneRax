@@ -28,7 +28,7 @@ void fillDistancesRec(pll_unode_t *currentNode,
 } 
 
 
-static void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
+void MiniNJ::geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
     GeneSpeciesMapping &mapping,
     StringToUint &speciesStringToSpeciesId,
     DistanceMatrix &distances,

@@ -271,7 +271,7 @@ static void fillPostOrder(pll_unode_t *node,
 }
 
 
-std::vector<pll_unode_t*> PLLUnrootedTree::getPostOrderNodes(bool innerOnly)
+std::vector<pll_unode_t*> PLLUnrootedTree::getPostOrderNodes(bool innerOnly) const
 {
   std::vector<pll_unode_t*> nodes;
   std::vector<char> markedNodes(getDirectedNodesNumber(), false);

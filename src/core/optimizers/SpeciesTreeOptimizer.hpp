@@ -118,8 +118,6 @@ public:
       const std::string &treesOutput,
       const std::string &llOutput);
 
-  void printBME();
-
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;

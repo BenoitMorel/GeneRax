@@ -48,6 +48,15 @@ public:
       std::vector<std::string> &speciesIdToSpeciesString,
       StringToUint &speciesStringToSpeciesId);
 
+
+  static void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
+    GeneSpeciesMapping &mapping,
+    StringToUint &speciesStringToSpeciesId,
+    DistanceMatrix &distances,
+    DistanceMatrix &distancesDenominator,
+    bool minMode,
+    bool reweight,
+    bool ustar);
 private:
   static std::unique_ptr<PLLRootedTree> geneTreeNJ(const Families &families, bool minAlgo, bool ustarAlgo = false, bool reweight = false);
 };
