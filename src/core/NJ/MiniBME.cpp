@@ -13,7 +13,7 @@ static DistanceMatrix getNullMatrix(unsigned int N)
 
 
 static void fillDistancesRec(pll_unode_t *currentNode, 
-    const StringToUint &speciesStringToSpeciesId,
+    const std::vector<unsigned int> &nodeIndexToSpid,
     double currentDistance,
     std::vector<double> &distances,
     std::vector<bool> *belongsToPruned)
@@ -24,19 +24,18 @@ static void fillDistancesRec(pll_unode_t *currentNode,
   if (!currentNode->next) {
     // leaf
     if (!belongsToPruned || (*belongsToPruned)[currentNode->node_index]) {
-      std::string label(currentNode->label);
-      distances[speciesStringToSpeciesId.at(label)] 
+      distances[nodeIndexToSpid[currentNode->node_index]] 
         = currentDistance;
     }
     return;
   }
   fillDistancesRec(currentNode->next->back, 
-      speciesStringToSpeciesId,
+      nodeIndexToSpid,
       currentDistance, 
       distances,
       belongsToPruned);
   fillDistancesRec(currentNode->next->next->back, 
-      speciesStringToSpeciesId,
+      nodeIndexToSpid,
       currentDistance, 
       distances,
       belongsToPruned);
@@ -47,6 +46,10 @@ static void fillSpeciesDistances(const PLLUnrootedTree &speciesTree,
     DistanceMatrix &speciesDistanceMatrix,
     std::vector<bool> *belongsToPruned = nullptr)
 {
+  std::vector<unsigned int> nodeIndexToSpid(speciesTree.getLeavesNumber());
+  for (auto leaf: speciesTree.getLeaves()) {
+    nodeIndexToSpid[leaf->node_index] = speciesStringToSpeciesId.at(leaf->label);
+  }
   for (auto leaf: speciesTree.getLeaves()) {
     if (belongsToPruned && !(*belongsToPruned)[leaf->node_index]) {
       continue;
@@ -54,19 +57,18 @@ static void fillSpeciesDistances(const PLLUnrootedTree &speciesTree,
     std::string label = leaf->label;
     auto id = speciesStringToSpeciesId.at(label);
     fillDistancesRec(leaf->back,
-        speciesStringToSpeciesId,
+        nodeIndexToSpid,
         0.0,
         speciesDistanceMatrix[id],
         belongsToPruned);
   }
 }
 
-static DistanceMatrix getPrunedSpeciesMatrix(const PLLUnrootedTree &speciesTree,
+static void getPrunedSpeciesMatrix(const PLLUnrootedTree &speciesTree,
   const StringToUint &speciesStringToSpeciesId,
-  const std::unordered_set<std::string> &coverage)
+  const std::unordered_set<std::string> &coverage,
+  DistanceMatrix &distanceMatrix)
 {
-  unsigned int N = speciesTree.getLeavesNumber();
-  DistanceMatrix res = getNullMatrix(N);
   std::vector<bool> hasChildren(speciesTree.getDirectedNodesNumber(), false);
   std::vector<bool> belongsToPruned(speciesTree.getDirectedNodesNumber(), false);
   for (auto node: speciesTree.getPostOrderNodes()) {
@@ -84,9 +86,8 @@ static DistanceMatrix getPrunedSpeciesMatrix(const PLLUnrootedTree &speciesTree,
   }
   fillSpeciesDistances(speciesTree,
       speciesStringToSpeciesId,
-      res,
+      distanceMatrix,
       &belongsToPruned);
-  return res;
 }
     
 
@@ -112,13 +113,12 @@ MiniBME::MiniBME(const PLLUnrootedTree &speciesTree,
     _geneDistanceMatrices.resize(_perCoreFamilies.size());
     _geneDistanceDenominators.resize(_perCoreFamilies.size());
     unsigned int speciesNumber = speciesTree.getLeavesNumber();
-    std::vector<double> nullDistances(speciesNumber, 0.0);
     _perFamilyCoverage.resize(_perCoreFamilies.size());
     // map each species string to a species ID
     for (unsigned int i = 0; i < _perCoreFamilies.size(); ++i) {
       auto &family = _perCoreFamilies[i];
-      _geneDistanceMatrices[i] = DistanceMatrix(speciesNumber, nullDistances);  
-      _geneDistanceDenominators[i] = DistanceMatrix(speciesNumber, nullDistances);  
+      _geneDistanceMatrices[i] = getNullMatrix(speciesNumber);
+      _geneDistanceDenominators[i] = getNullMatrix(speciesNumber);
       GeneSpeciesMapping mappings;
       mappings.fill(family.mappingFile, family.startingGeneTree);
       for (auto species: mappings.getCoveredSpecies()) {
@@ -138,6 +138,8 @@ MiniBME::MiniBME(const PLLUnrootedTree &speciesTree,
             ustar);
       }
     }
+    _prunedSpeciesMatrices = std::vector<DistanceMatrix>(
+        _perCoreFamilies.size(), getNullMatrix(speciesNumber));
   } else {  
     _geneDistanceMatrices.resize(1);
     MiniNJ::computeDistanceMatrix(families,
@@ -174,7 +176,7 @@ double MiniBME::computeBME(const PLLUnrootedTree &speciesTree)
 }
 
 
-double MiniBME::_computeBMEPrune(const PLLUnrootedTree &speciesTree)
+double MiniBME::_computeBMEPruneOld(const PLLUnrootedTree &speciesTree)
 {
   unsigned int N = _speciesIdToSpeciesString.size();
   DistanceMatrix speciesDistanceMatrix = getNullMatrix(N);
@@ -182,24 +184,12 @@ double MiniBME::_computeBMEPrune(const PLLUnrootedTree &speciesTree)
       _speciesStringToSpeciesId,
       speciesDistanceMatrix);
   double res = 0.0;
-  std::vector<DistanceMatrix> prunedSpeciesMatrices(_perCoreFamilies.size(), getNullMatrix(N));
   for (unsigned int k = 0; k < _perCoreFamilies.size(); ++k) {
-    auto pruned = 
-    prunedSpeciesMatrices[k] = getPrunedSpeciesMatrix(speciesTree, 
+    getPrunedSpeciesMatrix(speciesTree, 
           _speciesStringToSpeciesId,
-          _perFamilyCoverage[k]);    
+          _perFamilyCoverage[k],
+          _prunedSpeciesMatrices[k]);    
   }
-  /*
-  for (unsigned int k = 0; k < _perCoreFamilies.size(); ++k) {
-    for (unsigned int i = 0; i < N; ++i) {
-      for (unsigned int j = 0; j < N; ++j) {
-        Logger::info << prunedSpeciesMatrices[k][i][j] << " ";
-      }
-      Logger::info << std::endl;
-    }
-    Logger::info << std::endl;
-  } 
-  */
   for (unsigned int i = 0; i < N; ++i) {
     for (unsigned int j = 0; j < i; ++j) {
       double distance = 0.0;
@@ -208,14 +198,13 @@ double MiniBME::_computeBMEPrune(const PLLUnrootedTree &speciesTree)
         if (0.0 == _geneDistanceDenominators[k][i][j]) {
           continue;
         }
-        /*
-        double correction = (speciesDistanceMatrix[i][j] / prunedSpeciesMatrices[k][i][j]);
+        double correction = (speciesDistanceMatrix[i][j] / _prunedSpeciesMatrices[k][i][j]);
         distance += _geneDistanceMatrices[k][i][j] * correction;
-        */
-        double correction = speciesDistanceMatrix[i][j] - prunedSpeciesMatrices[k][i][j];
+        /*
+        double correction = speciesDistanceMatrix[i][j] - _prunedSpeciesMatrices[k][i][j];
         distance += _geneDistanceMatrices[k][i][j] + correction;
+        */
         denominator += _geneDistanceDenominators[k][i][j];
-        //Logger::info << i << "-" << j << "-" << k << " " << prunedSpeciesMatrices[k][i][j] << " " <<  _geneDistanceMatrices[k][i][j] << " " << _geneDistanceDenominators[k][i][j] << std::endl;
       }
       ParallelContext::sumDouble(distance);
       ParallelContext::sumDouble(denominator);
@@ -225,6 +214,34 @@ double MiniBME::_computeBMEPrune(const PLLUnrootedTree &speciesTree)
       }
     }
   }
+  return res;
+}
+
+double MiniBME::_computeBMEPrune(const PLLUnrootedTree &speciesTree)
+{
+  unsigned int N = _speciesIdToSpeciesString.size();
+  DistanceMatrix speciesDistanceMatrix = getNullMatrix(N);
+  fillSpeciesDistances(speciesTree, 
+      _speciesStringToSpeciesId,
+      speciesDistanceMatrix);
+  double res = 0.0;
+  for (unsigned int k = 0; k < _perCoreFamilies.size(); ++k) {
+    getPrunedSpeciesMatrix(speciesTree, 
+          _speciesStringToSpeciesId,
+          _perFamilyCoverage[k],
+          _prunedSpeciesMatrices[k]);    
+  }
+  for (unsigned k = 0; k < _geneDistanceMatrices.size(); ++k) {
+    for (unsigned int i = 0; i < N; ++i) {
+      for (unsigned int j = 0; j < i; ++j) {
+        if (0.0 == _geneDistanceDenominators[k][i][j]) {
+          continue;
+        }
+        res += _geneDistanceMatrices[k][i][j] / pow(2.0, _prunedSpeciesMatrices[k][i][j]);
+      }
+    }
+  }
+  ParallelContext::sumDouble(res);
   return res;
 }
 

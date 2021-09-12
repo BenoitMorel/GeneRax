@@ -24,5 +24,7 @@ private:
   std::vector<std::unordered_set<std::string> > _perFamilyCoverage;
   StringToUint _speciesStringToSpeciesId;
   bool _prune;
+  std::vector<DistanceMatrix> _prunedSpeciesMatrices;
+  double _computeBMEPruneOld(const PLLUnrootedTree &speciesTree);
   double _computeBMEPrune(const PLLUnrootedTree &speciesTree);
 };
