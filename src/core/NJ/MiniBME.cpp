@@ -246,3 +246,45 @@ double MiniBME::_computeBMEPrune(const PLLUnrootedTree &speciesTree)
 }
 
 
+double MiniBME::_computeBMEPruneWeighted(const PLLUnrootedTree &speciesTree)
+{
+  unsigned int N = _speciesIdToSpeciesString.size();
+  DistanceMatrix speciesDistanceMatrix = getNullMatrix(N);
+  fillSpeciesDistances(speciesTree, 
+      _speciesStringToSpeciesId,
+      speciesDistanceMatrix);
+  double res = 0.0;
+  for (unsigned int k = 0; k < _perCoreFamilies.size(); ++k) {
+    getPrunedSpeciesMatrix(speciesTree, 
+          _speciesStringToSpeciesId,
+          _perFamilyCoverage[k],
+          _prunedSpeciesMatrices[k]);    
+  }
+  DistanceMatrix numerator = getNullMatrix(N);
+  DistanceMatrix denominator = getNullMatrix(N);
+  for (unsigned k = 0; k < _geneDistanceMatrices.size(); ++k) {
+    for (unsigned int i = 0; i < N; ++i) {
+      for (unsigned int j = 0; j < i; ++j) {
+        if (0.0 == _geneDistanceDenominators[k][i][j]) {
+          continue;
+        }
+        numerator[i][j] += _geneDistanceMatrices[k][i][j] / pow(2.0, _prunedSpeciesMatrices[k][i][j]);
+        denominator[i][j] += _geneDistanceDenominators[k][i][j];
+      }
+    }
+  }
+  for (unsigned int i = 0; i < N; ++i) {
+    for (unsigned int j = 0; j < i; ++j) {
+      ParallelContext::sumDouble(numerator[i][j]);
+      ParallelContext::sumDouble(denominator[i][j]);
+      if (denominator[i][j] != 0.0) {
+        res += numerator[i][j] / denominator[i][j];
+      }
+    }
+  }
+
+  return res;
+}
+
+
+

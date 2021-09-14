@@ -27,4 +27,6 @@ private:
   std::vector<DistanceMatrix> _prunedSpeciesMatrices;
   double _computeBMEPruneOld(const PLLUnrootedTree &speciesTree);
   double _computeBMEPrune(const PLLUnrootedTree &speciesTree);
+  double _computeBMEPruneWeighted(const PLLUnrootedTree &speciesTree);
+  
 };
