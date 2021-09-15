@@ -8,6 +8,7 @@
 #include <unordered_set>
 
 class PLLUnrootedTree;
+class UNNIMove;
 
 class MiniBME {
 public:
@@ -15,7 +16,8 @@ public:
       const Families &families,
       bool pruneMode = true);
   double computeBME(const PLLUnrootedTree &speciesTree);
-
+  double computeNNIDiff(const PLLUnrootedTree &speciesTree,
+      const UNNIMove &nni);
 private:
   std::vector<DistanceMatrix> _geneDistanceMatrices;
   std::vector<DistanceMatrix> _geneDistanceDenominators;
@@ -25,8 +27,12 @@ private:
   StringToUint _speciesStringToSpeciesId;
   bool _prune;
   std::vector<DistanceMatrix> _prunedSpeciesMatrices;
-  double _computeBMEPruneOld(const PLLUnrootedTree &speciesTree);
+  std::vector<DistanceMatrix> _subBMEs;
   double _computeBMEPrune(const PLLUnrootedTree &speciesTree);
   double _computeBMEPruneWeighted(const PLLUnrootedTree &speciesTree);
   
+  // could be made faster by skipping intersecting subtrees
+  // O(n^2)
+  void _computeSubBMEs(const PLLUnrootedTree &speciesTree);
+   
 };

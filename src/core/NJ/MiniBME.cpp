@@ -3,11 +3,13 @@
 #include <trees/PLLUnrootedTree.hpp>
 #include <IO/Logger.hpp>
 #include <parallelization/PerCoreGeneTrees.hpp>
+#include <search/UNNISearch.hpp>
+#include <limits>
 
-
-static DistanceMatrix getNullMatrix(unsigned int N)
+static DistanceMatrix getNullMatrix(unsigned int N,
+    double value = 0.0)
 {
-  std::vector<double> nullDistances(N, 0.0);
+  std::vector<double> nullDistances(N, value);
   return DistanceMatrix(N, nullDistances); 
 }
 
@@ -102,13 +104,13 @@ MiniBME::MiniBME(const PLLUnrootedTree &speciesTree,
   bool minMode = true;
   bool reweight = false;
   bool ustar = false;
+  for (auto leaf: speciesTree.getLeaves()) {
+    std::string label(leaf->label);
+    _speciesStringToSpeciesId.insert({label, _speciesIdToSpeciesString.size()});
+    _speciesIdToSpeciesString.push_back(label);
+  }
   if (_prune) {
     // fill species-spid mappings
-    for (auto leaf: speciesTree.getLeaves()) {
-      std::string label(leaf->label);
-      _speciesStringToSpeciesId.insert({label, _speciesIdToSpeciesString.size()});
-      _speciesIdToSpeciesString.push_back(label);
-    }
     PerCoreGeneTrees::getPerCoreFamilies(families, _perCoreFamilies);
     _geneDistanceMatrices.resize(_perCoreFamilies.size());
     _geneDistanceDenominators.resize(_perCoreFamilies.size());
@@ -159,9 +161,7 @@ double MiniBME::computeBME(const PLLUnrootedTree &speciesTree)
     return _computeBMEPrune(speciesTree);
   }
   unsigned int N = _speciesIdToSpeciesString.size();
-  std::vector<double> nullDistances(N, 0.0);
-  DistanceMatrix speciesDistanceMatrix = DistanceMatrix(N, 
-      nullDistances);  
+  DistanceMatrix speciesDistanceMatrix = getNullMatrix(N);
   fillSpeciesDistances(speciesTree, 
       _speciesStringToSpeciesId,
       speciesDistanceMatrix);
@@ -172,50 +172,12 @@ double MiniBME::computeBME(const PLLUnrootedTree &speciesTree)
       res += _geneDistanceMatrices[0][i][j] / weight;
     }
   }
+  _prunedSpeciesMatrices.resize(1);
+  _prunedSpeciesMatrices[0] = speciesDistanceMatrix;
+  _computeSubBMEs(speciesTree);
   return res;
 }
 
-
-double MiniBME::_computeBMEPruneOld(const PLLUnrootedTree &speciesTree)
-{
-  unsigned int N = _speciesIdToSpeciesString.size();
-  DistanceMatrix speciesDistanceMatrix = getNullMatrix(N);
-  fillSpeciesDistances(speciesTree, 
-      _speciesStringToSpeciesId,
-      speciesDistanceMatrix);
-  double res = 0.0;
-  for (unsigned int k = 0; k < _perCoreFamilies.size(); ++k) {
-    getPrunedSpeciesMatrix(speciesTree, 
-          _speciesStringToSpeciesId,
-          _perFamilyCoverage[k],
-          _prunedSpeciesMatrices[k]);    
-  }
-  for (unsigned int i = 0; i < N; ++i) {
-    for (unsigned int j = 0; j < i; ++j) {
-      double distance = 0.0;
-      double denominator = 0.0;
-      for (unsigned k = 0; k < _geneDistanceMatrices.size(); ++k) {
-        if (0.0 == _geneDistanceDenominators[k][i][j]) {
-          continue;
-        }
-        double correction = (speciesDistanceMatrix[i][j] / _prunedSpeciesMatrices[k][i][j]);
-        distance += _geneDistanceMatrices[k][i][j] * correction;
-        /*
-        double correction = speciesDistanceMatrix[i][j] - _prunedSpeciesMatrices[k][i][j];
-        distance += _geneDistanceMatrices[k][i][j] + correction;
-        */
-        denominator += _geneDistanceDenominators[k][i][j];
-      }
-      ParallelContext::sumDouble(distance);
-      ParallelContext::sumDouble(denominator);
-      if (denominator != 0.0) {
-        denominator *= pow(2.0, speciesDistanceMatrix[i][j]);
-        res += distance / denominator;
-      }
-    }
-  }
-  return res;
-}
 
 double MiniBME::_computeBMEPrune(const PLLUnrootedTree &speciesTree)
 {
@@ -286,5 +248,50 @@ double MiniBME::_computeBMEPruneWeighted(const PLLUnrootedTree &speciesTree)
   return res;
 }
 
+bool isNumber(double v) {
+  return v == 0.0 || std::isnormal(v);
+}
 
 
+void MiniBME::_computeSubBMEs(const PLLUnrootedTree &speciesTree)
+{
+  auto subtrees1 = speciesTree.getReverseDepthNodes();
+  auto subBME = getNullMatrix(subtrees1.size(), std::numeric_limits<double>::infinity());
+  for (auto n1: subtrees1) {
+    auto subtrees2 = speciesTree.getPostOrderNodesFrom(n1->back);
+    auto i1 = n1->node_index;
+    for (auto n2: subtrees2) {
+      auto i2 = n2->node_index;
+      if (!n1->next && !n2->next) { // both leaves
+        // edge case
+        subBME[i1][i2] = _geneDistanceMatrices[0][i1][i2];
+        assert(isNumber(subBME[i1][i2]));
+      } else if (n1->next && !n2->next) { // n2 is a leaf
+        // we already computed the symetric
+        subBME[i1][i2] = subBME[i2][i1];
+        assert(isNumber(subBME[i1][i2]));
+      } else  { // n2 is not a leaf
+        auto left2 = n2->next->back->node_index;
+        auto right2 = n2->next->next->back->node_index;
+        subBME[i1][i2] = 0.5 * (subBME[i1][left2] + subBME[i1][right2]);
+        assert(isNumber(subBME[i1][i2]));
+      }
+    }
+  }
+
+  _subBMEs.resize(1);
+  _subBMEs[0] = subBME;
+}
+
+
+double MiniBME::computeNNIDiff(const PLLUnrootedTree &speciesTree,
+      const UNNIMove &nni)
+{
+  auto A = nni.getA()->node_index;
+  auto B = nni.getB()->node_index;
+  auto C = nni.getC()->node_index;
+  auto D = nni.getD()->node_index;
+  auto diffPlus = _subBMEs[0][A][C] + _subBMEs[0][B][D];
+  auto diffMinus = _subBMEs[0][A][B] + _subBMEs[0][C][D];
+  return (diffPlus - diffMinus) * 0.125;
+}

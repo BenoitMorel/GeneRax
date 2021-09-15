@@ -9,7 +9,23 @@
 #include <vector>
 #include <maths/ModelParameters.hpp>
 #include <NJ/MiniBME.hpp>
+#include <search/UNNISearch.hpp>
 
+class USearchMiniBMEEvaluator: public USearchEvaluator {
+public:
+  USearchMiniBMEEvaluator(PLLUnrootedTree &speciesTree,
+    const Families &families,
+    bool missingData):
+      _miniBME(speciesTree, families, missingData),
+      _lastScore(-99999) {}
+
+  virtual ~USearchMiniBMEEvaluator() {}
+  virtual double eval(PLLUnrootedTree &tree);
+  virtual double evalNNI(PLLUnrootedTree &tree, UNNIMove &move);
+private:
+  MiniBME _miniBME;
+  double _lastScore;
+};
 
 class MiniBMEEvaluator: public SpeciesTreeLikelihoodEvaluatorInterface {
 public:
@@ -52,8 +68,9 @@ private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   MiniBMEEvaluator _evaluator;
   std::string _outputDir;
+  bool _missingData;
+  Families _families;
   SpeciesSearchState _searchState;
-  bool _rootedScore;
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
 };

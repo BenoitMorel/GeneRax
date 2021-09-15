@@ -6,7 +6,7 @@
 #include <stack>
 #include <functional>
 #include <sstream>
-
+#include <deque>
 
 void defaultUnodePrinter(pll_unode_t *node, 
     std::stringstream &ss)
@@ -269,6 +269,14 @@ static void fillPostOrder(pll_unode_t *node,
   }
   nodes.push_back(node);
 }
+  
+std::vector<pll_unode_t*> PLLUnrootedTree::getPostOrderNodesFrom(pll_unode_t *node) const
+{
+  std::vector<pll_unode_t*> nodes;
+  std::vector<char> markedNodes(getDirectedNodesNumber(), false);
+  fillPostOrder(node, nodes, markedNodes);
+  return nodes;
+}
 
 
 std::vector<pll_unode_t*> PLLUnrootedTree::getPostOrderNodes(bool innerOnly) const
@@ -290,6 +298,38 @@ std::vector<pll_unode_t*> PLLUnrootedTree::getPostOrderNodes(bool innerOnly) con
     assert(nodes.size() == getDirectedNodesNumber());
   }
   return nodes;
+}
+  
+std::vector<pll_unode_t*> PLLUnrootedTree::getReverseDepthNodes() const
+{
+  std::deque<pll_unode_t *> q;
+  std::vector<bool> marked(getDirectedNodesNumber(), false);
+  std::vector<pll_unode_t *> nodes;
+  for (auto leaf: getLeaves()) {
+    marked[leaf->node_index] = true;
+    q.push_back(leaf);
+  }
+  while (!q.empty()) {
+    auto node = q.front();
+    q.pop_front();
+    nodes.push_back(node);
+    auto back = node->back;
+    if (!back->next) {
+      continue;
+    }
+    auto left = back->next;;
+    auto right = back->next->next;
+    if (!marked[left->node_index]) {
+      q.push_back(left);
+      marked[left->node_index] = true;
+    }
+    if (!marked[right->node_index]) {
+      q.push_back(right);
+      marked[right->node_index] = true;
+    }
+  }
+  assert(nodes.size() == getDirectedNodesNumber());
+  return nodes; 
 }
 
 static void computePairwiseDistancesRec(pll_unode_t *currentNode, 

@@ -5,8 +5,32 @@
 #include <util/Paths.hpp>
 #include <search/SpeciesSPRSearch.hpp>
 #include <search/SpeciesTransferSearch.hpp>
+#include <search/UNNISearch.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <parallelization/PerCoreGeneTrees.hpp>
+  
+
+double USearchMiniBMEEvaluator::eval(PLLUnrootedTree &tree)
+{
+  _lastScore = -_miniBME.computeBME(tree);
+  return _lastScore;
+}
+
+double USearchMiniBMEEvaluator::evalNNI(PLLUnrootedTree &tree,
+    UNNIMove &move)
+{
+  /*  
+  auto before = eval(tree);
+  auto diff2 = _miniBME.computeNNIDiff(tree, move);
+  move.apply();
+  auto after = eval(tree);
+  move.apply(); // rollback
+  auto diff1 = before - after;
+  std::cerr << "diffs: " << diff1 << " " << diff2 << " " << diff1/diff2 << std::endl;
+  return after;
+  */
+  return _lastScore - _miniBME.computeNNIDiff(tree, move);
+}
 
 static bool testAndSwap(size_t &hash1, size_t &hash2) {
   std::swap(hash1, hash2);
@@ -91,6 +115,8 @@ MiniBMEOptimizer::MiniBMEOptimizer(
   _speciesTree(std::make_unique<SpeciesTree>(speciesTreeFile)),
   _evaluator(_speciesTree->getTree(), families, missingData),
   _outputDir(outputDir),
+  _missingData(missingData),
+  _families(families),
   _searchState(*_speciesTree,
       Paths::getSpeciesTreeFile(_outputDir, "inferred_species_tree.newick"))
 {
@@ -103,20 +129,30 @@ MiniBMEOptimizer::MiniBMEOptimizer(
 
 void MiniBMEOptimizer::optimize()
 {
-  _searchState.bestLL = _evaluator.computeLikelihood();
-  //sprSearch(3);
-  size_t hash1 = 0;
-  size_t hash2 = 0;
-  unsigned int index = 0;
-  do {
-    if (index++ % 2 == 0) {
-      transferSearch();
-    } else {
-      sprSearch(3);
+  if (_missingData) {
+    _searchState.bestLL = _evaluator.computeLikelihood();
+    //sprSearch(3);
+    size_t hash1 = 0;
+    size_t hash2 = 0;
+    unsigned int index = 0;
+    do {
+      if (index++ % 2 == 0) {
+        transferSearch();
+      } else {
+        sprSearch(3);
+      }
+      hash1 = _speciesTree->getHash();
     }
-    hash1 = _speciesTree->getHash();
+    while(testAndSwap(hash1, hash2));
+  } else {
+    PLLUnrootedTree speciesTree(_speciesTree->getTree());
+    USearchMiniBMEEvaluator evaluator(speciesTree,
+      _families,
+      _missingData);
+    UNNISearch search(speciesTree, evaluator);
+    search.search();
+    speciesTree.save(Paths::getSpeciesTreeFile(_outputDir, "inferred_species_tree.newick"));
   }
-  while(testAndSwap(hash1, hash2));
 }
 
 

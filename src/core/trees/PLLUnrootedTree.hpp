@@ -126,6 +126,9 @@ public:
    *  always comes after its (virtual) children.
    */
   std::vector<pll_unode_t*> getPostOrderNodes(bool innerOnly = false) const;
+  std::vector<pll_unode_t*> getPostOrderNodesFrom(pll_unode_t *node) const;
+  std::vector<pll_unode_t*> getReverseDepthNodes() const;
+  
  
   /**
    *  Return a set of all branches (for each node, one and only 
@@ -189,7 +192,10 @@ public:
    *  Return the leaf node that has the label label,
    *  or null pointer if such leaf does not exist
    */
-  pll_unode_t *findLeaf(const std::string &label);
+  pll_unode_t *findLeaf(const std::string &labe);
+
+  static pll_unode_t *getLeft(pll_unode_t *node) {return node->next->back;}
+  static pll_unode_t *getRight(pll_unode_t *node) {return node->next->next->back;}
 private:
   std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;
 };
