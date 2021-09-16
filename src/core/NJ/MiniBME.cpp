@@ -421,7 +421,7 @@ double MiniBME::computeNNIDiff(const PLLUnrootedTree &speciesTree,
   auto B = nni.getB()->node_index;
   auto C = nni.getC()->node_index;
   auto D = nni.getD()->node_index;
-  if (!_miniBME) {
+  if (!_missingData) {
     auto diffPlus = _subBMEs[A][C][0] + _subBMEs[B][D][0];
     auto diffMinus = _subBMEs[A][B][0] + _subBMEs[C][D][0];
     return (diffPlus - diffMinus) * 0.125;
