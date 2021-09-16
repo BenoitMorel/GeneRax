@@ -23,16 +23,17 @@ private:
   std::vector<DistanceMatrix> _geneDistanceDenominators;
   std::vector<std::string> _speciesIdToSpeciesString;
   Families _perCoreFamilies;
-  std::vector<std::unordered_set<std::string> > _perFamilyCoverage;
+  std::vector<std::unordered_set<std::string> > _perFamilyCoverageStr;
+  std::vector<std::vector<bool> > _perFamilyCoverage;
   StringToUint _speciesStringToSpeciesId;
   bool _prune;
   std::vector<DistanceMatrix> _prunedSpeciesMatrices;
   std::vector<DistanceMatrix> _subBMEs;
   double _computeBMEPrune(const PLLUnrootedTree &speciesTree);
-  double _computeBMEPruneWeighted(const PLLUnrootedTree &speciesTree);
   
   // could be made faster by skipping intersecting subtrees
   // O(n^2)
   void _computeSubBMEs(const PLLUnrootedTree &speciesTree);
+  void _computeSubBMEsPrune(const PLLUnrootedTree &speciesTree);
    
 };

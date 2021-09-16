@@ -19,17 +19,17 @@ double USearchMiniBMEEvaluator::eval(PLLUnrootedTree &tree)
 double USearchMiniBMEEvaluator::evalNNI(PLLUnrootedTree &tree,
     UNNIMove &move)
 {
-  /*  
   auto before = eval(tree);
   auto diff2 = _miniBME.computeNNIDiff(tree, move);
   move.apply();
   auto after = eval(tree);
+  std::cerr << tree.getNewickString() << std::endl;
   move.apply(); // rollback
   auto diff1 = before - after;
+  eval(tree);
   std::cerr << "diffs: " << diff1 << " " << diff2 << " " << diff1/diff2 << std::endl;
   return after;
-  */
-  return _lastScore - _miniBME.computeNNIDiff(tree, move);
+  //return _lastScore - _miniBME.computeNNIDiff(tree, move);
 }
 
 static bool testAndSwap(size_t &hash1, size_t &hash2) {
@@ -129,7 +129,8 @@ MiniBMEOptimizer::MiniBMEOptimizer(
 
 void MiniBMEOptimizer::optimize()
 {
-  if (_missingData) {
+  //if (_missingData) {
+  if (false) {
     _searchState.bestLL = _evaluator.computeLikelihood();
     //sprSearch(3);
     size_t hash1 = 0;
