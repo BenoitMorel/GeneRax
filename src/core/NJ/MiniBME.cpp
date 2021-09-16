@@ -239,7 +239,9 @@ bool isNumber(double v) {
 void MiniBME::_computeSubBMEs(const PLLUnrootedTree &speciesTree)
 {
   auto subtrees1 = speciesTree.getReverseDepthNodes();
-  _subBME = getNullMatrix(subtrees1.size(), std::numeric_limits<double>::infinity());
+  auto nodesNumber = subtrees1.size();
+  _subBMEs = DistanceVectorMatrix(nodesNumber, 
+      getMatrix(nodesNumber, 1, std::numeric_limits<double>::infinity()));
   for (auto n1: subtrees1) {
     auto subtrees2 = speciesTree.getPostOrderNodesFrom(n1->back);
     auto i1 = n1->node_index;
@@ -247,14 +249,14 @@ void MiniBME::_computeSubBMEs(const PLLUnrootedTree &speciesTree)
       auto i2 = n2->node_index;
       if (!n1->next && !n2->next) { // both leaves
         // edge case
-        _subBME[i1][i2] = _geneDistanceMatrices[0][i1][i2];
+        _subBMEs[i1][i2][0] = _geneDistanceMatrices[0][i1][i2];
       } else if (n1->next && !n2->next) { // n2 is a leaf
         // we already computed the symetric
-        _subBME[i1][i2] = _subBME[i2][i1];
+        _subBMEs[i1][i2][0] = _subBMEs[i2][i1][0];
       } else  { // n2 is not a leaf
         auto left2 = n2->next->back->node_index;
         auto right2 = n2->next->next->back->node_index;
-        _subBME[i1][i2] = 0.5 * (_subBME[i1][left2] + _subBME[i1][right2]);
+        _subBMEs[i1][i2][0] = 0.5 * (_subBMEs[i1][left2][0] + _subBMEs[i1][right2][0]);
       }
     }
   }
@@ -262,7 +264,7 @@ void MiniBME::_computeSubBMEs(const PLLUnrootedTree &speciesTree)
 }
 
 
-// computes _subBME[0][i1][i2]
+// computes _subBMEs[0][i1][i2]
 static void computeSubBMEsPruneRec(pll_unode_t *n1,
     pll_unode_t *n2,
     BoolMatrix &treated,
@@ -274,11 +276,6 @@ static void computeSubBMEsPruneRec(pll_unode_t *n1,
   auto i1 = n1->node_index;
   auto i2 = n2->node_index;
   unsigned int K = subBMEs[0][0].size();
-  bool isInteresting = (i1 == 0) && (i2 == 10);
-  if (isInteresting) {
-    std::cerr << "coucou " << n2->next->back->label << std::endl;
-    std::cerr << "coucou " << n2->next->next->back->label << std::endl;
-  }
   if (treated[i1][i2]) {
     // stop if we've already been there
     return;
@@ -412,40 +409,7 @@ void MiniBME::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
         hasChildren,
         belongsToPruned,
         _geneDistanceMatrices,
-        subBMEs);
-    }
-  }
-  
-  for (unsigned int k = 0; k < _perCoreFamilies.size(); ++k) {
-    bool hasPruned = false;
-    for (unsigned int i = 0; i < nodesNumber; ++i) {
-      hasPruned |= !hasChildren[i][k];
-    }
-    if (hasPruned) {
-      std::cerr << "has pruned:" << std::endl;
-    }
-    for (unsigned int i = 0; i < nodesNumber; ++i) {
-      if (i < _speciesIdToSpeciesString.size()) {
-        std::cerr << _speciesIdToSpeciesString[i] << "\t";
-      } else {
-        std::cerr << "\t";
-      }
-      for (unsigned int j = 0; j < nodesNumber; ++j) {
-        std::cerr << subBMEs[i][j][k] << " ";
-      }
-      std::cerr << std::endl;
-    }
-  }
-  std::cerr << std::endl;
-  
-  // gather the subBME values
-  _subBME = getNullMatrix(nodesNumber, 0.0);
-  for (unsigned int i = 0; i < nodesNumber; ++i) {
-    for (unsigned int j = 0; j < nodesNumber; ++j) {
-      for (unsigned int k = 1; k < _perCoreFamilies.size(); ++k) {
-        _subBME[i][j] += subBMEs[i][j][k];
-      }
-      ParallelContext::sumDouble(_subBME[i][j]);
+        _subBMEs);
     }
   }
 }
@@ -457,8 +421,26 @@ double MiniBME::computeNNIDiff(const PLLUnrootedTree &speciesTree,
   auto B = nni.getB()->node_index;
   auto C = nni.getC()->node_index;
   auto D = nni.getD()->node_index;
-  auto diffPlus = _subBME[A][C] + _subBME[B][D];
-  auto diffMinus = _subBME[A][B] + _subBME[C][D];
-  std::cerr << _subBME[A][C] << "+" << _subBME[B][D] << "  " << diffMinus << std::endl;
-  return (diffPlus - diffMinus) * 0.125;
+  if (!_miniBME) {
+    auto diffPlus = _subBMEs[A][C][0] + _subBMEs[B][D][0];
+    auto diffMinus = _subBMEs[A][B][0] + _subBMEs[C][D][0];
+    return (diffPlus - diffMinus) * 0.125;
+  }
+
+  double diffPlus = 0.0;
+  double diffMinus = 0.0;
+  for (unsigned int k = 0; k < _perCoreFamilies.size(); ++k) {
+    if (_subBMEs[A][C][0] == 0.0 || _subBMEs[B][D][0] == 0.0
+        || _subBMEs[A][B][0] == 0.0 || _subBMEs[C][D][0] == 0.0) {
+      // skip families for which the NNI move does not change
+      // the induced tree topology, because the formula
+      // does not hold anymore in this case
+      continue;
+    }
+    diffPlus += _subBMEs[A][C][0] + _subBMEs[B][D][0];
+    diffMinus += _subBMEs[A][B][0] + _subBMEs[C][D][0];
+  }
+  double res = (diffPlus - diffMinus) * 0.125;
+  ParallelContext::sumDouble(res);
+  return res;
 }
