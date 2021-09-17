@@ -207,12 +207,15 @@ double MiniBME::_computeBMEPrune(const PLLUnrootedTree &speciesTree)
       _speciesStringToSpeciesId,
       speciesDistanceMatrix);
   double res = 0.0;
+  // O(kn^2)
   for (unsigned int k = 0; k < _perCoreFamilies.size(); ++k) {
+    // O(n^2)
     getPrunedSpeciesMatrix(speciesTree, 
           _speciesStringToSpeciesId,
           _perFamilyCoverageStr[k],
           _prunedSpeciesMatrices[k]);    
   }
+  // O(kn^2)
   for (unsigned k = 0; k < _geneDistanceMatrices.size(); ++k) {
     for (unsigned int i = 0; i < N; ++i) {
       for (unsigned int j = 0; j < i; ++j) {
