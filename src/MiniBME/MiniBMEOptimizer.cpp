@@ -42,6 +42,7 @@ MiniBMEOptimizer::MiniBMEOptimizer(
   _missingData(missingData),
   _families(families)
 {
+  
   saveCurrentSpeciesTreeId("starting_species_tree.newick");
   saveCurrentSpeciesTreeId();
   ParallelContext::barrier();
