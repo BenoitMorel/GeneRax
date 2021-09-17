@@ -19,17 +19,20 @@ double USearchMiniBMEEvaluator::eval(PLLUnrootedTree &tree)
 double USearchMiniBMEEvaluator::evalNNI(PLLUnrootedTree &tree,
     UNNIMove &move)
 {
+  /*
   auto before = eval(tree);
+  Logger::info << tree.getUnrootedTreeHash() << " " << before << std::endl;
   auto diff2 = _miniBME.computeNNIDiff(tree, move);
   move.apply();
   auto after = eval(tree);
-  std::cerr << tree.getNewickString() << std::endl;
+  Logger::info << tree.getUnrootedTreeHash() << " " << after << std::endl;
   move.apply(); // rollback
   auto diff1 = before - after;
+  //Logger::info << "scores: " << before << " " << after << std::endl;
+  //Logger::info << "diffs: " << diff1 << " " << diff2 << " " << diff1/diff2 << std::endl;
   eval(tree);
-  std::cerr << "diffs: " << diff1 << " " << diff2 << " " << diff1/diff2 << std::endl;
-  return after;
-  //return _lastScore - _miniBME.computeNNIDiff(tree, move);
+  return after;*/
+  return _lastScore - _miniBME.computeNNIDiff(tree, move);
 }
 
 static bool testAndSwap(size_t &hash1, size_t &hash2) {

@@ -6,7 +6,6 @@
 #include <search/UNNISearch.hpp>
 #include <limits>
 
-using BoolMatrix = std::vector< std::vector<bool> >;
 using DistanceVectorMatrix = std::vector<DistanceMatrix>;
 
 static BoolMatrix getBoolMatrix(unsigned int N,
@@ -366,34 +365,35 @@ static void computeSubBMEsPruneRec(pll_unode_t *n1,
 void MiniBME::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
 {
   auto nodesNumber = speciesTree.getDirectedNodesNumber();
+  auto K = _perCoreFamilies.size();
   // Fill hasChildren and belongsToPruned
-  BoolMatrix hasChildren = getBoolMatrix(nodesNumber, 
+  _hasChildren = getBoolMatrix(nodesNumber, 
       _perCoreFamilies.size(),
       false);
-  BoolMatrix belongsToPruned = hasChildren;
+  _belongsToPruned = _hasChildren;
   for (auto node: speciesTree.getPostOrderNodes()) {
     auto index = node->node_index;
-    for (unsigned int k = 0; k < _perCoreFamilies.size(); ++k) {
+    for (unsigned int k = 0; k < K; ++k) {
       if (!node->next) {
         if (_perFamilyCoverage[k][index]) {
-          hasChildren[index][k] = true;
-          belongsToPruned[index][k] = true;
+          _hasChildren[index][k] = true;
+          _belongsToPruned[index][k] = true;
         }
       } else {
         auto left = node->next->back->node_index;
         auto right = node->next->next->back->node_index;
-        hasChildren[index][k] = 
-          hasChildren[left][k] || hasChildren[right][k];
-        belongsToPruned[index][k] = 
-          hasChildren[left][k] && hasChildren[right][k];
+        _hasChildren[index][k] = 
+          _hasChildren[left][k] || _hasChildren[right][k];
+        _belongsToPruned[index][k] = 
+          _hasChildren[left][k] && _hasChildren[right][k];
       }
     }
   }
   // Fill  the per-family subBME matrices
   BoolMatrix treated = getBoolMatrix(nodesNumber, nodesNumber, false);
-  DistanceVectorMatrix subBMEs(nodesNumber, 
+  _subBMEs = DistanceVectorMatrix(nodesNumber, 
       getMatrix(nodesNumber, 
-        _perCoreFamilies.size(), 
+        K, 
         std::numeric_limits<double>::infinity()));
   for (auto n1: speciesTree.getPostOrderNodes()) {
     
@@ -406,8 +406,8 @@ void MiniBME::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
       computeSubBMEsPruneRec(n1,
         n2,
         treated,
-        hasChildren,
-        belongsToPruned,
+        _hasChildren,
+        _belongsToPruned,
         _geneDistanceMatrices,
         _subBMEs);
     }
@@ -421,7 +421,9 @@ double MiniBME::computeNNIDiff(const PLLUnrootedTree &speciesTree,
   auto B = nni.getB()->node_index;
   auto C = nni.getC()->node_index;
   auto D = nni.getD()->node_index;
-  if (!_missingData) {
+  auto e1 = nni.edge->node_index;;
+  auto e2 = nni.edge->back->node_index;;
+  if (!_prune) {
     auto diffPlus = _subBMEs[A][C][0] + _subBMEs[B][D][0];
     auto diffMinus = _subBMEs[A][B][0] + _subBMEs[C][D][0];
     return (diffPlus - diffMinus) * 0.125;
@@ -430,15 +432,14 @@ double MiniBME::computeNNIDiff(const PLLUnrootedTree &speciesTree,
   double diffPlus = 0.0;
   double diffMinus = 0.0;
   for (unsigned int k = 0; k < _perCoreFamilies.size(); ++k) {
-    if (_subBMEs[A][C][0] == 0.0 || _subBMEs[B][D][0] == 0.0
-        || _subBMEs[A][B][0] == 0.0 || _subBMEs[C][D][0] == 0.0) {
-      // skip families for which the NNI move does not change
+    if (!_belongsToPruned[e1][k] || !_belongsToPruned[e2][k]) {  
+    // skip families for which the NNI move does not change
       // the induced tree topology, because the formula
       // does not hold anymore in this case
       continue;
     }
-    diffPlus += _subBMEs[A][C][0] + _subBMEs[B][D][0];
-    diffMinus += _subBMEs[A][B][0] + _subBMEs[C][D][0];
+    diffPlus += _subBMEs[A][C][k] + _subBMEs[B][D][k];
+    diffMinus += _subBMEs[A][B][k] + _subBMEs[C][D][k];
   }
   double res = (diffPlus - diffMinus) * 0.125;
   ParallelContext::sumDouble(res);

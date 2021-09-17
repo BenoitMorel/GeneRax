@@ -9,6 +9,7 @@
 
 class PLLUnrootedTree;
 class UNNIMove;
+using BoolMatrix = std::vector< std::vector<bool> >;
 
 class MiniBME {
 public:
@@ -29,6 +30,9 @@ private:
   bool _prune;
   std::vector<DistanceMatrix> _prunedSpeciesMatrices;
   std::vector<DistanceMatrix> _subBMEs;
+  BoolMatrix _hasChildren;
+  BoolMatrix _belongsToPruned;
+
   double _computeBMEPrune(const PLLUnrootedTree &speciesTree);
   
   // could be made faster by skipping intersecting subtrees
