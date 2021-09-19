@@ -8,6 +8,7 @@
 #include <util/RecModelInfo.hpp>
 #include <routines/Routines.hpp>
 #include <routines/SlavesMain.hpp>
+#include <maths/Random.hpp>
 
 
 
@@ -55,6 +56,7 @@ void initStartingSpeciesTree(MiniBMEArguments &args,
 void run( MiniBMEArguments &args)
 {
   Logger::info << "Mkdir " << args.output << std::endl;
+  Random::setSeed(static_cast<unsigned int>(args.seed));
   FileSystem::mkdir(args.output, true);
   FileSystem::mkdir(args.output + "/species_trees", true);
   Logger::initFileOutput(FileSystem::joinPaths(args.output, "genetegrator"));

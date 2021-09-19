@@ -3,11 +3,10 @@
 #include <string>
 #include <IO/Families.hpp>
 #include <util/types.hpp>
-
+#include <trees/PLLUnrootedTree.hpp>
 #include <vector>
 #include <unordered_set>
 
-class PLLUnrootedTree;
 class UNNIMove;
 using BoolMatrix = std::vector< std::vector<bool> >;
 
@@ -17,8 +16,15 @@ public:
       const Families &families,
       bool pruneMode = true);
   double computeBME(const PLLUnrootedTree &speciesTree);
-  double computeNNIDiff(const PLLUnrootedTree &speciesTree,
-      const UNNIMove &nni);
+  double computeNNIDiff(const UNNIMove &nni);
+
+
+  void getBestSPR(PLLUnrootedTree &speciesTree,
+      pll_unode_t *&bestPruneNode,
+      pll_unode_t *&bestRegraftNode);
+  void  getBestSPRFromPrune(pll_unode_t *prunedNode,
+      pll_unode_t *&bestRegraftNode,
+      double &bestDiff);
 private:
   std::vector<DistanceMatrix> _geneDistanceMatrices;
   std::vector<DistanceMatrix> _geneDistanceDenominators;

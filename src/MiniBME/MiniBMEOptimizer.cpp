@@ -9,6 +9,8 @@
 double USearchMiniBMEEvaluator::eval(PLLUnrootedTree &tree)
 {
   _lastScore = -_miniBME.computeBME(tree);
+  pll_unode_t *fake;
+  _miniBME.getBestSPR(tree, fake, fake);
   return _lastScore;
 }
 
@@ -28,7 +30,10 @@ double USearchMiniBMEEvaluator::evalNNI(PLLUnrootedTree &tree,
   //Logger::info << "diffs: " << diff1 << " " << diff2 << " " << diff1/diff2 << std::endl;
   eval(tree);
   return after;*/
-  return _lastScore - _miniBME.computeNNIDiff(tree, move);
+  auto diff = _miniBME.computeNNIDiff(move);
+  auto res = _lastScore - diff;
+  Logger::info << "evalNNI diff=" << diff << std::endl;
+  return res;
 }
 
 

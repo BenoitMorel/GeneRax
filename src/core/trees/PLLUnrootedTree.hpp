@@ -90,6 +90,7 @@ public:
   std::string getNewickString(UnodePrinter f = defaultUnodePrinter,
       pll_unode_t *root = nullptr, 
       bool rooted = false);
+  static std::string getSubtreeString(pll_unode_t *subtree, UnodePrinter f = defaultUnodePrinter);
 
   /**
    * Replace null branch lengths with minBL

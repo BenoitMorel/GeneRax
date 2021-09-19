@@ -525,6 +525,16 @@ static void printAux(pll_unode_t *node,
   }
   f(node, ss);
 }
+  
+std::string PLLUnrootedTree::getSubtreeString(pll_unode_t *subtree, UnodePrinter f)
+{
+  if (!subtree) {
+    return "null";
+  }
+  std::stringstream ss;
+  printAux(subtree, ss, f);
+  return ss.str();
+}
 
 std::string PLLUnrootedTree::getNewickString(UnodePrinter f,
       pll_unode_t *root, 
