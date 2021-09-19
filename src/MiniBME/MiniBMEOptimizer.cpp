@@ -35,6 +35,26 @@ double USearchMiniBMEEvaluator::evalNNI(PLLUnrootedTree &tree,
   Logger::info << "evalNNI diff=" << diff << std::endl;
   return res;
 }
+  
+bool USearchMiniBMEEvaluator::computeAndApplyBestSPR(PLLUnrootedTree &tree)
+{
+  auto currentScore = -_miniBME.computeBME(tree);
+  double diff = 0.0;
+  pll_unode_t *bestPruneNode = nullptr;
+  pll_unode_t *bestRegraftNode = nullptr;
+  _miniBME.getBestSPR(tree, 
+      bestPruneNode, 
+      bestRegraftNode,
+      diff);
+  if (diff > 0.0) {
+    assert(bestPruneNode);
+    assert(bestRegraftNode);
+    auto ok = corax_utree_spr(bestPruneNode->back, 
+        bestRegraftNode, 
+        nullptr);
+    assert(ok);
+  }
+}
 
 
 MiniBMEOptimizer::MiniBMEOptimizer(

@@ -21,7 +21,8 @@ public:
 
   void getBestSPR(PLLUnrootedTree &speciesTree,
       pll_unode_t *&bestPruneNode,
-      pll_unode_t *&bestRegraftNode);
+      pll_unode_t *&bestRegraftNode,
+      double &bestDiff);
   void  getBestSPRFromPrune(pll_unode_t *prunedNode,
       pll_unode_t *&bestRegraftNode,
       double &bestDiff);
