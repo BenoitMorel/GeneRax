@@ -573,19 +573,3 @@ void MiniBME::getBestSPRFromPrune(pll_unode_t *prunedNode,
   }
 }
 
-/*
-static void getBestSPRRec(unsigned int s,
-    pll_unode_t *W0, 
-    pll_unode_t *Wp, 
-    pll_unode_t *Wsminus1, 
-    pll_unode_t *Vsminus1, 
-    double delta_Vsminus2_Wp, // previous deltaAB
-    pll_unode_t *Vs, 
-    double Lsminus1, // L_s-1
-    pll_unode_t *&bestRegraftNode,
-    double &bestLs,
-    const std::vector<DistanceMatrix> &subBMEs)
-{
-  pll_unode_t *Ws = getOtherNext(Vs, Vsminus1->back)->back; 
-
-  */

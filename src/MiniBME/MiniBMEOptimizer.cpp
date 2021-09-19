@@ -38,7 +38,7 @@ double USearchMiniBMEEvaluator::evalNNI(PLLUnrootedTree &tree,
   
 bool USearchMiniBMEEvaluator::computeAndApplyBestSPR(PLLUnrootedTree &tree)
 {
-  auto currentScore = -_miniBME.computeBME(tree);
+  _lastScore = -_miniBME.computeBME(tree);
   double diff = 0.0;
   pll_unode_t *bestPruneNode = nullptr;
   pll_unode_t *bestRegraftNode = nullptr;
@@ -46,13 +46,15 @@ bool USearchMiniBMEEvaluator::computeAndApplyBestSPR(PLLUnrootedTree &tree)
       bestPruneNode, 
       bestRegraftNode,
       diff);
-  if (diff > 0.0) {
+  if (diff > 0.00000001) {
     assert(bestPruneNode);
     assert(bestRegraftNode);
     auto ok = pllmod_utree_spr(bestPruneNode->back, 
         bestRegraftNode, 
         nullptr);
     assert(ok);
+    Logger::timed << "Score: " << _lastScore + diff << std::endl;
+    Logger::timed <<   "(diff=" << diff << ")" << std::endl;
     return true;
   } else {
     return false;
