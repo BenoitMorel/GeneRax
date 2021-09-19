@@ -510,7 +510,7 @@ static void getBestSPRRec(unsigned int s,
   diff = 0.125 * (deltaAB + deltaCD - deltaAC - deltaBD);
   double Ls = Lsminus1 + diff;
   //Logger::info << deltaAB << " " << deltaCD << " " << deltaAC << " " << deltaBD << std::endl;
-  Logger::info << "LS=" << Ls << std::endl;
+  Logger::info << "L" << s << "=" << Ls << std::endl;
   if (Ls > bestLs) {
     bestLs = Ls;
     bestRegraftNode = Vs;
