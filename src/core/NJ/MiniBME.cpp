@@ -509,8 +509,6 @@ static void getBestSPRRec(unsigned int s,
   }
   diff = 0.125 * (deltaAB + deltaCD - deltaAC - deltaBD);
   double Ls = Lsminus1 + diff;
-  //Logger::info << deltaAB << " " << deltaCD << " " << deltaAC << " " << deltaBD << std::endl;
-  Logger::info << "L" << s << "=" << Ls << std::endl;
   if (Ls > bestLs) {
     bestLs = Ls;
     bestRegraftNode = Vs;
@@ -530,7 +528,6 @@ void MiniBME::getBestSPR(PLLUnrootedTree &speciesTree,
       pll_unode_t *&bestRegraftNode,
       double &bestDiff)
 {
-  Logger::timed << "getBestSPR" << std::endl;
   bestDiff = 0.0;
   for (auto pruneNode: speciesTree.getPostOrderNodes()) {
     pll_unode_t *localBestRegraft = nullptr;
@@ -542,7 +539,6 @@ void MiniBME::getBestSPR(PLLUnrootedTree &speciesTree,
       bestRegraftNode = localBestRegraft;
     }
   }
-  Logger::info << "End of getBestSPR. Best diff: " << bestDiff << std::endl;
 }
 
 

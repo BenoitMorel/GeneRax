@@ -20,8 +20,8 @@ public:
   virtual double eval(PLLUnrootedTree &tree);
   virtual double evalNNI(PLLUnrootedTree &tree, UNNIMove &move);
   bool computeAndApplyBestSPR(PLLUnrootedTree &tree);
-private:
   MiniBME _miniBME;
+  private:
   double _lastScore;
 };
 

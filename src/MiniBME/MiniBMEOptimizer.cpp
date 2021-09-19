@@ -4,13 +4,13 @@
 #include <util/Paths.hpp>
 #include <search/UNNISearch.hpp>
 #include <parallelization/PerCoreGeneTrees.hpp>
-  
+#include <corax/corax.h>
 
 double USearchMiniBMEEvaluator::eval(PLLUnrootedTree &tree)
 {
   _lastScore = -_miniBME.computeBME(tree);
-  pll_unode_t *fake;
-  _miniBME.getBestSPR(tree, fake, fake);
+  //pll_unode_t *fake;
+  //_miniBME.getBestSPR(tree, fake, fake);
   return _lastScore;
 }
 
@@ -49,10 +49,13 @@ bool USearchMiniBMEEvaluator::computeAndApplyBestSPR(PLLUnrootedTree &tree)
   if (diff > 0.0) {
     assert(bestPruneNode);
     assert(bestRegraftNode);
-    auto ok = corax_utree_spr(bestPruneNode->back, 
+    auto ok = pllmod_utree_spr(bestPruneNode->back, 
         bestRegraftNode, 
         nullptr);
     assert(ok);
+    return true;
+  } else {
+    return false;
   }
 }
 
@@ -79,8 +82,14 @@ void MiniBMEOptimizer::optimize()
   USearchMiniBMEEvaluator evaluator(speciesTree,
     _families,
     _missingData);
+  /*
   UNNISearch search(speciesTree, evaluator);
   search.search();
+  */
+  bool ok = true;
+  while (ok) {
+    ok = evaluator.computeAndApplyBestSPR(speciesTree);
+  }
   speciesTree.save(Paths::getSpeciesTreeFile(_outputDir, "inferred_species_tree.newick"));
 }
 
