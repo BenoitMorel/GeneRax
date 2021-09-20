@@ -54,7 +54,6 @@ bool USearchMiniBMEEvaluator::computeAndApplyBestSPR(PLLUnrootedTree &tree)
         nullptr);
     assert(ok);
     Logger::timed << "Score: " << _lastScore + diff << std::endl;
-    Logger::timed <<   "(diff=" << diff << ")" << std::endl;
     return true;
   } else {
     return false;
@@ -84,14 +83,19 @@ void MiniBMEOptimizer::optimize()
   USearchMiniBMEEvaluator evaluator(speciesTree,
     _families,
     _missingData);
+  Logger::info << "Starting score: " << evaluator.eval(speciesTree) << std::endl;
   /*
   UNNISearch search(speciesTree, evaluator);
   search.search();
   */
   bool ok = true;
+  unsigned int it = 0;
   while (ok) {
     ok = evaluator.computeAndApplyBestSPR(speciesTree);
+    ++it;
   }
+  Logger::info << "SPR search stopped after " << it << " iterations" << std::endl;
+  Logger::info << "Final score: " << evaluator.eval(speciesTree) << std::endl;
   speciesTree.save(Paths::getSpeciesTreeFile(_outputDir, "inferred_species_tree.newick"));
 }
 
