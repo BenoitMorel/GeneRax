@@ -54,6 +54,8 @@ bool USearchMiniBMEEvaluator::computeAndApplyBestSPR(PLLUnrootedTree &tree)
         nullptr);
     assert(ok);
     Logger::timed << "Score: " << _lastScore + diff << std::endl;
+    Logger::timed << "Estimated diff " << diff << std::endl; 
+    Logger::timed << "Real      diff " << -_miniBME.computeBME(tree) - _lastScore << std::endl; 
     return true;
   } else {
     return false;
@@ -90,7 +92,7 @@ void MiniBMEOptimizer::optimize()
   */
   bool ok = true;
   unsigned int it = 0;
-  while (ok) {
+  while (ok && it < 5) {
     ok = evaluator.computeAndApplyBestSPR(speciesTree);
     ++it;
   }

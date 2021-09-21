@@ -23,9 +23,10 @@ public:
       pll_unode_t *&bestPruneNode,
       pll_unode_t *&bestRegraftNode,
       double &bestDiff);
-  void  getBestSPRFromPrune(pll_unode_t *prunedNode,
+  bool  getBestSPRFromPrune(pll_unode_t *prunedNode,
       pll_unode_t *&bestRegraftNode,
-      double &bestDiff);
+      double &bestDiff,
+      unsigned int &bestS);
 private:
   std::vector<DistanceMatrix> _geneDistanceMatrices;
   std::vector<DistanceMatrix> _geneDistanceDenominators;

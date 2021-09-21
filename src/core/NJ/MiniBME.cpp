@@ -516,7 +516,8 @@ static void getBestSPRRec(unsigned int s,
 
 
 static void getBestSPRRecMissing(unsigned int s,
-    pll_unode_t *W0, 
+    std::vector<unsigned int> sprime, // copy!!
+    std::vector<pll_unode_t *> W0s, 
     pll_unode_t *Wp, 
     pll_unode_t *Wsminus1, 
     pll_unode_t *Vsminus1, 
@@ -525,10 +526,14 @@ static void getBestSPRRecMissing(unsigned int s,
     double Lsminus1, // L_s-1
     pll_unode_t *&bestRegraftNode,
     double &bestLs,
+    unsigned int &bestS,
     const std::vector<DistanceMatrix> &subBMEs,
     const BoolMatrix &belongsToPruned,
-    const BoolMatrix &hasChildren)
+    const BoolMatrix &hasChildren,
+    std::vector<bool> Vsminus2HasChildren, // does Vsminus2 have children after the previous moves
+    std::vector<bool> Vsminus1HasChildren) // does Vsminus1 have children after the previous moves
 {
+  unsigned int maxRadius = 2;
   pll_unode_t *Ws = getOtherNext(Vs, Vsminus1->back)->back; 
   unsigned int K = subBMEs[0][0].size();
   // compute L_s
@@ -541,51 +546,85 @@ static void getBestSPRRecMissing(unsigned int s,
   // A was modified by the previous (simulated) NNI moves
   // and its average distances need an update
   double diff = 0.0;
-  std::vector<double> deltaABs(K, 0.0);
+  std::vector<double> delta_Vsminus1_Wp(K, std::numeric_limits<double>::infinity());
+  std::vector<bool> VsHasChildren = Vsminus1HasChildren;
   for (unsigned int k = 0; k < K; ++k) {
-    // not sure this check is necessary
-    if (!hasChildren[Vs->node_index][k] || !hasChildren[Wp->node_index][k]) {
+    // if Wp has no children in the induced tree, the SPR move has no effect
+    // on the score of this family
+    if (!hasChildren[Wp->node_index][k]) {
       continue;
     }
-    bool applyDiff = true;
-    if (s == 1) {
-      applyDiff = belongsToPruned[Vsminus1->node_index][k] && belongsToPruned[Vsminus1->back->node_index][k];
-    } else {
-      applyDiff = belongsToPruned[Vsminus1->back->node_index][k];
+    // The current NNI move affects the current family score if and only if each of
+    // its 4 subtrees (after having recursively applied the previous NNI moves!!)
+    // have children in the induced tree
+    // At this point, Wp has children. Vsminus1HasChildren tells if the updated Vs has children
+    // belongsToPruned == true iif both the node children (Ws and Vs->back) have children
+    bool applyDiff = Vsminus1HasChildren[k] && belongsToPruned[Vsminus1->back->node_index][k];
+  
+    /**
+     *  Not sure that this changes something
+     *  Maybe we can just use W0 without vector...
+     */
+    if (nullptr == W0s[k] && applyDiff) {
+      W0s[k] = Wsminus1;
     }
+
+    // deltaCD and deltaBD are trivial because not affected by previous NNI moves
     double deltaCD = subBMEs[Ws->node_index][Vs->back->node_index][k];
     double deltaBD = subBMEs[Wp->node_index][Vs->back->node_index][k];
+    
+    // deltaAB and deltaAC are affected by the previous moves
     double deltaAB = 0.0;
     double deltaAC = 0.0;
-    if (s == 1) {
-      deltaAB = subBMEs[W0->node_index][Wp->node_index][k];
-      deltaAC = subBMEs[W0->node_index][Ws->node_index][k];
+    if (sprime[k] == 1) {
+      deltaAB = subBMEs[Wsminus1->node_index][Wp->node_index][k];
+      deltaAC = subBMEs[Wsminus1->node_index][Ws->node_index][k];
     } else {
-      deltaAB = 0.5 * (delta_Vsminus2_Wp[k] + 
-        subBMEs[Wsminus1->node_index][Wp->node_index][k]);
       deltaAC = subBMEs[Vsminus1->node_index][Ws->node_index][k];
-      deltaAC -= pow(0.5, s) * subBMEs[Wp->node_index][Ws->node_index][k];
-      deltaAC += pow(0.5, s) * subBMEs[W0->node_index][Ws->node_index][k];
+      deltaAC -= pow(0.5, sprime[k]) * subBMEs[Wp->node_index][Ws->node_index][k];
+      deltaAC += pow(0.5, sprime[k]) * subBMEs[W0s[k]->node_index][Ws->node_index][k];
+      //deltaAC -= pow(0.5, s) * subBMEs[Wp->node_index][Ws->node_index][k];
+      //deltaAC += pow(0.5, s) * subBMEs[W0s[k]->node_index][Ws->node_index][k];
+      if (hasChildren[Wsminus1->node_index][k] && Vsminus2HasChildren[k]) {
+        deltaAB = 0.5 * (delta_Vsminus2_Wp[k] + 
+          subBMEs[Wsminus1->node_index][Wp->node_index][k]);
+      } else if (hasChildren[Wsminus1->node_index][k] && !Vsminus2HasChildren[k]) {
+        deltaAB = subBMEs[Wsminus1->node_index][Wp->node_index][k];
+      } else if (!hasChildren[Wsminus1->node_index][k] && Vsminus2HasChildren[k]) {
+        deltaAB = delta_Vsminus2_Wp[k];
+      } else {
+        assert(!applyDiff);
+        deltaAB = std::numeric_limits<double>::infinity(); // won't be used anyway
+      }
     }
-    double diffk = 0.125 * (deltaAB + deltaCD - deltaAC - deltaBD);
-    assert(isNumber(diffk));
     if (applyDiff) {
+      double diffk = 0.125 * (deltaAB + deltaCD - deltaAC - deltaBD);
+      assert(isNumber(diffk));
       diff += diffk;
+      sprime[k] += 1;
+      delta_Vsminus1_Wp[k] = deltaAB; // in our out the if???
     }
-    deltaABs[k] = deltaAB;
+
+    // update VsHasChildren for next call
+    VsHasChildren[k] = Vsminus1HasChildren[k] || hasChildren[Ws->node_index][k];
   }
   ParallelContext::sumDouble(diff);
   double Ls = Lsminus1 + diff;
   if (Ls > bestLs) {
     bestLs = Ls;
     bestRegraftNode = Vs;
+    bestS = s;
+    Logger::info << " better diff " << bestLs << " s=" << s << std::endl;
   }
   // recursive call
+  if (s >= maxRadius) {
+    return;
+  }
   if (Vs->back->next) {
-    getBestSPRRecMissing(s+1, W0, Wp, Ws, Vs, deltaABs, Vs->back->next, 
-        Ls, bestRegraftNode, bestLs, subBMEs, belongsToPruned, hasChildren);
-    getBestSPRRecMissing(s+1, W0, Wp, Ws, Vs, deltaABs, Vs->back->next->next, 
-        Ls, bestRegraftNode, bestLs, subBMEs, belongsToPruned, hasChildren);
+    getBestSPRRecMissing(s+1, sprime, W0s, Wp, Ws, Vs, delta_Vsminus1_Wp, Vs->back->next, 
+        Ls, bestRegraftNode, bestLs, bestS, subBMEs, belongsToPruned, hasChildren, Vsminus1HasChildren, VsHasChildren);
+    getBestSPRRecMissing(s+1, sprime, W0s, Wp, Ws, Vs, delta_Vsminus1_Wp, Vs->back->next->next, 
+        Ls, bestRegraftNode, bestLs, bestS, subBMEs, belongsToPruned, hasChildren, Vsminus1HasChildren, VsHasChildren);
   }
 }
 
@@ -596,26 +635,26 @@ void MiniBME::getBestSPR(PLLUnrootedTree &speciesTree,
       double &bestDiff)
 {
   bestDiff = 0.0;
+  unsigned int bestS = 1;
   for (auto pruneNode: speciesTree.getPostOrderNodes()) {
-    pll_unode_t *localBestRegraft = nullptr;
-    double localBestDiff = 0.0;
-    getBestSPRFromPrune(pruneNode, localBestRegraft, localBestDiff);
-    if (localBestDiff > bestDiff) {
-      bestDiff = localBestDiff;
+    if (getBestSPRFromPrune(pruneNode, bestRegraftNode, bestDiff, bestS)) {
       bestPruneNode = pruneNode;
-      bestRegraftNode = localBestRegraft;
     }
   }
+  Logger::info << "Best S=" << bestS << std::endl;
 }
 
 
-void MiniBME::getBestSPRFromPrune(pll_unode_t *prunedNode,
+bool MiniBME::getBestSPRFromPrune(pll_unode_t *prunedNode,
       pll_unode_t *&bestRegraftNode,
-      double &bestDiff)
+      double &bestDiff,
+      unsigned int &bestS)
 {
+  bool foundBetter = false;
+  double oldBestDiff = bestDiff;
   auto Wp = prunedNode;
   if (!Wp->back->next) {
-    return;
+    return foundBetter;
   }
   std::vector<pll_unode_t *> V0s;
   V0s.push_back(Wp->back->next->back);
@@ -631,18 +670,27 @@ void MiniBME::getBestSPRFromPrune(pll_unode_t *prunedNode,
     for (auto V1: V1s) {
       unsigned int s = 1;
       pll_unode_t *W0 = V0;
-      pll_unode_t *Wsminus1 = nullptr;
+      pll_unode_t *Wsminus1 = W0;
       if (_prune) {
-        std::vector<double> deltaABs; // not used at first iteration
-        getBestSPRRecMissing(s, W0, Wp,  Wsminus1, V,deltaABs,
-            V1, 0.0, bestRegraftNode, bestDiff, _subBMEs, 
-            _belongsToPruned, _hasChildren);
+        unsigned int K = _subBMEs[0][0].size();
+        std::vector<pll_unode_t *> W0s(K, nullptr);
+        std::vector<double> delta_V0_Wp; // not used at first iteration
+        std::vector<unsigned int> sprime(K, 1);
+        std::vector<bool> V0HasChildren = _hasChildren[V0->node_index];
+        std::vector<bool> Vminus1HasChildren(V0HasChildren.size()); // won't be read at first iteration
+        getBestSPRRecMissing(s, sprime, W0s, Wp,  Wsminus1, V,delta_V0_Wp,
+            V1, 0.0, bestRegraftNode, bestDiff, bestS, _subBMEs, 
+            _belongsToPruned, _hasChildren, Vminus1HasChildren, V0HasChildren);
       } else {
         double deltaAB = 0.0; // not used at first iteration
         getBestSPRRec(s, W0, Wp,  Wsminus1, V, deltaAB,
             V1, 0.0, bestRegraftNode, bestDiff, _subBMEs);
       }
+      if (bestDiff > oldBestDiff) {
+        foundBetter = true;
+      }
     }
   }
+  return foundBetter;
 }
 
