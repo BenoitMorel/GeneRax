@@ -583,6 +583,7 @@ static void getBestSPRRecMissing(unsigned int s,
       deltaAC = subBMEs[Vsminus1->node_index][Ws->node_index][k];
       deltaAC -= pow(0.5, sprime[k]) * subBMEs[Wp->node_index][Ws->node_index][k];
       deltaAC += pow(0.5, sprime[k]) * subBMEs[W0s[k]->node_index][Ws->node_index][k];
+      assert(W0s[k] == Wsminus1);
       //deltaAC -= pow(0.5, s) * subBMEs[Wp->node_index][Ws->node_index][k];
       //deltaAC += pow(0.5, s) * subBMEs[W0s[k]->node_index][Ws->node_index][k];
       if (hasChildren[Wsminus1->node_index][k] && Vsminus2HasChildren[k]) {
