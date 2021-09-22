@@ -198,6 +198,18 @@ double MiniBME::computeBME(const PLLUnrootedTree &speciesTree)
   return res;
 }
 
+// return the maximum non-diagonal value, assuming
+// that m is symetric
+double getMaxSym(const DistanceMatrix &m) {
+  double res = -std::numeric_limits<double>::infinity();
+  for (unsigned int i = 0; i < m.size(); ++i) {
+    for (unsigned int j = 0; j < i; ++j) {
+      res = std::max(res, m[i][j]);
+      Logger::info << m[i][j] << std::endl;
+    }
+  }
+  return res;
+}
 
 double MiniBME::_computeBMEPrune(const PLLUnrootedTree &speciesTree)
 {
@@ -206,6 +218,7 @@ double MiniBME::_computeBMEPrune(const PLLUnrootedTree &speciesTree)
   fillSpeciesDistances(speciesTree, 
       _speciesStringToSpeciesId,
       speciesDistanceMatrix);
+  //double maxSpeciesDistance = getMaxSym(speciesDistanceMatrix);
   double res = 0.0;
   // O(kn^2)
   for (unsigned int k = 0; k < _perCoreFamilies.size(); ++k) {
@@ -222,6 +235,7 @@ double MiniBME::_computeBMEPrune(const PLLUnrootedTree &speciesTree)
         if (0.0 == _geneDistanceDenominators[k][i][j]) {
           continue;
         }
+
         res += _geneDistanceMatrices[k][i][j] / pow(2.0, _prunedSpeciesMatrices[k][i][j]);
       }
     }
@@ -533,6 +547,10 @@ static void getBestSPRRecMissing(unsigned int s,
     std::vector<bool> Vsminus2HasChildren, // does Vsminus2 have children after the previous moves
     std::vector<bool> Vsminus1HasChildren) // does Vsminus1 have children after the previous moves
 {
+  std::vector<double> pows(s+1);
+  for (unsigned int i = 0; i <= s; ++i) {
+    pows[i] = pow(0.5, i);
+  }
   unsigned int maxRadius = 9999;
   pll_unode_t *Ws = getOtherNext(Vs, Vsminus1->back)->back; 
   unsigned int K = subBMEs[0][0].size();
@@ -583,10 +601,8 @@ static void getBestSPRRecMissing(unsigned int s,
       deltaAC = subBMEs[W0s[k]->node_index][Ws->node_index][k];
     } else if (W0s[k]) {
       deltaAC = subBMEs[Vsminus1->node_index][Ws->node_index][k];
-      deltaAC -= pow(0.5, sprime[k]) * subBMEs[Wp->node_index][Ws->node_index][k];
-      deltaAC += pow(0.5, sprime[k]) * subBMEs[W0s[k]->node_index][Ws->node_index][k];
-      //deltaAC -= pow(0.5, s) * subBMEs[Wp->node_index][Ws->node_index][k];
-      //deltaAC += pow(0.5, s) * subBMEs[W0s[k]->node_index][Ws->node_index][k];
+      deltaAC -= pows[sprime[k]] * subBMEs[Wp->node_index][Ws->node_index][k];
+      deltaAC += pows[sprime[k]] * subBMEs[W0s[k]->node_index][Ws->node_index][k];
       if (hasChildren[Wsminus1->node_index][k] && Vsminus2HasChildren[k]) {
         deltaAB = 0.5 * (delta_Vsminus2_Wp[k] + 
           subBMEs[Wsminus1->node_index][Wp->node_index][k]);
