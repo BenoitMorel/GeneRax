@@ -126,6 +126,9 @@ MiniBME::MiniBME(const PLLUnrootedTree &speciesTree,
     _speciesStringToSpeciesId.insert({label, _speciesIdToSpeciesString.size()});
     _speciesIdToSpeciesString.push_back(label);
   }
+  for (unsigned int i = 0; i < speciesTree.getLeavesNumber() + 3; ++i) {
+    _pows.push_back(std::pow(0.5, i));
+  }
   if (_prune) {
     // fill species-spid mappings
     PerCoreGeneTrees::getPerCoreFamilies(families, _perCoreFamilies);
@@ -218,7 +221,6 @@ double MiniBME::_computeBMEPrune(const PLLUnrootedTree &speciesTree)
   fillSpeciesDistances(speciesTree, 
       _speciesStringToSpeciesId,
       speciesDistanceMatrix);
-  //double maxSpeciesDistance = getMaxSym(speciesDistanceMatrix);
   double res = 0.0;
   // O(kn^2)
   for (unsigned int k = 0; k < _perCoreFamilies.size(); ++k) {
@@ -236,7 +238,7 @@ double MiniBME::_computeBMEPrune(const PLLUnrootedTree &speciesTree)
           continue;
         }
 
-        res += _geneDistanceMatrices[k][i][j] / pow(2.0, _prunedSpeciesMatrices[k][i][j]);
+        res += _geneDistanceMatrices[k][i][j] * _pows[_prunedSpeciesMatrices[k][i][j]];
       }
     }
   }
@@ -334,17 +336,13 @@ static void computeSubBMEsPruneRec(pll_unode_t *n1,
         // Go down to n2's child that has children
         if (hasChildren[left2->node_index][k]) {
           subBMEs[i1][i2][k] = subBMEs[i1][left2->node_index][k];
-          assert(isNumber(subBMEs[i1][i2][k]));
         } else {
-          assert(hasChildren[right2->node_index][k]);
           subBMEs[i1][i2][k] = subBMEs[i1][right2->node_index][k];
-          assert(isNumber(subBMEs[i1][i2][k]));
         }
       } else if (!belongsToPruned[i1][k]) {
         // Case 2: n2 is in the induced tree, n1 is not
         // Note that n1 cannot be a leaf at this point
         // go down to n1's child that has children
-        assert(n1->next != nullptr);
         auto left1 = n1->next->back;
         auto right1 = n1->next->next->back;
         auto lefti1 = n1->next->back->node_index;
@@ -355,27 +353,20 @@ static void computeSubBMEsPruneRec(pll_unode_t *n1,
             belongsToPruned, geneDistances, subBMEs);
         if (hasChildren[lefti1][k]) {
           subBMEs[i1][i2][k] = subBMEs[lefti1][i2][k];
-          assert(isNumber(subBMEs[i1][i2][k]));
         } else {
-          assert(hasChildren[righti1][k]);
           subBMEs[i1][i2][k] = subBMEs[righti1][i2][k];
-          assert(isNumber(subBMEs[i1][i2][k]));
         }
       } else {
         // case 3: both n1 and n2 are in the induced tree
         subBMEs[i1][i2][k] = 0.5 * (
             subBMEs[i1][left2->node_index][k] + 
             subBMEs[i1][right2->node_index][k]);
-        assert(isNumber(subBMEs[i1][i2][k]));
       }
   
     }
   }
 
 
-  for (unsigned k = 0; k < K; ++k) {
-    assert(isNumber(subBMEs[i1][i2][k]));
-  }
   treated[i1][i2] = true;
 }
 
@@ -468,7 +459,6 @@ static pll_unode_t *getOtherNext(pll_unode_t *n1,
   if (n1->next == n2) {
     return n2->next;
   } else {
-    assert(n1->next->next == n2);
     return n1->next;
   }
 }
@@ -529,7 +519,7 @@ static void getBestSPRRec(unsigned int s,
 }
 
 
-static void getBestSPRRecMissing(unsigned int s,
+void MiniBME::_getBestSPRRecMissing(unsigned int s,
     std::vector<unsigned int> sprime, // copy!!
     std::vector<pll_unode_t *> W0s, 
     pll_unode_t *Wp, 
@@ -547,10 +537,6 @@ static void getBestSPRRecMissing(unsigned int s,
     std::vector<bool> Vsminus2HasChildren, // does Vsminus2 have children after the previous moves
     std::vector<bool> Vsminus1HasChildren) // does Vsminus1 have children after the previous moves
 {
-  std::vector<double> pows(s+1);
-  for (unsigned int i = 0; i <= s; ++i) {
-    pows[i] = pow(0.5, i);
-  }
   unsigned int maxRadius = 9999;
   pll_unode_t *Ws = getOtherNext(Vs, Vsminus1->back)->back; 
   unsigned int K = subBMEs[0][0].size();
@@ -600,9 +586,10 @@ static void getBestSPRRecMissing(unsigned int s,
       deltaAB = subBMEs[W0s[k]->node_index][Wp->node_index][k];
       deltaAC = subBMEs[W0s[k]->node_index][Ws->node_index][k];
     } else if (W0s[k]) {
-      deltaAC = subBMEs[Vsminus1->node_index][Ws->node_index][k];
-      deltaAC -= pows[sprime[k]] * subBMEs[Wp->node_index][Ws->node_index][k];
-      deltaAC += pows[sprime[k]] * subBMEs[W0s[k]->node_index][Ws->node_index][k];
+      deltaAC = _pows[sprime[k]] * 
+        (subBMEs[W0s[k]->node_index][Ws->node_index][k] - 
+         subBMEs[Wp->node_index][Ws->node_index][k]);
+      deltaAC += subBMEs[Vsminus1->node_index][Ws->node_index][k];
       if (hasChildren[Wsminus1->node_index][k] && Vsminus2HasChildren[k]) {
         deltaAB = 0.5 * (delta_Vsminus2_Wp[k] + 
           subBMEs[Wsminus1->node_index][Wp->node_index][k]);
@@ -611,13 +598,11 @@ static void getBestSPRRecMissing(unsigned int s,
       } else if (!hasChildren[Wsminus1->node_index][k] && Vsminus2HasChildren[k]) {
         deltaAB = delta_Vsminus2_Wp[k];
       } else {
-        assert(!applyDiff);
         deltaAB = std::numeric_limits<double>::infinity(); // won't be used anyway
       }
     }
     if (applyDiff) {
       double diffk = 0.125 * (deltaAB + deltaCD - deltaAC - deltaBD);
-      assert(isNumber(diffk));
       diff += diffk;
       sprime[k] += 1;
     }
@@ -638,9 +623,9 @@ static void getBestSPRRecMissing(unsigned int s,
     return;
   }
   if (Vs->back->next) {
-    getBestSPRRecMissing(s+1, sprime, W0s, Wp, Ws, Vs, delta_Vsminus1_Wp, Vs->back->next, 
+    _getBestSPRRecMissing(s+1, sprime, W0s, Wp, Ws, Vs, delta_Vsminus1_Wp, Vs->back->next, 
         Ls, bestRegraftNode, bestLs, bestS, subBMEs, belongsToPruned, hasChildren, Vsminus1HasChildren, VsHasChildren);
-    getBestSPRRecMissing(s+1, sprime, W0s, Wp, Ws, Vs, delta_Vsminus1_Wp, Vs->back->next->next, 
+    _getBestSPRRecMissing(s+1, sprime, W0s, Wp, Ws, Vs, delta_Vsminus1_Wp, Vs->back->next->next, 
         Ls, bestRegraftNode, bestLs, bestS, subBMEs, belongsToPruned, hasChildren, Vsminus1HasChildren, VsHasChildren);
   }
 }
@@ -695,7 +680,7 @@ bool MiniBME::getBestSPRFromPrune(pll_unode_t *prunedNode,
         std::vector<unsigned int> sprime(K, 1);
         std::vector<bool> V0HasChildren = _hasChildren[V0->node_index];
         std::vector<bool> Vminus1HasChildren(V0HasChildren.size()); // won't be read at first iteration
-        getBestSPRRecMissing(s, sprime, W0s, Wp,  Wsminus1, V,delta_V0_Wp,
+        _getBestSPRRecMissing(s, sprime, W0s, Wp,  Wsminus1, V,delta_V0_Wp,
             V1, 0.0, bestRegraftNode, bestDiff, bestS, _subBMEs, 
             _belongsToPruned, _hasChildren, Vminus1HasChildren, V0HasChildren);
       } else {
