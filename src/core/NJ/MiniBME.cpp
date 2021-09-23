@@ -160,7 +160,8 @@ MiniBME::MiniBME(const PLLUnrootedTree &speciesTree,
             _geneDistanceDenominators[i],
             minMode,
             reweight,
-            ustar);
+            ustar,
+            -1.0);
       }
     }
     _prunedSpeciesMatrices = std::vector<DistanceMatrix>(
@@ -171,6 +172,7 @@ MiniBME::MiniBME(const PLLUnrootedTree &speciesTree,
       minMode, 
       reweight,
       ustar,
+      -1.0, // do not contract small branch lengths
       _geneDistanceMatrices[0],
       _speciesIdToSpeciesString,
       _speciesStringToSpeciesId);
@@ -520,7 +522,7 @@ static void getBestSPRRec(unsigned int s,
 
 
 void MiniBME::_getBestSPRRecMissing(unsigned int s,
-    std::vector<unsigned int> sprime, // copy!!
+    std::vector<unsigned int> sprime, 
     std::vector<pll_unode_t *> W0s, 
     pll_unode_t *Wp, 
     pll_unode_t *Wsminus1, 

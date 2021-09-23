@@ -61,8 +61,8 @@ void run( MiniBMEArguments &args)
   FileSystem::mkdir(args.output + "/species_trees", true);
   Logger::initFileOutput(FileSystem::joinPaths(args.output, "genetegrator"));
   auto families = FamiliesFileParser::parseFamiliesFile(args.families);
-  //Logger::timed << "Filtering gene families..." << std::endl;
-  //Family::filterFamilies(families, "", false, false);
+  Logger::timed << "Filtering gene families..." << std::endl;
+  Family::filterFamilies(families, "", false, false);
   initStartingSpeciesTree(args, families);
   
   MiniBMEOptimizer speciesTreeOptimizer(

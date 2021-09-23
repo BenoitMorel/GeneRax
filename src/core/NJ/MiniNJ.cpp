@@ -11,11 +11,12 @@
 
 void fillDistancesRec(pll_unode_t *currentNode, 
     double currentDistance,
-    std::vector<double> &distances)
+    std::vector<double> &distances,
+    double contractBranchUnder)
 {
   // do not account for internal nodes which have too small
   // branch lengths
-  if (currentNode->length == 0.0 || currentNode->length > 0.0000011) {
+  if (currentNode->length == 0.0 || currentNode->length >= contractBranchUnder) {
     currentDistance += 1.0;
   }
   if (!currentNode->next) {
@@ -23,8 +24,8 @@ void fillDistancesRec(pll_unode_t *currentNode,
     distances[currentNode->node_index] = currentDistance;
     return;
   }
-  fillDistancesRec(currentNode->next->back, currentDistance, distances);
-  fillDistancesRec(currentNode->next->next->back, currentDistance, distances);
+  fillDistancesRec(currentNode->next->back, currentDistance, distances, contractBranchUnder);
+  fillDistancesRec(currentNode->next->next->back, currentDistance, distances, contractBranchUnder);
 } 
 
 
@@ -35,7 +36,8 @@ void MiniNJ::geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
     DistanceMatrix &distancesDenominator,
     bool minMode,
     bool reweight,
-    bool ustar)
+    bool ustar,
+    double contractBranchUnder)
 {
   unsigned int speciesNumber = distances.size();
   if (speciesNumber < 3) {
@@ -58,7 +60,7 @@ void MiniNJ::geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
   std::vector<double>zerosLeaf(leaves.size(), 0.0);
   std::vector<std::vector<double> > leafDistances(leaves.size(), zerosLeaf);
   for (auto leafNode: leaves) {
-    fillDistancesRec(leafNode->back, 0.0, leafDistances[leafNode->node_index]);
+    fillDistancesRec(leafNode->back, 0.0, leafDistances[leafNode->node_index], contractBranchUnder);
   }
 
   // fill species distance matrices
@@ -123,7 +125,7 @@ std::unique_ptr<PLLRootedTree> MiniNJ::runMiniNJ(const Families &families)
 }
 
 
-std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool minMode, bool ustar, bool reweight)
+std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool minMode, bool ustar, bool reweight, double contractBranchUnder)
 {
   DistanceMatrix distanceMatrix;
   std::vector<std::string> speciesIdToSpeciesString;
@@ -132,6 +134,7 @@ std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool
       minMode,
       reweight,
       ustar,
+      contractBranchUnder,
       distanceMatrix,
       speciesIdToSpeciesString,
       speciesStringToSpeciesId);
@@ -146,6 +149,7 @@ void MiniNJ::computeDistanceMatrix(const Families &families,
   bool minMode, 
   bool reweight,
   bool ustar,
+  double contractBranchUnder,
   DistanceMatrix &distanceMatrix,
   std::vector<std::string> &speciesIdToSpeciesString,
   StringToUint &speciesStringToSpeciesId)
@@ -191,7 +195,8 @@ void MiniNJ::computeDistanceMatrix(const Families &families,
           distanceDenominator,
           minMode,
           reweight,
-          ustar);
+          ustar,
+          contractBranchUnder);
     }
   }
 

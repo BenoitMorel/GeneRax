@@ -44,6 +44,7 @@ public:
       bool minMode, 
       bool reweight,
       bool ustar,
+      double contractBranchUnder,
       DistanceMatrix &distanceMatrix,
       std::vector<std::string> &speciesIdToSpeciesString,
       StringToUint &speciesStringToSpeciesId);
@@ -56,7 +57,9 @@ public:
     DistanceMatrix &distancesDenominator,
     bool minMode,
     bool reweight,
-    bool ustar);
+    bool ustar,
+    double contractBranchUnder = 0.0000011); 
 private:
-  static std::unique_ptr<PLLRootedTree> geneTreeNJ(const Families &families, bool minAlgo, bool ustarAlgo = false, bool reweight = false);
+  static std::unique_ptr<PLLRootedTree> geneTreeNJ(const Families &families, bool minAlgo, bool ustarAlgo = false, 
+      bool reweight = false, double contractBranchUnder = 0.0000011);
 };
