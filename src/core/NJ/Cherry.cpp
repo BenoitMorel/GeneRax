@@ -774,7 +774,6 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
     // compute the two species to join, and join them
     std::pair<int, int> bestPairSpecies = MININJ ? 
       getMinInMatrix(neighborMatrix) : getMaxInMatrix(neighborMatrix);
-    Logger::info << bestPairSpecies.first << " " << bestPairSpecies.second << std::endl; 
     if (bestPairSpecies.first == bestPairSpecies.second) {
       // edge case when we filtered out all gene trees
       assert(geneTrees.size() == 0);
@@ -815,6 +814,12 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
     }
     double bl1 = sumBL1 / denBL1;
     double bl2 = sumBL2 / denBL2;
+    if (bl1 != bl1) {
+      bl1 = 0.0;
+    }
+    if (bl2 != bl2) {
+      bl2 = 0.0;
+    }
     speciesIdToStr[bestPairSpecies.first] = std::string("(") + 
       speciesStr1 + ":" + std::to_string(bl1) + "," + 
       speciesStr2 + ":" + std::to_string(bl2) + ")";
@@ -841,6 +846,12 @@ std::unique_ptr<PLLRootedTree> Cherry::geneTreeCherry(const Families &families)
   }
   double bl1 = sumBL1 / denBL1;
   double bl2 = sumBL2 / denBL2;
+  if (bl1 != bl1) {
+    bl1 = 0.0;
+  }
+  if (bl2 != bl2) {
+    bl2 = 0.0;
+  }
   std::string newick = "(" + lastSpecies[0] + ":" + std::to_string(bl1) +
                        "," + lastSpecies[1] + ":" + std::to_string(bl2) + ");";
   Logger::info << newick << std::endl;
