@@ -21,6 +21,7 @@ set(jointsearch-core_SOURCES
   likelihoods/reconciliation_models/BaseReconciliationModel.cpp
   maths/Random.cpp
   NJ/MiniBME.cpp
+  NJ/MiniBMEPruned.cpp
   NJ/MiniNJ.cpp
   NJ/Cherry.cpp
   NJ/CherryPro.cpp

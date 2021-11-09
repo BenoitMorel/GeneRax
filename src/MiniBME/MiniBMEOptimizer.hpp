@@ -6,22 +6,28 @@
 #include <memory>
 #include <vector>
 #include <NJ/MiniBME.hpp>
-#include <search/UNNISearch.hpp>
+#include <NJ/MiniBMEPruned.hpp>
 
-class USearchMiniBMEEvaluator: public USearchEvaluator {
+
+
+class USearchMiniBMEEvaluator {
 public:
   USearchMiniBMEEvaluator(PLLUnrootedTree &speciesTree,
     const Families &families,
     bool missingData):
-      _miniBME(speciesTree, families, missingData),
-      _lastScore(-99999) {}
+      _lastScore(-99999) {
+      if (missingData) {
+        _miniBME.reset(new MiniBMEPruned(speciesTree, families)); 
+      } else {
+        _miniBME.reset(new MiniBME(speciesTree, families)); 
+      }
+    }
 
   virtual ~USearchMiniBMEEvaluator() {}
   virtual double eval(PLLUnrootedTree &tree);
-  virtual double evalNNI(PLLUnrootedTree &tree, UNNIMove &move);
   bool computeAndApplyBestSPR(PLLUnrootedTree &tree);
-  MiniBME _miniBME;
-  private:
+private:
+  std::unique_ptr<BMEEvaluator> _miniBME;
   double _lastScore;
 };
 

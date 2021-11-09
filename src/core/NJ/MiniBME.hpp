@@ -7,26 +7,28 @@
 #include <vector>
 #include <unordered_set>
 
-class UNNIMove;
 using BoolMatrix = std::vector< std::vector<bool> >;
 
-class MiniBME {
+class BMEEvaluator {
+public:
+  virtual ~BMEEvaluator() {}
+  virtual double computeBME(const PLLUnrootedTree &speciesTree) = 0;
+  virtual void getBestSPR(PLLUnrootedTree &speciesTree,
+      pll_unode_t *&bestPruneNode,
+      pll_unode_t *&bestRegraftNode,
+      double &bestDiff) = 0;
+};
+
+class MiniBME: public BMEEvaluator {
 public:
   MiniBME(const PLLUnrootedTree &speciesTree, 
-      const Families &families,
-      bool pruneMode = true);
-  double computeBME(const PLLUnrootedTree &speciesTree);
-  double computeNNIDiff(const UNNIMove &nni);
-
-
-  void getBestSPR(PLLUnrootedTree &speciesTree,
+      const Families &families);
+  virtual ~MiniBME() {}
+  virtual double computeBME(const PLLUnrootedTree &speciesTree);
+  virtual void getBestSPR(PLLUnrootedTree &speciesTree,
       pll_unode_t *&bestPruneNode,
       pll_unode_t *&bestRegraftNode,
       double &bestDiff);
-  bool  getBestSPRFromPrune(pll_unode_t *prunedNode,
-      pll_unode_t *&bestRegraftNode,
-      double &bestDiff,
-      unsigned int &bestS);
 private:
   std::vector<DistanceMatrix> _geneDistanceMatrices;
   std::vector<DistanceMatrix> _geneDistanceDenominators;
@@ -35,35 +37,17 @@ private:
   std::vector<std::unordered_set<std::string> > _perFamilyCoverageStr;
   std::vector<std::vector<bool> > _perFamilyCoverage;
   StringToUint _speciesStringToSpeciesId;
-  bool _prune;
-  std::vector<DistanceMatrix> _prunedSpeciesMatrices;
   std::vector<DistanceMatrix> _subBMEs;
   BoolMatrix _hasChildren;
   BoolMatrix _belongsToPruned;
   std::vector<double> _pows;
-  double _computeBMEPrune(const PLLUnrootedTree &speciesTree);
   
+  bool  getBestSPRFromPrune(pll_unode_t *prunedNode,
+      pll_unode_t *&bestRegraftNode,
+      double &bestDiff,
+      unsigned int &bestS);
   // could be made faster by skipping intersecting subtrees
   // O(n^2)
   void _computeSubBMEs(const PLLUnrootedTree &speciesTree);
-  void _computeSubBMEsPrune(const PLLUnrootedTree &speciesTree);
- 
-  void _getBestSPRRecMissing(unsigned int s,
-     std::vector<unsigned int> sprime, // copy!!
-     std::vector<pll_unode_t *> W0s, 
-     pll_unode_t *Wp, 
-     pll_unode_t *Wsminus1, 
-     pll_unode_t *Vsminus1, 
-     std::vector<double> delta_Vsminus2_Wp, // previous deltaAB
-     pll_unode_t *Vs, 
-     double Lsminus1, // L_s-1
-     pll_unode_t *&bestRegraftNode,
-     double &bestLs,
-     unsigned int &bestS,
-     const std::vector<DistanceMatrix> &subBMEs,
-     const BoolMatrix &belongsToPruned,
-     const BoolMatrix &hasChildren,
-     std::vector<bool> Vsminus2HasChildren, // does Vsminus2 have children after the previous moves
-     std::vector<bool> Vsminus1HasChildren); // does Vsminus1 have children after the previous moves
    
 };
