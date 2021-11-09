@@ -41,6 +41,12 @@ static DistanceMatrix getMatrix(unsigned int N,
 }
 
 
+/**
+ *  Computes the distances between a leaf (corresponding to
+ *  currentNode at the first recursive call) and all other 
+ *  nodes in the unrooted tree. If belongsToPruned is set,
+ *  the distances are computed on the pruned subtree
+ */
 static void fillDistancesRec(pll_unode_t *currentNode, 
     const std::vector<unsigned int> &nodeIndexToSpid,
     double currentDistance,
@@ -70,6 +76,11 @@ static void fillDistancesRec(pll_unode_t *currentNode,
       belongsToPruned);
 }
 
+/**
+ *  Fills the internode distance matrix of a pruned species tree.
+ *  belongsToPruned tells which species leaves do not belong
+ *  to the pruned species tree.
+ */
 static void fillSpeciesDistances(const PLLUnrootedTree &speciesTree,
     const StringToUint &speciesStringToSpeciesId,
     DistanceMatrix &speciesDistanceMatrix,
@@ -121,8 +132,6 @@ static void getPrunedSpeciesMatrix(const PLLUnrootedTree &speciesTree,
     
 
 
-
-
 MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
     const Families &families)
 {
@@ -138,15 +147,17 @@ MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
     _pows.push_back(std::pow(0.5, i));
   }
   // fill species-spid mappings
-  PerCoreGeneTrees::getPerCoreFamilies(families, _perCoreFamilies);
-  _geneDistanceMatrices.resize(_perCoreFamilies.size());
-  _geneDistanceDenominators.resize(_perCoreFamilies.size());
+  Families perCoreFamilies;
+  PerCoreGeneTrees::getPerCoreFamilies(families, perCoreFamilies);
+  _patternCount = perCoreFamilies.size();
+  _geneDistanceMatrices.resize(_patternCount);
+  _geneDistanceDenominators.resize(_patternCount);
   unsigned int speciesNumber = speciesTree.getLeavesNumber();
-  _perFamilyCoverageStr.resize(_perCoreFamilies.size());
-  _perFamilyCoverage.resize(_perCoreFamilies.size());
+  _perFamilyCoverageStr.resize(_patternCount);
+  _perFamilyCoverage.resize(_patternCount);
   // map each species string to a species ID
-  for (unsigned int i = 0; i < _perCoreFamilies.size(); ++i) {
-    auto &family = _perCoreFamilies[i];
+  for (unsigned int i = 0; i < _patternCount; ++i) {
+    auto &family = perCoreFamilies[i];
     _perFamilyCoverage[i] = std::vector<bool>(speciesTree.getLeavesNumber(), false);
     _geneDistanceMatrices[i] = getNullMatrix(speciesNumber);
     _geneDistanceDenominators[i] = getNullMatrix(speciesNumber);
@@ -172,22 +183,14 @@ MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
     }
   }
   _prunedSpeciesMatrices = std::vector<DistanceMatrix>(
-      _perCoreFamilies.size(), getNullMatrix(speciesNumber));
+      _patternCount, getNullMatrix(speciesNumber));
+  auto nodesNumber = speciesTree.getDirectedNodesNumber();
+  _subBMEs = DistanceVectorMatrix(nodesNumber, 
+      getMatrix(nodesNumber, 
+        _patternCount, 
+        std::numeric_limits<double>::infinity()));
 }
 
-
-// return the maximum non-diagonal value, assuming
-// that m is symetric
-static double getMaxSym(const DistanceMatrix &m) {
-  double res = -std::numeric_limits<double>::infinity();
-  for (unsigned int i = 0; i < m.size(); ++i) {
-    for (unsigned int j = 0; j < i; ++j) {
-      res = std::max(res, m[i][j]);
-      Logger::info << m[i][j] << std::endl;
-    }
-  }
-  return res;
-}
 
 double MiniBMEPruned::computeBME(const PLLUnrootedTree &speciesTree)
 {
@@ -198,7 +201,7 @@ double MiniBMEPruned::computeBME(const PLLUnrootedTree &speciesTree)
       speciesDistanceMatrix);
   double res = 0.0;
   // O(kn^2)
-  for (unsigned int k = 0; k < _perCoreFamilies.size(); ++k) {
+  for (unsigned int k = 0; k < _patternCount; ++k) {
     // O(n^2)
     getPrunedSpeciesMatrix(speciesTree, 
           _speciesStringToSpeciesId,
@@ -290,14 +293,8 @@ static void computeSubBMEsPruneRec(pll_unode_t *n1,
         // Case 2: n2 is in the induced tree, n1 is not
         // Note that n1 cannot be a leaf at this point
         // go down to n1's child that has children
-        auto left1 = n1->next->back;
-        auto right1 = n1->next->next->back;
         auto lefti1 = n1->next->back->node_index;
         auto righti1 = n1->next->next->back->node_index;
-        computeSubBMEsPruneRec(left1, n2, treated, hasChildren, 
-            belongsToPruned, geneDistances, subBMEs);
-        computeSubBMEsPruneRec(right1, n2, treated, hasChildren, 
-            belongsToPruned, geneDistances, subBMEs);
         if (hasChildren[lefti1][k]) {
           subBMEs[i1][i2][k] = subBMEs[lefti1][i2][k];
         } else {
@@ -320,15 +317,14 @@ static void computeSubBMEsPruneRec(pll_unode_t *n1,
 void MiniBMEPruned::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
 {
   auto nodesNumber = speciesTree.getDirectedNodesNumber();
-  auto K = _perCoreFamilies.size();
   // Fill hasChildren and belongsToPruned
   _hasChildren = getBoolMatrix(nodesNumber, 
-      _perCoreFamilies.size(),
+      _patternCount,
       false);
   _belongsToPruned = _hasChildren;
   for (auto node: speciesTree.getPostOrderNodes()) {
     auto index = node->node_index;
-    for (unsigned int k = 0; k < K; ++k) {
+    for (unsigned int k = 0; k < _patternCount; ++k) {
       if (!node->next) {
         if (_perFamilyCoverage[k][index]) {
           _hasChildren[index][k] = true;
@@ -346,10 +342,6 @@ void MiniBMEPruned::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
   }
   // Fill  the per-family subBME matrices
   BoolMatrix treated = getBoolMatrix(nodesNumber, nodesNumber, false);
-  _subBMEs = DistanceVectorMatrix(nodesNumber, 
-      getMatrix(nodesNumber, 
-        K, 
-        std::numeric_limits<double>::infinity()));
   for (auto n1: speciesTree.getPostOrderNodes()) {
     
     // we only need the subBMEs of the nodes of the
@@ -457,6 +449,7 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
       diff += diffk;
       sprime[k] += 1;
     }
+    
     delta_Vsminus1_Wp[k] = deltaAB; // in our out the if???
 
     // update VsHasChildren for next call
@@ -513,6 +506,8 @@ bool MiniBMEPruned::getBestSPRFromPrune(pll_unode_t *prunedNode,
   std::vector<pll_unode_t *> V0s;
   V0s.push_back(Wp->back->next->back);
   V0s.push_back(Wp->back->next->next->back);
+  unsigned int K = _subBMEs[0][0].size();
+  std::vector<unsigned int> sprime(K, 1);
   for (auto V0: V0s) {
     auto V = getOtherNext(Wp->back, V0->back);
     if (!V->back->next) {
@@ -525,10 +520,8 @@ bool MiniBMEPruned::getBestSPRFromPrune(pll_unode_t *prunedNode,
       unsigned int s = 1;
       pll_unode_t *W0 = V0;
       pll_unode_t *Wsminus1 = W0;
-      unsigned int K = _subBMEs[0][0].size();
       std::vector<pll_unode_t *> W0s(K, nullptr);
       std::vector<double> delta_V0_Wp; // not used at first iteration
-      std::vector<unsigned int> sprime(K, 1);
       std::vector<bool> V0HasChildren = _hasChildren[V0->node_index];
       std::vector<bool> Vminus1HasChildren(V0HasChildren.size()); // won't be read at first iteration
       _getBestSPRRecMissing(s, sprime, W0s, Wp,  Wsminus1, V,delta_V0_Wp,

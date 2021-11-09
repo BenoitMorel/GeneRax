@@ -24,7 +24,7 @@ private:
   std::vector<DistanceMatrix> _geneDistanceMatrices;
   std::vector<DistanceMatrix> _geneDistanceDenominators;
   std::vector<std::string> _speciesIdToSpeciesString;
-  Families _perCoreFamilies;
+  unsigned int _patternCount;
   std::vector<std::unordered_set<std::string> > _perFamilyCoverageStr;
   std::vector<std::vector<bool> > _perFamilyCoverage;
   StringToUint _speciesStringToSpeciesId;
@@ -39,8 +39,9 @@ private:
   // O(n^2)
   void _computeSubBMEsPrune(const PLLUnrootedTree &speciesTree);
  
+  // lot of copies hgre...
   void _getBestSPRRecMissing(unsigned int s,
-     std::vector<unsigned int> sprime, // copy!!
+     std::vector<unsigned int> sprime, 
      std::vector<pll_unode_t *> W0s, 
      pll_unode_t *Wp, 
      pll_unode_t *Wsminus1, 
