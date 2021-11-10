@@ -77,7 +77,7 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.families);
   initFolders(instance);
   bool needAlignments = instance.args.strategy != GeneSearchStrategy::SKIP
-    && instance.args.strategy != GeneSearchStrategy::RECONCILE;
+    && instance.args.strategy != GeneSearchStrategy::EVAL;
   if (instance.args.filterFamilies) {
     Logger::timed << "Filtering invalid families..." << std::endl;
     bool checkSpeciesTree = (instance.args.speciesTreeAlgorithm 
@@ -114,7 +114,7 @@ void GeneRaxCore::initSpeciesTree(GeneRaxInstance &instance)
   if (instance.args.filterFamilies) {
     Logger::timed << "Filtering invalid families based on the starting species tree..." << std::endl;
     bool needAlignments = instance.args.strategy != GeneSearchStrategy::SKIP
-      && instance.args.strategy != GeneSearchStrategy::RECONCILE;
+      && instance.args.strategy != GeneSearchStrategy::EVAL;
     Family::filterFamilies(instance.currentFamilies, instance.speciesTree, needAlignments, true);
   }
   if (!instance.currentFamilies.size()) {
@@ -222,7 +222,7 @@ void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
   if (instance.args.strategy == GeneSearchStrategy::SKIP ||
-      instance.args.strategy == GeneSearchStrategy::RECONCILE) {
+      instance.args.strategy == GeneSearchStrategy::EVAL) {
     return;
   }
   for (unsigned int i = 1; i <= instance.args.recRadius; ++i) { 
@@ -247,7 +247,7 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
   if (instance.args.reconcile || instance.args.reconciliationSamples > 0) {
-    if (instance.args.strategy == GeneSearchStrategy::RECONCILE) {
+    if (instance.args.strategy == GeneSearchStrategy::EVAL) {
       Logger::timed << "Optimizing DTL rates before the reconciliation..." << std::endl;
       // we haven't optimized the DTL rates yet, so we do it now
       if (!instance.args.perFamilyDTLRates) {
