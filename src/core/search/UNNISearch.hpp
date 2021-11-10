@@ -6,17 +6,17 @@
  * Swap B and C
  */
 struct UNNIMove {
-  UNNIMove (pll_unode_t *e,
+  UNNIMove (corax_unode_t *e,
       bool l): edge(e), left(l) {}
   void apply();
-  pll_unode_t *getA() const {return edge->next->back;}
-  pll_unode_t *getB() const {return edge->next->next->back;}
-  pll_unode_t *getC() const {return left? edge->back->next->back : 
+  corax_unode_t *getA() const {return edge->next->back;}
+  corax_unode_t *getB() const {return edge->next->next->back;}
+  corax_unode_t *getC() const {return left? edge->back->next->back : 
     edge->back->next->next->back;}
-  pll_unode_t *getD() const {return !left? edge->back->next->back : 
+  corax_unode_t *getD() const {return !left? edge->back->next->back : 
     edge->back->next->next->back;}
 
-  pll_unode_t *edge;
+  corax_unode_t *edge;
   bool left;
 };
 

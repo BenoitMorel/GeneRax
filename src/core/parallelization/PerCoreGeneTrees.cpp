@@ -126,7 +126,7 @@ bool PerCoreGeneTrees::checkMappings(const std::string &speciesTreeFile)
       Logger::error << "Invalid mapping for tree " << tree.name << std::endl;
     }
   }
-  pll_rtree_destroy(speciesTree, 0);
+  corax_rtree_destroy(speciesTree, 0);
   ParallelContext::parallelAnd(ok);
   return ok;
 }

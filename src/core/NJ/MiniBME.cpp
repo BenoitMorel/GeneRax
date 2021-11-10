@@ -30,7 +30,7 @@ static DistanceMatrix getMatrix(unsigned int N,
 }
 
 
-static void fillDistancesRec(pll_unode_t *currentNode, 
+static void fillDistancesRec(corax_unode_t *currentNode, 
     const std::vector<unsigned int> &nodeIndexToSpid,
     double currentDistance,
     std::vector<double> &distances,
@@ -190,8 +190,8 @@ void MiniBME::_computeSubBMEs(const PLLUnrootedTree &speciesTree)
 
 
 // computes _subBMEs[0][i1][i2]
-static void computeSubBMEsPruneRec(pll_unode_t *n1,
-    pll_unode_t *n2,
+static void computeSubBMEsPruneRec(corax_unode_t *n1,
+    corax_unode_t *n2,
     BoolMatrix &treated,
     BoolMatrix &hasChildren,
     BoolMatrix &belongsToPruned,
@@ -278,8 +278,8 @@ static void computeSubBMEsPruneRec(pll_unode_t *n1,
 }
 
 
-static pll_unode_t *getOtherNext(pll_unode_t *n1, 
-    pll_unode_t *n2)
+static corax_unode_t *getOtherNext(corax_unode_t *n1, 
+    corax_unode_t *n2)
 {
   if (n1->next == n2) {
     return n2->next;
@@ -292,18 +292,18 @@ static pll_unode_t *getOtherNext(pll_unode_t *n1,
 // having regrafted Wp between Vsminus and Vs
 // and recursively test further SPR mvoes
 static void getBestSPRRec(unsigned int s,
-    pll_unode_t *W0, 
-    pll_unode_t *Wp, 
-    pll_unode_t *Wsminus1, 
-    pll_unode_t *Vsminus1, 
+    corax_unode_t *W0, 
+    corax_unode_t *Wp, 
+    corax_unode_t *Wsminus1, 
+    corax_unode_t *Vsminus1, 
     double delta_Vsminus2_Wp, // previous deltaAB
-    pll_unode_t *Vs, 
+    corax_unode_t *Vs, 
     double Lsminus1, // L_s-1
-    pll_unode_t *&bestRegraftNode,
+    corax_unode_t *&bestRegraftNode,
     double &bestLs,
     const std::vector<DistanceMatrix> &subBMEs)
 {
-  pll_unode_t *Ws = getOtherNext(Vs, Vsminus1->back)->back; 
+  corax_unode_t *Ws = getOtherNext(Vs, Vsminus1->back)->back; 
   // compute L_s
   // we compute LS for an NNI to ((A,B),(C,D)) by swapping B and C
   // where:
@@ -346,8 +346,8 @@ static void getBestSPRRec(unsigned int s,
 
 
 void MiniBME::getBestSPR(PLLUnrootedTree &speciesTree,
-      pll_unode_t *&bestPruneNode,
-      pll_unode_t *&bestRegraftNode,
+      corax_unode_t *&bestPruneNode,
+      corax_unode_t *&bestRegraftNode,
       double &bestDiff)
 {
   bestDiff = 0.0;
@@ -361,8 +361,8 @@ void MiniBME::getBestSPR(PLLUnrootedTree &speciesTree,
 }
 
 
-bool MiniBME::getBestSPRFromPrune(pll_unode_t *prunedNode,
-      pll_unode_t *&bestRegraftNode,
+bool MiniBME::getBestSPRFromPrune(corax_unode_t *prunedNode,
+      corax_unode_t *&bestRegraftNode,
       double &bestDiff,
       unsigned int &bestS)
 {
@@ -372,7 +372,7 @@ bool MiniBME::getBestSPRFromPrune(pll_unode_t *prunedNode,
   if (!Wp->back->next) {
     return foundBetter;
   }
-  std::vector<pll_unode_t *> V0s;
+  std::vector<corax_unode_t *> V0s;
   V0s.push_back(Wp->back->next->back);
   V0s.push_back(Wp->back->next->next->back);
   for (auto V0: V0s) {
@@ -380,13 +380,13 @@ bool MiniBME::getBestSPRFromPrune(pll_unode_t *prunedNode,
     if (!V->back->next) {
       continue;
     }
-    std::vector<pll_unode_t *> V1s;
+    std::vector<corax_unode_t *> V1s;
     V1s.push_back(V->back->next);
     V1s.push_back(V->back->next->next);
     for (auto V1: V1s) {
       unsigned int s = 1;
-      pll_unode_t *W0 = V0;
-      pll_unode_t *Wsminus1 = W0;
+      corax_unode_t *W0 = V0;
+      corax_unode_t *Wsminus1 = W0;
       double deltaAB = 0.0; // not used at first iteration
       getBestSPRRec(s, W0, Wp,  Wsminus1, V, deltaAB,
           V1, 0.0, bestRegraftNode, bestDiff, _subBMEs);

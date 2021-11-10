@@ -21,7 +21,7 @@ public:
 
   virtual void setRates(const RatesVector &);
   virtual double computeLogLikelihood();
-  virtual pll_rnode_t *sampleSpeciesNode();
+  virtual corax_rnode_t *sampleSpeciesNode();
   
 private:
   
@@ -63,12 +63,12 @@ private:
   REAL getLikelihoodFactor() const;
   virtual void recomputeSpeciesProbabilities();
   virtual void computeProbability(CID cid, 
-    pll_rnode_t *speciesNode, 
+    corax_rnode_t *speciesNode, 
     REAL &proba,
     ReconciliationCell<REAL> *recCell = nullptr);
   void sampleTransferEvent(unsigned int cid,
     REAL survivingTransferSum,
-    pll_rnode_t *&destSpeciesNode);
+    corax_rnode_t *&destSpeciesNode);
 
   
 };
@@ -175,7 +175,7 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
 template <class REAL>
 void UndatedDTLMultiModel<REAL>::sampleTransferEvent(unsigned int cid,
     REAL survivingTransferSum,
-    pll_rnode_t *&destSpeciesNode)
+    corax_rnode_t *&destSpeciesNode)
 {
   REAL max = survivingTransferSum * Random::getProba();
   max *= this->_allSpeciesNodes.size();
@@ -221,7 +221,7 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
 
 template <class REAL>
 void UndatedDTLMultiModel<REAL>::computeProbability(CID cid, 
-    pll_rnode_t *speciesNode, 
+    corax_rnode_t *speciesNode, 
     REAL &proba,
     ReconciliationCell<REAL> *recCell
     )
@@ -359,7 +359,7 @@ REAL UndatedDTLMultiModel<REAL>::getLikelihoodFactor() const
 }
 
 template <class REAL>
-pll_rnode_t *UndatedDTLMultiModel<REAL>::sampleSpeciesNode()
+corax_rnode_t *UndatedDTLMultiModel<REAL>::sampleSpeciesNode()
 {
   auto rootCID = this->_ccp.getCladesNumber() - 1;
   auto &uq = _dtlclvs[rootCID]._uq;

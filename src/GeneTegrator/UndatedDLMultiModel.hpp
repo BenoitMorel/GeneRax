@@ -21,7 +21,7 @@ public:
 
   virtual void setRates(const RatesVector &);
   virtual double computeLogLikelihood();
-  virtual pll_rnode_t *sampleSpeciesNode();
+  virtual corax_rnode_t *sampleSpeciesNode();
   
 
 private:
@@ -36,7 +36,7 @@ private:
   REAL getLikelihoodFactor() const;
   virtual void recomputeSpeciesProbabilities();
   virtual void computeProbability(CID cid, 
-    pll_rnode_t *speciesNode, 
+    corax_rnode_t *speciesNode, 
     REAL &proba,
     ReconciliationCell<REAL> *recCell = nullptr);
 
@@ -142,7 +142,7 @@ void UndatedDLMultiModel<REAL>::recomputeSpeciesProbabilities()
 
 template <class REAL>
 void UndatedDLMultiModel<REAL>::computeProbability(CID cid, 
-    pll_rnode_t *speciesNode, 
+    corax_rnode_t *speciesNode, 
     REAL &proba,
     ReconciliationCell<REAL> *recCell
     )
@@ -252,7 +252,7 @@ REAL UndatedDLMultiModel<REAL>::getLikelihoodFactor() const
 
 
 template <class REAL>
-pll_rnode_t *UndatedDLMultiModel<REAL>::sampleSpeciesNode()
+corax_rnode_t *UndatedDLMultiModel<REAL>::sampleSpeciesNode()
 {
   auto rootCID = this->_ccp.getCladesNumber() - 1;
   auto &uq = _dlclvs[rootCID];

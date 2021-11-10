@@ -4,7 +4,7 @@
 #include <corax/corax_common.h>
 #include <trees/PLLRootedTree.hpp>
 
-static void printEvent(const Scenario::Event &event, pll_rtree_t *speciesTree, pll_unode_t *node, ParallelOfstream &os)
+static void printEvent(const Scenario::Event &event, corax_rtree_t *speciesTree, corax_unode_t *node, ParallelOfstream &os)
 {
   if (event.isValid()) {
     os << "[&&NHX";
@@ -26,16 +26,16 @@ static void printEvent(const Scenario::Event &event, pll_rtree_t *speciesTree, p
   }
 }
 
-static void recursivelySaveReconciliationsNHX(pll_rtree_t *speciesTree, 
-    pll_unode_t *node, 
+static void recursivelySaveReconciliationsNHX(corax_rtree_t *speciesTree, 
+    corax_unode_t *node, 
     bool isVirtualRoot, 
     std::vector<std::vector<Scenario::Event> > &geneToEvents, 
     ParallelOfstream &os)
 {
   
   if(node->next) {
-    pll_unode_t *left = nullptr;
-    pll_unode_t *right = nullptr;
+    corax_unode_t *left = nullptr;
+    corax_unode_t *right = nullptr;
     if (isVirtualRoot) {
       left = node->next;
       right = node->next->back;
@@ -60,13 +60,13 @@ static void recursivelySaveReconciliationsNHX(pll_rtree_t *speciesTree,
   printEvent(geneToEvents[node->node_index].back(), speciesTree, node, os);
 }
   
-void ReconciliationWriter::saveReconciliationNHX(pll_rtree_t *speciesTree, 
-    pll_unode_t *geneRoot, 
+void ReconciliationWriter::saveReconciliationNHX(corax_rtree_t *speciesTree, 
+    corax_unode_t *geneRoot, 
     unsigned int virtualRootIndex,
     std::vector<std::vector<Scenario::Event> > &geneToEvents, 
     ParallelOfstream &os) 
 {
-  pll_unode_t virtualRoot;
+  corax_unode_t virtualRoot;
   virtualRoot.next = geneRoot;
   virtualRoot.node_index = virtualRootIndex;
   virtualRoot.label = nullptr;
@@ -76,7 +76,7 @@ void ReconciliationWriter::saveReconciliationNHX(pll_rtree_t *speciesTree,
 }
 
 
-static void recursivelySaveSpeciesTreeRecPhyloXML(pll_rnode_t *node, std::string &indent, ParallelOfstream &os)
+static void recursivelySaveSpeciesTreeRecPhyloXML(corax_rnode_t *node, std::string &indent, ParallelOfstream &os)
 {
   if (!node) {
     return;
@@ -90,7 +90,7 @@ static void recursivelySaveSpeciesTreeRecPhyloXML(pll_rnode_t *node, std::string
   os << indent << "</clade>" << std::endl;
 }
 
-static void saveSpeciesTreeRecPhyloXML(pll_rtree_t *speciesTree, ParallelOfstream &os)
+static void saveSpeciesTreeRecPhyloXML(corax_rtree_t *speciesTree, ParallelOfstream &os)
 {
   os << "<spTree>" << std::endl;
   os << "<phylogeny>" << std::endl;
@@ -102,14 +102,14 @@ static void saveSpeciesTreeRecPhyloXML(pll_rtree_t *speciesTree, ParallelOfstrea
 }
 
 static void writeEventRecPhyloXML(unsigned int geneIndex,
-    pll_rtree_t *speciesTree, 
+    corax_rtree_t *speciesTree, 
     Scenario::Event  &event,
     const Scenario::Event *previousEvent,
     std::string &indent, 
     ParallelOfstream &os)
 {
   auto species = speciesTree->nodes[event.speciesNode];
-  pll_rnode_t *speciesOut = 0;
+  corax_rnode_t *speciesOut = 0;
   os << indent << "<eventsRec>" << std::endl;
   bool previousWasTransfer = previousEvent->type 
     == ReconciliationEventType::EVENT_T || previousEvent->type == ReconciliationEventType::EVENT_TL;
@@ -145,7 +145,7 @@ static void writeEventRecPhyloXML(unsigned int geneIndex,
 }
 
 static void recursivelySaveGeneTreeRecPhyloXML(unsigned int geneIndex, 
-    pll_rtree_t *speciesTree, 
+    corax_rtree_t *speciesTree, 
     std::vector<std::vector<Scenario::Event> > &geneToEvents,
     const Scenario::Event *previousEvent,
     std::string &indent,
@@ -202,7 +202,7 @@ static void recursivelySaveGeneTreeRecPhyloXML(unsigned int geneIndex,
 }
 
 static void saveGeneTreeRecPhyloXML(unsigned int geneIndex,
-    pll_rtree_t *speciesTree,
+    corax_rtree_t *speciesTree,
     std::vector<std::vector<Scenario::Event> > &geneToEvents, 
     ParallelOfstream &os)
 {
@@ -216,7 +216,7 @@ static void saveGeneTreeRecPhyloXML(unsigned int geneIndex,
   os << "</recGeneTree>" << std::endl;
 }
 
-void ReconciliationWriter::saveReconciliationRecPhyloXML(pll_rtree_t *speciesTree, 
+void ReconciliationWriter::saveReconciliationRecPhyloXML(corax_rtree_t *speciesTree, 
     unsigned int geneIndex, 
     std::vector<std::vector<Scenario::Event> > &geneToEvents, 
     ParallelOfstream &os)
@@ -232,7 +232,7 @@ void ReconciliationWriter::saveReconciliationRecPhyloXML(pll_rtree_t *speciesTre
 }
 
 static void recursivelySaveReconciliationsNewickEvents(
-    pll_unode_t *node, 
+    corax_unode_t *node, 
     bool isVirtualRoot, 
     std::vector<std::vector<Scenario::Event> > &geneToEvents, 
     ParallelOfstream &os)
@@ -269,12 +269,12 @@ static void recursivelySaveReconciliationsNewickEvents(
   }
 }
   
-void ReconciliationWriter::saveReconciliationNewickEvents(pll_unode_t *geneRoot, 
+void ReconciliationWriter::saveReconciliationNewickEvents(corax_unode_t *geneRoot, 
       unsigned int virtualRootIndex,
       std::vector<std::vector<Scenario::Event> > &geneToEvent, 
       ParallelOfstream &os)
 {
-  pll_unode_t virtualRoot;
+  corax_unode_t virtualRoot;
   virtualRoot.next = geneRoot;
   virtualRoot.node_index = virtualRootIndex;
   virtualRoot.label = nullptr;

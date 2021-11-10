@@ -3,7 +3,7 @@
 #include <trees/SpeciesTree.hpp>
 #include <trees/PLLRootedTree.hpp>
 
-static std::string getSubtreeID(pll_rnode_t *subtree)
+static std::string getSubtreeID(corax_rnode_t *subtree)
 {
   if (!subtree->left) {
     return std::string(subtree->label);
@@ -17,7 +17,7 @@ static std::string getSubtreeID(pll_rnode_t *subtree)
   return std::string("(") + id1 + "," + id2 + ")";
 }
 
-void RootLikelihoods::saveValue(pll_rnode_t *subtree, double ll) 
+void RootLikelihoods::saveValue(corax_rnode_t *subtree, double ll) 
 {
   auto id = getSubtreeID(subtree); 
   idToLL[id] = ll;

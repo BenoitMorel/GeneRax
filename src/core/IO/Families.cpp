@@ -147,7 +147,7 @@ void Family::filterFamilies(Families &families, const std::string &speciesTreeFi
   families.clear();
   std::unordered_set<std::string> speciesTreeLabels;
   unsigned int invalid = 0;
-  pll_rtree_t *speciesTree = 0;
+  corax_rtree_t *speciesTree = 0;
   if (checkSpeciesTree) {
     if (!FileSystem::exists(speciesTreeFile)) {
       Logger::info << "[Error] Species tree file does not exist (" << speciesTreeFile << ")" << std::endl;
@@ -188,7 +188,7 @@ void Family::filterFamilies(Families &families, const std::string &speciesTreeFi
       << " invalid families (they will be discarded from the analysis)" << std::endl;
   }  
   if (speciesTree) {
-    pll_rtree_destroy(speciesTree, 0);
+    corax_rtree_destroy(speciesTree, 0);
   }
   Random::setSeed(consistentSeed);
 }

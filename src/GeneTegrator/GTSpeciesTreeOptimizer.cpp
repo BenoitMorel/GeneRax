@@ -294,7 +294,7 @@ double GTSpeciesTreeOptimizer::sprSearch(unsigned int radius)
 }
 
 
-void GTSpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
+void GTSpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate)
 {
   for (auto &evaluation: _evaluations) {
     evaluation->onSpeciesTreeChange(nodesToInvalidate);

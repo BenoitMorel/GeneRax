@@ -25,12 +25,12 @@ public:
   PLLTreeInfo(PLLTreeInfo &&) = delete;
   PLLTreeInfo & operator = (PLLTreeInfo &&) = delete;
 
-  pllmod_treeinfo_t *getTreeInfo() {return _treeinfo.get();}
+  corax_treeinfo_t *getTreeInfo() {return _treeinfo.get();}
   PLLUnrootedTree &getTree() {return *_utree;}
   Model &getModel() {return *_model;}
 
 private:
-  std::unique_ptr<pllmod_treeinfo_t, void(*)(pllmod_treeinfo_t*)> _treeinfo;
+  std::unique_ptr<corax_treeinfo_t, void(*)(corax_treeinfo_t*)> _treeinfo;
   std::unique_ptr<PLLUnrootedTree> _utree;
   std::unique_ptr<Model> _model; 
 private:
@@ -41,10 +41,10 @@ private:
   void buildTree(const std::string &newickStrOrFile, 
       bool isNewickAFile, 
       const PLLSequencePtrs &sequences);
-  pll_partition_t * buildPartition(const PLLSequencePtrs &sequences, 
+  corax_partition_t * buildPartition(const PLLSequencePtrs &sequences, 
   unsigned int *patternWeights); 
-  pllmod_treeinfo_t *buildTreeInfo(const Model &model,
-    pll_partition_t *partition,
+  corax_treeinfo_t *buildTreeInfo(const Model &model,
+    corax_partition_t *partition,
     PLLUnrootedTree &utree);
   
 };

@@ -3,7 +3,7 @@
 
 int main()
 {
-  pll_partition partition;
-  pll_hardware_dump();
+  corax_partition partition;
+  corax_hardware_dump();
   return 0;
 }

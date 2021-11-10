@@ -8,13 +8,13 @@
 #include <functional>
 
 
-static size_t leafHash(pll_unode_t *leaf) {
+static size_t leafHash(corax_unode_t *leaf) {
   assert(leaf);
   std::hash<std::string> hash_fn;
   return hash_fn(std::string(leaf->label));
 }
 
-static size_t getTreeHashRec(pll_unode_t *node, size_t i) {
+static size_t getTreeHashRec(corax_unode_t *node, size_t i) {
   assert(node);
   if (i == 0) 
     i = 1;
@@ -31,7 +31,7 @@ static size_t getTreeHashRec(pll_unode_t *node, size_t i) {
 
 }
 
-static pll_unode_t *findMinimumHashLeafRec(pll_unode_t * root, size_t &hashValue)
+static corax_unode_t *findMinimumHashLeafRec(corax_unode_t * root, size_t &hashValue)
 {
   assert(root);
   if (!root->next) {
@@ -52,7 +52,7 @@ static pll_unode_t *findMinimumHashLeafRec(pll_unode_t * root, size_t &hashValue
   }
 }
 
-static pll_unode_t *findMinimumHashLeaf(pll_unode_t * root) 
+static corax_unode_t *findMinimumHashLeaf(corax_unode_t * root) 
 {
   assert(root);
   auto n1 = root;
@@ -89,7 +89,7 @@ size_t JointTree::getUnrootedTreeHash()
   return res % 100000;
 }
 
-static void printLibpllNode(pll_unode_s *node, Logger &os, bool isRoot)
+static void printLibpllNode(corax_unode_s *node, Logger &os, bool isRoot)
 {
   if (node->next) {
     os << "(";
@@ -103,7 +103,7 @@ static void printLibpllNode(pll_unode_s *node, Logger &os, bool isRoot)
   os << ":" << (isRoot ? node->length / 2.0 : node->length);
 }
 
-static void printLibpllTreeRooted(pll_unode_t *root, Logger &os){
+static void printLibpllTreeRooted(corax_unode_t *root, Logger &os){
   os << "(";
   printLibpllNode(root, os, true);
   os << ",";
@@ -200,7 +200,7 @@ void JointTree::printLoglk(bool libpll, bool rec, bool joint, Logger &os) {
 }
 
 
-pll_unode_t *JointTree::getNode(unsigned int index) {
+corax_unode_t *JointTree::getNode(unsigned int index) {
   return getTreeInfo()->subnodes[index];
 }
 
@@ -238,12 +238,12 @@ void JointTree::save(const std::string &fileName, bool append) {
   LibpllParsers::saveUtree(root, fileName, append);
 }
 
-pllmod_treeinfo_t * JointTree::getTreeInfo() {
+corax_treeinfo_t * JointTree::getTreeInfo() {
   return _libpllEvaluation.getTreeInfo();
 }
 
 
-void JointTree::invalidateCLV(pll_unode_s *node)
+void JointTree::invalidateCLV(corax_unode_s *node)
 {
   reconciliationEvaluation_->invalidateCLV(node->node_index);
   _libpllEvaluation.invalidateCLV(node->node_index);

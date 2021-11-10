@@ -14,8 +14,8 @@ public:
   virtual ~BMEEvaluator() {}
   virtual double computeBME(const PLLUnrootedTree &speciesTree) = 0;
   virtual void getBestSPR(PLLUnrootedTree &speciesTree,
-      pll_unode_t *&bestPruneNode,
-      pll_unode_t *&bestRegraftNode,
+      corax_unode_t *&bestPruneNode,
+      corax_unode_t *&bestRegraftNode,
       double &bestDiff) = 0;
 };
 
@@ -26,8 +26,8 @@ public:
   virtual ~MiniBME() {}
   virtual double computeBME(const PLLUnrootedTree &speciesTree);
   virtual void getBestSPR(PLLUnrootedTree &speciesTree,
-      pll_unode_t *&bestPruneNode,
-      pll_unode_t *&bestRegraftNode,
+      corax_unode_t *&bestPruneNode,
+      corax_unode_t *&bestRegraftNode,
       double &bestDiff);
 private:
   std::vector<DistanceMatrix> _geneDistanceMatrices;
@@ -42,8 +42,8 @@ private:
   BoolMatrix _belongsToPruned;
   std::vector<double> _pows;
   
-  bool  getBestSPRFromPrune(pll_unode_t *prunedNode,
-      pll_unode_t *&bestRegraftNode,
+  bool  getBestSPRFromPrune(corax_unode_t *prunedNode,
+      corax_unode_t *&bestRegraftNode,
       double &bestDiff,
       unsigned int &bestS);
   // could be made faster by skipping intersecting subtrees

@@ -41,10 +41,10 @@ protected:
   // overload from parent
   virtual void setInitialGeneTree(PLLUnrootedTree &tree);
   // overload from parent
-  virtual void updateCLV(pll_unode_t *geneNode);
+  virtual void updateCLV(corax_unode_t *geneNode);
   // overload from parent
-  virtual REAL getGeneRootLikelihood(pll_unode_t *root) const;
-  virtual REAL getGeneRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {
+  virtual REAL getGeneRootLikelihood(corax_unode_t *root) const;
+  virtual REAL getGeneRootLikelihood(corax_unode_t *root, corax_rnode_t *speciesRoot) {
     return _dlclvs[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];
   }
 
@@ -52,9 +52,9 @@ protected:
   virtual void recomputeSpeciesProbabilities();
   virtual REAL getLikelihoodFactor() const;
   // overload from parent
-  virtual void computeGeneRootLikelihood(pll_unode_t *virtualRoot);
+  virtual void computeGeneRootLikelihood(corax_unode_t *virtualRoot);
   // overlead from parent
-  virtual void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+  virtual void computeProbability(corax_unode_t *geneNode, corax_rnode_t *speciesNode, 
       REAL &proba,
       bool isVirtualRoot = false,
       Scenario *scenario = nullptr,
@@ -71,7 +71,7 @@ private:
   std::vector<DLCLV> _dlclvs;
  
 private:
-  std::vector<pll_rnode_s *> &getSpeciesNodesToUpdate() {
+  std::vector<corax_rnode_s *> &getSpeciesNodesToUpdate() {
     //return this->_speciesNodesToUpdate;
     return this->_allSpeciesNodes;
   }
@@ -136,7 +136,7 @@ template <class REAL>
 UndatedDLModel<REAL>::~UndatedDLModel() { }
 
 template <class REAL>
-void UndatedDLModel<REAL>::updateCLV(pll_unode_t *geneNode)
+void UndatedDLModel<REAL>::updateCLV(corax_unode_t *geneNode)
 {
   assert(geneNode);
   for (auto speciesNode: getSpeciesNodesToUpdate()) {
@@ -148,7 +148,7 @@ void UndatedDLModel<REAL>::updateCLV(pll_unode_t *geneNode)
 
 
 template <class REAL>
-void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+void UndatedDLModel<REAL>::computeProbability(corax_unode_t *geneNode, corax_rnode_t *speciesNode, 
       REAL &proba,
       bool isVirtualRoot,
       Scenario *,
@@ -157,8 +157,8 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
   
 {
   auto gid = geneNode->node_index;
-  pll_unode_t *leftGeneNode = 0;     
-  pll_unode_t *rightGeneNode = 0;     
+  corax_unode_t *leftGeneNode = 0;     
+  corax_unode_t *rightGeneNode = 0;     
   bool isGeneLeaf = !geneNode->next;
   if (!isGeneLeaf) {
     leftGeneNode = this->getLeft(geneNode, isVirtualRoot);
@@ -283,7 +283,7 @@ void UndatedDLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t
 }
   
 template <class REAL>
-REAL UndatedDLModel<REAL>::getGeneRootLikelihood(pll_unode_t *root) const
+REAL UndatedDLModel<REAL>::getGeneRootLikelihood(corax_unode_t *root) const
 {
   REAL sum = REAL();
   auto u = root->node_index + this->_maxGeneId + 1;
@@ -295,7 +295,7 @@ REAL UndatedDLModel<REAL>::getGeneRootLikelihood(pll_unode_t *root) const
 }
 
 template <class REAL>
-void UndatedDLModel<REAL>::computeGeneRootLikelihood(pll_unode_t *virtualRoot)
+void UndatedDLModel<REAL>::computeGeneRootLikelihood(corax_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
   for (auto speciesNode: getSpeciesNodesToUpdate()) {

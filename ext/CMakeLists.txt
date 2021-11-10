@@ -8,7 +8,10 @@ set(MPISCHEDULER_STATIC_SCHEDULED_MAIN True)
 # Dependencies
 add_subdirectory(MPIScheduler)
 # the two following lines disable corax tests build
+
+option(CORAX_TESTS_ENABLED "Enable and build the tests" OFF)
 set(CORAX_TESTS_ENABLED OFF)
+
 set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 add_subdirectory(coraxlib)
 

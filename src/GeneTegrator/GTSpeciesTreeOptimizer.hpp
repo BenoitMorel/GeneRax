@@ -64,7 +64,7 @@ public:
   double sprSearch(unsigned int radius);
   double rootSearch(unsigned int maxDepth);
   double transferSearch();
-  void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
+  void onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
   void reconcile();
   void printFamilyDimensions(const std::string &outputFile);
 private:

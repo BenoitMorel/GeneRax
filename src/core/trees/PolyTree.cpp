@@ -3,13 +3,13 @@
 
 #include <iostream>
 
-static bool contractBranch(pll_unode_t *branch)
+static bool contractBranch(corax_unode_t *branch)
 {
   return branch->length <= 0.000001 && branch->next;
 }
 
-static void fillChildrenRec(pll_unode_t *node,
-    std::vector<pll_unode_t*> &children)
+static void fillChildrenRec(corax_unode_t *node,
+    std::vector<corax_unode_t*> &children)
 {
   auto left = node->next->back;
   auto right = node->next->next->back;
@@ -43,7 +43,7 @@ PolyTree::PolyTree(PLLUnrootedTree &tree):
 }
 
 
-static std::string buildStringRec(pll_unode_t *node,
+static std::string buildStringRec(corax_unode_t *node,
     const std::vector<PolyTree::Cell> &cells)
 {
   auto gid = node->node_index;

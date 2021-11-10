@@ -12,7 +12,7 @@
 #include <util/types.hpp>
 
 
-typedef struct pll_rnode_s
+typedef struct corax_rnode_s
 {
   char * label;
   double length;
@@ -20,33 +20,33 @@ typedef struct pll_rnode_s
   unsigned int clv_index;
   int scaler_index;
   unsigned int pmatrix_index;
-  struct pll_rnode_s * left;
-  struct pll_rnode_s * right;
-  struct pll_rnode_s * parent;
+  struct corax_rnode_s * left;
+  struct corax_rnode_s * right;
+  struct corax_rnode_s * parent;
 
   void * data;
-} pll_rnode_t;
+} corax_rnode_t;
 
-typedef struct pll_rtree_s
+typedef struct corax_rtree_s
 {
   unsigned int tip_count;
   unsigned int inner_count;
   unsigned int edge_count;
 
-  pll_rnode_t ** nodes;
+  corax_rnode_t ** nodes;
 
-  pll_rnode_t * root;
+  corax_rnode_t * root;
 
-} pll_rtree_t;
+} corax_rtree_t;
 
-void pll_rtree_destroy(pll_rtree_t * tree,
+void corax_rtree_destroy(corax_rtree_t * tree,
                                   void (*cb_destroy)(void *));
 
 
-pll_utree_t * pll_rtree_unroot(pll_rtree_t * tree);
+corax_utree_t * corax_rtree_unroot(corax_rtree_t * tree);
 
 /**
- *  C++ wrapper around the libpll pll_rtree_t structure
+ *  C++ wrapper around the libpll corax_rtree_t structure
  *  to represent a rooted tree
  */
 class PLLRootedTree {
@@ -81,18 +81,18 @@ public:
   /*
    * Node access
    */
-  pll_rnode_t *getRoot() const;
-  pll_rnode_t *getAnyInnerNode() const;
-  pll_rnode_t *getNode(unsigned int node_index) const;
-  pll_rnode_t *getParent(unsigned int node_index) const;
-  pll_rnode_t *getNeighbor(unsigned int node_index) const;
+  corax_rnode_t *getRoot() const;
+  corax_rnode_t *getAnyInnerNode() const;
+  corax_rnode_t *getNode(unsigned int node_index) const;
+  corax_rnode_t *getParent(unsigned int node_index) const;
+  corax_rnode_t *getNeighbor(unsigned int node_index) const;
 
   /**
    * labels
    */
   std::unordered_set<std::string> getLabels(bool leavesOnly) const;
   
-  static void getLeafLabelsUnder(pll_rnode_t *node,
+  static void getLeafLabelsUnder(corax_rnode_t *node,
       std::unordered_set<std::string> &labels);
 
   /**
@@ -117,19 +117,19 @@ public:
   /**
    *  Direct access to the libpll structure
    */
-  pll_rtree_t *getRawPtr() {return _tree.get();}
-  const pll_rtree_t *getRawPtr() const {return _tree.get();}
+  corax_rtree_t *getRawPtr() {return _tree.get();}
+  const corax_rtree_t *getRawPtr() const {return _tree.get();}
   
-  CArrayRange<pll_rnode_t*> getLeaves() const;
-  CArrayRange<pll_rnode_t*> getInnerNodes() const;
-  CArrayRange<pll_rnode_t*> getNodes() const;
-  std::vector<pll_rnode_t*> getPostOrderNodes() const;
+  CArrayRange<corax_rnode_t*> getLeaves() const;
+  CArrayRange<corax_rnode_t*> getInnerNodes() const;
+  CArrayRange<corax_rnode_t*> getNodes() const;
+  std::vector<corax_rnode_t*> getPostOrderNodes() const;
 
-  static void setSon(pll_rnode_t *parent, pll_rnode_t *newSon, bool left);
+  static void setSon(corax_rnode_t *parent, corax_rnode_t *newSon, bool left);
   
   friend std::ostream& operator<<(std::ostream& os, const PLLRootedTree &tree)
   {
-    char *newick = pll_rtree_export_newick(tree.getRawPtr()->root, 0);
+    char *newick = corax_rtree_export_newick(tree.getRawPtr()->root, 0);
     std::string str(newick);
     os << str;
     free(newick);
@@ -140,20 +140,20 @@ public:
    * Get lowest common ancestor
    * First call is O(n^2), and all next calls O(1)
    */
-  pll_rnode_t *getLCA(pll_rnode_t *n1, pll_rnode_t *n2);
-  pll_rnode_t *getLCA(unsigned int nodeIndex1, unsigned int nodeIndex2);
+  corax_rnode_t *getLCA(corax_rnode_t *n1, corax_rnode_t *n2);
+  corax_rnode_t *getLCA(unsigned int nodeIndex1, unsigned int nodeIndex2);
 
   /**
    * Return true if either one of n1 or n2 is parent of another
    * First call is O(n^2), and all next calls O(1)
    */
-  bool areParents(pll_rnode_t *n1, pll_rnode_t *n2);
+  bool areParents(corax_rnode_t *n1, corax_rnode_t *n2);
 
-  void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
+  void onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
   
   
-  std::vector<bool> &getParentsCache(pll_rnode_t *n1);
-  std::vector<bool> &getAncestorssCache(pll_rnode_t *n1);
+  std::vector<bool> &getParentsCache(corax_rnode_t *n1);
+  std::vector<bool> &getAncestorssCache(corax_rnode_t *n1);
   
   void buildLCACache();
 
@@ -176,7 +176,7 @@ public:
 
   bool areNodeIndicesParallelConsistent() const;
 private:
-  std::unique_ptr<pll_rtree_t, void(*)(pll_rtree_t*)> _tree;
+  std::unique_ptr<corax_rtree_t, void(*)(corax_rtree_t*)> _tree;
   
   struct LCACache {
     // vectors are indexed with rnodes indices
@@ -184,14 +184,14 @@ private:
     // parents[n1][n2] is true if n2 is an ancestor
     //   of n1 or n1 an ancestor of n2
     // ancestors[n1][n2] is true if n2 is ancestor of n1
-    std::vector<std::vector<pll_rnode_t *> > lcas;
+    std::vector<std::vector<corax_rnode_t *> > lcas;
     std::vector<std::vector<bool> > parents;
     std::vector<std::vector<bool> > ancestors;
   };
   std::unique_ptr<LCACache> _lcaCache;
   
   
-  static pll_rtree_t *buildRandomTree(const std::unordered_set<std::string> &leafLabels);
+  static corax_rtree_t *buildRandomTree(const std::unordered_set<std::string> &leafLabels);
 };
 
 

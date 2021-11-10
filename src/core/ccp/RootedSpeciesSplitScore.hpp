@@ -18,6 +18,6 @@ private:
   PLLRootedTree *_speciesTree;
   std::vector<unsigned int> _spidToNodeIndex;
   std::vector<SPID> _nodeIndexToSpid;
-  pll_rnode_t *getLCA(unsigned int cid);
+  corax_rnode_t *getLCA(unsigned int cid);
 
 };

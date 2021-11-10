@@ -40,7 +40,7 @@ private:
   std::vector<std::vector<BranchSet> > _paths;
   std::unordered_map<std::string, unsigned int> _labelToSpid;
   void fillPathsRec(unsigned int fromSpid, 
-    pll_unode_t *node,
+    corax_unode_t *node,
     BranchSet &path);
   
   // returns all the branchs that are located between at least

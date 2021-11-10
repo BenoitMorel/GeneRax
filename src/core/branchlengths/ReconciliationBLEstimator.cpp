@@ -6,7 +6,7 @@
 #include <maths/ModelParameters.hpp>
 #include <parallelization/PerCoreGeneTrees.hpp>
 
-static void getAverageDepthRec(pll_rnode_t *node,
+static void getAverageDepthRec(corax_rnode_t *node,
     double currentDepth,
     double &sumDepths,
     unsigned int &count)
@@ -21,7 +21,7 @@ static void getAverageDepthRec(pll_rnode_t *node,
   }
 }
 
-static double getAverageDepth(pll_rnode_t *node)
+static double getAverageDepth(corax_rnode_t *node)
 {
   double sumDepths = 0.0;
   unsigned int count = 0;
@@ -57,11 +57,11 @@ static void balanceRoot(PLLRootedTree &tree)
  *  branch, and not on a gene node, and thus do not hold the time
  *  of speciation
  */
-static void estimateBLRecursive(pll_unode_t *node,
+static void estimateBLRecursive(corax_unode_t *node,
     bool isVirtualRoot,
     unsigned int ancestralSpeciesId,
     double lengthToAncestralSpecies,
-    pll_rtree_t *speciesTree,
+    corax_rtree_t *speciesTree,
     const std::vector<std::vector<Scenario::Event> > &geneToEvents,
     double familyWeight,
     std::vector<double> &speciesSumBL,
@@ -122,7 +122,7 @@ void estimateBLForFamily(const Scenario &scenario,
     std::vector<double> &speciesWeightBL)
 {
   auto geneRoot = scenario.getGeneRoot();
-  pll_unode_t virtualRoot;
+  corax_unode_t virtualRoot;
   virtualRoot.next = geneRoot;
   virtualRoot.node_index = scenario.getVirtualRootIndex();
   virtualRoot.label = nullptr;

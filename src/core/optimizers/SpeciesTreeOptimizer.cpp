@@ -272,7 +272,7 @@ void SpeciesTreeOptimizer::updateEvaluations()
   
 
 
-void SpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
+void SpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate)
 {
   for (auto &evaluation: _evaluations) {
     evaluation->onSpeciesTreeChange(nodesToInvalidate);
@@ -329,7 +329,7 @@ unsigned int SpeciesTreeOptimizer::_unsupportedCladesNumber()
   return speciesClades.size() - intersectionSize;
 }
 
-static std::string getSubtreeID(pll_rnode_t *subtree)
+static std::string getSubtreeID(corax_rnode_t *subtree)
 {
   if (!subtree->left) {
     return std::string(subtree->label);
@@ -462,7 +462,7 @@ void SpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
 void SpeciesTreeLikelihoodEvaluator::pushRollback() 
 {
   if (_rootedGeneTrees) {
-    _previousGeneRoots.push(std::vector<pll_unode_t *>());
+    _previousGeneRoots.push(std::vector<corax_unode_t *>());
     for (auto evaluation: *_evaluations) {
       _previousGeneRoots.top().push_back(evaluation->getRoot());
     }

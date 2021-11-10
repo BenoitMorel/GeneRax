@@ -75,7 +75,7 @@ private:
   PerCoreGeneTrees *_geneTrees;
   PerCoreEvaluations *_evaluations;
   ModelParameters *_modelRates;
-  std::stack<std::vector<pll_unode_t*> > _previousGeneRoots;
+  std::stack<std::vector<corax_unode_t*> > _previousGeneRoots;
   bool _rootedGeneTrees;
   bool _pruneSpeciesTree;
   bool _userDTLRates;
@@ -99,7 +99,7 @@ public:
   SpeciesTreeOptimizer & operator = (SpeciesTreeOptimizer &&) = delete;
   virtual ~SpeciesTreeOptimizer(); 
    
-  virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
+  virtual void onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
 
   void optimize(SpeciesSearchStrategy strategy);
   
@@ -123,7 +123,7 @@ private:
   std::unique_ptr<PerCoreGeneTrees> _geneTrees;
   PerCoreEvaluations _evaluations; 
   SpeciesTreeLikelihoodEvaluator _evaluator;
-  std::vector<pll_unode_t*> _previousGeneRoots;
+  std::vector<corax_unode_t*> _previousGeneRoots;
   Families _initialFamilies;
   std::string _outputDir;
   bool _firstOptimizeRatesCall;

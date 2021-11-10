@@ -72,9 +72,9 @@ enum class ParamValue
 enum class AscBiasCorrection
 {
   none = 0,
-  lewis = PLL_ATTRIB_AB_LEWIS,
-  felsenstein = PLL_ATTRIB_AB_FELSENSTEIN,
-  stamatakis = PLL_ATTRIB_AB_STAMATAKIS,
+  lewis = CORAX_ATTRIB_AB_LEWIS,
+  felsenstein = CORAX_ATTRIB_AB_FELSENSTEIN,
+  stamatakis = CORAX_ATTRIB_AB_STAMATAKIS,
 };
 
 enum class BootstopCriterion

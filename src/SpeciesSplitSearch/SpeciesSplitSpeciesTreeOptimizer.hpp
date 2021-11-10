@@ -49,7 +49,7 @@ public:
   void optimize();
   double sprSearch(unsigned int radius);
   double transferSearch();
-  void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
+  void onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
   double rootSearch(unsigned int maxDepth);
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;

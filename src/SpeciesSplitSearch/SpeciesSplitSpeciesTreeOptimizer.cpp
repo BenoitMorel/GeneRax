@@ -169,7 +169,7 @@ double SpeciesSplitSpeciesTreeOptimizer::sprSearch(unsigned int radius)
 }
 
 
-void SpeciesSplitSpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
+void SpeciesSplitSpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate)
 {
 }
 

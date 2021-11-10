@@ -8,8 +8,8 @@
 
 using DistanceVectorMatrix = std::vector<DistanceMatrix>;
 
-static pll_unode_t *getOtherNext(pll_unode_t *n1, 
-    pll_unode_t *n2)
+static corax_unode_t *getOtherNext(corax_unode_t *n1, 
+    corax_unode_t *n2)
 {
   if (n1->next == n2) {
     return n2->next;
@@ -47,7 +47,7 @@ static DistanceMatrix getMatrix(unsigned int N,
  *  nodes in the unrooted tree. If belongsToPruned is set,
  *  the distances are computed on the pruned subtree
  */
-static void fillDistancesRec(pll_unode_t *currentNode, 
+static void fillDistancesRec(corax_unode_t *currentNode, 
     const std::vector<unsigned int> &nodeIndexToSpid,
     double currentDistance,
     std::vector<double> &distances,
@@ -233,8 +233,8 @@ static bool isNumber(double v) {
 
 
 // computes _subBMEs[0][i1][i2]
-static void computeSubBMEsPruneRec(pll_unode_t *n1,
-    pll_unode_t *n2,
+static void computeSubBMEsPruneRec(corax_unode_t *n1,
+    corax_unode_t *n2,
     BoolMatrix &treated,
     BoolMatrix &hasChildren,
     BoolMatrix &belongsToPruned,
@@ -364,14 +364,14 @@ void MiniBMEPruned::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
 
 void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
     std::vector<unsigned int> sprime, 
-    std::vector<pll_unode_t *> W0s, 
-    pll_unode_t *Wp, 
-    pll_unode_t *Wsminus1, 
-    pll_unode_t *Vsminus1, 
+    std::vector<corax_unode_t *> W0s, 
+    corax_unode_t *Wp, 
+    corax_unode_t *Wsminus1, 
+    corax_unode_t *Vsminus1, 
     std::vector<double> delta_Vsminus2_Wp, // previous deltaAB
-    pll_unode_t *Vs, 
+    corax_unode_t *Vs, 
     double Lsminus1, // L_s-1
-    pll_unode_t *&bestRegraftNode,
+    corax_unode_t *&bestRegraftNode,
     double &bestLs,
     unsigned int &bestS,
     const std::vector<DistanceMatrix> &subBMEs,
@@ -381,7 +381,7 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
     std::vector<bool> Vsminus1HasChildren) // does Vsminus1 have children after the previous moves
 {
   unsigned int maxRadius = 9999;
-  pll_unode_t *Ws = getOtherNext(Vs, Vsminus1->back)->back; 
+  corax_unode_t *Ws = getOtherNext(Vs, Vsminus1->back)->back; 
   unsigned int K = subBMEs[0][0].size();
   // compute L_s
   // we compute LS for an NNI to ((A,B),(C,D)) by swapping B and C
@@ -476,8 +476,8 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
 
 
 void MiniBMEPruned::getBestSPR(PLLUnrootedTree &speciesTree,
-      pll_unode_t *&bestPruneNode,
-      pll_unode_t *&bestRegraftNode,
+      corax_unode_t *&bestPruneNode,
+      corax_unode_t *&bestRegraftNode,
       double &bestDiff)
 {
   bestDiff = 0.0;
@@ -492,8 +492,8 @@ void MiniBMEPruned::getBestSPR(PLLUnrootedTree &speciesTree,
 
 
 
-bool MiniBMEPruned::getBestSPRFromPrune(pll_unode_t *prunedNode,
-      pll_unode_t *&bestRegraftNode,
+bool MiniBMEPruned::getBestSPRFromPrune(corax_unode_t *prunedNode,
+      corax_unode_t *&bestRegraftNode,
       double &bestDiff,
       unsigned int &bestS)
 {
@@ -503,7 +503,7 @@ bool MiniBMEPruned::getBestSPRFromPrune(pll_unode_t *prunedNode,
   if (!Wp->back->next) {
     return foundBetter;
   }
-  std::vector<pll_unode_t *> V0s;
+  std::vector<corax_unode_t *> V0s;
   V0s.push_back(Wp->back->next->back);
   V0s.push_back(Wp->back->next->next->back);
   unsigned int K = _subBMEs[0][0].size();
@@ -513,14 +513,14 @@ bool MiniBMEPruned::getBestSPRFromPrune(pll_unode_t *prunedNode,
     if (!V->back->next) {
       continue;
     }
-    std::vector<pll_unode_t *> V1s;
+    std::vector<corax_unode_t *> V1s;
     V1s.push_back(V->back->next);
     V1s.push_back(V->back->next->next);
     for (auto V1: V1s) {
       unsigned int s = 1;
-      pll_unode_t *W0 = V0;
-      pll_unode_t *Wsminus1 = W0;
-      std::vector<pll_unode_t *> W0s(K, nullptr);
+      corax_unode_t *W0 = V0;
+      corax_unode_t *Wsminus1 = W0;
+      std::vector<corax_unode_t *> W0s(K, nullptr);
       std::vector<double> delta_V0_Wp; // not used at first iteration
       std::vector<bool> V0HasChildren = _hasChildren[V0->node_index];
       std::vector<bool> Vminus1HasChildren(V0HasChildren.size()); // won't be read at first iteration

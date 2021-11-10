@@ -9,26 +9,26 @@
 const double DEFAULT_BL = 0.1;
 
 static unsigned int getBestLibpllAttribute() {
-  pll_hardware_probe();
-  unsigned int arch = PLL_ATTRIB_ARCH_CPU;
-  if (pll_hardware.avx2_present) {
-    arch = PLL_ATTRIB_ARCH_AVX2;
-  } else if (pll_hardware.avx_present) {
-    arch = PLL_ATTRIB_ARCH_AVX;
-  } else if (pll_hardware.sse_present) {
-    arch = PLL_ATTRIB_ARCH_SSE;
+  corax_hardware_probe();
+  unsigned int arch = CORAX_ATTRIB_ARCH_CPU;
+  if (corax_hardware.avx2_present) {
+    arch = CORAX_ATTRIB_ARCH_AVX2;
+  } else if (corax_hardware.avx_present) {
+    arch = CORAX_ATTRIB_ARCH_AVX;
+  } else if (corax_hardware.sse_present) {
+    arch = CORAX_ATTRIB_ARCH_SSE;
   }
-  arch |= PLL_ATTRIB_SITE_REPEATS;
+  arch |= CORAX_ATTRIB_SITE_REPEATS;
   return  arch;
 }
 
 
-void treeinfoDestroy(pllmod_treeinfo_t *treeinfo)
+void treeinfoDestroy(corax_treeinfo_t *treeinfo)
 {
   if (!treeinfo)
     return;
-  pll_partition_destroy(treeinfo->partitions[0]);
-  pllmod_treeinfo_destroy(treeinfo);
+  corax_partition_destroy(treeinfo->partitions[0]);
+  corax_treeinfo_destroy(treeinfo);
 }
 
 
@@ -44,7 +44,7 @@ PLLTreeInfo::PLLTreeInfo(const std::string &newickStrOrFile,
   LibpllParsers::parseMSA(alignmentFilename, _model->charmap(), sequences, patternWeights);
   buildTree(newickStrOrFile, isNewickAFile, sequences);
   auto partition = buildPartition(sequences, patternWeights);
-  _treeinfo = std::unique_ptr<pllmod_treeinfo_t, void(*)(pllmod_treeinfo_t*)>(
+  _treeinfo = std::unique_ptr<corax_treeinfo_t, void(*)(corax_treeinfo_t*)>(
       buildTreeInfo(*_model, partition, *_utree), treeinfoDestroy);
   free(patternWeights);
 }
@@ -80,7 +80,7 @@ void PLLTreeInfo::buildTree(const std::string &newickStrOrFile,
   _utree->setMissingBranchLengths(DEFAULT_BL);
 }
 
-pll_partition_t * PLLTreeInfo::buildPartition(const PLLSequencePtrs &sequences, 
+corax_partition_t * PLLTreeInfo::buildPartition(const PLLSequencePtrs &sequences, 
   unsigned int *patternWeights)  
 {  
   unsigned int attribute = getBestLibpllAttribute();
@@ -89,7 +89,7 @@ pll_partition_t * PLLTreeInfo::buildPartition(const PLLSequencePtrs &sequences,
   unsigned int edgesNumber = 2 * tipNumber - 1;
   unsigned int sitesNumber = sequences[0]->len;
   unsigned int ratesMatrices = 1;
-  pll_partition_t *partition = pll_partition_create(tipNumber,
+  corax_partition_t *partition = corax_partition_create(tipNumber,
       innerNumber,
       _model->num_states(),
       sitesNumber, 
@@ -100,14 +100,14 @@ pll_partition_t * PLLTreeInfo::buildPartition(const PLLSequencePtrs &sequences,
       attribute);  
   if (!partition) 
     throw LibpllException("Could not create libpll partition");
-  pll_set_pattern_weights(partition, patternWeights);
+  corax_set_pattern_weights(partition, patternWeights);
   
   // fill partition
   std::map<std::string, unsigned int> tipsLabelling;
   unsigned int labelIndex = 0;
   for (auto &seq: sequences) {
     tipsLabelling[seq->label] = labelIndex;
-    pll_set_tip_states(partition, labelIndex, _model->charmap(), seq->seq);
+    corax_set_tip_states(partition, labelIndex, _model->charmap(), seq->seq);
     labelIndex++;
   }
   assign(partition, *_model);
@@ -120,19 +120,19 @@ pll_partition_t * PLLTreeInfo::buildPartition(const PLLSequencePtrs &sequences,
   return partition;
 }
 
-pllmod_treeinfo_t *PLLTreeInfo::buildTreeInfo(const Model &model,
-    pll_partition_t *partition,
+corax_treeinfo_t *PLLTreeInfo::buildTreeInfo(const Model &model,
+    corax_partition_t *partition,
     PLLUnrootedTree &utree)
 {
   // treeinfo
   int params_to_optimize = model.params_to_optimize();
-  params_to_optimize |= PLLMOD_OPT_PARAM_BRANCHES_ITERATIVE;
+  params_to_optimize |= CORAX_OPT_PARAM_BRANCHES_ITERATIVE;
   std::vector<unsigned int> params_indices(model.num_ratecats(), 0); 
-  auto treeinfo = pllmod_treeinfo_create(utree.getAnyInnerNode(), 
-      utree.getLeavesNumber(), 1, PLL_BRLEN_SCALED);
+  auto treeinfo = corax_treeinfo_create(utree.getAnyInnerNode(), 
+      utree.getLeavesNumber(), 1, CORAX_BRLEN_SCALED);
   if (!treeinfo || !treeinfo->root)
     throw LibpllException("Cannot create treeinfo");
-  pllmod_treeinfo_init_partition(treeinfo, 0, partition,
+  corax_treeinfo_init_partition(treeinfo, 0, partition,
       params_to_optimize,
       model.gamma_mode(),
       model.alpha(), 

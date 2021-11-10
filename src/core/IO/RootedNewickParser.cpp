@@ -11,15 +11,15 @@ struct RTreeParser {
   // size of input
   unsigned int input_size;
   // buffer containing all nodes
-  pll_rnode_t **nodes;
+  corax_rnode_t **nodes;
   // allocated size of nodes
   unsigned int nodes_capacity;
   // current number of parsed nodes (<= nodes_capacity)
   unsigned int nodes_number;
   // node currently being parsed
-  pll_rnode_t *current_node;
+  corax_rnode_t *current_node;
   // parent of current_node
-  pll_rnode_t *parent_node;
+  corax_rnode_t *parent_node;
   // are we reading from a file or from a string
   bool is_file;
   // object to fill if parsing fails
@@ -69,9 +69,9 @@ void set_error(struct RTreeParser *p, ParsingErrorType type)
 void increase_nodes_capacity(RTreeParser *p)
 {
   p->nodes_capacity *= 4;  
-  pll_rnode_t **new_buffer = (pll_rnode_t **)calloc(
-      p->nodes_capacity, sizeof(pll_rnode_t *));
-  memcpy(new_buffer, p->nodes, (p->nodes_number) * sizeof(pll_rnode_t *));
+  corax_rnode_t **new_buffer = (corax_rnode_t **)calloc(
+      p->nodes_capacity, sizeof(corax_rnode_t *));
+  memcpy(new_buffer, p->nodes, (p->nodes_number) * sizeof(corax_rnode_t *));
   free(p->nodes);
   p->nodes = new_buffer;
 }
@@ -79,12 +79,12 @@ void increase_nodes_capacity(RTreeParser *p)
 /**
  *  Create and initialize a new node in p
  */
-pll_rnode_t *rtree_parse_add_node(RTreeParser *p)
+corax_rnode_t *rtree_parse_add_node(RTreeParser *p)
 {
   if (p->nodes_number >= p->nodes_capacity) {
     increase_nodes_capacity(p);
   }
-  pll_rnode_t *node = (pll_rnode_t *)malloc(sizeof(pll_rnode_t));
+  corax_rnode_t *node = (corax_rnode_t *)malloc(sizeof(corax_rnode_t));
   p->nodes[p->nodes_number] = node;
   node->node_index = p->nodes_number;
   node->label = NULL;
@@ -94,7 +94,7 @@ pll_rnode_t *rtree_parse_add_node(RTreeParser *p)
   node->data = NULL;
   node->parent = p->parent_node;
   if (node->parent != NULL) {
-    pll_rnode_t *parent_node = node->parent;
+    corax_rnode_t *parent_node = node->parent;
     if (!parent_node->left) {
       parent_node->left = node;
     } else if (!parent_node->right) {
@@ -149,7 +149,7 @@ void rtree_add_node_neighbor(RTreeParser *p)
   p->current_node = rtree_parse_add_node(p);
 }
 
-int is_branch_length_set(pll_rnode_t *node)
+int is_branch_length_set(corax_rnode_t *node)
 {
   return node && node->length != INFINITY;
 }
@@ -169,7 +169,7 @@ void rtree_add_label(RTreeParser *p, Token *token)
 
 
 
-void terminate_node_creation(pll_rnode_t *node)
+void terminate_node_creation(corax_rnode_t *node)
 {
   if (!node) {
     return;
@@ -251,28 +251,28 @@ void parse(RTreeParser *p)
  *  Build the tree.
  *  The input newick string should have already been parsed
  */
-pll_rtree_t *build_rtree(RTreeParser *p)
+corax_rtree_t *build_rtree(RTreeParser *p)
 {
   if (has_errored(p)) {
     return NULL;
   }
-  pll_rtree_t * tree = (pll_rtree_t *)malloc(sizeof(pll_rtree_t));
-  tree->nodes = (pll_rnode_t **)malloc(
-      (p->nodes_number)*sizeof(pll_rnode_t *));
+  corax_rtree_t * tree = (corax_rtree_t *)malloc(sizeof(corax_rtree_t));
+  tree->nodes = (corax_rnode_t **)malloc(
+      (p->nodes_number)*sizeof(corax_rnode_t *));
   unsigned int tips_number = p->nodes_number / 2 + 1;
   unsigned int tips_index = 0;
   unsigned int internal_index = tips_number;
   // start at one, because the first node is the root
   // and should be placed at the end
   for (unsigned int i = 1; i < p->nodes_number; ++i) {
-    pll_rnode_t *node = p->nodes[i];
+    corax_rnode_t *node = p->nodes[i];
     p->nodes[i] = NULL; // avoid double free when destroying p
     if (!node->left) {
       node->node_index 
         = node->clv_index 
         = node->pmatrix_index 
         = tips_index++;
-      node->scaler_index = PLL_SCALE_BUFFER_NONE;
+      node->scaler_index = CORAX_SCALE_BUFFER_NONE;
     } else {
       node->scaler_index = internal_index - tips_number;
       node->node_index 
@@ -298,7 +298,7 @@ pll_rtree_t *build_rtree(RTreeParser *p)
   return tree;
 }
 
-pll_rtree_t * custom_rtree_parse_newick(const char *input,
+corax_rtree_t * custom_rtree_parse_newick(const char *input,
     bool is_file,
     ParsingError *error)
 {
@@ -319,13 +319,13 @@ pll_rtree_t * custom_rtree_parse_newick(const char *input,
   p.input_current = (char*)p.input;
   p.nodes_capacity = 1000; 
   p.nodes_number = 0;
-  p.nodes = (pll_rnode_t **)
-    calloc(p.nodes_capacity, sizeof(pll_rnode_t *));
+  p.nodes = (corax_rnode_t **)
+    calloc(p.nodes_capacity, sizeof(corax_rnode_t *));
   assert(p.nodes);
   p.current_node = NULL;
   p.parent_node = NULL;
   parse(&p); 
-  pll_rtree_t *rtree = build_rtree(&p);
+  corax_rtree_t *rtree = build_rtree(&p);
   destroy_rtree_parser(&p);
   return rtree;
 }

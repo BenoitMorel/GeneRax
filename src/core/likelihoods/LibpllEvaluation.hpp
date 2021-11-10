@@ -69,8 +69,8 @@ public:
   /**
    *  Accessor to the wrapped treeinfo structure
    */
-  pllmod_treeinfo_t *getTreeInfo() {return _treeInfo->getTreeInfo();}
-  const pllmod_treeinfo_t *getTreeInfo() const {return _treeInfo->getTreeInfo();}
+  corax_treeinfo_t *getTreeInfo() {return _treeInfo->getTreeInfo();}
+  const corax_treeinfo_t *getTreeInfo() const {return _treeInfo->getTreeInfo();}
 
 
   /**
@@ -95,9 +95,9 @@ private:
   LibpllEvaluation() {}
  
 
-  static double optimizeAllParametersOnce(pllmod_treeinfo_t *treeinfo, double tolerance);
+  static double optimizeAllParametersOnce(corax_treeinfo_t *treeinfo, double tolerance);
   
-  pll_unode_t *getNode(unsigned int nodeIndex) {return _treeInfo->getTreeInfo()->subnodes[nodeIndex];}
+  corax_unode_t *getNode(unsigned int nodeIndex) {return _treeInfo->getTreeInfo()->subnodes[nodeIndex];}
 private:
   std::unique_ptr<PLLTreeInfo> _treeInfo;
 };

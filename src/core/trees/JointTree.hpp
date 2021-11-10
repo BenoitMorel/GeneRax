@@ -13,8 +13,8 @@
 
 
 struct RecModelInfo;
-void printLibpllNode(pll_unode_s *node, std::ostream &os, bool isRoot);
-void printLibpllTreeRooted(pll_unode_t *root, std::ostream &os);
+void printLibpllNode(corax_unode_s *node, std::ostream &os, bool isRoot);
+void printLibpllTreeRooted(corax_unode_t *root, std::ostream &os);
 
 class JointTree {
 public:
@@ -43,24 +43,24 @@ public:
     double computeReconciliationLoglk ();
     double computeJointLoglk();
     void printLoglk(bool libpll = true, bool rec = true, bool joint = true, Logger &os = Logger::info);
-    pll_unode_t *getNode(unsigned int index);
+    corax_unode_t *getNode(unsigned int index);
     void applyMove(Move &move);
     void optimizeMove(Move &move);
   
-    void invalidateCLV(pll_unode_s *node);
+    void invalidateCLV(corax_unode_s *node);
     void printAllNodes(std::ostream &os);
     void printInfo();
     void rollbackLastMove();
     void save(const std::string &fileName, bool append);
-    pllmod_treeinfo_t *getTreeInfo();
+    corax_treeinfo_t *getTreeInfo();
     void setRates(const Parameters &ratesVector);
     PLLRootedTree &getSpeciesTree() {return _speciesTree;}
     size_t getUnrootedTreeHash();
     ReconciliationEvaluation &getReconciliationEvaluation() {return *reconciliationEvaluation_;}
     std::shared_ptr<ReconciliationEvaluation> getReconciliationEvaluationPtr() {return reconciliationEvaluation_;}
     
-    pll_unode_t *getRoot() {return reconciliationEvaluation_->getRoot();}
-    void setRoot(pll_unode_t * root) {reconciliationEvaluation_->setRoot(root);}
+    corax_unode_t *getRoot() {return reconciliationEvaluation_->getRoot();}
+    void setRoot(corax_unode_t * root) {reconciliationEvaluation_->setRoot(root);}
     const Parameters &getRatesVector() const {return _ratesVector;}
     void inferMLScenario(Scenario &scenario) {
       reconciliationEvaluation_->inferMLScenario(scenario);

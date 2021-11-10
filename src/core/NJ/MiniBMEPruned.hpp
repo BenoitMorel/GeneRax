@@ -17,8 +17,8 @@ public:
   virtual double computeBME(const PLLUnrootedTree &speciesTree);
 
   virtual void getBestSPR(PLLUnrootedTree &speciesTree,
-      pll_unode_t *&bestPruneNode,
-      pll_unode_t *&bestRegraftNode,
+      corax_unode_t *&bestPruneNode,
+      corax_unode_t *&bestRegraftNode,
       double &bestDiff);
 private:
   std::vector<DistanceMatrix> _geneDistanceMatrices;
@@ -42,14 +42,14 @@ private:
   // lot of copies hgre...
   void _getBestSPRRecMissing(unsigned int s,
      std::vector<unsigned int> sprime, 
-     std::vector<pll_unode_t *> W0s, 
-     pll_unode_t *Wp, 
-     pll_unode_t *Wsminus1, 
-     pll_unode_t *Vsminus1, 
+     std::vector<corax_unode_t *> W0s, 
+     corax_unode_t *Wp, 
+     corax_unode_t *Wsminus1, 
+     corax_unode_t *Vsminus1, 
      std::vector<double> delta_Vsminus2_Wp, // previous deltaAB
-     pll_unode_t *Vs, 
+     corax_unode_t *Vs, 
      double Lsminus1, // L_s-1
-     pll_unode_t *&bestRegraftNode,
+     corax_unode_t *&bestRegraftNode,
      double &bestLs,
      unsigned int &bestS,
      const std::vector<DistanceMatrix> &subBMEs,
@@ -58,8 +58,8 @@ private:
      std::vector<bool> Vsminus2HasChildren, // does Vsminus2 have children after the previous moves
      std::vector<bool> Vsminus1HasChildren); // does Vsminus1 have children after the previous moves
    
-  bool  getBestSPRFromPrune(pll_unode_t *prunedNode,
-      pll_unode_t *&bestRegraftNode,
+  bool  getBestSPRFromPrune(corax_unode_t *prunedNode,
+      corax_unode_t *&bestRegraftNode,
       double &bestDiff,
       unsigned int &bestS);
 };

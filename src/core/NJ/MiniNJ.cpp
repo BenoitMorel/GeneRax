@@ -9,7 +9,7 @@
 #include <parallelization/PerCoreGeneTrees.hpp>
 #include <parallelization//ParallelContext.hpp>
 
-void fillDistancesRec(pll_unode_t *currentNode, 
+void fillDistancesRec(corax_unode_t *currentNode, 
     double currentDistance,
     std::vector<double> &distances,
     double contractBranchUnder)

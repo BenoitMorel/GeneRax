@@ -8,7 +8,7 @@
 double USearchMiniBMEEvaluator::eval(PLLUnrootedTree &tree)
 {
   _lastScore = -_miniBME->computeBME(tree);
-  //pll_unode_t *fake;
+  //corax_unode_t *fake;
   //_miniBME.getBestSPR(tree, fake, fake);
   return _lastScore;
 }
@@ -18,8 +18,8 @@ bool USearchMiniBMEEvaluator::computeAndApplyBestSPR(PLLUnrootedTree &tree)
 {
   _lastScore = -_miniBME->computeBME(tree);
   double diff = 0.0;
-  pll_unode_t *bestPruneNode = nullptr;
-  pll_unode_t *bestRegraftNode = nullptr;
+  corax_unode_t *bestPruneNode = nullptr;
+  corax_unode_t *bestRegraftNode = nullptr;
   _miniBME->getBestSPR(tree, 
       bestPruneNode, 
       bestRegraftNode,
@@ -27,7 +27,7 @@ bool USearchMiniBMEEvaluator::computeAndApplyBestSPR(PLLUnrootedTree &tree)
   if (diff > 0.00000001) {
     assert(bestPruneNode);
     assert(bestRegraftNode);
-    auto ok = pllmod_utree_spr(bestPruneNode->back, 
+    auto ok = corax_utree_spr(bestPruneNode->back, 
         bestRegraftNode, 
         nullptr);
     assert(ok);

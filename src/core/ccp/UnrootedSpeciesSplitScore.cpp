@@ -5,7 +5,7 @@
 
 static const unsigned int INVALID_BID = static_cast<unsigned int>(-1);
 void UnrootedSpeciesSplitScore::fillPathsRec(unsigned int fromSpid, 
-    pll_unode_t *node,
+    corax_unode_t *node,
     BranchSet &path)
 {
   if (!node->next) { 

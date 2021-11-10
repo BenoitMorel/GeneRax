@@ -139,7 +139,7 @@ private:
   /**
    * map the subtree to an ID and return this ID
    */
-  unsigned int mapSubtree(pll_unode_t *node) {
+  unsigned int mapSubtree(corax_unode_t *node) {
     if (!node->next) { // terminal node
       return _labelToId[node->label];
     }

@@ -69,15 +69,15 @@ public:
   virtual bool inferMLScenario(Scenario &scenario, 
     bool stochastic = false);
 protected:
-  virtual pll_rnode_t *sampleSpeciesNode() = 0;
+  virtual corax_rnode_t *sampleSpeciesNode() = 0;
 
 private:
   virtual void computeProbability(CID cid, 
-    pll_rnode_t *speciesNode, 
+    corax_rnode_t *speciesNode, 
     REAL &proba,
     ReconciliationCell<REAL> *recCell = nullptr) = 0;
   bool backtrace(unsigned int cid, 
-      pll_rnode_t *speciesRoot,
+      corax_rnode_t *speciesRoot,
       Scenario &scenario,
       bool stochastic); 
 };
@@ -98,7 +98,7 @@ bool MultiModelTemplate<REAL>::inferMLScenario(Scenario &scenario,
 
 template <class REAL>
 bool MultiModelTemplate<REAL>::backtrace(unsigned int cid, 
-    pll_rnode_t *speciesNode,
+    corax_rnode_t *speciesNode,
     Scenario &scenario,
     bool stochastic)
 {

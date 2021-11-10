@@ -2,8 +2,8 @@
 
 #include <IO/Logger.hpp>
 
-static void uswap(pll_unode_t *A,
-    pll_unode_t *B) 
+static void uswap(corax_unode_t *A,
+    corax_unode_t *B) 
 {
   auto temp = A->back;
   A->back = B->back;

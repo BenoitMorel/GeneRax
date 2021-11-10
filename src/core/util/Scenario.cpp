@@ -199,7 +199,7 @@ void Scenario::saveTransfers(const std::string &filename, bool masterRankOnly)
 void Scenario::saveLargestOrthoGroup(std::string &filename, bool masterRankOnly) const
 {
   ParallelOfstream os(filename, masterRankOnly);
-  pll_unode_t virtualRoot;
+  corax_unode_t virtualRoot;
   virtualRoot.next = _geneRoot;
   virtualRoot.node_index = _virtualRootIndex;
   virtualRoot.label = nullptr;
@@ -215,7 +215,7 @@ void Scenario::saveLargestOrthoGroup(std::string &filename, bool masterRankOnly)
 void Scenario::saveAllOrthoGroups(std::string &filename, bool masterRankOnly) const
 {
   ParallelOfstream os(filename, masterRankOnly);
-  pll_unode_t virtualRoot;
+  corax_unode_t virtualRoot;
   virtualRoot.next = _geneRoot;
   virtualRoot.node_index = _virtualRootIndex;
   virtualRoot.label = nullptr;
@@ -235,7 +235,7 @@ void Scenario::saveAllOrthoGroups(std::string &filename, bool masterRankOnly) co
 
 
 
-OrthoGroup *Scenario::getLargestOrthoGroupRec(pll_unode_t *geneNode, bool isVirtualRoot) const
+OrthoGroup *Scenario::getLargestOrthoGroupRec(corax_unode_t *geneNode, bool isVirtualRoot) const
 {
   auto &events = _geneIdToEvents[geneNode->node_index];
   for (auto &event: events) {
@@ -308,7 +308,7 @@ static void appendOrtho(OrthoGroupPtr &orthoGroups,
       orthoGroupsToAppend->end());
 }
 
-void Scenario::getAllOrthoGroupRec(pll_unode_t *geneNode,
+void Scenario::getAllOrthoGroupRec(corax_unode_t *geneNode,
       OrthoGroups &orthoGroups,
       OrthoGroupPtr &currentOrthoGroup,
       bool isVirtualRoot) const

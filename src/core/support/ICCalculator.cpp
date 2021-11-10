@@ -81,7 +81,7 @@ void ICCalculator::_readTrees()
   }
 }
 
-void fillWithChildren(pll_unode_t *node, TaxaSet &set)
+void fillWithChildren(corax_unode_t *node, TaxaSet &set)
 {
   if (!node->next) {
     set.insert(node->clv_index);
@@ -244,8 +244,8 @@ unsigned int ICCalculator::_getQuadripartitionCount(
  *  quartetIndex == 1 -> alternative topology AC|BD
  *  quartetIndex == 2 -> alternative topology AD|BC
  */
-static UInt4 getQuadripartition(pll_unode_t *u,
-    pll_unode_t *v,
+static UInt4 getQuadripartition(corax_unode_t *u,
+    corax_unode_t *v,
     unsigned int quartetIndex)
 {
   auto A = u->next->back->node_index;
@@ -278,7 +278,7 @@ static UInt4 getQuadripartition(pll_unode_t *u,
   return res;
 }
     
-UInt3 getTripartition(pll_unode_t *u,
+UInt3 getTripartition(corax_unode_t *u,
     DSTagger *tagger)
 {
   if (tagger) {
@@ -328,7 +328,7 @@ void ICCalculator::_computeQuadriCounts()
       vcount = {0, 0, 0};
     }
   }
-  std::vector<pll_unode_t *> speciesInnerNodes;
+  std::vector<corax_unode_t *> speciesInnerNodes;
   for (auto node: _referenceTree.getInnerNodes()) {
     speciesInnerNodes.push_back(node);
   }
@@ -357,7 +357,7 @@ void ICCalculator::_computeQuadriCounts()
       assert(unode->next && vnode->next);
       assert(unode->next != vnode && unode->next->next != vnode);
       assert(vnode->next != unode && vnode->next->next != unode);
-      std::vector<pll_unode_t *> branchPath;
+      std::vector<corax_unode_t *> branchPath;
       _referenceTree.orientTowardEachOther(&unode, 
           &vnode,
           branchPath);
@@ -419,7 +419,7 @@ struct ScorePrinter
   std::string prefix;
   const std::vector<double> &score;
   const std::vector<unsigned int> &refNodeIndexToBranchIndex;
-  void operator()(pll_unode_t *node, 
+  void operator()(corax_unode_t *node, 
       std::stringstream &ss)
   {
     if (node->next && node->back->next) {
@@ -452,7 +452,7 @@ struct ThreeScoresPrinter
   const std::vector<double> &score2;
   const std::vector<double> &score3;
   const std::vector<unsigned int> &refNodeIndexToBranchIndex;
-  void operator()(pll_unode_t *node, 
+  void operator()(corax_unode_t *node, 
       std::stringstream &ss)
   {
     if (node->next && node->back->next) {

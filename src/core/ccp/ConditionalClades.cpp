@@ -108,7 +108,7 @@ static void firstPass(const WeightedTrees &weightedTrees,
     CladeToCID &cladeToCID,
     CIDToClade &cidToClade,
     CIDToLeaf &cidToLeaf,
-    std::vector<std::vector<pll_unode_t*> > &postOrderNodes
+    std::vector<std::vector<corax_unode_t*> > &postOrderNodes
     )
 {
   auto &anyTree = *(weightedTrees.begin()->first.tree);
@@ -117,7 +117,7 @@ static void firstPass(const WeightedTrees &weightedTrees,
   auto leafNumber = anyTree.getLeavesNumber();
   std::unordered_set<CCPClade> unorderedClades;
   unorderedClades.insert(fullClade);
-  std::vector<pll_unode_t *> nodes;
+  std::vector<corax_unode_t *> nodes;
   std::vector<char> buffer;
   for (auto pair: weightedTrees) {
     auto &tree = *(pair.first.tree);
@@ -181,7 +181,7 @@ ConditionalClades::ConditionalClades(const std::string &inputFile,
   emptyClade = CCPClade(anyTree.getLeavesNumber(), false);
   fullClade = CCPClade(anyTree.getLeavesNumber(), true);
   
-  std::vector<std::vector<pll_unode_t*> > postOrderNodes;
+  std::vector<std::vector<corax_unode_t*> > postOrderNodes;
   firstPass(weightedTrees, 
       leafToId,
       _cladeToCID,

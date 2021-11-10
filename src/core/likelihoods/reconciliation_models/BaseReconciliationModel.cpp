@@ -1,8 +1,8 @@
 #include "BaseReconciliationModel.hpp"
 
-static bool fillNodesPostOrder(pll_rnode_t *node, 
-    std::vector<pll_rnode_t *> &nodes, 
-    std::unordered_set<pll_rnode_t *> *nodesToAdd = nullptr)  
+static bool fillNodesPostOrder(corax_rnode_t *node, 
+    std::vector<corax_rnode_t *> &nodes, 
+    std::unordered_set<corax_rnode_t *> *nodesToAdd = nullptr)  
 {
   bool addMyself = true;
   if (nodesToAdd) {
@@ -35,9 +35,9 @@ BaseReconciliationModel::BaseReconciliationModel(
 }
 
 
-bool BaseReconciliationModel::fillPrunedNodesPostOrder(pll_rnode_t *node, 
-    std::vector<pll_rnode_t *> &nodes, 
-    std::unordered_set<pll_rnode_t *> *nodesToAdd)
+bool BaseReconciliationModel::fillPrunedNodesPostOrder(corax_rnode_t *node, 
+    std::vector<corax_rnode_t *> &nodes, 
+    std::unordered_set<corax_rnode_t *> *nodesToAdd)
 {
   bool addMyself = true;
   if (nodesToAdd) {
@@ -59,9 +59,9 @@ bool BaseReconciliationModel::fillPrunedNodesPostOrder(pll_rnode_t *node,
 void BaseReconciliationModel::initSpeciesTree()
 {
   _allSpeciesNodesCount = _speciesTree.getNodesNumber();
-  _speciesLeft = std::vector<pll_rnode_t *>(_allSpeciesNodesCount, nullptr);
-  _speciesRight = std::vector<pll_rnode_t *>(_allSpeciesNodesCount, nullptr);
-  _speciesParent = std::vector<pll_rnode_t *>(_allSpeciesNodesCount, nullptr);
+  _speciesLeft = std::vector<corax_rnode_t *>(_allSpeciesNodesCount, nullptr);
+  _speciesRight = std::vector<corax_rnode_t *>(_allSpeciesNodesCount, nullptr);
+  _speciesParent = std::vector<corax_rnode_t *>(_allSpeciesNodesCount, nullptr);
   _speciesNameToId.clear();
   onSpeciesTreeChange(nullptr);
   for (auto node: _allSpeciesNodes) {
@@ -72,7 +72,7 @@ void BaseReconciliationModel::initSpeciesTree()
 }
 
 void BaseReconciliationModel::onSpeciesTreeChange(
-    const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
+    const std::unordered_set<corax_rnode_t *> *nodesToInvalidate)
 {
   if (!nodesToInvalidate) {
     _allSpeciesNodesInvalid = true;
@@ -97,7 +97,7 @@ void BaseReconciliationModel::onSpeciesTreeChange(
   }
   _prunedRoot = _speciesTree.getRoot();
   if (_info.pruneSpeciesTree && _speciesCoverage.size()) {
-    std::vector<pll_rnode_t *> pruned(_allSpeciesNodesCount, nullptr);
+    std::vector<corax_rnode_t *> pruned(_allSpeciesNodesCount, nullptr);
     for (auto speciesNode: _allSpeciesNodes) {
       auto e = speciesNode->node_index;
       if (!speciesNode->left) {

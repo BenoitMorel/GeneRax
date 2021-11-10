@@ -56,12 +56,12 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
   _evaluators->setRates(_rates);
 }
   
-pll_unode_t *ReconciliationEvaluation::getRoot() 
+corax_unode_t *ReconciliationEvaluation::getRoot() 
 {
   return _evaluators->getRoot();
 }
 
-void ReconciliationEvaluation::setRoot(pll_unode_t * root) 
+void ReconciliationEvaluation::setRoot(corax_unode_t * root) 
 {
   _evaluators->setRoot(root);
 }
@@ -145,12 +145,12 @@ void ReconciliationEvaluation::inferMLScenario(Scenario &scenario, bool stochast
   updatePrecision(infinitePrecision);
 }
   
-pll_unode_t *ReconciliationEvaluation::computeMLRoot() 
+corax_unode_t *ReconciliationEvaluation::computeMLRoot() 
 {
   return  _evaluators->computeMLRoot();
 }
   
-pll_unode_t *ReconciliationEvaluation::inferMLRoot()
+corax_unode_t *ReconciliationEvaluation::inferMLRoot()
 {
   auto infinitePrecision = _infinitePrecision;
   updatePrecision(true);
@@ -162,7 +162,7 @@ pll_unode_t *ReconciliationEvaluation::inferMLRoot()
   return res;
 }
 
-void ReconciliationEvaluation::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
+void ReconciliationEvaluation::onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate)
 {
   assert(_evaluators);
   _evaluators->onSpeciesTreeChange(nodesToInvalidate);

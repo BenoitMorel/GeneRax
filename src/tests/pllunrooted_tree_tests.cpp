@@ -11,7 +11,7 @@ const std::string tree2("(E, F, ((A,B),(C,D)));");
 const std::string treeWithDistances1 =
   "((A:0.1,B:0.1):0.2,(C:0.2,D:0.2):0.2,(E:0.2,F:0.3):0.1):0.0;";
 
-void testGetClade(pll_unode_t *node, unsigned int leavesNumber)
+void testGetClade(corax_unode_t *node, unsigned int leavesNumber)
 {
   auto c1 = PLLUnrootedTree::getClade(node);
   auto c2 = PLLUnrootedTree::getClade(node->back);
@@ -84,7 +84,7 @@ void testMADRooting()
   assert(deviations.size() == t1.getDirectedNodesNumber());
   auto minIt = std::min_element(deviations.begin(), deviations.end());
   auto minIndex = std::distance(deviations.begin(), minIt);
-  pll_unode_t *root = nullptr;
+  corax_unode_t *root = nullptr;
   for (auto node: t1.getNodes()) {
     if (node->node_index == minIndex) {
       root = node;

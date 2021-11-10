@@ -21,8 +21,8 @@ void test_aux(const std::string &newickString, bool as_file)
     os.close();
   }
   auto pllTree = as_file ? 
-    pll_rtree_parse_newick(input.c_str()) 
-    : pll_rtree_parse_newick_string(input.c_str());
+    corax_rtree_parse_newick(input.c_str()) 
+    : corax_rtree_parse_newick_string(input.c_str());
   assert(pllTree);
   auto customTree = custom_rtree_parse_newick(input.c_str(), 
       as_file,
@@ -33,14 +33,14 @@ void test_aux(const std::string &newickString, bool as_file)
   }
   assert(error.type == PET_NOERROR);
   assert(customTree);
-  auto pllTreeString = pll_rtree_export_newick(pllTree->root, nullptr);
-  auto customTreeString = pll_rtree_export_newick(customTree->root, nullptr);
+  auto pllTreeString = corax_rtree_export_newick(pllTree->root, nullptr);
+  auto customTreeString = corax_rtree_export_newick(customTree->root, nullptr);
   
   assert(std::string(pllTreeString) == std::string(customTreeString));
   free(pllTreeString);
   free(customTreeString);
-  pll_rtree_destroy(pllTree, nullptr);
-  pll_rtree_destroy(customTree, nullptr);
+  corax_rtree_destroy(pllTree, nullptr);
+  corax_rtree_destroy(customTree, nullptr);
 }
 
 void test(const std::string &newickString)
@@ -50,17 +50,17 @@ void test(const std::string &newickString)
 }
 
 void benchmark_aux(const std::vector<std::string> &newickStrings,
-    std::vector<pll_rtree_t *> &trees,
+    std::vector<corax_rtree_t *> &trees,
     bool pllVersion,
     bool as_file)
 {
   for (auto &newickString: newickStrings) {
-    pll_rtree_t *tree = nullptr;
+    corax_rtree_t *tree = nullptr;
     if (pllVersion) {
       if (as_file) {
-        tree = pll_rtree_parse_newick(newickString.c_str());
+        tree = corax_rtree_parse_newick(newickString.c_str());
       } else {
-        tree = pll_rtree_parse_newick_string(newickString.c_str());
+        tree = corax_rtree_parse_newick_string(newickString.c_str());
       }
     } else {
       ParsingError error;
@@ -127,8 +127,8 @@ void benchmark(bool asFile)
       newickStrings.push_back(newick);
     }
   }
-  std::vector<pll_rtree_t *> pllTrees;
-  std::vector<pll_rtree_t *> customTrees;
+  std::vector<corax_rtree_t *> pllTrees;
+  std::vector<corax_rtree_t *> customTrees;
   auto startCustom = std::chrono::high_resolution_clock::now();
   std::cerr << "[benchmark] parsing with custom..." << std::endl;
   for (unsigned int i = 0; i < iterations; ++i) {
@@ -150,10 +150,10 @@ void benchmark(bool asFile)
   std::cerr << "Custom parser: " << timeCustom << "s" << std::endl;
   std::cerr << "Destroying all trees..." << std::endl;
   for (auto tree: pllTrees) {
-    pll_rtree_destroy(tree, nullptr);
+    corax_rtree_destroy(tree, nullptr);
   }
   for (auto tree: customTrees) {
-    pll_rtree_destroy(tree, nullptr);
+    corax_rtree_destroy(tree, nullptr);
   }
 }
 
@@ -171,7 +171,7 @@ void test_bad_trees_aux(const std::string &name,
     std::cerr << get_parsing_error_name(error.type) << std::endl;
   }
   if (customTree) {
-    auto customTreeString = pll_rtree_export_newick(customTree->root, nullptr);
+    auto customTreeString = corax_rtree_export_newick(customTree->root, nullptr);
     std::cout << customTreeString << std::endl;
     free(customTreeString);
   }

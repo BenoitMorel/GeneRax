@@ -63,7 +63,7 @@ public:
    *  Should be called after each change in the species tree topology
    */
   virtual void onSpeciesTreeChange(
-      const std::unordered_set<pll_rnode_t *> *nodesToInvalidate) = 0;
+      const std::unordered_set<corax_rnode_t *> *nodesToInvalidate) = 0;
 
   /**
    *  Set the path to the file containing information about
@@ -91,37 +91,37 @@ public:
   virtual void setFractionMissingGenes(
       const std::string &fractionMissingFile);
   // overload from parent
-  virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
+  virtual void onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
 
-  pll_rnode_t *getSpeciesLeft(pll_rnode_t *node) {
+  corax_rnode_t *getSpeciesLeft(corax_rnode_t *node) {
     return _speciesLeft[node->node_index];
   }
 
-  pll_rnode_t *getSpeciesRight(pll_rnode_t *node) {
+  corax_rnode_t *getSpeciesRight(corax_rnode_t *node) {
     return _speciesRight[node->node_index];
   }
 
-  pll_rnode_t *getSpeciesParent(pll_rnode_t *node) {
+  corax_rnode_t *getSpeciesParent(corax_rnode_t *node) {
     return _speciesParent[node->node_index];
   }
 
-  pll_rnode_t *getPrunedRoot() {return _prunedRoot;}
+  corax_rnode_t *getPrunedRoot() {return _prunedRoot;}
 protected:
   virtual void initSpeciesTree();
   virtual void recomputeSpeciesProbabilities() = 0;
   virtual void beforeComputeLogLikelihood(); 
   
-  bool fillPrunedNodesPostOrder(pll_rnode_t *node, 
-    std::vector<pll_rnode_t *> &nodes, 
-    std::unordered_set<pll_rnode_t *> *nodesToAdd = nullptr);  
+  bool fillPrunedNodesPostOrder(corax_rnode_t *node, 
+    std::vector<corax_rnode_t *> &nodes, 
+    std::unordered_set<corax_rnode_t *> *nodesToAdd = nullptr);  
 
 
 
 protected:
   RecModelInfo _info;
   PLLRootedTree &_speciesTree;
-  std::vector <pll_rnode_t *> _speciesNodesToUpdate;
-  std::vector <pll_rnode_t *> _allSpeciesNodes;
+  std::vector <corax_rnode_t *> _speciesNodesToUpdate;
+  std::vector <corax_rnode_t *> _allSpeciesNodes;
   unsigned int _allSpeciesNodesCount;
   std::vector<unsigned int> _geneToSpecies;
   PartialLikelihoodMode _likelihoodMode;
@@ -131,13 +131,13 @@ protected:
   std::map<std::string, std::string> _geneNameToSpeciesName;
   std::map<std::string, unsigned int> _speciesNameToId;
   bool _allSpeciesNodesInvalid;
-  std::unordered_set<pll_rnode_t *> _invalidatedSpeciesNodes;
+  std::unordered_set<corax_rnode_t *> _invalidatedSpeciesNodes;
   // left, right and parent species vectors, 
   // indexed with the species nodex_index
-  std::vector<pll_rnode_t *> _speciesLeft;
-  std::vector<pll_rnode_t *> _speciesRight;
-  std::vector<pll_rnode_t *> _speciesParent;
-  pll_rnode_t *_prunedRoot;
+  std::vector<corax_rnode_t *> _speciesLeft;
+  std::vector<corax_rnode_t *> _speciesRight;
+  std::vector<corax_rnode_t *> _speciesParent;
+  corax_rnode_t *_prunedRoot;
 
 };
 

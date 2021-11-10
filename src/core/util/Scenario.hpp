@@ -10,10 +10,10 @@
 #include <trees/PLLRootedTree.hpp>
 
 /*
-typedef struct pll_utree_s pll_utree_t;
-typedef struct pll_unode_s pll_unode_t;
-typedef struct pll_rtree_s pll_rtree_t;
-typedef struct pll_rnode_s pll_rnode_t;
+typedef struct corax_utree_s corax_utree_t;
+typedef struct corax_unode_s corax_unode_t;
+typedef struct corax_rtree_s corax_rtree_t;
+typedef struct corax_rnode_s corax_rnode_t;
 */
 class ParallelOfstream;
 typedef std::unordered_set<std::string> OrthoGroup;
@@ -86,8 +86,8 @@ public:
     unsigned int rightGeneIndex;
 
     // temporary variables for event inference
-    pll_unode_t *pllTransferedGeneNode;
-    pll_rnode_t *pllDestSpeciesNode;
+    corax_unode_t *pllTransferedGeneNode;
+    corax_rnode_t *pllDestSpeciesNode;
     
     std::string label;
 
@@ -114,8 +114,8 @@ public:
   Scenario(Scenario &&) = delete;
   Scenario & operator = (Scenario &&) = delete;
  
-  void setGeneRoot(pll_unode_t *geneRoot) {_geneRoot = geneRoot;}
-  void setSpeciesTree(pll_rtree_t *speciesTree) {_speciesTree = speciesTree;}
+  void setGeneRoot(corax_unode_t *geneRoot) {_geneRoot = geneRoot;}
+  void setSpeciesTree(corax_rtree_t *speciesTree) {_speciesTree = speciesTree;}
   void setVirtualRootIndex(unsigned int virtualRootIndex) {_virtualRootIndex = virtualRootIndex;}
 
   /**
@@ -162,9 +162,9 @@ public:
   void resetBlackList();
 
 
-  pll_unode_t *getGeneRoot() const {return _geneRoot;}
+  corax_unode_t *getGeneRoot() const {return _geneRoot;}
   unsigned int getVirtualRootIndex() const { return _virtualRootIndex;}
-  pll_rtree_t *getSpeciesTree() const {return _speciesTree;}
+  corax_rtree_t *getSpeciesTree() const {return _speciesTree;}
   const std::vector<std::vector<Event> > &
     getGeneIdToEvents() const {return _geneIdToEvents;}
 private:
@@ -172,13 +172,13 @@ private:
   std::vector<Event> _events;
   std::vector<unsigned int> _eventsCount;
   std::vector<std::vector<Event> > _geneIdToEvents;
-  pll_unode_t *_geneRoot;
-  pll_rtree_t *_speciesTree;
+  corax_unode_t *_geneRoot;
+  corax_rtree_t *_speciesTree;
   unsigned int _virtualRootIndex;
   typedef std::vector< std::vector <int> > ScenarioBlackList;
   std::unique_ptr<ScenarioBlackList> _blacklist;
-  OrthoGroup *getLargestOrthoGroupRec(pll_unode_t *geneNode, bool isVirtualRoot) const;
-  void getAllOrthoGroupRec(pll_unode_t *geneNode,
+  OrthoGroup *getLargestOrthoGroupRec(corax_unode_t *geneNode, bool isVirtualRoot) const;
+  void getAllOrthoGroupRec(corax_unode_t *geneNode,
       OrthoGroups &orthogroups,
       OrthoGroupPtr &currentOrthoGroup,
       bool isVirtualRoot) const;

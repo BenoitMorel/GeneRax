@@ -26,7 +26,7 @@ void GeneSpeciesMapping::fill(const GeneSpeciesMapping &mapping)
   }
 }
   
-bool GeneSpeciesMapping::check(pll_utree_t *geneTree, pll_rtree_t *speciesTree)
+bool GeneSpeciesMapping::check(corax_utree_t *geneTree, corax_rtree_t *speciesTree)
 {
 
   assert(false);

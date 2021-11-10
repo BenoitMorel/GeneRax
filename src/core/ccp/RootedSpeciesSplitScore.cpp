@@ -37,10 +37,10 @@ void RootedSpeciesSplitScore::updateSpeciesTree(PLLRootedTree &speciesTree)
 }
 
 
-pll_rnode_t *RootedSpeciesSplitScore::getLCA(unsigned int cid)
+corax_rnode_t *RootedSpeciesSplitScore::getLCA(unsigned int cid)
 {
   const auto &clade = _splits.getClade(cid);
-  pll_rnode_t *lca = nullptr;
+  corax_rnode_t *lca = nullptr;
   for (unsigned int spid = 0; spid < clade.size(); ++spid) {
     if (clade[spid]) {
       if (lca == nullptr) {

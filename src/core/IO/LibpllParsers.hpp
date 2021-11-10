@@ -9,14 +9,14 @@
 #include <memory>
 #include <IO/Model.hpp>
 
-typedef struct pll_utree_s pll_utree_t;
-typedef struct pll_unode_s pll_unode_t;
-typedef struct pll_rtree_s pll_rtree_t;
-typedef struct pll_rnode_s pll_rnode_t;
-typedef unsigned long long pll_state_t;
+typedef struct corax_utree_s corax_utree_t;
+typedef struct corax_unode_s corax_unode_t;
+typedef struct corax_rtree_s corax_rtree_t;
+typedef struct corax_rnode_s corax_rnode_t;
+typedef unsigned long long corax_state_t;
 
-char * pll_rtree_export_newick(const pll_rnode_t * root,
-                                   char * (*cb_serialize)(const pll_rnode_t *));
+char * corax_rtree_export_newick(const corax_rnode_t * root,
+                                   char * (*cb_serialize)(const corax_rnode_t *));
 
 struct PLLSequence {
   PLLSequence(char *label_, char *seq_, unsigned int len_):
@@ -51,14 +51,14 @@ class LibpllParsers {
 public:
   LibpllParsers() = delete;
 
-  static void labelRootedTree(pll_rtree_t *tree);
+  static void labelRootedTree(corax_rtree_t *tree);
   static void labelRootedTree(const std::string &unlabelledNewickFile, const std::string &labelledNewickFile);
-  static pll_utree_t *readNewickFromFile(const std::string &newickFile);
-  static pll_utree_t *readNewickFromStr(const std::string &newickSTring);
-  static pll_rtree_t *readRootedFromFile(const std::string &newickFile);
-  static pll_rtree_t *readRootedFromStr(const std::string &newickFile);
+  static corax_utree_t *readNewickFromFile(const std::string &newickFile);
+  static corax_utree_t *readNewickFromStr(const std::string &newickSTring);
+  static corax_rtree_t *readRootedFromFile(const std::string &newickFile);
+  static corax_rtree_t *readRootedFromStr(const std::string &newickFile);
   static void parseMSA(const std::string &alignmentFilename, 
-    const pll_state_t *stateMap,
+    const corax_state_t *stateMap,
     PLLSequencePtrs &sequences,
     unsigned int *&weights);
 
@@ -69,8 +69,8 @@ public:
    */
   static double getMSAEntropy(const std::string &alignmentFilename,
       const std::string &modelStrOrFilename);
-  static void fillLeavesFromUtree(pll_utree_t *utree, std::unordered_set<std::string> &leaves);
-  static void fillLeavesFromRtree(pll_rtree_t *rtree, std::unordered_set<std::string> &leaves);
+  static void fillLeavesFromUtree(corax_utree_t *utree, std::unordered_set<std::string> &leaves);
+  static void fillLeavesFromRtree(corax_rtree_t *rtree, std::unordered_set<std::string> &leaves);
   
   /**
    *  return false if could not open the alignment
@@ -82,15 +82,15 @@ public:
   static bool areLabelsValid(std::unordered_set<std::string> &leaves);
   
   static std::vector<unsigned int> parallelGetTreeSizes(const Families &families);
-  static void saveUtree(const pll_unode_t *utree, 
+  static void saveUtree(const corax_unode_t *utree, 
     const std::string &fileName, 
     bool append = false);
-  static void saveRtree(const pll_rnode_t *rtree, 
+  static void saveRtree(const corax_rnode_t *rtree, 
     const std::string &fileName);
-  static void getRtreeNewickString(const pll_rtree_t *rtree, std::string &newick);
-  static void getRnodeNewickString(const pll_rnode_t *rnode, std::string &newick);
-  static void getUnodeNewickString(const pll_unode_t *rnode, std::string &newick);
-  static void getRtreeHierarchicalString(const pll_rtree_t *rtree, std::string &newick);
+  static void getRtreeNewickString(const corax_rtree_t *rtree, std::string &newick);
+  static void getRnodeNewickString(const corax_rnode_t *rnode, std::string &newick);
+  static void getUnodeNewickString(const corax_unode_t *rnode, std::string &newick);
+  static void getRtreeHierarchicalString(const corax_rtree_t *rtree, std::string &newick);
   static std::unique_ptr<Model> getModel(const std::string &modelStrOrFilename);
   static void writeSuperMatrixFasta(const SuperMatrix &superMatrix,
       const std::string &outputFile);
@@ -103,7 +103,7 @@ private:
    *  @param weights Pattern weights
    */
   static void parseFasta(const char *fasta_file, 
-    const pll_state_t *stateMap,
+    const corax_state_t *stateMap,
     PLLSequencePtrs &sequences,
     unsigned int *&weights);
 
@@ -115,7 +115,7 @@ private:
    *  @param weights Pattern weights
    */
   static void parsePhylip(const char *phylip_file, 
-    const pll_state_t *stateMap,
+    const corax_state_t *stateMap,
     PLLSequencePtrs &sequences,
     unsigned int *&weights);
   
