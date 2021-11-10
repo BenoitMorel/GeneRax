@@ -258,6 +258,7 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
           instance.args.perSpeciesDTLRates, 
           instance.rates, 
           instance.elapsedRates);
+        instance.totalRecLL = instance.rates.getScore();
       } else {
         long elapsed = 0;
         bool enableLibpll = false;
@@ -280,6 +281,8 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
             instance.currentIteration++, 
             ParallelContext::allowSchedulerSplitImplementation(), 
             elapsed);
+        double temp = 0.0;
+        Routines::gatherLikelihoods(instance.currentFamilies, temp, instance.totalRecLL);
       }
     }
         
