@@ -77,7 +77,7 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.familyFilePath);
   initFolders(instance);
   bool needAlignments = instance.args.geneSearchStrategy != GeneSearchStrategy::SKIP
-    && instance.args.geneSearchStrategy != GeneSearchStrategy::RECONCILE;
+    && instance.args.geneSearchStrategy != GeneSearchStrategy::EVAL;
   if (instance.args.filterFamilies) {
     Logger::timed << "Filtering invalid families..." << std::endl;
     bool checkSpeciesTree = (instance.args.speciesTreeAlgorithm 
@@ -114,10 +114,10 @@ void GeneRaxCore::initSpeciesTree(GeneRaxInstance &instance)
   if (instance.args.filterFamilies) {
     Logger::timed << "Filtering invalid families based on the starting species tree..." << std::endl;
     bool needAlignments = instance.args.geneSearchStrategy != GeneSearchStrategy::SKIP
-      && instance.args.geneSearchStrategy != GeneSearchStrategy::RECONCILE;
+      && instance.args.geneSearchStrategy != GeneSearchStrategy::EVAL;
     Family::filterFamilies(instance.initialFamilies, instance.speciesTree, needAlignments, true);
   }
-  if (!instance.initialFamilies.size()) {
+  if (!instance.currentFamilies.size()) {
     Logger::info << "[Error] No valid families! Aborting GeneRax" << std::endl;
     ParallelContext::abort(10);
   }
@@ -222,7 +222,7 @@ void GeneRaxCore::geneTreeJointSearch(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
   if (instance.args.geneSearchStrategy == GeneSearchStrategy::SKIP ||
-      instance.args.geneSearchStrategy == GeneSearchStrategy::RECONCILE) {
+      instance.args.geneSearchStrategy == GeneSearchStrategy::EVAL) {
     return;
   }
   for (unsigned int i = 1; i <= instance.args.recRadius; ++i) { 
@@ -248,7 +248,7 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
   assert(ParallelContext::isRandConsistent());
   if (instance.args.reconcile || 
       instance.args.reconciliationSampleNumber > 0) {
-    if (instance.args.geneSearchStrategy == GeneSearchStrategy::RECONCILE) {
+    if (instance.args.geneSearchStrategy == GeneSearchStrategy::EVAL) {
       Logger::timed << "Optimizing DTL rates before the reconciliation..." << std::endl;
       // we haven't optimized the DTL rates yet, so we do it now
       if (!instance.args.perFamilyDTLRates) {
@@ -259,6 +259,7 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
           instance.args.perSpeciesDTLRates, 
           instance.rates, 
           instance.elapsedRates);
+        instance.totalRecLL = instance.rates.getScore();
       } else {
         long elapsed = 0;
         bool enableLibpll = false;
@@ -281,6 +282,8 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
             instance.currentIteration++, 
             ParallelContext::allowSchedulerSplitImplementation(), 
             elapsed);
+        double temp = 0.0;
+        Routines::gatherLikelihoods(instance.currentFamilies, temp, instance.totalRecLL);
       }
     }
         
@@ -453,7 +456,7 @@ void GeneRaxCore::speciesTreeSupportEstimation(GeneRaxInstance &instance)
   ParallelContext::barrier();
   if (instance.args.quartetSupport) { 
     ICCalculator calculator(instance.speciesTree,
-        instance.initialFamilies,
+        instance.currentFamilies,
         instance.args.eqpicRadius,
         true);
     auto qpicOutput = Paths::getSpeciesTreeFile(instance.args.outputPath,
