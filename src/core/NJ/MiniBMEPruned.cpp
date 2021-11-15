@@ -140,8 +140,7 @@ MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
   bool ustar = false;
   for (auto leaf: speciesTree.getLeaves()) {
     std::string label(leaf->label);
-    _speciesStringToSpeciesId.insert({label, _speciesIdToSpeciesString.size()});
-    _speciesIdToSpeciesString.push_back(label);
+    _speciesStringToSpeciesId.insert({label, _speciesStringToSpeciesId.size()});
   }
   for (unsigned int i = 0; i < speciesTree.getLeavesNumber() + 3; ++i) {
     _pows.push_back(std::pow(0.5, i));
@@ -194,7 +193,7 @@ MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
 
 double MiniBMEPruned::computeBME(const PLLUnrootedTree &speciesTree)
 {
-  unsigned int N = _speciesIdToSpeciesString.size();
+  unsigned int N = _speciesStringToSpeciesId.size();
   DistanceMatrix speciesDistanceMatrix = getNullMatrix(N);
   fillSpeciesDistances(speciesTree, 
       _speciesStringToSpeciesId,
@@ -227,12 +226,7 @@ double MiniBMEPruned::computeBME(const PLLUnrootedTree &speciesTree)
 
 
 
-static bool isNumber(double v) {
-  return v == 0.0 || std::isnormal(v);
-}
-
-
-// computes _subBMEs[0][i1][i2]
+// computes _subBMEs[k][i1][i2] for all k
 static void computeSubBMEsPruneRec(corax_unode_t *n1,
     corax_unode_t *n2,
     BoolMatrix &treated,
@@ -342,8 +336,43 @@ void MiniBMEPruned::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
   }
   // Fill  the per-family subBME matrices
   BoolMatrix treated = getBoolMatrix(nodesNumber, nodesNumber, false);
+  if (_toUpdate.before) {
+    auto beforeNodes = speciesTree.getPostOrderNodesFrom(_toUpdate.before);
+    auto afterNodes = speciesTree.getPostOrderNodesFrom(_toUpdate.after);
+    auto prunedNodes = speciesTree.getPostOrderNodesFrom(_toUpdate.pruned);
+    auto betweenNodes = speciesTree.getPostOrderNodesFrom(_toUpdate.between[0]);
+    for (auto between: _toUpdate.between) {
+      for (auto node: speciesTree.getPostOrderNodesFrom(between)) {
+        betweenNodes.push_back(node);
+      }
+    }
+    for (auto i1: prunedNodes) {
+      for (auto i2: prunedNodes) {
+        treated[i1->node_index][i2->node_index] = true;
+      }
+    }
+    for (auto i1: betweenNodes) {
+      for (auto i2: betweenNodes) {
+        treated[i1->node_index][i2->node_index] = true;
+      }
+    }
+    for (auto i1: afterNodes) {
+      for (auto i2: afterNodes) {
+        treated[i1->node_index][i2->node_index] = true;
+      }
+    }
+    for (auto i1: beforeNodes) {
+      for (auto i2: beforeNodes) {
+        treated[i1->node_index][i2->node_index] = true;
+      }
+    }
+    for (auto i1: beforeNodes) {
+      for (auto i2: afterNodes) {
+        treated[i1->node_index][i2->node_index] = true;
+      }
+    }
+  }
   for (auto n1: speciesTree.getPostOrderNodes()) {
-    
     // we only need the subBMEs of the nodes of the
     // subtree rooted at n1->back
     for (auto n2: speciesTree.getPostOrderNodesFrom(n1->back)) {
@@ -359,6 +388,7 @@ void MiniBMEPruned::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
         _subBMEs);
     }
   }
+  
 }
 
 
@@ -372,6 +402,7 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
     corax_unode_t *Vs, 
     double Lsminus1, // L_s-1
     corax_unode_t *&bestRegraftNode,
+    SubBMEToUpdate &subBMEToUpdate,
     double &bestLs,
     unsigned int &bestS,
     const std::vector<DistanceMatrix> &subBMEs,
@@ -381,6 +412,10 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
     std::vector<bool> Vsminus1HasChildren) // does Vsminus1 have children after the previous moves
 {
   unsigned int maxRadius = 9999;
+  if (s > maxRadius) {
+    return;
+  }
+  subBMEToUpdate.tempBetween.push_back(Wsminus1);
   corax_unode_t *Ws = getOtherNext(Vs, Vsminus1->back)->back; 
   unsigned int K = subBMEs[0][0].size();
   // compute L_s
@@ -461,17 +496,18 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
     bestLs = Ls;
     bestRegraftNode = Vs;
     bestS = s;
-  }
-  // recursive call
-  if (s >= maxRadius) {
-    return;
+    subBMEToUpdate.between = subBMEToUpdate.tempBetween;
+    subBMEToUpdate.after = Vs->back;
+    subBMEToUpdate.pruned = Wp;
+
   }
   if (Vs->back->next) {
     _getBestSPRRecMissing(s+1, sprime, W0s, Wp, Ws, Vs, delta_Vsminus1_Wp, Vs->back->next, 
-        Ls, bestRegraftNode, bestLs, bestS, subBMEs, belongsToPruned, hasChildren, Vsminus1HasChildren, VsHasChildren);
+        Ls, bestRegraftNode, subBMEToUpdate, bestLs, bestS, subBMEs, belongsToPruned, hasChildren, Vsminus1HasChildren, VsHasChildren);
     _getBestSPRRecMissing(s+1, sprime, W0s, Wp, Ws, Vs, delta_Vsminus1_Wp, Vs->back->next->next, 
-        Ls, bestRegraftNode, bestLs, bestS, subBMEs, belongsToPruned, hasChildren, Vsminus1HasChildren, VsHasChildren);
+        Ls, bestRegraftNode, subBMEToUpdate, bestLs, bestS, subBMEs, belongsToPruned, hasChildren, Vsminus1HasChildren, VsHasChildren);
   }
+  subBMEToUpdate.tempBetween.pop_back();
 }
 
 
@@ -482,6 +518,7 @@ void MiniBMEPruned::getBestSPR(PLLUnrootedTree &speciesTree,
 {
   bestDiff = 0.0;
   unsigned int bestS = 1;
+  _toUpdate.reset();
   for (auto pruneNode: speciesTree.getPostOrderNodes()) {
     if (getBestSPRFromPrune(pruneNode, bestRegraftNode, bestDiff, bestS)) {
       bestPruneNode = pruneNode;
@@ -525,10 +562,12 @@ bool MiniBMEPruned::getBestSPRFromPrune(corax_unode_t *prunedNode,
       std::vector<bool> V0HasChildren = _hasChildren[V0->node_index];
       std::vector<bool> Vminus1HasChildren(V0HasChildren.size()); // won't be read at first iteration
       _getBestSPRRecMissing(s, sprime, W0s, Wp,  Wsminus1, V,delta_V0_Wp,
-          V1, 0.0, bestRegraftNode, bestDiff, bestS, _subBMEs, 
+          V1, 0.0, bestRegraftNode, _toUpdate, bestDiff, bestS, _subBMEs, 
           _belongsToPruned, _hasChildren, Vminus1HasChildren, V0HasChildren);
       if (bestDiff > oldBestDiff) {
         foundBetter = true;
+        _toUpdate.before = V0;
+        oldBestDiff = bestDiff;
       }
     }
   }
