@@ -25,7 +25,8 @@ public:
 
   virtual ~USearchMiniBMEEvaluator() {}
   virtual double eval(PLLUnrootedTree &tree);
-  bool computeAndApplyBestSPR(PLLUnrootedTree &tree);
+  bool computeAndApplyBestSPR(PLLUnrootedTree &tree,
+    unsigned int maxRadiusWithoutImprovement);
 private:
   std::unique_ptr<BMEEvaluator> _miniBME;
   double _lastScore;

@@ -346,6 +346,7 @@ static void getBestSPRRec(unsigned int s,
 
 
 void MiniBME::getBestSPR(PLLUnrootedTree &speciesTree,
+      unsigned int maxRadiusWithoutImprovement,
       corax_unode_t *&bestPruneNode,
       corax_unode_t *&bestRegraftNode,
       double &bestDiff)
@@ -357,7 +358,9 @@ void MiniBME::getBestSPR(PLLUnrootedTree &speciesTree,
       bestPruneNode = pruneNode;
     }
   }
-  Logger::info << "Best S=" << bestS << std::endl;
+  if (bestDiff != 0,0) {
+    Logger::info << "Best S=" << bestS << std::endl;
+  }
 }
 
 

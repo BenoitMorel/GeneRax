@@ -14,6 +14,7 @@ public:
   virtual ~BMEEvaluator() {}
   virtual double computeBME(const PLLUnrootedTree &speciesTree) = 0;
   virtual void getBestSPR(PLLUnrootedTree &speciesTree,
+      unsigned int maxRadiusWithoutImprovement,
       corax_unode_t *&bestPruneNode,
       corax_unode_t *&bestRegraftNode,
       double &bestDiff) = 0;
@@ -26,6 +27,7 @@ public:
   virtual ~MiniBME() {}
   virtual double computeBME(const PLLUnrootedTree &speciesTree);
   virtual void getBestSPR(PLLUnrootedTree &speciesTree,
+      unsigned int maxRadiusWithoutImprovement,
       corax_unode_t *&bestPruneNode,
       corax_unode_t *&bestRegraftNode,
       double &bestDiff);

@@ -14,17 +14,28 @@ double USearchMiniBMEEvaluator::eval(PLLUnrootedTree &tree)
 }
 
   
-bool USearchMiniBMEEvaluator::computeAndApplyBestSPR(PLLUnrootedTree &tree)
+bool USearchMiniBMEEvaluator::computeAndApplyBestSPR(PLLUnrootedTree &tree,
+    unsigned int maxRadiusWithoutImprovement)
 {
   _lastScore = -_miniBME->computeBME(tree);
   double diff = 0.0;
   corax_unode_t *bestPruneNode = nullptr;
   corax_unode_t *bestRegraftNode = nullptr;
   _miniBME->getBestSPR(tree, 
+      maxRadiusWithoutImprovement,
       bestPruneNode, 
       bestRegraftNode,
       diff);
-  if (diff > 0.00000001) {
+  double epsilon = 0.00000001;
+  if (diff <= epsilon) {
+    Logger::info << "Local search failed, trying with max radius..." << std::endl;
+    _miniBME->getBestSPR(tree, 
+        99999999,
+        bestPruneNode, 
+        bestRegraftNode,
+        diff);
+  }
+  if (diff > epsilon) {
     assert(bestPruneNode);
     assert(bestRegraftNode);
     auto ok = corax_utree_spr(bestPruneNode->back, 
@@ -69,7 +80,7 @@ void MiniBMEOptimizer::optimize()
   bool ok = true;
   unsigned int it = 0;
   while (ok) {
-    ok = evaluator.computeAndApplyBestSPR(speciesTree);
+    ok = evaluator.computeAndApplyBestSPR(speciesTree, 5);
     ++it;
   }
   Logger::info << "SPR search stopped after " << it << " iterations" << std::endl;

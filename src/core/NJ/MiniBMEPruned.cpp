@@ -393,6 +393,7 @@ void MiniBMEPruned::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
 
 
 void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
+    StopCriterion stopCriterion,
     std::vector<unsigned int> sprime, 
     std::vector<corax_unode_t *> W0s, 
     corax_unode_t *Wp, 
@@ -411,8 +412,8 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
     std::vector<bool> Vsminus2HasChildren, // does Vsminus2 have children after the previous moves
     std::vector<bool> Vsminus1HasChildren) // does Vsminus1 have children after the previous moves
 {
-  unsigned int maxRadius = 9999;
-  if (s > maxRadius) {
+  if (s > stopCriterion.maxRadius || 
+      stopCriterion.noImprovement > stopCriterion.maxRadiusWithoutImprovement) {
     return;
   }
   subBMEToUpdate.tempBetween.push_back(Wsminus1);
@@ -499,12 +500,14 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
     subBMEToUpdate.between = subBMEToUpdate.tempBetween;
     subBMEToUpdate.after = Vs->back;
     subBMEToUpdate.pruned = Wp;
-
+    stopCriterion.noImprovement = 0;
+  } else {
+    stopCriterion.noImprovement++;
   }
   if (Vs->back->next) {
-    _getBestSPRRecMissing(s+1, sprime, W0s, Wp, Ws, Vs, delta_Vsminus1_Wp, Vs->back->next, 
+    _getBestSPRRecMissing(s+1, stopCriterion, sprime, W0s, Wp, Ws, Vs, delta_Vsminus1_Wp, Vs->back->next, 
         Ls, bestRegraftNode, subBMEToUpdate, bestLs, bestS, subBMEs, belongsToPruned, hasChildren, Vsminus1HasChildren, VsHasChildren);
-    _getBestSPRRecMissing(s+1, sprime, W0s, Wp, Ws, Vs, delta_Vsminus1_Wp, Vs->back->next->next, 
+    _getBestSPRRecMissing(s+1, stopCriterion, sprime, W0s, Wp, Ws, Vs, delta_Vsminus1_Wp, Vs->back->next->next, 
         Ls, bestRegraftNode, subBMEToUpdate, bestLs, bestS, subBMEs, belongsToPruned, hasChildren, Vsminus1HasChildren, VsHasChildren);
   }
   subBMEToUpdate.tempBetween.pop_back();
@@ -512,6 +515,7 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
 
 
 void MiniBMEPruned::getBestSPR(PLLUnrootedTree &speciesTree,
+      unsigned int maxRadiusWithoutImprovement,
       corax_unode_t *&bestPruneNode,
       corax_unode_t *&bestRegraftNode,
       double &bestDiff)
@@ -520,7 +524,7 @@ void MiniBMEPruned::getBestSPR(PLLUnrootedTree &speciesTree,
   unsigned int bestS = 1;
   _toUpdate.reset();
   for (auto pruneNode: speciesTree.getPostOrderNodes()) {
-    if (getBestSPRFromPrune(pruneNode, bestRegraftNode, bestDiff, bestS)) {
+    if (getBestSPRFromPrune(maxRadiusWithoutImprovement, pruneNode, bestRegraftNode, bestDiff, bestS)) {
       bestPruneNode = pruneNode;
     }
   }
@@ -529,7 +533,8 @@ void MiniBMEPruned::getBestSPR(PLLUnrootedTree &speciesTree,
 
 
 
-bool MiniBMEPruned::getBestSPRFromPrune(corax_unode_t *prunedNode,
+bool MiniBMEPruned::getBestSPRFromPrune(unsigned int maxRadiusWithoutImprovement,
+      corax_unode_t *prunedNode,
       corax_unode_t *&bestRegraftNode,
       double &bestDiff,
       unsigned int &bestS)
@@ -545,6 +550,8 @@ bool MiniBMEPruned::getBestSPRFromPrune(corax_unode_t *prunedNode,
   V0s.push_back(Wp->back->next->next->back);
   unsigned int K = _subBMEs[0][0].size();
   std::vector<unsigned int> sprime(K, 1);
+  StopCriterion stopCriterion;
+  stopCriterion.maxRadiusWithoutImprovement = maxRadiusWithoutImprovement;
   for (auto V0: V0s) {
     auto V = getOtherNext(Wp->back, V0->back);
     if (!V->back->next) {
@@ -561,7 +568,7 @@ bool MiniBMEPruned::getBestSPRFromPrune(corax_unode_t *prunedNode,
       std::vector<double> delta_V0_Wp; // not used at first iteration
       std::vector<bool> V0HasChildren = _hasChildren[V0->node_index];
       std::vector<bool> Vminus1HasChildren(V0HasChildren.size()); // won't be read at first iteration
-      _getBestSPRRecMissing(s, sprime, W0s, Wp,  Wsminus1, V,delta_V0_Wp,
+      _getBestSPRRecMissing(s, stopCriterion, sprime, W0s, Wp,  Wsminus1, V,delta_V0_Wp,
           V1, 0.0, bestRegraftNode, _toUpdate, bestDiff, bestS, _subBMEs, 
           _belongsToPruned, _hasChildren, Vminus1HasChildren, V0HasChildren);
       if (bestDiff > oldBestDiff) {

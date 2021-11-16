@@ -27,6 +27,7 @@ public:
    *  between the current score and the new score
    */
   virtual void getBestSPR(PLLUnrootedTree &speciesTree,
+      unsigned int maxRadiusWithoutImprovement,
       corax_unode_t *&bestPruneNode,
       corax_unode_t *&bestRegraftNode,
       double &bestDiff);
@@ -85,9 +86,20 @@ private:
   
   // O(n^2)
   void _computeSubBMEsPrune(const PLLUnrootedTree &speciesTree);
- 
+
+  struct StopCriterion {
+    unsigned int maxRadius;
+    unsigned int maxRadiusWithoutImprovement;
+    unsigned int noImprovement;
+    StopCriterion(): maxRadius(99999),
+      maxRadiusWithoutImprovement(4),
+      noImprovement(0)
+      {}
+  };
+
   // lot of copies hgre...
   void _getBestSPRRecMissing(unsigned int s,
+     StopCriterion stopCriterion,
      std::vector<unsigned int> sprime, 
      std::vector<corax_unode_t *> W0s, 
      corax_unode_t *Wp, 
@@ -106,7 +118,8 @@ private:
      std::vector<bool> Vsminus2HasChildren, // does Vsminus2 have children after the previous moves
      std::vector<bool> Vsminus1HasChildren); // does Vsminus1 have children after the previous moves
    
-  bool  getBestSPRFromPrune(corax_unode_t *prunedNode,
+  bool  getBestSPRFromPrune(unsigned int maxRadiusWithoutImprovement,
+      corax_unode_t *prunedNode,
       corax_unode_t *&bestRegraftNode,
       double &bestDiff,
       unsigned int &bestS);
