@@ -17,6 +17,7 @@ extern "C" {
 }
 #include <IO/RaxmlTypes.hpp>
 #include <memory>
+#include <stdexcept>
 
 
 
