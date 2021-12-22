@@ -18,6 +18,7 @@ public:
    std::string speciesTree;
    SpeciesTreeAlgorithm speciesTreeAlgorithm;
    std::string output;
+   double minbl;
    int seed;
    bool missingData;
 

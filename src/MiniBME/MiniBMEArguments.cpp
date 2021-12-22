@@ -8,6 +8,7 @@ MiniBMEArguments::MiniBMEArguments(int iargc, char * iargv[]):
   argv(iargv),
   speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
   output("MiniBME"),
+  minbl(-1.0),
   seed(123),
   missingData(false)
 {
@@ -23,6 +24,8 @@ MiniBMEArguments::MiniBMEArguments(int iargc, char * iargv[]):
       speciesTreeAlgorithm = Enums::strToSpeciesTree(speciesTree);
     } else if (arg == "-p" || arg == "--prefix") {
       output = std::string(argv[++i]);
+    } else if (arg == "-b" || arg == "--min-bl") {
+      minbl = atof(argv[++i]);
     } else if (arg == "--seed") {
       seed = atoi(argv[++i]);
     } else if (arg == "--missing-data") {

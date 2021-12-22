@@ -133,7 +133,8 @@ static void getPrunedSpeciesMatrix(const PLLUnrootedTree &speciesTree,
 
 
 MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
-    const Families &families)
+    const Families &families,
+    double minbl)
 {
   bool minMode = true;
   bool reweight = false;
@@ -155,6 +156,7 @@ MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
   _perFamilyCoverageStr.resize(_patternCount);
   _perFamilyCoverage.resize(_patternCount);
   // map each species string to a species ID
+  std::set< std::vector<bool> > coverageSet;
   for (unsigned int i = 0; i < _patternCount; ++i) {
     auto &family = perCoreFamilies[i];
     _perFamilyCoverage[i] = std::vector<bool>(speciesTree.getLeavesNumber(), false);
@@ -166,6 +168,7 @@ MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
       _perFamilyCoverageStr[i].insert(species);
       _perFamilyCoverage[i][_speciesStringToSpeciesId.at(species)] = true;
     }
+    coverageSet.insert(_perFamilyCoverage[i]);
     std::ifstream reader(family.startingGeneTree);
     std::string geneTreeStr;
     while (std::getline(reader, geneTreeStr)) {
@@ -178,9 +181,11 @@ MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
           minMode,
           reweight,
           ustar,
-          -1.0);
+          minbl);
     }
   }
+  Logger::info << "Families: " << _patternCount << std::endl;
+  Logger::info << "Patterns: " << coverageSet.size() << std::endl;
   _prunedSpeciesMatrices = std::vector<DistanceMatrix>(
       _patternCount, getNullMatrix(speciesNumber));
   auto nodesNumber = speciesTree.getDirectedNodesNumber();

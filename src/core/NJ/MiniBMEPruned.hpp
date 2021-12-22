@@ -12,7 +12,8 @@
 class MiniBMEPruned: public BMEEvaluator {
 public:
   MiniBMEPruned(const PLLUnrootedTree &speciesTree, 
-      const Families &families);
+      const Families &families,
+      double minbl);
   virtual ~MiniBMEPruned() {}
   /*
    *  Computes the BME score of the species tree

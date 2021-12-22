@@ -23,7 +23,8 @@ public:
 class MiniBME: public BMEEvaluator {
 public:
   MiniBME(const PLLUnrootedTree &speciesTree, 
-      const Families &families);
+      const Families &families,
+      double minbl);
   virtual ~MiniBME() {}
   virtual double computeBME(const PLLUnrootedTree &speciesTree);
   virtual void getBestSPR(PLLUnrootedTree &speciesTree,

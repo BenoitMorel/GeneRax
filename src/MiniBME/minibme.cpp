@@ -68,6 +68,7 @@ void run( MiniBMEArguments &args)
   MiniBMEOptimizer speciesTreeOptimizer(
       args.speciesTree,
       families,
+      args.minbl,
       args.missingData,
       args.output);
   speciesTreeOptimizer.optimize();

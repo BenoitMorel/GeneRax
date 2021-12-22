@@ -57,10 +57,12 @@ bool USearchMiniBMEEvaluator::computeAndApplyBestSPR(PLLUnrootedTree &tree,
 MiniBMEOptimizer::MiniBMEOptimizer(
     const std::string speciesTreeFile, 
     const Families &families, 
+    double minbl,
     bool missingData,
     const std::string &outputDir):
   _speciesTree(std::make_unique<SpeciesTree>(speciesTreeFile)),
   _outputDir(outputDir),
+  _minbl(minbl),
   _missingData(missingData),
   _families(families)
 {
@@ -75,6 +77,7 @@ void MiniBMEOptimizer::optimize()
   PLLUnrootedTree speciesTree(_speciesTree->getTree());
   USearchMiniBMEEvaluator evaluator(speciesTree,
     _families,
+    _minbl,
     _missingData);
   Logger::info << "Starting score: " << evaluator.eval(speciesTree) << std::endl;
   bool ok = true;

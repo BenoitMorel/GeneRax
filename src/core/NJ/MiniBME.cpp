@@ -113,7 +113,8 @@ static void getPrunedSpeciesMatrix(const PLLUnrootedTree &speciesTree,
 
 
 MiniBME::MiniBME(const PLLUnrootedTree &speciesTree,
-    const Families &families)
+    const Families &families,
+    double minbl)
 {
   bool minMode = true;
   bool reweight = false;
@@ -131,7 +132,7 @@ MiniBME::MiniBME(const PLLUnrootedTree &speciesTree,
     minMode, 
     reweight,
     ustar,
-    -1.0, // do not contract small branch lengths
+    minbl,
     _geneDistanceMatrices[0],
     _speciesIdToSpeciesString,
     _speciesStringToSpeciesId);

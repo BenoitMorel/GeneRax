@@ -14,12 +14,13 @@ class USearchMiniBMEEvaluator {
 public:
   USearchMiniBMEEvaluator(PLLUnrootedTree &speciesTree,
     const Families &families,
+    double minbl,
     bool missingData):
       _lastScore(-99999) {
       if (missingData) {
-        _miniBME.reset(new MiniBMEPruned(speciesTree, families)); 
+        _miniBME.reset(new MiniBMEPruned(speciesTree, families, minbl)); 
       } else {
-        _miniBME.reset(new MiniBME(speciesTree, families)); 
+        _miniBME.reset(new MiniBME(speciesTree, families, minbl)); 
       }
     }
 
@@ -37,6 +38,7 @@ class MiniBMEOptimizer {
 public:
   MiniBMEOptimizer(const std::string speciesTreeFile, 
       const Families &families,
+      double minbl,
       bool missingData,
       const std::string &outputDir);
 
@@ -44,6 +46,7 @@ public:
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   std::string _outputDir;
+  double _minbl;
   bool _missingData;
   Families _families;
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
