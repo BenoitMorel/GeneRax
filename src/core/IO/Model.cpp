@@ -929,7 +929,7 @@ void assign(Model& model, const corax_partition_t * partition)
       model.base_freqs(i, doubleVector(partition->frequencies[i],
                                        partition->frequencies[i] + partition->states));
 
-      size_t n_subst_rates = corax_subst_rate_count(partition->states);
+      size_t n_subst_rates = CORAX_SUBST_RATE_COUNT(partition->states);
       model.subst_rates(i, doubleVector(partition->subst_params[i],
                                         partition->subst_params[i] + n_subst_rates));
     }

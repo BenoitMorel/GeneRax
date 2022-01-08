@@ -7,7 +7,7 @@
 #include <IO/Logger.hpp>
 #include <IO/FileSystem.hpp>
 #include <trees/PLLUnrootedTree.hpp>
-#include <corax/corax_common.h>
+#include <corax/corax.h>
 
 void GeneSpeciesMapping::fill(const std::string &mappingFile, const std::string &geneTreeStrOrFile) 
 {

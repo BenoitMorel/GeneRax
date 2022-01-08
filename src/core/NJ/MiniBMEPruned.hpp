@@ -9,6 +9,7 @@
 
 #include <NJ/MiniBME.hpp>
 
+
 class MiniBMEPruned: public BMEEvaluator {
 public:
   MiniBMEPruned(const PLLUnrootedTree &speciesTree, 
@@ -29,9 +30,8 @@ public:
    */
   virtual void getBestSPR(PLLUnrootedTree &speciesTree,
       unsigned int maxRadiusWithoutImprovement,
-      corax_unode_t *&bestPruneNode,
-      corax_unode_t *&bestRegraftNode,
-      double &bestDiff);
+      std::vector<SPRMove> &bestMoves);
+
 private:
   // _getBestSPRRecMissing[k][i][j] is the distance
   // between species i and j for the gene family k

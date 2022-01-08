@@ -9,7 +9,7 @@
 #include <array>
 #include <IO/Logger.hpp>
 #include <IO/RootedNewickParser.hpp>
-#include <corax/corax_common.h>
+#include <corax/corax.h>
 
 
 static char * rtree_export_newick_recursive(const corax_rnode_t * root,

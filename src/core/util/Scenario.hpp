@@ -6,7 +6,7 @@
 #include <util/types.hpp>
 #include <memory>
 #include <unordered_set>
-#include <corax/corax_common.h>
+#include <corax/corax.h>
 #include <trees/PLLRootedTree.hpp>
 
 /*

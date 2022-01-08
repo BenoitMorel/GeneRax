@@ -769,3 +769,26 @@ corax_unode_t *PLLUnrootedTree::findLeaf(const std::string &label)
   return nullptr;
 }
 
+void PLLUnrootedTree::ensureUniqueLabels() 
+{
+  auto labels = getLabels();
+  unsigned int i = 0;
+  std::string prefix("s");
+  for (auto node: getPostOrderNodes()) {
+    if (node->next) {
+      std::string newLabel;
+      if (node->label) {
+        newLabel = std::string(node->label);
+      }
+      while (labels.find(newLabel) != labels.end() || newLabel.size() == 0) {
+        newLabel = prefix + std::to_string(i++);
+      }
+      free(node->label);
+      node->label = static_cast<char*>(malloc(sizeof(char) * (newLabel.size() + 1)));
+      std::strcpy(node->label, newLabel.c_str());
+      labels.insert(newLabel);
+    }
+  }
+}
+  
+

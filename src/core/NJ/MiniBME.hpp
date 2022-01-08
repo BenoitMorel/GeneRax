@@ -9,6 +9,34 @@
 
 using BoolMatrix = std::vector< std::vector<bool> >;
 
+struct SPRMove {
+  corax_unode_t *pruneNode;
+  corax_unode_t *regraftNode;
+  double score;
+  SPRMove(corax_unode_t *pruneNode,
+      corax_unode_t *regraftNode,
+      double score): 
+    pruneNode(pruneNode),
+    regraftNode(regraftNode),
+    score(score) {}
+  
+  bool operator < (const SPRMove& other) const {
+    return other.score < score;
+    /*
+    if (other.score < score) {
+      return true;
+    } else if (other.score > score) {
+      return false;
+    }
+    return other.prunedNode->node_index + other.regraftNode->node_index <
+      pruneNode->node_index + regraftNode->node_index;
+  */
+  }
+  bool operator ==(const SPRMove& other) const {
+    return other.score == score;
+  }
+};
+
 class BMEEvaluator {
 public:
   virtual ~BMEEvaluator() {}
@@ -17,7 +45,10 @@ public:
       unsigned int maxRadiusWithoutImprovement,
       corax_unode_t *&bestPruneNode,
       corax_unode_t *&bestRegraftNode,
-      double &bestDiff) = 0;
+      double &bestDiff)  {}
+  virtual void getBestSPR(PLLUnrootedTree &speciesTree,
+      unsigned int maxRadiusWithoutImprovement,
+      std::vector<SPRMove> &bestMoves) {}
 };
 
 class MiniBME: public BMEEvaluator {

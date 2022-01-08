@@ -341,7 +341,7 @@ void MiniBMEPruned::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
   }
   // Fill  the per-family subBME matrices
   BoolMatrix treated = getBoolMatrix(nodesNumber, nodesNumber, false);
-  if (_toUpdate.before) {
+  if (false && _toUpdate.before) {
     auto beforeNodes = speciesTree.getPostOrderNodesFrom(_toUpdate.before);
     auto afterNodes = speciesTree.getPostOrderNodesFrom(_toUpdate.after);
     auto prunedNodes = speciesTree.getPostOrderNodesFrom(_toUpdate.pruned);
@@ -521,19 +521,19 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
 
 void MiniBMEPruned::getBestSPR(PLLUnrootedTree &speciesTree,
       unsigned int maxRadiusWithoutImprovement,
-      corax_unode_t *&bestPruneNode,
-      corax_unode_t *&bestRegraftNode,
-      double &bestDiff)
+      std::vector<SPRMove> &bestMoves)
 {
-  bestDiff = 0.0;
-  unsigned int bestS = 1;
   _toUpdate.reset();
   for (auto pruneNode: speciesTree.getPostOrderNodes()) {
+    double bestDiff = 0.0;
+    unsigned int bestS = 1;
+    corax_unode_t *bestRegraftNode = nullptr;
     if (getBestSPRFromPrune(maxRadiusWithoutImprovement, pruneNode, bestRegraftNode, bestDiff, bestS)) {
-      bestPruneNode = pruneNode;
+      bestMoves.push_back(SPRMove(pruneNode, bestRegraftNode, bestDiff));
     }
   }
-  Logger::info << "Best S=" << bestS << std::endl;
+  std::sort(bestMoves.begin(), bestMoves.end());
+  //Logger::info << "Best S=" << bestS << std::endl;
 }
 
 

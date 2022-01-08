@@ -11,6 +11,7 @@
 #include <util/CArrayRange.hpp>
 #include <maths/Random.hpp>
 #include <functional>
+#include <cstring>
 
 class PLLRootedTree;
 
@@ -188,6 +189,8 @@ public:
     const PLLUnrootedTree &t2);
 
   bool isBinary() const;
+  
+  void ensureUniqueLabels();
 
   /**
    *  Return the leaf node that has the label label,

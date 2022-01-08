@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <unordered_map>
+#include <corax/corax_model.h>
 #include <corax/corax.h>
 #include <IO/RaxmlTypes.hpp>
 #include <memory>

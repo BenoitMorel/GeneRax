@@ -1,6 +1,6 @@
 #pragma once
 
-#include <corax/corax_common.h>
+#include <corax/corax.h>
 #include <IO/LibpllParsers.hpp>
 
 extern int is_separator[];
