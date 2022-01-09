@@ -56,6 +56,10 @@ private:
   // i and j (indexed with node_index). Only defined for non-
   // intersecting i and j.
   std::vector<DistanceMatrix> _subBMEs;
+  double &cell(unsigned int sp1, unsigned int sp2, unsigned int k) {
+    return _subBMEs[sp1][sp2][k];
+  }
+  DistanceMatrix _coucou;
   // _hasChildren[i][k] == true if there is at least one leaf
   // under i that belongs to the species tree induced by the
   // family k
@@ -119,6 +123,11 @@ private:
      std::vector<bool> Vsminus2HasChildren, // does Vsminus2 have children after the previous moves
      std::vector<bool> Vsminus1HasChildren); // does Vsminus1 have children after the previous moves
    
+
+  // computes _subBMEs[k][i1][i2] for all k
+  void _computeSubBMEsPruneRec(corax_unode_t *n1,
+    corax_unode_t *n2,
+    BoolMatrix &treated);
   bool  getBestSPRFromPrune(unsigned int maxRadiusWithoutImprovement,
       corax_unode_t *prunedNode,
       corax_unode_t *&bestRegraftNode,

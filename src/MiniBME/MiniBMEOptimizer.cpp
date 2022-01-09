@@ -170,11 +170,14 @@ MiniBMEOptimizer::MiniBMEOptimizer(
 void MiniBMEOptimizer::optimize()
 {
   PLLUnrootedTree speciesTree(_speciesTree->getTree());
+  Logger::timed << "Evaluator initialization..." << std::endl;
   USearchMiniBMEEvaluator evaluator(speciesTree,
     _families,
     _minbl,
     _missingData);
-  Logger::info << "Starting score: " << evaluator.eval(speciesTree) << std::endl;
+  Logger::timed << "First score computation..." << std::endl;
+  double startingScore = evaluator.eval(speciesTree); 
+  Logger::info << "Starting score: " << startingScore << std::endl;
   bool ok = true;
   unsigned int it = 0;
   while (ok) {
@@ -182,7 +185,6 @@ void MiniBMEOptimizer::optimize()
     ++it;
   }
   Logger::info << "SPR search stopped after " << it << " iterations" << std::endl;
-  Logger::info << "Final score: " << evaluator.eval(speciesTree) << std::endl;
   speciesTree.save(Paths::getSpeciesTreeFile(_outputDir, "inferred_species_tree.newick"));
 }
 
