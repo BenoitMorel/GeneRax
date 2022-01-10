@@ -147,20 +147,20 @@ MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
   for (unsigned int i = 0; i < speciesTree.getLeavesNumber() + 3; ++i) {
     _pows.push_back(std::pow(0.5, i));
   }
-  
+  _N = speciesTree.getDirectedNodesNumber(); 
   // fill species-spid mappings
   Families perCoreFamilies;
   PerCoreGeneTrees::getPerCoreFamilies(families, perCoreFamilies);
-  _patternCount = perCoreFamilies.size();
-  _geneDistanceMatrices.resize(_patternCount);
-  _geneDistanceDenominators.resize(_patternCount);
+  _K = perCoreFamilies.size();
+  _geneDistanceMatrices.resize(_K);
+  _geneDistanceDenominators.resize(_K);
   unsigned int speciesNumber = speciesTree.getLeavesNumber();
-  _perFamilyCoverageStr.resize(_patternCount);
-  _perFamilyCoverage.resize(_patternCount);
+  _perFamilyCoverageStr.resize(_K);
+  _perFamilyCoverage.resize(_K);
   // map each species string to a species ID
   std::set< std::vector<bool> > coverageSet;
   Logger::timed << "MiniBMEPruned::MiniBMEPruned 2" << std::endl;
-  for (unsigned int i = 0; i < _patternCount; ++i) {
+  for (unsigned int i = 0; i < _K; ++i) {
     auto &family = perCoreFamilies[i];
     _perFamilyCoverage[i] = std::vector<bool>(speciesTree.getLeavesNumber(), false);
     _geneDistanceMatrices[i] = getNullMatrix(speciesNumber);
@@ -187,24 +187,34 @@ MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
           minbl);
     }
   }
-  Logger::info << "Families: " << _patternCount << std::endl;
+  Logger::info << "Families: " << _K << std::endl;
   Logger::info << "Patterns: " << coverageSet.size() << std::endl;
   _prunedSpeciesMatrices = std::vector<DistanceMatrix>(
-      _patternCount, getNullMatrix(speciesNumber));
+      _K, getNullMatrix(speciesNumber));
   auto nodesNumber = speciesTree.getDirectedNodesNumber();
   Logger::timed << "MiniBMEPruned::MiniBMEPruned 3" << std::endl;
   auto zero = getMatrix(nodesNumber, 
-        _patternCount, 
+        _K, 
         std::numeric_limits<double>::infinity());
   Logger::timed << "MiniBMEPruned::MiniBMEPruned 4" << std::endl;
+#ifdef OLDBME
   _subBMEs = DistanceVectorMatrix(nodesNumber);
+  Logger::timed << "MiniBMEPruned::MiniBMEPruned 5" << std::endl;
   std::fill(_subBMEs.begin(), _subBMEs.end(), zero);
+  Logger::timed << "MiniBMEPruned::MiniBMEPruned 6" << std::endl;
+#else
+  _subBMEs = std::vector<double>(_N * _N * _K, 
+      std::numeric_limits<double>::infinity());
+  // check integer overflow
+  assert(_subBMEs.size() / _K == _N * _N);
+#endif
+  std::cerr << _subBMEs.size() << std::endl;
   for (auto sp1: speciesTree.getLeaves()) {
     auto i1 = sp1->node_index;
     for (auto sp2: speciesTree.getLeaves()) {
       auto i2 = sp2->node_index;
-      for (auto k = 0; k < _patternCount; ++k) {
-        _subBMEs[i1][i2][k] = _geneDistanceMatrices[k][i1][i2];
+      for (auto k = 0; k < _K; ++k) {
+        setCell(i1, i2, k, _geneDistanceMatrices[k][i1][i2]);
       }
     }
   }
@@ -222,7 +232,7 @@ double MiniBMEPruned::computeBME(const PLLUnrootedTree &speciesTree)
       speciesDistanceMatrix);
   double res = 0.0;
   // O(kn^2)
-  for (unsigned int k = 0; k < _patternCount; ++k) {
+  for (unsigned int k = 0; k < _K; ++k) {
     // O(n^2)
     getPrunedSpeciesMatrix(speciesTree, 
           _speciesStringToSpeciesId,
@@ -248,14 +258,13 @@ double MiniBMEPruned::computeBME(const PLLUnrootedTree &speciesTree)
 
 
 
-// computes _subBMEs[k][i1][i2] for all k
  void MiniBMEPruned::_computeSubBMEsPruneRec(corax_unode_t *n1,
     corax_unode_t *n2,
     BoolMatrix &treated)
 {
   auto i1 = n1->node_index;
   auto i2 = n2->node_index;
-  unsigned int K = _patternCount;
+  unsigned int K = _K;
   if (treated[i1][i2]) {
     // stop if we've already been there
     return;
@@ -265,7 +274,9 @@ double MiniBMEPruned::computeBME(const PLLUnrootedTree &speciesTree)
   } else if (!n2->next) {
     // only n2 is a leaf, compute the symetric
     _computeSubBMEsPruneRec(n2, n1, treated); 
-    _subBMEs[i1][i2] = _subBMEs[i2][i1];
+    for (unsigned int k = 0; k < _K; ++k) {
+      setCell(i1, i2, k, getCell(i2, i1, k));
+    }
   } else {
     // n2 is not a leaf, we can run recursion on n2
     auto left2 = n2->next->back;
@@ -277,7 +288,7 @@ double MiniBMEPruned::computeBME(const PLLUnrootedTree &speciesTree)
         // Edge case: either n1 or n2 is not in the path
         // of the induced tree, so its subBME should be
         // ignored
-        _subBMEs[i1][i2][k] = 0.0;
+        setCell(i1, i2, k, 0.0);
         continue;
       }
       // Now we can assume that both n1 and n2 are in 
@@ -287,9 +298,9 @@ double MiniBMEPruned::computeBME(const PLLUnrootedTree &speciesTree)
         // Case 1: n2 is not in the induced tree
         // Go down to n2's child that has children
         if (_hasChildren[left2->node_index][k]) {
-          _subBMEs[i1][i2][k] = _subBMEs[i1][left2->node_index][k];
+          setCell(i1, i2, k, getCell(i1, left2->node_index, k));
         } else {
-          _subBMEs[i1][i2][k] = _subBMEs[i1][right2->node_index][k];
+          setCell(i1, i2, k, getCell(i1, right2->node_index, k));
         }
       } else if (!_belongsToPruned[i1][k]) {
         // Case 2: n2 is in the induced tree, n1 is not
@@ -298,15 +309,16 @@ double MiniBMEPruned::computeBME(const PLLUnrootedTree &speciesTree)
         auto lefti1 = n1->next->back->node_index;
         auto righti1 = n1->next->next->back->node_index;
         if (_hasChildren[lefti1][k]) {
-          _subBMEs[i1][i2][k] = _subBMEs[lefti1][i2][k];
+          setCell(i1, i2, k, getCell(lefti1, i2, k));
         } else {
-          _subBMEs[i1][i2][k] = _subBMEs[righti1][i2][k];
+          setCell(i1, i2, k, getCell(righti1, i2, k));
         }
       } else {
         // case 3: both n1 and n2 are in the induced tree
-        _subBMEs[i1][i2][k] = 0.5 * (
-            _subBMEs[i1][left2->node_index][k] + 
-            _subBMEs[i1][right2->node_index][k]);
+        double v = getCell(i1, left2->node_index, k);
+        v += getCell(i1, right2->node_index, k);
+        v *= 0.5;
+        setCell(i1, i2, k, v);
       }
   
     }
@@ -319,12 +331,12 @@ void MiniBMEPruned::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
   auto nodesNumber = speciesTree.getDirectedNodesNumber();
   // Fill hasChildren and belongsToPruned
   _hasChildren = getBoolMatrix(nodesNumber, 
-      _patternCount,
+      _K,
       false);
   _belongsToPruned = _hasChildren;
   for (auto node: speciesTree.getPostOrderNodes()) {
     auto index = node->node_index;
-    for (unsigned int k = 0; k < _patternCount; ++k) {
+    for (unsigned int k = 0; k < _K; ++k) {
       if (!node->next) {
         if (_perFamilyCoverage[k][index]) {
           _hasChildren[index][k] = true;
@@ -343,6 +355,8 @@ void MiniBMEPruned::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
   // Fill  the per-family subBME matrices
   BoolMatrix treated = getBoolMatrix(nodesNumber, nodesNumber, false);
   /*
+  // this is a code optimization that does not work with
+  // applying multiple SPR rounds simultaneously
   if (false && _toUpdate.before) {
     auto beforeNodes = speciesTree.getPostOrderNodesFrom(_toUpdate.before);
     auto afterNodes = speciesTree.getPostOrderNodesFrom(_toUpdate.after);
@@ -409,7 +423,6 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
     SubBMEToUpdate &subBMEToUpdate,
     double &bestLs,
     unsigned int &bestS,
-    const std::vector<DistanceMatrix> &subBMEs,
     const BoolMatrix &belongsToPruned,
     const BoolMatrix &hasChildren,
     std::vector<bool> Vsminus2HasChildren, // does Vsminus2 have children after the previous moves
@@ -421,7 +434,7 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
   }
   subBMEToUpdate.tempBetween.push_back(Wsminus1);
   corax_unode_t *Ws = getOtherNext(Vs, Vsminus1->back)->back; 
-  unsigned int K = subBMEs[0][0].size();
+  unsigned int K = _K;
   // compute L_s
   // we compute LS for an NNI to ((A,B),(C,D)) by swapping B and C
   // where:
@@ -458,25 +471,25 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
     }
 
     // deltaCD and deltaBD are trivial because not affected by previous NNI moves
-    double deltaCD = subBMEs[Ws->node_index][Vs->back->node_index][k];
-    double deltaBD = subBMEs[Wp->node_index][Vs->back->node_index][k];
+    double deltaCD = getCell(Ws->node_index, Vs->back->node_index, k);
+    double deltaBD = getCell(Wp->node_index, Vs->back->node_index, k);
     
     // deltaAB and deltaAC are affected by the previous moves
     double deltaAB = 0.0;
     double deltaAC = 0.0;
     if (sprime[k] <= 1 && applyDiff) {
-      deltaAB = subBMEs[W0s[k]->node_index][Wp->node_index][k];
-      deltaAC = subBMEs[W0s[k]->node_index][Ws->node_index][k];
+      deltaAB = getCell(W0s[k]->node_index, Wp->node_index, k);
+      deltaAC = getCell(W0s[k]->node_index, Ws->node_index, k);
     } else if (W0s[k]) {
       deltaAC = _pows[sprime[k]] * 
-        (subBMEs[W0s[k]->node_index][Ws->node_index][k] - 
-         subBMEs[Wp->node_index][Ws->node_index][k]);
-      deltaAC += subBMEs[Vsminus1->node_index][Ws->node_index][k];
+        (getCell(W0s[k]->node_index, Ws->node_index, k) - 
+         getCell(Wp->node_index, Ws->node_index, k));
+      deltaAC += getCell(Vsminus1->node_index, Ws->node_index, k);
       if (hasChildren[Wsminus1->node_index][k] && Vsminus2HasChildren[k]) {
         deltaAB = 0.5 * (delta_Vsminus2_Wp[k] + 
-          subBMEs[Wsminus1->node_index][Wp->node_index][k]);
+          getCell(Wsminus1->node_index, Wp->node_index, k));
       } else if (hasChildren[Wsminus1->node_index][k] && !Vsminus2HasChildren[k]) {
-        deltaAB = subBMEs[Wsminus1->node_index][Wp->node_index][k];
+        deltaAB = getCell(Wsminus1->node_index, Wp->node_index, k);
       } else if (!hasChildren[Wsminus1->node_index][k] && Vsminus2HasChildren[k]) {
         deltaAB = delta_Vsminus2_Wp[k];
       } else {
@@ -509,9 +522,9 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
   }
   if (Vs->back->next) {
     _getBestSPRRecMissing(s+1, stopCriterion, sprime, W0s, Wp, Ws, Vs, delta_Vsminus1_Wp, Vs->back->next, 
-        Ls, bestRegraftNode, subBMEToUpdate, bestLs, bestS, subBMEs, belongsToPruned, hasChildren, Vsminus1HasChildren, VsHasChildren);
+        Ls, bestRegraftNode, subBMEToUpdate, bestLs, bestS, belongsToPruned, hasChildren, Vsminus1HasChildren, VsHasChildren);
     _getBestSPRRecMissing(s+1, stopCriterion, sprime, W0s, Wp, Ws, Vs, delta_Vsminus1_Wp, Vs->back->next->next, 
-        Ls, bestRegraftNode, subBMEToUpdate, bestLs, bestS, subBMEs, belongsToPruned, hasChildren, Vsminus1HasChildren, VsHasChildren);
+        Ls, bestRegraftNode, subBMEToUpdate, bestLs, bestS, belongsToPruned, hasChildren, Vsminus1HasChildren, VsHasChildren);
   }
   subBMEToUpdate.tempBetween.pop_back();
 }
@@ -550,7 +563,7 @@ bool MiniBMEPruned::getBestSPRFromPrune(unsigned int maxRadiusWithoutImprovement
   std::vector<corax_unode_t *> V0s;
   V0s.push_back(Wp->back->next->back);
   V0s.push_back(Wp->back->next->next->back);
-  unsigned int K = _subBMEs[0][0].size();
+  unsigned int K = _K;
   std::vector<unsigned int> sprime(K, 1);
   StopCriterion stopCriterion;
   stopCriterion.maxRadiusWithoutImprovement = maxRadiusWithoutImprovement;
@@ -571,7 +584,7 @@ bool MiniBMEPruned::getBestSPRFromPrune(unsigned int maxRadiusWithoutImprovement
       std::vector<bool> V0HasChildren = _hasChildren[V0->node_index];
       std::vector<bool> Vminus1HasChildren(V0HasChildren.size()); // won't be read at first iteration
       _getBestSPRRecMissing(s, stopCriterion, sprime, W0s, Wp,  Wsminus1, V,delta_V0_Wp,
-          V1, 0.0, bestRegraftNode, _toUpdate, bestDiff, bestS, _subBMEs, 
+          V1, 0.0, bestRegraftNode, _toUpdate, bestDiff, bestS, 
           _belongsToPruned, _hasChildren, Vminus1HasChildren, V0HasChildren);
       if (bestDiff > oldBestDiff) {
         foundBetter = true;

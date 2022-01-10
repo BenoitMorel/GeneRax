@@ -7,6 +7,7 @@
 #include <vector>
 #include <unordered_set>
 
+#include <IO/Logger.hpp>
 #include <NJ/MiniBME.hpp>
 
 
@@ -40,8 +41,10 @@ private:
   std::vector<DistanceMatrix> _geneDistanceMatrices;
   // see _geneDistanceMatrices
   std::vector<DistanceMatrix> _geneDistanceDenominators;
+  // number of species nodes
+  size_t _N;
   // number of families 
-  unsigned int _patternCount;
+  size_t _K;
   // _perFamilyCoverageStr[k] is the set of labels of the species
   // covered by the family k
   std::vector<std::unordered_set<std::string> > _perFamilyCoverageStr;
@@ -55,11 +58,27 @@ private:
   // _subBMEs[k][i][j] == average distance between the subtrees
   // i and j (indexed with node_index). Only defined for non-
   // intersecting i and j.
+
+#ifdef OLDBME
   std::vector<DistanceMatrix> _subBMEs;
-  double &cell(unsigned int sp1, unsigned int sp2, unsigned int k) {
+  double getCell(unsigned int sp1, unsigned int sp2, unsigned int k) {
     return _subBMEs[sp1][sp2][k];
   }
-  DistanceMatrix _coucou;
+  void setCell(unsigned int sp1, unsigned int sp2, unsigned int k, double v) {
+    _subBMEs[sp1][sp2][k] = v;
+  }
+#else
+  std::vector<double> _subBMEs;
+  double getCell(size_t sp1, size_t sp2, size_t k) {
+    size_t index = ((sp1 * _N) + sp2) * _K + k;
+    return _subBMEs[index];
+  }
+  void setCell(size_t sp1, size_t sp2, size_t k, double v) {
+    size_t index = ((sp1 * _N) + sp2) * _K + k;
+    _subBMEs[index] = v;
+  }
+#endif
+  
   // _hasChildren[i][k] == true if there is at least one leaf
   // under i that belongs to the species tree induced by the
   // family k
@@ -117,7 +136,6 @@ private:
      SubBMEToUpdate &subBMEToUpdate,
      double &bestLs,
      unsigned int &bestS,
-     const std::vector<DistanceMatrix> &subBMEs,
      const BoolMatrix &belongsToPruned,
      const BoolMatrix &hasChildren,
      std::vector<bool> Vsminus2HasChildren, // does Vsminus2 have children after the previous moves
