@@ -15,9 +15,9 @@
 #include <IO/FileSystem.hpp>
 #include <IO/ParallelOfstream.hpp>
 #include <maths/Random.hpp>
-#include <NJ/MiniNJ.hpp>
-#include <NJ/Cherry.hpp>
-#include <NJ/CherryPro.hpp>
+#include <DistanceMethods/MiniNJ.hpp>
+#include <DistanceMethods/Cherry.hpp>
+#include <DistanceMethods/CherryPro.hpp>
 #include <parallelization/Scheduler.hpp>
 #include <routines/Routines.hpp>
 #include <optimizers/SpeciesTreeOptimizer.hpp>

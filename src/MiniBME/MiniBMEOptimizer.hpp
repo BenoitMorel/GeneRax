@@ -5,8 +5,8 @@
 #include <IO/Families.hpp>
 #include <memory>
 #include <vector>
-#include <NJ/MiniBME.hpp>
-#include <NJ/MiniBMEPruned.hpp>
+#include <DistanceMethods/MiniBME.hpp>
+#include <DistanceMethods/MiniBMEPruned.hpp>
 
 
 

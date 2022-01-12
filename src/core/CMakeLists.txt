@@ -20,12 +20,12 @@ set(jointsearch-core_SOURCES
   likelihoods/ReconciliationEvaluation.cpp
   likelihoods/reconciliation_models/BaseReconciliationModel.cpp
   maths/Random.cpp
-  NJ/MiniBME.cpp
-  NJ/MiniBMEPruned.cpp
-  NJ/MiniNJ.cpp
-  NJ/Cherry.cpp
-  NJ/CherryPro.cpp
-  NJ/NeighborJoining.cpp
+  DistanceMethods/MiniBME.cpp
+  DistanceMethods/MiniBMEPruned.cpp
+  DistanceMethods/MiniNJ.cpp
+  DistanceMethods/Cherry.cpp
+  DistanceMethods/CherryPro.cpp
+  DistanceMethods/NeighborJoining.cpp
   optimizers/DTLOptimizer.cpp
   optimizers/PerFamilyDTLOptimizer.cpp
   optimizers/SpeciesTreeOptimizer.cpp

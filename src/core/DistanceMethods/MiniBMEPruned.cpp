@@ -1,5 +1,5 @@
 #include "MiniBMEPruned.hpp"
-#include <NJ/MiniNJ.hpp>
+#include <DistanceMethods/MiniNJ.hpp>
 #include <trees/PLLUnrootedTree.hpp>
 #include <IO/Logger.hpp>
 #include <parallelization/PerCoreGeneTrees.hpp>

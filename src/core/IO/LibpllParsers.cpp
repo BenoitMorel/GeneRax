@@ -8,6 +8,7 @@
 #include <stack>
 #include <array>
 #include <IO/Logger.hpp>
+#include <IO/LibpllException.hpp>
 #include <IO/RootedNewickParser.hpp>
 #include <corax/corax.h>
 
@@ -110,10 +111,6 @@ char * corax_rtree_export_newick(const corax_rnode_t * root,
   return newick;
 }
 
-LibpllException::~LibpllException()
-{
-
-}
 
 void LibpllParsers::labelRootedTree(corax_rtree_t *tree)
 {

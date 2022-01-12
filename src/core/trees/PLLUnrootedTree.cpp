@@ -6,6 +6,7 @@
 #include <functional>
 #include <sstream>
 #include <deque>
+#include <IO/LibpllException.hpp>
 
 void defaultUnodePrinter(corax_unode_t *node, 
     std::stringstream &ss)

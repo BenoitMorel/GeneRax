@@ -4,6 +4,7 @@
 #include <fstream>
 #include <IO/Logger.hpp>
 #include <maths/Random.hpp>
+#include <IO/LibpllException.hpp>
 
 #include <corax/corax.h>
 const double DEFAULT_BL = 0.1;

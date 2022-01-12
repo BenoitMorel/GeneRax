@@ -7,8 +7,8 @@
 #include <algorithm>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <fstream>
-#include <NJ/MiniNJ.hpp>
-#include <NJ/NeighborJoining.hpp>
+#include <DistanceMethods/MiniNJ.hpp>
+#include <DistanceMethods/NeighborJoining.hpp>
 #include <cstdio>
 #include <support/ICCalculator.hpp>
 #include <search/SpeciesSPRSearch.hpp>

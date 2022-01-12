@@ -16,9 +16,9 @@
 #include <routines/scheduled_routines/GeneRaxMaster.hpp>
 #include <maths/Random.hpp>
 #include <trees/PLLRootedTree.hpp>
-#include <NJ/MiniNJ.hpp>
-#include <NJ/Cherry.hpp>
-#include <NJ/CherryPro.hpp>
+#include <DistanceMethods/MiniNJ.hpp>
+#include <DistanceMethods/Cherry.hpp>
+#include <DistanceMethods/CherryPro.hpp>
   
 std::unique_ptr<PLLRootedTree> 
 Routines::computeInitialSpeciesTree(Families &families,

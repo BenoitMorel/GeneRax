@@ -1,9 +1,9 @@
 #include <string>
 #include <iostream>
 
-#include <NJ/MiniNJ.hpp>
-#include <NJ/Cherry.hpp>
-#include <NJ/CherryPro.hpp>
+#include <DistanceMethods/MiniNJ.hpp>
+#include <DistanceMethods/Cherry.hpp>
+#include <DistanceMethods/CherryPro.hpp>
 #include <trees/PLLRootedTree.hpp>
 #include <IO/Families.hpp>
 #include <util/enums.hpp>

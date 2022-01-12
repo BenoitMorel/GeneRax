@@ -4,6 +4,7 @@
 #include <IO/ParallelOfstream.hpp>
 #include <IO/FileSystem.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
+#include <IO/LibpllException.hpp>
 #include <algorithm>
 #include <trees/PLLRootedTree.hpp>
 #include <parallelization/PerCoreGeneTrees.hpp>

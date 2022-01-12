@@ -8,7 +8,7 @@
 #include <unordered_set>
 
 #include <IO/Logger.hpp>
-#include <NJ/MiniBME.hpp>
+#include <DistanceMethods/MiniBME.hpp>
 
 
 class MiniBMEPruned: public BMEEvaluator {
