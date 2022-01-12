@@ -1,6 +1,5 @@
 #include "PLLUnrootedTree.hpp"
 
-#include <IO/LibpllParsers.hpp>
 #include <IO/Logger.hpp>
 #include <trees/PLLRootedTree.hpp>  
 #include <stack>
@@ -28,12 +27,31 @@ void utreeDestroy(corax_utree_t *utree) {
   corax_utree_destroy(utree, destroyNodeData);
 }
 
+
+
+static corax_utree_t *readNewickFromStr(const std::string &str) 
+{
+  auto utree =  corax_utree_parse_newick_string_unroot(str.c_str());
+  if (!utree) 
+    throw LibpllException("Error while reading tree from std::string: ", str);
+  return utree;
+}
+
+
+static corax_utree_t *readNewickFromFile(const std::string &str)
+{
+  auto utree =  corax_utree_parse_newick_unroot(str.c_str());
+  if (!utree) 
+    throw LibpllException("Error while reading tree from file: ", str);
+  return utree;
+}
+
 static corax_utree_t *buildUtree(const std::string &str, bool isFile)
 {
   if (isFile) {
-    return LibpllParsers::readNewickFromFile(str);
+    return readNewickFromFile(str);
   } else {
-    return LibpllParsers::readNewickFromStr(str);
+    return readNewickFromStr(str);
   }
 }
 
@@ -74,7 +92,11 @@ PLLUnrootedTree::PLLUnrootedTree(const std::vector<const char*> &labels,
 
 void PLLUnrootedTree::save(const std::string &fileName)
 {
-  LibpllParsers::saveUtree(_tree->nodes[0], fileName, false);
+  std::ofstream os(fileName, std::ofstream::out);
+  char *newick = corax_utree_export_newick_rooted(getRawPtr()->nodes[0], 0);
+  os << newick;
+  os.close();
+  free(newick);
 }
 
 void PLLUnrootedTree::setMissingBranchLengths(double minBL)
