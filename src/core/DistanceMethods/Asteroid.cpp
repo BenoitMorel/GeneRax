@@ -1,4 +1,4 @@
-#include "MiniBMEPruned.hpp"
+#include "Asteroid.hpp"
 #include <DistanceMethods/MiniNJ.hpp>
 #include <trees/PLLUnrootedTree.hpp>
 #include <IO/Logger.hpp>
@@ -132,11 +132,11 @@ static void getPrunedSpeciesMatrix(const PLLUnrootedTree &speciesTree,
     
 
 
-MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
+Asteroid::Asteroid(const PLLUnrootedTree &speciesTree,
     const Families &families,
     double minbl)
 {
-  Logger::timed << "MiniBMEPruned::MiniBMEPruned 1" << std::endl;
+  Logger::timed << "Asteroid::Asteroid 1" << std::endl;
   bool minMode = true;
   bool reweight = false;
   bool ustar = false;
@@ -159,7 +159,7 @@ MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
   _perFamilyCoverage.resize(_K);
   // map each species string to a species ID
   std::set< std::vector<bool> > coverageSet;
-  Logger::timed << "MiniBMEPruned::MiniBMEPruned 2" << std::endl;
+  Logger::timed << "Asteroid::Asteroid 2" << std::endl;
   for (unsigned int i = 0; i < _K; ++i) {
     auto &family = perCoreFamilies[i];
     _perFamilyCoverage[i] = std::vector<bool>(speciesTree.getLeavesNumber(), false);
@@ -192,16 +192,16 @@ MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
   _prunedSpeciesMatrices = std::vector<DistanceMatrix>(
       _K, getNullMatrix(speciesNumber));
   auto nodesNumber = speciesTree.getDirectedNodesNumber();
-  Logger::timed << "MiniBMEPruned::MiniBMEPruned 3" << std::endl;
+  Logger::timed << "Asteroid::Asteroid 3" << std::endl;
   auto zero = getMatrix(nodesNumber, 
         _K, 
         std::numeric_limits<double>::infinity());
-  Logger::timed << "MiniBMEPruned::MiniBMEPruned 4" << std::endl;
+  Logger::timed << "Asteroid::Asteroid 4" << std::endl;
 #ifdef OLDBME
   _subBMEs = DistanceVectorMatrix(nodesNumber);
-  Logger::timed << "MiniBMEPruned::MiniBMEPruned 5" << std::endl;
+  Logger::timed << "Asteroid::Asteroid 5" << std::endl;
   std::fill(_subBMEs.begin(), _subBMEs.end(), zero);
-  Logger::timed << "MiniBMEPruned::MiniBMEPruned 6" << std::endl;
+  Logger::timed << "Asteroid::Asteroid 6" << std::endl;
 #else
   _subBMEs = std::vector<double>(_N * _N * _K, 
       std::numeric_limits<double>::infinity());
@@ -219,11 +219,11 @@ MiniBMEPruned::MiniBMEPruned(const PLLUnrootedTree &speciesTree,
     }
   }
   
-  Logger::timed << "MiniBMEPruned::MiniBMEPruned 5" << std::endl;
+  Logger::timed << "Asteroid::Asteroid 5" << std::endl;
 }
 
 
-double MiniBMEPruned::computeBME(const PLLUnrootedTree &speciesTree)
+double Asteroid::computeBME(const PLLUnrootedTree &speciesTree)
 {
   unsigned int N = _speciesStringToSpeciesId.size();
   DistanceMatrix speciesDistanceMatrix = getNullMatrix(N);
@@ -258,7 +258,7 @@ double MiniBMEPruned::computeBME(const PLLUnrootedTree &speciesTree)
 
 
 
- void MiniBMEPruned::_computeSubBMEsPruneRec(corax_unode_t *n1,
+ void Asteroid::_computeSubBMEsPruneRec(corax_unode_t *n1,
     corax_unode_t *n2,
     BoolMatrix &treated)
 {
@@ -326,7 +326,7 @@ double MiniBMEPruned::computeBME(const PLLUnrootedTree &speciesTree)
   treated[i1][i2] = true;
 }
 
-void MiniBMEPruned::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
+void Asteroid::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
 {
   auto nodesNumber = speciesTree.getDirectedNodesNumber();
   // Fill hasChildren and belongsToPruned
@@ -409,7 +409,7 @@ void MiniBMEPruned::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
 }
 
 
-void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
+void Asteroid::_getBestSPRRecMissing(unsigned int s,
     StopCriterion stopCriterion,
     std::vector<unsigned int> sprime, 
     std::vector<corax_unode_t *> W0s, 
@@ -530,7 +530,7 @@ void MiniBMEPruned::_getBestSPRRecMissing(unsigned int s,
 }
 
 
-void MiniBMEPruned::getBestSPR(PLLUnrootedTree &speciesTree,
+void Asteroid::getBestSPR(PLLUnrootedTree &speciesTree,
       unsigned int maxRadiusWithoutImprovement,
       std::vector<SPRMove> &bestMoves)
 {
@@ -548,7 +548,7 @@ void MiniBMEPruned::getBestSPR(PLLUnrootedTree &speciesTree,
 
 
 
-bool MiniBMEPruned::getBestSPRFromPrune(unsigned int maxRadiusWithoutImprovement,
+bool Asteroid::getBestSPRFromPrune(unsigned int maxRadiusWithoutImprovement,
       corax_unode_t *prunedNode,
       corax_unode_t *&bestRegraftNode,
       double &bestDiff,

@@ -5,26 +5,26 @@
 #include <IO/Families.hpp>
 #include <memory>
 #include <vector>
-#include <DistanceMethods/MiniBME.hpp>
-#include <DistanceMethods/MiniBMEPruned.hpp>
+#include <DistanceMethods/Asteroid.hpp>
+#include <DistanceMethods/Astrid.hpp>
 
 
 
-class USearchMiniBMEEvaluator {
+class USearchAsteroidEvaluator {
 public:
-  USearchMiniBMEEvaluator(PLLUnrootedTree &speciesTree,
+  USearchAsteroidEvaluator(PLLUnrootedTree &speciesTree,
     const Families &families,
     double minbl,
     bool missingData):
       _lastScore(-99999) {
       if (missingData) {
-        _miniBME.reset(new MiniBMEPruned(speciesTree, families, minbl)); 
+        _miniBME.reset(new Astrid(speciesTree, families, minbl)); 
       } else {
-        _miniBME.reset(new MiniBME(speciesTree, families, minbl)); 
+        _miniBME.reset(new Asteroid(speciesTree, families, minbl)); 
       }
     }
 
-  virtual ~USearchMiniBMEEvaluator() {}
+  virtual ~USearchAsteroidEvaluator() {}
   virtual double eval(PLLUnrootedTree &tree);
   bool computeAndApplyBestSPR(PLLUnrootedTree &tree,
     unsigned int maxRadiusWithoutImprovement);
@@ -34,9 +34,9 @@ private:
 };
 
 
-class MiniBMEOptimizer {
+class AsteroidOptimizer {
 public:
-  MiniBMEOptimizer(const std::string speciesTreeFile, 
+  AsteroidOptimizer(const std::string speciesTreeFile, 
       const Families &families,
       double minbl,
       bool missingData,

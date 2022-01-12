@@ -20,8 +20,8 @@ set(jointsearch-core_SOURCES
   likelihoods/ReconciliationEvaluation.cpp
   likelihoods/reconciliation_models/BaseReconciliationModel.cpp
   maths/Random.cpp
-  DistanceMethods/MiniBME.cpp
-  DistanceMethods/MiniBMEPruned.cpp
+  DistanceMethods/Astrid.cpp
+  DistanceMethods/Asteroid.cpp
   DistanceMethods/MiniNJ.cpp
   DistanceMethods/Cherry.cpp
   DistanceMethods/CherryPro.cpp

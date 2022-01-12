@@ -1,13 +1,13 @@
-#include "MiniBMEArguments.hpp"
+#include "AsteroidArguments.hpp"
 #include <IO/Logger.hpp>
    
 
 
-MiniBMEArguments::MiniBMEArguments(int iargc, char * iargv[]):
+AsteroidArguments::AsteroidArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
   speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
-  output("MiniBME"),
+  output("Asteroid"),
   minbl(-1.0),
   seed(123),
   missingData(false)
@@ -35,7 +35,7 @@ MiniBMEArguments::MiniBMEArguments(int iargc, char * iargv[]):
 }
 
 
-void MiniBMEArguments::printHelp()
+void AsteroidArguments::printHelp()
 {
   Logger::info << "TODO" << std::endl;
 }

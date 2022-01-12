@@ -82,7 +82,7 @@ endmacro()
 
 add_subdirectory(GeneRax)
 add_subdirectory(GeneTegrator)
-add_subdirectory(MiniBME)
+add_subdirectory(Asteroid)
 add_subdirectory(SpeciesSplitSearch)
 add_subdirectory(NJRax)
 add_subdirectory(tools)

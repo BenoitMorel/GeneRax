@@ -1,11 +1,11 @@
-#include "MiniBMEOptimizer.hpp" 
+#include "AsteroidOptimizer.hpp" 
 #include <IO/FileSystem.hpp>
 #include <IO/Logger.hpp>
 #include <util/Paths.hpp>
 #include <parallelization/PerCoreGeneTrees.hpp>
 #include <corax/corax.h>
 
-double USearchMiniBMEEvaluator::eval(PLLUnrootedTree &tree)
+double USearchAsteroidEvaluator::eval(PLLUnrootedTree &tree)
 {
   _lastScore = -_miniBME->computeBME(tree);
   //corax_unode_t *fake;
@@ -66,7 +66,7 @@ bool wasInvolved(corax_unode_t *node,
   return involved.find(node) != involved.end();
 }
   
-bool USearchMiniBMEEvaluator::computeAndApplyBestSPR(PLLUnrootedTree &tree,
+bool USearchAsteroidEvaluator::computeAndApplyBestSPR(PLLUnrootedTree &tree,
     unsigned int maxRadiusWithoutImprovement)
 {
   Logger::timed << "last score " << _lastScore << std::endl;
@@ -149,7 +149,7 @@ bool USearchMiniBMEEvaluator::computeAndApplyBestSPR(PLLUnrootedTree &tree,
 }
 
 
-MiniBMEOptimizer::MiniBMEOptimizer(
+AsteroidOptimizer::AsteroidOptimizer(
     const std::string speciesTreeFile, 
     const Families &families, 
     double minbl,
@@ -167,11 +167,11 @@ MiniBMEOptimizer::MiniBMEOptimizer(
   ParallelContext::barrier();
 }
 
-void MiniBMEOptimizer::optimize()
+void AsteroidOptimizer::optimize()
 {
   PLLUnrootedTree speciesTree(_speciesTree->getTree());
   Logger::timed << "Evaluator initialization..." << std::endl;
-  USearchMiniBMEEvaluator evaluator(speciesTree,
+  USearchAsteroidEvaluator evaluator(speciesTree,
     _families,
     _minbl,
     _missingData);
@@ -189,14 +189,14 @@ void MiniBMEOptimizer::optimize()
 }
 
 
-std::string MiniBMEOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
+std::string AsteroidOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
 {
   std::string res = Paths::getSpeciesTreeFile(_outputDir, name);
   saveCurrentSpeciesTreePath(res, masterRankOnly);
   return res;
 }
 
-void MiniBMEOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly)
+void AsteroidOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly)
 {
   _speciesTree->saveToFile(str, masterRankOnly);
   if (masterRankOnly) {

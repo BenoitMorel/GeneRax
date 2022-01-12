@@ -8,15 +8,15 @@
 #include <unordered_set>
 
 #include <IO/Logger.hpp>
-#include <DistanceMethods/MiniBME.hpp>
+#include <DistanceMethods/Astrid.hpp>
 
 
-class MiniBMEPruned: public BMEEvaluator {
+class Asteroid: public BMEEvaluator {
 public:
-  MiniBMEPruned(const PLLUnrootedTree &speciesTree, 
+  Asteroid(const PLLUnrootedTree &speciesTree, 
       const Families &families,
       double minbl);
-  virtual ~MiniBMEPruned() {}
+  virtual ~Asteroid() {}
   /*
    *  Computes the BME score of the species tree
    *  and update the _subBMEs used to speedup the

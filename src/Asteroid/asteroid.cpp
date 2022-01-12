@@ -1,9 +1,9 @@
-#include "MiniBMEArguments.hpp"
+#include "AsteroidArguments.hpp"
 #include <parallelization/ParallelContext.hpp>
 #include <IO/Logger.hpp>
 #include <IO/FileSystem.hpp>
 #include <IO/FamiliesFileParser.hpp>
-#include "MiniBMEOptimizer.hpp"
+#include "AsteroidOptimizer.hpp"
 #include <util/Paths.hpp>
 #include <util/RecModelInfo.hpp>
 #include <routines/Routines.hpp>
@@ -12,7 +12,7 @@
 
 
 
-void initStartingSpeciesTree(MiniBMEArguments &args,
+void initStartingSpeciesTree(AsteroidArguments &args,
     Families &families)
 {
   Logger::timed << "Initializing starting species tree..." << std::endl;
@@ -53,7 +53,7 @@ void initStartingSpeciesTree(MiniBMEArguments &args,
   Logger::timed << "Finished starting species tree initialization" << std::endl;
 }
 
-void run( MiniBMEArguments &args)
+void run( AsteroidArguments &args)
 {
   Logger::info << "Mkdir " << args.output << std::endl;
   Random::setSeed(static_cast<unsigned int>(args.seed));
@@ -65,7 +65,7 @@ void run( MiniBMEArguments &args)
   Family::filterFamilies(families, "", false, false);
   initStartingSpeciesTree(args, families);
   
-  MiniBMEOptimizer speciesTreeOptimizer(
+  AsteroidOptimizer speciesTreeOptimizer(
       args.speciesTree,
       families,
       args.minbl,
@@ -78,8 +78,8 @@ int genetegrator_main(int argc, char** argv, void* comm)
 {
   ParallelContext::init(comm); 
   Logger::init();
-  Logger::timed << "MiniBME v0.0.0" << std::endl; 
-  MiniBMEArguments args(argc, argv); 
+  Logger::timed << "Asteroid v0.0.0" << std::endl; 
+  AsteroidArguments args(argc, argv); 
   run(args);
   Logger::close();
   ParallelContext::finalize();

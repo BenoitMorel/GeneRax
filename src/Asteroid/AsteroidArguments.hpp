@@ -7,9 +7,9 @@
 
   
 
-class MiniBMEArguments {
+class AsteroidArguments {
 public:
-  MiniBMEArguments(int argc, char * argv[]);
+  AsteroidArguments(int argc, char * argv[]);
   void printHelp();
 public:
    int argc;

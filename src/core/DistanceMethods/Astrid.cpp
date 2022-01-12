@@ -1,4 +1,4 @@
-#include "MiniBME.hpp"
+#include "Astrid.hpp"
 #include <DistanceMethods/MiniNJ.hpp>
 #include <trees/PLLUnrootedTree.hpp>
 #include <IO/Logger.hpp>
@@ -112,7 +112,7 @@ static void getPrunedSpeciesMatrix(const PLLUnrootedTree &speciesTree,
 
 
 
-MiniBME::MiniBME(const PLLUnrootedTree &speciesTree,
+Astrid::Astrid(const PLLUnrootedTree &speciesTree,
     const Families &families,
     double minbl)
 {
@@ -139,7 +139,7 @@ MiniBME::MiniBME(const PLLUnrootedTree &speciesTree,
 }
 
 
-double MiniBME::computeBME(const PLLUnrootedTree &speciesTree)
+double Astrid::computeBME(const PLLUnrootedTree &speciesTree)
 {
   unsigned int N = _speciesIdToSpeciesString.size();
   DistanceMatrix speciesDistanceMatrix = getNullMatrix(N);
@@ -162,7 +162,7 @@ static bool isNumber(double v) {
 }
 
 
-void MiniBME::_computeSubBMEs(const PLLUnrootedTree &speciesTree)
+void Astrid::_computeSubBMEs(const PLLUnrootedTree &speciesTree)
 {
   auto subtrees1 = speciesTree.getReverseDepthNodes();
   auto nodesNumber = subtrees1.size();
@@ -346,7 +346,7 @@ static void getBestSPRRec(unsigned int s,
 
 
 
-void MiniBME::getBestSPR(PLLUnrootedTree &speciesTree,
+void Astrid::getBestSPR(PLLUnrootedTree &speciesTree,
       unsigned int maxRadiusWithoutImprovement,
       std::vector<SPRMove> &bestMoves)
 {
@@ -362,7 +362,7 @@ void MiniBME::getBestSPR(PLLUnrootedTree &speciesTree,
 }
 
 
-bool MiniBME::getBestSPRFromPrune(corax_unode_t *prunedNode,
+bool Astrid::getBestSPRFromPrune(corax_unode_t *prunedNode,
       corax_unode_t *&bestRegraftNode,
       double &bestDiff,
       unsigned int &bestS)
