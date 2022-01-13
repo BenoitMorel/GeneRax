@@ -18,9 +18,9 @@ public:
     bool missingData):
       _lastScore(-99999) {
       if (missingData) {
-        _miniBME.reset(new Astrid(speciesTree, families, minbl)); 
-      } else {
         _miniBME.reset(new Asteroid(speciesTree, families, minbl)); 
+      } else {
+        _miniBME.reset(new Astrid(speciesTree, families, minbl)); 
       }
     }
 
