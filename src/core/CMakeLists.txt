@@ -1,7 +1,6 @@
 
 set(jointsearch-core_SOURCES 
   branchlengths/ReconciliationBLEstimator.cpp
-  ccp/bitvector.cpp
   ccp/ConditionalClades.cpp
   ccp/RootedSpeciesSplitScore.cpp
   ccp/SpeciesSplits.cpp
@@ -19,6 +18,7 @@ set(jointsearch-core_SOURCES
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ReconciliationEvaluation.cpp
   likelihoods/reconciliation_models/BaseReconciliationModel.cpp
+  maths/bitvector.cpp
   maths/Random.cpp
   DistanceMethods/Astrid.cpp
   DistanceMethods/Asteroid.cpp

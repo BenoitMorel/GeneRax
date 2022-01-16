@@ -3,7 +3,7 @@
 #include <string>
 #include <unordered_map>
 #include <set>
-#include "bitvector.hpp"
+#include <maths/bitvector.hpp>
 #include <iostream>
 
 using CID = unsigned int;
