@@ -58,7 +58,6 @@ public:
       std::vector<SPRMove> &bestMoves);
 private:
   std::vector<DistanceMatrix> _geneDistanceMatrices;
-  std::vector<DistanceMatrix> _geneDistanceDenominators;
   std::vector<std::string> _speciesIdToSpeciesString;
   Families _perCoreFamilies;
   std::vector<std::unordered_set<std::string> > _perFamilyCoverageStr;
