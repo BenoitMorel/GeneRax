@@ -4,27 +4,26 @@
 #include <util/enums.hpp>
 #include <vector>
 #include <string>
-typedef struct pll_unode_s pll_unode_t;
-typedef struct pll_rtree_s pll_rtree_t;
+typedef struct corax_unode_s corax_unode_t;
+typedef struct corax_rtree_s corax_rtree_t;
 class ParallelOfstream;
 
 class ReconciliationWriter {
 public:
   ReconciliationWriter() = delete;
 
-  static void saveReconciliationNHX(pll_rtree_t *speciesTree,  
-      pll_unode_t *geneRoot, 
+  static void saveReconciliationNHX(corax_rtree_t *speciesTree,  
+      corax_unode_t *geneRoot, 
       unsigned int virtualRootIndex,
       std::vector<std::vector<Scenario::Event> > &geneToEvent, 
       ParallelOfstream &os);
 
-  static void saveReconciliationRecPhyloXML(pll_rtree_t *speciesTree,  
-      pll_unode_t *geneRoot, 
-      unsigned int virtualRootIndex,
+  static void saveReconciliationRecPhyloXML(corax_rtree_t *speciesTree,  
+      unsigned int geneNode, 
       std::vector<std::vector<Scenario::Event> > &geneToEvent, 
       ParallelOfstream &os);
   
-  static void saveReconciliationNewickEvents(pll_unode_t *geneRoot, 
+  static void saveReconciliationNewickEvents(corax_unode_t *geneRoot, 
       unsigned int virtualRootIndex,
       std::vector<std::vector<Scenario::Event> > &geneToEvent, 
       ParallelOfstream &os);

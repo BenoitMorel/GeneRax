@@ -6,14 +6,15 @@
 #include <util/types.hpp>
 #include <memory>
 #include <unordered_set>
-extern "C" {
-#include <pll.h>
-}
+#include <corax/corax.h>
+#include <trees/PLLRootedTree.hpp>
 
-typedef struct pll_utree_s pll_utree_t;
-typedef struct pll_unode_s pll_unode_t;
-typedef struct pll_rtree_s pll_rtree_t;
-typedef struct pll_rnode_s pll_rnode_t;
+/*
+typedef struct corax_utree_s corax_utree_t;
+typedef struct corax_unode_s corax_unode_t;
+typedef struct corax_rtree_s corax_rtree_t;
+typedef struct corax_rnode_s corax_rnode_t;
+*/
 class ParallelOfstream;
 typedef std::unordered_set<std::string> OrthoGroup;
 typedef std::shared_ptr<OrthoGroup> OrthoGroupPtr;
@@ -66,30 +67,35 @@ public:
       type(ReconciliationEventType::EVENT_S), 
       geneNode(INVALID_NODE_ID), 
       speciesNode(INVALID_NODE_ID), 
-      transferedGeneNode(INVALID_NODE_ID), 
       destSpeciesNode(INVALID_NODE_ID),
       pllTransferedGeneNode(nullptr),
-      pllDestSpeciesNode(nullptr),
-      cross(false)
+      pllDestSpeciesNode(nullptr)
     {}
     ReconciliationEventType type;
     unsigned int geneNode;
     unsigned int speciesNode;
-    unsigned int transferedGeneNode;  // for transfers only 
     unsigned int destSpeciesNode;     // for transfers only
-    
-    // temporary variables for event inference
-    pll_unode_t *pllTransferedGeneNode;
-    pll_rnode_t *pllDestSpeciesNode;
-    bool cross; // used to decide which gene (left/right) goes to which species (left/right)
-                // if set to true, left goes to right and right goes to left
-                // if set to false, left goes to left and right goes to right
-    
    
+    // left and gene indices:
+    // - for speciation: left gene goes to left species
+    // - for transfer: left gene goes to source species and right gene 
+    // goes to recieving species
+    // - for duplication, the order doesn't matter
+    // - for other events, those members are irrelevant
+    unsigned int leftGeneIndex;
+    unsigned int rightGeneIndex;
+
+    // temporary variables for event inference
+    corax_unode_t *pllTransferedGeneNode;
+    corax_rnode_t *pllDestSpeciesNode;
+    
+    std::string label;
+
     /**
      *  Is this event valid? (if not, something went wrong)
      */
     bool isValid() const { return speciesNode != INVALID_NODE_ID; }
+    bool isLeaf() const { return type == ReconciliationEventType::EVENT_None;}
   };
 
 
@@ -108,8 +114,8 @@ public:
   Scenario(Scenario &&) = delete;
   Scenario & operator = (Scenario &&) = delete;
  
-  void setGeneRoot(pll_unode_t *geneRoot) {_geneRoot = geneRoot;}
-  void setSpeciesTree(pll_rtree_t *speciesTree) {_speciesTree = speciesTree;}
+  void setGeneRoot(corax_unode_t *geneRoot) {_geneRoot = geneRoot;}
+  void setSpeciesTree(corax_rtree_t *speciesTree) {_speciesTree = speciesTree;}
   void setVirtualRootIndex(unsigned int virtualRootIndex) {_virtualRootIndex = virtualRootIndex;}
 
   /**
@@ -123,7 +129,6 @@ public:
   void addTransfer(ReconciliationEventType type, 
     unsigned int geneNode, 
     unsigned int speciesNode, 
-    unsigned int transferedGeneNode,
     unsigned int destSpeciesNode);
 
   /**
@@ -140,6 +145,10 @@ public:
   void gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents) const;
   void countTransfers(const StringToUint &labelToId,
       MatrixUint &count);
+
+  unsigned int getEventCount(ReconciliationEventType type) const {
+    return _eventsCount[static_cast<unsigned int>(type)];
+  }
   /**
    * The following methods help blacklisting pairs of gene and species nodes.
    * The motivation is that both ML and sampling reconciliation inference algorithm
@@ -153,9 +162,9 @@ public:
   void resetBlackList();
 
 
-  pll_unode_t *getGeneRoot() const {return _geneRoot;}
+  corax_unode_t *getGeneRoot() const {return _geneRoot;}
   unsigned int getVirtualRootIndex() const { return _virtualRootIndex;}
-  pll_rtree_t *getSpeciesTree() const {return _speciesTree;}
+  corax_rtree_t *getSpeciesTree() const {return _speciesTree;}
   const std::vector<std::vector<Event> > &
     getGeneIdToEvents() const {return _geneIdToEvents;}
 private:
@@ -163,13 +172,13 @@ private:
   std::vector<Event> _events;
   std::vector<unsigned int> _eventsCount;
   std::vector<std::vector<Event> > _geneIdToEvents;
-  pll_unode_t *_geneRoot;
-  pll_rtree_t *_speciesTree;
+  corax_unode_t *_geneRoot;
+  corax_rtree_t *_speciesTree;
   unsigned int _virtualRootIndex;
   typedef std::vector< std::vector <int> > ScenarioBlackList;
   std::unique_ptr<ScenarioBlackList> _blacklist;
-  OrthoGroup *getLargestOrthoGroupRec(pll_unode_t *geneNode, bool isVirtualRoot) const;
-  void getAllOrthoGroupRec(pll_unode_t *geneNode,
+  OrthoGroup *getLargestOrthoGroupRec(corax_unode_t *geneNode, bool isVirtualRoot) const;
+  void getAllOrthoGroupRec(corax_unode_t *geneNode,
       OrthoGroups &orthogroups,
       OrthoGroupPtr &currentOrthoGroup,
       bool isVirtualRoot) const;

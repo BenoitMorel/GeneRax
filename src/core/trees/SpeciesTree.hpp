@@ -28,9 +28,9 @@ public:
   // set rates and gene trees before calling this
 
   std::string toString() const;
-  pll_rnode_t *getRandomNode();
-  pll_rnode_t *getNode(unsigned int nodeIndex) {return _speciesTree.getNode(nodeIndex);}
-  pll_rnode_t *getRoot() { return getTree().getRawPtr()->root; } 
+  corax_rnode_t *getRandomNode();
+  corax_rnode_t *getNode(unsigned int nodeIndex) {return _speciesTree.getNode(nodeIndex);}
+  corax_rnode_t *getRoot() { return getTree().getRawPtr()->root; } 
   friend std::ostream& operator<<(std::ostream& os, SpeciesTree &speciesTree) {
     os << speciesTree.toString() << "(" << speciesTree.getTree().getLeavesNumber() << " taxa)" << std::endl;
     return os;
@@ -47,11 +47,11 @@ public:
   class Listener {
   public:
     virtual ~Listener() {}
-    virtual void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate) = 0;
+    virtual void onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate) = 0;
   };
   void addListener(Listener *listener);
   void removeListener(Listener *listener);
-  void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate); // should be called when changing the species tree
+  void onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate); // should be called when changing the species tree
 
 
 private:

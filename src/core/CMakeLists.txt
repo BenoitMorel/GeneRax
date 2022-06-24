@@ -1,6 +1,10 @@
 
 set(jointsearch-core_SOURCES 
   branchlengths/ReconciliationBLEstimator.cpp
+  ccp/ConditionalClades.cpp
+  ccp/RootedSpeciesSplitScore.cpp
+  ccp/SpeciesSplits.cpp
+  ccp/UnrootedSpeciesSplitScore.cpp
   IO/NewickParserCommon.cpp
   IO/RootedNewickParser.cpp
   IO/Families.cpp
@@ -13,11 +17,15 @@ set(jointsearch-core_SOURCES
   IO/ReconciliationWriter.cpp
   likelihoods/LibpllEvaluation.cpp
   likelihoods/ReconciliationEvaluation.cpp
+  likelihoods/reconciliation_models/BaseReconciliationModel.cpp
+  maths/bitvector.cpp
   maths/Random.cpp
-  NJ/MiniNJ.cpp
-  NJ/Cherry.cpp
-  NJ/CherryPro.cpp
-  NJ/NeighborJoining.cpp
+  DistanceMethods/Astrid.cpp
+  DistanceMethods/Asteroid.cpp
+  DistanceMethods/MiniNJ.cpp
+  DistanceMethods/Cherry.cpp
+  DistanceMethods/CherryPro.cpp
+  DistanceMethods/NeighborJoining.cpp
   optimizers/DTLOptimizer.cpp
   optimizers/PerFamilyDTLOptimizer.cpp
   optimizers/SpeciesTreeOptimizer.cpp
@@ -33,7 +41,12 @@ set(jointsearch-core_SOURCES
   search/Moves.cpp
   search/Rollbacks.cpp
   search/SearchUtils.cpp
+  search/SpeciesSearchCommon.cpp
+  search/SpeciesRootSearch.cpp
+  search/SpeciesSPRSearch.cpp
+  search/SpeciesTransferSearch.cpp
   search/SPRSearch.cpp
+  search/UNNISearch.cpp
   support/ICCalculator.cpp
   trees/Clade.cpp
   trees/DSTagger.cpp

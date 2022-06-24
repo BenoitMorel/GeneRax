@@ -13,10 +13,6 @@ class Parameters;
 class ModelParameters;
 class PLLRootedTree;
 class PerCoreGeneTrees;
-struct TransferFrequencies {
-  MatrixUint count;
-  std::vector<std::string> idToLabel;
-};
 
 
 class Routines {
@@ -29,10 +25,6 @@ public:
       Families &family,
       const std::string globalOutputDir,
       SpeciesTreeAlgorithm algo);
-
-  static std::unique_ptr<PLLRootedTree> computeSupportedCladeTree(
-      Families &family,
-      const std::string &outputDir);
 
   /*
    *  Schedule gene tree inference using
@@ -85,20 +77,21 @@ public:
     Parameters &rates,
     long &sumElapsed);
 
-  static void exportPerSpeciesRates(const std::string &speciesTreeFile,
-      Parameters &rates,
-      const RecModelInfo &recModelInfo,
-      const std::string &outputFile);
-  
-  static void getPerSpeciesEvents(const std::string &speciesTreeFile,
-    Families &families,
+  static void getPerSpeciesEvents(PLLRootedTree &speciesTree,
+    PerCoreGeneTrees &geneTrees,
     const ModelParameters &modelRates,
     unsigned int reconciliationSamples,
     PerSpeciesEvents &events,
     bool forceTransfers);
 
-  static void getTransfersFrequencies(const std::string &speciesTreeFile,
-    Families &families,
+  
+  static void exportPerSpeciesRates(const std::string &speciesTreeFile,
+      Parameters &rates,
+      const RecModelInfo &recModelInfo,
+      const std::string &outputFile);
+  
+  static void getTransfersFrequencies(PLLRootedTree &speciesTree,
+    PerCoreGeneTrees &geneTrees,
     const ModelParameters &modelRates,
     unsigned int reconciliationSamples,
     TransferFrequencies &frequencies);

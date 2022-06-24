@@ -19,14 +19,18 @@ struct OptimizationSettings {
     epsilon(0.0000001)
   {}
 
-
-
   double lineSearchMinImprovement;
   double optimizationMinImprovement;
   double minAlpha;
   double epsilon;
-
 };
+
+class FunctionToOptimize {
+public: 
+  virtual ~FunctionToOptimize() {};
+  virtual double evaluate(Parameters &parameters) = 0;
+};
+
 
 class DTLOptimizer {
 public:
@@ -43,6 +47,9 @@ public:
    *  @return The parameters that maximize the function
    */
   static Parameters optimizeParameters(PerCoreEvaluations &evaluations, 
+      const Parameters &startingParameters,
+      OptimizationSettings settings = OptimizationSettings());
+  static Parameters optimizeParameters(FunctionToOptimize &function, 
       const Parameters &startingParameters,
       OptimizationSettings settings = OptimizationSettings());
  

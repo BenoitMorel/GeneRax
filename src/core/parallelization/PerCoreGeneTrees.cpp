@@ -1,5 +1,6 @@
 #include "PerCoreGeneTrees.hpp"
 #include <parallelization/ParallelContext.hpp>
+#include <ccp/ConditionalClades.hpp>
 #include <IO/Logger.hpp>
 #include <IO/FileSystem.hpp>
 #include <IO/LibpllParsers.hpp>
@@ -7,6 +8,7 @@
 #include <numeric>
 #include <iostream>
 #include <sstream>
+#include <trees/PLLRootedTree.hpp>
 
 template <typename T>
 std::vector<size_t> sort_indexes_descending(const std::vector<T> &v) {
@@ -52,10 +54,27 @@ static void splitLines(const std::string &input,
   }
 }
 
-PerCoreGeneTrees::PerCoreGeneTrees(const Families &families,
-    bool acceptMultipleTrees)
+std::vector<unsigned int> getCCPSizes(const Families &families) 
 {
-  auto treeSizes = LibpllParsers::parallelGetTreeSizes(families);
+  unsigned int treesNumber = static_cast<unsigned int>(families.size());
+  std::vector<unsigned int> localTreeSizes((treesNumber - 1 ) / ParallelContext::getSize() + 1, 0);
+  for (auto i = ParallelContext::getBegin(treesNumber); i < ParallelContext::getEnd(treesNumber); i ++) {
+    ConditionalClades cc(families[i].startingGeneTree);
+    localTreeSizes[i - ParallelContext::getBegin(treesNumber)] = cc.getCladesNumber();
+  }
+  std::vector<unsigned int> treeSizes;
+  ParallelContext::concatenateUIntVectors(localTreeSizes, treeSizes);
+  treeSizes.erase(remove(treeSizes.begin(), treeSizes.end(), 0), treeSizes.end());
+  assert(treeSizes.size() == families.size());
+  return treeSizes;
+
+}
+
+PerCoreGeneTrees::PerCoreGeneTrees(const Families &families,
+    bool acceptMultipleTrees,
+    bool ccpMode)
+{
+  auto treeSizes = ccpMode ? getCCPSizes(families) : LibpllParsers::parallelGetTreeSizes(families);
   auto myIndices = getMyIndices(treeSizes);
 
   _geneTrees.resize(myIndices.size());
@@ -107,9 +126,18 @@ bool PerCoreGeneTrees::checkMappings(const std::string &speciesTreeFile)
       Logger::error << "Invalid mapping for tree " << tree.name << std::endl;
     }
   }
-  pll_rtree_destroy(speciesTree, 0);
+  corax_rtree_destroy(speciesTree, 0);
   ParallelContext::parallelAnd(ok);
   return ok;
 }
 
+void PerCoreGeneTrees::getPerCoreFamilies(const Families &allFamilies,
+      Families &perCoreFamilies)
+{
+  perCoreFamilies.clear();
+  PerCoreGeneTrees geneTrees(allFamilies);
+  for (const auto &geneTree: geneTrees.getTrees()) {
+    perCoreFamilies.push_back(allFamilies[geneTree.familyIndex]);
+  }
+}
 

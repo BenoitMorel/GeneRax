@@ -16,9 +16,9 @@
 #include <routines/scheduled_routines/GeneRaxMaster.hpp>
 #include <maths/Random.hpp>
 #include <trees/PLLRootedTree.hpp>
-#include <NJ/MiniNJ.hpp>
-#include <NJ/Cherry.hpp>
-#include <NJ/CherryPro.hpp>
+#include <DistanceMethods/MiniNJ.hpp>
+#include <DistanceMethods/Cherry.hpp>
+#include <DistanceMethods/CherryPro.hpp>
   
 std::unique_ptr<PLLRootedTree> 
 Routines::computeInitialSpeciesTree(Families &families,
@@ -44,41 +44,10 @@ Routines::computeInitialSpeciesTree(Families &families,
     return std::make_unique<PLLRootedTree>(
         std::make_unique<SpeciesTree>(families)->getTree().getNewickString(), 
         false);
-  case SpeciesTreeAlgorithm::Clades:
-    FileSystem::mkdir(cladeOutput, true);
-    return computeSupportedCladeTree(families, cladeOutput);
   case SpeciesTreeAlgorithm::User:
     assert(false);
   }
   return nullptr;
-}
-
-std::unique_ptr<PLLRootedTree> 
-Routines::computeSupportedCladeTree(Families &families, 
-    const std::string &outputDir)
-{
-  ParallelContext::barrier();
-  Logger::info << "Generating random species tree..." << std::endl;
-  auto randomSpeciesTree = std::make_unique<SpeciesTree>(families);
-  auto speciesTreePath = FileSystem::joinPaths(outputDir, "random_starting_tree.newick");
-  randomSpeciesTree->saveToFile(speciesTreePath, true);
-  ParallelContext::barrier();
-  Logger::info << "Random species tree generated!" << std::endl;
-  RecModelInfo info;
-  bool userRates = true;
-  Logger::info << "Starting Clade tree search" << std::endl;
-  SpeciesTreeSearchParams searchParams;
-  SpeciesTreeOptimizer speciesTreeOptimizer(speciesTreePath, 
-      families, 
-      info, 
-      info.getDefaultGlobalParameters(), 
-      userRates, 
-      outputDir, 
-      searchParams);
-  speciesTreeOptimizer.optimize(SpeciesSearchStrategy::HYBRID,
-    SpeciesTreeOptimizer::SupportedClades);
-  return std::make_unique<PLLRootedTree>(
-      speciesTreeOptimizer.getSpeciesTree().getTree().getNewickString(), false);
 }
 
 void Routines::runRaxmlOptimization(Families &families,
@@ -330,8 +299,8 @@ void Routines::inferReconciliation(
   {
     bool forceTransfers = false;
     PerSpeciesEvents events;
-    getPerSpeciesEvents(speciesTreeFile,
-      families,
+    getPerSpeciesEvents(speciesTree,
+      geneTrees,
       initialModelRates,
       reconciliationSamples,
       events,
@@ -485,18 +454,16 @@ void Routines::getLabelsFromTransferKey(const std::string &key, std::string &lab
 
 
 
-void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
-  Families &families,
+void Routines::getPerSpeciesEvents(PLLRootedTree &speciesTree,
+  PerCoreGeneTrees &geneTrees,
   const ModelParameters &modelParameters,
   unsigned int reconciliationSamples,
   PerSpeciesEvents &events,
   bool forceTransfers)
 {
-  PLLRootedTree speciesTree(speciesTreeFile);
   events = PerSpeciesEvents(speciesTree.getNodesNumber());
   std::vector<Scenario> scenarios;
   bool optimizeRates = false;
-  PerCoreGeneTrees geneTrees(families);
   ModelParameters transfersModelParameter;
   if (Enums::accountsForTransfers(modelParameters.info.model)
       || !forceTransfers) {
@@ -528,8 +495,8 @@ void Routines::getPerSpeciesEvents(const std::string &speciesTreeFile,
 }
   
 
-void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
-    Families &families,
+void Routines::getTransfersFrequencies(PLLRootedTree &speciesTree,
+    PerCoreGeneTrees &geneTrees,
     const ModelParameters &modelParameters,
     unsigned int reconciliationSamples,
     TransferFrequencies &transferFrequencies)
@@ -550,18 +517,16 @@ void Routines::getTransfersFrequencies(const std::string &speciesTreeFile,
         recModelInfo);
   }
   transfersModelParameter.info.rootedGeneTree = false;
-  SpeciesTree speciesTree(speciesTreeFile);
-  PerCoreGeneTrees geneTrees(families);
   std::vector<Scenario> scenarios;
-  inferAndGetReconciliationScenarios(speciesTree.getTree(), 
+  inferAndGetReconciliationScenarios(speciesTree, 
       geneTrees, 
       transfersModelParameter,
       reconciliationSamples,
       optimizeRates, 
       scenarios);
   
-  const auto labelToId = speciesTree.getTree().getDeterministicLabelToId();
-  const auto idToLabel = speciesTree.getTree().getDeterministicIdToLabel();
+  const auto labelToId = speciesTree.getDeterministicLabelToId();
+  const auto idToLabel = speciesTree.getDeterministicIdToLabel();
   const unsigned int labelsNumber = idToLabel.size();
   const VectorUint zeros(labelsNumber, 0);
   transferFrequencies.count = MatrixUint(labelsNumber, zeros);

@@ -59,7 +59,7 @@ void SpeciesTree::removeListener(Listener *listener)
   _listeners.erase(std::remove(_listeners.begin(), _listeners.end(), listener), _listeners.end());      
 }
 
-void SpeciesTree::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
+void SpeciesTree::onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate)
 {
   for (auto listener: _listeners) {
     listener->onSpeciesTreeChange(nodesToInvalidate);
@@ -67,7 +67,7 @@ void SpeciesTree::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *n
   _speciesTree.onSpeciesTreeChange(nodesToInvalidate);
 }
   
-static void setRootAux(SpeciesTree &speciesTree, pll_rnode_t *root) {
+static void setRootAux(SpeciesTree &speciesTree, corax_rnode_t *root) {
   speciesTree.getTree().getRawPtr()->root = root; 
   root->parent = 0;
 }
@@ -102,7 +102,7 @@ void SpeciesTreeOperator::changeRoot(SpeciesTree &speciesTree, unsigned int dire
   auto B = rootLeft->right;
   auto C = rootRight->left;
   auto D = rootRight->right;
-  std::unordered_set<pll_rnode_t *> nodesToInvalidate;
+  std::unordered_set<corax_rnode_t *> nodesToInvalidate;
   nodesToInvalidate.insert(root);
   setRootAux(speciesTree, left1 ? rootLeft : rootRight);
   if (left1 && left2) {
@@ -132,7 +132,7 @@ void SpeciesTreeOperator::revertChangeRoot(SpeciesTree &speciesTree, unsigned in
   changeRoot(speciesTree, 3 - direction);
 }
 
-pll_rnode_t *getBrother(pll_rnode_t *node) {
+corax_rnode_t *getBrother(corax_rnode_t *node) {
   auto father = node->parent;
   assert(father);
   return father->left == node ? father->right : father->left;
@@ -167,7 +167,7 @@ unsigned int SpeciesTreeOperator::applySPRMove(SpeciesTree &speciesTree,
   auto pruneGrandFatherNode = pruneFatherNode->parent;
   auto pruneBrotherNode = getBrother(pruneNode);
   unsigned int res = pruneBrotherNode->node_index;
-  std::unordered_set<pll_rnode_t *> nodesToInvalidate;
+  std::unordered_set<corax_rnode_t *> nodesToInvalidate;
   // prune
   nodesToInvalidate.insert(pruneFatherNode);
   if (pruneGrandFatherNode) {
@@ -201,7 +201,7 @@ void SpeciesTreeOperator::reverseSPRMove(SpeciesTree &speciesTree,
 
 
 // direction: 0 == from parent, 1 == from left, 2 == from right
-static void recursiveGetNodes(pll_rnode_t *node, 
+static void recursiveGetNodes(corax_rnode_t *node, 
     unsigned int direction, 
     unsigned int radius, 
     std::vector<unsigned int> &nodes, 
@@ -273,13 +273,13 @@ void SpeciesTreeOperator::getPossibleRegrafts(SpeciesTree &speciesTree,
   recursiveGetNodes(getBrother(pruneNode)->right, 0, radius, regrafts, false);
 }
   
-static size_t leafHash(const pll_rnode_t *leaf) {
+static size_t leafHash(const corax_rnode_t *leaf) {
   assert(leaf);
   std::hash<std::string> hash_fn;
   return hash_fn(std::string(leaf->label));
 }
 
-static size_t getTreeHashRec(const pll_rnode_t *node, size_t i, bool useLeafHash) {
+static size_t getTreeHashRec(const corax_rnode_t *node, size_t i, bool useLeafHash) {
   assert(node);
   std::hash<size_t> hash_fn;
   if (i == 0) 

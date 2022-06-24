@@ -34,7 +34,7 @@ def reset_dir(directory):
 def generate_families_file_data(test_data, with_starting_tree, test_output):
   families_file = os.path.join(test_output, "families.txt")
   command = []
-  command.append("python")
+  command.append("python3")
   command.append(FAMILIES_SCRIPT)
   command.append(os.path.join(test_data, "alignments"))
   if (with_starting_tree):
@@ -56,7 +56,7 @@ def generate_families_file_data(test_data, with_starting_tree, test_output):
 def generate_families_file(test_output, alignments = "NONE", starting_trees = "NONE", mappings = "NONE", subst_model = "NONE"):
   families_file = os.path.join(test_output, "families.txt")
   command = []
-  command.append("python")
+  command.append("python3")
   command.append(FAMILIES_SCRIPT)
   command.append(alignments)
   command.append(starting_trees)

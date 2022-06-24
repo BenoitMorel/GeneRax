@@ -29,20 +29,18 @@ void Scenario::addEvent(ReconciliationEventType type,
     unsigned int destSpeciesNode) 
 {
   
-  addTransfer(type, geneNode, speciesNode, INVALID_NODE_ID, destSpeciesNode);
+  addTransfer(type, geneNode, speciesNode, destSpeciesNode);
 }
   
 void Scenario::addTransfer(ReconciliationEventType type, 
   unsigned int geneNode, 
   unsigned int speciesNode, 
-    unsigned int transferedGeneNode,
   unsigned int destSpeciesNode)
 {
   Event event;
   event.type = type;
   event.geneNode = geneNode;
   event.speciesNode = speciesNode;
-  event.transferedGeneNode = transferedGeneNode;
   event.destSpeciesNode = destSpeciesNode;
   addEvent(event);
 }
@@ -157,7 +155,6 @@ void Scenario::saveReconciliation(ParallelOfstream &os, ReconciliationFormat for
     break;
   case ReconciliationFormat::RecPhyloXML:
     ReconciliationWriter::saveReconciliationRecPhyloXML(_speciesTree, 
-        _geneRoot, 
         _virtualRootIndex, 
         _geneIdToEvents, 
         os);
@@ -202,7 +199,7 @@ void Scenario::saveTransfers(const std::string &filename, bool masterRankOnly)
 void Scenario::saveLargestOrthoGroup(std::string &filename, bool masterRankOnly) const
 {
   ParallelOfstream os(filename, masterRankOnly);
-  pll_unode_t virtualRoot;
+  corax_unode_t virtualRoot;
   virtualRoot.next = _geneRoot;
   virtualRoot.node_index = _virtualRootIndex;
   virtualRoot.label = nullptr;
@@ -218,7 +215,7 @@ void Scenario::saveLargestOrthoGroup(std::string &filename, bool masterRankOnly)
 void Scenario::saveAllOrthoGroups(std::string &filename, bool masterRankOnly) const
 {
   ParallelOfstream os(filename, masterRankOnly);
-  pll_unode_t virtualRoot;
+  corax_unode_t virtualRoot;
   virtualRoot.next = _geneRoot;
   virtualRoot.node_index = _virtualRootIndex;
   virtualRoot.label = nullptr;
@@ -238,7 +235,7 @@ void Scenario::saveAllOrthoGroups(std::string &filename, bool masterRankOnly) co
 
 
 
-OrthoGroup *Scenario::getLargestOrthoGroupRec(pll_unode_t *geneNode, bool isVirtualRoot) const
+OrthoGroup *Scenario::getLargestOrthoGroupRec(corax_unode_t *geneNode, bool isVirtualRoot) const
 {
   auto &events = _geneIdToEvents[geneNode->node_index];
   for (auto &event: events) {
@@ -270,10 +267,10 @@ OrthoGroup *Scenario::getLargestOrthoGroupRec(pll_unode_t *geneNode, bool isVirt
       return rightOrthoGroup;
     case ReconciliationEventType::EVENT_T:
       // only keep the non transfered gene
-      if (event.transferedGeneNode == left->node_index) {
+      if (event.rightGeneIndex == left->node_index) {
         delete leftOrthoGroup;
         return  rightOrthoGroup;
-      } else if (event.transferedGeneNode == right->node_index) {
+      } else if (event.rightGeneIndex == right->node_index) {
         delete rightOrthoGroup;
         return leftOrthoGroup;
       } else {
@@ -311,7 +308,7 @@ static void appendOrtho(OrthoGroupPtr &orthoGroups,
       orthoGroupsToAppend->end());
 }
 
-void Scenario::getAllOrthoGroupRec(pll_unode_t *geneNode,
+void Scenario::getAllOrthoGroupRec(corax_unode_t *geneNode,
       OrthoGroups &orthoGroups,
       OrthoGroupPtr &currentOrthoGroup,
       bool isVirtualRoot) const
@@ -346,10 +343,10 @@ void Scenario::getAllOrthoGroupRec(pll_unode_t *geneNode,
     case ReconciliationEventType::EVENT_T:
       // save the orthoGroup from the transfered gene,
       // and keep filling the orthoGroup on the non transfered gene
-      if (event.transferedGeneNode == left->node_index) {
+      if (event.rightGeneIndex == left->node_index) {
         appendOrtho(currentOrthoGroup, rightOrthoGroup);
         orthoGroups.push_back(leftOrthoGroup);
-      } else if (event.transferedGeneNode == right->node_index) {
+      } else if (event.rightGeneIndex == right->node_index) {
         appendOrtho(currentOrthoGroup, leftOrthoGroup);
         orthoGroups.push_back(rightOrthoGroup);
       } else {

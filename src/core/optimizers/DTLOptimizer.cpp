@@ -14,21 +14,8 @@ static bool isValidLikelihood(double ll) {
 }
 
 
-static void updateLL(Parameters &rates, Evaluations &evaluations) {
-  rates.ensurePositivity();
-  double ll = 0.0;
-  for (auto evaluation: evaluations) {
-    evaluation->setRates(rates);
-    ll += evaluation->evaluate();
-  }
-  ParallelContext::sumDouble(ll);
-  if (!isValidLikelihood(ll)) {
-    ll = -std::numeric_limits<double>::infinity();
-  }
-  rates.setScore(ll);
-}
 
-static bool lineSearchParameters(Evaluations &evaluations, 
+static bool lineSearchParameters(FunctionToOptimize &function,
     Parameters &currentRates, 
     const Parameters &gradient, 
     unsigned int &llComputationsLine,
@@ -43,7 +30,7 @@ static bool lineSearchParameters(Evaluations &evaluations,
   while (alpha > minAlpha) {
     currentGradient.normalize(alpha);
     Parameters proposal = currentRates + (currentGradient * alpha);
-    updateLL(proposal, evaluations);
+    function.evaluate(proposal);
     llComputationsLine++;
     if (currentRates.getScore() + settings.lineSearchMinImprovement
         < proposal.getScore()) {
@@ -63,7 +50,7 @@ static bool lineSearchParameters(Evaluations &evaluations,
 }
 
 
-Parameters DTLOptimizer::optimizeParameters(PerCoreEvaluations &evaluations,
+Parameters DTLOptimizer::optimizeParameters(FunctionToOptimize &function,
     const Parameters &startingParameters,
     OptimizationSettings settings)
 {
@@ -72,7 +59,7 @@ Parameters DTLOptimizer::optimizeParameters(PerCoreEvaluations &evaluations,
   }
   double epsilon = settings.epsilon;
   Parameters currentRates = startingParameters;
-  updateLL(currentRates, evaluations);
+  function.evaluate(currentRates);
   unsigned int llComputationsGrad = 0;
   unsigned int llComputationsLine = 0;
   unsigned int dimensions = startingParameters.dimensions();
@@ -82,12 +69,41 @@ Parameters DTLOptimizer::optimizeParameters(PerCoreEvaluations &evaluations,
     for (unsigned int i = 0; i < dimensions; ++i) {
       Parameters closeRates = currentRates;
       closeRates[i] += epsilon;
-      updateLL(closeRates, evaluations);
+      function.evaluate(closeRates);
       llComputationsGrad++;
       gradient[i] = (currentRates.getScore() - closeRates.getScore()) / (-epsilon);
     }
-  } while (lineSearchParameters(evaluations, currentRates, gradient, llComputationsLine, settings));
+  } while (lineSearchParameters(function, currentRates, gradient, llComputationsLine, settings));
   return currentRates;
+}
+
+class PerCoreFunction: public FunctionToOptimize {
+public:
+  PerCoreFunction(PerCoreEvaluations &evaluations):_evaluations(evaluations){}
+  virtual double evaluate(Parameters &parameters) {
+    parameters.ensurePositivity();
+    double ll = 0.0;
+    for (auto evaluation: _evaluations) {
+      evaluation->setRates(parameters);
+      ll += evaluation->evaluate();
+    }
+    ParallelContext::sumDouble(ll);
+    if (!isValidLikelihood(ll)) {
+      ll = -std::numeric_limits<double>::infinity();
+    }
+    parameters.setScore(ll);
+    return ll;
+  }
+private:
+  PerCoreEvaluations &_evaluations;
+};
+
+Parameters DTLOptimizer::optimizeParameters(PerCoreEvaluations &evaluations,
+    const Parameters &startingParameters,
+    OptimizationSettings settings)
+{
+  PerCoreFunction function(evaluations);
+  return optimizeParameters(function, startingParameters, settings);
 }
 
 ModelParameters DTLOptimizer::optimizeModelParameters(PerCoreEvaluations &evaluations,

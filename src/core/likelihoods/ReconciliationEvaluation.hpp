@@ -10,7 +10,7 @@
 #include <trees/PLLUnrootedTree.hpp>
 #include <trees/PLLRootedTree.hpp>
 
-class ReconciliationModelInterface;
+class GTBaseReconciliationInterface;
 class Scenario;
 
 /**
@@ -47,8 +47,8 @@ public:
    * This method is mostly used for rollbacking to a previous state. In most of the
    * cases you should call inferMLRoot instead.
    */
-  pll_unode_t *getRoot();
-  void setRoot(pll_unode_t * root);
+  corax_unode_t *getRoot();
+  void setRoot(corax_unode_t * root);
 
   void enableMADRooting(bool enable);
 
@@ -62,7 +62,7 @@ public:
   /*
    *  Call this everytime that the species tree changes
    */
-  void onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate);
+  void onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
 
   void setPartialLikelihoodMode(PartialLikelihoodMode mode);
 
@@ -75,13 +75,12 @@ public:
   void invalidateAllCLVs();
   void invalidateAllSpeciesCLVs();
  
-  pll_unode_t *inferMLRoot();
+  corax_unode_t *inferMLRoot();
   
   void inferMLScenario(Scenario &scenario, bool stochastic = false);
 
   RecModel getRecModel() const {return _recModelInfo.model;}
   
-  void rollbackToLastState();
 private:
   PLLRootedTree &_speciesTree;
   PLLUnrootedTree &_initialGeneTree;
@@ -91,10 +90,10 @@ private:
   std::vector<std::vector<double> > _rates;
   // we actually own this pointer, but we do not 
   // wrap it into a unique_ptr to allow forward definition
-  ReconciliationModelInterface *_evaluators;
+  GTBaseReconciliationInterface *_evaluators;
 private:
-  ReconciliationModelInterface *buildRecModelObject(RecModel recModel, bool infinitePrecision);
-  pll_unode_t *computeMLRoot();
+  GTBaseReconciliationInterface *buildRecModelObject(RecModel recModel, bool infinitePrecision);
+  corax_unode_t *computeMLRoot();
   void updatePrecision(bool infinitePrecision);
 };
   

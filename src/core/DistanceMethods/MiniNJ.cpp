@@ -6,46 +6,38 @@
 #include <IO/Families.hpp>
 #include <trees/PLLUnrootedTree.hpp>
 #include <algorithm>
+#include <parallelization/PerCoreGeneTrees.hpp>
 #include <parallelization//ParallelContext.hpp>
 
-void fillDistancesRec(pll_unode_t *currentNode, 
-    bool useBL,
-    bool useBootstrap,
+void fillDistancesRec(corax_unode_t *currentNode, 
     double currentDistance,
-    std::vector<double> &distances)
+    std::vector<double> &distances,
+    double contractBranchUnder)
 {
-  if (useBL) {
-    currentDistance += std::max(0.0000001, currentNode->length);
-  } else if (useBootstrap) {
-    double bootstrapValue = (nullptr == currentNode->label) ? 0.0 : std::atof(currentNode->label);
-    currentDistance += bootstrapValue;
-  } else {
-    // do not account for internal nodes which have too small
-    // branch lengths
-    if (currentNode->length == 0.0 || currentNode->length > 0.0000011) {
-      currentDistance += 1.0;
-    }
+  // do not account for internal nodes which have too small
+  // branch lengths
+  if (currentNode->length == 0.0 || currentNode->length >= contractBranchUnder) {
+    currentDistance += 1.0;
   }
   if (!currentNode->next) {
     // leaf
     distances[currentNode->node_index] = currentDistance;
     return;
   }
-  fillDistancesRec(currentNode->next->back, useBL, useBootstrap, currentDistance, distances);
-  fillDistancesRec(currentNode->next->next->back, useBL, useBootstrap, currentDistance, distances);
+  fillDistancesRec(currentNode->next->back, currentDistance, distances, contractBranchUnder);
+  fillDistancesRec(currentNode->next->next->back, currentDistance, distances, contractBranchUnder);
 } 
 
 
-static void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
+void MiniNJ::geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
     GeneSpeciesMapping &mapping,
     StringToUint &speciesStringToSpeciesId,
     DistanceMatrix &distances,
     DistanceMatrix &distancesDenominator,
     bool minMode,
     bool reweight,
-    bool useBL,
-    bool useBootstrap,
-    bool ustar)
+    bool ustar,
+    double contractBranchUnder)
 {
   unsigned int speciesNumber = distances.size();
   if (speciesNumber < 3) {
@@ -68,7 +60,7 @@ static void geneDistancesFromGeneTree(PLLUnrootedTree &geneTree,
   std::vector<double>zerosLeaf(leaves.size(), 0.0);
   std::vector<std::vector<double> > leafDistances(leaves.size(), zerosLeaf);
   for (auto leafNode: leaves) {
-    fillDistancesRec(leafNode->back, useBL, useBootstrap, 0.0, leafDistances[leafNode->node_index]);
+    fillDistancesRec(leafNode->back, 0.0, leafDistances[leafNode->node_index], contractBranchUnder);
   }
 
   // fill species distance matrices
@@ -133,31 +125,22 @@ std::unique_ptr<PLLRootedTree> MiniNJ::runMiniNJ(const Families &families)
 }
 
 
-std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool minMode, bool ustar, bool reweight)
+std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool minMode, bool ustar, bool reweight, double contractBranchUnder)
 {
   DistanceMatrix distanceMatrix;
   std::vector<std::string> speciesIdToSpeciesString;
   StringToUint speciesStringToSpeciesId;
-  bool useBL = false;
-  bool useBootstrap = false;
   computeDistanceMatrix(families,
       minMode,
       reweight,
-      useBL,
-      useBootstrap,
       ustar,
+      contractBranchUnder,
       distanceMatrix,
       speciesIdToSpeciesString,
       speciesStringToSpeciesId);
   auto res = NeighborJoining::applyNJ(distanceMatrix, 
       speciesIdToSpeciesString, 
       speciesStringToSpeciesId);
-  /*
-  return NeighborJoining::applyNJ(distanceMatrix, 
-      speciesIdToSpeciesString, 
-      speciesStringToSpeciesId,
-      res.get());
-    */
   return res;
 }
 
@@ -165,20 +148,26 @@ std::unique_ptr<PLLRootedTree> MiniNJ::geneTreeNJ(const Families &families, bool
 void MiniNJ::computeDistanceMatrix(const Families &families,
   bool minMode, 
   bool reweight,
-  bool useBL,
-  bool useBootstrap,
   bool ustar,
+  double contractBranchUnder,
   DistanceMatrix &distanceMatrix,
   std::vector<std::string> &speciesIdToSpeciesString,
   StringToUint &speciesStringToSpeciesId)
 {
+  Families perCoreFamilies;
+  PerCoreGeneTrees::getPerCoreFamilies(families, perCoreFamilies);
+  // map each species string to a species ID
   for (auto &family: families) {
+    // here we have to integrate over ALL families
+    // but this could be parallelized...
     GeneSpeciesMapping mappings;
     mappings.fill(family.mappingFile, family.startingGeneTree);
     for (auto &pairMapping: mappings.getMap()) {
       auto &species = pairMapping.second;
-      if (speciesStringToSpeciesId.find(species) == speciesStringToSpeciesId.end()) {
-        speciesStringToSpeciesId.insert({species, speciesIdToSpeciesString.size()});
+      if (speciesStringToSpeciesId.find(species) 
+          == speciesStringToSpeciesId.end()) {
+        speciesStringToSpeciesId.insert(
+            {species, speciesIdToSpeciesString.size()});
         speciesIdToSpeciesString.push_back(species);
         
       }
@@ -189,7 +178,10 @@ void MiniNJ::computeDistanceMatrix(const Families &families,
   distanceMatrix = DistanceMatrix(speciesNumber, nullDistances);  
   DistanceMatrix distanceDenominator(speciesNumber, nullDistances);
     
-  for (auto &family: families) {
+
+  // fill distanceMatrix and distanceDenominator from
+  // the gene trees
+  for (auto &family: perCoreFamilies) {
     GeneSpeciesMapping mappings;
     mappings.fill(family.mappingFile, family.startingGeneTree);
     std::ifstream reader(family.startingGeneTree);
@@ -203,17 +195,19 @@ void MiniNJ::computeDistanceMatrix(const Families &families,
           distanceDenominator,
           minMode,
           reweight,
-          useBL,
-          useBootstrap,
-          ustar);
+          ustar,
+          contractBranchUnder);
     }
   }
+
+  // update distanceMatrix with distanceDenominator
   for (unsigned int i = 0; i < speciesNumber; ++i) {
     for (unsigned int j = 0; j < speciesNumber; ++j) {
+      ParallelContext::sumDouble(distanceMatrix[i][j]);
+      ParallelContext::sumDouble(distanceDenominator[i][j]);
       if (i == j) {
         distanceMatrix[i][j] = 0.0;
-      }
-      if (0.0 != distanceDenominator[i][j]) {
+      } else if (0.0 != distanceDenominator[i][j]) {
         distanceMatrix[i][j] /= distanceDenominator[i][j];
       }
     }

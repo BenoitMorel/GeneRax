@@ -17,7 +17,7 @@ void GeneRaxInstance::readModelParameters(ModelParameters &modelParameters)
     return;
   }
   Parameters ratesToRead(rates);
-  auto resultsPath = FileSystem::joinPaths(args.output, "results");
+  auto resultsPath = FileSystem::joinPaths(args.outputPath, "results");
   for (unsigned int i = 0; i < this->currentFamilies.size(); ++i) {
     const auto &family = this->currentFamilies[i];
     std::string stats = FileSystem::joinPaths(FileSystem::joinPaths(resultsPath, family.name), "stats.txt");

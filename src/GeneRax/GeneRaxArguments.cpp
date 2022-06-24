@@ -9,11 +9,9 @@
 GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
-  speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
-  strategy(GeneSearchStrategy::SPR),
-  speciesStrategy(SpeciesSearchStrategy::SKIP),
+  geneSearchStrategy(GeneSearchStrategy::SPR),
   reconciliationModelStr("UndatedDTL"),
-  output("GeneRax"),
+  outputPath("GeneRax"),
   perFamilyDTLRates(false),
   rootedGeneTree(true),
   madRooting(false),
@@ -21,7 +19,6 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   supportThreshold(-1.0),
   recRadius(0),
   perSpeciesDTLRates(false),
-  useTransferFrequencies(false),
   userDTLRates(false),
   noDup(false),
   dupRate(0.2),
@@ -29,12 +26,14 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   transferRate(0.2),
   reconcile(true),
   buildSuperMatrix(false),
-  reconciliationSamples(0),
+  reconciliationSampleNumber(0),
   maxSPRRadius(5),
   recWeight(1.0), 
   seed(123),
   filterFamilies(true),
   exec(iargv[0]),
+  speciesStrategy(SpeciesSearchStrategy::SKIP),
+  speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
   constrainSpeciesSearch(false),
   rerootSpeciesTree(false),
   estimateSpeciesBranchLenghts(false), 
@@ -64,17 +63,17 @@ void GeneRaxArguments::init() {
       printHelp();
       ParallelContext::abort(0);
     } else if (arg == "-f" || arg == "--families") {
-      families = std::string(argv[++i]);
+      familyFilePath = std::string(argv[++i]);
     } else if (arg == "-s" || arg == "--species-tree") {
       speciesTree = std::string(argv[++i]);
       speciesTreeAlgorithm = Enums::strToSpeciesTree(speciesTree);
     } else if (arg == "--strategy") {
-      strategy = ArgumentsHelper::strToStrategy(std::string(argv[++i]));
-      if (strategy == GeneSearchStrategy::EVAL) {
+      geneSearchStrategy = ArgumentsHelper::strToStrategy(std::string(argv[++i]));
+      if (geneSearchStrategy == GeneSearchStrategy::EVAL) {
         recRadius = maxSPRRadius = 0;
       }
     } else if (arg == "-p" || arg == "--prefix") {
-      output = std::string(argv[++i]);
+      outputPath = std::string(argv[++i]);
     } else if (arg == "--seed") {
       seed = atoi(argv[++i]);
     } else if (arg == "--skip-family-filtering") {
@@ -113,13 +112,13 @@ void GeneRaxArguments::init() {
     } else if (arg == "--rec-weight") {
       recWeight = atof(argv[++i]);
     } else if (arg == "--reconciliation-samples") {
-      reconciliationSamples = static_cast<unsigned int>(atoi(argv[++i]));
+      reconciliationSampleNumber = static_cast<unsigned int>(atoi(argv[++i]));
     /**
      * Gene tree correction
      */
-    } else if (arg == "--strategy") {
-      strategy = ArgumentsHelper::strToStrategy(std::string(argv[++i]));
-      if (strategy == GeneSearchStrategy::EVAL) {
+    } else if (arg == "--geneSearchStrategy") {
+      geneSearchStrategy = ArgumentsHelper::strToStrategy(std::string(argv[++i]));
+      if (geneSearchStrategy == GeneSearchStrategy::EVAL) {
         recRadius = maxSPRRadius = 0;
       }
     } else if (arg == "--reconcile") {
@@ -161,10 +160,8 @@ void GeneRaxArguments::init() {
       minGeneBranchLength = atof(argv[++i]);
     } else if (arg == "--quartet-support-all-quartets") {
       quartetSupportAllQuartets = true; 
-    } else if (arg == "--use-transfer-frequencies") {
-      useTransferFrequencies = true;
     } else if (arg == "--reconciliation-samples") {
-      reconciliationSamples = static_cast<unsigned int>(atoi(argv[++i]));
+      reconciliationSampleNumber = static_cast<unsigned int>(atoi(argv[++i]));
     } else if (arg == "--generate-fake-alignments") {
       generateFakeAlignments = true;
     } else {
@@ -189,7 +186,7 @@ static void assertFileExists(const std::string &file)
 
 void GeneRaxArguments::checkInputs() {
   bool ok = true;
-  assertFileExists(families); 
+  assertFileExists(familyFilePath); 
   if (!speciesTree.size() && speciesStrategy != SpeciesSearchStrategy::SKIP) {
     Logger::info << "[Error] You need to provide a species tree or to optimize it." << std::endl;
     ok = false;
@@ -223,7 +220,7 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "-h, --help" << std::endl;
   Logger::info << "-f, --families <FAMILIES_INFORMATION>" << std::endl;
   Logger::info << "-s, --species-tree <SPECIES TREE>" << std::endl;
-  Logger::info << "--strategy <STRATEGY>  {EVAL, SPR}" << std::endl;
+  Logger::info << "--geneSearchStrategy <STRATEGY>  {EVAL, SPR}" << std::endl;
   Logger::info << "-r --rec-model <reconciliationModel>  {UndatedDL, UndatedDTL, Auto}" << std::endl;
   Logger::info << "-p, --prefix <OUTPUT PREFIX>" << std::endl;
   Logger::info << "--unrooted-gene-tree" << std::endl;
@@ -254,8 +251,8 @@ void GeneRaxArguments::printCommand() {
 void GeneRaxArguments::printSummary() {
   std::string boolStr[2] = {std::string("OFF"), std::string("ON")};
   Logger::info << "General information:" << std::endl;
-  Logger::info << "- Output prefix: " << output << std::endl;
-  Logger::info << "- Families information: " << families << std::endl;
+  Logger::info << "- Output prefix: " << outputPath << std::endl;
+  Logger::info << "- Families information: " << familyFilePath << std::endl;
   Logger::info << "- Species tree: " << speciesTree << std::endl;
 #ifdef WITH_MPI
   Logger::info << "- MPI Ranks: " << ParallelContext::getSize() << std::endl;
@@ -264,8 +261,8 @@ void GeneRaxArguments::printSummary() {
 #endif
   Logger::info << "- Random seed: " << seed << std::endl;
   Logger::info << "- Reconciliation model: " << reconciliationModelStr << std::endl;
-  if (reconciliationSamples) {
-    Logger::info << "- Reconciliation samples: " << reconciliationSamples << std::endl;
+  if (reconciliationSampleNumber) {
+    Logger::info << "- Reconciliation samples: " << reconciliationSampleNumber << std::endl;
   }
   Logger::info << "- DTL rates: "; 
   if (perSpeciesDTLRates) {
@@ -289,9 +286,9 @@ void GeneRaxArguments::printSummary() {
     Logger::info << std::endl;
   } 
     
-  if (strategy != GeneSearchStrategy::SKIP) {
+  if (geneSearchStrategy != GeneSearchStrategy::SKIP) {
     Logger::info << "Gene tree correction information:" << std::endl;  
-    Logger::info << "- Gene tree strategy: " << ArgumentsHelper::strategyToStr(strategy) << std::endl;
+    Logger::info << "- Gene tree search strategy: " << ArgumentsHelper::strategyToStr(geneSearchStrategy) << std::endl;
     Logger::info << "- Max gene SPR radius: " << maxSPRRadius << std::endl;
     Logger::info << std::endl;
   }

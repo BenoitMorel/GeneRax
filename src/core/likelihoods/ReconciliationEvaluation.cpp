@@ -5,9 +5,9 @@
 #include <likelihoods/reconciliation_models/UndatedDLModel.hpp>
 #include <likelihoods/reconciliation_models/UndatedDTLModel.hpp>
 #include <likelihoods/reconciliation_models/ParsimonyDModel.hpp>
+#include <likelihoods/reconciliation_models/BaseReconciliationModel.hpp>
 #include <cmath>
 #include <IO/FileSystem.hpp>
-#include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
 
 double log(ScaledValue v) 
 {
@@ -56,12 +56,12 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
   _evaluators->setRates(_rates);
 }
   
-pll_unode_t *ReconciliationEvaluation::getRoot() 
+corax_unode_t *ReconciliationEvaluation::getRoot() 
 {
   return _evaluators->getRoot();
 }
 
-void ReconciliationEvaluation::setRoot(pll_unode_t * root) 
+void ReconciliationEvaluation::setRoot(corax_unode_t * root) 
 {
   _evaluators->setRoot(root);
 }
@@ -91,10 +91,10 @@ void ReconciliationEvaluation::invalidateAllSpeciesCLVs()
   _evaluators->invalidateAllSpeciesCLVs();
 }
 
-ReconciliationModelInterface *ReconciliationEvaluation::buildRecModelObject(RecModel recModel, 
+GTBaseReconciliationInterface *ReconciliationEvaluation::buildRecModelObject(RecModel recModel, 
     bool infinitePrecision)
 {
-  ReconciliationModelInterface *res(nullptr);
+  GTBaseReconciliationInterface *res(nullptr);
   switch(recModel) {
   case RecModel::UndatedDL:
     if (infinitePrecision) {
@@ -145,12 +145,12 @@ void ReconciliationEvaluation::inferMLScenario(Scenario &scenario, bool stochast
   updatePrecision(infinitePrecision);
 }
   
-pll_unode_t *ReconciliationEvaluation::computeMLRoot() 
+corax_unode_t *ReconciliationEvaluation::computeMLRoot() 
 {
   return  _evaluators->computeMLRoot();
 }
   
-pll_unode_t *ReconciliationEvaluation::inferMLRoot()
+corax_unode_t *ReconciliationEvaluation::inferMLRoot()
 {
   auto infinitePrecision = _infinitePrecision;
   updatePrecision(true);
@@ -162,7 +162,7 @@ pll_unode_t *ReconciliationEvaluation::inferMLRoot()
   return res;
 }
 
-void ReconciliationEvaluation::onSpeciesTreeChange(const std::unordered_set<pll_rnode_t *> *nodesToInvalidate)
+void ReconciliationEvaluation::onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate)
 {
   assert(_evaluators);
   _evaluators->onSpeciesTreeChange(nodesToInvalidate);
@@ -173,8 +173,3 @@ void ReconciliationEvaluation::setPartialLikelihoodMode(PartialLikelihoodMode mo
   _evaluators->setPartialLikelihoodMode(mode);
 }
   
-void ReconciliationEvaluation::rollbackToLastState() 
-{
-  _evaluators->rollbackToLastState();
-}
-

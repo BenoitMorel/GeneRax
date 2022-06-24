@@ -1,14 +1,6 @@
 #pragma once
 
-extern "C" {
-#include <pll.h>
-#include <pllmod_algorithm.h>
-#include <pll_binary.h>
-#include <pll_msa.h>
-#include <pll_optimize.h>
-#include <pll_tree.h>
-#include <pllmod_util.h>  
-}
+#include <corax/corax.h>
 
 #include <unordered_set>
 #include <string>
@@ -19,18 +11,19 @@ extern "C" {
 #include <util/CArrayRange.hpp>
 #include <maths/Random.hpp>
 #include <functional>
+#include <cstring>
 
 class PLLRootedTree;
 
 
 using UnodePrinter = 
-  std::function<void(pll_unode_t *, std::stringstream &)>;
+  std::function<void(corax_unode_t *, std::stringstream &)>;
 
-void defaultUnodePrinter(pll_unode_t *node, 
+void defaultUnodePrinter(corax_unode_t *node, 
     std::stringstream &ss);
 
 /**
- *  C++ wrapper around the libpll pll_utree_t structure
+ *  C++ wrapper around the libpll corax_utree_t structure
  *  to represent an unrooted tree
  */
 class PLLUnrootedTree {
@@ -59,7 +52,11 @@ public:
   PLLUnrootedTree(PLLUnrootedTree &&) = delete;
   PLLUnrootedTree & operator = (PLLUnrootedTree &&) = delete;
 
-
+  bool operator ==(const PLLUnrootedTree &other) const
+  {
+    return areIsomorphic(*this, other);
+  }
+  
   /*
    * Tree dimension
    */
@@ -77,8 +74,8 @@ public:
   /*
    * Node access
    */
-  pll_unode_t *getAnyInnerNode();
-  pll_unode_t *getNode(unsigned int node_index);
+  corax_unode_t *getAnyInnerNode() const;
+  corax_unode_t *getNode(unsigned int node_index) const;
 
  
   
@@ -92,47 +89,55 @@ public:
    */
   void save(const std::string &fileName); 
   std::string getNewickString(UnodePrinter f = defaultUnodePrinter,
-      pll_unode_t *root = nullptr, 
+      corax_unode_t *root = nullptr, 
       bool rooted = false);
+  static std::string getSubtreeString(corax_unode_t *subtree, UnodePrinter f = defaultUnodePrinter);
 
   /**
    * Replace null branch lengths with minBL
    */
   void setMissingBranchLengths(double minBL = 0.1); 
 
+  
+  size_t getUnrootedTreeHash() const;
+
   /**
    *  Direct access to the libpll structure
    */
-  pll_utree_t *getRawPtr() {return _tree.get();}
+  corax_utree_t *getRawPtr() {return _tree.get();}
   
-  CArrayRange<pll_unode_t*> getLeaves() const;
+  CArrayRange<corax_unode_t*> getLeaves() const;
 
   /*
    *  C++11 range for accessing internal nodes. 
    *  Only includes one of the three pll elements per node
    *  in the tree
    */
-  CArrayRange<pll_unode_t*> getInnerNodes() const;
+  CArrayRange<corax_unode_t*> getInnerNodes() const;
 
   /*
    *  C++11 range for accessing nodes. 
    *  For internal nodes, Only includes one of the three pll elements per node
    *  in the tree
    */
-  CArrayRange<pll_unode_t*> getNodes() const;
+  CArrayRange<corax_unode_t*> getNodes() const;
 
   /**
    *  Create a vector of all nodes (including all three pll
    *  internal elements per internal node), such that a node
    *  always comes after its (virtual) children.
    */
-  std::vector<pll_unode_t*> getPostOrderNodes(bool innerOnly = false);
-
+  std::vector<corax_unode_t*> getPostOrderNodes(bool innerOnly = false) const;
+  std::vector<corax_unode_t*> getPostOrderNodesFrom(corax_unode_t *node) const;
+  std::vector<corax_unode_t*> getReverseDepthNodes() const;
+  
+ 
   /**
    *  Return a set of all branches (for each node, one and only 
    *  one of node and node->back will be inserted in the set)
    */
-  std::unordered_set<pll_unode_t *> getBranches();
+  std::unordered_set<corax_unode_t *> getBranches() const;
+  std::vector<corax_unode_t *> getBranchesDeterministic() const;
 
   /**
    *  Compute a matrix of pairwise distances.
@@ -160,9 +165,9 @@ public:
    *  In addition, fill branchesPath with the sequence of BRANCHES
    *  along the path (if node1->back == node2, we only add one of the two)
    */
-  static void orientTowardEachOther(pll_unode_t **pu, 
-      pll_unode_t **pv,
-      std::vector<pll_unode_t *> &branchesPath);
+  static void orientTowardEachOther(corax_unode_t **pu, 
+      corax_unode_t **pv,
+      std::vector<corax_unode_t *> &branchesPath);
 
 
   /*
@@ -170,7 +175,7 @@ public:
    *  the root in the input rooted tree. Both trees should have the 
    *  same (unrooted) topology and leaf set.
    */
-   pll_unode_t *getVirtualRoot(PLLRootedTree &referenceTree);
+   corax_unode_t *getVirtualRoot(PLLRootedTree &referenceTree);
 
   // TODO: DOCUMENT
   std::vector<double> getMADRelativeDeviations();
@@ -178,12 +183,27 @@ public:
   /**
    *  Return the set of leaves under the input directed node
    */
-  static std::unordered_set<unsigned int> getClade(pll_unode_t *node);
+  static std::unordered_set<unsigned int> getClade(corax_unode_t *node);
+
+  static bool areIsomorphic(const PLLUnrootedTree &t1,
+    const PLLUnrootedTree &t2);
 
   bool isBinary() const;
+  
+  void ensureUniqueLabels();
+
+  /**
+   *  Return the leaf node that has the label label,
+   *  or null pointer if such leaf does not exist
+   */
+  corax_unode_t *findLeaf(const std::string &labe);
+
+  static corax_unode_t *getLeft(corax_unode_t *node) {return node->next->back;}
+  static corax_unode_t *getRight(corax_unode_t *node) {return node->next->next->back;}
 private:
-  std::unique_ptr<pll_utree_t, void(*)(pll_utree_t*)> _tree;
+  std::unique_ptr<corax_utree_t, void(*)(corax_utree_t*)> _tree;
 };
+
 
 
 

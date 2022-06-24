@@ -1,6 +1,6 @@
 #pragma once
 
-#include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
+#include <likelihoods/reconciliation_models/GTBaseReconciliationModel.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <IO/Logger.hpp>
@@ -12,12 +12,12 @@
 
 
 
-class ParsimonyDModel: public AbstractReconciliationModel<double> {
+class ParsimonyDModel: public GTBaseReconciliationModel<double> {
 public:
   ParsimonyDModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMappingp, 
       const RecModelInfo &recModelInfo):
-    AbstractReconciliationModel<double>(speciesTree, 
+    GTBaseReconciliationModel<double>(speciesTree, 
         geneSpeciesMappingp, 
         recModelInfo),
     _costD(-1.0)
@@ -36,10 +36,10 @@ protected:
   // overload from parent
   virtual void setInitialGeneTree(PLLUnrootedTree &tree);
   // overload from parent
-  virtual void updateCLV(pll_unode_t *geneNode);
+  virtual void updateCLV(corax_unode_t *geneNode);
   // overload from parent
-  virtual double getGeneRootLikelihood(pll_unode_t *root) const;
-  virtual double  getGeneRootLikelihood(pll_unode_t *root, pll_rnode_t *) {
+  virtual double getGeneRootLikelihood(corax_unode_t *root) const;
+  virtual double  getGeneRootLikelihood(corax_unode_t *root, corax_rnode_t *) {
     return _dlclvs[root->node_index + this->_maxGeneId + 1].cost;
   }
 
@@ -47,16 +47,15 @@ protected:
   virtual void recomputeSpeciesProbabilities() {}
   virtual double getLikelihoodFactor() const {return 1.0;}
   // overload from parent
-  virtual void computeGeneRootLikelihood(pll_unode_t *virtualRoot);
+  virtual void computeGeneRootLikelihood(corax_unode_t *virtualRoot);
   // overlead from parent
-  virtual void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+  virtual void computeProbability(corax_unode_t *geneNode, corax_rnode_t *speciesNode, 
       double &proba,
       bool isVirtualRoot = false,
       Scenario *scenario = nullptr,
       Scenario::Event *event = nullptr,
       bool stochastic = false);
   virtual bool isParsimony() const {return true;}
-  virtual bool sumOverAllOriginations() const {return false;}
 private:
   // parsimony costs
   double _costD;
@@ -71,7 +70,7 @@ private:
   std::vector<DLCLV> _dlclvs;
  
 private:
-  std::vector<pll_rnode_s *> &getSpeciesNodesToUpdate() {
+  std::vector<corax_rnode_s *> &getSpeciesNodesToUpdate() {
     return this->_speciesNodesToUpdate;
   }
 
@@ -81,20 +80,20 @@ private:
 
 void ParsimonyDModel::setInitialGeneTree(PLLUnrootedTree &tree)
 {
-  AbstractReconciliationModel<double>::setInitialGeneTree(tree);
+  GTBaseReconciliationModel<double>::setInitialGeneTree(tree);
   _dlclvs = std::vector<DLCLV>(2 * (this->_maxGeneId + 1));
 }
 
 
-void ParsimonyDModel::updateCLV(pll_unode_t *geneNode)
+void ParsimonyDModel::updateCLV(corax_unode_t *geneNode)
 {
   computeProbability(geneNode, 
         nullptr, 
         _dlclvs[geneNode->node_index].cost);
 }
 
-static void getPolytomyD(pll_unode_t *node, 
-    std::vector<pll_unode_t *> &polytomy,
+static void getPolytomyD(corax_unode_t *node, 
+    std::vector<corax_unode_t *> &polytomy,
     double minBranchLength = 0.0000011)
 {
   if (!node->next || node->length > minBranchLength) {
@@ -106,8 +105,8 @@ static void getPolytomyD(pll_unode_t *node,
 }
 
 
-void ParsimonyDModel::computeProbability(pll_unode_t *geneNode, 
-    pll_rnode_t *, 
+void ParsimonyDModel::computeProbability(corax_unode_t *geneNode, 
+    corax_rnode_t *, 
       double &proba,
       bool isVirtualRoot,
       Scenario *,
@@ -124,7 +123,7 @@ void ParsimonyDModel::computeProbability(pll_unode_t *geneNode,
   auto v = leftGeneNode->node_index;
   auto w = rightGeneNode->node_index;
   proba = _dlclvs[v].cost + _dlclvs[w].cost;
-  std::vector<pll_unode_t *> polytomy;
+  std::vector<corax_unode_t *> polytomy;
   getPolytomyD(leftGeneNode, polytomy);
   getPolytomyD(rightGeneNode, polytomy);
   if (polytomy.size() > 2) {
@@ -145,14 +144,14 @@ void ParsimonyDModel::computeProbability(pll_unode_t *geneNode,
 }
   
 
-double ParsimonyDModel::getGeneRootLikelihood(pll_unode_t *root) const
+double ParsimonyDModel::getGeneRootLikelihood(corax_unode_t *root) const
 {
   auto u = root->node_index + this->_maxGeneId + 1;
   return _dlclvs[u].cost;
 }
 
 
-void ParsimonyDModel::computeGeneRootLikelihood(pll_unode_t *virtualRoot)
+void ParsimonyDModel::computeGeneRootLikelihood(corax_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
   computeProbability(virtualRoot, nullptr, _dlclvs[u].cost, true);

@@ -307,6 +307,71 @@ void ParallelContext::concatenateUIntVectors(const std::vector<unsigned int> &lo
 #endif
 }
   
+void ParallelContext::concatenateHetherogeneousDoubleVectors(
+      const std::vector<double> &localVector, 
+      std::vector<double> &globalVector)
+{
+  if (!_mpiEnabled) {
+    globalVector = localVector;
+    return;
+  }
+#ifdef WITH_MPI
+  std::vector<int> vectorSizes(static_cast<int>(getSize()));
+  allGatherInt(localVector.size(), vectorSizes);
+  auto totalSize = std::accumulate(vectorSizes.begin(), 
+      vectorSizes.end(),
+      0);
+  globalVector.resize(totalSize);
+  std::vector<int> displ(totalSize);
+  for (int i = 1; i < totalSize; ++i) {
+    displ[i] = displ[i-1] + vectorSizes[i-1];
+  }
+  MPI_Gatherv(&localVector[0],  // send buffer 
+      localVector.size(),       // send count
+      MPI::DOUBLE,              // send type
+      &globalVector[0],         // receive buffer 
+      &vectorSizes[0],          // receive counts
+      &displ[0],                // per rank offset 
+      MPI::DOUBLE,              // receive type
+      0,                       // root rank
+      getComm());
+#else
+  assert(false);
+#endif
+}
+
+void ParallelContext::concatenateHetherogeneousUIntVectors(
+      const std::vector<unsigned int> &localVector, 
+      std::vector<unsigned int> &globalVector)
+{
+  if (!_mpiEnabled) {
+    globalVector = localVector;
+    return;
+  }
+#ifdef WITH_MPI
+  std::vector<int> vectorSizes(static_cast<int>(getSize()));
+  allGatherInt(localVector.size(), vectorSizes);
+  auto totalSize = std::accumulate(vectorSizes.begin(), 
+      vectorSizes.end(),
+      0);
+  globalVector.resize(totalSize);
+  std::vector<int> displ(totalSize);
+  for (int i = 1; i < totalSize; ++i) {
+    displ[i] = displ[i-1] + vectorSizes[i-1];
+  }
+  MPI_Allgatherv(&localVector[0],  // send buffer 
+      localVector.size(),       // send count
+      MPI_UNSIGNED,              // send type
+      &globalVector[0],         // receive buffer 
+      &vectorSizes[0],          // receive counts
+      &displ[0],                // per rank offset 
+      MPI_UNSIGNED,              // receive type
+      getComm());
+#else
+  assert(false);
+#endif
+}
+  
 void ParallelContext::broadcastInt(unsigned int fromRank, int &value)
 {
   if (!_mpiEnabled) {
@@ -418,6 +483,14 @@ bool ParallelContext::allowSchedulerSplitImplementation()
 bool ParallelContext::isRandConsistent()
 {
   return isIntEqual(Random::getInt());
+}
+
+void ParallelContext::makeRandConsistent()
+{
+  auto seed = Random::getInt();
+  ParallelContext::broadcastInt(0, seed);
+  Random::setSeed(seed);
+  assert(isRandConsistent());
 }
 
 bool ParallelContext::isIntEqual(int value)

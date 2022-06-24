@@ -1,6 +1,6 @@
 #pragma once
 
-#include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
+#include <likelihoods/reconciliation_models/GTBaseReconciliationModel.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <IO/Logger.hpp>
@@ -15,12 +15,12 @@
 * In addition, we forbid transfers to parent species
 */
 template <class REAL>
-class UndatedDTLModel: public AbstractReconciliationModel<REAL> {
+class UndatedDTLModel: public GTBaseReconciliationModel<REAL> {
 public:
   UndatedDTLModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMappingp, 
       const RecModelInfo &recModelInfo): 
-    AbstractReconciliationModel<REAL>(speciesTree, 
+    GTBaseReconciliationModel<REAL>(speciesTree, 
         geneSpeciesMappingp, 
         recModelInfo) {}
   UndatedDTLModel(const UndatedDTLModel &) = delete;
@@ -32,23 +32,22 @@ public:
   // overloaded from parent
   virtual void setRates(const RatesVector &rates);
   
-  virtual void rollbackToLastState();
 protected:
   // overloaded from parent
   virtual void setInitialGeneTree(PLLUnrootedTree &tree);
   // overloaded from parent
-  virtual void updateCLV(pll_unode_t *geneNode);
+  virtual void updateCLV(corax_unode_t *geneNode);
   // overload from parent
   virtual void recomputeSpeciesProbabilities();
   // overloaded from parent
-  virtual REAL getGeneRootLikelihood(pll_unode_t *root) const;
+  virtual REAL getGeneRootLikelihood(corax_unode_t *root) const;
   // overload from parent
-  virtual void computeGeneRootLikelihood(pll_unode_t *virtualRoot);
-  virtual REAL getGeneRootLikelihood(pll_unode_t *root, pll_rnode_t *speciesRoot) {
+  virtual void computeGeneRootLikelihood(corax_unode_t *virtualRoot);
+  virtual REAL getGeneRootLikelihood(corax_unode_t *root, corax_rnode_t *speciesRoot) {
     return _dtlclvs[root->node_index + this->_maxGeneId + 1]._uq[speciesRoot->node_index];
   }
   virtual REAL getLikelihoodFactor() const;
-  virtual void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+  virtual void computeProbability(corax_unode_t *geneNode, corax_rnode_t *speciesNode, 
       REAL &proba,
       bool isVirtualRoot = false,
       Scenario *scenario = nullptr,
@@ -93,18 +92,18 @@ private:
 private:
   void updateTransferSums(REAL &transferExtinctionSum,
       const std::vector<REAL> &probabilities);
-  void getBestTransfer(pll_unode_t *parentGeneNode, 
-    pll_rnode_t *originSpeciesNode,
+  void getBestTransfer(corax_unode_t *parentGeneNode, 
+    corax_rnode_t *originSpeciesNode,
     bool isVirtualRoot,
-    pll_unode_t *&transferedGene,
-    pll_unode_t *&stayingGene,
-    pll_rnode_t *&recievingSpecies,
+    corax_unode_t *&transferedGene,
+    corax_unode_t *&stayingGene,
+    corax_rnode_t *&recievingSpecies,
     REAL &proba, 
     bool stochastic = false);
   void getBestTransferLoss(Scenario &scenario,
-      pll_unode_t *parentGeneNode, 
-    pll_rnode_t *originSpeciesNode,
-    pll_rnode_t *&recievingSpecies,
+      corax_unode_t *parentGeneNode, 
+    corax_rnode_t *originSpeciesNode,
+    corax_rnode_t *&recievingSpecies,
     REAL &proba,
     bool stochastic = false);
   unsigned int getIterationsNumber() const {return 4;}    
@@ -116,10 +115,10 @@ private:
   {
     return _dtlclvs[geneId]._survivingTransferSums * _PT[speciesId];
   }
-  std::vector<pll_rnode_s *> &getSpeciesNodesToUpdate() {
+  std::vector<corax_rnode_s *> &getSpeciesNodesToUpdate() {
     return this->_speciesNodesToUpdate;
   }
-  std::vector<pll_rnode_s *> &getSpeciesNodesToUpdateSafe() {
+  std::vector<corax_rnode_s *> &getSpeciesNodesToUpdateSafe() {
     return this->_allSpeciesNodes;
   }
 };
@@ -128,7 +127,7 @@ private:
 template <class REAL>
 void UndatedDTLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
 {
-  AbstractReconciliationModel<REAL>::setInitialGeneTree(tree);
+  GTBaseReconciliationModel<REAL>::setInitialGeneTree(tree);
   DTLCLV nullCLV(this->_allSpeciesNodesCount);
   _dtlclvs = std::vector<DTLCLV>(2 * (this->_maxGeneId + 1), nullCLV);
 }
@@ -214,7 +213,7 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
 }
 
 template <class REAL>
-void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
+void UndatedDTLModel<REAL>::updateCLV(corax_unode_t *geneNode)
 {
   auto gid = geneNode->node_index; 
   auto lca = this->_geneToSpeciesLCA[gid];
@@ -255,7 +254,7 @@ void UndatedDTLModel<REAL>::updateCLV(pll_unode_t *geneNode)
 
 
 template <class REAL>
-void UndatedDTLModel<REAL>::computeGeneRootLikelihood(pll_unode_t *virtualRoot)
+void UndatedDTLModel<REAL>::computeGeneRootLikelihood(corax_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
   _dtlclvs[u]._survivingTransferSums = REAL();
@@ -277,7 +276,7 @@ void UndatedDTLModel<REAL>::computeGeneRootLikelihood(pll_unode_t *virtualRoot)
 }
 
 template <class REAL>
-void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+void UndatedDTLModel<REAL>::computeProbability(corax_unode_t *geneNode, corax_rnode_t *speciesNode, 
       REAL &proba,
       bool isVirtualRoot,
       Scenario *scenario,
@@ -298,6 +297,9 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
 
   if (isSpeciesLeaf and isGeneLeaf and e == this->_geneToSpecies[gid]) {
     proba = REAL(_PS[e]);
+    if (event) {
+      event->label = std::string(geneNode->label);
+    }
     return;
   }
   typedef std::array<REAL, 7>  ValuesArray;
@@ -308,8 +310,8 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
   }
   proba = REAL();
   
-  pll_unode_t *leftGeneNode = 0;     
-  pll_unode_t *rightGeneNode = 0;     
+  corax_unode_t *leftGeneNode = 0;     
+  corax_unode_t *rightGeneNode = 0;     
   if (!isGeneLeaf) {
     leftGeneNode = this->getLeft(geneNode, isVirtualRoot);
     rightGeneNode = this->getRight(geneNode, isVirtualRoot);
@@ -369,9 +371,9 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
   }
   if (event) {
     assert(scenario);
-    pll_unode_t *transferedGene = 0;
-    pll_unode_t *stayingGene = 0;
-    pll_rnode_t *recievingSpecies = 0;
+    corax_unode_t *transferedGene = 0;
+    corax_unode_t *stayingGene = 0;
+    corax_rnode_t *recievingSpecies = 0;
     values[5] = values[6] = REAL(); // invalidate these ones
     if (!isGeneLeaf) {
       getBestTransfer(geneNode, speciesNode, isVirtualRoot, 
@@ -392,14 +394,18 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
     switch(maxValueIndex) {
     case 0:
       event->type = ReconciliationEventType::EVENT_S;
-      event->cross = false;
+      event->leftGeneIndex = leftGeneNode->node_index;
+      event->rightGeneIndex = rightGeneNode->node_index;
       break;
     case 1:
       event->type = ReconciliationEventType::EVENT_S;
-      event->cross = true;
+      event->leftGeneIndex = rightGeneNode->node_index;
+      event->rightGeneIndex = leftGeneNode->node_index;
       break;
     case 2:
       event->type = ReconciliationEventType::EVENT_D;
+      event->leftGeneIndex = leftGeneNode->node_index;
+      event->rightGeneIndex = rightGeneNode->node_index;
       break;
     case 3:
       event->type = ReconciliationEventType::EVENT_SL;
@@ -413,7 +419,8 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
       break;
     case 5:
       event->type = ReconciliationEventType::EVENT_T;
-      event->transferedGeneNode = transferedGene->node_index;
+      event->leftGeneIndex = stayingGene->node_index;
+      event->rightGeneIndex = transferedGene->node_index;
       event->destSpeciesNode = recievingSpecies->node_index;
       event->pllTransferedGeneNode = transferedGene;
       event->pllDestSpeciesNode = recievingSpecies;
@@ -430,7 +437,7 @@ void UndatedDTLModel<REAL>::computeProbability(pll_unode_t *geneNode, pll_rnode_
 
 
 template <class REAL>
-REAL UndatedDTLModel<REAL>::getGeneRootLikelihood(pll_unode_t *root) const
+REAL UndatedDTLModel<REAL>::getGeneRootLikelihood(corax_unode_t *root) const
 {
   REAL sum = REAL();
   auto u = root->node_index + this->_maxGeneId + 1;
@@ -455,17 +462,12 @@ REAL UndatedDTLModel<REAL>::getLikelihoodFactor() const
 
 
 template <class REAL>
-void UndatedDTLModel<REAL>::rollbackToLastState()
-{
-}
-
-template <class REAL>
-void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode, 
-  pll_rnode_t *originSpeciesNode,
+void UndatedDTLModel<REAL>::getBestTransfer(corax_unode_t *parentGeneNode, 
+  corax_rnode_t *originSpeciesNode,
   bool isVirtualRoot,
-  pll_unode_t *&transferedGene,
-  pll_unode_t *&stayingGene,
-  pll_rnode_t *&recievingSpecies,
+  corax_unode_t *&transferedGene,
+  corax_unode_t *&stayingGene,
+  corax_rnode_t *&recievingSpecies,
   REAL &proba, 
   bool stochastic)
 {
@@ -529,9 +531,9 @@ void UndatedDTLModel<REAL>::getBestTransfer(pll_unode_t *parentGeneNode,
 
 template <class REAL>
 void UndatedDTLModel<REAL>::getBestTransferLoss(Scenario &scenario,
-   pll_unode_t *parentGeneNode, 
-  pll_rnode_t *originSpeciesNode,
-  pll_rnode_t *&recievingSpecies,
+   corax_unode_t *parentGeneNode, 
+  corax_rnode_t *originSpeciesNode,
+  corax_rnode_t *&recievingSpecies,
   REAL &proba, 
   bool stochastic)
 {

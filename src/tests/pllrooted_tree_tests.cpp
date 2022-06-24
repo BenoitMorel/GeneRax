@@ -9,10 +9,10 @@ const std::string tree2("(E, ((A,B),(C,D)));");
 
 const std::string tree3("(((A,B),(C,D)),((E,(F,G)),(((H,I),J),((K,L),(((M,N),(O,P)),(Q,(R,(S,(T,U)))))))));");
 
-pll_rnode_t * getLCA(pll_rnode_t *n1,
-    pll_rnode_t *n2)
+corax_rnode_t * getLCA(corax_rnode_t *n1,
+    corax_rnode_t *n2)
 {
-  std::unordered_set<pll_rnode_t *> n1Ancestors;
+  std::unordered_set<corax_rnode_t *> n1Ancestors;
   while (n1) {
     n1Ancestors.insert(n1);
     n1 = n1->parent;

@@ -92,7 +92,7 @@ static void computeCup(unsigned int l1,
   }
 }
 
-void computeDupLoss(pll_rnode_t *node,
+void computeDupLoss(corax_rnode_t *node,
     std::vector<Entry> &entries,
     unsigned int k)
 {
@@ -127,7 +127,7 @@ void computeDupLoss(pll_rnode_t *node,
   }
 }
 
-static void computeAncestralCopies(pll_rnode_t *node,
+static void computeAncestralCopies(corax_rnode_t *node,
     std::vector<Entry> &entries,
     unsigned int parentsCopies)
 {

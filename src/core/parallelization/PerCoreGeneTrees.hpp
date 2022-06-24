@@ -34,7 +34,8 @@ public:
    *  @param families families description
    */
   PerCoreGeneTrees(const Families &families, 
-      bool acceptMultipleTrees = false);
+      bool acceptMultipleTrees = false,
+      bool ccpMode = false);
   /**
    * Create an instance with a unique gene tree, without 
    * accouting for parallelization.
@@ -63,6 +64,10 @@ public:
    *  @return true if the mappings are valid.
    */
   bool checkMappings(const std::string &speciesTreeFile);
+
+  static void getPerCoreFamilies(const Families &allFamilies,
+      Families &perCoreFamilies);
+
 private:
   std::vector<GeneTree> _geneTrees;
   std::vector<unsigned int> _treeSizes;

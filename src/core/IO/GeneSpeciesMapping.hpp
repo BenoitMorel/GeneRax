@@ -5,9 +5,9 @@
 #include <fstream>
 #include <unordered_set>
 
-typedef struct pll_utree_s pll_utree_t;
-typedef struct pll_unode_s pll_unode_t;
-typedef struct pll_rtree_s pll_rtree_t;
+typedef struct corax_utree_s corax_utree_t;
+typedef struct corax_unode_s corax_unode_t;
+typedef struct corax_rtree_s corax_rtree_t;
 
 
 
@@ -26,7 +26,7 @@ public:
   
   void fill(const std::string &mappingFile, const std::string &geneTreeStrOrFile); 
   void fillFromGeneLabels(const std::unordered_set<std::string> &labels); 
-  bool check(pll_utree_t *geneTree, pll_rtree_t *speciesTree);
+  bool check(corax_utree_t *geneTree, corax_rtree_t *speciesTree);
   bool check(const std::unordered_set<std::string> &genes, const std::unordered_set<std::string> &species);
   void fill(const GeneSpeciesMapping &mapping);
 

@@ -39,6 +39,6 @@ private:
   unsigned int pruneIndex_;
   unsigned int regraftIndex_;
   std::vector<unsigned int> path_;
-  std::vector<pll_unode_t *> branchesToOptimize_;
+  std::vector<corax_unode_t *> branchesToOptimize_;
 };
 

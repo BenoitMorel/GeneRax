@@ -7,9 +7,7 @@
 #include <IO/Logger.hpp>
 #include <IO/FileSystem.hpp>
 #include <trees/PLLUnrootedTree.hpp>
-extern "C" {
-#include <pll.h>
-}
+#include <corax/corax.h>
 
 void GeneSpeciesMapping::fill(const std::string &mappingFile, const std::string &geneTreeStrOrFile) 
 {
@@ -28,7 +26,7 @@ void GeneSpeciesMapping::fill(const GeneSpeciesMapping &mapping)
   }
 }
   
-bool GeneSpeciesMapping::check(pll_utree_t *geneTree, pll_rtree_t *speciesTree)
+bool GeneSpeciesMapping::check(corax_utree_t *geneTree, corax_rtree_t *speciesTree)
 {
 
   assert(false);

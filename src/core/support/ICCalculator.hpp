@@ -57,7 +57,7 @@ private:
   // trees
   PLLRootedTree _rootedReferenceTree;
   PLLUnrootedTree _referenceTree;
-  pll_unode_t *_referenceRoot;
+  corax_unode_t *_referenceRoot;
   PerCoreGeneTrees _perCoreGeneTrees;
   TaxaSet _allSPID;
   std::vector<unsigned int> _speciesSubtreeSizes;

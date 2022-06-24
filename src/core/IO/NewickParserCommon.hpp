@@ -1,8 +1,7 @@
 #pragma once
 
-extern "C" {
-#include <pll.h>
-}
+#include <corax/corax.h>
+#include <IO/LibpllParsers.hpp>
 
 extern int is_separator[];
 extern int to_trim[];

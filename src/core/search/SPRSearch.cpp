@@ -16,7 +16,7 @@ struct SPRMoveDesc {
   std::vector<unsigned int> path;
 };
 
-static void queryPruneIndicesRec(pll_unode_t * node,
+static void queryPruneIndicesRec(corax_unode_t * node,
                                std::vector<unsigned int> &buffer)
 {
   assert(node);
@@ -40,7 +40,7 @@ static void getAllPruneIndices(JointTree &tree, std::vector<unsigned int> &allNo
 }
 
 
-static bool sprYeldsSameTree(pll_unode_t *p, pll_unode_t *r)
+static bool sprYeldsSameTree(corax_unode_t *p, corax_unode_t *r)
 {
   assert(p);
   assert(r);
@@ -48,7 +48,7 @@ static bool sprYeldsSameTree(pll_unode_t *p, pll_unode_t *r)
     || (r == p->back) || (r == p->next->back) || (r == p->next->next->back);
 }
 
-static bool isValidSPRMove(pll_unode_s *prune, pll_unode_s *regraft) {
+static bool isValidSPRMove(corax_unode_s *prune, corax_unode_s *regraft) {
   assert(prune);
   assert(regraft);
   return !sprYeldsSameTree(prune, regraft);
@@ -57,7 +57,7 @@ static bool isValidSPRMove(pll_unode_s *prune, pll_unode_s *regraft) {
 
 
 static void getRegraftsRec(unsigned int pruneIndex, 
-    pll_unode_t *regraft, 
+    corax_unode_t *regraft, 
     int maxRadius, 
     double supportThreshold, 
     std::vector<unsigned int> &path, 
@@ -81,7 +81,7 @@ static void getRegraftsRec(unsigned int pruneIndex,
 
 static void getRegrafts(JointTree &jointTree, unsigned int pruneIndex, int maxRadius, std::vector<SPRMoveDesc> &moves) 
 {
-  pll_unode_t *pruneNode = jointTree.getNode(pruneIndex);
+  corax_unode_t *pruneNode = jointTree.getNode(pruneIndex);
   std::vector<unsigned int> path;
   auto supportThreshold = jointTree.getSupportThreshold();
   getRegraftsRec(pruneIndex, pruneNode->next->back, maxRadius, supportThreshold, path, moves);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <likelihoods/reconciliation_models/AbstractReconciliationModel.hpp>
+#include <likelihoods/reconciliation_models/GTBaseReconciliationModel.hpp>
 #include <likelihoods/LibpllEvaluation.hpp>
 #include <IO/GeneSpeciesMapping.hpp>
 #include <IO/Logger.hpp>
@@ -13,12 +13,12 @@
 
 
 template <class REAL>
-class SimpleDSModel: public AbstractReconciliationModel<REAL> {
+class SimpleDSModel: public GTBaseReconciliationModel<REAL> {
 public:
   SimpleDSModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMappingp, 
       const RecModelInfo &recModelInfo): 
-    AbstractReconciliationModel<REAL>(speciesTree, 
+    GTBaseReconciliationModel<REAL>(speciesTree, 
         geneSpeciesMappingp, 
         recModelInfo) {}
   
@@ -35,10 +35,10 @@ protected:
   // overload from parent
   virtual void setInitialGeneTree(PLLUnrootedTree &tree);
   // overload from parent
-  virtual void updateCLV(pll_unode_t *geneNode);
+  virtual void updateCLV(corax_unode_t *geneNode);
   // overload from parent
-  virtual REAL getGeneRootLikelihood(pll_unode_t *root) const;
-  virtual REAL getGeneRootLikelihood(pll_unode_t *root, pll_rnode_t *) {
+  virtual REAL getGeneRootLikelihood(corax_unode_t *root) const;
+  virtual REAL getGeneRootLikelihood(corax_unode_t *root, corax_rnode_t *) {
     return _dsclvs[root->node_index].proba;
   }
 
@@ -47,9 +47,9 @@ protected:
   // overload from parent
   virtual void recomputeSpeciesProbabilities(){};
   // overload from parent
-  virtual void computeGeneRootLikelihood(pll_unode_t *virtualRoot);
+  virtual void computeGeneRootLikelihood(corax_unode_t *virtualRoot);
   // overlead from parent
-  virtual void computeProbability(pll_unode_t *geneNode, pll_rnode_t *speciesNode, 
+  virtual void computeProbability(corax_unode_t *geneNode, corax_rnode_t *speciesNode, 
       REAL &proba,
       bool isVirtualRoot = false,
       Scenario *scenario = nullptr,
@@ -72,7 +72,7 @@ private:
 template <class REAL>
 void SimpleDSModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
 {
-  AbstractReconciliationModel<REAL>::setInitialGeneTree(tree);
+  GTBaseReconciliationModel<REAL>::setInitialGeneTree(tree);
   assert(this->_maxGeneId);
   _dsclvs = std::vector<DSCLV>(2 * (this->_maxGeneId + 1));
 }
@@ -96,7 +96,7 @@ template <class REAL>
 SimpleDSModel<REAL>::~SimpleDSModel() { }
 
 template <class REAL>
-void SimpleDSModel<REAL>::updateCLV(pll_unode_t *geneNode)
+void SimpleDSModel<REAL>::updateCLV(corax_unode_t *geneNode)
 {
   assert(geneNode);
   computeProbability(geneNode, 
@@ -125,8 +125,8 @@ static REAL dividePowerTwo(REAL v, unsigned int powerTwo)
 }
 
 template <class REAL>
-void SimpleDSModel<REAL>::computeProbability(pll_unode_t *geneNode, 
-    pll_rnode_t *, 
+void SimpleDSModel<REAL>::computeProbability(corax_unode_t *geneNode, 
+    corax_rnode_t *, 
       REAL &proba,
       bool isVirtualRoot,
       Scenario *,
@@ -146,8 +146,8 @@ void SimpleDSModel<REAL>::computeProbability(pll_unode_t *geneNode,
     _dsclvs[gid].genesCount = 1;
     return;
   }
-  pll_unode_t *leftGeneNode = 0;     
-  pll_unode_t *rightGeneNode = 0;     
+  corax_unode_t *leftGeneNode = 0;     
+  corax_unode_t *rightGeneNode = 0;     
   leftGeneNode = this->getLeft(geneNode, isVirtualRoot);
   rightGeneNode = this->getRight(geneNode, isVirtualRoot);
   auto v = leftGeneNode->node_index;
@@ -183,14 +183,14 @@ void SimpleDSModel<REAL>::computeProbability(pll_unode_t *geneNode,
 }
   
 template <class REAL>
-REAL SimpleDSModel<REAL>::getGeneRootLikelihood(pll_unode_t *root) const
+REAL SimpleDSModel<REAL>::getGeneRootLikelihood(corax_unode_t *root) const
 {
   auto u = root->node_index + this->_maxGeneId + 1;
   return _dsclvs[u].proba;
 }
 
 template <class REAL>
-void SimpleDSModel<REAL>::computeGeneRootLikelihood(pll_unode_t *virtualRoot)
+void SimpleDSModel<REAL>::computeGeneRootLikelihood(corax_unode_t *virtualRoot)
 {
   auto u = virtualRoot->node_index;
   computeProbability(virtualRoot, nullptr, _dsclvs[u].proba, true);

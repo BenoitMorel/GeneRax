@@ -15,9 +15,9 @@ DSTagger::DSTagger(PLLUnrootedTree &tree):_tree(tree),
   
   // here we create a fake node with fake children
   // to run the _tagNode function on virtual roots
-  pll_unode_t fakeNode; // virtual root
-  pll_unode_t fakeNext;
-  pll_unode_t fakeNextNext;
+  corax_unode_t fakeNode; // virtual root
+  corax_unode_t fakeNext;
+  corax_unode_t fakeNextNext;
   fakeNode.next = &fakeNext;
   fakeNode.next->next = &fakeNextNext;
   unsigned int bestScore = UINT_MAX;
@@ -54,7 +54,7 @@ DSTagger::DSTagger(PLLUnrootedTree &tree):_tree(tree),
   _rootFromNode(&_roots[0]);
 }
   
-void DSTagger::fillUpTraversal(pll_unode_t *node,
+void DSTagger::fillUpTraversal(corax_unode_t *node,
       TaxaSet &set)
 {
   auto parents = getSpeciationAncestorNodes(node);
@@ -67,7 +67,7 @@ void DSTagger::fillUpTraversal(pll_unode_t *node,
   }
 }
 
-void DSTagger::_tagNode(pll_unode_t *node, CLV &clv)
+void DSTagger::_tagNode(corax_unode_t *node, CLV &clv)
 {
   if (!node->next) {
     // leaf case, nothing to do
@@ -96,7 +96,7 @@ void DSTagger::_tagNode(pll_unode_t *node, CLV &clv)
   }
 }
   
-void DSTagger::_rootFromNode(pll_unode_t *node)
+void DSTagger::_rootFromNode(corax_unode_t *node)
 {
   auto &clv = _clvs[node->node_index];
   clv.up = node;
@@ -127,7 +127,7 @@ void DSTagger::print()
 }
     
 
-void DSTagger::TaggerUNodePrinter::operator()(pll_unode_t *node, 
+void DSTagger::TaggerUNodePrinter::operator()(corax_unode_t *node, 
         std::stringstream &ss) const
 {
   if (!node->next) {
@@ -139,7 +139,7 @@ void DSTagger::TaggerUNodePrinter::operator()(pll_unode_t *node,
 }
   
 
-static void _fillWithChildren(pll_unode_t *node,
+static void _fillWithChildren(corax_unode_t *node,
     TaxaSet &set)
 {
   if (!node->next) {
@@ -150,17 +150,17 @@ static void _fillWithChildren(pll_unode_t *node,
   }
 }
 
-void DSTagger::fillWithChildren(pll_unode_t *node,
+void DSTagger::fillWithChildren(corax_unode_t *node,
       TaxaSet &set)
 {
   orientUp(node);
   _fillWithChildren(node, set);  
 }
 
-std::vector<pll_unode_t *> 
-DSTagger::getSpeciationAncestorNodes(pll_unode_t *node)
+std::vector<corax_unode_t *> 
+DSTagger::getSpeciationAncestorNodes(corax_unode_t *node)
 {
-  std::vector<pll_unode_t *> ancestors;
+  std::vector<corax_unode_t *> ancestors;
   auto clv = &_clvs[node->node_index];
   while (true) { //!clv->isRoot) {
     orientUp(node);
@@ -191,8 +191,8 @@ DSTagger::getSpeciationAncestorNodes(pll_unode_t *node)
 }
 
 
-static void _fillWithInternalDescendants(pll_unode_t *node,
-    std::vector<pll_unode_t*> &descendants)
+static void _fillWithInternalDescendants(corax_unode_t *node,
+    std::vector<corax_unode_t*> &descendants)
 {
   if (node->next) {
     descendants.push_back(node);
@@ -201,8 +201,8 @@ static void _fillWithInternalDescendants(pll_unode_t *node,
   }
 }
 
-void DSTagger::fillWithInternalDescendants(pll_unode_t *node,
-      std::vector<pll_unode_t*> &descendants)
+void DSTagger::fillWithInternalDescendants(corax_unode_t *node,
+      std::vector<corax_unode_t*> &descendants)
 {
   if (node->next) {
     _fillWithInternalDescendants(node->next->back, descendants);  

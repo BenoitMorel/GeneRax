@@ -27,7 +27,7 @@ std::unique_ptr<Move> Move::createSPRMove(unsigned int pruneIndex,
 
 
 static void optimizeBranchesSlow(JointTree &tree,
-    const std::vector<pll_unode_t *> &nodesToOptimize)
+    const std::vector<corax_unode_t *> &nodesToOptimize)
 {
     auto root = tree.getTreeInfo()->root;
     // could be incremental and thus faster
@@ -37,9 +37,9 @@ static void optimizeBranchesSlow(JointTree &tree,
     tree.computeLibpllLoglk(); // update CLVs
     for (unsigned int j = 0; j < 2; ++j) {
       for (unsigned int i = 0; i < nodesToOptimize.size(); ++i) {
-          pllmod_treeinfo_set_root(treeinfo, nodesToOptimize[i]);
+          corax_treeinfo_set_root(treeinfo, nodesToOptimize[i]);
           double oldLoglk = tree.computeLibpllLoglk(true);
-          double newLoglk = pllmod_opt_optimize_branch_lengths_local(
+          double newLoglk = corax_opt_optimize_branch_lengths_local(
               treeinfo->partitions[0],
               treeinfo->root,
               &params_indices[0],
@@ -52,7 +52,7 @@ static void optimizeBranchesSlow(JointTree &tree,
          assert(oldLoglk <= newLoglk);
       }
     }
-    pllmod_treeinfo_set_root(treeinfo, root);
+    corax_treeinfo_set_root(treeinfo, root);
 }
 
 
@@ -80,7 +80,7 @@ std::unique_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
     tree.invalidateCLV(tree.getNode(branchIndex));
     tree.invalidateCLV(tree.getNode(branchIndex)->back);
   }
-  pll_tree_rollback_t pll_rollback;
+  corax_tree_rollback_t corax_rollback;
   std::vector<SavedBranch> savedBranches;
     
   branchesToOptimize_.push_back(prune);
@@ -100,8 +100,8 @@ std::unique_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
   for (auto branch: branchesToOptimize_) {
     savedBranches.push_back(branch);
   }
-  assert(PLL_SUCCESS == pllmod_utree_spr(prune, regraft, &pll_rollback));
-  return std::make_unique<SPRRollback>(tree, pll_rollback, savedBranches, root);
+  assert(CORAX_SUCCESS == corax_utree_spr(prune, regraft, &corax_rollback));
+  return std::make_unique<SPRRollback>(tree, corax_rollback, savedBranches, root);
 }
   
 void SPRMove::optimizeMove(JointTree &tree)

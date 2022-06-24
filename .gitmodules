@@ -1,9 +1,9 @@
-[submodule "ext/pll-modules"]
-	path = ext/pll-modules
-  branch = dev_nobison
-  url = https://github.com/ddarriba/pll-modules.git
 [submodule "ext/MPIScheduler"]
 	path = ext/MPIScheduler
   branch = master
 	url = https://github.com/BenoitMorel/MPIScheduler
 
+[submodule "ext/coraxlib"]
+	path = ext/coraxlib
+  branch = dev
+  url = https://codeberg.org/Exelixis-Lab/coraxlib.git
