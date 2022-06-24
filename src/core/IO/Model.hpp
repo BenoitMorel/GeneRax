@@ -10,6 +10,7 @@
 #include <corax/corax.h>
 #include <IO/RaxmlTypes.hpp>
 #include <memory>
+#include <stdexcept>
 
 
 
