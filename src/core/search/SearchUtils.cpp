@@ -6,7 +6,7 @@
 
 
 void SearchUtils::testMove(JointTree &jointTree,
-    Move &move,
+    SPRMove &move,
     double initialReconciliationLoglk,
     double initialLibpllLoglk,
 #ifdef SUPER_OPTIM
@@ -34,7 +34,6 @@ void SearchUtils::testMove(JointTree &jointTree,
       std::cerr << "small rollback lead to different likelihoods: " << initialLoglk
         << " " << jointTree.computeJointLoglk() << std::endl;
       std::cerr << " rank " << ParallelContext::getRank() << std::endl;
-      std::cerr << "Move: " << move << std::endl;
       exit(1);
     }
     return;
@@ -44,6 +43,7 @@ void SearchUtils::testMove(JointTree &jointTree,
     jointTree.optimizeMove(move);
   }
   newLoglk = recLoglk +  jointTree.computeLibpllLoglk(false);
+  move.setScore(newLoglk);
   jointTree.rollbackLastMove();
   if(check) {
     auto rbLoglk = jointTree.computeJointLoglk();
@@ -54,16 +54,14 @@ void SearchUtils::testMove(JointTree &jointTree,
         << " " << rbLoglk << std::endl;
       std::cerr << "recomputing the ll again: " << jointTree.computeJointLoglk() << std::endl;
       std::cerr << " rank " << ParallelContext::getRank() << std::endl;
-      std::cerr << "Move: " << move << std::endl;
       exit(1);
     }
   }
 }
 
 //#define STOP
-
 bool SearchUtils::findBestMove(JointTree &jointTree,
-    std::vector<std::unique_ptr<Move> > &allMoves,
+    std::vector<std::shared_ptr<SPRMove> > &allMoves,
     double &bestLoglk,
     unsigned int &bestMoveIndex,
     bool blo,
@@ -95,6 +93,7 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
     }
   }
 #endif
+  double previousBest = bestLoglk;
   for (auto i = begin; i < end; ++i) {
     auto loglk = bestLoglk;
     SearchUtils::testMove(jointTree, *allMoves[i], 
@@ -107,6 +106,9 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
     if (loglk > bestLoglk) {
       bestLoglk = loglk;
       bestMoveIndex = i;
+    }
+    if (loglk > previousBest) {
+      Logger::info << loglk - previousBest << std::endl;
     }
 #ifdef STOP
     if ((begin - i) % 1 == 0) {
@@ -124,4 +126,52 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
   jointTree.getReconciliationEvaluation().invalidateAllCLVs();
   return bestMoveIndex != static_cast<unsigned int>(-1);
 }
+
+
+struct less_than_move_ptr
+{
+  inline bool operator() (const std::shared_ptr<SPRMove> &m1, 
+      const std::shared_ptr<SPRMove> &m2)
+  {
+    return (m1->getScore() < m2->getScore());
+  }
+};
+
+
+bool SearchUtils::findBetterMoves(JointTree &jointTree,
+  std::vector<std::shared_ptr<SPRMove> > &allMoves,
+  std::vector<std::shared_ptr<SPRMove> > &sortedBetterMoves,
+  bool blo,
+  bool check)
+{
+  double initialReconciliationLoglk = jointTree.computeReconciliationLoglk();
+  double initialLibpllLoglk = jointTree.computeLibpllLoglk();
+  double initialLoglk = initialLibpllLoglk + initialReconciliationLoglk;
+  double averageReconciliationDiff = 0;
+  auto begin = ParallelContext::getBegin(static_cast<unsigned int>(allMoves.size()));
+  auto end = ParallelContext::getEnd(static_cast<unsigned int>(allMoves.size()));
+  
+  for (auto i = begin; i < end; ++i) {
+    auto loglk = initialLoglk;
+    SearchUtils::testMove(jointTree, *allMoves[i], 
+        initialReconciliationLoglk,
+        initialLibpllLoglk, 
+        averageReconciliationDiff,
+        loglk,
+        blo,
+        check);
+    if (loglk > initialLoglk) {
+      sortedBetterMoves.push_back(allMoves[i]);
+    }
+  }
+  std::sort(sortedBetterMoves.rbegin(), sortedBetterMoves.rend(), less_than_move_ptr()); 
+  /*
+  ParallelContext::getMax(bestLoglk, bestRank);
+  ParallelContext::broadcastUInt(bestRank, bestMoveIndex);
+  Logger::info << "best;; " << bestLoglk << " " << bestRank << std::endl;
+  */
+  jointTree.getReconciliationEvaluation().invalidateAllCLVs();
+  return 0 < sortedBetterMoves.size();
+}
+
 

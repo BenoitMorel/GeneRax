@@ -9,11 +9,6 @@
 
 class JointTree;
 
-class Rollback {
-public:
-  virtual ~Rollback() {}
-  virtual void applyRollback() = 0;
-};
 
 class SavedBranch {
 public:
@@ -29,7 +24,7 @@ private:
   double length_;
 };
 
-class SPRRollback: public Rollback {
+class SPRRollback {
 public:
   virtual ~SPRRollback() {}
   SPRRollback(JointTree &tree, 

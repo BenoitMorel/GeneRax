@@ -19,10 +19,10 @@
   
 
 
-std::unique_ptr<Move> Move::createSPRMove(unsigned int pruneIndex, 
+std::shared_ptr<SPRMove> SPRMove::createSPRMove(unsigned int pruneIndex, 
     unsigned int regraftIndex, 
     const std::vector<unsigned int> &path) {
-  return std::make_unique<SPRMove>(pruneIndex, regraftIndex, path);
+  return std::make_shared<SPRMove>(pruneIndex, regraftIndex, path);
 }
 
 
@@ -63,7 +63,7 @@ SPRMove::SPRMove(unsigned int pruneIndex, unsigned int regraftIndex, const std::
 {
 }
 
-std::unique_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
+std::shared_ptr<SPRRollback> SPRMove::applyMove(JointTree &tree)
 {
   auto root = tree.getRoot();
   auto prune = tree.getNode(pruneIndex_);
@@ -101,7 +101,7 @@ std::unique_ptr<Rollback> SPRMove::applyMove(JointTree &tree)
     savedBranches.push_back(branch);
   }
   assert(CORAX_SUCCESS == corax_utree_spr(prune, regraft, &corax_rollback));
-  return std::make_unique<SPRRollback>(tree, corax_rollback, savedBranches, root);
+  return std::make_shared<SPRRollback>(tree, corax_rollback, savedBranches, root);
 }
   
 void SPRMove::optimizeMove(JointTree &tree)
@@ -117,5 +117,5 @@ std::ostream& SPRMove::print(std::ostream & os) const {
   os << ")";
   return os;
 }
-
+  
 

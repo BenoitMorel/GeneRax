@@ -54,6 +54,39 @@ static bool isValidSPRMove(corax_unode_s *prune, corax_unode_s *regraft) {
   return !sprYeldsSameTree(prune, regraft);
 }
 
+static bool isSPRMoveValid(PLLUnrootedTree &tree,
+    corax_unode_t *prune, 
+    corax_unode_t *regraft)
+{
+  // regraft should not be a child of prune
+  auto pruneChildren = tree.getPostOrderNodesFrom(prune->back);
+  for (auto child: pruneChildren) {
+    if (regraft == child) {
+      return false;
+    }
+    if (regraft->back == child) {
+      return false;
+    }
+  }
+  return !sprYeldsSameTree(prune, regraft);
+}
+
+
+static void addInvolvedNode(corax_unode_t *node, 
+    std::unordered_set<corax_unode_t *> &involved)
+{
+  involved.insert(node);
+  if (node->next) {
+    involved.insert(node->next);
+    involved.insert(node->next->next);
+  }
+}
+
+static bool wasInvolved(corax_unode_t *node,
+    std::unordered_set<corax_unode_t *> &involved)
+{
+  return involved.find(node) != involved.end();
+}
 
 
 static void getRegraftsRec(unsigned int pruneIndex, 
@@ -92,7 +125,7 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
   std::vector<unsigned int> allNodes;
   getAllPruneIndices(jointTree, allNodes);
   std::vector<SPRMoveDesc> potentialMoves;
-  std::vector<std::unique_ptr<Move> > allMoves;
+  std::vector<std::shared_ptr<SPRMove> > allMoves;
   for (unsigned int i = 0; i < allNodes.size(); ++i) {
       auto pruneIndex = allNodes[i];
       getRegrafts(jointTree, pruneIndex, radius, potentialMoves);
@@ -121,13 +154,14 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
       redundantNNIMoves[nniBranchIndex][nniType] = true; 
     }
 
-    allMoves.push_back(std::move(Move::createSPRMove(pruneIndex, regraftIndex, move.path)));
+    allMoves.push_back(SPRMove::createSPRMove(pruneIndex, regraftIndex, move.path));
   }
   
   Logger::info << "Start SPR round " 
     << "(std::hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" 
     << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
     << std::endl;
+#ifdef OLD
   unsigned int bestMoveIndex = static_cast<unsigned int>(-1);
   auto foundBetterMove = SearchUtils::findBestMove(jointTree, 
       allMoves, 
@@ -146,6 +180,27 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
       Logger::info << "Warning, potential numerical issue in SPRSearch::applySPRRound " << error << std::endl;
     }
   }
+#else
+  std::vector<std::shared_ptr<SPRMove> > betterMoves;
+  SearchUtils::findBetterMoves(jointTree, 
+      allMoves,
+      betterMoves,
+      blo,
+      jointTree.isSafeMode());
+  bool foundBetterMove = betterMoves.size() > 0;
+  //for (auto &move: betterMoves) {
+  for (unsigned int i = 0; i < std::min(betterMoves.size(), size_t(10)); ++i) {
+    auto move = betterMoves[i];
+    // toto check move valid
+    jointTree.applyMove(*move);
+    if (blo) {
+      jointTree.optimizeMove(*move);
+    }
+    double ll = jointTree.computeJointLoglk();
+    bestLoglk = ll;
+    Logger::info << move->getScore() << " " << ll << std::endl;
+  }
+#endif
   return foundBetterMove;
 }
 

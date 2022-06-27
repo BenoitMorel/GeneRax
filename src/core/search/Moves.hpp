@@ -9,36 +9,25 @@
 
 class JointTree;
 
-class Move {
-public:
-  virtual ~Move() {}
-  
-  static std::unique_ptr<Move> createSPRMove(unsigned int pruneIndex, 
-      unsigned int regraftIndex, 
-      const std::vector<unsigned int> &path);
-  
-  virtual std::unique_ptr<Rollback> applyMove(JointTree &tree) = 0;
-  
-  virtual void optimizeMove(JointTree &tree) = 0;
-    
-  friend std::ostream & operator <<( std::ostream &os, const Move &move ) {
-    return move.print(os);
-  }
-  
-  virtual std::ostream& print(std::ostream & os) const = 0;
-};
 
-class SPRMove: public Move {
+class SPRMove {
 public:
   SPRMove(unsigned int pruneIndex, unsigned int regraftIndex, const std::vector<unsigned int> &path);
   virtual ~SPRMove() {}
-  virtual std::unique_ptr<Rollback> applyMove(JointTree &tree);
-  virtual void optimizeMove(JointTree &tree);
-  virtual std::ostream& print(std::ostream & os) const;
+  static std::shared_ptr<SPRMove> createSPRMove(unsigned int pruneIndex, 
+      unsigned int regraftIndex, 
+      const std::vector<unsigned int> &path);
+  std::shared_ptr<SPRRollback> applyMove(JointTree &tree);
+  void optimizeMove(JointTree &tree);
+  std::ostream& print(std::ostream & os) const;
+  void setScore(double score) {_score = score;}
+  double getScore() const {return _score;}
+  
 private:
   unsigned int pruneIndex_;
   unsigned int regraftIndex_;
   std::vector<unsigned int> path_;
   std::vector<corax_unode_t *> branchesToOptimize_;
+  double _score;
 };
 

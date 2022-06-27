@@ -205,11 +205,11 @@ corax_unode_t *JointTree::getNode(unsigned int index) {
 }
 
 
-void JointTree::applyMove(Move &move) {
-  _rollbacks.push(std::move(move.applyMove(*this)));
+void JointTree::applyMove(SPRMove &move) {
+  _rollbacks.push(move.applyMove(*this));
 }
 
-void JointTree::optimizeMove(Move &move) {
+void JointTree::optimizeMove(SPRMove &move) {
   if (_enableLibpll) {
     move.optimizeMove(*this);
   }

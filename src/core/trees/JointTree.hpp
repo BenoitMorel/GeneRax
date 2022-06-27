@@ -44,8 +44,8 @@ public:
     double computeJointLoglk();
     void printLoglk(bool libpll = true, bool rec = true, bool joint = true, Logger &os = Logger::info);
     corax_unode_t *getNode(unsigned int index);
-    void applyMove(Move &move);
-    void optimizeMove(Move &move);
+    void applyMove(SPRMove &move);
+    void optimizeMove(SPRMove &move);
   
     void invalidateCLV(corax_unode_s *node);
     void printAllNodes(std::ostream &os);
@@ -79,7 +79,7 @@ private:
     PLLRootedTree _speciesTree;
     GeneSpeciesMapping _geneSpeciesMap;
     Parameters _ratesVector;
-    std::stack<std::unique_ptr<Rollback> > _rollbacks;
+    std::stack<std::shared_ptr<SPRRollback> > _rollbacks;
     bool _optimizeDTLRates;
     bool _safeMode;
     bool _enableReconciliation;
