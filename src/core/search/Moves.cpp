@@ -118,4 +118,20 @@ std::ostream& SPRMove::print(std::ostream & os) const {
   return os;
 }
   
+void SPRMove::updatePath(JointTree &tree)
+{
+  auto prune = tree.getNode(_pruneIndex); 
+  auto regraft = tree.getNode(_regraftIndex); 
+  auto initialRegraft = regraft;
+  auto initialPrune = prune;
+  std::vector<corax_unode_t *> nodes;
+  _path.clear();
+  PLLUnrootedTree::orientTowardEachOther(&prune, &regraft, nodes);
+  for (auto node: nodes) {
+    if (node != regraft) {
+      _path.push_back(node->node_index);
+    }
+  
+  }
+}
 

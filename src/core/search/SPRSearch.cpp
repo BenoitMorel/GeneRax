@@ -72,22 +72,6 @@ static bool isSPRMoveValid(PLLUnrootedTree &tree,
 }
 
 
-static void addInvolvedNode(corax_unode_t *node, 
-    std::unordered_set<corax_unode_t *> &involved)
-{
-  involved.insert(node);
-  if (node->next) {
-    involved.insert(node->next);
-    involved.insert(node->next->next);
-  }
-}
-
-static bool wasInvolved(corax_unode_t *node,
-    std::unordered_set<corax_unode_t *> &involved)
-{
-  return involved.find(node) != involved.end();
-}
-
 
 static void getRegraftsRec(unsigned int pruneIndex, 
     corax_unode_t *regraft, 
@@ -119,6 +103,22 @@ static void getRegrafts(JointTree &jointTree, unsigned int pruneIndex, int maxRa
   auto supportThreshold = jointTree.getSupportThreshold();
   getRegraftsRec(pruneIndex, pruneNode->next->back, maxRadius, supportThreshold, path, moves);
   getRegraftsRec(pruneIndex, pruneNode->next->next->back, maxRadius, supportThreshold, path, moves);
+}
+
+static void addInvolvedNode(corax_unode_t *node, 
+    std::unordered_set<corax_unode_t *> &involved)
+{
+  involved.insert(node);
+  if (node->next) {
+    involved.insert(node->next);
+    involved.insert(node->next->next);
+  }
+}
+
+static bool wasInvolved(corax_unode_t *node,
+    std::unordered_set<corax_unode_t *> &involved)
+{
+  return involved.find(node) != involved.end();
 }
 
 bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLoglk, bool blo) {
@@ -187,17 +187,39 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
       betterMoves,
       blo,
       jointTree.isSafeMode());
-  bool foundBetterMove = betterMoves.size() > 0;
+  bool foundBetterMove = false;
+  std::unordered_set<corax_unode_t *> involved;
   //for (auto &move: betterMoves) {
-  for (unsigned int i = 0; i < std::min(betterMoves.size(), size_t(10)); ++i) {
+  double currentLL = jointTree.computeJointLoglk();
+  for (unsigned int i = 0; i < betterMoves.size(); ++i) {
     auto move = betterMoves[i];
-    // toto check move valid
+    auto prune = jointTree.getNode(move->getPruneIndex());
+    auto regraft = jointTree.getNode(move->getRegraftIndex());
+    if (wasInvolved(prune, involved) || wasInvolved(regraft, involved)) {
+      Logger::info << "involved, abort" << std::endl;
+      continue;
+    }
+    if (!isSPRMoveValid(jointTree.getGeneTree(), prune, regraft)) {
+      Logger::info << "invalid, abort" << std::endl;
+      continue;
+    }
+    addInvolvedNode(prune, involved);
+    addInvolvedNode(regraft, involved);
+    move->updatePath(jointTree);
     jointTree.applyMove(*move);
     if (blo) {
       jointTree.optimizeMove(*move);
     }
     double ll = jointTree.computeJointLoglk();
-    bestLoglk = ll;
+    if (ll < currentLL) {
+      Logger::info << "ROLLBACK" << std::endl;
+      jointTree.rollbackLastMove();
+      ll = jointTree.computeJointLoglk();
+    } else {
+      foundBetterMove = true;
+      currentLL = ll;
+      bestLoglk = ll;
+    }
     Logger::info << move->getScore() << " " << ll << std::endl;
   }
 #endif

@@ -24,6 +24,7 @@ public:
   double getScore() const {return _score;}
   unsigned int getPruneIndex() const {return _pruneIndex;}
   unsigned int getRegraftIndex() const {return _regraftIndex;}
+  void updatePath(JointTree &tree);
 private:
   unsigned int _pruneIndex;
   unsigned int _regraftIndex;
