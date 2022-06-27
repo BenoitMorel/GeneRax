@@ -22,12 +22,13 @@ public:
   std::ostream& print(std::ostream & os) const;
   void setScore(double score) {_score = score;}
   double getScore() const {return _score;}
-  
+  unsigned int getPruneIndex() const {return _pruneIndex;}
+  unsigned int getRegraftIndex() const {return _regraftIndex;}
 private:
-  unsigned int pruneIndex_;
-  unsigned int regraftIndex_;
-  std::vector<unsigned int> path_;
-  std::vector<corax_unode_t *> branchesToOptimize_;
+  unsigned int _pruneIndex;
+  unsigned int _regraftIndex;
+  std::vector<unsigned int> _path;
+  std::vector<corax_unode_t *> _branchesToOptimize;
   double _score;
 };
 

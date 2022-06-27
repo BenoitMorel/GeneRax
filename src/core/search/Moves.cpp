@@ -57,17 +57,17 @@ static void optimizeBranchesSlow(JointTree &tree,
 
 
 SPRMove::SPRMove(unsigned int pruneIndex, unsigned int regraftIndex, const std::vector<unsigned int> &path):
-  pruneIndex_(pruneIndex),
-  regraftIndex_(regraftIndex),
-  path_(path)
+  _pruneIndex(pruneIndex),
+  _regraftIndex(regraftIndex),
+  _path(path)
 {
 }
 
 std::shared_ptr<SPRRollback> SPRMove::applyMove(JointTree &tree)
 {
   auto root = tree.getRoot();
-  auto prune = tree.getNode(pruneIndex_);
-  auto regraft = tree.getNode(regraftIndex_);
+  auto prune = tree.getNode(_pruneIndex);
+  auto regraft = tree.getNode(_regraftIndex);
   assert (prune && prune->next);
   assert (regraft && regraft);
   tree.invalidateCLV(prune->next->back);
@@ -76,28 +76,28 @@ std::shared_ptr<SPRRollback> SPRMove::applyMove(JointTree &tree)
   tree.invalidateCLV(prune->next->next->back);
   tree.invalidateCLV(regraft);
   tree.invalidateCLV(regraft->back);
-  for (auto branchIndex: path_) {
+  for (auto branchIndex: _path) {
     tree.invalidateCLV(tree.getNode(branchIndex));
     tree.invalidateCLV(tree.getNode(branchIndex)->back);
   }
   corax_tree_rollback_t corax_rollback;
   std::vector<SavedBranch> savedBranches;
     
-  branchesToOptimize_.push_back(prune);
-  branchesToOptimize_.push_back(regraft->back);
-  branchesToOptimize_.push_back(regraft);
-  for (auto branchIndex: path_) {
+  _branchesToOptimize.push_back(prune);
+  _branchesToOptimize.push_back(regraft->back);
+  _branchesToOptimize.push_back(regraft);
+  for (auto branchIndex: _path) {
     auto node = tree.getNode(branchIndex);
-    branchesToOptimize_.push_back(node);
-    if (path_.size() == 1) {
-      branchesToOptimize_.push_back(node->next);
-      branchesToOptimize_.push_back(node->next->next);
+    _branchesToOptimize.push_back(node);
+    if (_path.size() == 1) {
+      _branchesToOptimize.push_back(node->next);
+      _branchesToOptimize.push_back(node->next->next);
       node = node->back;
-      branchesToOptimize_.push_back(node->next);
-      branchesToOptimize_.push_back(node->next->next);
+      _branchesToOptimize.push_back(node->next);
+      _branchesToOptimize.push_back(node->next->next);
     }
   }
-  for (auto branch: branchesToOptimize_) {
+  for (auto branch: _branchesToOptimize) {
     savedBranches.push_back(branch);
   }
   assert(CORAX_SUCCESS == corax_utree_spr(prune, regraft, &corax_rollback));
@@ -106,14 +106,14 @@ std::shared_ptr<SPRRollback> SPRMove::applyMove(JointTree &tree)
   
 void SPRMove::optimizeMove(JointTree &tree)
 {
-  optimizeBranchesSlow(tree, branchesToOptimize_);
-  branchesToOptimize_.clear();
+  optimizeBranchesSlow(tree, _branchesToOptimize);
+  _branchesToOptimize.clear();
 }
 
 std::ostream& SPRMove::print(std::ostream & os) const {
   os << "SPR(";
-  os << "prune:" <<pruneIndex_ << ", regraft:" << regraftIndex_;
-  os << ",path_size:" << path_.size();
+  os << "prune:" <<_pruneIndex << ", regraft:" << _regraftIndex;
+  os << ",_pathsize:" << _path.size();
   os << ")";
   return os;
 }
