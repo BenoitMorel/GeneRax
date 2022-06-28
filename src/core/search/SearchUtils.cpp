@@ -156,6 +156,7 @@ bool SearchUtils::findBetterMoves(JointTree &jointTree,
   std::vector<double> localGoodLL;
   std::vector<unsigned int> goodIndices;
   std::vector<double> goodLL;
+  double epsilon = fabs(initialLoglk) > 10000.0 ? 0.5 : 0.001; 
   for (auto i = begin; i < end; ++i) {
     auto loglk = initialLoglk;
     SearchUtils::testMove(jointTree, *allMoves[i], 
@@ -165,7 +166,7 @@ bool SearchUtils::findBetterMoves(JointTree &jointTree,
         loglk,
         blo,
         check);
-    if (loglk > initialLoglk) {
+    if (loglk - initialLoglk > epsilon) {
       localGoodIndices.push_back(i);
       localGoodLL.push_back(allMoves[i]->getScore());
       assert(allMoves[i]->getScore() != 0.0);
