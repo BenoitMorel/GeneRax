@@ -155,12 +155,13 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
     }
     allMoves.push_back(SPRMove::createSPRMove(pruneIndex, regraftIndex, move.path));
   }
-  Logger::info << "Start SPR round " 
+  Logger::timed << "Start SPR round " 
     << "(std::hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" 
     << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
     << std::endl;
   std::vector<std::shared_ptr<SPRMove> > betterMoves;
   double initialLL = bestLoglk; 
+  Logger::info << "Searching all potential good moves..." << std::endl;
   SearchUtils::findBetterMoves(jointTree, 
       allMoves,
       betterMoves,
@@ -168,8 +169,8 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
       jointTree.isSafeMode());
   bool foundBetterMove = false;
   std::unordered_set<corax_unode_t *> involved;
-  //for (auto &move: betterMoves) {
   double currentLL = jointTree.computeJointLoglk();
+  Logger::info << "GeneRax will now test and apply all the " << betterMoves.size() << " potential good moves one after each other" << std::endl;
   for (unsigned int i = 0; i < betterMoves.size(); ++i) {
     auto move = betterMoves[i];
     auto prune = jointTree.getNode(move->getPruneIndex());
@@ -177,11 +178,9 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
     assert(ParallelContext::isIntEqual(i));
     assert(ParallelContext::isIntEqual(move->getPruneIndex()));
     if (wasInvolved(prune, involved) || wasInvolved(regraft, involved)) {
-      Logger::info << "involved, abort" << std::endl;
       continue;
     }
     if (!isSPRMoveValid(jointTree.getGeneTree(), prune, regraft)) {
-      Logger::info << "invalid, abort" << std::endl;
       continue;
     }
     addInvolvedNode(prune, involved);
@@ -193,15 +192,15 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
     }
     double ll = jointTree.computeJointLoglk();
     if (ll < currentLL) {
-      Logger::info << "ROLLBACK" << std::endl;
+      Logger::info << "Move rejected" << std::endl;
       jointTree.rollbackLastMove();
       ll = jointTree.computeJointLoglk();
     } else {
       foundBetterMove = true;
       currentLL = ll;
       bestLoglk = ll;
+      Logger::timed << "Applying move, ll = " << ll << std::endl;
     }
-    Logger::info << move->getScore() << " " << ll << std::endl;
   }
   double epsilon = fabs(bestLoglk) > 10000.0 ? 0.5 : 0.001; 
   return foundBetterMove && (bestLoglk - initialLL > epsilon);
