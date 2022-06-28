@@ -57,7 +57,7 @@ void GeneRaxMaster::optimizeGeneTrees(Families &families,
     auto taxa = geneTreeSizes[i];
     unsigned int cores = 1;
     if (sprRadius == 1) {
-      cores = taxa / 2;
+      cores = taxa / 20;
     } else if (sprRadius == 2) {
       cores = taxa / 2;
     } else if (sprRadius >= 3) {
