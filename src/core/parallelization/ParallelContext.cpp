@@ -322,18 +322,17 @@ void ParallelContext::concatenateHetherogeneousDoubleVectors(
       vectorSizes.end(),
       0);
   globalVector.resize(totalSize);
-  std::vector<int> displ(totalSize);
-  for (int i = 1; i < totalSize; ++i) {
+  std::vector<int> displ(getSize(), 0);
+  for (int i = 1; i < displ.size(); ++i) {
     displ[i] = displ[i-1] + vectorSizes[i-1];
   }
-  MPI_Gatherv(&localVector[0],  // send buffer 
+  MPI_Allgatherv(&localVector[0],  // send buffer 
       localVector.size(),       // send count
       MPI::DOUBLE,              // send type
       &globalVector[0],         // receive buffer 
       &vectorSizes[0],          // receive counts
       &displ[0],                // per rank offset 
       MPI::DOUBLE,              // receive type
-      0,                       // root rank
       getComm());
 #else
   assert(false);
@@ -355,8 +354,8 @@ void ParallelContext::concatenateHetherogeneousUIntVectors(
       vectorSizes.end(),
       0);
   globalVector.resize(totalSize);
-  std::vector<int> displ(totalSize);
-  for (int i = 1; i < totalSize; ++i) {
+  std::vector<int> displ(getSize(), 0);
+  for (int i = 1; i < displ.size(); ++i) {
     displ[i] = displ[i-1] + vectorSizes[i-1];
   }
   MPI_Allgatherv(&localVector[0],  // send buffer 
@@ -514,6 +513,8 @@ bool ParallelContext::isDoubleEqual(double value)
   allGatherDouble(value, rands);
   for (auto v: rands) {
     if (fabs(v - rands[0]) > 0.00000001) {
+      std::cout << "KO " << v << " " <<  rands[0] << std::endl;
+      std::cerr << "KO " << v << " " <<  rands[0] << std::endl;
       return false;
     }
   }

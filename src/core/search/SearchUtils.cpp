@@ -93,7 +93,6 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
     }
   }
 #endif
-  double previousBest = bestLoglk;
   for (auto i = begin; i < end; ++i) {
     auto loglk = bestLoglk;
     SearchUtils::testMove(jointTree, *allMoves[i], 
@@ -106,9 +105,6 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
     if (loglk > bestLoglk) {
       bestLoglk = loglk;
       bestMoveIndex = i;
-    }
-    if (loglk > previousBest) {
-      Logger::info << loglk - previousBest << std::endl;
     }
 #ifdef STOP
     if ((begin - i) % 1 == 0) {
@@ -133,7 +129,13 @@ struct less_than_move_ptr
   inline bool operator() (const std::shared_ptr<SPRMove> &m1, 
       const std::shared_ptr<SPRMove> &m2)
   {
-    return (m1->getScore() < m2->getScore());
+    if (m1->getScore() != m2->getScore()) {
+      return (m1->getScore() < m2->getScore());
+    } else if (m1->getPruneIndex() != m2->getPruneIndex()) {
+      return m1->getPruneIndex() <  m2->getPruneIndex();
+    } else {
+      return m1->getRegraftIndex() < m2->getRegraftIndex();
+    }
   }
 };
 
@@ -150,7 +152,10 @@ bool SearchUtils::findBetterMoves(JointTree &jointTree,
   double averageReconciliationDiff = 0;
   auto begin = ParallelContext::getBegin(static_cast<unsigned int>(allMoves.size()));
   auto end = ParallelContext::getEnd(static_cast<unsigned int>(allMoves.size()));
-  
+  std::vector<unsigned int> localGoodIndices;
+  std::vector<double> localGoodLL;
+  std::vector<unsigned int> goodIndices;
+  std::vector<double> goodLL;
   for (auto i = begin; i < end; ++i) {
     auto loglk = initialLoglk;
     SearchUtils::testMove(jointTree, *allMoves[i], 
@@ -161,15 +166,33 @@ bool SearchUtils::findBetterMoves(JointTree &jointTree,
         blo,
         check);
     if (loglk > initialLoglk) {
-      sortedBetterMoves.push_back(allMoves[i]);
+      localGoodIndices.push_back(i);
+      localGoodLL.push_back(allMoves[i]->getScore());
+      assert(allMoves[i]->getScore() != 0.0);
     }
   }
+  ParallelContext::concatenateHetherogeneousUIntVectors(localGoodIndices, 
+      goodIndices); 
+  ParallelContext::concatenateHetherogeneousDoubleVectors(localGoodLL, 
+      goodLL);
+  assert(ParallelContext::isIntEqual(goodIndices.size()));
+  assert(goodIndices.size() == goodLL.size());
+  for (unsigned int i = 0; i < goodIndices.size(); ++i) {
+    unsigned int index = goodIndices[i];
+    double ll = goodLL[i];
+    assert(ParallelContext::isIntEqual(index));
+    assert(ParallelContext::isDoubleEqual(ll));
+    auto move = allMoves[index];
+    move->setScore(ll);
+    sortedBetterMoves.push_back(move);
+  }
+  for (auto move: sortedBetterMoves) {
+    assert(ParallelContext::isIntEqual(move->getPruneIndex()));
+  }
   std::sort(sortedBetterMoves.rbegin(), sortedBetterMoves.rend(), less_than_move_ptr()); 
-  /*
-  ParallelContext::getMax(bestLoglk, bestRank);
-  ParallelContext::broadcastUInt(bestRank, bestMoveIndex);
-  Logger::info << "best;; " << bestLoglk << " " << bestRank << std::endl;
-  */
+  for (auto move: sortedBetterMoves) {
+    assert(ParallelContext::isIntEqual(move->getPruneIndex()));
+  }
   jointTree.getReconciliationEvaluation().invalidateAllCLVs();
   return 0 < sortedBetterMoves.size();
 }

@@ -153,14 +153,13 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
       }
       redundantNNIMoves[nniBranchIndex][nniType] = true; 
     }
-
     allMoves.push_back(SPRMove::createSPRMove(pruneIndex, regraftIndex, move.path));
   }
-  
   Logger::info << "Start SPR round " 
     << "(std::hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" 
     << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
     << std::endl;
+//#define OLD
 #ifdef OLD
   unsigned int bestMoveIndex = static_cast<unsigned int>(-1);
   auto foundBetterMove = SearchUtils::findBestMove(jointTree, 
@@ -195,6 +194,8 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
     auto move = betterMoves[i];
     auto prune = jointTree.getNode(move->getPruneIndex());
     auto regraft = jointTree.getNode(move->getRegraftIndex());
+    assert(ParallelContext::isIntEqual(i));
+    assert(ParallelContext::isIntEqual(move->getPruneIndex()));
     if (wasInvolved(prune, involved) || wasInvolved(regraft, involved)) {
       Logger::info << "involved, abort" << std::endl;
       continue;
