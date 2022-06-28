@@ -159,28 +159,8 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
     << "(std::hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" 
     << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
     << std::endl;
-//#define OLD
-#ifdef OLD
-  unsigned int bestMoveIndex = static_cast<unsigned int>(-1);
-  auto foundBetterMove = SearchUtils::findBestMove(jointTree, 
-      allMoves, 
-      bestLoglk, 
-      bestMoveIndex, 
-      blo, 
-      jointTree.isSafeMode()); 
-  if (foundBetterMove) {
-    jointTree.applyMove(*allMoves[bestMoveIndex]);
-    if (blo) {
-      jointTree.optimizeMove(*allMoves[bestMoveIndex]);
-    }
-    double ll = jointTree.computeJointLoglk();
-    double error = fabs(ll - bestLoglk);
-    if (error > 0.01) {
-      Logger::info << "Warning, potential numerical issue in SPRSearch::applySPRRound " << error << std::endl;
-    }
-  }
-#else
   std::vector<std::shared_ptr<SPRMove> > betterMoves;
+  double initialLL = bestLoglk; 
   SearchUtils::findBetterMoves(jointTree, 
       allMoves,
       betterMoves,
@@ -223,8 +203,8 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
     }
     Logger::info << move->getScore() << " " << ll << std::endl;
   }
-#endif
-  return foundBetterMove;
+  double epsilon = fabs(bestLoglk) > 10000.0 ? 0.5 : 0.001; 
+  return foundBetterMove && (bestLoglk - initialLL > epsilon);
 }
 
 
