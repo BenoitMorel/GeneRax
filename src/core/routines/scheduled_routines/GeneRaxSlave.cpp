@@ -51,6 +51,7 @@ static void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
     const std::string &outputGeneTree,
     const std::string &outputStats) 
 {
+  auto start = std::chrono::high_resolution_clock::now();
   Logger::timed << "Starting optimizing gene tree" << std::endl;
   Logger::info << "Number of ranks " << ParallelContext::getSize() << std::endl;
   std::vector<std::string> geneTreeStrings;
@@ -99,7 +100,10 @@ static void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
     }
     stats.close();
   }
-  Logger::timed << "End of optimizing gene tree" << std::endl;
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+  auto seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
+  Logger::timed << "End of optimizing gene tree after " << seconds << "s" << std::endl;
   ParallelContext::barrier();
 }
 

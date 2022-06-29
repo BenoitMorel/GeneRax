@@ -274,7 +274,7 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
   
   if (betterMoves.size() > 10) {
     std::vector<std::shared_ptr<SPRMove> > movesToRetry;
-    foundBetterMove = simultaneouslyApplyBetterMoves(jointTree, 
+    foundBetterMove |= simultaneouslyApplyBetterMoves(jointTree, 
         betterMoves,
         blo,
         bestLoglk,
