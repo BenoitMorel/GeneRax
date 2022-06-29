@@ -281,13 +281,13 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
         movesToRetry);
     if (movesToRetry.size()) {
       Logger::info << "Now sequentially applying the " << movesToRetry.size() << " moves that could not be applied simultaneously..." << std::endl;
-      foundBetterMove = sequentiallyApplyBetterMoves(jointTree, 
+      foundBetterMove |= sequentiallyApplyBetterMoves(jointTree, 
           movesToRetry,
           blo,
           bestLoglk);
     }
   } else {
-    foundBetterMove = sequentiallyApplyBetterMoves(jointTree, 
+    foundBetterMove |= sequentiallyApplyBetterMoves(jointTree, 
         betterMoves,
         blo,
         bestLoglk);
