@@ -17,8 +17,13 @@ public:
     length_(branch->length) 
   {}
 
+  SavedBranch(corax_unode_t *branch, double length):
+    branch_(branch),
+    length_(length)
+  {}
   void restore();
-  corax_unode_t *getNode() {return branch_;}
+  corax_unode_t *getNode() const {return branch_;}
+  double getLength() const {return length_;}
 private:
   corax_unode_t *branch_;
   double length_;

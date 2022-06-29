@@ -2,7 +2,9 @@
 #include <trees/JointTree.hpp>
 
 void SavedBranch::restore() {
+  //Logger::info << "restore " << branch_->length << " ";
   corax_utree_set_length(branch_, length_);
+  //Logger::info << branch_->length << std::endl;;
 }
 
 void SPRRollback::applyRollback() {

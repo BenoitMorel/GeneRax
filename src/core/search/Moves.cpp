@@ -107,7 +107,27 @@ std::shared_ptr<SPRRollback> SPRMove::applyMove(JointTree &tree)
 void SPRMove::optimizeMove(JointTree &tree)
 {
   optimizeBranchesSlow(tree, _branchesToOptimize);
+  for (auto branch: _branchesToOptimize) {
+    _optimizedBranches.push_back(SavedBranch(branch));
+    _optimizedBackBranches.push_back(SavedBranch(branch->back));
+  }
   _branchesToOptimize.clear();
+}
+  
+void SPRMove::reOptimizeMove(JointTree &tree)
+{
+  if (!ParallelContext::isIntEqual(_optimizedBranches.size())) {
+    synchronizeOptimizedBL(tree);
+  }
+  for (unsigned int i = 0; i < _optimizedBranches.size(); ++i) {
+    auto &saved = _optimizedBranches[i];
+    auto &savedBack = _optimizedBackBranches[i];
+    if (saved.getNode() != savedBack.getNode()->back) {
+      Logger::info << "The branch pattern changed, skipping this branch reoptimization" << std::endl;
+      continue;
+    }
+    saved.restore();
+  }
 }
 
 std::ostream& SPRMove::print(std::ostream & os) const {
@@ -122,16 +142,34 @@ void SPRMove::updatePath(JointTree &tree)
 {
   auto prune = tree.getNode(_pruneIndex); 
   auto regraft = tree.getNode(_regraftIndex); 
-  auto initialRegraft = regraft;
-  auto initialPrune = prune;
   std::vector<corax_unode_t *> nodes;
   _path.clear();
   PLLUnrootedTree::orientTowardEachOther(&prune, &regraft, nodes);
-  for (auto node: nodes) {
-    if (node != regraft) {
-      _path.push_back(node->node_index);
-    }
-  
+}
+
+void SPRMove::synchronizeOptimizedBL(JointTree &tree)
+{
+  std::vector<unsigned int> branchIndices;
+  std::vector<double> branchLengths;
+  unsigned int nonNullRanks = (_optimizedBranches.size()) > 1 ? 1 : 0;
+  ParallelContext::sumUInt(nonNullRanks);
+  assert(nonNullRanks == 1);
+  for (const auto &savedBranch: _optimizedBranches) {
+    branchIndices.push_back(savedBranch.getNode()->node_index);
+    branchLengths.push_back(savedBranch.getLength());
+  }
+  std::vector<unsigned int> globalIndices;
+  std::vector<double> globalLengths;
+  ParallelContext::concatenateHetherogeneousUIntVectors(branchIndices, globalIndices);
+  ParallelContext::concatenateHetherogeneousDoubleVectors(branchLengths, globalLengths);
+  _optimizedBranches.clear();
+  _optimizedBackBranches.clear();
+  assert(globalIndices.size() == globalLengths.size());
+  for (unsigned int i = 0; i < globalIndices.size(); ++i) {
+    auto b = tree.getNode(globalIndices[i]);
+    auto l = globalLengths[i];
+    _optimizedBranches.push_back(SavedBranch(b, l));
+    _optimizedBackBranches.push_back(SavedBranch(b->back, l));
   }
 }
 

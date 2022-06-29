@@ -59,7 +59,6 @@ void SearchUtils::testMove(JointTree &jointTree,
   }
 }
 
-//#define STOP
 bool SearchUtils::findBestMove(JointTree &jointTree,
     std::vector<std::shared_ptr<SPRMove> > &allMoves,
     double &bestLoglk,
@@ -81,18 +80,6 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
   auto begin = ParallelContext::getBegin(static_cast<unsigned int>(allMoves.size()));
   auto end = ParallelContext::getEnd(static_cast<unsigned int>(allMoves.size()));
   unsigned int bestRank = 0;
-#ifdef STOP
-  // ensure that all cores recieve the same number of tasks, 
-  // to avoid deadlock when synchronizing
-  while ((end - begin) * ParallelContext::getSize() < allMoves.size()) {
-    if (begin > 0) {
-      begin -= 1;
-    } else {
-      assert(end < allMoves.size());
-      end += 1;
-    }
-  }
-#endif
   for (auto i = begin; i < end; ++i) {
     auto loglk = bestLoglk;
     SearchUtils::testMove(jointTree, *allMoves[i], 
@@ -106,15 +93,6 @@ bool SearchUtils::findBestMove(JointTree &jointTree,
       bestLoglk = loglk;
       bestMoveIndex = i;
     }
-#ifdef STOP
-    if ((begin - i) % 1 == 0) {
-      ParallelContext::getMax(bestLoglk, bestRank);
-      ParallelContext::broadcastUInt(bestRank, bestMoveIndex);
-      if (bestMoveIndex != static_cast<unsigned int>(-1)) {
-        return true;
-      }
-    }
-#endif
   }
   ParallelContext::getMax(bestLoglk, bestRank);
   ParallelContext::broadcastUInt(bestRank, bestMoveIndex);

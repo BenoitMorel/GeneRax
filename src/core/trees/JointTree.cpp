@@ -215,6 +215,12 @@ void JointTree::optimizeMove(SPRMove &move) {
   }
 }
 
+void JointTree::reOptimizeMove(SPRMove &move) {
+  if (_enableLibpll) {
+    move.reOptimizeMove(*this);
+  }
+}
+
 
 void JointTree::rollbackLastMove() {
   assert(!_rollbacks.empty());

@@ -46,6 +46,7 @@ public:
     corax_unode_t *getNode(unsigned int index);
     void applyMove(SPRMove &move);
     void optimizeMove(SPRMove &move);
+    void reOptimizeMove(SPRMove &move);
   
     void invalidateCLV(corax_unode_s *node);
     void printAllNodes(std::ostream &os);

@@ -121,11 +121,13 @@ static bool wasInvolved(corax_unode_t *node,
   return involved.find(node) != involved.end();
 }
 
-bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLoglk, bool blo) {
+static void getAllPotentialMoves(JointTree &jointTree,
+    int radius,
+    std::vector<std::shared_ptr<SPRMove> > &allMoves)
+{
   std::vector<unsigned int> allNodes;
   getAllPruneIndices(jointTree, allNodes);
   std::vector<SPRMoveDesc> potentialMoves;
-  std::vector<std::shared_ptr<SPRMove> > allMoves;
   for (unsigned int i = 0; i < allNodes.size(); ++i) {
       auto pruneIndex = allNodes[i];
       getRegrafts(jointTree, pruneIndex, radius, potentialMoves);
@@ -155,28 +157,20 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
     }
     allMoves.push_back(SPRMove::createSPRMove(pruneIndex, regraftIndex, move.path));
   }
-  Logger::timed << "Start SPR round " 
-    << "(std::hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" 
-    << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
-    << std::endl;
-  std::vector<std::shared_ptr<SPRMove> > betterMoves;
-  double initialLL = bestLoglk; 
-  Logger::info << "Searching all potential good moves..." << std::endl;
-  SearchUtils::findBetterMoves(jointTree, 
-      allMoves,
-      betterMoves,
-      blo,
-      jointTree.isSafeMode());
+
+}
+
+static bool sequentiallyApplyBetterMoves(JointTree &jointTree, 
+    const std::vector<std::shared_ptr<SPRMove> > &betterMoves,
+    bool blo,
+    double &bestLoglk)
+{
+  Logger::timed << "GeneRax will now test and apply all the " << betterMoves.size() << " potential good moves one after each other" << std::endl;
   bool foundBetterMove = false;
   std::unordered_set<corax_unode_t *> involved;
-  double currentLL = jointTree.computeJointLoglk();
-  Logger::info << "GeneRax will now test and apply all the " << betterMoves.size() << " potential good moves one after each other" << std::endl;
-  for (unsigned int i = 0; i < betterMoves.size(); ++i) {
-    auto move = betterMoves[i];
+  for (auto move: betterMoves) {
     auto prune = jointTree.getNode(move->getPruneIndex());
     auto regraft = jointTree.getNode(move->getRegraftIndex());
-    assert(ParallelContext::isIntEqual(i));
-    assert(ParallelContext::isIntEqual(move->getPruneIndex()));
     if (wasInvolved(prune, involved) || wasInvolved(regraft, involved)) {
       continue;
     }
@@ -191,16 +185,112 @@ bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLogl
       jointTree.optimizeMove(*move);
     }
     double ll = jointTree.computeJointLoglk();
-    if (ll < currentLL) {
+    if (ll < bestLoglk) {
       Logger::info << "Move rejected" << std::endl;
       jointTree.rollbackLastMove();
       ll = jointTree.computeJointLoglk();
     } else {
       foundBetterMove = true;
-      currentLL = ll;
       bestLoglk = ll;
-      Logger::timed << "Applying move, ll = " << ll << std::endl;
+      Logger::timed << "\tApplying move, ll = " << ll << std::endl;
     }
+  }
+  return foundBetterMove;
+}
+
+static bool simultaneouslyApplyBetterMoves(JointTree &jointTree, 
+    const std::vector<std::shared_ptr<SPRMove> > &betterMoves,
+    bool blo,
+    double &bestLoglk,
+    std::vector<std::shared_ptr<SPRMove> > &movesToRetry)
+{
+  Logger::timed << "GeneRax will now test and apply all non-conflicting " << betterMoves.size() << " potential good moves simultaneously" << std::endl;
+  std::unordered_set<corax_unode_t *> involved;
+  std::vector<std::shared_ptr<SPRMove> >  appliedMoves;
+  for (auto move: betterMoves) {
+    auto prune = jointTree.getNode(move->getPruneIndex());
+    auto regraft = jointTree.getNode(move->getRegraftIndex());
+    if (!isSPRMoveValid(jointTree.getGeneTree(), prune, regraft)) {
+      continue;
+    }
+    auto p = prune;
+    auto r = regraft;
+    std::vector<corax_unode_t *> branches;
+    PLLUnrootedTree::orientTowardEachOther(&p, &r, branches);
+    bool skip = false;
+    for (auto b: branches) {
+      if (wasInvolved(b, involved)) {
+        skip = true;
+      }
+    }
+    if (skip) {
+      movesToRetry.push_back(move);
+      continue;
+    }
+    for (auto b: branches) {
+      addInvolvedNode(b, involved);
+      addInvolvedNode(b->back, involved);
+    }
+    move->updatePath(jointTree);
+    jointTree.applyMove(*move);
+    appliedMoves.push_back(move);
+    if (blo) {
+      jointTree.reOptimizeMove(*move);
+    }
+  }
+  double initialLoglk = bestLoglk;
+  bestLoglk = jointTree.computeJointLoglk();
+  Logger::timed << "After simultaneously applying the moves, ll = " << bestLoglk << std::endl;
+  if (bestLoglk < initialLoglk) {
+    Logger::info <<"Rollback all moves!" << std::endl;
+    for (auto move: appliedMoves) {
+      jointTree.rollbackLastMove();
+      movesToRetry.push_back(move);
+    }
+    bestLoglk = jointTree.computeJointLoglk();
+    return false;
+  }
+  return true;
+}
+
+
+bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLoglk, bool blo) {
+  std::vector<std::shared_ptr<SPRMove> > allMoves;
+  getAllPotentialMoves(jointTree, radius, allMoves);
+  Logger::timed << "Start SPR round " 
+    << "(std::hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" 
+    << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
+    << std::endl;
+  std::vector<std::shared_ptr<SPRMove> > betterMoves;
+  Logger::info << "Searching all potential good moves..." << std::endl;
+  SearchUtils::findBetterMoves(jointTree, 
+      allMoves,
+      betterMoves,
+      blo,
+      jointTree.isSafeMode());
+  bestLoglk = jointTree.computeJointLoglk();
+  double initialLL = bestLoglk; 
+  bool foundBetterMove = false;
+  
+  if (betterMoves.size() > 10) {
+    std::vector<std::shared_ptr<SPRMove> > movesToRetry;
+    foundBetterMove = simultaneouslyApplyBetterMoves(jointTree, 
+        betterMoves,
+        blo,
+        bestLoglk,
+        movesToRetry);
+    if (movesToRetry.size()) {
+      Logger::info << "Now sequentially applying the " << movesToRetry.size() << " moves that could not be applied simultaneously..." << std::endl;
+      foundBetterMove = sequentiallyApplyBetterMoves(jointTree, 
+          movesToRetry,
+          blo,
+          bestLoglk);
+    }
+  } else {
+    foundBetterMove = sequentiallyApplyBetterMoves(jointTree, 
+        betterMoves,
+        blo,
+        bestLoglk);
   }
   double epsilon = fabs(bestLoglk) > 10000.0 ? 0.5 : 0.001; 
   return foundBetterMove && (bestLoglk - initialLL > epsilon);
