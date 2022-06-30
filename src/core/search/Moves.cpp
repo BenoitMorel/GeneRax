@@ -106,6 +106,8 @@ std::shared_ptr<SPRRollback> SPRMove::applyMove(JointTree &tree)
   
 void SPRMove::optimizeMove(JointTree &tree)
 {
+  _optimizedBranches.clear();
+  _optimizedBackBranches.clear();
   optimizeBranchesSlow(tree, _branchesToOptimize);
   for (auto branch: _branchesToOptimize) {
     _optimizedBranches.push_back(SavedBranch(branch));

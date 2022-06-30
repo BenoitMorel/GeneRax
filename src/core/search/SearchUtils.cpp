@@ -3,102 +3,48 @@
 #include <parallelization/ParallelContext.hpp>
 #include <IO/Logger.hpp>
 
+static bool sprYeldsSameTree(corax_unode_t *p, corax_unode_t *r)
+{
+  assert(p);
+  assert(r);
+  return (r == p) || (r == p->next) || (r == p->next->next)
+    || (r == p->back) || (r == p->next->back) || (r == p->next->next->back);
+}
+
+static bool isValidSPRMove(corax_unode_s *prune, corax_unode_s *regraft) {
+  assert(prune);
+  assert(regraft);
+  return !sprYeldsSameTree(prune, regraft);
+}
 
 
 void SearchUtils::testMove(JointTree &jointTree,
     SPRMove &move,
-    double initialReconciliationLoglk,
-    double initialLibpllLoglk,
-#ifdef SUPER_OPTIM
-    double &averageReconciliationDiff,
-#else
-    double &,
-#endif
     double &newLoglk,
     bool blo,
-    bool check
-    )
+    std::unordered_map<unsigned int, double> *treeHashScores)
 {
-  double initialLoglk = initialReconciliationLoglk + initialLibpllLoglk;
   jointTree.applyMove(move); 
-  double recLoglk = jointTree.computeReconciliationLoglk();
-#ifdef SUPER_OPTIM
-  double improvement = recLoglk - initialReconciliationLoglk;
-  averageReconciliationDiff *= 50;
-  averageReconciliationDiff += improvement;
-  averageReconciliationDiff /= 51;
-  if (improvement < averageReconciliationDiff) {
-    jointTree.rollbackLastMove();
-    if(check && fabs(initialLoglk - jointTree.computeJointLoglk()) > 0.000001) {
-      std::cerr.precision(17);
-      std::cerr << "small rollback lead to different likelihoods: " << initialLoglk
-        << " " << jointTree.computeJointLoglk() << std::endl;
-      std::cerr << " rank " << ParallelContext::getRank() << std::endl;
-      exit(1);
+  if (treeHashScores) {
+    auto hash = jointTree.getUnrootedTreeHash();
+    auto it = treeHashScores->find(hash);
+    if (it != treeHashScores->end()) {
+      newLoglk = it->second;
+      jointTree.rollbackLastMove();
+      move.setScore(newLoglk);
+      return;
     }
-    return;
   }
-#endif
+  double recLoglk = jointTree.computeReconciliationLoglk();
   if (blo) {
     jointTree.optimizeMove(move);
   }
   newLoglk = recLoglk +  jointTree.computeLibpllLoglk(false);
   move.setScore(newLoglk);
   jointTree.rollbackLastMove();
-  if(check) {
-    auto rbLoglk = jointTree.computeJointLoglk();
-    if (fabs(initialLoglk - rbLoglk) > 0.000001) {
-      jointTree.printLoglk();
-      std::cerr.precision(17);
-      std::cerr << "rollback lead to different likelihoods: " << initialLoglk
-        << " " << rbLoglk << std::endl;
-      std::cerr << "recomputing the ll again: " << jointTree.computeJointLoglk() << std::endl;
-      std::cerr << " rank " << ParallelContext::getRank() << std::endl;
-      exit(1);
-    }
-  }
-}
-
-bool SearchUtils::findBestMove(JointTree &jointTree,
-    std::vector<std::shared_ptr<SPRMove> > &allMoves,
-    double &bestLoglk,
-    unsigned int &bestMoveIndex,
-    bool blo,
-    bool check)
-{
-  bestMoveIndex = static_cast<unsigned int>(-1);
-  double initialLoglk = bestLoglk; //jointTree.computeJointLoglk();
-  double initialReconciliationLoglk = jointTree.computeReconciliationLoglk();
-  double initialLibpllLoglk = jointTree.computeLibpllLoglk();
-  double averageReconciliationDiff = 0;
-  double error = fabs(initialLoglk - 
-      (initialReconciliationLoglk + initialLibpllLoglk));
-  if (error > 0.01)
-  {
-    Logger::info << "WARNING: potential numerical issue in SearchUtils::findBestMove " << error << std::endl;
-  }
-  auto begin = ParallelContext::getBegin(static_cast<unsigned int>(allMoves.size()));
-  auto end = ParallelContext::getEnd(static_cast<unsigned int>(allMoves.size()));
-  unsigned int bestRank = 0;
-  for (auto i = begin; i < end; ++i) {
-    auto loglk = bestLoglk;
-    SearchUtils::testMove(jointTree, *allMoves[i], 
-        initialReconciliationLoglk,
-        initialLibpllLoglk, 
-        averageReconciliationDiff,
-        loglk,
-        blo,
-        check);
-    if (loglk > bestLoglk) {
-      bestLoglk = loglk;
-      bestMoveIndex = i;
-    }
-  }
-  ParallelContext::getMax(bestLoglk, bestRank);
-  ParallelContext::broadcastUInt(bestRank, bestMoveIndex);
-  Logger::info << "best;; " << bestLoglk << " " << bestRank << std::endl;
-  jointTree.getReconciliationEvaluation().invalidateAllCLVs();
-  return bestMoveIndex != static_cast<unsigned int>(-1);
+  if (treeHashScores) {
+    treeHashScores->insert({jointTree.getUnrootedTreeHash(), newLoglk});
+  } 
 }
 
 
@@ -138,12 +84,8 @@ bool SearchUtils::findBetterMoves(JointTree &jointTree,
   for (auto i = begin; i < end; ++i) {
     auto loglk = initialLoglk;
     SearchUtils::testMove(jointTree, *allMoves[i], 
-        initialReconciliationLoglk,
-        initialLibpllLoglk, 
-        averageReconciliationDiff,
         loglk,
-        blo,
-        check);
+        blo);
     if (loglk - initialLoglk > epsilon) {
       localGoodIndices.push_back(i);
       localGoodLL.push_back(allMoves[i]->getScore());
@@ -175,5 +117,84 @@ bool SearchUtils::findBetterMoves(JointTree &jointTree,
   jointTree.getReconciliationEvaluation().invalidateAllCLVs();
   return 0 < sortedBetterMoves.size();
 }
+
+
+static void diggRecursive(JointTree &jointTree,
+    std::unordered_map<unsigned int, double> &treeHashScores,
+    corax_unode_t *pruneNode,
+    corax_unode_t *regraftNode,
+    std::vector<unsigned int> &path,
+    unsigned int radius,
+    unsigned int maxRadius,
+    unsigned int additionalRadius,
+    bool blo,
+    double &bestLL,
+    double &bestLLAmongPrune,
+    SPRMove &bestMove)
+{
+  // should we stop?
+  if (radius >= maxRadius) {
+    return;
+  }
+  // test the current move
+  SPRMove move(pruneNode->node_index,
+      regraftNode->node_index,
+      path);
+
+  if (isValidSPRMove(pruneNode, regraftNode)) {
+    double newLL = 0.0;
+    SearchUtils::testMove(jointTree, 
+      move,
+      newLL,
+      blo);
+    if (newLL > bestLLAmongPrune) {
+      bestMove = move;
+      bestLLAmongPrune = newLL;
+      if (newLL > bestLL) {
+        Logger::info << "better " << newLL << " prune=" << pruneNode->node_index << " r=" << radius <<  std::endl;
+        bestLL = newLL;
+        maxRadius += additionalRadius;
+      }
+    }
+  }
+  // continue 
+  if (regraftNode->next) {
+    auto left = regraftNode->next->back;
+    auto right = regraftNode->next->next->back;
+    path.push_back(regraftNode->node_index);
+    diggRecursive(jointTree, treeHashScores, pruneNode, left, path, radius + 1, maxRadius,
+        additionalRadius, blo, bestLL, bestLLAmongPrune, bestMove);
+    diggRecursive(jointTree, treeHashScores, pruneNode, right, path, radius + 1, maxRadius,
+        additionalRadius, blo, bestLL, bestLLAmongPrune, bestMove);
+    path.pop_back();
+  }
+}
+
+bool SearchUtils::diggBestMoveFromPrune(JointTree &jointTree,
+    std::unordered_map<unsigned int, double> &treeHashScores,
+    unsigned int pruneIndex,
+    unsigned int maxRadius,
+    unsigned int additionalRadius,
+    double &bestLL,
+    double &bestLLAmongPrune,
+    bool blo,
+    SPRMove &bestMove)
+{
+  auto pruneNode = jointTree.getNode(pruneIndex);
+  assert(pruneNode->next);
+  auto regraft1 = pruneNode->next->back;
+  auto regraft2 = pruneNode->next->next->back;
+  std::vector<unsigned int> path;
+  bestLLAmongPrune = -99999999999.0;
+  double initialLL = bestLL;
+  diggRecursive(jointTree, treeHashScores, pruneNode, regraft1, path, 
+      0, maxRadius, additionalRadius, blo, 
+      bestLL, bestLLAmongPrune, bestMove);
+  diggRecursive(jointTree, treeHashScores, pruneNode, regraft2, path, 
+      0, maxRadius, additionalRadius, blo, 
+      bestLL, bestLLAmongPrune, bestMove);
+  return  (bestLLAmongPrune - initialLL) > 0.1;
+}
+
 
 
