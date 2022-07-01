@@ -283,6 +283,8 @@ bool SPRSearch::applySPRRoundDigg(JointTree &jointTree, int radius, double &best
   double bestLL = jointTree.computeJointLoglk();
   unsigned int plop = 0;
   std::unordered_map<unsigned int, double> treeHashScores;
+  DiggStopper stopper;
+  std::vector<SPRMove> goodMoves;
   while (pruneIndices.size()) {
     bool localImproved = false; 
     std::vector<ScoredPrune> scoredPrunes;
@@ -295,6 +297,7 @@ bool SPRSearch::applySPRRoundDigg(JointTree &jointTree, int radius, double &best
       double initialLL = bestLL;
       bool isBetter = SearchUtils::diggBestMoveFromPrune(jointTree, 
           treeHashScores,
+          stopper,
           pruneIndex, 
           radius + 1,
           additionalRadius,
@@ -313,6 +316,8 @@ bool SPRSearch::applySPRRoundDigg(JointTree &jointTree, int radius, double &best
         localImproved = true;
       }
     }
+    Logger::info << "Stopped: " << stopper.ko << std::endl; 
+    Logger::info << "Tested: " << stopper.ok << std::endl; 
     std::sort(scoredPrunes.rbegin(), scoredPrunes.rend(), less_than_prune());
     /*
     for (auto sp: scoredPrunes) {

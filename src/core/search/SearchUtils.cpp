@@ -73,7 +73,6 @@ bool SearchUtils::findBetterMoves(JointTree &jointTree,
   double initialReconciliationLoglk = jointTree.computeReconciliationLoglk();
   double initialLibpllLoglk = jointTree.computeLibpllLoglk();
   double initialLoglk = initialLibpllLoglk + initialReconciliationLoglk;
-  double averageReconciliationDiff = 0;
   auto begin = ParallelContext::getBegin(static_cast<unsigned int>(allMoves.size()));
   auto end = ParallelContext::getEnd(static_cast<unsigned int>(allMoves.size()));
   std::vector<unsigned int> localGoodIndices;
@@ -121,6 +120,7 @@ bool SearchUtils::findBetterMoves(JointTree &jointTree,
 
 static void diggRecursive(JointTree &jointTree,
     std::unordered_map<unsigned int, double> &treeHashScores,
+    DiggStopper &stopper,
     corax_unode_t *pruneNode,
     corax_unode_t *regraftNode,
     std::vector<unsigned int> &path,
@@ -140,13 +140,14 @@ static void diggRecursive(JointTree &jointTree,
   SPRMove move(pruneNode->node_index,
       regraftNode->node_index,
       path);
-
+  double diff = 1.0;
   if (isValidSPRMove(pruneNode, regraftNode)) {
     double newLL = 0.0;
     SearchUtils::testMove(jointTree, 
       move,
       newLL,
       blo);
+    diff = newLL - bestLL;
     if (newLL > bestLLAmongPrune) {
       bestMove = move;
       bestLLAmongPrune = newLL;
@@ -156,15 +157,18 @@ static void diggRecursive(JointTree &jointTree,
         maxRadius += additionalRadius;
       }
     }
+    stopper.treatDiff(diff, radius);
   }
+
   // continue 
-  if (regraftNode->next) {
+  radius += 1;
+  if (regraftNode->next && radius < maxRadius && !stopper.doStop(diff, radius)) {
     auto left = regraftNode->next->back;
     auto right = regraftNode->next->next->back;
     path.push_back(regraftNode->node_index);
-    diggRecursive(jointTree, treeHashScores, pruneNode, left, path, radius + 1, maxRadius,
+    diggRecursive(jointTree, treeHashScores, stopper, pruneNode, left, path, radius, maxRadius,
         additionalRadius, blo, bestLL, bestLLAmongPrune, bestMove);
-    diggRecursive(jointTree, treeHashScores, pruneNode, right, path, radius + 1, maxRadius,
+    diggRecursive(jointTree, treeHashScores, stopper, pruneNode, right, path, radius, maxRadius,
         additionalRadius, blo, bestLL, bestLLAmongPrune, bestMove);
     path.pop_back();
   }
@@ -172,6 +176,7 @@ static void diggRecursive(JointTree &jointTree,
 
 bool SearchUtils::diggBestMoveFromPrune(JointTree &jointTree,
     std::unordered_map<unsigned int, double> &treeHashScores,
+    DiggStopper &stopper,
     unsigned int pruneIndex,
     unsigned int maxRadius,
     unsigned int additionalRadius,
@@ -187,10 +192,10 @@ bool SearchUtils::diggBestMoveFromPrune(JointTree &jointTree,
   std::vector<unsigned int> path;
   bestLLAmongPrune = -99999999999.0;
   double initialLL = bestLL;
-  diggRecursive(jointTree, treeHashScores, pruneNode, regraft1, path, 
+  diggRecursive(jointTree, treeHashScores, stopper, pruneNode, regraft1, path, 
       0, maxRadius, additionalRadius, blo, 
       bestLL, bestLLAmongPrune, bestMove);
-  diggRecursive(jointTree, treeHashScores, pruneNode, regraft2, path, 
+  diggRecursive(jointTree, treeHashScores, stopper, pruneNode, regraft2, path, 
       0, maxRadius, additionalRadius, blo, 
       bestLL, bestLLAmongPrune, bestMove);
   return  (bestLLAmongPrune - initialLL) > 0.1;
