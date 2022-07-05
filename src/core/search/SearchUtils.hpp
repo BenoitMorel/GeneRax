@@ -24,7 +24,7 @@ struct DiggStopper {
   unsigned int ko;
 
   void treatDiff(double diff, unsigned int radius) {
-    if (diff > 0.0) {
+    if (diff > 0.1) {
       return;
     }
     if (radius == 1) {
@@ -34,7 +34,8 @@ struct DiggStopper {
     stream.addValue(diff);
   }
 
-  bool doStop(double diff, unsigned int radius) {
+  bool doStop(double diff, unsigned int) {
+    //return false;
     bool res = stream.isSignificant() && (diff < streamR1.getAverage());
     //bool res = stream.isSignificant() && (diff < worseDiffR1 / 2.0);
     if (res) {
@@ -87,9 +88,7 @@ public:
   static bool findBetterMoves(JointTree &jointTree,
     std::vector<std::shared_ptr<SPRMove> > &allMoves,
     std::vector<std::shared_ptr<SPRMove> > &sortedBetterMoves,
-    bool blo,
-    bool check);
-
+    bool blo);
 
   /**
    *

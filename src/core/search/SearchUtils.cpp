@@ -67,8 +67,7 @@ struct less_than_move_ptr
 bool SearchUtils::findBetterMoves(JointTree &jointTree,
   std::vector<std::shared_ptr<SPRMove> > &allMoves,
   std::vector<std::shared_ptr<SPRMove> > &sortedBetterMoves,
-  bool blo,
-  bool check)
+  bool blo)
 {
   double initialReconciliationLoglk = jointTree.computeReconciliationLoglk();
   double initialLibpllLoglk = jointTree.computeLibpllLoglk();
@@ -152,7 +151,6 @@ static void diggRecursive(JointTree &jointTree,
       bestMove = move;
       bestLLAmongPrune = newLL;
       if (newLL > bestLL) {
-        Logger::info << "better " << newLL << " prune=" << pruneNode->node_index << " r=" << radius <<  std::endl;
         bestLL = newLL;
         maxRadius += additionalRadius;
       }

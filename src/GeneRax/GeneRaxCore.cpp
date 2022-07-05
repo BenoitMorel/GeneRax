@@ -432,7 +432,7 @@ void GeneRaxCore::optimizeRatesAndGeneTrees(GeneRaxInstance &instance,
       elapsed);
   instance.elapsedSPR += elapsed;
   Routines::gatherLikelihoods(instance.currentFamilies, instance.totalLibpllLL, instance.totalRecLL);
-  Logger::info << "\tJointLL=" << instance.totalLibpllLL + instance.totalRecLL 
+  Logger::timed << "JointLL=" << instance.totalLibpllLL + instance.totalRecLL 
     << " RecLL=" << instance.totalRecLL << " LibpllLL=" << instance.totalLibpllLL << std::endl;
   Logger::info << std::endl;
 }
