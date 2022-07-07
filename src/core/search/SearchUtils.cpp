@@ -24,15 +24,20 @@ void SearchUtils::testMove(JointTree &jointTree,
     bool blo,
     std::unordered_map<unsigned int, double> *treeHashScores)
 {
+  static int computed = 0;
+  static int saved = 0;
   jointTree.applyMove(move); 
   if (treeHashScores) {
     auto hash = jointTree.getUnrootedTreeHash();
     auto it = treeHashScores->find(hash);
     if (it != treeHashScores->end()) {
+      saved++;
       newLoglk = it->second;
       jointTree.rollbackLastMove();
       move.setScore(newLoglk);
       return;
+    } else {
+      computed++;
     }
   }
   double recLoglk = jointTree.computeReconciliationLoglk();
@@ -41,10 +46,10 @@ void SearchUtils::testMove(JointTree &jointTree,
   }
   newLoglk = recLoglk +  jointTree.computeLibpllLoglk(false);
   move.setScore(newLoglk);
-  jointTree.rollbackLastMove();
   if (treeHashScores) {
     treeHashScores->insert({jointTree.getUnrootedTreeHash(), newLoglk});
   } 
+  jointTree.rollbackLastMove();
 }
 
 
@@ -145,7 +150,8 @@ static void diggRecursive(JointTree &jointTree,
     SearchUtils::testMove(jointTree, 
       move,
       newLL,
-      blo);
+      blo,
+      &treeHashScores);
     diff = newLL - bestLL;
     if (newLL > bestLLAmongPrune) {
       bestMove = move;
