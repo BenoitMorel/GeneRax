@@ -37,6 +37,10 @@ static void getAllPruneIndices(JointTree &tree, std::vector<unsigned int> &allNo
       allNodeIndices.push_back(treeinfo->subnodes[i]->node_index);
     }
   }
+  /*
+  auto rng = std::default_random_engine {};
+  std::shuffle(std::begin(allNodeIndices), std::end(allNodeIndices), rng);
+  */
 }
 
 
@@ -380,7 +384,6 @@ bool SPRSearch::applySPRRoundDigg(JointTree &jointTree, int radius, double &best
     Logger::timed << "SPR Search with radius " << radius << ": trying " << pruneIndices.size() << " prune nodes" << std::endl;
     auto begin = ParallelContext::getBegin(pruneIndices.size());
     auto end = ParallelContext::getEnd(pruneIndices.size());
-    Logger::perrank << begin << " " << end << std::endl;
     for (unsigned int i = begin; i < end; ++i) {
       auto pruneIndex = pruneIndices[i];
       std::vector<unsigned int> path;
