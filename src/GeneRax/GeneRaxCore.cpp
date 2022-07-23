@@ -68,13 +68,21 @@ void GeneRaxCore::initInstance(GeneRaxInstance &instance)
   Random::setSeed(static_cast<unsigned int>(instance.args.seed));
   FileSystem::mkdir(instance.args.outputPath, true);
   Logger::initFileOutput(FileSystem::joinPaths(instance.args.outputPath, "generax"));
-  // assert twice, before of a bug I had at the 
+  // assert twice, because of a bug I had at the 
   // second rand() call with openmpi
   assert(ParallelContext::isRandConsistent());
   assert(ParallelContext::isRandConsistent());
   instance.args.printCommand();
   instance.args.printSummary();
   instance.initialFamilies = FamiliesFileParser::parseFamiliesFile(instance.args.familyFilePath);
+  if (instance.args.geneSearchStrategy == GeneSearchStrategy::EVAL) {
+    for (const auto &family: instance.initialFamilies) {
+      if (family.startingGeneTree == "__random__") {
+        Logger::info << "Error: in EVAL mode, a gene tree must be provided for all families. Family " << family.name << " does not provide a gene tree" << std::endl;
+        ParallelContext::abort(1);
+      }
+    }
+  }
   initFolders(instance);
   bool needAlignments = instance.args.geneSearchStrategy != GeneSearchStrategy::SKIP
     && instance.args.geneSearchStrategy != GeneSearchStrategy::EVAL;
@@ -360,15 +368,14 @@ void GeneRaxCore::initialGeneTreeSearch(GeneRaxInstance &instance)
 {
   assert(ParallelContext::isRandConsistent());
   Logger::info << std::endl;
-  Logger::timed << "[Initialization] Initial optimization of the starting random gene trees" << std::endl;
-  Logger::timed << "[Initialization] All the families will first be optimized with sequences only" << std::endl;
+  Logger::timed << "[Initialization] Initial optimization of the starting random gene trees from the MSAs only" << std::endl;
   Logger::mute();
   Routines::runRaxmlOptimization(instance.currentFamilies, instance.args.outputPath, 
       instance.args.execPath, instance.currentIteration++, 
       ParallelContext::allowSchedulerSplitImplementation(), instance.elapsedRaxml);
   Logger::unmute();
   Routines::gatherLikelihoods(instance.currentFamilies, instance.totalLibpllLL, instance.totalRecLL);
-  Logger::timed << "[Initialization] Finished optimizing some of the gene trees" << std::endl;
+  Logger::timed << "[Initialization] Finished optimizing the gene trees from the MSAs" << std::endl;
   Logger::info << std::endl;
 }
 
