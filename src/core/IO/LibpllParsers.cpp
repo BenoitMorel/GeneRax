@@ -434,6 +434,10 @@ bool LibpllParsers::fillLabelsFromAlignment(const std::string &alignmentFilename
   }
   free(patternWeights);
   for (auto &sequence: sequences) {
+    if (leaves.find(sequence->label) != leaves.end()) {
+      // duplicate taxa!
+      return false;
+    }
     leaves.insert(sequence->label);
   }
   return res;
