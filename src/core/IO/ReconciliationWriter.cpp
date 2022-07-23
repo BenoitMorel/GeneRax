@@ -83,7 +83,11 @@ static void recursivelySaveSpeciesTreeRecPhyloXML(corax_rnode_t *node, std::stri
   }
   os << indent << "<clade>" << std::endl;
   indent += "\t";
-  os << indent << "\t<name>" << node->label << "</name>" << std::endl;
+  std::string label(node->label);
+  if (!label.size()) {
+    label = "NULL";
+  }
+  os << indent << "\t<name>" << label << "</name>" << std::endl;
   recursivelySaveSpeciesTreeRecPhyloXML(node->left, indent, os);
   recursivelySaveSpeciesTreeRecPhyloXML(node->right, indent, os);
   indent.pop_back();
@@ -156,7 +160,7 @@ static void recursivelySaveGeneTreeRecPhyloXML(unsigned int geneIndex,
     os << indent << "<clade>" << std::endl;
     indent += "\t";
     auto &event = events[i];
-    os << indent << "<name>" << "" << "</name>" << std::endl;
+    os << indent << "<name>" << "NULL" << "</name>" << std::endl;
     writeEventRecPhyloXML(geneIndex, speciesTree, event, previousEvent, indent, os);  
     previousEvent = &event;
     if (event.type == ReconciliationEventType::EVENT_SL || event.type == ReconciliationEventType::EVENT_TL) {
@@ -184,8 +188,8 @@ static void recursivelySaveGeneTreeRecPhyloXML(unsigned int geneIndex,
   os << indent << "<clade>" << std::endl;
   indent += "\t";
   Scenario::Event &event = geneToEvents[geneIndex].back();
-  //os << indent << "<name>" << (geneTree->label ? geneTree->label : "NULL") << "</name>" << std::endl;
-  os << indent << "<name>" << event.label << "</name>" << std::endl;
+  auto label = event.label.size() ? event.label : "NULL";
+  os << indent << "<name>" << label << "</name>" << std::endl;
   writeEventRecPhyloXML(geneIndex, speciesTree, event, previousEvent, indent, os);  
 
 
