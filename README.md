@@ -28,8 +28,6 @@ SpeciesRax is part of the GeneRax tool and is available since GeneRax v2.0.0. Sp
 * gcc 5.0 or > 
 * CMake 3.6 or >
 * MPI
-* bison and flex parsers
-
 
 ## Installation 
 
