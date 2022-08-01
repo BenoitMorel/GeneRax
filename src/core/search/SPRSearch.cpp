@@ -367,7 +367,7 @@ static void synchronizeMoves(JointTree &jointTree, std::vector<std::shared_ptr<S
   }
 }
 
-bool SPRSearch::applySPRRoundDigg(JointTree &jointTree, int radius, double &bestLoglk, bool blo) 
+bool SPRSearch::applySPRRoundDigg(JointTree &jointTree, int radius, bool blo) 
 {
   std::vector<unsigned int> pruneIndices;
   getAllPruneIndices(jointTree, pruneIndices);
@@ -429,7 +429,7 @@ bool SPRSearch::applySPRRoundDigg(JointTree &jointTree, int radius, double &best
 
 
 bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLoglk, bool blo) {
-  return applySPRRoundDigg(jointTree, radius, bestLoglk, blo);
+  return applySPRRoundDigg(jointTree, radius, blo);
   std::vector<std::shared_ptr<SPRMove> > allMoves;
   getAllPotentialMoves(jointTree, radius, allMoves);
   Logger::timed << "Start SPR round " 

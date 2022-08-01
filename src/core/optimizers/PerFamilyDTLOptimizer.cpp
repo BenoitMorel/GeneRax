@@ -114,6 +114,8 @@ void PerFamilyDTLOptimizer::optimizeDTLRates(JointTree &jointTree, RecOpt method
   case RecOpt::Gradient:
     optimizeDTLRatesGradient(jointTree);
     break;
+  case RecOpt::None:
+    break;
   }
 }
 
@@ -128,6 +130,8 @@ void PerFamilyDTLOptimizer::optimizeDLRates(JointTree &jointTree, RecOpt method)
     break;
   case RecOpt::Gradient:
     optimizeDTLRatesGradient(jointTree);
+    break;
+  case RecOpt::None:
     break;
   }
 }

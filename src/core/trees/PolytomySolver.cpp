@@ -196,12 +196,6 @@ void PolytomySolver::solveSimpleInterface(
   for (auto node: speciesTree.getPostOrderNodes()) {
     auto spid = node->node_index;
     auto &c = cells[spid];
-    //std::cout << node->label << "\tdup=" << c.dups << "\tloss=" << c.losses << "\tnbs=" << c.nbs << "\tac=" << c.ac << std::endl;
-  }
-  
-  for (auto node: speciesTree.getPostOrderNodes()) {
-    auto spid = node->node_index;
-    auto &c = cells[spid];
     if (!node->left) {
       // LEAF
       std::string label(node->label);

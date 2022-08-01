@@ -323,7 +323,7 @@ void ParallelContext::concatenateHetherogeneousDoubleVectors(
       0);
   globalVector.resize(totalSize);
   std::vector<int> displ(getSize(), 0);
-  for (int i = 1; i < displ.size(); ++i) {
+  for (unsigned int i = 1; i < displ.size(); ++i) {
     displ[i] = displ[i-1] + vectorSizes[i-1];
   }
   MPI_Allgatherv(&localVector[0],  // send buffer 
@@ -355,7 +355,7 @@ void ParallelContext::concatenateHetherogeneousUIntVectors(
       0);
   globalVector.resize(totalSize);
   std::vector<int> displ(getSize(), 0);
-  for (int i = 1; i < displ.size(); ++i) {
+  for (unsigned int i = 1; i < displ.size(); ++i) {
     displ[i] = displ[i-1] + vectorSizes[i-1];
   }
   MPI_Allgatherv(&localVector[0],  // send buffer 

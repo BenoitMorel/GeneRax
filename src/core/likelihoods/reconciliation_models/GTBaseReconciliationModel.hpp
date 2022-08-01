@@ -545,7 +545,6 @@ bool GTBaseReconciliationModel<REAL>::backtrace(corax_unode_t *geneNode, corax_r
       bool isVirtualRoot, 
       bool stochastic) 
 {
-  bool isGeneLeaf = !geneNode->next;
   REAL temp;
   Scenario::Event event;
   computeProbability(geneNode, speciesNode, temp, isVirtualRoot, &scenario, &event, stochastic);

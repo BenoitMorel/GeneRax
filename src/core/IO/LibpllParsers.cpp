@@ -17,19 +17,16 @@ static char * rtree_export_newick_recursive(const corax_rnode_t * root,
                                   char * (*cb_serialize)(const corax_rnode_t *))
 {
   char * newick;
-  int size_alloced;
   assert(root != NULL);
-
   if (!(root->left) || !(root->right))
   {
     if (cb_serialize)
     {
       newick = cb_serialize(root);
-      size_alloced = (int) strlen(newick);
     }
     else
     {
-      size_alloced = asprintf(&newick, "%s:%f", root->label, root->length);
+      asprintf(&newick, "%s:%f", root->label, root->length);
     }
   }
   else
@@ -39,7 +36,7 @@ static char * rtree_export_newick_recursive(const corax_rnode_t * root,
     if (cb_serialize)
     {
       char * temp = cb_serialize(root);
-      size_alloced = asprintf(&newick,
+      asprintf(&newick,
                               "(%s,%s)%s",
                               subtree1,
                               subtree2,
@@ -48,7 +45,7 @@ static char * rtree_export_newick_recursive(const corax_rnode_t * root,
     }
     else
     {
-      size_alloced = asprintf(&newick,
+      asprintf(&newick,
                               "(%s,%s)%s:%f",
                               subtree1,
                               subtree2,
@@ -66,7 +63,6 @@ char * corax_rtree_export_newick(const corax_rnode_t * root,
                                    char * (*cb_serialize)(const corax_rnode_t *))
 {
   char * newick;
-  int size_alloced;
   if (!root) return NULL;
 
   if (!(root->left) || !(root->right))
@@ -74,11 +70,10 @@ char * corax_rtree_export_newick(const corax_rnode_t * root,
     if (cb_serialize)
     {
       newick = cb_serialize(root);
-      size_alloced = (int) strlen(newick);
     }
     else
     {
-      size_alloced = asprintf(&newick, "%s:%f", root->label, root->length);
+      asprintf(&newick, "%s:%f", root->label, root->length);
     }
   }
   else
@@ -88,7 +83,7 @@ char * corax_rtree_export_newick(const corax_rnode_t * root,
     if (cb_serialize)
     {
       char * temp = cb_serialize(root);
-      size_alloced = asprintf(&newick,
+      asprintf(&newick,
                               "(%s,%s)%s",
                               subtree1,
                               subtree2,
@@ -97,7 +92,7 @@ char * corax_rtree_export_newick(const corax_rnode_t * root,
     }
     else
     {
-      size_alloced = asprintf(&newick,
+      asprintf(&newick,
                               "(%s,%s)%s:%f;",
                               subtree1,
                               subtree2,

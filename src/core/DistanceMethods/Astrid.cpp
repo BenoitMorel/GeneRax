@@ -7,14 +7,6 @@
 
 using DistanceVectorMatrix = std::vector<DistanceMatrix>;
 
-static BoolMatrix getBoolMatrix(unsigned int N,
-    unsigned int M,
-    bool value = false)
-{
-  std::vector<bool> v(M, value);
-  return BoolMatrix(N, v);
-}
-
 static DistanceMatrix getNullMatrix(unsigned int N,
     double value = 0.0)
 {
@@ -82,32 +74,6 @@ static void fillSpeciesDistances(const PLLUnrootedTree &speciesTree,
   }
 }
 
-static void getPrunedSpeciesMatrix(const PLLUnrootedTree &speciesTree,
-  const StringToUint &speciesStringToSpeciesId,
-  const std::unordered_set<std::string> &coverage,
-  DistanceMatrix &distanceMatrix)
-{
-  std::vector<bool> hasChildren(speciesTree.getDirectedNodesNumber(), false);
-  std::vector<bool> belongsToPruned(speciesTree.getDirectedNodesNumber(), false);
-  for (auto node: speciesTree.getPostOrderNodes()) {
-    auto index = node->node_index;
-    if (node->next) {
-      auto leftIndex = node->next->back->node_index;
-      auto rightIndex = node->next->next->back->node_index;
-      hasChildren[index] = hasChildren[leftIndex] || hasChildren[rightIndex];
-      belongsToPruned[index] = hasChildren[leftIndex] && hasChildren[rightIndex];
-    } else {
-      bool isCovered = coverage.find(std::string(node->label)) != coverage.end();
-      hasChildren[index] = isCovered;
-      belongsToPruned[index] = isCovered;
-    }
-  }
-  fillSpeciesDistances(speciesTree,
-      speciesStringToSpeciesId,
-      distanceMatrix,
-      &belongsToPruned);
-}
-    
 
 
 
@@ -156,11 +122,6 @@ double Astrid::computeBME(const PLLUnrootedTree &speciesTree)
   _computeSubBMEs(speciesTree);
   return res;
 }
-
-static bool isNumber(double v) {
-  return v == 0.0 || std::isnormal(v);
-}
-
 
 void Astrid::_computeSubBMEs(const PLLUnrootedTree &speciesTree)
 {
@@ -259,7 +220,7 @@ static void getBestSPRRec(unsigned int s,
 
 
 void Astrid::getBestSPR(PLLUnrootedTree &speciesTree,
-      unsigned int maxRadiusWithoutImprovement,
+      unsigned int,
       std::vector<SPRMove> &bestMoves)
 {
   for (auto pruneNode: speciesTree.getPostOrderNodes()) {
@@ -277,7 +238,7 @@ void Astrid::getBestSPR(PLLUnrootedTree &speciesTree,
 bool Astrid::getBestSPRFromPrune(corax_unode_t *prunedNode,
       corax_unode_t *&bestRegraftNode,
       double &bestDiff,
-      unsigned int &bestS)
+      unsigned int &)
 {
   bool foundBetter = false;
   double oldBestDiff = bestDiff;

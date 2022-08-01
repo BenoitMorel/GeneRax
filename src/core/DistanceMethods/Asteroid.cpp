@@ -213,7 +213,7 @@ Asteroid::Asteroid(const PLLUnrootedTree &speciesTree,
     auto i1 = sp1->node_index;
     for (auto sp2: speciesTree.getLeaves()) {
       auto i2 = sp2->node_index;
-      for (auto k = 0; k < _K; ++k) {
+      for (size_t k = 0; k < _K; ++k) {
         setCell(i1, i2, k, _geneDistanceMatrices[k][i1][i2]);
       }
     }

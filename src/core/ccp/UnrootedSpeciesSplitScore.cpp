@@ -62,7 +62,6 @@ double UnrootedSpeciesSplitScore::getScoreHack()
 {
   static const bool weightCladeSize = false;//true; // does not matter that much
   static const bool weightBranchNumber = true; // important
-  static const bool useDenominator = true;
   static const double branchPow = 2.0;
   // compute the score
   std::vector<double> score(_bidToNodeIndex.size(), 0.0);

@@ -82,7 +82,6 @@ enum class SpeciesTreeAlgorithm {
   NJst,
   WMinNJ,
   Ustar,
-  Clades,
   Random
 };
 
@@ -166,8 +165,6 @@ public:
       return SpeciesTreeAlgorithm::Cherry;
     } else if (str == std::string("CherryPro")) {
       return SpeciesTreeAlgorithm::CherryPro;
-    } else if (str == std::string("Clades")) { 
-      return SpeciesTreeAlgorithm::Clades;
     } else if (str == std::string("Random") || 
         str == std::string("random")) {
       return SpeciesTreeAlgorithm::Random;

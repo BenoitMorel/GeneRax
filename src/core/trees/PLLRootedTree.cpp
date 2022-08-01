@@ -116,37 +116,6 @@ static unsigned int utree_count_nodes_recursive(corax_unode_t * node,
   }
 }
 
-static unsigned int utree_count_nodes(corax_unode_t * root, unsigned int * tip_count,
-                                      unsigned int * inner_count)
-{
-  unsigned int count = 0;
-  
-  if (tip_count)
-    *tip_count = 0; 
-  
-  if (inner_count)
-    *inner_count = 0; 
-
-  if (!root->next && !root->back->next)
-    return 0;
-
-  if (!root->next)
-    root = root->back;
-    
-  count = utree_count_nodes_recursive(root, tip_count, inner_count, 0);
-  
-  if (tip_count && inner_count)
-    assert(count == *tip_count + *inner_count); 
-
-  return count;
-}
-
-
-static int unode_is_rooted(const corax_unode_t * root)
-{
-  return (root->next && root->next->next == root) ? 1 : 0;
-}
-
 void PLLRootedTree::setSon(corax_rnode_t *parent, corax_rnode_t *newSon, bool left)
 {
   newSon->parent = parent;
@@ -578,57 +547,6 @@ PLLRootedTree::getNodeIndexMapping(PLLRootedTree &otherTree)
   }
   return mapping;
 }
-
-static corax_utree_t * utree_wraptree(corax_unode_t * root,
-                                    unsigned int tip_count,
-                                    unsigned int inner_count,
-                                    int binary)
-{
-  unsigned int node_count;
-  
-  corax_utree_t * tree = (corax_utree_t *)malloc(sizeof(corax_utree_t));
-  
-  if (!root->next)
-    root = root->back;
-
-  if (binary)
-  {
-    if (tip_count == 0)
-    {
-      node_count = utree_count_nodes(root, &tip_count, &inner_count);
-    }
-    else
-    {
-      inner_count = tip_count - 2;
-      node_count = tip_count + inner_count;
-    }
-  }
-  else
-  {
-    if (tip_count == 0 || inner_count == 0)
-      node_count = utree_count_nodes(root, &tip_count, &inner_count);
-    else
-      node_count = tip_count + inner_count;
-  }
-
-  tree->nodes = (corax_unode_t **)malloc(node_count*sizeof(corax_unode_t *));
-  unsigned int tip_index = 0;
-  unsigned int inner_index = tip_count;
-
-  fill_nodes_recursive(root, tree->nodes, node_count, &tip_index, &inner_index, 0);
- 
-  assert(tip_index == tip_count);
-  assert(inner_index == tip_count + inner_count);
-
-  tree->tip_count = tip_count;
-  tree->inner_count = inner_count;
-  tree->edge_count = node_count - 1;
-  tree->binary = (inner_count == tip_count - (unode_is_rooted(root) ? 1 : 2));
-  tree->vroot = root;
-
-  return tree;
-}
-
 
 static corax_unode_t * rtree_unroot(corax_rnode_t * root, corax_unode_t * back)
 {
