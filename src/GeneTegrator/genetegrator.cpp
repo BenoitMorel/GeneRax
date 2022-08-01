@@ -64,7 +64,7 @@ void initStartingSpeciesTree(GeneTegratorArguments &args,
       ParallelContext::abort(153);
     }
     // add labels to internal nodes
-    LibpllParsers::labelRootedTree(args.speciesTree, startingSpeciesTree);
+    PLLRootedTree::labelRootedTree(args.speciesTree, startingSpeciesTree);
   } else {
     Routines::computeInitialSpeciesTree(families,
         args.output,

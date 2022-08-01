@@ -5,7 +5,7 @@
 #include <branchlengths/ReconciliationBLEstimator.hpp>
 #include <IO/FamiliesFileParser.hpp>
 #include <IO/Logger.hpp>
-#include <IO/LibpllParsers.hpp>
+#include <trees/PLLRootedTree.hpp>
 #include <algorithm>
 #include <random>
 #include <limits>
@@ -47,7 +47,8 @@ static void initStartingSpeciesTree(GeneRaxInstance &instance)
       ParallelContext::abort(153);
     }
     // add labels to internal nodes
-    LibpllParsers::labelRootedTree(instance.args.speciesTree, instance.speciesTree);
+    PLLRootedTree::labelRootedTree(instance.args.speciesTree, 
+        instance.speciesTree);
   } else {
     Routines::computeInitialSpeciesTree(instance.currentFamilies,
         instance.args.outputPath,

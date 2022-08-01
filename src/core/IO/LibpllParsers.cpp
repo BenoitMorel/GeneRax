@@ -106,36 +106,6 @@ char * corax_rtree_export_newick(const corax_rnode_t * root,
   return newick;
 }
 
-
-void LibpllParsers::labelRootedTree(corax_rtree_t *tree)
-{
-  assert(tree);
-  unsigned int index = 0;
-  std::unordered_set<std::string> existingLabels;
-  for (unsigned int i = 0; i < tree->tip_count + tree->inner_count; ++i) {
-    auto node = tree->nodes[i];
-    auto label = node->label;
-    if (!label || existingLabels.find(label) != existingLabels.end()) {
-      auto newLabel = std::string("node_" + std::to_string(index++));
-      while (existingLabels.find(newLabel) != existingLabels.end()) {
-        // make sure we use a label that do not already exists
-        newLabel = std::string("node_" + std::to_string(index++));
-      }
-      node->label = static_cast<char*>(malloc(sizeof(char) * (newLabel.size() + 1)));
-      std::strcpy(node->label, newLabel.c_str());
-    }
-    existingLabels.insert(std::string(node->label));
-  }
-}
-
-void LibpllParsers::labelRootedTree(const std::string &unlabelledNewickFile, const std::string &labelledNewickFile)
-{
-  corax_rtree_t *tree = readRootedFromFile(unlabelledNewickFile);
-  labelRootedTree(tree);
-  saveRtree(tree->root, labelledNewickFile);
-  corax_rtree_destroy(tree, free);
-}
-
 corax_utree_t *LibpllParsers::readNewickFromFile(const std::string &newickFilename)
 {
   std::ifstream is(newickFilename);
@@ -222,23 +192,12 @@ void LibpllParsers::saveRtree(const corax_rnode_t *rtree,
   free(newick);
 }
   
-void LibpllParsers::getRnodeNewickString(const corax_rnode_t *rnode, std::string &newick)
-{
-  char *newickStr = corax_rtree_export_newick(rnode, 0);
-  newick = std::string(newickStr);
-  free(newickStr);
-}
 
 void LibpllParsers::getUnodeNewickString(const corax_unode_t *rnode, std::string &newick)
 {
   char *newickStr = corax_utree_export_newick(rnode, 0);
   newick = std::string(newickStr);
   free(newickStr);
-}
-  
-void LibpllParsers::getRtreeNewickString(const corax_rtree_t *rtree, std::string &newick)
-{
-  getRnodeNewickString(rtree->root, newick);
 }
 
 void rtreeHierarchicalStringAux(const corax_rnode_t *node, std::vector<bool> &lefts, std::ostringstream &os)

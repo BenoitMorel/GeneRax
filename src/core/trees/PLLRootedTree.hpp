@@ -125,6 +125,13 @@ public:
   CArrayRange<corax_rnode_t*> getNodes() const;
   std::vector<corax_rnode_t*> getPostOrderNodes() const;
 
+  /**
+   *  Open unlabelledNewickFile as a rooted tree and ensure that
+   *  all its nodes have a unique label. Stores the result into
+   *  labelledNewickFile (can be equal to unlabelledNewickFile)
+   */
+  static void labelRootedTree(const std::string &unlabelledNewickFile, 
+      const std::string &labelledNewickFile);
   static void setSon(corax_rnode_t *parent, corax_rnode_t *newSon, bool left);
   
   friend std::ostream& operator<<(std::ostream& os, const PLLRootedTree &tree)

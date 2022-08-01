@@ -16,11 +16,12 @@ int main()
   SpeciesSplits speciesSplits(speciesTree.getLabels(), false);
   for (auto &geneTreeStr: geneTreeStrings) {
     PLLUnrootedTree geneTree(geneTreeStr, false);
+    std::cout << geneTree.getNewickString() << std::endl;
     GeneSpeciesMapping mapping;
     mapping.fillFromGeneLabels(geneTree.getLabels());
     speciesSplits.addGeneTree(geneTree, mapping);
-    //std::cout << "Total number of distinct splits: " << speciesSplits.distinctSplitsNumber() << std::endl;
-    //std::cout << "Total number of splits: " << speciesSplits.nonDistinctSplitsNumber() << std::endl;
+    std::cout << "Total number of distinct splits: " << speciesSplits.distinctSplitsNumber() << std::endl;
+    std::cout << "Total number of splits: " << speciesSplits.nonDistinctSplitsNumber() << std::endl;
   }
   assert(speciesSplits.distinctSplitsNumber() == 9);
   assert(speciesSplits.nonDistinctSplitsNumber() == 12);

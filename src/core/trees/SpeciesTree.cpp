@@ -33,20 +33,17 @@ SpeciesTree::SpeciesTree(const Families &families):
 }
 
 
-std::string SpeciesTree::toString() const
-{
-  std::string newick;
-  LibpllParsers::getRtreeHierarchicalString(_speciesTree.getRawPtr(), newick);
-  return newick;
-}
-
-
 void SpeciesTree::saveToFile(const std::string &newick, bool masterRankOnly)
 {
   if (masterRankOnly && ParallelContext::getRank()) {
     return;
   }
   _speciesTree.save(newick);
+}
+  
+std::string SpeciesTree::toString()
+{
+  return _speciesTree.getNewickString();
 }
   
 void SpeciesTree::addListener(Listener *listener)

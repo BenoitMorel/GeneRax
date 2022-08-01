@@ -186,10 +186,10 @@ void PLLRootedTree::save(const std::string &fileName) const
   
 std::string PLLRootedTree::getNewickString() const
 {
-  std::string res;
-  LibpllParsers::getRtreeNewickString(_tree.get(), res);
-
-  return res;
+  char *newickStr = corax_rtree_export_newick(_tree.get()->root, 0);
+  auto newick = std::string(newickStr);
+  free(newickStr);
+  return newick;
 }
   
 void PLLRootedTree::setMissingBranchLengths(double minBL)
@@ -205,7 +205,7 @@ void PLLRootedTree::ensureUniqueLabels()
 {
   auto labels = getLabels(true);
   unsigned int i = 0;
-  std::string prefix("s");
+  std::string prefix("node_");
   for (auto node: getNodes()) {
     if (node->left) {
       std::string newLabel;
@@ -221,6 +221,14 @@ void PLLRootedTree::ensureUniqueLabels()
       labels.insert(newLabel);
     }
   }
+}
+
+void PLLRootedTree::labelRootedTree(const std::string &unlabelledNewickFile, 
+      const std::string &labelledNewickFile)
+{
+  PLLRootedTree tree(unlabelledNewickFile);
+  tree.ensureUniqueLabels();
+  tree.save(labelledNewickFile);
 }
   
 CArrayRange<corax_rnode_t*> PLLRootedTree::getLeaves() const
@@ -343,7 +351,6 @@ corax_rtree_t *PLLRootedTree::buildRandomTree(const std::unordered_set<std::stri
   res->inner_count = static_cast<unsigned int>(allNodes.size()) / 2;
   res->edge_count = static_cast<unsigned int>(allNodes.size()) - 1;
   
-  LibpllParsers::labelRootedTree(res);
   return res;
 }
 

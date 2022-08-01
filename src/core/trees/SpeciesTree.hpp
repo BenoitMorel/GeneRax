@@ -27,14 +27,9 @@ public:
 
   // set rates and gene trees before calling this
 
-  std::string toString() const;
   corax_rnode_t *getRandomNode();
   corax_rnode_t *getNode(unsigned int nodeIndex) {return _speciesTree.getNode(nodeIndex);}
   corax_rnode_t *getRoot() { return getTree().getRawPtr()->root; } 
-  friend std::ostream& operator<<(std::ostream& os, SpeciesTree &speciesTree) {
-    os << speciesTree.toString() << "(" << speciesTree.getTree().getLeavesNumber() << " taxa)" << std::endl;
-    return os;
-  }
 
   const PLLRootedTree &getTree() const {return _speciesTree;}
   PLLRootedTree &getTree() {return _speciesTree;}
@@ -43,6 +38,7 @@ public:
   size_t getHash() const;
   size_t getNodeIndexHash() const;
   void getLabelsToId(std::unordered_map<std::string, unsigned int> &map) const;
+  std::string toString(); 
 
   class Listener {
   public:

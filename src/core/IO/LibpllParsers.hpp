@@ -40,8 +40,6 @@ class LibpllParsers {
 public:
   LibpllParsers() = delete;
 
-  static void labelRootedTree(corax_rtree_t *tree);
-  static void labelRootedTree(const std::string &unlabelledNewickFile, const std::string &labelledNewickFile);
   static corax_utree_t *readNewickFromFile(const std::string &newickFile);
   static corax_utree_t *readNewickFromStr(const std::string &newickSTring);
   static corax_rtree_t *readRootedFromFile(const std::string &newickFile);
@@ -76,8 +74,6 @@ public:
     bool append = false);
   static void saveRtree(const corax_rnode_t *rtree, 
     const std::string &fileName);
-  static void getRtreeNewickString(const corax_rtree_t *rtree, std::string &newick);
-  static void getRnodeNewickString(const corax_rnode_t *rnode, std::string &newick);
   static void getUnodeNewickString(const corax_unode_t *rnode, std::string &newick);
   static void getRtreeHierarchicalString(const corax_rtree_t *rtree, std::string &newick);
   static std::unique_ptr<Model> getModel(const std::string &modelStrOrFilename);
