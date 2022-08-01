@@ -163,6 +163,8 @@ def run_generax(test_data, test_output, families_file, strategy, model, cores):
 
 
 def run_test(dataset, with_starting_tree, strategy, model, cores):
+  if (strategy == "EVAL" and not with_starting_tree):
+    return True
   test_name = get_test_name(dataset, with_starting_tree, strategy, model, cores)
   test_output = os.path.join(OUTPUT, test_name)
   reset_dir(test_output)
@@ -196,13 +198,12 @@ def run_reconciliation_test(cores, model):
 dataset_set = ["simulated_2", "simulated_2_map_in_label"]
 with_starting_tree_set = [False, True]
 strategy_set = ["SPR", "EVAL"]
-model_set = ["UndatedDL", "UndatedDTL"]#, "ParsimonyDL"]
+model_set = ["UndatedDL", "UndatedDTL"]
 cores_set = [1]
 if (is_mpi_installed()):
   cores_set.append(3)
 
 all_ok = True
-#all_ok = all_ok and run_reconciliation_test(1, "ParsimonyDL")
 all_ok = all_ok and run_reconciliation_test(1, "UndatedDTL")
 all_ok = all_ok and run_reconciliation_test(1, "UndatedDL")
 for dataset in dataset_set:
