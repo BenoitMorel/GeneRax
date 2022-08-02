@@ -60,7 +60,7 @@ void PLLTreeInfo::buildModel(const std::string &modelStrOrFile)
     getline(f, modelStr);
     modelStr = modelStr.substr(0, modelStr.find(","));
   }
-  _model = std::make_unique<Model>(modelStr);
+  _model = std::make_unique<EvolModel>(modelStr);
   assert(_model->num_submodels() == 1);
 
 }
@@ -111,7 +111,7 @@ corax_partition_t * PLLTreeInfo::buildPartition(const PLLSequencePtrs &sequences
     corax_set_tip_states(partition, labelIndex, _model->charmap(), seq->seq);
     labelIndex++;
   }
-  assign(partition, *_model);
+  corax::model::assign(partition, *_model);
   
   // map tree to partition
   for (auto leaf: _utree->getLeaves()) {
@@ -121,7 +121,7 @@ corax_partition_t * PLLTreeInfo::buildPartition(const PLLSequencePtrs &sequences
   return partition;
 }
 
-corax_treeinfo_t *PLLTreeInfo::buildTreeInfo(const Model &model,
+corax_treeinfo_t *PLLTreeInfo::buildTreeInfo(const EvolModel &model,
     corax_partition_t *partition,
     PLLUnrootedTree &utree)
 {

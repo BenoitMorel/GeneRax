@@ -32,15 +32,16 @@ static void queryPruneIndicesRec(corax_unode_t * node,
 
 static void getAllPruneIndices(JointTree &tree, std::vector<unsigned int> &allNodeIndices) {
   auto treeinfo = tree.getTreeInfo();
-  for (unsigned int i = 0; i < treeinfo->subnode_count; ++i) {
-    if (treeinfo->subnodes[i]->next) {
-      allNodeIndices.push_back(treeinfo->subnodes[i]->node_index);
+  for (auto node: tree.getGeneTree().getPostOrderNodes()) {
+    bool ok = node->next;
+    if (ok && tree.getSupportThreshold() > 0.0) {
+      auto support = tree.getSupportValue(node->back->pmatrix_index);
+      ok &= support > tree.getSupportThreshold();
+    }
+    if (ok) {
+      allNodeIndices.push_back(node->node_index);
     }
   }
-  /*
-  auto rng = std::default_random_engine {};
-  std::shuffle(std::begin(allNodeIndices), std::end(allNodeIndices), rng);
-  */
 }
 
 
@@ -367,9 +368,13 @@ static void synchronizeMoves(JointTree &jointTree, std::vector<std::shared_ptr<S
   }
 }
 
-bool SPRSearch::applySPRRoundDigg(JointTree &jointTree, int radius, bool blo) 
+bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLoglk, bool blo) 
 {
   std::vector<unsigned int> pruneIndices;
+  if (jointTree.getSupportThreshold() > 0.0) {
+    jointTree.updateSupportValues();
+    Logger::timed << "Support values updated!" << std::endl;
+  }
   getAllPruneIndices(jointTree, pruneIndices);
   unsigned int additionalRadius = 0;
   bool improved = false;
@@ -379,9 +384,13 @@ bool SPRSearch::applySPRRoundDigg(JointTree &jointTree, int radius, bool blo)
   DiggStopper stopper;
   std::vector<std::shared_ptr<SPRMove> > betterMoves;
   while (pruneIndices.size()) {
+    Logger::timed << "SPR Search with radius " << radius << ": trying " << pruneIndices.size() << " prune nodes" << std::endl;
+    if (jointTree.getSupportThreshold() > 0.0) {
+      jointTree.updateSupportValues();
+      Logger::timed << "Support values updated!" << std::endl;
+    }
     std::vector<ScoredPrune> scoredPrunes;
     Logger::info << std::endl;
-    Logger::timed << "SPR Search with radius " << radius << ": trying " << pruneIndices.size() << " prune nodes" << std::endl;
     auto begin = ParallelContext::getBegin(pruneIndices.size());
     auto end = ParallelContext::getEnd(pruneIndices.size());
     for (unsigned int i = begin; i < end; ++i) {
@@ -423,32 +432,12 @@ bool SPRSearch::applySPRRoundDigg(JointTree &jointTree, int radius, bool blo)
       radius += 1;
     }
   }
+  bestLoglk = bestLL;
   return improved;
 
 }
 
 
-bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLoglk, bool blo) {
-  return applySPRRoundDigg(jointTree, radius, blo);
-  std::vector<std::shared_ptr<SPRMove> > allMoves;
-  getAllPotentialMoves(jointTree, radius, allMoves);
-  Logger::timed << "Start SPR round " 
-    << "(std::hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" 
-    << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
-    << std::endl;
-  std::vector<std::shared_ptr<SPRMove> > betterMoves;
-  Logger::info << "Searching all potential good moves..." << std::endl;
-  SearchUtils::findBetterMoves(jointTree, 
-      allMoves,
-      betterMoves,
-      blo);
-  bestLoglk = jointTree.computeJointLoglk();
-  bool foundBetterMove = applyTheBetterMoves(jointTree, 
-      betterMoves,
-      blo,
-      bestLoglk);
-  return foundBetterMove;
-}
 
 
 void SPRSearch::applySPRSearch(JointTree &jointTree)

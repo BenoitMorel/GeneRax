@@ -7,6 +7,8 @@
 #include <iomanip>
 #include <fstream>
 
+#ifdef PLOP
+
 const std::vector<int> ALL_MODEL_PARAMS = {CORAX_OPT_PARAM_FREQUENCIES, CORAX_OPT_PARAM_SUBST_RATES,
                                       CORAX_OPT_PARAM_PINV, CORAX_OPT_PARAM_ALPHA,
                                       CORAX_OPT_PARAM_FREE_RATES, CORAX_OPT_PARAM_RATE_WEIGHTS,
@@ -973,3 +975,5 @@ void assign(corax_partition_t * partition, const Model& model)
   else
     throw std::runtime_error("incompatible partition!");
 }
+
+#endif

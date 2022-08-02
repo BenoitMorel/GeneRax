@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <likelihoods/LibpllEvaluation.hpp>
+#include <map>
 
 class PLLRootedTree;
 class PLLUnrootedTree;

@@ -53,6 +53,8 @@ public:
    */
   double computeLikelihood(bool incremental = false);
 
+  double computeALRT(std::vector<double> &supportValues);
+
   /**
    *  Optimize branch lengths and model parameters
    *  @return the log likeihood of the tree
@@ -84,7 +86,7 @@ public:
     const std::string &outputTreeFile);
 
   std::string getModelStr();
-  Model &getModel() {return _treeInfo->getModel();} 
+  EvolModel &getModel() {return _treeInfo->getModel();} 
 
   PLLUnrootedTree &getGeneTree() {return _treeInfo->getTree();}
 

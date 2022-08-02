@@ -76,7 +76,7 @@ public:
     const std::string &fileName);
   static void getUnodeNewickString(const corax_unode_t *rnode, std::string &newick);
   static void getRtreeHierarchicalString(const corax_rtree_t *rtree, std::string &newick);
-  static std::unique_ptr<Model> getModel(const std::string &modelStrOrFilename);
+  static std::unique_ptr<EvolModel> getModel(const std::string &modelStrOrFilename);
   static void writeSuperMatrixFasta(const SuperMatrix &superMatrix,
       const std::string &outputFile);
 private:

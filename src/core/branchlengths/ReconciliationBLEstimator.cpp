@@ -146,7 +146,7 @@ double getFamilyWeight(const FamilyInfo &info)
     return 1.0;
   }
   try {
-    Model model(info.libpllModel);
+    EvolModel model(info.libpllModel);
   } catch (...) {
     return 1.0;
   }

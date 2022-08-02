@@ -27,12 +27,12 @@ public:
 
   corax_treeinfo_t *getTreeInfo() {return _treeinfo.get();}
   PLLUnrootedTree &getTree() {return *_utree;}
-  Model &getModel() {return *_model;}
+  EvolModel &getModel() {return *_model;}
 
 private:
   std::unique_ptr<corax_treeinfo_t, void(*)(corax_treeinfo_t*)> _treeinfo;
   std::unique_ptr<PLLUnrootedTree> _utree;
-  std::unique_ptr<Model> _model; 
+  std::unique_ptr<EvolModel> _model; 
 private:
   void buildFromString(const std::string &newickString,
       const std::string& alignmentFilename,
@@ -43,7 +43,7 @@ private:
       const PLLSequencePtrs &sequences);
   corax_partition_t * buildPartition(const PLLSequencePtrs &sequences, 
   unsigned int *patternWeights); 
-  corax_treeinfo_t *buildTreeInfo(const Model &model,
+  corax_treeinfo_t *buildTreeInfo(const EvolModel &model,
     corax_partition_t *partition,
     PLLUnrootedTree &utree);
   

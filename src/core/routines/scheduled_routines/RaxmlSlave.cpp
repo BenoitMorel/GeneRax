@@ -32,10 +32,13 @@ static bool optimizeTopology(LibpllEvaluation &evaluation,
 {
   
   double initialLL = evaluation.computeLikelihood(false);
+  
+  
   Logger::timed << "["  << initialLL << "] " 
     << (thorough ? "SLOW" : "FAST") << " SPR Round (radius=" << radiusMax << ")" << std::endl;
   double ll = evaluation.raxmlSPRRounds(radiusMin, radiusMax, thorough, toKeep, cutoff);
   optimizeBranches(evaluation, 1.0);
+  std::cout << "LL=" << ll << std::endl;
   return ll > initialLL + 0.1;
 }
 
@@ -54,6 +57,7 @@ int RaxmlSlave::runRaxmlOptimization(int argc, char** argv, void* comm)
   Logger::info << startingGeneTreeFile << std::endl;
   LibpllEvaluation evaluation(startingGeneTreeFile, true, alignmentFile, libpllModel);
   Logger::timed << "LL = " << evaluation.computeLikelihood(false) << std::endl; 
+
   optimizeBranches(evaluation, 1.0);
   optimizeParameters(evaluation, 10.0);
   unsigned int radiusMin = 1;

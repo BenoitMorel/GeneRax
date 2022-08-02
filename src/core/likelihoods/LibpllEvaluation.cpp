@@ -30,9 +30,27 @@ const double DEFAULT_BL = 0.1;
 
 std::string LibpllEvaluation::getModelStr()
 {
-  assign(_treeInfo->getModel(), _treeInfo->getTreeInfo()->partitions[0]);
+  corax::model::assign(_treeInfo->getModel(), 
+      _treeInfo->getTreeInfo()->partitions[0]);
   std::string modelStr = _treeInfo->getModel().to_string(true);
   return modelStr;
+}
+
+double LibpllEvaluation::computeALRT(std::vector<double> &supportValues)
+{
+  auto treeinfo =  _treeInfo->getTreeInfo();
+  int alrt_size = 2*treeinfo->tip_count-3;
+  supportValues = std::vector<double>(alrt_size, -1.0);
+  auto tolerance = std::numeric_limits<double>::infinity();
+  int bootstraps = 100;
+  auto res =  corax_algo_nni_round(treeinfo, tolerance, &(supportValues[0]), bootstraps, 0.1, CORAX_OPT_BLO_NEWTON_FAST, RAXML_BRLEN_MIN, RAXML_BRLEN_MAX);
+
+  if (res == CORAX_FAILURE){
+    std::cout << "Error. " << std::endl;
+    std::cout << corax_errmsg << std::endl;
+    assert(false);
+  }
+  return res;
 }
 
 void LibpllEvaluation::createAndSaveRandomTree(const std::string &alignmentFilename,

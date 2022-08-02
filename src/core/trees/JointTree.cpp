@@ -23,7 +23,6 @@ static size_t getTreeHashRec(corax_unode_t *node, size_t i) {
   }
   auto hash1 = getTreeHashRec(node->next->back, i + 1);
   auto hash2 = getTreeHashRec(node->next->next->back, i + 1);
-  //Logger::info << "(" << hash1 << "," << hash2 << ") ";
   std::hash<size_t> hash_fn;
   auto m = std::min(hash1, hash2);
   auto M = std::max(hash1, hash2);
@@ -275,5 +274,10 @@ void JointTree::printInfo()
   Logger::info << "Gene leaves: " << geneLeaves << std::endl;
   Logger::info << "Sites: " << sites << std::endl;
   Logger::info << std::endl;
+}
+    
+void JointTree::updateSupportValues()
+{
+  _libpllEvaluation.computeALRT(_supportValues); 
 }
 

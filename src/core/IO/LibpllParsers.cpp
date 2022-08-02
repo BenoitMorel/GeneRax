@@ -362,7 +362,7 @@ void LibpllParsers::parsePhylip(const char *phylipFile,
   corax_msa_destroy(msa);
 }
   
-std::unique_ptr<Model> LibpllParsers::getModel(const std::string &modelStrOrFilename)
+std::unique_ptr<EvolModel> LibpllParsers::getModel(const std::string &modelStrOrFilename)
 {
   std::string modelStr = modelStrOrFilename;
   std::ifstream f(modelStr);
@@ -370,7 +370,7 @@ std::unique_ptr<Model> LibpllParsers::getModel(const std::string &modelStrOrFile
     getline(f, modelStr);
     modelStr = modelStr.substr(0, modelStr.find(","));
   }
-  return std::make_unique<Model>(modelStr);
+  return std::make_unique<EvolModel>(modelStr);
 }
 
 bool LibpllParsers::fillLabelsFromAlignment(const std::string &alignmentFilename, 

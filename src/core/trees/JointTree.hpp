@@ -71,9 +71,15 @@ public:
     void enableLibpll(bool enable) {_enableLibpll = enable;}
     unsigned int getGeneTaxaNumber() {return getTreeInfo()->tip_count;}
     PLLUnrootedTree &getGeneTree() {return _libpllEvaluation.getGeneTree();}
-    Model &getModel() {return _libpllEvaluation.getModel();} 
+    EvolModel &getModel() {return _libpllEvaluation.getModel();} 
     const GeneSpeciesMapping &getMappings() const {return _geneSpeciesMap;}
     double getSupportThreshold() const {return _supportThreshold;}
+    double getSupportValue(unsigned int pmatrixIndex) const {
+      assert(_supportValues.size());
+      assert(pmatrixIndex < _supportValues.size());
+      return _supportValues[pmatrixIndex];
+    }
+    void updateSupportValues();
 private:
     LibpllEvaluation _libpllEvaluation;
     std::shared_ptr<ReconciliationEvaluation> reconciliationEvaluation_;
@@ -89,6 +95,7 @@ private:
     double _recWeight;
     double _supportThreshold;
     bool _madRooting;
+    std::vector<double> _supportValues;
 };
 
 

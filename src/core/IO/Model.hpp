@@ -1,5 +1,11 @@
 #pragma once
 
+#include <corax/corax.h>
+#include <corax/model/evolmodel.hpp>
+
+using EvolModel = corax::model::EvolModel;
+
+#ifdef PLOP
 /*
  * This file was copied from RAxML-NG
  */
@@ -7,11 +13,9 @@
 #include <algorithm>
 #include <unordered_map>
 #include <corax/corax_model.h>
-#include <corax/corax.h>
 #include <IO/RaxmlTypes.hpp>
 #include <memory>
 #include <stdexcept>
-
 
 
 class SubstitutionModel
@@ -201,4 +205,4 @@ private:
 void assign(Model& model, const corax_partition_t * partition);
 void assign(corax_partition_t * partition, const Model& model);
 
-
+#endif
