@@ -140,6 +140,12 @@ static void diggRecursive(JointTree &jointTree,
   if (radius >= maxRadius) {
     return;
   }
+  if (jointTree.getSupportThreshold() > 0.0) {
+    auto support = jointTree.getSupportValue(regraftNode->pmatrix_index);
+    if (support > jointTree.getSupportThreshold()) {
+      return;
+    }
+  }
   // test the current move
   SPRMove move(pruneNode->node_index,
       regraftNode->node_index,

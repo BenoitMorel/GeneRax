@@ -31,17 +31,30 @@ static void queryPruneIndicesRec(corax_unode_t * node,
 }
 
 static void getAllPruneIndices(JointTree &tree, std::vector<unsigned int> &allNodeIndices) {
+  allNodeIndices.clear();
   auto treeinfo = tree.getTreeInfo();
+  /*
+  for (unsigned int i = 0; i < treeinfo->subnode_count; ++i) {
+    if (treeinfo->subnodes[i]->next) {
+      allNodeIndices.push_back(treeinfo->subnodes[i]->node_index);
+    }
+  }
+  */
+
   for (auto node: tree.getGeneTree().getPostOrderNodes()) {
     bool ok = node->next;
+    /*
     if (ok && tree.getSupportThreshold() > 0.0) {
       auto support = tree.getSupportValue(node->back->pmatrix_index);
-      ok &= support > tree.getSupportThreshold();
+      ok &= support < tree.getSupportThreshold();
     }
+    */
     if (ok) {
       allNodeIndices.push_back(node->node_index);
     }
   }
+
+  Logger::info << "Number of pruned indices: " << allNodeIndices.size() << std::endl;
 }
 
 
@@ -86,10 +99,12 @@ static void getRegraftsRec(unsigned int pruneIndex,
     std::vector<SPRMoveDesc> &moves)
 {
   assert(regraft);
+  /*
   double bootstrapValue = (nullptr == regraft->label) ? 0.0 : std::atof(regraft->label);
   if (supportThreshold >= 0.0 && bootstrapValue > supportThreshold) {
     return;
   }
+  */
   if (path.size()) {
     moves.push_back(SPRMoveDesc(pruneIndex, regraft->node_index, path));
   }
@@ -101,14 +116,6 @@ static void getRegraftsRec(unsigned int pruneIndex,
   }
 }
 
-static void getRegrafts(JointTree &jointTree, unsigned int pruneIndex, int maxRadius, std::vector<SPRMoveDesc> &moves) 
-{
-  corax_unode_t *pruneNode = jointTree.getNode(pruneIndex);
-  std::vector<unsigned int> path;
-  auto supportThreshold = jointTree.getSupportThreshold();
-  getRegraftsRec(pruneIndex, pruneNode->next->back, maxRadius, supportThreshold, path, moves);
-  getRegraftsRec(pruneIndex, pruneNode->next->next->back, maxRadius, supportThreshold, path, moves);
-}
 
 static void addInvolvedNode(corax_unode_t *node, 
     std::unordered_set<corax_unode_t *> &involved)
@@ -126,44 +133,6 @@ static bool wasInvolved(corax_unode_t *node,
   return involved.find(node) != involved.end();
 }
 
-static void getAllPotentialMoves(JointTree &jointTree,
-    int radius,
-    std::vector<std::shared_ptr<SPRMove> > &allMoves)
-{
-  std::vector<unsigned int> allNodes;
-  getAllPruneIndices(jointTree, allNodes);
-  std::vector<SPRMoveDesc> potentialMoves;
-  for (unsigned int i = 0; i < allNodes.size(); ++i) {
-      auto pruneIndex = allNodes[i];
-      getRegrafts(jointTree, pruneIndex, radius, potentialMoves);
-  }
-  std::vector<std::array<bool, 2> > redundantNNIMoves(
-      jointTree.getTreeInfo()->subnode_count, 
-      std::array<bool, 2>{{false,false}});
-  for (auto &move: potentialMoves) {
-    auto pruneIndex = move.pruneIndex;
-    auto regraftIndex = move.regraftIndex;
-    if (!isValidSPRMove(jointTree.getNode(pruneIndex), jointTree.getNode(regraftIndex))) {
-      continue;
-    }
-    // in case of a radius 1, SPR moves are actually NNI moves
-    // the traversal algorithm produces redundant moves, so we 
-    // get rid of them here
-    if (move.path.size() == 1) { 
-      auto nniEdge = jointTree.getNode(move.path[0]);
-      bool isPruneNext = nniEdge->back->next->node_index == pruneIndex;
-      bool isRegraftNext = nniEdge->next->back->node_index == regraftIndex;
-      auto nniType = static_cast<unsigned int>(isPruneNext == isRegraftNext);
-      auto nniBranchIndex = std::min(nniEdge->node_index, nniEdge->back->node_index);
-      if (redundantNNIMoves[nniBranchIndex][nniType]) {
-        continue;
-      }
-      redundantNNIMoves[nniBranchIndex][nniType] = true; 
-    }
-    allMoves.push_back(SPRMove::createSPRMove(pruneIndex, regraftIndex, move.path));
-  }
-
-}
 
 static bool sequentiallyApplyBetterMoves(JointTree &jointTree, 
     const std::vector<std::shared_ptr<SPRMove> > &betterMoves,
