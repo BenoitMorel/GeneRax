@@ -85,6 +85,7 @@ add_subdirectory(GeneRax)
 #add_subdirectory(Asteroid)
 #add_subdirectory(SpeciesSplitSearch)
 add_subdirectory(NJRax)
+add_subdirectory(LightSearch)
 add_subdirectory(tools)
 add_subdirectory(tests)
 
