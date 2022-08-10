@@ -255,6 +255,7 @@ int lightSearch(int argc, char** argv, void* comm)
   std::string bestTreeStr = inputTreeStrings[0];
   std::unordered_set<size_t> cache;
   double bestLL = -99999999999999;
+  Logger::info << "Evaluating all input trees..." << std::endl;
   for (const auto &treeStr: inputTreeStrings) {
     eval(treeStr, false, alignmentFile, model, cache, bestLL, bestTreeStr); 
   }
@@ -282,7 +283,7 @@ int lightSearch(int argc, char** argv, void* comm)
   }
 
   
-  auto finalLL = evalThorough(bestTreeStr, false, alignmentFile, model, true, outputTreePath);
+  auto finalLL = evalThorough(bestTreeStr, false, alignmentFile, model, false, outputTreePath);
   Logger::info << "Final LL " << finalLL << std::endl;
   
   ParallelContext::finalize();
