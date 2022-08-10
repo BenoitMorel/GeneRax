@@ -15,7 +15,7 @@
 const double DEFAULT_BL = 0.1;
 
 
-//#define RAXML_PARAM_EPSILON       0.001  //0.01
+#define RAXML_PARAM_EPSILON       0.001  //0.01
 #define RAXML_BFGS_FACTOR         1e7
 #define RAXML_BRLEN_SMOOTHINGS    32
 #define RAXML_BRLEN_MIN           1.0e-6
@@ -83,16 +83,47 @@ double LibpllEvaluation::computeLikelihood(bool incremental)
   return corax_treeinfo_compute_loglh(_treeInfo->getTreeInfo(), incremental);
 }
 
-double LibpllEvaluation::optimizeBranches(double tolerance)
+double LibpllEvaluation::optimizeBranches(double lh_epsilon, double brlen_smooth_factor)
 {
-  auto toOptimize = _treeInfo->getTreeInfo()->params_to_optimize[0];
-  _treeInfo->getTreeInfo()->params_to_optimize[0] = CORAX_OPT_PARAM_BRANCHES_ITERATIVE;
-  double res = optimizeAllParameters(tolerance);
-  _treeInfo->getTreeInfo()->params_to_optimize[0] = toOptimize;
-  return res;
+  auto treeinfo = _treeInfo->getTreeInfo();
+  auto max_iter = static_cast<int>(brlen_smooth_factor * static_cast<double>(RAXML_BRLEN_SMOOTHINGS));
+  computeLikelihood();
+  auto new_loglh =  -1 * corax_opt_optimize_branch_lengths_local_multi(treeinfo->partitions,
+      treeinfo->partition_count,
+      treeinfo->root,
+      treeinfo->param_indices,
+      treeinfo->deriv_precomp,
+      treeinfo->branch_lengths,
+      treeinfo->brlen_scalers,
+      RAXML_BRLEN_MIN,
+      RAXML_BRLEN_MAX,
+      lh_epsilon,
+      max_iter,
+      -1,  /* radius */
+      1,    /* keep_update */
+      CORAX_OPT_BLO_NEWTON_SAFE,
+      treeinfo->brlen_linkage,
+      treeinfo->parallel_context,
+      treeinfo->parallel_reduce_cb
+      );
+  
+  /* optimize brlen scalers, if needed */
+  if (treeinfo->brlen_linkage == CORAX_BRLEN_SCALED &&
+      treeinfo->partition_count > 1)
+  {
+    new_loglh = -1 * corax_algo_opt_onedim_treeinfo(treeinfo,
+        CORAX_OPT_PARAM_BRANCH_LEN_SCALER,
+        RAXML_BRLEN_SCALER_MIN,
+        RAXML_BRLEN_SCALER_MAX,
+        lh_epsilon);
+
+    /* normalize scalers and scale the branches accordingly */
+    corax_treeinfo_normalize_brlen_scalers(treeinfo);
+  }
+  return new_loglh;
 }
 
-double LibpllEvaluation::optimizeAllParameters(double tolerance)
+double LibpllEvaluation::optimizeAllParameters(double lh_epsilon)
 {
   if (_treeInfo->getTreeInfo()->params_to_optimize[0] == 0) {
     return computeLikelihood();
@@ -101,17 +132,18 @@ double LibpllEvaluation::optimizeAllParameters(double tolerance)
   double newLogl = previousLogl;
   do {
     previousLogl = newLogl;
-    newLogl = optimizeAllParametersOnce(_treeInfo->getTreeInfo(), tolerance);
-  } while (newLogl - previousLogl > tolerance);
+    newLogl = optimizeAllParametersOnce(_treeInfo->getTreeInfo(), lh_epsilon);
+  } while (newLogl - previousLogl > lh_epsilon);
   return newLogl;
 }
 
 
-double LibpllEvaluation::optimizeAllParametersOnce(corax_treeinfo_t *treeinfo, double tolerance)
+double LibpllEvaluation::optimizeAllParametersOnce(corax_treeinfo_t *treeinfo, double lh_epsilon)
 {
   // This code comes from RaxML
   double new_loglh = 0.0;
   auto params_to_optimize = treeinfo->params_to_optimize[0];
+  computeLikelihood();
   /* optimize SUBSTITUTION RATES */
   if (params_to_optimize & CORAX_OPT_PARAM_SUBST_RATES)
   {
@@ -120,7 +152,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(corax_treeinfo_t *treeinfo, d
         CORAX_OPT_MIN_SUBST_RATE,
         CORAX_OPT_MAX_SUBST_RATE,
         RAXML_BFGS_FACTOR,
-        tolerance);
+        RAXML_PARAM_EPSILON);
   }
 
   /* optimize BASE FREQS */
@@ -131,7 +163,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(corax_treeinfo_t *treeinfo, d
         CORAX_OPT_MIN_FREQ,
         CORAX_OPT_MAX_FREQ,
         RAXML_BFGS_FACTOR,
-        tolerance);
+        RAXML_PARAM_EPSILON);
   }
 
   /* optimize ALPHA */
@@ -141,7 +173,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(corax_treeinfo_t *treeinfo, d
         CORAX_OPT_PARAM_ALPHA,
         CORAX_OPT_MIN_ALPHA,
         CORAX_OPT_MAX_ALPHA,
-        tolerance);
+        RAXML_PARAM_EPSILON);
   }
 
   if (params_to_optimize & CORAX_OPT_PARAM_PINV)
@@ -150,7 +182,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(corax_treeinfo_t *treeinfo, d
         CORAX_OPT_PARAM_PINV,
         CORAX_OPT_MIN_PINV,
         CORAX_OPT_MAX_PINV,
-        tolerance);
+        RAXML_PARAM_EPSILON);
   }
 
   /* optimize FREE RATES and WEIGHTS */
@@ -162,7 +194,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(corax_treeinfo_t *treeinfo, d
         RAXML_BRLEN_MIN,
         RAXML_BRLEN_MAX,
         RAXML_BFGS_FACTOR,
-        tolerance);
+        RAXML_PARAM_EPSILON);
 
     /* normalize scalers and scale the branches accordingly */
     if (treeinfo->brlen_linkage == CORAX_BRLEN_SCALED &&
@@ -173,40 +205,9 @@ double LibpllEvaluation::optimizeAllParametersOnce(corax_treeinfo_t *treeinfo, d
 
   if (params_to_optimize & CORAX_OPT_PARAM_BRANCHES_ITERATIVE)
   {
-    double brlen_smooth_factor = 0.25; // magical number from raxml
-    new_loglh = -1 * corax_opt_optimize_branch_lengths_local_multi(treeinfo->partitions,
-        treeinfo->partition_count,
-        treeinfo->root,
-        treeinfo->param_indices,
-        treeinfo->deriv_precomp,
-        treeinfo->branch_lengths,
-        treeinfo->brlen_scalers,
-        RAXML_BRLEN_MIN,
-        RAXML_BRLEN_MAX,
-        tolerance,
-        static_cast<int>(brlen_smooth_factor * static_cast<double>(RAXML_BRLEN_SMOOTHINGS)),
-        -1,  /* radius */
-        1,    /* keep_update */
-        CORAX_OPT_BLO_NEWTON_SAFE,
-        treeinfo->brlen_linkage,
-        treeinfo->parallel_context,
-        treeinfo->parallel_reduce_cb
-        );
+    new_loglh = optimizeBranches(lh_epsilon, 0.25);
   }
 
-  /* optimize brlen scalers, if needed */
-  if (treeinfo->brlen_linkage == CORAX_BRLEN_SCALED &&
-      treeinfo->partition_count > 1)
-  {
-    new_loglh = -1 * corax_algo_opt_onedim_treeinfo(treeinfo,
-        CORAX_OPT_PARAM_BRANCH_LEN_SCALER,
-        RAXML_BRLEN_SCALER_MIN,
-        RAXML_BRLEN_SCALER_MAX,
-        tolerance);
-
-    /* normalize scalers and scale the branches accordingly */
-    corax_treeinfo_normalize_brlen_scalers(treeinfo);
-  }
   assert(0.0 != new_loglh);
   return new_loglh;
 }

@@ -57,8 +57,8 @@ public:
    *  Optimize branch lengths and model parameters
    *  @return the log likeihood of the tree
    */
-  double optimizeAllParameters(double tolerance = TOLERANCE);
-  double optimizeBranches(double tolerance = TOLERANCE);
+  double optimizeAllParameters(double lh_epsilon = TOLERANCE);
+  double optimizeBranches(double lh_epsilon = TOLERANCE, double brlen_smooth_factor = 0.25);
 
   double raxmlSPRRounds(unsigned int minRadius, 
       unsigned int maxRadius, 
@@ -95,7 +95,7 @@ private:
   LibpllEvaluation() {}
  
 
-  static double optimizeAllParametersOnce(corax_treeinfo_t *treeinfo, double tolerance);
+  double optimizeAllParametersOnce(corax_treeinfo_t *treeinfo, double lh_epsilon);
   
   corax_unode_t *getNode(unsigned int nodeIndex) {return _treeInfo->getTreeInfo()->subnodes[nodeIndex];}
 private:

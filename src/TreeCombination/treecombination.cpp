@@ -16,12 +16,6 @@ static void optimizeParameters(LibpllEvaluation &evaluation, double radius)
   evaluation.optimizeAllParameters(radius);
 }
 
-static void optimizeBranches(LibpllEvaluation &evaluation, double radius) 
-{
-  evaluation.optimizeBranches(radius);
-}
-
-
 static bool optimizeTopology(LibpllEvaluation &evaluation, 
     unsigned int radius, 
     unsigned int thorough, 
@@ -52,9 +46,13 @@ double eval(const std::string &treePath,
   }
   cache.insert(hash);
   LibpllEvaluation evaluation(treePath, isFile, alignmentFile, model);
-  optimizeBranches(evaluation, 10.0);
+  
+  double ll = 0.0;
+  ll = evaluation.computeLikelihood();
+  evaluation.optimizeBranches(10.0, 1.0);
+  ll = evaluation.computeLikelihood();
   optimizeParameters(evaluation, 0.1);
-  auto ll = evaluation.computeLikelihood();
+  ll = evaluation.computeLikelihood();
   Logger::info << "Eval ll=" << ll << std::endl;
   if (ll > bestLL) {
     Logger::timed << "Found better tree! ll=" << ll << std::endl;
@@ -73,7 +71,7 @@ double evalThorough(const std::string &treePath,
 {
   LibpllEvaluation evaluation(treePath, isFile, alignmentFile, model);
   optimizeParameters(evaluation, 0.1);
-  optimizeBranches(evaluation, 1.0);
+  evaluation.optimizeBranches(10.0, 1.0);
   if (topology) {
     optimizeTopology(evaluation, 5, 1, 20, 0.1);
   }
