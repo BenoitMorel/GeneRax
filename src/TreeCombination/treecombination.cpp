@@ -1,9 +1,7 @@
-/**
- * This is a simpler reimplementation of the raxml-ng search algorithm with autodetect, fast and slow SPR roudns
- */
 
 
 #include <string>
+#include <fstream>
 #include <IO/Logger.hpp>
 #include <IO/LibpllParsers.hpp>
 #include <IO/ParallelOfstream.hpp>
@@ -15,9 +13,6 @@
 
 static void optimizeParameters(LibpllEvaluation &evaluation, double radius) 
 {
-  double initialLL = evaluation.computeLikelihood(false);
-  //Logger::timed << "[" << initialLL << "]" << " Optimize parametres (" << radius << ")" << std::endl;
-  
   evaluation.optimizeAllParameters(radius);
 }
 
@@ -41,20 +36,49 @@ static bool optimizeTopology(LibpllEvaluation &evaluation,
   Logger::info << "ll=" << ll << std::endl;
   return ll > initialLL + 0.1;
 }
+
 double eval(const std::string &treePath,
     bool isFile,
     const std::string &alignmentFile,
     const std::string &model,
-    bool topology = false)
+    std::unordered_set<size_t> &cache,
+    double &bestLL,
+    std::string &bestTree)
+{
+  PLLUnrootedTree tree(treePath, isFile);
+  auto hash = tree.getUnrootedTreeHash();
+  if (cache.find(hash) != cache.end()) {
+    return -std::numeric_limits<double>::infinity();
+  }
+  cache.insert(hash);
+  LibpllEvaluation evaluation(treePath, isFile, alignmentFile, model);
+  optimizeBranches(evaluation, 10.0);
+  optimizeParameters(evaluation, 0.1);
+  auto ll = evaluation.computeLikelihood();
+  Logger::info << "Eval ll=" << ll << std::endl;
+  if (ll > bestLL) {
+    Logger::timed << "Found better tree! ll=" << ll << std::endl;
+    bestLL = ll;
+    bestTree = evaluation.getGeneTree().getNewickString();
+  }
+  return ll;
+}
+
+double evalThorough(const std::string &treePath,
+    bool isFile,
+    const std::string &alignmentFile,
+    const std::string &model,
+    bool topology = false,
+    std::string out = "")
 {
   LibpllEvaluation evaluation(treePath, isFile, alignmentFile, model);
-  //optimizeParameters(evaluation, 0.1);
-  optimizeBranches(evaluation, 0.1);
-  Logger::timed << "ll=" << evaluation.computeLikelihood() << std::endl;
-  
+  optimizeParameters(evaluation, 0.1);
+  optimizeBranches(evaluation, 1.0);
   if (topology) {
-    optimizeParameters(evaluation, 0.1);
-    optimizeTopology(evaluation, 25, 1, 20, 0.1);
+    optimizeTopology(evaluation, 5, 1, 20, 0.1);
+  }
+  if (out.size()) {
+    evaluation.getGeneTree().save(out);
   }
   return evaluation.computeLikelihood();
 }
@@ -138,15 +162,7 @@ std::string getRecombinedString(const BranchPair &pair,
   
   std::string subtree1 = PLLUnrootedTree::getSubtreeString(n1);
   std::string subtree2 = PLLUnrootedTree::getSubtreeString(n2->back);
- 
-  /*
-  if (subtree1.find("ENSSTUP00000053904") != std::string::npos) {
-    subtree1 = PLLUnrootedTree::getSubtreeString(n1->back);
-  }
-  if (subtree2.find("ENSSTUP00000053904") == std::string::npos) {
-    subtree2 = PLLUnrootedTree::getSubtreeString(n2->back);
-  }
-  */
+  
   std::string newick = "(";
   newick += subtree1;
   newick += ",";
@@ -156,16 +172,15 @@ std::string getRecombinedString(const BranchPair &pair,
 }
 
 void getBranchesToRecombine(PLLUnrootedTree &tree1,
-    PLLUnrootedTree &tree2,
     SplitToBranch &splitToBranch1,
     SplitToBranch &splitToBranch2,
     BranchToSplit &branchToSplit1,
-    BranchToSplit &branchToSplit2,
     BranchPairs &branches)
 {
   auto nodeNumber = tree1.getDirectedNodesNumber();
   auto nodes1 = tree1.getPostOrderNodes();
   std::vector<bool> isConflicting(nodeNumber, false);
+  std::vector<bool> isSeriousConflicting(nodeNumber, false);
   std::vector<bool> hasConflictingChild(nodeNumber, false);
   for (auto node: nodes1) {
     if (!node->next || !node->back->next) {
@@ -174,10 +189,13 @@ void getBranchesToRecombine(PLLUnrootedTree &tree1,
     auto sp1 = branchToSplit1[node->node_index];
     if (splitToBranch2.find(sp1) == splitToBranch2.end()) {
       isConflicting[node->node_index] = true;
+      if (node->length > 0.00001) {
+        isSeriousConflicting[node->node_index] = true;
+      }
     }
     auto leftIndex = node->next->back->node_index;
     auto rightIndex = node->next->next->back->node_index;
-    if (isConflicting[leftIndex] || isConflicting[rightIndex]
+    if (isSeriousConflicting[leftIndex] || isSeriousConflicting[rightIndex]
         || hasConflictingChild[leftIndex]
         || hasConflictingChild[rightIndex]) {
       hasConflictingChild[node->node_index] = true;
@@ -208,20 +226,25 @@ int lightSearch(int argc, char** argv, void* comm)
   Logger::init();
   if (argc != 5) {
     Logger::info << "Syntax error" << std::endl;
-    Logger::info << "lightsearch tree1 tree2 alignment model" 
+    Logger::info << "lightsearch trees alignment model outputtree" 
       << std::endl;
     return 1;
   }
   int i = 1;
-  std::string treePath1(argv[i++]);
-  std::string treePath2(argv[i++]);
+  std::string inputTreesPath(argv[i++]);
   std::string alignmentFile(argv[i++]);
   std::string model(argv[i++]);
-  
-  
-
-  PLLUnrootedTree tree1(treePath1);
-  PLLUnrootedTree tree2(treePath2);
+  std::string outputTreePath(argv[i++]);
+ 
+  std::ifstream is(inputTreesPath);
+  std::vector<std::string> inputTreeStrings;
+  std::string line;
+  while(std::getline(is, line)) {
+    inputTreeStrings.push_back(line);
+  }
+ 
+  assert(inputTreeStrings.size());
+  PLLUnrootedTree tree1(inputTreeStrings[0], false);
 
   LabelToIndex labelToIndex;
   for (auto leaf: tree1.getLeaves()) {
@@ -229,52 +252,41 @@ int lightSearch(int argc, char** argv, void* comm)
     unsigned int index = labelToIndex.size();
     labelToIndex.insert({label, index});
   }
-  
-  SplitToBranch splitToBranch1;
-  SplitToBranch splitToBranch2;
-  BranchToSplit branchToSplit1;
-  BranchToSplit branchToSplit2;
 
-  computeSplits(tree1, splitToBranch1, branchToSplit1, labelToIndex);
-  computeSplits(tree2, splitToBranch2, branchToSplit2, labelToIndex);
- 
-  Logger::info << "Number of leaves: " << tree1.getLeavesNumber() << std::endl;
-  unsigned int RF = 0;
-  for (auto it: splitToBranch1) {
-    RF += splitToBranch2.find(it.first) == splitToBranch2.end();
-  }
-  Logger::info << "RF=" << RF << std::endl;
- 
 
-  
-  std::string fixedModel = model;
-  evalModel(treePath1, true, alignmentFile, fixedModel);  
-  eval(treePath2, true, alignmentFile, fixedModel);  
-  
-  BranchPairs branches;
-  getBranchesToRecombine(tree1, tree2, splitToBranch1,
-      splitToBranch2, branchToSplit1, branchToSplit2, branches);
-
-  Logger::info << "Branches: " << branches.size() << std::endl;
-
+  std::string bestTreeStr = inputTreeStrings[0];
+  std::unordered_set<size_t> cache;
   double bestLL = -99999999999999;
-  std::string bestTree;
-  for (auto pair: branches) {
-    for (auto reverse: {true}) {// {true, false}) {
-      auto newTreeStr1 = getRecombinedString(pair, reverse);
-      auto ll1 = eval(newTreeStr1, false, alignmentFile, fixedModel);
-      if (ll1 > bestLL) {
-        bestLL = ll1;
-        bestTree = newTreeStr1;
+  for (const auto &treeStr: inputTreeStrings) {
+    eval(treeStr, false, alignmentFile, model, cache, bestLL, bestTreeStr); 
+  }
+  for (unsigned int i = 1; i < inputTreeStrings.size(); ++i) {
+    Logger::info << "Starting new round " << i << std::endl;
+    const auto &newTreePath = inputTreeStrings[i];
+    SplitToBranch splitToBranch1;
+    SplitToBranch splitToBranch2;
+    BranchToSplit branchToSplit1;
+    BranchToSplit branchToSplit2;
+    PLLUnrootedTree bestTree(bestTreeStr, false); 
+    PLLUnrootedTree newTree(newTreePath, false);
+    computeSplits(bestTree, splitToBranch1, branchToSplit1, labelToIndex);
+    computeSplits(newTree, splitToBranch2, branchToSplit2, labelToIndex);
+    BranchPairs branches;
+    getBranchesToRecombine(bestTree, splitToBranch1,
+        splitToBranch2, branchToSplit1, branches);
+    for (auto pair: branches) {
+      for (auto reverse: {true, false}) {
+        auto recombinedTree = getRecombinedString(pair, reverse);
+        eval(recombinedTree, false, alignmentFile, model, cache,
+            bestLL, bestTreeStr);
       }
     }
   }
-  //Logger::info << bestTree << std::endl;
-  Logger::info << " best ll = " << bestLL << std::endl;
+
   
-  
-  auto finalLL = eval(bestTree, false, alignmentFile, model, true);
+  auto finalLL = evalThorough(bestTreeStr, false, alignmentFile, model, true, outputTreePath);
   Logger::info << "Final LL " << finalLL << std::endl;
+  
   ParallelContext::finalize();
   return 0;
 }
