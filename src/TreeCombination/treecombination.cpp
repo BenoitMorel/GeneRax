@@ -259,6 +259,7 @@ int lightSearch(int argc, char** argv, void* comm)
   for (const auto &treeStr: inputTreeStrings) {
     eval(treeStr, false, alignmentFile, model, cache, bestLL, bestTreeStr); 
   }
+  auto initialLL = bestLL;
   for (unsigned int i = 1; i < inputTreeStrings.size(); ++i) {
     Logger::info << "Starting new round " << i << std::endl;
     const auto &newTreePath = inputTreeStrings[i];
@@ -284,7 +285,9 @@ int lightSearch(int argc, char** argv, void* comm)
 
   
   auto finalLL = evalThorough(bestTreeStr, false, alignmentFile, model, false, outputTreePath);
-  Logger::info << "Final LL " << finalLL << std::endl;
+  Logger::info << std::endl;
+  Logger::timed << "Initial LL " << initialLL << std::endl;
+  Logger::timed << "Final LL " << finalLL << std::endl;
   
   ParallelContext::finalize();
   return 0;
