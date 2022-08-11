@@ -172,18 +172,34 @@ void computeSplits(PLLUnrootedTree &tree,
   }
 }
 
+int getNodesNumber(corax_unode_t *node)
+{
+  if (!node->next) {
+    return 1;
+  }
+  return getNodesNumber(node->next->back) + getNodesNumber(node->next->next->back);
+}
+
+
 std::string getRecombinedString(const BranchPair &pair,
     bool reverse)
 {
   auto n1 = pair.first;
   auto n2 = pair.second;
   if (reverse) {
-    std::swap(n1, n2);
+    n1 = n1->back;
+    n2 = n2->back;
   }
+  Logger::info << "n1: " << getNodesNumber(n1)  << "\t n2: " << getNodesNumber(n2->back) << std::endl;
   
+
   std::string subtree1 = PLLUnrootedTree::getSubtreeString(n1);
   std::string subtree2 = PLLUnrootedTree::getSubtreeString(n2->back);
-  
+ 
+  if (getNodesNumber(n1) < getNodesNumber(n1->back)) {
+    return "";
+  }
+
   std::string newick = "(";
   newick += subtree1;
   newick += ",";
@@ -307,6 +323,9 @@ int lightSearch(int argc, char** argv, void* comm)
     for (auto pair: branches) {
       for (auto reverse: {true, false}) {
         auto recombinedTree = getRecombinedString(pair, reverse);
+        if (recombinedTree.size() == 0) {
+          continue;
+        }
         evalQuick(recombinedTree, false, alignmentFile, bestModelStr, cacheApprox);
         eval(recombinedTree, false, alignmentFile, model, cache,
             bestLL, bestTreeStr, bestModelStr);
