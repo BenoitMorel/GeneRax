@@ -272,7 +272,8 @@ int lightSearch(int argc, char** argv, void* comm)
   std::string alignmentFile(argv[i++]);
   std::string model(argv[i++]);
   std::string outputTreePath(argv[i++]);
- 
+  std::string outputLog = outputTreePath + ".logs";
+  Logger::initFileOutput(outputLog);
   std::ifstream is(inputTreesPath);
   std::vector<std::string> inputTreeStrings;
   std::string line;
