@@ -31,13 +31,35 @@ static bool optimizeTopology(LibpllEvaluation &evaluation,
   return ll > initialLL + 0.1;
 }
 
+
+double evalQuick(const std::string &treePath,
+    bool isFile,
+    const std::string &alignmentFile,
+    const std::string &model,
+    std::unordered_set<size_t> &cache)
+{
+  PLLUnrootedTree tree(treePath, isFile);
+  auto hash = tree.getUnrootedTreeHash();
+  if (cache.find(hash) != cache.end()) {
+    return -std::numeric_limits<double>::infinity();
+  }
+  cache.insert(hash);
+  LibpllEvaluation evaluation(treePath, isFile, alignmentFile, model);
+  double ll = 0.0;
+  ll = evaluation.computeLikelihood();
+  evaluation.optimizeBranches(10.0, 1.0);
+  ll = evaluation.computeLikelihood();
+  Logger::timed << "Approx ll=\t" << ll << std::endl;
+  return ll;
+}
 double eval(const std::string &treePath,
     bool isFile,
     const std::string &alignmentFile,
     const std::string &model,
     std::unordered_set<size_t> &cache,
     double &bestLL,
-    std::string &bestTree)
+    std::string &bestTree,
+    std::string &bestModel)
 {
   PLLUnrootedTree tree(treePath, isFile);
   auto hash = tree.getUnrootedTreeHash();
@@ -53,11 +75,12 @@ double eval(const std::string &treePath,
   ll = evaluation.computeLikelihood();
   optimizeParameters(evaluation, 0.1);
   ll = evaluation.computeLikelihood();
-  Logger::info << "Eval ll=" << ll << std::endl;
+  Logger::timed << "Eval ll= \t" << ll << std::endl;
   if (ll > bestLL) {
     Logger::timed << "Found better tree! ll=" << ll << std::endl;
     bestLL = ll;
     bestTree = evaluation.getGeneTree().getNewickString();
+    bestModel = evaluation.getModelStr();
   }
   return ll;
 }
@@ -241,6 +264,8 @@ int lightSearch(int argc, char** argv, void* comm)
     inputTreeStrings.push_back(line);
   }
  
+  std::cout.precision(11);
+
   assert(inputTreeStrings.size());
   PLLUnrootedTree tree1(inputTreeStrings[0], false);
 
@@ -253,11 +278,13 @@ int lightSearch(int argc, char** argv, void* comm)
 
 
   std::string bestTreeStr = inputTreeStrings[0];
+  std::string bestModelStr = model;
   std::unordered_set<size_t> cache;
+  std::unordered_set<size_t> cacheApprox;
   double bestLL = -99999999999999;
   Logger::info << "Evaluating all input trees..." << std::endl;
   for (const auto &treeStr: inputTreeStrings) {
-    eval(treeStr, false, alignmentFile, model, cache, bestLL, bestTreeStr); 
+    eval(treeStr, false, alignmentFile, bestModelStr, cacheApprox, bestLL, bestTreeStr, bestModelStr); 
   }
   auto initialLL = bestLL;
   for (unsigned int i = 1; i < inputTreeStrings.size(); ++i) {
@@ -274,11 +301,15 @@ int lightSearch(int argc, char** argv, void* comm)
     BranchPairs branches;
     getBranchesToRecombine(bestTree, splitToBranch1,
         splitToBranch2, branchToSplit1, branches);
+    
+    
+    
     for (auto pair: branches) {
       for (auto reverse: {true, false}) {
         auto recombinedTree = getRecombinedString(pair, reverse);
+        evalQuick(recombinedTree, false, alignmentFile, bestModelStr, cacheApprox);
         eval(recombinedTree, false, alignmentFile, model, cache,
-            bestLL, bestTreeStr);
+            bestLL, bestTreeStr, bestModelStr);
       }
     }
   }
