@@ -278,12 +278,12 @@ void LibpllParsers::parseMSA(const std::string &alignmentFilename,
     throw LibpllException("Alignment file " + alignmentFilename + "does not exist");
   }
   try {
-    parseFasta(alignmentFilename.c_str(),
-        stateMap, sequences, weights);
-  } catch (...) {
     parsePhylip(alignmentFilename.c_str(),
         stateMap, sequences,
         weights);
+  } catch (...) {
+    parseFasta(alignmentFilename.c_str(),
+        stateMap, sequences, weights);
   }
 }
 
