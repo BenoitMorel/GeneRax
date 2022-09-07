@@ -313,8 +313,11 @@ void LibpllParsers::parseFasta(const char *fastaFile,
     buffer[i] = sequences[i]->seq;
   }
   weights = corax_compress_site_patterns(buffer, stateMap, static_cast<int>(count), &length);
-  if (!weights) 
+  if (!weights) {
+    corax_fasta_close(reader);
+    free(buffer);
     throw LibpllException("Error while parsing fasta: cannot compress sites from ", fastaFile);
+  }
   for (unsigned int i = 0; i < count; ++i) {
     sequences[i]->len = static_cast<unsigned int>(length);
   }
@@ -351,6 +354,7 @@ void LibpllParsers::parsePhylip(const char *phylipFile,
   }
   weights = corax_compress_site_patterns(msa->sequence, stateMap, msa->count, &msa->length);
   if (!weights) 
+    corax_msa_destroy(msa);
     throw LibpllException("Error while parsing fasta: cannot compress sites");
   for (auto i = 0; i < msa->count; ++i) {
     PLLSequencePtr seq(new PLLSequence(msa->label[i], msa->sequence[i], static_cast<unsigned int>(msa->length)));
