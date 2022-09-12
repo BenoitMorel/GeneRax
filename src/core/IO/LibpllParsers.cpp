@@ -353,9 +353,10 @@ void LibpllParsers::parsePhylip(const char *phylipFile,
     }
   }
   weights = corax_compress_site_patterns(msa->sequence, stateMap, msa->count, &msa->length);
-  if (!weights) 
+  if (!weights)  {
     corax_msa_destroy(msa);
     throw LibpllException("Error while parsing fasta: cannot compress sites");
+  }
   for (auto i = 0; i < msa->count; ++i) {
     PLLSequencePtr seq(new PLLSequence(msa->label[i], msa->sequence[i], static_cast<unsigned int>(msa->length)));
     sequences.push_back(std::move(seq));
