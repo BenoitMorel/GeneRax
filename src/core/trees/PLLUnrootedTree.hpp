@@ -75,6 +75,7 @@ public:
    * Node access
    */
   corax_unode_t *getAnyInnerNode() const;
+  corax_unode_t *getAnyLeaf() const {return _tree->nodes[0];}
   corax_unode_t *getNode(unsigned int node_index) const;
 
  

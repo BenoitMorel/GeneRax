@@ -66,8 +66,9 @@ double eval(const std::string &treePath,
   if (cache.find(hash) != cache.end()) {
     return cache[hash];
   }
-  LibpllEvaluation evaluation(treePath, isFile, alignmentFile, model);
-  
+  LibpllEvaluation evaluation(treePath, isFile, alignmentFile, bestModel);
+  Model m(model);
+  evaluation.setParametersToOptimize(m.params_to_optimize());
   double ll = 0.0;
   ll = evaluation.computeLikelihood();
   evaluation.optimizeBranches(10.0, 1.0);
@@ -80,6 +81,7 @@ double eval(const std::string &treePath,
     bestLL = ll;
     bestTree = evaluation.getGeneTree().getNewickString();
     bestModel = evaluation.getModelStr();
+    Logger::info << " best model " << bestModel << std::endl;
   }
   cache.insert({hash, ll});
   return ll;
@@ -206,6 +208,117 @@ std::string getRecombinedString(const BranchPair &pair,
   return newick;
 }
 
+
+std::string buildMultibinedSubtree(corax_unode_t *node2,
+    const std::vector<corax_unode_t *> &branch2ToBranch1,
+    bool &justPolytomies,
+    bool firstCall = true) {
+  if (!node2->next) {
+    return std::string(node2->label);
+  }
+  if (!firstCall && branch2ToBranch1[node2->node_index]) {
+    auto node1 = branch2ToBranch1[node2->node_index];
+    return PLLUnrootedTree::getSubtreeString(node1);
+  } else {
+    if (node2->length > 0.0000011) {
+      justPolytomies = false;
+    }
+    auto left = PLLUnrootedTree::getLeft(node2);
+    auto right = PLLUnrootedTree::getRight(node2);
+    auto leftString = buildMultibinedSubtree(left, branch2ToBranch1, justPolytomies, false);
+    auto rightString = buildMultibinedSubtree(right, branch2ToBranch1, justPolytomies, false);
+    std::string res = "(";
+    res += leftString;
+    res += ",";
+    res += rightString;
+    res += ")";
+    return res;
+  }
+}
+
+
+/*
+ *  return directions such that directions[node->node_index] is
+ *  true if node points to a node with label refLabel
+ */
+std::vector<bool> getBranchDirections(PLLUnrootedTree &tree,
+    const std::string &refLabel)
+{
+  auto nodes = tree.getPostOrderNodes();
+  std::vector<bool> directions(nodes.size(), false);
+  for (auto node: nodes) {
+    if (!node->next) {
+      directions[node->node_index] = (refLabel == node->label);
+    } else {
+      auto leftIndex = PLLUnrootedTree::getLeft(node)->node_index;
+      auto rightIndex = PLLUnrootedTree::getRight(node)->node_index;
+      directions[node->node_index] = directions[leftIndex] ||
+        directions[rightIndex];
+    }
+  }
+  return directions;
+}
+
+
+std::vector<std::string> buildMultibinedTrees(PLLUnrootedTree &tree1,
+    PLLUnrootedTree &tree2,
+    BranchToSplit &branchToSplit1,
+    SplitToBranch &splitToBranch1,
+    SplitToBranch &splitToBranch2
+  )
+
+{
+  std::vector<std::string> trees;
+
+  auto refLabel = std::string(tree1.getAnyLeaf()->label);
+  auto directions1 = getBranchDirections(tree1, refLabel);
+  auto directions2 = getBranchDirections(tree2, refLabel);
+  
+  std::vector<corax_unode_t *> branch2ToBranch1(tree1.getDirectedNodesNumber(), nullptr);
+  for (auto branch1: tree1.getPostOrderNodes()) {
+    auto it = branchToSplit1.find(branch1->node_index);
+    if (it == branchToSplit1.end()) {
+      continue;
+    }
+    auto split = it->second;
+    if (splitToBranch2.end() == splitToBranch2.find(split)) {
+      continue;
+    }
+    auto branch2 = splitToBranch2.at(split);
+    if (directions1[branch1->node_index] != directions2[branch2->node_index]) {
+      branch2 = branch2->back;
+    }
+    branch2ToBranch1[branch2->node_index] = branch1;
+  }
+
+  for (auto branch2: tree2.getPostOrderNodes()) {
+    if (!branch2->next || !branch2->back->next) {
+      continue;
+    }
+    auto branch1 = branch2ToBranch1[branch2->node_index];
+    if (!branch1) {
+      continue;
+    }
+    // branch1 and branch2 agree and are not trivial branches
+    bool justPolytomies = true;
+    auto treeLeft = buildMultibinedSubtree(branch2, branch2ToBranch1, justPolytomies);
+    if (justPolytomies) {
+      continue;
+    }
+    auto treeRight = PLLUnrootedTree::getSubtreeString(branch1->back);
+    std::string tree = "(";
+    tree += treeLeft;
+    tree += ",";
+    tree += treeRight;
+    tree += ");";
+    //std::cout << "ADD TREE " << tree << std::endl;
+    trees.push_back(tree);
+  }
+  Logger::info << "Added " << trees.size() << " trees" << std::endl;
+  return trees;
+}
+
+
 void getBranchesToRecombine(PLLUnrootedTree &tree1,
     SplitToBranch &splitToBranch1,
     SplitToBranch &splitToBranch2,
@@ -298,6 +411,7 @@ int lightSearch(int argc, char** argv, void* comm)
   std::string bestTreeStr = inputTreeStrings[0];
   std::string bestModelStr = model;
   std::unordered_map<size_t, double> cache;
+  std::unordered_map<size_t, double> cache2;
   std::unordered_map<size_t, double> cacheApprox;
   double bestLL = -99999999999999;
   Logger::info << "Evaluating all input trees..." << std::endl;
@@ -305,7 +419,7 @@ int lightSearch(int argc, char** argv, void* comm)
   for (const auto &treeStr: inputTreeStrings) {
     auto previousBestLL = bestLL;
     const double EPS = 0.00001;
-    auto ll = eval(treeStr, false, alignmentFile, model, cacheApprox, bestLL, bestTreeStr, bestModelStr);
+    auto ll = eval(treeStr, false, alignmentFile, model, cache, bestLL, bestTreeStr, bestModelStr);
     if (ll - previousBestLL > EPS) {
       bestTreeNumber = 1; // new best tree
     } else if (fabs(ll - previousBestLL) < EPS) {
@@ -328,6 +442,9 @@ int lightSearch(int argc, char** argv, void* comm)
       PLLUnrootedTree newTree(newTreePath, false);
       computeSplits(bestTree, splitToBranch1, branchToSplit1, labelToIndex);
       computeSplits(newTree, splitToBranch2, branchToSplit2, labelToIndex);
+#define MULTI
+#define SIMPLE
+#ifdef SIMPLE
       BranchPairs branches;
       getBranchesToRecombine(bestTree, splitToBranch1,
           splitToBranch2, branchToSplit1, branches);
@@ -342,7 +459,35 @@ int lightSearch(int argc, char** argv, void* comm)
               bestLL, bestTreeStr, bestModelStr);
         }
       }
+#endif
+#ifdef MULTI
+      bool improved = true;
+      while (improved) {
+        improved = false;
+        PLLUnrootedTree currentBestTree(bestTreeStr, false);
+        splitToBranch1.clear();
+        branchToSplit1.clear();
+        computeSplits(currentBestTree, splitToBranch1, branchToSplit1, labelToIndex);
+        auto candidates = buildMultibinedTrees(currentBestTree,
+          newTree,
+          branchToSplit1,
+          splitToBranch1,
+          splitToBranch2
+          );
+        for (auto recombinedTree: candidates) {
+          bool saveBestLL = bestLL;  
+          //evalQuick(recombinedTree, false, alignmentFile, bestModelStr, cacheApprox);
+          eval(recombinedTree, false, alignmentFile, model, cache,
+                bestLL, bestTreeStr, bestModelStr);
+          if (bestLL > saveBestLL) {
+            improved = true;
+            break;
+          }
+        }
+      }
+#endif
     }
+
   } else {  
     Logger::info << "Skipping the recombination step." << std::endl;
   }

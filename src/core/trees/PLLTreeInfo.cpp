@@ -121,6 +121,13 @@ corax_partition_t * PLLTreeInfo::buildPartition(const PLLSequencePtrs &sequences
   return partition;
 }
 
+void PLLTreeInfo::setParametersToOptimize(int paramsToOptimize)
+{
+  paramsToOptimize |= CORAX_OPT_PARAM_BRANCHES_ITERATIVE;
+  _treeinfo->params_to_optimize[0] = paramsToOptimize;
+}
+
+
 corax_treeinfo_t *PLLTreeInfo::buildTreeInfo(const Model &model,
     corax_partition_t *partition,
     PLLUnrootedTree &utree)

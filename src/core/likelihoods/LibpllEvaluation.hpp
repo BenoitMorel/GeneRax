@@ -72,6 +72,7 @@ public:
   corax_treeinfo_t *getTreeInfo() {return _treeInfo->getTreeInfo();}
   const corax_treeinfo_t *getTreeInfo() const {return _treeInfo->getTreeInfo();}
 
+  void setParametersToOptimize(int paramsToOptimize) {_treeInfo->setParametersToOptimize(paramsToOptimize);}
 
   /**
    *  Invalidate a CLV at a given node index

@@ -28,6 +28,7 @@ public:
   corax_treeinfo_t *getTreeInfo() {return _treeinfo.get();}
   PLLUnrootedTree &getTree() {return *_utree;}
   Model &getModel() {return *_model;}
+  void setParametersToOptimize(int parametersToOptimize);
 
 private:
   std::unique_ptr<corax_treeinfo_t, void(*)(corax_treeinfo_t*)> _treeinfo;
