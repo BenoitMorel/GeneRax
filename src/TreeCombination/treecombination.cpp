@@ -11,47 +11,13 @@
 
 #include <unordered_map>
 
-static void optimizeParameters(LibpllEvaluation &evaluation, double radius) 
+static void optimizeParameters(LibpllEvaluation &evaluation, double radius, double itradius) 
 {
-  evaluation.optimizeAllParameters(radius);
-}
-
-static bool optimizeTopology(LibpllEvaluation &evaluation, 
-    unsigned int radius, 
-    unsigned int thorough, 
-    unsigned int toKeep, 
-    double cutoff) 
-{
-  
-  double initialLL = evaluation.computeLikelihood(false);
-  Logger::timed << "["  << initialLL << "] " 
-    << (thorough ? "SLOW" : "FAST") << " SPR Round (radius=" << radius << ")" << std::endl;
-  double ll = evaluation.raxmlSPRRounds(1, radius, thorough, toKeep, cutoff);
-  Logger::info << "ll=" << ll << std::endl;
-  return ll > initialLL + 0.1;
+  evaluation.optimizeAllParameters(radius, itradius);
 }
 
 
-double evalQuick(const std::string &treePath,
-    bool isFile,
-    const std::string &alignmentFile,
-    const std::string &model,
-    std::unordered_map<size_t, double> &cache)
-{
-  PLLUnrootedTree tree(treePath, isFile);
-  auto hash = tree.getUnrootedTreeHash();
-  if (cache.find(hash) != cache.end()) {
-    return cache[hash];
-  }
-  LibpllEvaluation evaluation(treePath, isFile, alignmentFile, model);
-  double ll = 0.0;
-  ll = evaluation.computeLikelihood();
-  evaluation.optimizeBranches(10.0, 1.0);
-  ll = evaluation.computeLikelihood();
-  cache.insert({hash, ll});
-  Logger::timed << "Approx ll=\t" << ll << std::endl;
-  return ll;
-}
+
 double eval(const std::string &treePath,
     bool isFile,
     const std::string &alignmentFile,
@@ -59,62 +25,44 @@ double eval(const std::string &treePath,
     std::unordered_map<size_t, double> &cache,
     double &bestLL,
     std::string &bestTree,
-    std::string &bestModel)
+    std::string &bestModel, bool fast = false)
 {
   PLLUnrootedTree tree(treePath, isFile);
   auto hash = tree.getUnrootedTreeHash();
   if (cache.find(hash) != cache.end()) {
     return cache[hash];
   }
-  LibpllEvaluation evaluation(treePath, isFile, alignmentFile, model);
-  
+  LibpllEvaluation evaluation(treePath, isFile, alignmentFile, bestModel);
+  Model m(model);
+  evaluation.setParametersToOptimize(m.params_to_optimize());
   double ll = 0.0;
   ll = evaluation.computeLikelihood();
-  evaluation.optimizeBranches(10.0, 1.0);
-  ll = evaluation.computeLikelihood();
-  optimizeParameters(evaluation, 0.1);
-  ll = evaluation.computeLikelihood();
+  
+  if (!fast) {
+    Logger::info << "before opt " << ll << std::endl;
+    evaluation.optimizeBranches(10.0, 1.0);
+    ll = evaluation.computeLikelihood();
+    Logger::info << "after blo  " << ll << std::endl;
+    optimizeParameters(evaluation, 0.1, 0.1);
+    ll = evaluation.computeLikelihood();
+    Logger::info << "after model opt  " << ll << std::endl;
+  } else {
+    optimizeParameters(evaluation, 1.0, 10.0);
+    ll = evaluation.computeLikelihood();
+
+  }
   Logger::timed << "Eval ll= \t" << ll << std::endl;
   if (ll > bestLL) {
     Logger::timed << "Found better tree! ll=" << ll << std::endl;
     bestLL = ll;
     bestTree = evaluation.getGeneTree().getNewickString();
     bestModel = evaluation.getModelStr();
+    Logger::info << " best model " << bestModel << std::endl;
   }
   cache.insert({hash, ll});
   return ll;
 }
 
-double evalThorough(const std::string &treePath,
-    bool isFile,
-    const std::string &alignmentFile,
-    const std::string &model,
-    bool topology = false,
-    std::string out = "")
-{
-  LibpllEvaluation evaluation(treePath, isFile, alignmentFile, model);
-  optimizeParameters(evaluation, 0.1);
-  evaluation.optimizeBranches(10.0, 1.0);
-  if (topology) {
-    optimizeTopology(evaluation, 5, 1, 20, 0.1);
-  }
-  if (out.size()) {
-    evaluation.getGeneTree().save(out);
-  }
-  return evaluation.computeLikelihood();
-}
-
-double evalModel(const std::string &treePath,
-    bool isFile,
-    const std::string &alignmentFile,
-    std::string &model)
-{
-  LibpllEvaluation evaluation(treePath, isFile, alignmentFile, model);
-  optimizeParameters(evaluation, 0.1);
-  model = evaluation.getModelStr();
-  Logger::timed << "ll=" << evaluation.computeLikelihood() << std::endl;
-  return evaluation.computeLikelihood();
-}
 
 
 
@@ -190,8 +138,6 @@ std::string getRecombinedString(const BranchPair &pair,
     n1 = n1->back;
     n2 = n2->back;
   }
-  //Logger::info << "n1: " << getNodesNumber(n1)  << "\t n2: " << getNodesNumber(n2->back) << std::endl;
-  
 
   std::string subtree1 = PLLUnrootedTree::getSubtreeString(n1);
   std::string subtree2 = PLLUnrootedTree::getSubtreeString(n2->back);
@@ -209,6 +155,7 @@ std::string getRecombinedString(const BranchPair &pair,
 
 std::string buildMultibinedSubtree(corax_unode_t *node2,
     const std::vector<corax_unode_t *> &branch2ToBranch1,
+    bool &justPolytomies,
     bool firstCall = true) {
   if (!node2->next) {
     return std::string(node2->label);
@@ -217,10 +164,13 @@ std::string buildMultibinedSubtree(corax_unode_t *node2,
     auto node1 = branch2ToBranch1[node2->node_index];
     return PLLUnrootedTree::getSubtreeString(node1);
   } else {
+    if (node2->length > 0.0000011) {
+      justPolytomies = false;
+    }
     auto left = PLLUnrootedTree::getLeft(node2);
     auto right = PLLUnrootedTree::getRight(node2);
-    auto leftString = buildMultibinedSubtree(left, branch2ToBranch1, false);
-    auto rightString = buildMultibinedSubtree(right, branch2ToBranch1, false);
+    auto leftString = buildMultibinedSubtree(left, branch2ToBranch1, justPolytomies, false);
+    auto rightString = buildMultibinedSubtree(right, branch2ToBranch1, justPolytomies, false);
     std::string res = "(";
     res += leftString;
     res += ",";
@@ -294,7 +244,11 @@ std::vector<std::string> buildMultibinedTrees(PLLUnrootedTree &tree1,
       continue;
     }
     // branch1 and branch2 agree and are not trivial branches
-    auto treeLeft = buildMultibinedSubtree(branch2, branch2ToBranch1);
+    bool justPolytomies = true;
+    auto treeLeft = buildMultibinedSubtree(branch2, branch2ToBranch1, justPolytomies);
+    if (justPolytomies) {
+      continue;
+    }
     auto treeRight = PLLUnrootedTree::getSubtreeString(branch1->back);
     std::string tree = "(";
     tree += treeLeft;
@@ -304,7 +258,7 @@ std::vector<std::string> buildMultibinedTrees(PLLUnrootedTree &tree1,
     //std::cout << "ADD TREE " << tree << std::endl;
     trees.push_back(tree);
   }
-  std::cout << "Added " << trees.size() << " trees" << std::endl;
+  Logger::info << "Added " << trees.size() << " trees" << std::endl;
   return trees;
 }
 
@@ -401,6 +355,7 @@ int lightSearch(int argc, char** argv, void* comm)
   std::string bestTreeStr = inputTreeStrings[0];
   std::string bestModelStr = model;
   std::unordered_map<size_t, double> cache;
+  std::unordered_map<size_t, double> cache2;
   std::unordered_map<size_t, double> cacheApprox;
   double bestLL = -99999999999999;
   Logger::info << "Evaluating all input trees..." << std::endl;
@@ -408,7 +363,7 @@ int lightSearch(int argc, char** argv, void* comm)
   for (const auto &treeStr: inputTreeStrings) {
     auto previousBestLL = bestLL;
     const double EPS = 0.00001;
-    auto ll = eval(treeStr, false, alignmentFile, model, cacheApprox, bestLL, bestTreeStr, bestModelStr);
+    auto ll = eval(treeStr, false, alignmentFile, model, cache, bestLL, bestTreeStr, bestModelStr);
     if (ll - previousBestLL > EPS) {
       bestTreeNumber = 1; // new best tree
     } else if (fabs(ll - previousBestLL) < EPS) {
@@ -434,7 +389,7 @@ int lightSearch(int argc, char** argv, void* comm)
 #define MULTI
 #define SIMPLE
 #ifdef SIMPLE
-     BranchPairs branches;
+      BranchPairs branches;
       getBranchesToRecombine(bestTree, splitToBranch1,
           splitToBranch2, branchToSplit1, branches);
       for (auto pair: branches) {
@@ -443,23 +398,34 @@ int lightSearch(int argc, char** argv, void* comm)
           if (recombinedTree.size() == 0) {
             continue;
           }
-          //evalQuick(recombinedTree, false, alignmentFile, bestModelStr, cacheApprox);
           eval(recombinedTree, false, alignmentFile, model, cache,
-              bestLL, bestTreeStr, bestModelStr);
+              bestLL, bestTreeStr, bestModelStr, true);
         }
       }
 #endif
 #ifdef MULTI
-      auto candidates = buildMultibinedTrees(bestTree,
+      bool improved = true;
+      while (improved) {
+        improved = false;
+        PLLUnrootedTree currentBestTree(bestTreeStr, false);
+        splitToBranch1.clear();
+        branchToSplit1.clear();
+        computeSplits(currentBestTree, splitToBranch1, branchToSplit1, labelToIndex);
+        auto candidates = buildMultibinedTrees(currentBestTree,
           newTree,
           branchToSplit1,
           splitToBranch1,
           splitToBranch2
           );
-      for (auto recombinedTree: candidates) {
+        for (auto recombinedTree: candidates) {
+          bool saveBestLL = bestLL;  
           eval(recombinedTree, false, alignmentFile, model, cache,
-              bestLL, bestTreeStr, bestModelStr);
-
+                bestLL, bestTreeStr, bestModelStr, true);
+          if (bestLL > saveBestLL) {
+            improved = true;
+            break;
+          }
+        }
       }
 #endif
     }
@@ -468,12 +434,11 @@ int lightSearch(int argc, char** argv, void* comm)
     Logger::info << "Skipping the recombination step." << std::endl;
   }
   
-  finalLL = evalThorough(bestTreeStr, false, alignmentFile, model, false, outputTreePath);
   Logger::info << std::endl;
   Logger::timed << "Initial LL " << initialLL << std::endl;
-  Logger::timed << "Final LL " << finalLL << std::endl;
+  Logger::timed << "Final LL " << bestLL << std::endl;
   std::ofstream statsOs(outputStats);
-  statsOs << bestTreeNumber << " " << initialLL << " " << finalLL << std::endl; 
+  statsOs << bestTreeNumber << " " << initialLL << " " << bestLL << std::endl; 
   //ParallelContext::finalize();
   return 0;
 }

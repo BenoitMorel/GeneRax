@@ -30,7 +30,9 @@ const double DEFAULT_BL = 0.1;
 
 std::string LibpllEvaluation::getModelStr()
 {
-  assign(_treeInfo->getModel(), _treeInfo->getTreeInfo()->partitions[0]);
+  auto info = _treeInfo->getTreeInfo();
+  assign(_treeInfo->getModel(), info->partitions[0]);
+  _treeInfo->getModel().alpha(info->alphas[0]);
   std::string modelStr = _treeInfo->getModel().to_string(true);
   return modelStr;
 }
@@ -123,17 +125,20 @@ double LibpllEvaluation::optimizeBranches(double lh_epsilon, double brlen_smooth
   return new_loglh;
 }
 
-double LibpllEvaluation::optimizeAllParameters(double lh_epsilon)
+double LibpllEvaluation::optimizeAllParameters(double lh_epsilon, double it_epsilon)
 {
   if (_treeInfo->getTreeInfo()->params_to_optimize[0] == 0) {
     return computeLikelihood();
   }
   double previousLogl = computeLikelihood(); 
   double newLogl = previousLogl;
+  unsigned int it = 0;
   do {
     previousLogl = newLogl;
     newLogl = optimizeAllParametersOnce(_treeInfo->getTreeInfo(), lh_epsilon);
-  } while (newLogl - previousLogl > lh_epsilon);
+    it++;
+  } while (newLogl - previousLogl > it_epsilon);
+  Logger::info << " it = " << it << std::endl;
   return newLogl;
 }
 
@@ -167,6 +172,7 @@ double LibpllEvaluation::optimizeAllParametersOnce(corax_treeinfo_t *treeinfo, d
   }
 
   /* optimize ALPHA */
+  
   if (params_to_optimize & CORAX_OPT_PARAM_ALPHA)
   {
     new_loglh = -1 * corax_algo_opt_onedim_treeinfo(treeinfo,
@@ -185,7 +191,6 @@ double LibpllEvaluation::optimizeAllParametersOnce(corax_treeinfo_t *treeinfo, d
         RAXML_PARAM_EPSILON);
   }
 
-  /* optimize FREE RATES and WEIGHTS */
   if (params_to_optimize & CORAX_OPT_PARAM_FREE_RATES)
   {
     new_loglh = -1 * corax_algo_opt_rates_weights_treeinfo (treeinfo,
@@ -196,17 +201,17 @@ double LibpllEvaluation::optimizeAllParametersOnce(corax_treeinfo_t *treeinfo, d
         RAXML_BFGS_FACTOR,
         RAXML_PARAM_EPSILON);
 
-    /* normalize scalers and scale the branches accordingly */
     if (treeinfo->brlen_linkage == CORAX_BRLEN_SCALED &&
         treeinfo->partition_count > 1)
       corax_treeinfo_normalize_brlen_scalers(treeinfo);
 
   }
-
   if (params_to_optimize & CORAX_OPT_PARAM_BRANCHES_ITERATIVE)
   {
     new_loglh = optimizeBranches(lh_epsilon, 0.25);
   }
+
+  new_loglh = computeLikelihood();
 
   assert(0.0 != new_loglh);
   return new_loglh;

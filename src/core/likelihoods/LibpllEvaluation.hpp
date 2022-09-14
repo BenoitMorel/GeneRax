@@ -57,7 +57,7 @@ public:
    *  Optimize branch lengths and model parameters
    *  @return the log likeihood of the tree
    */
-  double optimizeAllParameters(double lh_epsilon = TOLERANCE);
+  double optimizeAllParameters(double lh_epsilon = TOLERANCE, double it_epsilon = TOLERANCE);
   double optimizeBranches(double lh_epsilon = TOLERANCE, double brlen_smooth_factor = 0.25);
 
   double raxmlSPRRounds(unsigned int minRadius, 
@@ -72,6 +72,7 @@ public:
   corax_treeinfo_t *getTreeInfo() {return _treeInfo->getTreeInfo();}
   const corax_treeinfo_t *getTreeInfo() const {return _treeInfo->getTreeInfo();}
 
+  void setParametersToOptimize(int paramsToOptimize) {_treeInfo->setParametersToOptimize(paramsToOptimize);}
 
   /**
    *  Invalidate a CLV at a given node index
