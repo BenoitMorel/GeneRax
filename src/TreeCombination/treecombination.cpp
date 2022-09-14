@@ -11,9 +11,9 @@
 
 #include <unordered_map>
 
-static void optimizeParameters(LibpllEvaluation &evaluation, double radius, double itradius) 
+static double optimizeParameters(LibpllEvaluation &evaluation, double radius, double itradius) 
 {
-  evaluation.optimizeAllParameters(radius, itradius);
+  return evaluation.optimizeAllParameters(radius, itradius);
 }
 
 
@@ -36,20 +36,14 @@ double eval(const std::string &treePath,
   Model m(model);
   evaluation.setParametersToOptimize(m.params_to_optimize());
   double ll = 0.0;
-  ll = evaluation.computeLikelihood();
-  
+  //ll = evaluation.computeLikelihood();
   if (!fast) {
-    Logger::info << "before opt " << ll << std::endl;
     evaluation.optimizeBranches(10.0, 1.0);
-    ll = evaluation.computeLikelihood();
-    Logger::info << "after blo  " << ll << std::endl;
+    //ll = evaluation.computeLikelihood();
     optimizeParameters(evaluation, 0.1, 0.1);
     ll = evaluation.computeLikelihood();
-    Logger::info << "after model opt  " << ll << std::endl;
   } else {
-    optimizeParameters(evaluation, 1.0, 10.0);
-    ll = evaluation.computeLikelihood();
-
+    ll = optimizeParameters(evaluation, 1.0, 10.0);
   }
   Logger::timed << "Eval ll= \t" << ll << std::endl;
   if (ll > bestLL) {
@@ -57,7 +51,6 @@ double eval(const std::string &treePath,
     bestLL = ll;
     bestTree = evaluation.getGeneTree().getNewickString();
     bestModel = evaluation.getModelStr();
-    Logger::info << " best model " << bestModel << std::endl;
   }
   cache.insert({hash, ll});
   return ll;
