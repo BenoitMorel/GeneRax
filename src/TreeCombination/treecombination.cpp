@@ -17,7 +17,6 @@ static double optimizeParameters(LibpllEvaluation &evaluation, double radius, do
 }
 
 
-TODO: CHECK TODO SLACK
 
 double eval(const std::string &treePath,
     bool isFile,
