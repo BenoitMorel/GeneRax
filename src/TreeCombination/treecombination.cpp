@@ -17,6 +17,7 @@ static double optimizeParameters(LibpllEvaluation &evaluation, double radius, do
 }
 
 
+TODO: CHECK TODO SLACK
 
 double eval(const std::string &treePath,
     bool isFile,
@@ -337,6 +338,7 @@ int lightSearch(int argc, char** argv, void* comm)
   assert(inputTreeStrings.size());
   PLLUnrootedTree tree1(inputTreeStrings[0], false);
 
+  Logger::info << " Number of taxa: " << tree1.getLeavesNumber() << std::endl;
   LabelToIndex labelToIndex;
   for (auto leaf: tree1.getLeaves()) {
     std::string label = leaf->label;
@@ -379,6 +381,17 @@ int lightSearch(int argc, char** argv, void* comm)
       PLLUnrootedTree newTree(newTreePath, false);
       computeSplits(bestTree, splitToBranch1, branchToSplit1, labelToIndex);
       computeSplits(newTree, splitToBranch2, branchToSplit2, labelToIndex);
+      unsigned int agree = 0;
+      unsigned int disagree = 0;
+      for (auto p: splitToBranch1) {
+        auto split = p.first;
+        if (splitToBranch2.find(split) == splitToBranch2.end()) {
+          disagree++;
+        } else {
+          agree++;
+        } 
+      }
+      Logger::info <<"aRF = " << float(disagree) / float(disagree + agree) << std::endl;
 #define MULTI
 #define SIMPLE
 #ifdef SIMPLE

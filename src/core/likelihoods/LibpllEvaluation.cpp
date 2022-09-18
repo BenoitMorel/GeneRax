@@ -138,7 +138,6 @@ double LibpllEvaluation::optimizeAllParameters(double lh_epsilon, double it_epsi
     newLogl = optimizeAllParametersOnce(_treeInfo->getTreeInfo(), lh_epsilon);
     it++;
   } while (newLogl - previousLogl > it_epsilon);
-  Logger::info << " it = " << it << std::endl;
   return newLogl;
 }
 

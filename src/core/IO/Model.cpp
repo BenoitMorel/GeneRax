@@ -853,7 +853,6 @@ std::string Model::to_string(bool print_params, unsigned int precision) const
       break;
   }
 
-  std::cout << "WRITE ALPHA " << _alpha << std::endl;
   if (_num_ratecats > 1)
   {
     if (_rate_het == CORAX_UTIL_MIXTYPE_GAMMA)
