@@ -5,6 +5,7 @@
 #include <cstring>
 #include <maths/Random.hpp>
 #include <parallelization/ParallelContext.hpp>
+#include <sstream>
 
 static void * xmalloc(size_t size)
 { 
@@ -201,24 +202,66 @@ void PLLRootedTree::setMissingBranchLengths(double minBL)
   }
 }
 
+static void setNodeLabel(corax_rnode_t *node, const std::string &label)
+{
+  free(node->label);
+  node->label = static_cast<char*>(malloc(sizeof(char) * (label.size() + 1)));
+  std::strcpy(node->label, label.c_str());
+}
+
+static bool isFloat(const std::string &str) 
+{
+  std::istringstream iss(str);
+  float f = 0.0;
+  iss >> std::noskipws >> f; 
+  return iss.eof() && !iss.fail(); 
+}
+
+static void getUniqueLabel(const std::unordered_set<std::string> labels,
+    std::string &prefix)
+{
+  if (!prefix.size()) {
+    prefix = "node";
+  }
+  while (prefix.back() == '_') {
+    prefix.pop_back();
+  }
+  if (!prefix.size()) {
+    prefix = "node";
+  }
+  size_t index = 0;
+  auto newLabel = prefix + "_" + std::to_string(index); 
+  while (labels.end() != labels.find(newLabel)) {
+    index++;
+    newLabel = prefix + "_" + std::to_string(index); 
+  }
+  prefix = newLabel;
+}
+
 void PLLRootedTree::ensureUniqueLabels() 
 {
-  auto labels = getLabels(true);
-  unsigned int i = 0;
-  std::string prefix("node_");
-  for (auto node: getNodes()) {
-    if (node->left) {
-      std::string newLabel;
-      if (node->label) {
-        newLabel = std::string(node->label);
-      }
-      while (labels.find(newLabel) != labels.end() || newLabel.size() == 0) {
-        newLabel = prefix + std::to_string(i++);
-      }
-      free(node->label);
-      node->label = static_cast<char*>(malloc(sizeof(char) * (newLabel.size() + 1)));
-      std::strcpy(node->label, newLabel.c_str());
-      labels.insert(newLabel);
+  // get the leaf labels
+  auto labels = getLabels(true); 
+  labels.insert("");
+  std::vector<std::string> anyLeafLabel(getNodesNumber());
+  for (auto node: getPostOrderNodes()) {
+    if (!node->left) {
+      anyLeafLabel[node->node_index] = node->label;
+      continue;
+    }
+    anyLeafLabel[node->node_index] = anyLeafLabel[node->left->node_index];
+    std::string label(node->label ? node->label : "");
+    bool duplicate = labels.end() != labels.find(label);
+    bool isNumeric = isFloat(label);
+    if (duplicate || isNumeric) {
+      // we need to assign a new label
+      std::string label = "Node_";
+      label += anyLeafLabel[node->left->node_index];
+      label += "_";
+      label += anyLeafLabel[node->right->node_index];
+      getUniqueLabel(labels, label);
+      labels.insert(label);
+      setNodeLabel(node, label);
     }
   }
 }

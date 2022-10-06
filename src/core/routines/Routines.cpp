@@ -247,14 +247,19 @@ void Routines::inferReconciliation(
     assert(scenarios.size() == geneTrees.getTrees().size());
     for (unsigned int i = 0; i  < geneTrees.getTrees().size(); ++i) {
       auto &tree = geneTrees.getTrees()[i];
-      std::string eventCountsFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_eventCounts.txt");
-      std::string speciesEventCountsFile = getSpeciesEventCountFile(outputDir, tree.name);
+      std::string eventCountsFile = FileSystem::joinPaths(
+          reconciliationsDir, tree.name + "_eventCounts.txt");
+      std::string speciesEventCountsFile = 
+          getSpeciesEventCountFile(outputDir, tree.name);
       std::string transfersFile = getTransfersFile(outputDir, tree.name);
-      std::string orthoGroupFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_orthogroups.txt");
-      std::string allOrthoGroupFile = FileSystem::joinPaths(reconciliationsDir, tree.name + "_orthogroups_all.txt");
-      std::string treeWithEventsFileNHX = FileSystem::joinPaths(reconciliationsDir, tree.name + "_reconciliated.nhx");
-      std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(reconciliationsDir, 
-          tree.name + "_reconciliated.xml");
+      std::string orthoGroupFile = FileSystem::joinPaths(
+          reconciliationsDir, tree.name + "_orthogroups.txt");
+      std::string allOrthoGroupFile = FileSystem::joinPaths(
+          reconciliationsDir, tree.name + "_orthogroups_all.txt");
+      std::string treeWithEventsFileNHX = FileSystem::joinPaths(
+          reconciliationsDir, tree.name + "_reconciliated.nhx");
+      std::string treeWithEventsFileRecPhyloXML = FileSystem::joinPaths(
+          reconciliationsDir, tree.name + "_reconciliated.xml");
       std::string treeWithEventsFileNewickEvents = FileSystem::joinPaths(
           reconciliationsDir, 
           tree.name + "_events.newick");
