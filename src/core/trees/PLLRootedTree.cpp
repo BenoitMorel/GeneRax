@@ -265,29 +265,6 @@ void PLLRootedTree::ensureUniqueLabels()
     }
   }
 }
-/*
-void PLLRootedTree::ensureUniqueLabels() 
-{
-  auto labels = getLabels(true);
-  unsigned int i = 0;
-  std::string prefix("node_");
-  for (auto node: getNodes()) {
-    if (node->left) {
-      std::string newLabel;
-      if (node->label) {
-        newLabel = std::string(node->label);
-      }
-      while (labels.find(newLabel) != labels.end() || newLabel.size() == 0) {
-        newLabel = prefix + std::to_string(i++);
-      }
-      free(node->label);
-      node->label = static_cast<char*>(malloc(sizeof(char) * (newLabel.size() + 1)));
-      std::strcpy(node->label, newLabel.c_str());
-      labels.insert(newLabel);
-    }
-  }
-}
-*/
 
 void PLLRootedTree::labelRootedTree(const std::string &unlabelledNewickFile, 
       const std::string &labelledNewickFile)
