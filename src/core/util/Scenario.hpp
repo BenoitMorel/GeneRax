@@ -105,6 +105,8 @@ public:
   Scenario(): 
     _eventsCount(static_cast<unsigned int>(ReconciliationEventType::EVENT_Invalid), 0), 
     _geneRoot(nullptr), 
+    _rootedTree(nullptr),
+    _speciesTree(nullptr),
     _virtualRootIndex(INVALID_NODE_ID) 
   {}
 
@@ -115,7 +117,10 @@ public:
   Scenario & operator = (Scenario &&) = delete;
  
   void setGeneRoot(corax_unode_t *geneRoot) {_geneRoot = geneRoot;}
-  void setSpeciesTree(corax_rtree_t *speciesTree) {_speciesTree = speciesTree;}
+  void setSpeciesTree(PLLRootedTree *speciesTree) {
+    _rootedTree = speciesTree;
+    _speciesTree = _rootedTree->getRawPtr();
+  }
   void setVirtualRootIndex(unsigned int virtualRootIndex) {_virtualRootIndex = virtualRootIndex;}
 
   /**
@@ -138,6 +143,9 @@ public:
   void saveTransfers(const std::string &filename, bool masterRankOnly = true); 
   void saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly = true);
   void saveReconciliation(ParallelOfstream &os, ReconciliationFormat format);
+  static void saveTransferPairCountGlobal(PLLRootedTree &speciesTree,
+      std::vector<Scenario> &scenarios,
+      const std::string &filename);
 
   void saveLargestOrthoGroup(std::string &filename, bool masterRankOnly = true) const;
   void saveAllOrthoGroups(std::string &filename, bool masterRankOnly = true) const;
@@ -173,7 +181,8 @@ private:
   std::vector<unsigned int> _eventsCount;
   std::vector<std::vector<Event> > _geneIdToEvents;
   corax_unode_t *_geneRoot;
-  corax_rtree_t *_speciesTree;
+  PLLRootedTree *_rootedTree;
+  corax_rtree_s *_speciesTree;
   unsigned int _virtualRootIndex;
   typedef std::vector< std::vector <int> > ScenarioBlackList;
   std::unique_ptr<ScenarioBlackList> _blacklist;

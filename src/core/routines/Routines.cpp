@@ -275,6 +275,11 @@ void Routines::inferReconciliation(
       scenario.saveReconciliation(treeWithEventsFileNHX, ReconciliationFormat::NHX, false);
       scenario.saveTransfers(transfersFile, false);
     }
+    std::string transferPairGlobalFile(FileSystem::joinPaths(
+          outputDir, "per_species_pair_transfers.txt"));
+    Scenario::saveTransferPairCountGlobal(speciesTree, 
+        scenarios, 
+        transferPairGlobalFile);
   }
   if (reconciliationSamples) {
     std::vector<Scenario> scenarios;

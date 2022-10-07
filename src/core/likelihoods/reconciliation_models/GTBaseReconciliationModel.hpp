@@ -530,7 +530,7 @@ bool GTBaseReconciliationModel<REAL>::inferMLScenario(Scenario &scenario, bool s
   assert(geneRoot);
   assert(speciesRoot);
   scenario.setGeneRoot(geneRoot);
-  scenario.setSpeciesTree(this->_speciesTree.getRawPtr());
+  scenario.setSpeciesTree(&this->_speciesTree);
   corax_unode_t virtualRoot;
   virtualRoot.next = geneRoot;
   virtualRoot.node_index = geneRoot->node_index + _maxGeneId + 1;

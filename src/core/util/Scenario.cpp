@@ -234,6 +234,58 @@ void Scenario::saveAllOrthoGroups(std::string &filename, bool masterRankOnly) co
 }
 
 
+struct TransferPair {
+  unsigned int count;
+  unsigned int id1;
+  unsigned int id2;
+  TransferPair(unsigned int count, unsigned int id1, unsigned int id2):
+    count(count), id1(id1), id2(id2) {}
+  bool operator < (const TransferPair& p) const
+  {
+    if (count != p.count) {
+      return count < p.count;
+    } else if (id1 != p.id1) {
+      return id1 < p.id1;
+    } else {
+      return id2 < p.id2;
+    }
+  }
+};
+
+void Scenario::saveTransferPairCountGlobal(PLLRootedTree &speciesTree,
+    std::vector<Scenario> &scenarios,
+    const std::string &filename)
+{
+  Logger::info << "Save transfer pairs to " << filename << std::endl;
+  const auto labelToId = speciesTree.getDeterministicLabelToId();
+  const auto idToLabel = speciesTree.getDeterministicIdToLabel();
+  const unsigned int N = labelToId.size();
+  const VectorUint zeros(N, 0);
+  auto countMatrix = MatrixUint(N, zeros);
+  for (auto &scenario: scenarios) {
+    scenario.countTransfers(labelToId, countMatrix);
+  }
+  std::vector<TransferPair> transferPairs;
+  for (unsigned int i = 0; i < N; ++i) {
+    for (unsigned int j = 0; j < N; ++j) {
+      ParallelContext::sumUInt(countMatrix[i][j]);
+      if (countMatrix[i][j]) { 
+        TransferPair p(countMatrix[i][j], i, j);
+        transferPairs.push_back(p);
+      }
+    }
+  }
+  std::sort(transferPairs.rbegin(), transferPairs.rend());
+  ParallelOfstream os(filename);
+  for (auto p: transferPairs) {
+    os << idToLabel[p.id1] 
+      << " " << idToLabel[p.id2] 
+      << " " << p.count 
+      << std::endl;
+  }
+
+}
+
 
 OrthoGroup *Scenario::getLargestOrthoGroupRec(corax_unode_t *geneNode, bool isVirtualRoot) const
 {
