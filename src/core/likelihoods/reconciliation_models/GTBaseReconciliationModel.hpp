@@ -368,8 +368,10 @@ void GTBaseReconciliationModel<REAL>::updateCLVs(bool invalidate)
     switch (this->_likelihoodMode) {
       case PartialLikelihoodMode::PartialGenes:
         this->invalidateAllSpeciesCLVs();
+        this->invalidateAllCLVs();
       break;
       case PartialLikelihoodMode::PartialSpecies:
+        this->invalidateAllSpeciesCLVs();
         this->invalidateAllCLVs();
       break;
       case PartialLikelihoodMode::NoPartial:

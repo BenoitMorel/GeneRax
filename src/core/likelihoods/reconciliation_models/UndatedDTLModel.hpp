@@ -7,6 +7,7 @@
 #include <algorithm>
 
 
+#define FORBID_PARENTS
 
 
 /*
@@ -76,11 +77,13 @@ private:
 
     DTLCLV(unsigned int speciesNumber):
       _uq(speciesNumber, REAL()),
+      _correctionSum(speciesNumber, REAL()),
       _survivingTransferSums(REAL())
     {
     }
     // probability of a gene node rooted at a species node
     std::vector<REAL> _uq;
+    std::vector<REAL> _correctionSum;
 
     // sum of transfer probabilities. Can be computed only once
     // for all species, to reduce computation complexity
@@ -90,8 +93,6 @@ private:
   // Current DTLCLV values
   std::vector<DTLCLV> _dtlclvs;
 private:
-  void updateTransferSums(REAL &transferExtinctionSum,
-      const std::vector<REAL> &probabilities);
   void getBestTransfer(corax_unode_t *parentGeneNode, 
     corax_rnode_t *originSpeciesNode,
     bool isVirtualRoot,
@@ -113,7 +114,16 @@ private:
 
   REAL getCorrectedTransferSum(unsigned int geneId, unsigned int speciesId) const
   {
-    return _dtlclvs[geneId]._survivingTransferSums * _PT[speciesId];
+#ifdef FORBID_PARENTS
+    return (_dtlclvs[geneId]._survivingTransferSums
+        - _dtlclvs[geneId]._correctionSum[speciesId])
+      * _PT[speciesId];
+#else
+    return (_dtlclvs[geneId]._survivingTransferSums
+        - _dtlclvs[geneId]._uq[speciesId] * (1.0 / double(this->_allSpeciesNodes.size())))
+      * _PT[speciesId];
+
+#endif
   }
   std::vector<corax_rnode_s *> &getSpeciesNodesToUpdate() {
     return this->_speciesNodesToUpdate;
@@ -132,16 +142,6 @@ void UndatedDTLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
   _dtlclvs = std::vector<DTLCLV>(2 * (this->_maxGeneId + 1), nullCLV);
 }
 
-template <class REAL>
-void UndatedDTLModel<REAL>::updateTransferSums(REAL &transferSum,
-    const std::vector<REAL> &probabilities)
-{
-  transferSum = REAL();
-  for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
-    transferSum += probabilities[speciesNode->node_index];
-  }
-  transferSum /= this->_allSpeciesNodes.size();
-}
 
 
 template <class REAL>
@@ -219,6 +219,7 @@ void UndatedDTLModel<REAL>::updateCLV(corax_unode_t *geneNode)
   auto lca = this->_geneToSpeciesLCA[gid];
   auto &clv = _dtlclvs[gid];
   auto &uq = clv._uq;
+  auto &correctionSum = clv._correctionSum;
   
   auto &parentsCache = this->_speciesTree.getParentsCache(lca);
   
@@ -236,6 +237,7 @@ void UndatedDTLModel<REAL>::updateCLV(corax_unode_t *geneNode)
   */
 
   std::fill(uq.begin(), uq.end(), REAL());
+  std::fill(correctionSum.begin(), correctionSum.end(), REAL());
   REAL sum = REAL();
   for (auto speciesNode: getSpeciesNodesToUpdateSafe()) { 
     auto e = speciesNode->node_index;
@@ -244,11 +246,25 @@ void UndatedDTLModel<REAL>::updateCLV(corax_unode_t *geneNode)
       computeProbability(geneNode, 
         speciesNode, 
         uq[e]);
-      sum += uq[e];
     }
     //}
   }
-  sum /= this->_allSpeciesNodes.size();
+  auto postOrder = this->_speciesTree.getPostOrderNodes();
+  for (auto it = postOrder.rbegin();
+      it != postOrder.rend(); ++it)  {
+    auto speciesNode = *it;
+    auto e = speciesNode->node_index;
+    sum += uq[e];
+    auto parent = speciesNode;
+    while (parent) {
+      auto p = parent->node_index;
+      correctionSum[e] += uq[p];
+      parent = parent->parent;
+    }
+    correctionSum[e] /= double(this->_allSpeciesNodes.size());
+  }
+  
+  sum /= double(this->_allSpeciesNodes.size());
   clv._survivingTransferSums = sum;
 }
 
@@ -384,6 +400,8 @@ void UndatedDTLModel<REAL>::computeProbability(corax_unode_t *geneNode, corax_rn
       maxValueIndex =static_cast<unsigned int>(std::distance(values.begin(),
           std::max_element(values.begin(), values.end())
           ));
+      
+      assert(values[maxValueIndex] != REAL());
     } else {
       maxValueIndex = sampleIndex<ValuesArray, REAL>(values);
     }
@@ -418,6 +436,7 @@ void UndatedDTLModel<REAL>::computeProbability(corax_unode_t *geneNode, corax_rn
       event->pllDestSpeciesNode = this->getSpeciesRight(speciesNode);
       break;
     case 5:
+      //assert (values[5] != proba);
       event->type = ReconciliationEventType::EVENT_T;
       event->leftGeneIndex = stayingGene->node_index;
       event->rightGeneIndex = transferedGene->node_index;
@@ -460,7 +479,6 @@ REAL UndatedDTLModel<REAL>::getLikelihoodFactor() const
       
 }
 
-
 template <class REAL>
 void UndatedDTLModel<REAL>::getBestTransfer(corax_unode_t *parentGeneNode, 
   corax_rnode_t *originSpeciesNode,
@@ -474,15 +492,30 @@ void UndatedDTLModel<REAL>::getBestTransfer(corax_unode_t *parentGeneNode,
   unsigned int speciesNumber = this->_speciesTree.getNodesNumber();;
   proba = REAL();
   auto e = originSpeciesNode->node_index;
+  std::unordered_set<unsigned int> parents;
+#ifdef FORBID_PARENTS
+  auto parent = originSpeciesNode;
+  while (parent) {
+    parents.insert(parent->node_index);
+    parent = parent->parent;
+  }
+#endif
   auto u_left = this->getLeft(parentGeneNode, isVirtualRoot);
   auto u_right = this->getRight(parentGeneNode, isVirtualRoot);
   std::vector<REAL> transferProbas(speciesNumber * 2, REAL());
   double factor = _PT[e] / static_cast<double>(speciesNumber);
   for (auto species: this->_allSpeciesNodes) {
     auto h = species->node_index;
+#ifdef FORBID_PARENTS
+    if (parents.end() != parents.find(h)) {
+      continue;
+    }
+#else
     if (h == e) {
       continue;
     }
+#endif
+
     transferProbas[h] = (_dtlclvs[u_left->node_index]._uq[h] 
         * _dtlclvs[u_right->node_index]._uq[e]) * factor;
     transferProbas[h + speciesNumber] = (_dtlclvs[u_right->node_index]._uq[h] 
@@ -511,8 +544,13 @@ void UndatedDTLModel<REAL>::getBestTransfer(corax_unode_t *parentGeneNode,
     }
   } else {
     // find the max
+    REAL sum = REAL();
     for (auto species: this->_allSpeciesNodes) {
       auto h = species->node_index;
+      if (parents.end() != parents.find(h)) {
+        continue;
+      }
+      sum += transferProbas[h] + transferProbas[h + speciesNumber];
       if (proba < transferProbas[h]) {
         proba = transferProbas[h];
         transferedGene = u_left;

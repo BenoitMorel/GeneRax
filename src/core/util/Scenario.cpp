@@ -275,6 +275,19 @@ void Scenario::saveTransferPairCountGlobal(PLLRootedTree &speciesTree,
       }
     }
   }
+  unsigned int parentTransfers = 0;
+  for (auto speciesNode: speciesTree.getNodes()) {
+    std::string fromLabel = speciesNode->label;
+    auto from = labelToId.at(fromLabel);
+    auto parent = speciesNode;
+    while (parent) {
+      std::string toLabel = parent->label;
+      auto to = labelToId.at(toLabel);
+      parentTransfers += countMatrix[from][to];
+      parent = parent->parent;
+    }
+  }
+  Logger::info << "Transfers to parents: " << parentTransfers << std::endl;
   std::sort(transferPairs.rbegin(), transferPairs.rend());
   ParallelOfstream os(filename);
   for (auto p: transferPairs) {

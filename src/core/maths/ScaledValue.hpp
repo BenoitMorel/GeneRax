@@ -182,6 +182,11 @@ public:
     return scaler == v.scaler && (std::fabs(v.value-value) <= std::numeric_limits<double>::epsilon());
   }
 
+  inline bool operator !=(const ScaledValue& v) const
+  {
+    return !(*this == v);
+  }
+
   inline bool operator <=(const ScaledValue& v) const
   {
     if (isNull()) {
