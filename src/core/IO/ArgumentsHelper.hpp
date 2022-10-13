@@ -121,6 +121,32 @@ public:
     }
   }
 
+  static std::string transferConstraintToStr(TransferConstaint tc) {
+    switch(tc) {
+    case TransferConstaint::NONE:
+      return "NONE";
+    case TransferConstaint::PARENTS:
+      return "PARENTS";
+    case TransferConstaint::SOFTDATED:
+      return "SOFTDATED";
+    }
+    exit(41);
+  }
+
+  static TransferConstaint strToTransferConstraint(const std::string &str) {
+    if (str == "NONE") {
+      return TransferConstaint::NONE;
+    } else if (str == "PARENTS") {
+      return TransferConstaint::PARENTS;
+    } else if(str == "SOFTDATED") {
+      return TransferConstaint::SOFTDATED;
+    } else {
+      Logger::info << "Invalid transfer constraint " << str << std::endl;
+      exit(41);
+      return TransferConstaint::NONE;
+    }
+  }
+
   static std::string recOptToStr(RecOpt recOpt) {
     switch(recOpt) {
     case RecOpt::Grid:

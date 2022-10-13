@@ -182,6 +182,8 @@ public:
   std::vector<unsigned int> getNodeIndexMapping(PLLRootedTree &otherTree);
 
   bool areNodeIndicesParallelConsistent() const;
+
+  std::vector<corax_rnode_t *> getOrderedSpeciations() const;
 private:
   std::unique_ptr<corax_rtree_t, void(*)(corax_rtree_t*)> _tree;
   

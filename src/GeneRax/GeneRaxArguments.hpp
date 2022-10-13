@@ -31,6 +31,7 @@ public:
    unsigned int recRadius;
    bool perSpeciesDTLRates;
    bool userDTLRates;
+   TransferConstaint transferConstraint;
    bool noDup;
    double dupRate;
    double lossRate;

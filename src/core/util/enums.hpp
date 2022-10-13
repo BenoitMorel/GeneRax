@@ -40,6 +40,13 @@ enum class SpeciesSearchStrategy {
   SPR, TRANSFERS, HYBRID, REROOT, EVAL, SKIP
 };
 
+/**
+ *  Transfer constraint
+ */
+enum class TransferConstaint {
+  NONE, PARENTS, SOFTDATED
+};
+
 /*
  *  Output formats for reconciled gene trees
  */

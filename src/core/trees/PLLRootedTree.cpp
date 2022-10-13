@@ -690,3 +690,49 @@ bool PLLRootedTree::areNodeIndicesParallelConsistent() const
   return ok;
 }
 
+struct DatedNode {
+  double date;
+  corax_rnode_s *node;
+  DatedNode(double date, corax_rnode_s *node):
+    date(date),
+    node(node) {}
+
+  bool operator < (const DatedNode &dn) const {
+    if (date != dn.date) {
+      return date < dn.date;
+    } else {
+      std::string label1(node->label);
+      std::string label2(dn.node->label);
+      return label1 < label2;
+    }
+  }
+
+};
+
+static void fillDatedNodesRec(corax_rnode_t *node,
+    double depth,
+    std::vector<DatedNode> &datedNodes)
+{
+  if (!node->left) {
+    return;
+  }
+  depth += node->length;
+  datedNodes.push_back(DatedNode(depth, node));
+  fillDatedNodesRec(node->left, depth, datedNodes);
+  fillDatedNodesRec(node->right, depth, datedNodes);
+}
+  
+
+std::vector<corax_rnode_t *> PLLRootedTree::getOrderedSpeciations() const
+{
+  std::vector<corax_rnode_t *> speciations;
+  std::vector<DatedNode> datedNodes;
+  fillDatedNodesRec(getRoot(), 0.0, datedNodes);
+  std::sort(datedNodes.begin(), datedNodes.end());
+  for (const auto &datedNode: datedNodes) {
+    speciations.push_back(datedNode.node);
+  }
+  return speciations;
+}
+
+

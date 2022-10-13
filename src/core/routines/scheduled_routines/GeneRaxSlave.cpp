@@ -130,7 +130,6 @@ int GeneRaxSlave::optimizeGeneTreesMain(int argc, char** argv, void* comm)
   Logger::info << "LibpllModel " << libpllModel << std::endl;
   RecModelInfo recModelInfo;
   recModelInfo.readFromArgv(argv, i);
-  //recModelInfo.model = RecModel(atoi(argv[i++])); 
   RecOpt recOpt = RecOpt(atoi(argv[i++])); 
   
   //recModelInfo.perFamilyRates = bool(atoi(argv[i++]));

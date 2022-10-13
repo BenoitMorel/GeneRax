@@ -20,6 +20,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   recRadius(0),
   perSpeciesDTLRates(false),
   userDTLRates(false),
+  transferConstraint(TransferConstaint::NONE),
   noDup(false),
   dupRate(0.2),
   lossRate(0.2),
@@ -100,6 +101,8 @@ void GeneRaxArguments::init() {
           RecOpt::None) {
         userDTLRates = true;
       }
+    } else if (arg == "--transfer-constraint") {
+      transferConstraint = ArgumentsHelper::strToTransferConstraint(std::string(argv[++i]));
     } else if (arg == "--no-dup") {
       dupRate = 0.0;
       noDup = true;

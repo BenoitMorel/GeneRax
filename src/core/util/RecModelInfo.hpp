@@ -2,6 +2,7 @@
 
 #include <util/enums.hpp>
 #include <maths/Parameters.hpp>
+#include <IO/ArgumentsHelper.hpp>
 
 struct RecModelInfo {
   // reconciliation model (UndatedDTL, UndatedDL, etc)
@@ -16,11 +17,13 @@ struct RecModelInfo {
   // with a lenghts <= branchLengthThreshold are be contracted
   double branchLengthThreshold;
  
+  TransferConstaint transferConstraint;
+  
   // disable duplications
   bool noDup;
 
   std::string fractionMissingFile;
-  
+ 
   
   RecModelInfo():
     model(RecModel::UndatedDTL),
@@ -38,6 +41,7 @@ struct RecModelInfo {
       bool pruneSpeciesTree,
       bool rootedGeneTree,
       double branchLengthThreshold,
+      TransferConstaint transferConstraint,
       bool noDup,
       const std::string &fractionMissingFile):
     model(model),
@@ -45,6 +49,7 @@ struct RecModelInfo {
     pruneSpeciesTree(pruneSpeciesTree),
     rootedGeneTree(rootedGeneTree),
     branchLengthThreshold(branchLengthThreshold),
+    transferConstraint(transferConstraint),
     noDup(noDup),
     fractionMissingFile(fractionMissingFile)
   {
@@ -56,9 +61,12 @@ struct RecModelInfo {
     model = RecModel(atoi(argv[i++]));  
     perFamilyRates = bool(atoi(argv[i++]));
     pruneSpeciesTree = bool(atoi(argv[i++]));
-    branchLengthThreshold = double(atof(argv[i++]));
     rootedGeneTree = bool(atoi(argv[i++]));
+    std::string con = argv[i++];
+    std::cerr << "READ " << con << std::endl;
+    transferConstraint = ArgumentsHelper::strToTransferConstraint(con);
     noDup = bool(atoi(argv[i++]));
+    branchLengthThreshold = double(atof(argv[i++]));
     fractionMissingFile = std::string(argv[i++]);
     if (fractionMissingFile == "NONE") {
       fractionMissingFile = std::string();
@@ -72,6 +80,7 @@ struct RecModelInfo {
     argv.push_back(std::to_string(static_cast<int>(perFamilyRates)));
     argv.push_back(std::to_string(static_cast<int>(pruneSpeciesTree)));
     argv.push_back(std::to_string(static_cast<int>(rootedGeneTree)));
+    argv.push_back(ArgumentsHelper::transferConstraintToStr(transferConstraint));
     argv.push_back(std::to_string(static_cast<int>(noDup)));
     argv.push_back(std::to_string(branchLengthThreshold));
     if (fractionMissingFile.size()) {
@@ -84,7 +93,7 @@ struct RecModelInfo {
 
   static int getArgc() 
   {
-    return 7;
+    return 8;
   }
 
   unsigned int modelFreeParameters() const {
