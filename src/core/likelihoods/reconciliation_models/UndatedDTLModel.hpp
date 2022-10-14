@@ -62,7 +62,6 @@ private:
   std::vector<double> _PS; // Speciation probability, per branch
   // SPECIES
   std::vector<double> _uE; // Probability for a gene to become extinct on each brance
-  double _transferExtinctionSum;
   TransferConstaint _transferConstraint;
   
   /**
@@ -109,9 +108,6 @@ private:
     REAL &proba,
     bool stochastic = false);
   unsigned int getIterationsNumber() const {return 4;}    
-  double getCorrectedTransferExtinctionSum(unsigned int speciesId) const {
-    return _transferExtinctionSum * _PT[speciesId];
-  }
 
   REAL getCorrectedTransferSum(unsigned int geneId, unsigned int speciesId) const
   {
@@ -195,33 +191,62 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
   }
   _uE.resize(this->_allSpeciesNodesCount);
   for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
-    _uE[speciesNode->node_index] = REAL(0.0);
+    _uE[speciesNode->node_index] = 0.0;
   }
-  _transferExtinctionSum = REAL();
+  std::vector<double> transferExtinctionSums(this->_allSpeciesNodes.size(), REAL());
   for (unsigned int it = 0; it < getIterationsNumber(); ++it) {
     for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
       auto e = speciesNode->node_index;
       if (it + 1 == getIterationsNumber() && !speciesNode->left) {
-        _uE[e] = _uE[e] * (1.0 - this->_fm[e]) + REAL(this->_fm[e]);
+        _uE[e] = _uE[e] * (1.0 - this->_fm[e]) + this->_fm[e];
         continue;
       }
-      double proba(_PL[e]);
-      double temp = _uE[e] * _uE[e] * _PD[e];
-      proba += temp;
-      temp = getCorrectedTransferExtinctionSum(e) * _uE[e];
-      proba += temp;
+      double proba = _PL[e] + (_PD[e] * _uE[e] * _uE[e]) + _PT[e] * transferExtinctionSums[e] * _uE[e];
       if (this->getSpeciesLeft(speciesNode)) {
-        temp = _uE[this->getSpeciesLeft(speciesNode)->node_index]  * _uE[this->getSpeciesRight(speciesNode)->node_index] * _PS[e];
-        proba += temp;
+        proba +=  _uE[this->getSpeciesLeft(speciesNode)->node_index]  * _uE[this->getSpeciesRight(speciesNode)->node_index] * _PS[e];
       }
-      //PRINT_ERROR_PROBA(proba)
       _uE[speciesNode->node_index] = proba;
     }
-    _transferExtinctionSum = 0.0;
-    for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
-      _transferExtinctionSum += _uE[speciesNode->node_index];
+    std::fill(transferExtinctionSums.begin(), transferExtinctionSums.end(), 0.0);
+    auto transferExtinctionSum = 0.0;
+    double N = this->_allSpeciesNodes.size();
+    if (this->_transferConstraint == TransferConstaint::NONE) {
+      for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
+        auto e = speciesNode->node_index;
+        transferExtinctionSum += _uE[e];
+      }
+      transferExtinctionSum /= N;
+      for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
+        auto e = speciesNode->node_index;
+        transferExtinctionSums[e] = transferExtinctionSum;
+      }
+    } else if (this->_transferConstraint == TransferConstaint::PARENTS) {
+      assert(false);
+    } else if (this->_transferConstraint == TransferConstaint::SOFTDATED) {
+      std::vector<double> softDatedSums(N, 0.0);
+      double softDatedSum = 0.0;
+      for (auto leaf: this->_speciesTree.getLeaves()) {
+        auto e = leaf->node_index;
+        softDatedSum += _uE[e];
+      }
+      for (auto it = this->_orderedSpeciations.rbegin(); 
+          it != this->_orderedSpeciations.rend(); ++it) {
+        auto e = (*it)->node_index;
+        softDatedSums[e] = softDatedSum;
+        softDatedSum += _uE[e];
+      }
+      for (auto node: this->_allSpeciesNodes) {
+        auto e = node->node_index;
+        auto p = node->parent ? node->parent->node_index : e;
+        transferExtinctionSums[e] = softDatedSums[p];
+        if (e != p) {
+          transferExtinctionSums[e] = transferExtinctionSums[e] - _uE[e]; 
+        }
+        transferExtinctionSums[e] /= N; 
+      } 
+    } else {
+      assert(false);
     }
-    _transferExtinctionSum /= this->_allSpeciesNodes.size();
   }
 }
 
@@ -281,23 +306,38 @@ void UndatedDTLModel<REAL>::updateCLV(corax_unode_t *geneNode)
   }
   if (_transferConstraint == TransferConstaint::SOFTDATED) {
     std::vector<REAL> softDatedSums(N, REAL());
+    std::vector<double> possibleTransfers(N, REAL());
+    double currentPossibleTransfers = static_cast<double>(this->_speciesTree.getLeavesNumber()) - 1.0;
     REAL softDatedSum = REAL();
     for (auto leaf: this->_speciesTree.getLeaves()) {
       auto e = leaf->node_index;
       softDatedSum += uq[e];
+      possibleTransfers[e] = currentPossibleTransfers;
     }
-    auto orderedSpeciations = this->_speciesTree.getOrderedSpeciations();
-    for (auto it = orderedSpeciations.rbegin(); 
-        it != orderedSpeciations.rend(); ++it) {
+    for (auto it = this->_orderedSpeciations.rbegin(); 
+        it != this->_orderedSpeciations.rend(); ++it) {
       auto e = (*it)->node_index;
       softDatedSums[e] = softDatedSum;
+      possibleTransfers[e] = currentPossibleTransfers;
       softDatedSum += uq[e];
+      currentPossibleTransfers += 1.0;
     }
     for (auto node: this->_allSpeciesNodes) {
       auto e = node->node_index;
       auto p = node->parent ? node->parent->node_index : e;
       correctionSum[e] = softDatedSums[p];
-      correctionSum[e] /= N;
+      if (e != p) {
+        correctionSum[e] = correctionSum[e] - uq[e]; 
+      } 
+      assert (possibleTransfers[p] != 0.0);
+#ifdef POSSIBLETRANSFER_NORM
+      correctionSum[e] /= possibleTransfers[p];
+
+#else
+      correctionSum[e] /= N; 
+
+#endif
+      
     }
   }
   sum /= N;
