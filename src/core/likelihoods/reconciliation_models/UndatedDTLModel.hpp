@@ -92,6 +92,7 @@ private:
   // Current DTLCLV values
   std::vector<DTLCLV> _dtlclvs;
   std::vector<corax_rnode_s *> _orderedSpeciations;
+  std::vector<unsigned int> _orderedSpeciesRanks;
 private:
   void getBestTransfer(corax_unode_t *parentGeneNode, 
     corax_rnode_t *originSpeciesNode,
@@ -188,6 +189,14 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
 {
   if (_transferConstraint == TransferConstaint::SOFTDATED) {
     _orderedSpeciations = this->_speciesTree.getOrderedSpeciations();  
+    _orderedSpeciesRanks.resize(this->_speciesTree.getNodesNumber());
+    unsigned int rank = 0;
+    for (auto species: _orderedSpeciations) {
+      _orderedSpeciesRanks[species->node_index] = rank++; 
+    }
+    for (auto leaf: this->_speciesTree.getLeaves()) {
+      _orderedSpeciesRanks[leaf->node_index] = rank;
+    }
   }
   _uE.resize(this->_allSpeciesNodesCount);
   for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
@@ -210,7 +219,8 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
     std::fill(transferExtinctionSums.begin(), transferExtinctionSums.end(), 0.0);
     auto transferExtinctionSum = 0.0;
     double N = this->_allSpeciesNodes.size();
-    if (this->_transferConstraint == TransferConstaint::NONE) {
+    if (this->_transferConstraint == TransferConstaint::NONE || this->_transferConstraint == TransferConstaint::PARENTS) {
+      // TODO: TransferConstaint::PARENTS should have another treatment...
       for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
         auto e = speciesNode->node_index;
         transferExtinctionSum += _uE[e];
@@ -220,8 +230,6 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
         auto e = speciesNode->node_index;
         transferExtinctionSums[e] = transferExtinctionSum;
       }
-    } else if (this->_transferConstraint == TransferConstaint::PARENTS) {
-      assert(false);
     } else if (this->_transferConstraint == TransferConstaint::SOFTDATED) {
       std::vector<double> softDatedSums(N, 0.0);
       double softDatedSum = 0.0;
@@ -590,6 +598,14 @@ void UndatedDTLModel<REAL>::getBestTransfer(corax_unode_t *parentGeneNode,
     if (_transferConstraint == TransferConstaint::NONE) {
       if (h == e) {
         continue;
+      }
+    }
+    if (_transferConstraint == TransferConstaint::SOFTDATED) {
+      if (originSpeciesNode->parent) {
+        auto p = originSpeciesNode->parent->node_index;
+        if (_orderedSpeciesRanks[p] >= _orderedSpeciesRanks[h]) {
+          continue;
+        }
       }
     }
 
