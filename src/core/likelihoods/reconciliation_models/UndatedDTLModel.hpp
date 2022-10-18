@@ -314,9 +314,13 @@ void UndatedDTLModel<REAL>::updateCLV(corax_unode_t *geneNode)
   }
   if (_transferConstraint == TransferConstaint::SOFTDATED) {
     std::vector<REAL> softDatedSums(N, REAL());
+    std::vector<REAL> softDatedContCorrections(N, REAL());
     std::vector<double> possibleTransfers(N, REAL());
+    std::vector<double> possibleTransfers2(N, REAL());
     double currentPossibleTransfers = static_cast<double>(this->_speciesTree.getLeavesNumber()) - 1.0;
+    double currentPossibleTransfers2 = static_cast<double>(this->_speciesTree.getLeavesNumber()) - 1.0;
     REAL softDatedSum = REAL();
+    REAL softDatedContCorrection = REAL();
     for (auto leaf: this->_speciesTree.getLeaves()) {
       auto e = leaf->node_index;
       softDatedSum += uq[e];
@@ -324,28 +328,39 @@ void UndatedDTLModel<REAL>::updateCLV(corax_unode_t *geneNode)
     }
     for (auto it = this->_orderedSpeciations.rbegin(); 
         it != this->_orderedSpeciations.rend(); ++it) {
-      auto e = (*it)->node_index;
+      auto node = (*it);
+      auto e = node->node_index;
       softDatedSums[e] = softDatedSum;
       possibleTransfers[e] = currentPossibleTransfers;
       softDatedSum += uq[e];
       currentPossibleTransfers += 1.0;
     }
+#ifdef CONTCORRECTION
+    for (auto it = this->_orderedSpeciations.rbegin(); 
+        it != this->_orderedSpeciations.rend(); ++it) {
+      auto node = *it;
+      auto e = node->node_index;
+      assert(node->left);
+      auto f = node->left->node_index;
+      auto g = node->right->node_index;
+      softDatedContCorrection += uq[f];
+      softDatedContCorrection += uq[g];
+      currentPossibleTransfers2 += 2.0;
+      possibleTransfers2[e] = currentPossibleTransfers2;
+      softDatedContCorrections[e] = softDatedContCorrection;
+    }
+#endif
     for (auto node: this->_allSpeciesNodes) {
       auto e = node->node_index;
       auto p = node->parent ? node->parent->node_index : e;
-      correctionSum[e] = softDatedSums[p];
       if (e != p) {
-        correctionSum[e] = correctionSum[e] - uq[e]; 
-      } 
-      assert (possibleTransfers[p] != 0.0);
-#ifdef POSSIBLETRANSFER_NORM
-      correctionSum[e] /= possibleTransfers[p];
-
+#ifdef CONTCORRECTION
+        correctionSum[e] = softDatedSums[p] - (softDatedContCorrections[e] * 0.9);
 #else
-      correctionSum[e] /= N; 
-
+        correctionSum[e] = softDatedSums[p];
 #endif
-      
+      }
+      correctionSum[e] /= N;
     }
   }
   sum /= N;

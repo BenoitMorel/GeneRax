@@ -63,7 +63,6 @@ struct RecModelInfo {
     pruneSpeciesTree = bool(atoi(argv[i++]));
     rootedGeneTree = bool(atoi(argv[i++]));
     std::string con = argv[i++];
-    std::cerr << "READ " << con << std::endl;
     transferConstraint = ArgumentsHelper::strToTransferConstraint(con);
     noDup = bool(atoi(argv[i++]));
     branchLengthThreshold = double(atof(argv[i++]));
