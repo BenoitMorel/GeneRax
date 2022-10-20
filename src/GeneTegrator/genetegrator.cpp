@@ -84,6 +84,7 @@ void initStartingSpeciesTree(GeneTegratorArguments &args,
 void run( GeneTegratorArguments &args)
 {
   Logger::info << "Mkdir " << args.output << std::endl;
+  Random::setSeed(static_cast<unsigned int>(args.seed));
   FileSystem::mkdir(args.output, true);
   FileSystem::mkdir(args.output + "/species_trees", true);
   Logger::initFileOutput(FileSystem::joinPaths(args.output, "genetegrator"));
@@ -93,10 +94,11 @@ void run( GeneTegratorArguments &args)
     Logger::info << "No valid family, aborting" << std::endl;
     ParallelContext::abort(0);
   }
+  /*
   Logger::info << "Number of families before trimming: " << families.size() << std::endl;
   trimFamilies(families);
   Logger::info << "Number of families after trimming: " << families.size() << std::endl;
-
+  */
   initStartingSpeciesTree(args, families);
   
   RecModelInfo info;
@@ -107,8 +109,21 @@ void run( GeneTegratorArguments &args)
       families,
       info,
       args.output);
-  speciesTreeOptimizer.optimize();
-  speciesTreeOptimizer.reconcile();
+  switch (args.speciesSearchStrategy) {
+  case SpeciesSearchStrategy::HYBRID:
+    speciesTreeOptimizer.optimize();
+    break;
+  case SpeciesSearchStrategy::EVAL:
+    speciesTreeOptimizer.optimizeModelRates(false);
+    break;
+  case SpeciesSearchStrategy::SKIP:
+    break;
+  default:
+    assert(false); // not implemented yet
+    break;
+  }
+  Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
+  speciesTreeOptimizer.reconcile(args.geneTreeSamples);
 }
 
 int genetegrator_main(int argc, char** argv, void* comm)

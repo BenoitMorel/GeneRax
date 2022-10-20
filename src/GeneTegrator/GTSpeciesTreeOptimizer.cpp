@@ -103,8 +103,6 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
   auto rates = *_modelRates;
   OptimizationSettings settings;
   double ll = computeLikelihood();
-  Logger::info << "Disable rates optimization" << std::endl;
-  return ll;
   if (!thorough) {
     settings.lineSearchMinImprovement = 10.0;
     settings.minAlpha = 0.01;
@@ -252,6 +250,11 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   Logger::timed << "Initial ll=" << _evaluator.computeLikelihood() << std::endl;
   printFamilyDimensions("temp.txt");
 }
+  
+double GTSpeciesTreeOptimizer::optimizeModelRates(bool thorough)
+{
+  return _evaluator.optimizeModelRates(thorough);
+}
 
 void GTSpeciesTreeOptimizer::optimize()
 {
@@ -366,23 +369,30 @@ void GTSpeciesTreeOptimizer::printFamilyDimensions(const std::string &outputFile
   }
 }
 
-void GTSpeciesTreeOptimizer::reconcile()
+void GTSpeciesTreeOptimizer::reconcile(unsigned int samples)
 {
+  if (samples == 0) {
+    return;
+  }
   auto recDir = FileSystem::joinPaths(_outputDir, "reconciliations");
-  Logger::info << "mkdir " << recDir << std::endl;
   FileSystem::mkdir(recDir, true);
   ParallelContext::barrier();
   auto &families = _geneTrees.getTrees();
-  unsigned int samples = 5;
 
   for (unsigned int i = 0; i < families.size(); ++i) {
+    std::string geneTreesPath = FileSystem::joinPaths(recDir, families[i].name + std::string(".newick"));
+    Logger::info << "gene trees in " << geneTreesPath << std::endl;
+    ParallelOfstream geneTreesOs(geneTreesPath, false);
+
     for (unsigned int sample = 0; sample < samples; ++ sample) {
-      auto out = FileSystem::joinPaths(recDir, families[i].name + std::to_string(sample) + ".xml");
+      auto out = FileSystem::joinPaths(recDir, families[i].name + std::string("_") +  std::to_string(sample) + ".xml");
       auto &evaluation = _evaluations[i];
       evaluation->computeLogLikelihood();
       Scenario scenario;
       evaluation->inferMLScenario(scenario, true);
       scenario.saveReconciliation(out, ReconciliationFormat::RecPhyloXML, false);
+      scenario.saveReconciliation(geneTreesOs, ReconciliationFormat::NewickEvents);
+      geneTreesOs <<  "\n";
     }
   }
 

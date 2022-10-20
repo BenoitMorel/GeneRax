@@ -241,13 +241,14 @@ static void recursivelySaveReconciliationsNewickEvents(
     std::vector<std::vector<Scenario::Event> > &geneToEvents, 
     ParallelOfstream &os)
 {
-  
   if(node->next) {
-    auto left = node->next->back;
-    auto right = node->next->next->back;
+    corax_unode_t *left, *right;
     if (isVirtualRoot) {
       left = node->next;
       right = node->next->back;
+    } else {
+      left = node->next->back;
+      right = node->next->next->back;
     }
     os << "(";
     recursivelySaveReconciliationsNewickEvents(
@@ -264,7 +265,7 @@ static void recursivelySaveReconciliationsNewickEvents(
     os << ")";
   } 
   if (!node->next) {
-    os << node->label;
+    os << (node->label ? node->label : "coucou");
   } else {
     os << Enums::getEventName(geneToEvents[node->node_index].back().type); 
   }

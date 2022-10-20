@@ -65,8 +65,10 @@ public:
   double rootSearch(unsigned int maxDepth);
   double transferSearch();
   void onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
-  void reconcile();
+  void reconcile(unsigned int samples);
   void printFamilyDimensions(const std::string &outputFile);
+  double optimizeModelRates(bool thorough = false);
+
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   PerCoreGeneTrees _geneTrees;

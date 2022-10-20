@@ -170,6 +170,13 @@ public:
   void resetBlackList();
 
 
+  std::vector<corax_unode_t *> &getGeneNodeBuffer() {return _geneNodeBuffer;}
+  corax_unode_t *generateVirtualGeneRoot();
+  void generateGeneChildren(corax_unode_t *geneNode, 
+      corax_unode_t *&leftGeneNode,
+      corax_unode_t *&rightGeneNode);
+
+
   corax_unode_t *getGeneRoot() const {return _geneRoot;}
   unsigned int getVirtualRootIndex() const { return _virtualRootIndex;}
   corax_rtree_t *getSpeciesTree() const {return _speciesTree;}
@@ -184,6 +191,7 @@ private:
   PLLRootedTree *_rootedTree;
   corax_rtree_s *_speciesTree;
   unsigned int _virtualRootIndex;
+  std::vector<corax_unode_t *> _geneNodeBuffer;
   typedef std::vector< std::vector <int> > ScenarioBlackList;
   std::unique_ptr<ScenarioBlackList> _blacklist;
   OrthoGroup *getLargestOrthoGroupRec(corax_unode_t *geneNode, bool isVirtualRoot) const;

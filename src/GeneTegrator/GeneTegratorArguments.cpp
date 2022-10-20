@@ -8,7 +8,9 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
   argv(iargv),
   reconciliationModelStr("UndatedDTL"),
   speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
+  speciesSearchStrategy(SpeciesSearchStrategy::HYBRID),
   pruneSpeciesTree(false),
+  geneTreeSamples(0),
   output("GeneTegrator"),
   seed(123)
 {
@@ -22,14 +24,20 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
     } else if (arg == "-s" || arg == "--species-tree") {
       speciesTree = std::string(argv[++i]);
       speciesTreeAlgorithm = Enums::strToSpeciesTree(speciesTree);
+    } else if (arg == "--species-search") {
+      speciesSearchStrategy = ArgumentsHelper::strToSpeciesSearchStrategy(std::string(argv[++i]));
     } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModelStr = std::string(argv[++i]);
     } else if (arg == "--prune-species-tree") {
       pruneSpeciesTree = true;
+    } else if (arg == "--gene-tree-samples") {
+      geneTreeSamples = atoi(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
       output = std::string(argv[++i]);
     } else if (arg == "--seed") {
       seed = atoi(argv[++i]);
+    } else {
+      std::cerr << "Unknown argument " << arg << std::endl;
     }
   }
 }

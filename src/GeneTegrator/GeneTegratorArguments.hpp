@@ -18,7 +18,11 @@ public:
    std::string speciesTree;
    std::string reconciliationModelStr;
    SpeciesTreeAlgorithm speciesTreeAlgorithm;
+   SpeciesSearchStrategy speciesSearchStrategy;
    bool pruneSpeciesTree;
+
+   unsigned int geneTreeSamples;
+
    std::string output;
    int seed;
 

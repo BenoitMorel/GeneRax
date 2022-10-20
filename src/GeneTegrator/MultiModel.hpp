@@ -2,6 +2,7 @@
 
 #include <ccp/ConditionalClades.hpp>
 #include <likelihoods/reconciliation_models/BaseReconciliationModel.hpp>
+#include <IO/LibpllParsers.hpp>
 
 
 class GeneSpeciesMapping;
@@ -78,27 +79,39 @@ private:
     ReconciliationCell<REAL> *recCell = nullptr) = 0;
   bool backtrace(unsigned int cid, 
       corax_rnode_t *speciesRoot,
+      corax_unode_t *geneNode,
       Scenario &scenario,
       bool stochastic); 
 };
 
 
+
+
 template <class REAL>
 bool MultiModelTemplate<REAL>::inferMLScenario(Scenario &scenario, 
     bool stochastic) {
+   
   auto rootCID = this->_ccp.getCladesNumber() - 1;
   auto speciesRoot = sampleSpeciesNode();
-  scenario.setVirtualRootIndex(rootCID);
+  auto rootIndex = 2 * _ccp.getLeafNumber(); 
+  scenario.setVirtualRootIndex(rootIndex);
   scenario.setSpeciesTree(&this->_speciesTree);
-  return backtrace(rootCID, 
+  auto virtualGeneRoot = scenario.generateVirtualGeneRoot();
+  scenario.setGeneRoot(virtualGeneRoot);
+  auto res = backtrace(rootCID, 
       speciesRoot,
-      scenario, stochastic);
+      virtualGeneRoot, 
+      scenario, 
+      stochastic);
+
+  return res;
 }
 
 
 template <class REAL>
 bool MultiModelTemplate<REAL>::backtrace(unsigned int cid, 
     corax_rnode_t *speciesNode,
+    corax_unode_t *geneNode,
     Scenario &scenario,
     bool stochastic)
 {
@@ -107,30 +120,53 @@ bool MultiModelTemplate<REAL>::backtrace(unsigned int cid,
   ReconciliationCell<REAL> recCell;
   recCell.maxProba = proba * Random::getProba();
   computeProbability(cid, speciesNode, proba, &recCell);
+  if (scenario.getGeneNodeBuffer().size() == 1) {
+    recCell.event.geneNode = scenario.getVirtualRootIndex();
+  } else {
+    recCell.event.geneNode = geneNode->node_index;
+  }
+  
+  corax_unode_t *leftGeneNode;
+  corax_unode_t *rightGeneNode;
+  auto leftCid = recCell.event.leftGeneIndex;
+  auto rightCid = recCell.event.rightGeneIndex;
+  if (recCell.event.type == ReconciliationEventType::EVENT_S 
+      || recCell.event.type == ReconciliationEventType::EVENT_D
+      || recCell.event.type == ReconciliationEventType::EVENT_T) {
+    scenario.generateGeneChildren(geneNode, leftGeneNode, rightGeneNode);
+    recCell.event.leftGeneIndex = leftGeneNode->node_index;
+    recCell.event.rightGeneIndex = rightGeneNode->node_index;
+  }
   scenario.addEvent(recCell.event);
+
   bool ok = true;
+  std::string label;
+
   switch(recCell.event.type) {
   case ReconciliationEventType::EVENT_S:
-    ok &= backtrace(recCell.event.leftGeneIndex, this->getSpeciesLeft(speciesNode), scenario, stochastic); 
-    ok &= backtrace(recCell.event.rightGeneIndex, this->getSpeciesRight(speciesNode), scenario, stochastic); 
+    ok &= backtrace(leftCid, this->getSpeciesLeft(speciesNode), leftGeneNode, scenario, stochastic); 
+    ok &= backtrace(rightCid, this->getSpeciesRight(speciesNode), rightGeneNode, scenario, stochastic); 
     break;
   case ReconciliationEventType::EVENT_D:
-    ok &= backtrace(recCell.event.leftGeneIndex, speciesNode, scenario, stochastic); 
-    ok &= backtrace(recCell.event.rightGeneIndex, speciesNode, scenario, stochastic); 
+    ok &= backtrace(leftCid, speciesNode, leftGeneNode, scenario, stochastic); 
+    ok &= backtrace(rightCid, speciesNode, rightGeneNode, scenario, stochastic); 
     break;
   case ReconciliationEventType::EVENT_SL:
-    ok &= backtrace(cid, recCell.event.pllDestSpeciesNode, scenario, stochastic); 
+    ok &= backtrace(cid, recCell.event.pllDestSpeciesNode, geneNode, scenario, stochastic); 
     break;
   case ReconciliationEventType::EVENT_T:
     // source species
-    ok &= backtrace(recCell.event.leftGeneIndex, speciesNode, scenario, stochastic);
+    ok &= backtrace(leftCid, speciesNode, leftGeneNode, scenario, stochastic);
     // dest species
-    ok &= backtrace(recCell.event.rightGeneIndex, recCell.event.pllDestSpeciesNode, scenario, stochastic);
+    ok &= backtrace(rightCid, recCell.event.pllDestSpeciesNode, rightGeneNode, scenario, stochastic);
     break;
   case ReconciliationEventType::EVENT_TL:
     assert(false);
     break;
   case ReconciliationEventType::EVENT_None:
+    label = _ccp.getCidToLeaves().at(cid);
+    geneNode->label = new char[label.size() + 1];
+    memcpy(geneNode->label, label.c_str(), label.size() + 1);
     break;
   default:
     ok  = false;

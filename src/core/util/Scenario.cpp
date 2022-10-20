@@ -478,3 +478,62 @@ void Scenario::resetBlackList()
     }
   }
 }
+
+static corax_unode_t *createNode(unsigned int index)
+{
+  auto node = new corax_unode_t();
+  node->next = nullptr;
+  node->back = nullptr;
+  node->data = nullptr;
+  node->label = nullptr;
+  node->node_index = index;
+  return node;
+} 
+
+static void backLink(corax_unode_t *n1, corax_unode_t *n2)
+{
+  n1->back = n2;
+  n2->back = n1;
+}
+
+static void nextLink(corax_unode_t *n1, corax_unode_t *n2, corax_unode_t *n3)
+{
+  n1->next = n2;
+  n2->next = n3;
+  n3->next = n1;
+}
+
+corax_unode_t *Scenario::generateVirtualGeneRoot()
+{
+  auto node1 = createNode(0);
+  _geneNodeBuffer.push_back(node1);
+  return node1;
+}
+
+
+void Scenario::generateGeneChildren(corax_unode_t *geneNode, 
+    corax_unode_t *&leftGeneNode,
+    corax_unode_t *&rightGeneNode)
+{
+  if (_geneNodeBuffer.size() == 1) {
+    // we are at the root
+    leftGeneNode = _geneNodeBuffer.back();
+    rightGeneNode = createNode(_geneNodeBuffer.size());
+    backLink(leftGeneNode, rightGeneNode);
+    _geneNodeBuffer.push_back(rightGeneNode);
+    return;
+  }
+  auto next1 = createNode(geneNode->node_index);
+  auto next2 = createNode(geneNode->node_index);
+  nextLink(geneNode, next1, next2);
+  leftGeneNode = createNode(_geneNodeBuffer.size());
+  backLink(next1, leftGeneNode);
+  _geneNodeBuffer.push_back(leftGeneNode);
+  rightGeneNode = createNode(_geneNodeBuffer.size());
+  backLink(next2, rightGeneNode);
+  _geneNodeBuffer.push_back(rightGeneNode);
+}
+
+
+
+
