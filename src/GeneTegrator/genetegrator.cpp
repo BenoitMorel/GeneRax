@@ -83,7 +83,6 @@ void initStartingSpeciesTree(GeneTegratorArguments &args,
 
 void run( GeneTegratorArguments &args)
 {
-  Logger::info << "Mkdir " << args.output << std::endl;
   Random::setSeed(static_cast<unsigned int>(args.seed));
   FileSystem::mkdir(args.output, true);
   FileSystem::mkdir(args.output + "/species_trees", true);
@@ -124,6 +123,7 @@ void run( GeneTegratorArguments &args)
   }
   Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   speciesTreeOptimizer.reconcile(args.geneTreeSamples);
+  Logger::timed <<"End of the execution" << std::endl;
 }
 
 int genetegrator_main(int argc, char** argv, void* comm)
