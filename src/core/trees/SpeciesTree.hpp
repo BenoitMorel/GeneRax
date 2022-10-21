@@ -7,6 +7,7 @@
 #include <util/enums.hpp>
 #include <memory>
 #include <trees/PLLRootedTree.hpp>
+#include <trees/DatedTree.hpp>
 #include <unordered_set>
 #include <unordered_map>
 
@@ -33,6 +34,7 @@ public:
 
   const PLLRootedTree &getTree() const {return _speciesTree;}
   PLLRootedTree &getTree() {return _speciesTree;}
+  DatedTree &getDatedTree() {return _datedTree;}
 
   void saveToFile(const std::string &newick, bool masterRankOnly);
   size_t getHash() const;
@@ -52,6 +54,7 @@ public:
 
 private:
   PLLRootedTree _speciesTree;
+  DatedTree _datedTree;
   std::vector<Listener *> _listeners;
   void buildFromLabels(const std::unordered_set<std::string> &leafLabels);
   static std::unordered_set<std::string> getLabelsFromFamilies(const Families &families);

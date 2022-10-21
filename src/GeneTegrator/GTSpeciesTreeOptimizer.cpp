@@ -5,6 +5,7 @@
 #include <util/Paths.hpp>
 #include <search/SpeciesSPRSearch.hpp>
 #include <search/SpeciesTransferSearch.hpp>
+#include <search/DatedSpeciesTreeSearch.hpp>
 
 static bool testAndSwap(size_t &hash1, size_t &hash2) {
   std::swap(hash1, hash2);
@@ -110,7 +111,7 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
   }
   GTMultiEvaluatorsFunction function(*_evaluations, 
       _modelRates->info, 
-      _speciesTree->getNodesNumber());
+      _speciesTree->getTree().getNodesNumber());
   _modelRates->rates = DTLOptimizer::optimizeParameters(
       function, 
       _modelRates->rates, 
@@ -125,6 +126,8 @@ void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &spe
     TransferFrequencies &transferFrequencies,
     PerSpeciesEvents &perSpeciesEvents)
 {
+  assert(false);
+  /*
   // this is duplicated code from Routines...
   const auto labelToId = speciesTree.getDeterministicLabelToId();
   const auto idToLabel = speciesTree.getDeterministicIdToLabel();
@@ -160,6 +163,7 @@ void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &spe
   }
   perSpeciesEvents.parallelSum();
   assert(ParallelContext::isRandConsistent());
+  */
 }
 
 void GTSpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
@@ -219,7 +223,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
       break;
     case RecModel::UndatedDTL:
       _evaluations.push_back(std::make_shared<UndatedDTLMultiModel<ScaledValue> >(
-        _speciesTree->getTree(),
+        _speciesTree->getDatedTree(),
         mapping,
         info,
         family.startingGeneTree));
@@ -246,7 +250,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   Logger::timed << "Initializing ccps finished" << std::endl;
   _speciesTree->addListener(this);
   ParallelContext::barrier();
-  _evaluator.setEvaluations(_speciesTree->getTree(), _modelRates, families, _evaluations, _geneTrees);
+  _evaluator.setEvaluations(*_speciesTree, _modelRates, families, _evaluations, _geneTrees);
   Logger::timed << "Initial ll=" << _evaluator.computeLikelihood() << std::endl;
   printFamilyDimensions("temp.txt");
 }
@@ -267,10 +271,7 @@ void GTSpeciesTreeOptimizer::optimize()
    *  SPR search, until one does not find
    *  a better tree. Run each at least once.
    */
-  //if (!_searchState.farFromPlausible) {
-    rootSearch(3);
-    //optimizeDTLRates();
-  //}
+  rootSearch(3);
   do {
     if (index++ % 2 == 0) {
       transferSearch();
@@ -399,4 +400,37 @@ void GTSpeciesTreeOptimizer::reconcile(unsigned int samples)
   ParallelContext::makeRandConsistent();
   
 }
+
+
+void GTSpeciesTreeOptimizer::optimizeDates()
+{
+  auto &tree = _speciesTree->getDatedTree();
+  
+  unsigned int max = tree.getOrderedSpeciations().size() - 1;
+  auto bestLL = _evaluator.computeLikelihood();
+  Logger::info << "Optimizing dates, ll=" << bestLL << std::endl;
+  bool tryAgain = true;
+  while (tryAgain) {
+    tryAgain = false;
+    for (unsigned int rank = 0; rank < max; ++rank) {
+      if (!tree.moveUp(rank)) {
+        continue;
+      }
+      onSpeciesTreeChange(nullptr);
+      auto ll = _evaluator.computeLikelihood();
+      if (ll > bestLL) {
+        tryAgain = true;
+        bestLL = ll;
+        Logger::info << "Better ll = " << bestLL << std::endl;
+      } else {
+        tree.moveUp(rank);
+        onSpeciesTreeChange(nullptr);
+      }
+    }
+  }
+
+
+}
+
+
 

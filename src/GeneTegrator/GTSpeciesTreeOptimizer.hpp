@@ -21,7 +21,7 @@ class GTSpeciesTreeLikelihoodEvaluator: public SpeciesTreeLikelihoodEvaluatorInt
 public:
   GTSpeciesTreeLikelihoodEvaluator()
   {}
-  void setEvaluations(PLLRootedTree &speciesTree,
+  void setEvaluations(SpeciesTree &speciesTree,
       ModelParameters &modelRates, 
       const Families &families,
       PerCoreMultiEvaluation &evaluations,
@@ -45,7 +45,7 @@ public:
     PerSpeciesEvents &perSpeciesEvents);
   virtual bool pruneSpeciesTree() const {return _modelRates->info.pruneSpeciesTree;}
 private:
-  PLLRootedTree *_speciesTree;
+  SpeciesTree *_speciesTree;
   ModelParameters *_modelRates;
   const Families *_families;
   PerCoreMultiEvaluation *_evaluations;
@@ -68,6 +68,7 @@ public:
   void reconcile(unsigned int samples);
   void printFamilyDimensions(const std::string &outputFile);
   double optimizeModelRates(bool thorough = false);
+  void optimizeDates();
 
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;

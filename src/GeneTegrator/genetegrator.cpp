@@ -115,6 +115,9 @@ void run( GeneTegratorArguments &args)
     break;
   case SpeciesSearchStrategy::EVAL:
     speciesTreeOptimizer.optimizeModelRates(false);
+    speciesTreeOptimizer.optimizeDates();
+    speciesTreeOptimizer.optimizeModelRates(true);
+    speciesTreeOptimizer.optimizeDates();
     break;
   case SpeciesSearchStrategy::SKIP:
     break;

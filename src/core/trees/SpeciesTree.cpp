@@ -11,13 +11,15 @@
 
 
 SpeciesTree::SpeciesTree(const std::string &newick, bool fromFile):
-  _speciesTree(newick, fromFile)
+  _speciesTree(newick, fromFile),
+  _datedTree(&_speciesTree)
 {
 }
 
 
 SpeciesTree::SpeciesTree(const std::unordered_set<std::string> &leafLabels):
-  _speciesTree(leafLabels)
+  _speciesTree(leafLabels),
+  _datedTree(&_speciesTree)
 {
 }
   
@@ -28,7 +30,8 @@ std::unique_ptr<SpeciesTree> SpeciesTree::buildRandomTree() const
 
   
 SpeciesTree::SpeciesTree(const Families &families):
-  _speciesTree(getLabelsFromFamilies(families))
+  _speciesTree(getLabelsFromFamilies(families)),
+  _datedTree(&_speciesTree)
 {
 }
 

@@ -2,6 +2,7 @@
 
 #include <IO/GeneSpeciesMapping.hpp>
 #include <trees/PLLRootedTree.hpp>
+#include <trees/DatedTree.hpp>
 #include <ccp/ConditionalClades.hpp>
 #include <maths/ScaledValue.hpp>
 #include "MultiModel.hpp"
@@ -12,7 +13,7 @@ double log(ScaledValue v);
 template <class REAL>
 class UndatedDTLMultiModel: public MultiModelTemplate<REAL> {
 public: 
-  UndatedDTLMultiModel(PLLRootedTree &speciesTree, 
+  UndatedDTLMultiModel(DatedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
       const RecModelInfo &info,
       const std::string &geneTreesFile);
@@ -25,7 +26,7 @@ public:
   
 private:
   
-  
+  DatedTree &_datedTree;
   std::vector<double> _PD; // Duplication probability, per species branch
   std::vector<double> _PL; // Loss probability, per species branch
   std::vector<double> _PT; // Transfer probability, per species branch
@@ -61,8 +62,6 @@ private:
   };
   
   std::vector<DTLCLV> _dtlclvs;
-  std::vector<corax_rnode_s *> _orderedSpeciations;
-  std::vector<unsigned int> _orderedSpeciesRanks;
 
 
 
@@ -82,22 +81,23 @@ private:
 
 
 template <class REAL>
-UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(PLLRootedTree &speciesTree, 
+UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(DatedTree &speciesTree, 
     const GeneSpeciesMapping &geneSpeciesMapping, 
     const RecModelInfo &info,
     const std::string &geneTreesFile):
-  MultiModelTemplate<REAL>(speciesTree,
+  MultiModelTemplate<REAL>(speciesTree.getRootedTree(),
       geneSpeciesMapping,
       info,
       geneTreesFile),
-  _PD(speciesTree.getNodesNumber(), 0.2),
-  _PL(speciesTree.getNodesNumber(), 0.2),
-  _PT(speciesTree.getNodesNumber(), 0.2),
-  _PS(speciesTree.getNodesNumber(), 1.0),
-  _uE(speciesTree.getNodesNumber(), 0.0),
+  _datedTree(speciesTree),
+  _PD(this->_speciesTree.getNodesNumber(), 0.2),
+  _PL(this->_speciesTree.getNodesNumber(), 0.2),
+  _PT(this->_speciesTree.getNodesNumber(), 0.2),
+  _PS(this->_speciesTree.getNodesNumber(), 1.0),
+  _uE(this->_speciesTree.getNodesNumber(), 0.0),
   _transferConstraint(info.transferConstraint)
 {
-  std::vector<REAL> zeros(speciesTree.getNodesNumber());
+  std::vector<REAL> zeros(this->_speciesTree.getNodesNumber());
   DTLCLV nullCLV(this->_allSpeciesNodesCount);
   _dtlclvs = std::vector<DTLCLV>(2 * (this->_ccp.getCladesNumber()), nullCLV);
   for (unsigned int e = 0; e < this->_speciesTree.getNodesNumber(); ++e) {
@@ -176,8 +176,9 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
       auto e = leaf->node_index;
       softDatedSum += uq[e];
     }
-    for (auto it = this->_orderedSpeciations.rbegin(); 
-        it != this->_orderedSpeciations.rend(); ++it) {
+    
+    for (auto it = _datedTree.getOrderedSpeciations().rbegin(); 
+        it != _datedTree.getOrderedSpeciations().rend(); ++it) {
       auto node = (*it);
       auto e = node->node_index;
       softDatedSums[e] = softDatedSum;
@@ -276,7 +277,7 @@ void UndatedDTLMultiModel<REAL>::sampleTransferEvent(unsigned int cid,
     if (_transferConstraint == TransferConstaint::SOFTDATED) {
       if (originSpeciesNode->parent) {
         auto p = originSpeciesNode->parent->node_index;
-        if (_orderedSpeciesRanks[p] >= _orderedSpeciesRanks[h]) {
+        if (_datedTree.getRank(p) >= _datedTree.getRank(h)) {
           continue;
         }
       }
@@ -294,17 +295,6 @@ void UndatedDTLMultiModel<REAL>::sampleTransferEvent(unsigned int cid,
 template <class REAL>
 void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
 {
-  if (_transferConstraint == TransferConstaint::SOFTDATED) {
-    _orderedSpeciations = this->_speciesTree.getOrderedSpeciations();  
-    _orderedSpeciesRanks.resize(this->_speciesTree.getNodesNumber());
-    unsigned int rank = 0;
-    for (auto species: _orderedSpeciations) {
-      _orderedSpeciesRanks[species->node_index] = rank++; 
-    }
-    for (auto leaf: this->_speciesTree.getLeaves()) {
-      _orderedSpeciesRanks[leaf->node_index] = rank;
-    }
-  }
   for (auto speciesNode: this->_allSpeciesNodes) {
     _uE[speciesNode->node_index] = REAL(0.0);
   }

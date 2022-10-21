@@ -47,9 +47,11 @@ set(jointsearch-core_SOURCES
   search/SpeciesTransferSearch.cpp
   search/SPRSearch.cpp
   search/UNNISearch.cpp
+  search/DatedSpeciesTreeSearch.cpp
   support/ICCalculator.cpp
   trees/Clade.cpp
   trees/DSTagger.cpp
+  trees/DatedTree.cpp
   trees/PLLUnrootedTree.cpp
   trees/PLLRootedTree.cpp
   trees/PLLTreeInfo.cpp
