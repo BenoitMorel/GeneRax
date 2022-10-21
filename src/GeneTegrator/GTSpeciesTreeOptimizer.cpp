@@ -211,14 +211,14 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
     switch (info.model) {
     case RecModel::UndatedDL:
       _evaluations.push_back(
-        std::make_shared<UndatedDLMultiModel<ScaledValue> >(
+        std::make_shared<UndatedDLMultiModel<double> >(
         _speciesTree->getTree(),
         mapping,
         info,
         family.startingGeneTree));
       break;
     case RecModel::UndatedDTL:
-      _evaluations.push_back(std::make_shared<UndatedDTLMultiModel<ScaledValue> >(
+      _evaluations.push_back(std::make_shared<UndatedDTLMultiModel<double> >(
         _speciesTree->getTree(),
         mapping,
         info,

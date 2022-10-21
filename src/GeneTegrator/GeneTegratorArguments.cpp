@@ -7,6 +7,7 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
   reconciliationModelStr("UndatedDTL"),
+  transferConstraint(TransferConstaint::NONE),
   speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
   speciesSearchStrategy(SpeciesSearchStrategy::HYBRID),
   pruneSpeciesTree(false),
@@ -28,6 +29,8 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
       speciesSearchStrategy = ArgumentsHelper::strToSpeciesSearchStrategy(std::string(argv[++i]));
     } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModelStr = std::string(argv[++i]);
+    } else if (arg == "--transfer-constraint") {
+      transferConstraint = ArgumentsHelper::strToTransferConstraint(std::string(argv[++i]));
     } else if (arg == "--prune-species-tree") {
       pruneSpeciesTree = true;
     } else if (arg == "--gene-tree-samples") {

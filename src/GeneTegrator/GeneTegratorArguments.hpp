@@ -17,6 +17,7 @@ public:
    std::string families;
    std::string speciesTree;
    std::string reconciliationModelStr;
+   TransferConstaint transferConstraint;
    SpeciesTreeAlgorithm speciesTreeAlgorithm;
    SpeciesSearchStrategy speciesSearchStrategy;
    bool pruneSpeciesTree;

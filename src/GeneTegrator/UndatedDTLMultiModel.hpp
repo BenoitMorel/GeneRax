@@ -32,6 +32,8 @@ private:
   std::vector<double> _PS; // Speciation probability, per species branch
   std::vector<double> _uE; // Extinction probability, per species branch
   double _transferExtinctionSum;
+  
+  TransferConstaint _transferConstraint;
 
   /**
    *  All intermediate results needed to compute the reconciliation likelihood
@@ -40,26 +42,31 @@ private:
    */
   struct DTLCLV {
     DTLCLV():
-      _survivingTransferSums(REAL())
+      _survivingTransferSum(REAL())
     {}
 
     DTLCLV(unsigned int speciesNumber):
       _uq(speciesNumber, REAL()),
-      _survivingTransferSums(REAL())
+      _correctionSum(speciesNumber, REAL()),
+      _survivingTransferSum(REAL())
     {
     }
     // probability of a gene node rooted at a species node
     std::vector<REAL> _uq;
+    std::vector<REAL> _correctionSum;
 
     // sum of transfer probabilities. Can be computed only once
     // for all species, to reduce computation complexity
-    REAL _survivingTransferSums;
+    REAL _survivingTransferSum;
   };
   
   std::vector<DTLCLV> _dtlclvs;
+  std::vector<corax_rnode_s *> _orderedSpeciations;
+  std::vector<unsigned int> _orderedSpeciesRanks;
 
 
 
+  void updateCLV(CID cid);
   REAL getLikelihoodFactor() const;
   virtual void recomputeSpeciesProbabilities();
   virtual void computeProbability(CID cid, 
@@ -67,7 +74,7 @@ private:
     REAL &proba,
     ReconciliationCell<REAL> *recCell = nullptr);
   void sampleTransferEvent(unsigned int cid,
-    REAL survivingTransferSum,
+    corax_rnode_t *srcSpeciesNode,
     corax_rnode_t *&destSpeciesNode);
 
   
@@ -87,7 +94,8 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(PLLRootedTree &speciesTree,
   _PL(speciesTree.getNodesNumber(), 0.2),
   _PT(speciesTree.getNodesNumber(), 0.2),
   _PS(speciesTree.getNodesNumber(), 1.0),
-  _uE(speciesTree.getNodesNumber(), 0.0)
+  _uE(speciesTree.getNodesNumber(), 0.0),
+  _transferConstraint(info.transferConstraint)
 {
   std::vector<REAL> zeros(speciesTree.getNodesNumber());
   DTLCLV nullCLV(this->_allSpeciesNodesCount);
@@ -129,6 +137,41 @@ void UndatedDTLMultiModel<REAL>::setRates(const RatesVector &rates)
   recomputeSpeciesProbabilities();
 }
 
+template <class REAL>
+void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
+{
+  auto &clv = _dtlclvs[cid];
+  auto &uq = clv._uq;
+  auto &correctionSum = clv._correctionSum;
+  clv._survivingTransferSum = REAL();
+  std::fill(uq.begin(), uq.end(), REAL());
+  std::fill(correctionSum.begin(), correctionSum.end(), REAL());
+  auto N = static_cast<double>(this->_allSpeciesNodes.size());
+  auto sum = REAL();
+  for (auto speciesNode: this->_allSpeciesNodes) {
+    computeProbability(cid, 
+        speciesNode, 
+        uq[speciesNode->node_index]);
+    sum += uq[speciesNode->node_index];
+  }
+  if (_transferConstraint == TransferConstaint::PARENTS) {
+    auto postOrder = this->_speciesTree.getPostOrderNodes();
+    for (auto it = postOrder.rbegin();
+        it != postOrder.rend(); ++it)  {
+      auto speciesNode = *it;
+      auto e = speciesNode->node_index;
+      auto parent = speciesNode;
+      while (parent) {
+        auto p = parent->node_index;
+        correctionSum[e] += uq[p];
+        parent = parent->parent;
+      }
+      correctionSum[e] /= N;
+    }
+  }
+  sum /= N;
+  clv._survivingTransferSum = sum;
+}
 
 
 template <class REAL>
@@ -139,23 +182,7 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
   }
   this->beforeComputeLogLikelihood();
   for (CID cid = 0; cid < this->_ccp.getCladesNumber(); ++cid) {
-    auto &clv = _dtlclvs[cid];
-    auto &uq = clv._uq;
-    clv._survivingTransferSums = REAL();
-    std::fill(uq.begin(), uq.end(), REAL());
-  }  
-  for (CID cid = 0; cid < this->_ccp.getCladesNumber(); ++cid) {
-    auto &clv = _dtlclvs[cid];
-    auto &uq = clv._uq;
-    auto sum = REAL();
-    for (auto speciesNode: this->_allSpeciesNodes) {
-      computeProbability(cid, 
-          speciesNode, 
-          uq[speciesNode->node_index]);
-      sum += uq[speciesNode->node_index];
-    }
-    sum /= this->_allSpeciesNodes.size();
-    clv._survivingTransferSums = sum;
+    updateCLV(cid);
   }
   auto rootCID = this->_ccp.getCladesNumber() - 1;
   REAL res = REAL();
@@ -174,17 +201,45 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
 
 template <class REAL>
 void UndatedDTLMultiModel<REAL>::sampleTransferEvent(unsigned int cid,
-    REAL survivingTransferSum,
+    corax_rnode_t *srcSpeciesNode,
     corax_rnode_t *&destSpeciesNode)
 {
-  REAL max = survivingTransferSum * Random::getProba();
+  auto e = srcSpeciesNode->node_index;
+  auto &clv = _dtlclvs[cid];
+  auto &survivingTransferSum = clv._survivingTransferSum;
+  auto &correctionSum = clv._correctionSum;
+  REAL max = survivingTransferSum;
+  
+  if (_transferConstraint == TransferConstaint::PARENTS) {
+    max = max - correctionSum[e];
+  }
+  max *= Random::getProba();
   max *= this->_allSpeciesNodes.size();
   REAL sum = REAL();
+  
+  std::unordered_set<unsigned int> parents;
+  if (_transferConstraint == TransferConstaint::PARENTS) {
+    auto parent = srcSpeciesNode;
+    while (parent) {
+      parents.insert(parent->node_index);
+      parent = parent->parent;
+    }
+  }
+
   for (auto speciesNode: this->_allSpeciesNodes) {
-    sum += _dtlclvs[cid]._uq[speciesNode->node_index];
-    if (sum > max) {
-      destSpeciesNode = speciesNode;
-      return;
+    auto h = speciesNode->node_index;
+    bool ok = true;
+    ok &= (h !=e);  
+    // parent mode: do not continue if the receiving species
+    // is a parent of the source species
+    ok &= !(_transferConstraint == TransferConstaint::PARENTS 
+        && parents.end() != parents.find(h)); 
+    if (ok) {
+      sum += _dtlclvs[cid]._uq[h];
+      if (sum > max) {
+        destSpeciesNode = speciesNode;
+        return;
+      }
     }
   }
   assert(false);
@@ -289,15 +344,23 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
 
 
     // T event
-    
-    temp =  _dtlclvs[cidLeft]._survivingTransferSums * (_PT[e] * freq);
+    switch (_transferConstraint) {
+    case TransferConstaint::NONE:
+      temp =  _dtlclvs[cidLeft]._survivingTransferSum * (_PT[e] * freq);
+      break;
+    case TransferConstaint::PARENTS:
+      temp = (_dtlclvs[cidLeft]._survivingTransferSum - _dtlclvs[cidLeft]._correctionSum[e]) * (_PT[e] * freq);
+      break;
+    default:
+      assert(false);
+    }
     temp *= _dtlclvs[cidRight]._uq[e];
     scale(temp);
     proba += temp;
     if (recCell && proba > maxProba) {
       recCell->event.type = ReconciliationEventType::EVENT_T;
       sampleTransferEvent(cidLeft, 
-          _dtlclvs[cidLeft]._survivingTransferSums,
+          speciesNode,
           recCell->event.pllDestSpeciesNode);
       recCell->event.destSpeciesNode = 
         recCell->event.pllDestSpeciesNode->node_index;
@@ -306,14 +369,14 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
       return;
     }
    
-    temp =  _dtlclvs[cidRight]._survivingTransferSums * (_PT[e] * freq);
+    temp =  _dtlclvs[cidRight]._survivingTransferSum * (_PT[e] * freq);
     temp *= _dtlclvs[cidLeft]._uq[e];
     scale(temp);
     proba += temp;
     if (recCell && proba > maxProba) {
       recCell->event.type = ReconciliationEventType::EVENT_T;
       sampleTransferEvent(cidRight, 
-          _dtlclvs[cidRight]._survivingTransferSums,
+          speciesNode,
           recCell->event.pllDestSpeciesNode);
       recCell->event.destSpeciesNode = 
         recCell->event.pllDestSpeciesNode->node_index;

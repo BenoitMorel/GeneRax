@@ -269,18 +269,6 @@ void UndatedDTLModel<REAL>::updateCLV(corax_unode_t *geneNode)
   
   auto &parentsCache = this->_speciesTree.getParentsCache(lca);
   
-  /*
-  auto lcaRight = lca;
-  auto lcaLeft = lca;
-  if (geneNode->next) {
-    auto geneLeft = this->getLeft(geneNode, false);
-    auto geneRight = this->getRight(geneNode, false);
-    lcaRight = this->_geneToSpeciesLCA[geneLeft->node_index];
-    lcaLeft = this->_geneToSpeciesLCA[geneRight->node_index];
-  }
-  auto &ancestorsLeft = this->_speciesTree.getAncestorssCache(lcaLeft);
-  auto &ancestorsRight = this->_speciesTree.getAncestorssCache(lcaRight);
-  */
  
   auto N = static_cast<double>(this->_allSpeciesNodes.size());
   std::fill(uq.begin(), uq.end(), REAL());
@@ -314,13 +302,9 @@ void UndatedDTLModel<REAL>::updateCLV(corax_unode_t *geneNode)
   }
   if (_transferConstraint == TransferConstaint::SOFTDATED) {
     std::vector<REAL> softDatedSums(N, REAL());
-    std::vector<REAL> softDatedContCorrections(N, REAL());
     std::vector<double> possibleTransfers(N, REAL());
-    std::vector<double> possibleTransfers2(N, REAL());
     double currentPossibleTransfers = static_cast<double>(this->_speciesTree.getLeavesNumber()) - 1.0;
-    double currentPossibleTransfers2 = static_cast<double>(this->_speciesTree.getLeavesNumber()) - 1.0;
     REAL softDatedSum = REAL();
-    REAL softDatedContCorrection = REAL();
     for (auto leaf: this->_speciesTree.getLeaves()) {
       auto e = leaf->node_index;
       softDatedSum += uq[e];
@@ -335,30 +319,11 @@ void UndatedDTLModel<REAL>::updateCLV(corax_unode_t *geneNode)
       softDatedSum += uq[e];
       currentPossibleTransfers += 1.0;
     }
-#ifdef CONTCORRECTION
-    for (auto it = this->_orderedSpeciations.rbegin(); 
-        it != this->_orderedSpeciations.rend(); ++it) {
-      auto node = *it;
-      auto e = node->node_index;
-      assert(node->left);
-      auto f = node->left->node_index;
-      auto g = node->right->node_index;
-      softDatedContCorrection += uq[f];
-      softDatedContCorrection += uq[g];
-      currentPossibleTransfers2 += 2.0;
-      possibleTransfers2[e] = currentPossibleTransfers2;
-      softDatedContCorrections[e] = softDatedContCorrection;
-    }
-#endif
     for (auto node: this->_allSpeciesNodes) {
       auto e = node->node_index;
       auto p = node->parent ? node->parent->node_index : e;
       if (e != p) {
-#ifdef CONTCORRECTION
-        correctionSum[e] = softDatedSums[p] - (softDatedContCorrections[e] * 0.9);
-#else
         correctionSum[e] = softDatedSums[p];
-#endif
       }
       correctionSum[e] /= N;
     }

@@ -31,6 +31,7 @@ struct RecModelInfo {
     pruneSpeciesTree(true),
     rootedGeneTree(true),
     branchLengthThreshold(-1.0),
+    transferConstraint(TransferConstaint::NONE),
     noDup(false)
   {
 
