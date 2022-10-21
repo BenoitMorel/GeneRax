@@ -248,6 +248,17 @@ void UndatedDTLMultiModel<REAL>::sampleTransferEvent(unsigned int cid,
 template <class REAL>
 void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
 {
+  if (_transferConstraint == TransferConstaint::SOFTDATED) {
+    _orderedSpeciations = this->_speciesTree.getOrderedSpeciations();  
+    _orderedSpeciesRanks.resize(this->_speciesTree.getNodesNumber());
+    unsigned int rank = 0;
+    for (auto species: _orderedSpeciations) {
+      _orderedSpeciesRanks[species->node_index] = rank++; 
+    }
+    for (auto leaf: this->_speciesTree.getLeaves()) {
+      _orderedSpeciesRanks[leaf->node_index] = rank;
+    }
+  }
   for (auto speciesNode: this->_allSpeciesNodes) {
     _uE[speciesNode->node_index] = REAL(0.0);
   }
