@@ -10,6 +10,12 @@
 
 int generax_main(int argc, char** argv, void* comm)
 {
+  Logger::info << sizeof(char) << std::endl;
+  Logger::info << sizeof(unsigned int) << std::endl;
+  Logger::info << sizeof(unsigned long) << std::endl;
+  Logger::info << sizeof(unsigned long long) << std::endl;
+  Logger::info << sizeof(size_t) << std::endl;
+  return 1;
   ParallelContext::init(comm); 
   Logger::init();
   Logger::timed << "GeneRax 2.1.0" << std::endl; 

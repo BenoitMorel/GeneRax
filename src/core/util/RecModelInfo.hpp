@@ -24,7 +24,7 @@ struct RecModelInfo {
 
   std::string fractionMissingFile;
  
-  
+    
   RecModelInfo():
     model(RecModel::UndatedDTL),
     perFamilyRates(true),
@@ -131,5 +131,9 @@ struct RecModelInfo {
       }
     }
     return res;
+  }
+
+  bool isDated() const {
+    return transferConstraint == TransferConstaint::SOFTDATED;
   }
 };

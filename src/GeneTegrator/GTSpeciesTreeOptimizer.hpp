@@ -73,6 +73,7 @@ public:
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   PerCoreGeneTrees _geneTrees;
+  RecModelInfo _info;
   PerCoreMultiEvaluation _evaluations;
   GTSpeciesTreeLikelihoodEvaluator _evaluator;
   ModelParameters _modelRates;

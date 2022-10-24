@@ -186,6 +186,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
     const std::string &outputDir):
   _speciesTree(std::make_unique<SpeciesTree>(speciesTreeFile)),
   _geneTrees(families, false, true),
+  _info(info),
   _outputDir(outputDir),
   _searchState(*_speciesTree, 
       Paths::getSpeciesTreeFile(_outputDir, "inferred_species_tree.newick"))
@@ -404,6 +405,9 @@ void GTSpeciesTreeOptimizer::reconcile(unsigned int samples)
 
 void GTSpeciesTreeOptimizer::optimizeDates()
 {
+  if (!_info.isDated()) {
+    return; 
+  }
   auto &tree = _speciesTree->getDatedTree();
   
   unsigned int max = tree.getOrderedSpeciations().size() - 1;
