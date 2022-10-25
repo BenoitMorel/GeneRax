@@ -21,6 +21,7 @@ static void rootSearchAux(SpeciesTree &speciesTree,
   std::vector<unsigned int> moves;
   moves.push_back(movesHistory.back() % 2);
   moves.push_back(2 + (movesHistory.back() % 2));
+  auto backup = speciesTree.getDatedTree().getBackup();
   for (auto direction: moves) {
     if (!SpeciesTreeOperator::canChangeRoot(speciesTree, direction)) {
       continue;
@@ -63,6 +64,7 @@ static void rootSearchAux(SpeciesTree &speciesTree,
     SpeciesTreeOperator::revertChangeRoot(speciesTree, direction);
     evaluator.popAndApplyRollback();
     movesHistory.pop_back();
+    speciesTree.getDatedTree().restore(backup);
   }
 }
 

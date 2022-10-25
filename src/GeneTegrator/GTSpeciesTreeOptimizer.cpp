@@ -3,6 +3,7 @@
 #include <IO/Logger.hpp>
 #include <optimizers/DTLOptimizer.hpp>
 #include <util/Paths.hpp>
+#include <maths/Random.hpp>
 #include <search/SpeciesSPRSearch.hpp>
 #include <search/SpeciesTransferSearch.hpp>
 #include <search/DatedSpeciesTreeSearch.hpp>
@@ -208,8 +209,6 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   _modelRates = ModelParameters(startingRates, 
       1, //_geneTrees.getTrees().size(), 
       info);
-  saveCurrentSpeciesTreeId("starting_species_tree.newick");
-  saveCurrentSpeciesTreeId();
   Logger::timed << "Initializing ccps" << std::endl;
   for (const auto &geneTree: _geneTrees.getTrees()) {
     auto &family = families[geneTree.familyIndex];
@@ -254,8 +253,12 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   _speciesTree->addListener(this);
   ParallelContext::barrier();
   _evaluator.setEvaluations(*_speciesTree, _modelRates, families, _evaluations, _geneTrees);
+  
   Logger::timed << "Initial ll=" << _evaluator.computeLikelihood() << std::endl;
   printFamilyDimensions("temp.txt");
+  
+  saveCurrentSpeciesTreeId("starting_species_tree.newick");
+  saveCurrentSpeciesTreeId();
 }
   
 double GTSpeciesTreeOptimizer::optimizeModelRates(bool thorough)
@@ -400,7 +403,19 @@ void GTSpeciesTreeOptimizer::reconcile(unsigned int samples)
   }
 
   ParallelContext::makeRandConsistent();
-  
+}
+
+void GTSpeciesTreeOptimizer::perturbateDates()
+{
+  if (!_info.isDated()) {
+    return; 
+  }
+  auto &tree = _speciesTree->getDatedTree();
+  size_t N = tree.getOrderedSpeciations().size();
+  for (size_t i = 0; i < N * 2; ++i) {
+    auto rank = Random::getInt() % N;
+    tree.moveUp(rank);
+  }
 }
 
 
@@ -410,14 +425,48 @@ void GTSpeciesTreeOptimizer::optimizeDates()
     return; 
   }
   auto &tree = _speciesTree->getDatedTree();
+  auto bestLL = _evaluator.computeLikelihood();
+  Logger::timed << "Optimizing dates, ll=" << bestLL << std::endl;
+  optimizeDatesNaive(); 
+  bestLL = _evaluator.computeLikelihood();
+  Logger::timed << "Best ll so far: = " << bestLL << std::endl;
+  
+  for (unsigned int i = 0; i < 2; ++i) {
+    bool improved = true;
+    while (improved) {
+      improved = false;
+      auto backup = tree.getBackup();
+      perturbateDates();
+      auto ll = _evaluator.computeLikelihood();
+      //Logger::timed << "LL after random perturbate: " << ll << std::endl;
+      optimizeDatesNaive();
+      ll = _evaluator.computeLikelihood();
+      //Logger::timed << "LL after naive search from random perturbate: " << ll << std::endl;
+      if (ll <= bestLL) {
+        tree.restore(backup);
+      } else {
+        bestLL = ll;
+        Logger::timed << "Best ll so far: = " << bestLL << std::endl;
+        improved = true;
+      }
+    }
+  } 
+}
+
+
+void GTSpeciesTreeOptimizer::optimizeDatesNaive()
+{
+  if (!_info.isDated()) {
+    return; 
+  }
+  auto &tree = _speciesTree->getDatedTree();
   
   unsigned int max = tree.getOrderedSpeciations().size();
   auto bestLL = _evaluator.computeLikelihood();
-  Logger::info << "Optimizing dates, ll=" << bestLL << std::endl;
   bool tryAgain = true;
   while (tryAgain) {
     tryAgain = false;
-    Logger::timed << "new round" << std::endl;
+    Logger::timed << "new naive dated round ll= " << bestLL <<  std::endl;
     for (unsigned int rank = 0; rank < max; ++rank) {
       if (!tree.moveUp(rank)) {
         continue;
@@ -436,9 +485,21 @@ void GTSpeciesTreeOptimizer::optimizeDates()
       assert(_speciesTree->getDatedTree().isConsistent());
     }
   }
-
-
+    Logger::timed << "end naive dated round ll= " << bestLL <<  std::endl;
 }
+
+void GTSpeciesTreeOptimizer::randomizeRoot()
+{
+  auto &tree = _speciesTree->getDatedTree();
+  unsigned int N = tree.getOrderedSpeciations().size();
+  for (unsigned int i = 0; i < N; ++i) {
+    auto direction = Random::getInt() % 4;
+    if (SpeciesTreeOperator::canChangeRoot(*_speciesTree, direction)) {
+      SpeciesTreeOperator::changeRoot(*_speciesTree, direction);
+    }
+  }
+}
+
 
 double GTSpeciesTreeOptimizer::plopRoot()
 {

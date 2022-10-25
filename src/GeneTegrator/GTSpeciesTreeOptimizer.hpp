@@ -71,7 +71,10 @@ public:
   double optimizeModelRates(bool thorough = false);
   void optimizeDates();
   SpeciesTree &getSpeciesTree() {return *_speciesTree;}
+  void randomizeRoot();
 private:
+  void optimizeDatesNaive();
+  void perturbateDates();
   std::unique_ptr<SpeciesTree> _speciesTree;
   PerCoreGeneTrees _geneTrees;
   RecModelInfo _info;

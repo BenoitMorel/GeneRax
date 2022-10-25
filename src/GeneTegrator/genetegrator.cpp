@@ -121,6 +121,7 @@ void run( GeneTegratorArguments &args)
     speciesTreeOptimizer.optimizeModelRates(true);
     speciesTreeOptimizer.optimizeDates();
     speciesTreeOptimizer.rootSearch(5555);
+    speciesTreeOptimizer.optimizeDates();
     break;
   case SpeciesSearchStrategy::SKIP:
     break;
