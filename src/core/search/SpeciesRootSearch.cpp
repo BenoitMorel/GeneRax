@@ -29,6 +29,7 @@ static void rootSearchAux(SpeciesTree &speciesTree,
     evaluator.pushRollback();
     SpeciesTreeOperator::changeRoot(speciesTree, direction);
     double ll = evaluator.computeLikelihood();
+    Logger::info << "rootll = " << ll << std::endl;
     if (treePerFamLLVec) {
       auto newick = speciesTree.getTree().getNewickString();
       treePerFamLLVec->push_back({newick, PerFamLL()});

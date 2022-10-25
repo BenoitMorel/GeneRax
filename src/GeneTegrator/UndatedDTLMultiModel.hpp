@@ -210,9 +210,12 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
   }
   auto rootCID = this->_ccp.getCladesNumber() - 1;
   REAL res = REAL();
+  /*
   for (auto speciesNode: this->_allSpeciesNodes) {
     res += _dtlclvs[rootCID]._uq[speciesNode->node_index];
   }
+  */
+  res += _dtlclvs[rootCID]._uq[this->_speciesTree.getRoot()->node_index];
   // the root correction makes sure that UndatedDTLMultiModel and
   // UndatedDTL model are equivalent when there is one tree per
   // family: the UndatedDTLMultiModel integrates over all possible
@@ -486,6 +489,7 @@ REAL UndatedDTLMultiModel<REAL>::getLikelihoodFactor() const
 template <class REAL>
 corax_rnode_t *UndatedDTLMultiModel<REAL>::sampleSpeciesNode()
 {
+  return this->_speciesTree.getRoot();
   auto rootCID = this->_ccp.getCladesNumber() - 1;
   auto &uq = _dtlclvs[rootCID]._uq;
   auto totalLL = std::accumulate(uq.begin(), uq.end(), REAL());

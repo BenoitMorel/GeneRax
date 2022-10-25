@@ -104,25 +104,30 @@ void SpeciesTreeOperator::changeRoot(SpeciesTree &speciesTree, unsigned int dire
   auto D = rootRight->right;
   std::unordered_set<corax_rnode_t *> nodesToInvalidate;
   nodesToInvalidate.insert(root);
+  auto &datedTree = speciesTree.getDatedTree();
   setRootAux(speciesTree, left1 ? rootLeft : rootRight);
   if (left1 && left2) {
     PLLRootedTree::setSon(rootLeft, root, false);
     PLLRootedTree::setSon(root, B, true);
     PLLRootedTree::setSon(root, rootRight, false);
+    datedTree.moveNodeToRoot(rootLeft);
   } else if (!left1 && !left2) {
     PLLRootedTree::setSon(rootRight, root, true);
     PLLRootedTree::setSon(root, C, false);
     PLLRootedTree::setSon(root, rootLeft, true);
+    datedTree.moveNodeToRoot(rootRight);
   } else if (left1 && !left2) {
     PLLRootedTree::setSon(rootLeft, rootLeft->right, true);
     PLLRootedTree::setSon(rootLeft, root, false);
     PLLRootedTree::setSon(root, A, false);
     PLLRootedTree::setSon(root, rootRight, true);
+    datedTree.moveNodeToRoot(rootLeft);
   } else { // !left1 && left2
     PLLRootedTree::setSon(rootRight, root, true);
     PLLRootedTree::setSon(rootRight, C, false);
     PLLRootedTree::setSon(root, D, true);
     PLLRootedTree::setSon(root, rootLeft, false);
+    datedTree.moveNodeToRoot(rootRight);
   }
   speciesTree.onSpeciesTreeChange(&nodesToInvalidate);
 }

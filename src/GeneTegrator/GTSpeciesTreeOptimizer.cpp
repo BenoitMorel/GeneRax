@@ -92,7 +92,6 @@ public:
     }
     ParallelContext::sumDouble(res);
     parameters.setScore(res);
-    Logger::info << "ev " << parameters << std::endl;
     return res;
   }
 private:
@@ -102,8 +101,10 @@ private:
 double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
 {
   auto rates = *_modelRates;
+  Logger::timed << "[Species search] Initial rates: " << _modelRates->rates << std::endl;
   OptimizationSettings settings;
   double ll = computeLikelihood();
+  Logger::timed << "[Species search] Initial likleihood " << ll << std::endl;
   if (!thorough) {
     settings.lineSearchMinImprovement = 10.0;
     settings.minAlpha = 0.01;
@@ -119,7 +120,8 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
   //if (!_modelRates->info.perFamilyRates) {
     Logger::timed << "[Species search] Best rates: " << _modelRates->rates << std::endl;
   //}
-  return _modelRates->rates.getScore();
+    Logger::info << "New ll = " << computeLikelihood() << std::endl;
+    return _modelRates->rates.getScore();
 }
   
 void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &speciesTree,
@@ -332,7 +334,7 @@ double GTSpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
       maxDepth);
   return _searchState.bestLL;
 }
-
+  
 double GTSpeciesTreeOptimizer::transferSearch()
 {
   SpeciesTransferSearch::transferSearch(
@@ -383,7 +385,6 @@ void GTSpeciesTreeOptimizer::reconcile(unsigned int samples)
 
   for (unsigned int i = 0; i < families.size(); ++i) {
     std::string geneTreesPath = FileSystem::joinPaths(recDir, families[i].name + std::string(".newick"));
-    Logger::info << "gene trees in " << geneTreesPath << std::endl;
     ParallelOfstream geneTreesOs(geneTreesPath, false);
 
     for (unsigned int sample = 0; sample < samples; ++ sample) {
@@ -410,12 +411,13 @@ void GTSpeciesTreeOptimizer::optimizeDates()
   }
   auto &tree = _speciesTree->getDatedTree();
   
-  unsigned int max = tree.getOrderedSpeciations().size() - 1;
+  unsigned int max = tree.getOrderedSpeciations().size();
   auto bestLL = _evaluator.computeLikelihood();
   Logger::info << "Optimizing dates, ll=" << bestLL << std::endl;
   bool tryAgain = true;
   while (tryAgain) {
     tryAgain = false;
+    Logger::timed << "new round" << std::endl;
     for (unsigned int rank = 0; rank < max; ++rank) {
       if (!tree.moveUp(rank)) {
         continue;
@@ -425,16 +427,41 @@ void GTSpeciesTreeOptimizer::optimizeDates()
       if (ll > bestLL) {
         tryAgain = true;
         bestLL = ll;
-        Logger::info << "Better ll = " << bestLL << std::endl;
+        //Logger::info << "Better ll = " << bestLL << std::endl;
+        rank -= std::min((unsigned int)2, rank);
       } else {
         tree.moveUp(rank);
         onSpeciesTreeChange(nullptr);
       }
+      assert(_speciesTree->getDatedTree().isConsistent());
     }
   }
 
 
 }
 
+double GTSpeciesTreeOptimizer::plopRoot()
+{
+  auto ll = _evaluator.computeLikelihood();
+  Logger::info << "Before root change: ll= " << ll << std::endl;
+  unsigned int direction = 3;
+  if (SpeciesTreeOperator::canChangeRoot(*_speciesTree, direction)) {
+    SpeciesTreeOperator::changeRoot(*_speciesTree, direction);
+    auto ll2 = _evaluator.computeLikelihood();
+    Logger::info << "After root change: ll= " << ll2 << std::endl;
+    assert(_speciesTree->getDatedTree().isConsistent());
+    
+  }
+  if (SpeciesTreeOperator::canChangeRoot(*_speciesTree, direction)) {
+    SpeciesTreeOperator::changeRoot(*_speciesTree, direction);
+    auto ll2 = _evaluator.computeLikelihood();
+    Logger::info << "After root change: ll= " << ll2 << std::endl;
+    assert(_speciesTree->getDatedTree().isConsistent());
+    
+  }
 
+  return 0.0;
+
+
+}
 

@@ -63,13 +63,14 @@ public:
   void optimize();
   double sprSearch(unsigned int radius);
   double rootSearch(unsigned int maxDepth);
+  double plopRoot();
   double transferSearch();
   void onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
   void reconcile(unsigned int samples);
   void printFamilyDimensions(const std::string &outputFile);
   double optimizeModelRates(bool thorough = false);
   void optimizeDates();
-
+  SpeciesTree &getSpeciesTree() {return *_speciesTree;}
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   PerCoreGeneTrees _geneTrees;

@@ -114,10 +114,13 @@ void run( GeneTegratorArguments &args)
     speciesTreeOptimizer.optimize();
     break;
   case SpeciesSearchStrategy::EVAL:
-    speciesTreeOptimizer.optimizeModelRates(false);
-    speciesTreeOptimizer.optimizeDates();
+    
+    //speciesTreeOptimizer.optimizeModelRates(false);
+    //speciesTreeOptimizer.optimizeDates();
+    //speciesTreeOptimizer.optimizeModelRates(false);
     speciesTreeOptimizer.optimizeModelRates(true);
     speciesTreeOptimizer.optimizeDates();
+    speciesTreeOptimizer.rootSearch(5555);
     break;
   case SpeciesSearchStrategy::SKIP:
     break;
@@ -127,6 +130,7 @@ void run( GeneTegratorArguments &args)
   }
   Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   speciesTreeOptimizer.reconcile(args.geneTreeSamples);
+  speciesTreeOptimizer.getSpeciesTree().saveToFile(args.speciesTree, true); 
   Logger::timed <<"End of the execution" << std::endl;
 }
 
