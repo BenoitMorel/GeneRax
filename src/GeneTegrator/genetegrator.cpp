@@ -131,7 +131,7 @@ void run( GeneTegratorArguments &args)
   }
   Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   speciesTreeOptimizer.reconcile(args.geneTreeSamples);
-  speciesTreeOptimizer.getSpeciesTree().saveToFile(args.speciesTree, true); 
+  speciesTreeOptimizer.saveSpeciesTree(); 
   Logger::timed <<"End of the execution" << std::endl;
 }
 

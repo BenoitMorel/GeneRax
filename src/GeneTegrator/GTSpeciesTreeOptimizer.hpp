@@ -72,6 +72,7 @@ public:
   void optimizeDates();
   SpeciesTree &getSpeciesTree() {return *_speciesTree;}
   void randomizeRoot();
+  void saveSpeciesTree();
 private:
   void optimizeDatesNaive();
   void perturbateDates();

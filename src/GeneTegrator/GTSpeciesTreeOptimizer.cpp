@@ -256,6 +256,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   
   Logger::timed << "Initial ll=" << _evaluator.computeLikelihood() << std::endl;
   printFamilyDimensions("temp.txt");
+ 
   
   saveCurrentSpeciesTreeId("starting_species_tree.newick");
   saveCurrentSpeciesTreeId();
@@ -312,10 +313,15 @@ void GTSpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<corax_
 }
 
 
+void GTSpeciesTreeOptimizer::saveSpeciesTree()
+{
+  saveCurrentSpeciesTreeId();
+}
 
 std::string GTSpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
 {
   std::string res = Paths::getSpeciesTreeFile(_outputDir, name);
+  _speciesTree->getDatedTree().rescaleBranchLengths();
   saveCurrentSpeciesTreePath(res, masterRankOnly);
   return res;
 }
