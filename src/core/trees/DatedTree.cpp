@@ -61,7 +61,9 @@ bool DatedTree::moveUp(unsigned int rank, bool force)
 
 bool DatedTree::moveDown(unsigned int rank, bool force)
 {
-  assert(rank + 1 < _orderedSpeciations.size());
+  if (rank >  _orderedSpeciations.size() - 2) {
+    return false;
+  }
   auto n1 = _orderedSpeciations[rank];
   auto n2 = _orderedSpeciations[rank + 1];
   // n1 is above n2. We want to swap them

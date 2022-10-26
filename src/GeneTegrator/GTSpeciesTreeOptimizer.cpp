@@ -418,9 +418,19 @@ void GTSpeciesTreeOptimizer::perturbateDates()
   }
   auto &tree = _speciesTree->getDatedTree();
   size_t N = tree.getOrderedSpeciations().size();
-  for (size_t i = 0; i < N * 2; ++i) {
+  auto perturbations = 2 * N;
+  auto maxDisplacement = N / 4;
+  if (N < 2) {
+    N = 2;
+  }
+  Logger::info << "Max displacement; " << maxDisplacement << std::endl;
+  for (size_t i = 0; i < perturbations; ++i) {
     auto rank = Random::getInt() % N;
-    tree.moveUp(rank);
+    auto  displacement = Random::getInt() % maxDisplacement;
+    for (size_t j = 0; j < displacement; ++j) {
+      tree.moveUp(rank);
+      rank--;
+    }
   }
 }
 
@@ -457,6 +467,7 @@ void GTSpeciesTreeOptimizer::optimizeDates()
       }
     }
   } 
+  Logger::timed << "End of optimizing dates: ll = " << bestLL << std::endl;
 }
 
 
