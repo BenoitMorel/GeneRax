@@ -257,7 +257,7 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   Logger::timed << "Initial ll=" << _evaluator.computeLikelihood() << std::endl;
   printFamilyDimensions("temp.txt");
  
-  
+  randomizeRoot(); 
   saveCurrentSpeciesTreeId("starting_species_tree.newick");
   saveCurrentSpeciesTreeId();
 }
@@ -334,8 +334,9 @@ void GTSpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, 
   }
 }
   
-double GTSpeciesTreeOptimizer::rootSearch(unsigned int maxDepth)
+double GTSpeciesTreeOptimizer::rootSearch(unsigned int maxDepth, bool thorough)
 {
+  _searchState.farFromPlausible = thorough;
   SpeciesRootSearch::rootSearch(
       *_speciesTree,
       _evaluator,
@@ -411,99 +412,18 @@ void GTSpeciesTreeOptimizer::reconcile(unsigned int samples)
   ParallelContext::makeRandConsistent();
 }
 
-void GTSpeciesTreeOptimizer::perturbateDates()
+void GTSpeciesTreeOptimizer::optimizeDates(bool thorough)
 {
   if (!_info.isDated()) {
     return; 
   }
-  auto &tree = _speciesTree->getDatedTree();
-  size_t N = tree.getOrderedSpeciations().size();
-  auto perturbations = 2 * N;
-  auto maxDisplacement = N / 4;
-  if (N < 2) {
-    N = 2;
-  }
-  Logger::info << "Max displacement; " << maxDisplacement << std::endl;
-  for (size_t i = 0; i < perturbations; ++i) {
-    auto rank = Random::getInt() % N;
-    auto  displacement = Random::getInt() % maxDisplacement;
-    for (size_t j = 0; j < displacement; ++j) {
-      tree.moveUp(rank);
-      rank--;
-    }
-  }
+  DatedSpeciesTreeSearch::optimizeDates(*_speciesTree,
+      _evaluator,
+      _searchState,
+      thorough);
 }
 
 
-void GTSpeciesTreeOptimizer::optimizeDates()
-{
-  if (!_info.isDated()) {
-    return; 
-  }
-  auto &tree = _speciesTree->getDatedTree();
-  auto bestLL = _evaluator.computeLikelihood();
-  Logger::timed << "Optimizing dates, ll=" << bestLL << std::endl;
-  optimizeDatesNaive(); 
-  bestLL = _evaluator.computeLikelihood();
-  Logger::timed << "Best ll so far: = " << bestLL << std::endl;
-  
-  for (unsigned int i = 0; i < 2; ++i) {
-    bool improved = true;
-    while (improved) {
-      improved = false;
-      auto backup = tree.getBackup();
-      perturbateDates();
-      auto ll = _evaluator.computeLikelihood();
-      //Logger::timed << "LL after random perturbate: " << ll << std::endl;
-      optimizeDatesNaive();
-      ll = _evaluator.computeLikelihood();
-      //Logger::timed << "LL after naive search from random perturbate: " << ll << std::endl;
-      if (ll <= bestLL) {
-        tree.restore(backup);
-      } else {
-        bestLL = ll;
-        Logger::timed << "Best ll so far: = " << bestLL << std::endl;
-        improved = true;
-      }
-    }
-  } 
-  Logger::timed << "End of optimizing dates: ll = " << bestLL << std::endl;
-}
-
-
-void GTSpeciesTreeOptimizer::optimizeDatesNaive()
-{
-  if (!_info.isDated()) {
-    return; 
-  }
-  auto &tree = _speciesTree->getDatedTree();
-  
-  unsigned int max = tree.getOrderedSpeciations().size();
-  auto bestLL = _evaluator.computeLikelihood();
-  bool tryAgain = true;
-  while (tryAgain) {
-    tryAgain = false;
-    Logger::timed << "new naive dated round ll= " << bestLL <<  std::endl;
-    for (unsigned int rank = 0; rank < max; ++rank) {
-      if (!tree.moveUp(rank)) {
-        continue;
-      }
-      onSpeciesTreeChange(nullptr);
-      auto ll = _evaluator.computeLikelihood();
-      if (ll > bestLL) {
-        tryAgain = true;
-        bestLL = ll;
-        //Logger::info << "Better ll = " << bestLL << std::endl;
-        rank -= std::min((unsigned int)2, rank);
-      } else {
-        tree.moveUp(rank);
-        onSpeciesTreeChange(nullptr);
-      }
-      assert(_speciesTree->getDatedTree().isConsistent());
-    }
-  }
-    Logger::timed << "end naive dated round ll= " << bestLL <<  std::endl;
-}
 
 void GTSpeciesTreeOptimizer::randomizeRoot()
 {

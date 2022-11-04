@@ -1,7 +1,7 @@
 #include "SpeciesRootSearch.hpp"
 #include <trees/SpeciesTree.hpp>
 #include <trees/PLLRootedTree.hpp>
-
+#include "DatedSpeciesTreeSearch.hpp"
 
 
 static void rootSearchAux(SpeciesTree &speciesTree, 
@@ -15,7 +15,9 @@ static void rootSearchAux(SpeciesTree &speciesTree,
     RootLikelihoods *rootLikelihoods,
     TreePerFamLLVec *treePerFamLLVec) 
 {
+  Logger::info << "D=" << movesHistory.size() << " max=" << maxDepth << std::endl;
   if (movesHistory.size() > maxDepth) {
+    Logger::info << "MAX DEPTH, STOP" << std::endl;
     return;
   }
   std::vector<unsigned int> moves;
@@ -31,6 +33,13 @@ static void rootSearchAux(SpeciesTree &speciesTree,
     SpeciesTreeOperator::changeRoot(speciesTree, direction);
     double ll = evaluator.computeLikelihood();
     Logger::info << "rootll = " << ll << std::endl;
+    bool datedSearch = true;
+    if (datedSearch) {
+      ll = DatedSpeciesTreeSearch::optimizeDates(speciesTree,
+          evaluator,
+          searchState,
+          searchState.farFromPlausible);
+    }
     if (treePerFamLLVec) {
       auto newick = speciesTree.getTree().getNewickString();
       treePerFamLLVec->push_back({newick, PerFamLL()});
@@ -49,7 +58,11 @@ static void rootSearchAux(SpeciesTree &speciesTree,
       bestMovesHistory = movesHistory; 
       Logger::info << "Found better root " << ll << std::endl;
       searchState.betterTreeCallback(ll);
-      additionalDepth = 3;
+      additionalDepth = 2;
+    }
+    auto newMaxDepth = maxDepth;
+    if (additionalDepth) {
+      newMaxDepth = movesHistory.size() + additionalDepth;
     }
     rootSearchAux(speciesTree, 
         evaluator,
@@ -58,7 +71,7 @@ static void rootSearchAux(SpeciesTree &speciesTree,
         bestMovesHistory, 
         bestLL, 
         visits,
-        maxDepth + additionalDepth,
+        newMaxDepth,
         rootLikelihoods,
         treePerFamLLVec);
     SpeciesTreeOperator::revertChangeRoot(speciesTree, direction);
