@@ -36,6 +36,7 @@ public:
   virtual double computeLikelihood();
   virtual double computeLikelihoodFast();
   virtual bool providesFastLikelihoodImpl() const {return false;}
+  virtual bool isDated() const {return _modelRates->info.isDated();}
   virtual double optimizeModelRates(bool thorough = false);
   virtual void pushRollback() {}
   virtual void popAndApplyRollback() {}
@@ -73,6 +74,7 @@ public:
   SpeciesTree &getSpeciesTree() {return *_speciesTree;}
   void randomizeRoot();
   void saveSpeciesTree();
+  void saveSpeciesTreeRootLL();
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   PerCoreGeneTrees _geneTrees;
@@ -82,6 +84,7 @@ private:
   ModelParameters _modelRates;
   std::string _outputDir;
   SpeciesSearchState _searchState;
+  RootLikelihoods _rootLikelihoods;
   std::string saveCurrentSpeciesTreeId(std::string str = "inferred_species_tree.newick", bool masterRankOnly = true);
   void saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly = true);
 };

@@ -40,10 +40,16 @@ public:
   virtual double computeLikelihoodFast() = 0;
 
   /**
-   *  Returns true if computeLikelihood and computeLikelihoodFast
+   *  Return true if computeLikelihood and computeLikelihoodFast
    *  have different implementations
    */
   virtual bool providesFastLikelihoodImpl() const = 0;
+
+  /**
+   *  Return true if the model is dated (if the model depends
+   *  on the speciation event order)
+   */
+  virtual bool isDated() const = 0;
 
   /**
    *  Optimize model rates, such as DTL rates.

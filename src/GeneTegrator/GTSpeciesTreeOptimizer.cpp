@@ -323,6 +323,14 @@ std::string GTSpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, b
   std::string res = Paths::getSpeciesTreeFile(_outputDir, name);
   _speciesTree->getDatedTree().rescaleBranchLengths();
   saveCurrentSpeciesTreePath(res, masterRankOnly);
+  if (_rootLikelihoods.idToLL.size()) {
+    auto newick = _speciesTree->getTree().getNewickString();
+    PLLRootedTree tree(newick, false); 
+    _rootLikelihoods.fillTree(tree);
+    auto out = Paths::getSpeciesTreeFile(_outputDir, 
+        "species_tree_llr.newick");
+    tree.save(out);
+  }
   return res;
 }
 
@@ -336,12 +344,15 @@ void GTSpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, 
   
 double GTSpeciesTreeOptimizer::rootSearch(unsigned int maxDepth, bool thorough)
 {
+  _rootLikelihoods.reset();
   _searchState.farFromPlausible = thorough;
   SpeciesRootSearch::rootSearch(
       *_speciesTree,
       _evaluator,
       _searchState,
-      maxDepth);
+      maxDepth,
+      &_rootLikelihoods);
+  
   return _searchState.bestLL;
 }
   

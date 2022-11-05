@@ -63,6 +63,7 @@ public:
   virtual double computeLikelihood();
   virtual double computeLikelihoodFast();
   virtual bool providesFastLikelihoodImpl() const;
+  virtual bool isDated() const {return _modelRates->info.isDated();}
   virtual double optimizeModelRates(bool thorough = false);
   virtual void pushRollback();
   virtual void popAndApplyRollback();

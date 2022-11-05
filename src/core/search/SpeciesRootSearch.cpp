@@ -15,9 +15,7 @@ static void rootSearchAux(SpeciesTree &speciesTree,
     RootLikelihoods *rootLikelihoods,
     TreePerFamLLVec *treePerFamLLVec) 
 {
-  Logger::info << "D=" << movesHistory.size() << " max=" << maxDepth << std::endl;
   if (movesHistory.size() > maxDepth) {
-    Logger::info << "MAX DEPTH, STOP" << std::endl;
     return;
   }
   std::vector<unsigned int> moves;
@@ -32,7 +30,6 @@ static void rootSearchAux(SpeciesTree &speciesTree,
     evaluator.pushRollback();
     SpeciesTreeOperator::changeRoot(speciesTree, direction);
     double ll = evaluator.computeLikelihood();
-    Logger::info << "rootll = " << ll << std::endl;
     bool datedSearch = true;
     if (datedSearch) {
       ll = DatedSpeciesTreeSearch::optimizeDates(speciesTree,
