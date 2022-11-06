@@ -323,18 +323,6 @@ static bool applyTheBetterMoves(JointTree &jointTree,
         break;
       }
     } 
-    /*
-    if (!foundBetterMove) {
-      Logger::info << "Now sequentially applying the " << chunkSize << " first moves one after each other..." << std::endl;
-      auto end = std::min<unsigned int> (chunkSize, betterMoves.size());
-      std::vector<std::shared_ptr<SPRMove> > chunk(betterMoves.begin(),
-          betterMoves.begin() + end);
-      foundBetterMove |= sequentiallyApplyBetterMoves(jointTree, 
-          chunk,
-          blo,
-          bestLoglk);
-    }
-    */
   } else {
     foundBetterMove |= sequentiallyApplyBetterMoves(jointTree, 
         betterMoves,
@@ -374,55 +362,39 @@ bool SPRSearch::applySPRRoundDigg(JointTree &jointTree, int radius, bool blo)
   unsigned int additionalRadius = 0;
   bool improved = false;
   double bestLL = jointTree.computeJointLoglk();
-  unsigned int plop = 0;
   std::unordered_map<unsigned int, double> treeHashScores;
   DiggStopper stopper;
   std::vector<std::shared_ptr<SPRMove> > betterMoves;
-  while (pruneIndices.size()) {
-    std::vector<ScoredPrune> scoredPrunes;
-    Logger::info << std::endl;
-    Logger::timed << "SPR Search with radius " << radius << ": trying " << pruneIndices.size() << " prune nodes" << std::endl;
-    auto begin = ParallelContext::getBegin(pruneIndices.size());
-    auto end = ParallelContext::getEnd(pruneIndices.size());
-    for (unsigned int i = begin; i < end; ++i) {
-      auto pruneIndex = pruneIndices[i];
-      std::vector<unsigned int> path;
-      SPRMove move(0, 0, path);
-      double bestLLAmongPrune;
-      double tempLL = bestLL;
-      bool isBetter = SearchUtils::diggBestMoveFromPrune(jointTree, 
-          treeHashScores,
-          stopper,
-          pruneIndex, 
-          radius + 1,
-          additionalRadius,
-          tempLL,
-          bestLLAmongPrune,
-          blo,
-          move);  
-      //scoredPrunes.push_back(ScoredPrune(pruneIndex, bestLLAmongPrune - bestLL));
-      if (isBetter) {
-        betterMoves.push_back(std::make_shared<SPRMove>(move));
-      }
-    }
-    // gatjer the better moves from all parallel ranks
-    synchronizeMoves(jointTree, betterMoves);
-    //Logger::info << "Stopped: " << stopper.ko << std::endl; 
-    //Logger::info << "Tested: " << stopper.ok << std::endl; 
-    improved |= applyTheBetterMoves(jointTree, 
-      betterMoves,
-      blo,
-      bestLL);
-    betterMoves.clear();
-    plop++;
-    pruneIndices.clear();
-    if (plop == 1) {
-      for (unsigned int i = 0; i < scoredPrunes.size() / 10; ++i) {
-        pruneIndices.push_back(scoredPrunes[i].index);
-      }
-      radius += 1;
+  std::vector<ScoredPrune> scoredPrunes;
+  Logger::timed << "SPR Search with radius " << radius << ": trying " << pruneIndices.size() << " prune nodes" << std::endl;
+  auto begin = ParallelContext::getBegin(pruneIndices.size());
+  auto end = ParallelContext::getEnd(pruneIndices.size());
+  for (unsigned int i = begin; i < end; ++i) {
+    auto pruneIndex = pruneIndices[i];
+    std::vector<unsigned int> path;
+    SPRMove move(0, 0, path);
+    double bestLLAmongPrune;
+    double tempLL = bestLL;
+    bool isBetter = SearchUtils::diggBestMoveFromPrune(jointTree, 
+        treeHashScores,
+        stopper,
+        pruneIndex, 
+        radius + 1,
+        additionalRadius,
+        tempLL,
+        bestLLAmongPrune,
+        blo,
+        move);  
+    //scoredPrunes.push_back(ScoredPrune(pruneIndex, bestLLAmongPrune - bestLL));
+    if (isBetter) {
+      betterMoves.push_back(std::make_shared<SPRMove>(move));
     }
   }
+  synchronizeMoves(jointTree, betterMoves);
+  improved |= applyTheBetterMoves(jointTree, 
+    betterMoves,
+    blo,
+    bestLL);
   return improved;
 
 }
