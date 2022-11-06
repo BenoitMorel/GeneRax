@@ -294,6 +294,7 @@ void LibpllParsers::parseFasta(const char *fastaFile,
 {
   auto reader = corax_fasta_open(fastaFile, corax_map_fasta);
   if (!reader) {
+    corax_fasta_close(reader);
     throw LibpllException("Cannot parse fasta file ", fastaFile);
   }
   char * head;
@@ -313,8 +314,11 @@ void LibpllParsers::parseFasta(const char *fastaFile,
     buffer[i] = sequences[i]->seq;
   }
   weights = corax_compress_site_patterns(buffer, stateMap, static_cast<int>(count), &length);
-  if (!weights) 
+  if (!weights) {
+    corax_fasta_close(reader);
+    free(buffer);
     throw LibpllException("Error while parsing fasta: cannot compress sites from ", fastaFile);
+  }
   for (unsigned int i = 0; i < count; ++i) {
     sequences[i]->len = static_cast<unsigned int>(length);
   }
