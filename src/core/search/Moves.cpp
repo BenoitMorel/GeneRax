@@ -147,6 +147,9 @@ void SPRMove::updatePath(JointTree &tree)
   std::vector<corax_unode_t *> nodes;
   _path.clear();
   PLLUnrootedTree::orientTowardEachOther(&prune, &regraft, nodes);
+  for (auto node: nodes) {
+    _path.push_back(node->node_index);
+  }
 }
 
 void SPRMove::synchronizeOptimizedBL(JointTree &tree)

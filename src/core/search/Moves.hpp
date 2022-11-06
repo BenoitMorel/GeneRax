@@ -27,6 +27,7 @@ public:
   unsigned int getPruneIndex() const {return _pruneIndex;}
   unsigned int getRegraftIndex() const {return _regraftIndex;}
   void updatePath(JointTree &tree);
+  const std::vector<unsigned int> &getPath() const{return _path;}
   unsigned int getIdentifier() const {return _pruneIndex * 10000 + _regraftIndex;}
 private:
   unsigned int _pruneIndex;
