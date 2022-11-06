@@ -9,6 +9,7 @@ static void rootSearchAux(SpeciesTree &speciesTree,
     SpeciesSearchState &searchState,
     std::vector<unsigned int> &movesHistory, 
     std::vector<unsigned int> &bestMovesHistory, 
+    DatedTree::Backup &bestDatedBackup,
     double &bestLL, 
     double bestLLStack, 
     unsigned int &visits,
@@ -54,7 +55,8 @@ static void rootSearchAux(SpeciesTree &speciesTree,
     }
     if (ll > bestLL) {
       bestLL = ll;
-      bestMovesHistory = movesHistory; 
+      bestMovesHistory = movesHistory;
+      bestDatedBackup = speciesTree.getDatedTree().getBackup();
       Logger::info << "Found better root " << ll << std::endl;
       searchState.betterTreeCallback(ll);
     }
@@ -67,6 +69,7 @@ static void rootSearchAux(SpeciesTree &speciesTree,
         searchState,
         movesHistory, 
         bestMovesHistory, 
+        bestDatedBackup,
         bestLL,
         bestLLStack,
         visits,
@@ -108,11 +111,13 @@ double SpeciesRootSearch::rootSearch(
   movesHistory.push_back(1);
   double temp1 = bestLL;
   double temp2 = bestLL;
+  DatedTree::Backup bestDatedBackup;
   rootSearchAux(speciesTree,
       evaluator,
       searchState,
       movesHistory, 
       bestMovesHistory, 
+      bestDatedBackup,
       bestLL,
       temp1,
       visits, 
@@ -124,7 +129,8 @@ double SpeciesRootSearch::rootSearch(
       evaluator,
       searchState,
       movesHistory, 
-      bestMovesHistory, 
+      bestMovesHistory,
+      bestDatedBackup,
       bestLL,
       temp2,
       visits,
@@ -134,6 +140,7 @@ double SpeciesRootSearch::rootSearch(
   for (unsigned int i = 1; i < bestMovesHistory.size(); ++i) {
     SpeciesTreeOperator::changeRoot(speciesTree, bestMovesHistory[i]);
   }
+  speciesTree.getDatedTree().restore(bestDatedBackup);
   if (rootLikelihoods) {
     auto newick = speciesTree.getTree().getNewickString();
     PLLRootedTree tree(newick, false); 
