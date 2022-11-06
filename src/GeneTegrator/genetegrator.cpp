@@ -120,7 +120,9 @@ void run( GeneTegratorArguments &args)
     //speciesTreeOptimizer.optimizeModelRates(false);
     speciesTreeOptimizer.optimizeModelRates(true);
     speciesTreeOptimizer.optimizeDates();
-    speciesTreeOptimizer.rootSearch(3, false);
+    Logger::timed << "First root search, non thorough" << std::endl;
+    speciesTreeOptimizer.rootSearch(10, false);
+    Logger::timed << "Second root search, thorough" << std::endl;
     speciesTreeOptimizer.rootSearch(2, true);
     break;
   case SpeciesSearchStrategy::SKIP:

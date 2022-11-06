@@ -30,13 +30,10 @@ static void rootSearchAux(SpeciesTree &speciesTree,
     evaluator.pushRollback();
     SpeciesTreeOperator::changeRoot(speciesTree, direction);
     double ll = evaluator.computeLikelihood();
-    bool datedSearch = true;
-    if (datedSearch) {
-      ll = DatedSpeciesTreeSearch::optimizeDates(speciesTree,
-          evaluator,
-          searchState,
-          searchState.farFromPlausible);
-    }
+    ll = DatedSpeciesTreeSearch::optimizeDates(speciesTree,
+        evaluator,
+        searchState,
+        searchState.farFromPlausible);
     if (treePerFamLLVec) {
       auto newick = speciesTree.getTree().getNewickString();
       treePerFamLLVec->push_back({newick, PerFamLL()});
