@@ -10,6 +10,7 @@ static void rootSearchAux(SpeciesTree &speciesTree,
     std::vector<unsigned int> &movesHistory, 
     std::vector<unsigned int> &bestMovesHistory, 
     double &bestLL, 
+    double bestLLStack, 
     unsigned int &visits,
     unsigned int maxDepth, 
     RootLikelihoods *rootLikelihoods,
@@ -47,12 +48,15 @@ static void rootSearchAux(SpeciesTree &speciesTree,
     }
     visits++;
     unsigned int additionalDepth = 0;
+    if (ll > bestLLStack) {
+      additionalDepth = 2;
+      bestLLStack = ll;
+    }
     if (ll > bestLL) {
       bestLL = ll;
       bestMovesHistory = movesHistory; 
       Logger::info << "Found better root " << ll << std::endl;
       searchState.betterTreeCallback(ll);
-      additionalDepth = 2;
     }
     auto newMaxDepth = maxDepth;
     if (additionalDepth) {
@@ -63,7 +67,8 @@ static void rootSearchAux(SpeciesTree &speciesTree,
         searchState,
         movesHistory, 
         bestMovesHistory, 
-        bestLL, 
+        bestLL,
+        bestLLStack,
         visits,
         newMaxDepth,
         rootLikelihoods,
@@ -101,12 +106,15 @@ double SpeciesRootSearch::rootSearch(
   }
   unsigned int visits = 1;
   movesHistory.push_back(1);
+  double temp1 = bestLL;
+  double temp2 = bestLL;
   rootSearchAux(speciesTree,
       evaluator,
       searchState,
       movesHistory, 
       bestMovesHistory, 
-      bestLL, 
+      bestLL,
+      temp1,
       visits, 
       maxDepth,
       rootLikelihoods,
@@ -117,7 +125,8 @@ double SpeciesRootSearch::rootSearch(
       searchState,
       movesHistory, 
       bestMovesHistory, 
-      bestLL, 
+      bestLL,
+      temp2,
       visits,
       maxDepth,
       rootLikelihoods,
