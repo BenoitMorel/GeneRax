@@ -203,8 +203,9 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
       auto p = node->parent ? node->parent->node_index : e;
       if (e != p) {
         for (size_t c = 0; c < _gammaCatNumber; ++c) {
+          auto pc = p * _gammaCatNumber + c;
           auto ec = e * _gammaCatNumber + c;
-          correctionSum[ec] = softDatedSums[ec];
+          correctionSum[ec] = softDatedSums[pc];
         }
       }
       for (size_t c = 0; c < _gammaCatNumber; ++c) {
