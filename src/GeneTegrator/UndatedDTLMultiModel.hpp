@@ -109,10 +109,7 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(DatedTree &speciesTree,
   DTLCLV nullCLV(this->_allSpeciesNodesCount, _gammaCatNumber);
   _dtlclvs = std::vector<DTLCLV>(2 * (this->_ccp.getCladesNumber()), nullCLV);
   auto N = this->_speciesTree.getNodesNumber();
-  for (size_t i = 0; i < _gammaCatNumber; ++i) {
-    _gammaScalers[i] = 1.0 + 0.5 * double(i);//pow(2.0, double(i));
-  }
-  _gammaScalers[0] = 10;
+  
   _dtlRates.resize(3);
   for (unsigned int i = 0; i < 3; ++i) {
     _dtlRates[i] = std::vector<double>(N, 0.2);
@@ -284,7 +281,7 @@ void UndatedDTLMultiModel<REAL>::sampleTransferEvent(unsigned int cid,
   }
   auto samplingProba = Random::getProba();
   max *= samplingProba;
-  max *= this->_allSpeciesNodes.size();
+  max *= N;
   REAL sum = REAL();
   
   std::unordered_set<unsigned int> parents;
@@ -404,7 +401,6 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
   bool isSpeciesLeaf = !this->getSpeciesLeft(speciesNode);
   auto e = speciesNode->node_index;
   auto c = category;
-  auto N = this->_allSpeciesNodesCount;
   auto ec = e * _gammaCatNumber + c;
   REAL maxProba = REAL();
   if (recCell) {
@@ -557,7 +553,7 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
 template <class REAL>
 REAL UndatedDTLMultiModel<REAL>::getLikelihoodFactor() const
 {
-  REAL factor(1.0);
+  REAL factor(0.0);
   for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
     factor += (REAL(1.0) - REAL(_uE[e]));

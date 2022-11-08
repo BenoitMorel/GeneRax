@@ -38,7 +38,7 @@ public:
    */
   virtual void setRates(const RatesVector &rates) = 0;
 
-  virtual void setAlpha(double alpha) {}
+  virtual void setAlpha(double) {}
 
   /**
    * (incrementally) compute and return the likelihood of the gene tree 

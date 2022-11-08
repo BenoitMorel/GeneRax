@@ -146,7 +146,7 @@ void UndatedDLMultiModel<REAL>::recomputeSpeciesProbabilities()
 template <class REAL>
 void UndatedDLMultiModel<REAL>::computeProbability(CID cid, 
     corax_rnode_t *speciesNode, 
-    size_t category,
+    size_t,
     REAL &proba,
     ReconciliationCell<REAL> *recCell
     )
