@@ -37,6 +37,7 @@ struct GeneRaxInstance {
     std::string fractionMissingFile;
     recModelInfo = RecModelInfo(recModel,
         args.perFamilyDTLRates,
+        args.gammaCategories,
         args.pruneSpeciesTree,
         args.rootedGeneTree,
         args.minGeneBranchLength,

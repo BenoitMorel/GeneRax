@@ -36,6 +36,7 @@ public:
    double dupRate;
    double lossRate;
    double transferRate;
+   size_t gammaCategories;
    bool reconcile;
    bool buildSuperMatrix;
    unsigned int reconciliationSampleNumber;

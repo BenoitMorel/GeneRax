@@ -11,6 +11,7 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
   speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
   speciesSearchStrategy(SpeciesSearchStrategy::HYBRID),
   pruneSpeciesTree(false),
+  gammaCategories(1),
   geneTreeSamples(0),
   output("GeneTegrator"),
   seed(123)
@@ -35,6 +36,8 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
       pruneSpeciesTree = true;
     } else if (arg == "--gene-tree-samples") {
       geneTreeSamples = atoi(argv[++i]);
+    } else if (arg == "--gamma-categories") {
+      gammaCategories = atoi(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
       output = std::string(argv[++i]);
     } else if (arg == "--seed") {

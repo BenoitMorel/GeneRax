@@ -37,7 +37,9 @@ public:
    * Set the per-species lineage rates
    */
   virtual void setRates(const RatesVector &rates) = 0;
-  
+
+  virtual void setAlpha(double alpha) {}
+
   /**
    * (incrementally) compute and return the likelihood of the gene tree 
    */
@@ -138,6 +140,5 @@ protected:
   std::vector<corax_rnode_t *> _speciesRight;
   std::vector<corax_rnode_t *> _speciesParent;
   corax_rnode_t *_prunedRoot;
-
 };
 

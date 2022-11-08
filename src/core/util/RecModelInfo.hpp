@@ -9,6 +9,9 @@ struct RecModelInfo {
   RecModel model;
   // if set to true, each family can have different set of rates
   bool perFamilyRates;
+  // number of gamma categories for rate heterogeneity among families
+  size_t gammaCategories;
+  
   // if set to true,  for each family, we prune from the species
   // tree the taxa that are not covered in this family
   bool pruneSpeciesTree;
@@ -28,6 +31,7 @@ struct RecModelInfo {
   RecModelInfo():
     model(RecModel::UndatedDTL),
     perFamilyRates(true),
+    gammaCategories(1),
     pruneSpeciesTree(true),
     rootedGeneTree(true),
     branchLengthThreshold(-1.0),
@@ -39,6 +43,7 @@ struct RecModelInfo {
 
   RecModelInfo(RecModel model,
       bool perFamilyRates,
+      unsigned int gammaCategories,
       bool pruneSpeciesTree,
       bool rootedGeneTree,
       double branchLengthThreshold,
@@ -47,6 +52,7 @@ struct RecModelInfo {
       const std::string &fractionMissingFile):
     model(model),
     perFamilyRates(perFamilyRates),
+    gammaCategories(gammaCategories),
     pruneSpeciesTree(pruneSpeciesTree),
     rootedGeneTree(rootedGeneTree),
     branchLengthThreshold(branchLengthThreshold),

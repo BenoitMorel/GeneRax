@@ -104,6 +104,7 @@ void run( GeneTegratorArguments &args)
   info.pruneSpeciesTree = args.pruneSpeciesTree;
   info.model = ArgumentsHelper::strToRecModel(args.reconciliationModelStr); 
   info.transferConstraint = args.transferConstraint;
+  info.gammaCategories = args.gammaCategories;
   GTSpeciesTreeOptimizer speciesTreeOptimizer(
       args.speciesTree,
       families,

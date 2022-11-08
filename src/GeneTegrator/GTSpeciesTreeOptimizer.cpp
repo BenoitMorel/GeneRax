@@ -29,6 +29,13 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
   return sumLL;
 }
 
+void GTSpeciesTreeLikelihoodEvaluator::setAlpha(double alpha)
+{
+  for (auto evaluation: *_evaluations) {
+    evaluation->setAlpha(alpha);
+  }
+}
+
 
 class GTEvaluatorFunction: public FunctionToOptimize
 {
@@ -118,11 +125,57 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
       function, 
       _modelRates->rates, 
       settings);
-  //if (!_modelRates->info.perFamilyRates) {
     Logger::timed << "[Species search] Best rates: " << _modelRates->rates << std::endl;
-  //}
-    Logger::info << "New ll = " << computeLikelihood() << std::endl;
-    return _modelRates->rates.getScore();
+  ll = computeLikelihood();
+  Logger::timed << "New ll = " << ll << std::endl;
+  ll = optimizeGammaRates();
+  Logger::timed << "New ll after gamma opt " << ll << std::endl;
+  return ll;
+}
+
+static double callback(void *p, double x)
+{
+  auto *evaluator = (GTSpeciesTreeLikelihoodEvaluator *)p;
+  evaluator->setAlpha(x);
+  auto ll = evaluator->computeLikelihood();
+  std::cout.precision(17);
+  Logger::info << "Callback alpha = " << x << " ll = " << ll << std::endl;
+  return -ll;
+}
+
+double GTSpeciesTreeLikelihoodEvaluator::optimizeGammaRates()
+{
+  auto gammaCategories = _modelRates->info.gammaCategories;
+  auto ll = computeLikelihood();
+  if (gammaCategories == 1) {
+    return ll;
+  }
+  Logger::timed << "Before optimizing gamma rates: ll=" << ll << std::endl;
+  double minAlpha = CORAX_OPT_MIN_ALPHA;  
+  double maxAlpha = CORAX_OPT_MAX_ALPHA;  
+  double startingAlpha = 1.0;
+  double tolerance = 0.1;
+  double f2x = 1.0;
+  double alpha = corax_opt_minimize_brent(minAlpha,
+                                  startingAlpha,
+                                  maxAlpha,
+                                  tolerance,
+                                  &ll,
+                                  &f2x,
+                                  (void *)this,
+                                  &callback);
+  setAlpha(alpha);
+  auto newLL = computeLikelihood();
+  std::vector<double> categories(_modelRates->info.gammaCategories);
+  corax_compute_gamma_cats(alpha, categories.size(), &categories[0], 
+      CORAX_GAMMA_RATES_MEAN);
+  Logger::info << "alpha = " << alpha << std::endl;
+  for (auto c: categories) {
+    Logger::info << c << " ";
+  }
+  Logger::info << std::endl;
+
+  return ll;
 }
   
 void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &speciesTree,
@@ -255,7 +308,6 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   _evaluator.setEvaluations(*_speciesTree, _modelRates, families, _evaluations, _geneTrees);
   
   Logger::timed << "Initial ll=" << _evaluator.computeLikelihood() << std::endl;
-  printFamilyDimensions("temp.txt");
  
   randomizeRoot(); 
   saveCurrentSpeciesTreeId("starting_species_tree.newick");
@@ -448,29 +500,4 @@ void GTSpeciesTreeOptimizer::randomizeRoot()
   }
 }
 
-
-double GTSpeciesTreeOptimizer::plopRoot()
-{
-  auto ll = _evaluator.computeLikelihood();
-  Logger::info << "Before root change: ll= " << ll << std::endl;
-  unsigned int direction = 3;
-  if (SpeciesTreeOperator::canChangeRoot(*_speciesTree, direction)) {
-    SpeciesTreeOperator::changeRoot(*_speciesTree, direction);
-    auto ll2 = _evaluator.computeLikelihood();
-    Logger::info << "After root change: ll= " << ll2 << std::endl;
-    assert(_speciesTree->getDatedTree().isConsistent());
-    
-  }
-  if (SpeciesTreeOperator::canChangeRoot(*_speciesTree, direction)) {
-    SpeciesTreeOperator::changeRoot(*_speciesTree, direction);
-    auto ll2 = _evaluator.computeLikelihood();
-    Logger::info << "After root change: ll= " << ll2 << std::endl;
-    assert(_speciesTree->getDatedTree().isConsistent());
-    
-  }
-
-  return 0.0;
-
-
-}
 

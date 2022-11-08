@@ -75,6 +75,7 @@ protected:
 private:
   virtual void computeProbability(CID cid, 
     corax_rnode_t *speciesNode, 
+    size_t category,
     REAL &proba,
     ReconciliationCell<REAL> *recCell = nullptr) = 0;
   bool backtrace(unsigned int cid, 
@@ -116,10 +117,12 @@ bool MultiModelTemplate<REAL>::backtrace(unsigned int cid,
     bool stochastic)
 {
   REAL proba;
-  computeProbability(cid, speciesNode, proba);
+  // tood, do not use 0!
+  size_t category = 0;
+  computeProbability(cid, speciesNode, category, proba);
   ReconciliationCell<REAL> recCell;
   recCell.maxProba = proba * Random::getProba();
-  computeProbability(cid, speciesNode, proba, &recCell);
+  computeProbability(cid, speciesNode, category, proba, &recCell);
   if (scenario.getGeneNodeBuffer().size() == 1) {
     recCell.event.geneNode = scenario.getVirtualRootIndex();
   } else {

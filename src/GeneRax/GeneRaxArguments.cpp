@@ -25,6 +25,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   dupRate(0.2),
   lossRate(0.2),
   transferRate(0.2),
+  gammaCategories(1),
   reconcile(true),
   buildSuperMatrix(false),
   reconciliationSampleNumber(0),

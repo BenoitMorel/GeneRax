@@ -45,6 +45,9 @@ public:
     TransferFrequencies &frequencies,
     PerSpeciesEvents &perSpeciesEvents);
   virtual bool pruneSpeciesTree() const {return _modelRates->info.pruneSpeciesTree;}
+  virtual void setAlpha(double alpha);
+protected:
+  virtual double optimizeGammaRates();
 private:
   SpeciesTree *_speciesTree;
   ModelParameters *_modelRates;
@@ -64,7 +67,6 @@ public:
   void optimize();
   double sprSearch(unsigned int radius);
   double rootSearch(unsigned int maxDepth, bool thorough = false);
-  double plopRoot();
   double transferSearch();
   void onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
   void reconcile(unsigned int samples);

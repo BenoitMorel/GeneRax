@@ -37,6 +37,7 @@ private:
   virtual void recomputeSpeciesProbabilities();
   virtual void computeProbability(CID cid, 
     corax_rnode_t *speciesNode, 
+    size_t category,
     REAL &proba,
     ReconciliationCell<REAL> *recCell = nullptr);
 
@@ -104,8 +105,10 @@ double UndatedDLMultiModel<REAL>::computeLogLikelihood()
       this->_ccp.getCladesNumber(), zeros);
   for (CID cid = 0; cid < this->_ccp.getCladesNumber(); ++cid) {
     for (auto speciesNode: this->_allSpeciesNodes) {
+      auto category = 0;
       computeProbability(cid, 
-          speciesNode, 
+          speciesNode,
+          category,
           _dlclvs[cid][speciesNode->node_index]);
     }
   }
@@ -143,6 +146,7 @@ void UndatedDLMultiModel<REAL>::recomputeSpeciesProbabilities()
 template <class REAL>
 void UndatedDLMultiModel<REAL>::computeProbability(CID cid, 
     corax_rnode_t *speciesNode, 
+    size_t category,
     REAL &proba,
     ReconciliationCell<REAL> *recCell
     )
