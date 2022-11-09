@@ -70,7 +70,7 @@ public:
   virtual bool inferMLScenario(Scenario &scenario, 
     bool stochastic = false);
 protected:
-  virtual corax_rnode_t *sampleSpeciesNode() = 0;
+  virtual corax_rnode_t *sampleSpeciesNode(unsigned int &category) = 0;
 
 private:
   virtual void computeProbability(CID cid, 
@@ -81,6 +81,7 @@ private:
   bool backtrace(unsigned int cid, 
       corax_rnode_t *speciesRoot,
       corax_unode_t *geneNode,
+      unsigned int category,
       Scenario &scenario,
       bool stochastic); 
 };
@@ -91,9 +92,10 @@ private:
 template <class REAL>
 bool MultiModelTemplate<REAL>::inferMLScenario(Scenario &scenario, 
     bool stochastic) {
-   
+  assert(stochastic); 
+  unsigned int category = 0;
   auto rootCID = this->_ccp.getCladesNumber() - 1;
-  auto speciesRoot = sampleSpeciesNode();
+  auto speciesRoot = sampleSpeciesNode(category);
   auto rootIndex = 2 * _ccp.getLeafNumber(); 
   scenario.setVirtualRootIndex(rootIndex);
   scenario.setSpeciesTree(&this->_speciesTree);
@@ -101,7 +103,8 @@ bool MultiModelTemplate<REAL>::inferMLScenario(Scenario &scenario,
   scenario.setGeneRoot(virtualGeneRoot);
   auto res = backtrace(rootCID, 
       speciesRoot,
-      virtualGeneRoot, 
+      virtualGeneRoot,
+      category,
       scenario, 
       stochastic);
 
@@ -113,12 +116,11 @@ template <class REAL>
 bool MultiModelTemplate<REAL>::backtrace(unsigned int cid, 
     corax_rnode_t *speciesNode,
     corax_unode_t *geneNode,
+    unsigned int category,
     Scenario &scenario,
     bool stochastic)
 {
   REAL proba;
-  // tood, do not use 0!
-  size_t category = 0;
   computeProbability(cid, speciesNode, category, proba);
   ReconciliationCell<REAL> recCell;
   recCell.maxProba = proba * Random::getProba();
@@ -144,24 +146,25 @@ bool MultiModelTemplate<REAL>::backtrace(unsigned int cid,
 
   bool ok = true;
   std::string label;
+  auto c = category;
 
   switch(recCell.event.type) {
   case ReconciliationEventType::EVENT_S:
-    ok &= backtrace(leftCid, this->getSpeciesLeft(speciesNode), leftGeneNode, scenario, stochastic); 
-    ok &= backtrace(rightCid, this->getSpeciesRight(speciesNode), rightGeneNode, scenario, stochastic); 
+    ok &= backtrace(leftCid, this->getSpeciesLeft(speciesNode), leftGeneNode, c, scenario, stochastic); 
+    ok &= backtrace(rightCid, this->getSpeciesRight(speciesNode), rightGeneNode, c, scenario, stochastic); 
     break;
   case ReconciliationEventType::EVENT_D:
-    ok &= backtrace(leftCid, speciesNode, leftGeneNode, scenario, stochastic); 
-    ok &= backtrace(rightCid, speciesNode, rightGeneNode, scenario, stochastic); 
+    ok &= backtrace(leftCid, speciesNode, leftGeneNode, c, scenario, stochastic); 
+    ok &= backtrace(rightCid, speciesNode, rightGeneNode, c, scenario, stochastic); 
     break;
   case ReconciliationEventType::EVENT_SL:
-    ok &= backtrace(cid, recCell.event.pllDestSpeciesNode, geneNode, scenario, stochastic); 
+    ok &= backtrace(cid, recCell.event.pllDestSpeciesNode, geneNode, c, scenario, stochastic); 
     break;
   case ReconciliationEventType::EVENT_T:
     // source species
-    ok &= backtrace(leftCid, speciesNode, leftGeneNode, scenario, stochastic);
+    ok &= backtrace(leftCid, speciesNode, leftGeneNode, c, scenario, stochastic);
     // dest species
-    ok &= backtrace(rightCid, recCell.event.pllDestSpeciesNode, rightGeneNode, scenario, stochastic);
+    ok &= backtrace(rightCid, recCell.event.pllDestSpeciesNode, rightGeneNode, c, scenario, stochastic);
     break;
   case ReconciliationEventType::EVENT_TL:
     assert(false);

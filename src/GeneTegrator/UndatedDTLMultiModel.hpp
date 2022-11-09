@@ -23,7 +23,7 @@ public:
   virtual void setRates(const RatesVector &);
   virtual void setAlpha(double alpha); 
   virtual double computeLogLikelihood();
-  virtual corax_rnode_t *sampleSpeciesNode();
+  virtual corax_rnode_t *sampleSpeciesNode(unsigned int &category);
   
 private:
   
@@ -39,7 +39,7 @@ private:
   std::vector<double> _transferExtinctionSum;
   
   TransferConstaint _transferConstraint;
-
+  bool _originateFromRoot;
   /**
    *  All intermediate results needed to compute the reconciliation likelihood
    *  each gene node has one DTLCLV object
@@ -70,7 +70,7 @@ private:
 
 
   void updateCLV(CID cid);
-  REAL getLikelihoodFactor() const;
+  double getLikelihoodFactor(unsigned int category) const;
   virtual void recomputeSpeciesProbabilities();
   virtual void computeProbability(CID cid, 
     corax_rnode_t *speciesNode, 
@@ -103,7 +103,8 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(DatedTree &speciesTree,
   _PT(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.2),
   _PS(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 1.0),
   _uE(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.0),
-  _transferConstraint(info.transferConstraint)
+  _transferConstraint(info.transferConstraint),
+  _originateFromRoot(true)
 {
   std::vector<REAL> zeros(this->_speciesTree.getNodesNumber());
   DTLCLV nullCLV(this->_allSpeciesNodesCount, _gammaCatNumber);
@@ -228,28 +229,39 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
     return 0.0;
   }
   this->beforeComputeLogLikelihood();
+  auto N = this->_allSpeciesNodesCount;
   for (CID cid = 0; cid < this->_ccp.getCladesNumber(); ++cid) {
     updateCLV(cid);
   }
   auto rootCID = this->_ccp.getCladesNumber() - 1;
-  REAL res = REAL();
-  /*
-  for (auto speciesNode: this->_allSpeciesNodes) {
-    res += _dtlclvs[rootCID]._uq[speciesNode->node_index];
+  std::vector<REAL> categoryLikelihoods(_gammaCatNumber, REAL());
+  if (_originateFromRoot) {
+    for (size_t c = 0; c < _gammaCatNumber; ++c) {
+      categoryLikelihoods[c] += _dtlclvs[rootCID]._uq[this->_speciesTree.getRoot()->node_index * _gammaCatNumber + c];
+    }
+  } else {
+    for (auto speciesNode: this->_allSpeciesNodes) {
+      auto e = speciesNode->node_index;
+      for (size_t c = 0; c < _gammaCatNumber; ++c) {
+        categoryLikelihoods[c] += _dtlclvs[rootCID]._uq[e * N + c];
+      }
+    }
   }
-  */
-  for (size_t c = 0; c < _gammaCatNumber; ++c) {
-    res += _dtlclvs[rootCID]._uq[this->_speciesTree.getRoot()->node_index * _gammaCatNumber + c];
+  // condition on survival
+  for (unsigned int c = 0; c < _gammaCatNumber; ++c) {
+    categoryLikelihoods[c] /= getLikelihoodFactor(c); 
   }
+  // sum over the categories
+  REAL res = std::accumulate(categoryLikelihoods.begin(), categoryLikelihoods.end(), REAL());
+  // normalize by the number of categories
   res /= double(_gammaCatNumber);
-  // the root correction makes sure that UndatedDTLMultiModel and
+  // ths root correction makes sure that UndatedDTLMultiModel and
   // UndatedDTL model are equivalent when there is one tree per
   // family: the UndatedDTLMultiModel integrates over all possible
   // roots and adds a 1/numberOfGeneRoots weight that is not
   // present un the UndatedDTL, so we multiply back here
-  
-  REAL rootCorrection(double(this->_ccp.getRootsNumber()));
-  auto ret = log(res) - log(getLikelihoodFactor()) + log(rootCorrection);
+  res *= double(N); 
+  auto ret = log(res);
   return ret;
 }
 
@@ -552,33 +564,43 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
 }
   
 template <class REAL>
-REAL UndatedDTLMultiModel<REAL>::getLikelihoodFactor() const
+double UndatedDTLMultiModel<REAL>::getLikelihoodFactor(unsigned int category) const
 {
-  REAL factor(0.0);
+  double factor(0.0);
   for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
-    factor += (REAL(1.0) - REAL(_uE[e]));
+    factor += 1.0 - _uE[e * _gammaCatNumber + category];
   }
   return factor;
 }
 
 template <class REAL>
-corax_rnode_t *UndatedDTLMultiModel<REAL>::sampleSpeciesNode()
+corax_rnode_t *UndatedDTLMultiModel<REAL>::sampleSpeciesNode(unsigned int &category)
 {
-  return this->_speciesTree.getRoot();
-  /*
   auto rootCID = this->_ccp.getCladesNumber() - 1;
   auto &uq = _dtlclvs[rootCID]._uq;
-  auto totalLL = std::accumulate(uq.begin(), uq.end(), REAL());
-  REAL toSample = totalLL * Random::getProba();
-  REAL sumLL = REAL();
-  for (auto speciesNode: this->_allSpeciesNodes) {
-     sumLL += uq[speciesNode->node_index];
-     if (sumLL > toSample) {
-        return speciesNode;
-     }
+  std::vector<corax_rnode_t *> rootNodeVector;
+  rootNodeVector.push_back(this->_speciesTree.getRoot());
+  auto &speciesNodeCandidates = (_originateFromRoot ? rootNodeVector : this->_allSpeciesNodes);
+  REAL totalLL = REAL();
+  for (auto node: speciesNodeCandidates) {
+    auto e = node->node_index;
+    for (unsigned int c = 0; c < _gammaCatNumber; ++c) {
+      totalLL += uq[e * _gammaCatNumber + c];
+    }
   }
-  */
+  auto toSample = totalLL * Random::getProba();
+  auto sumLL = REAL();
+  for (auto node: speciesNodeCandidates) {
+    auto e = node->node_index;
+    for (unsigned int c = 0; c < _gammaCatNumber; ++c) {
+      sumLL += uq[e * _gammaCatNumber + c];
+      if (sumLL >= toSample) {
+        category = c;
+        return node;
+      }
+    }
+  } 
   assert(false);
   return nullptr;
 }

@@ -21,7 +21,7 @@ public:
 
   virtual void setRates(const RatesVector &);
   virtual double computeLogLikelihood();
-  virtual corax_rnode_t *sampleSpeciesNode();
+  virtual corax_rnode_t *sampleSpeciesNode(unsigned int &category);
   
 
 private:
@@ -256,8 +256,9 @@ REAL UndatedDLMultiModel<REAL>::getLikelihoodFactor() const
 
 
 template <class REAL>
-corax_rnode_t *UndatedDLMultiModel<REAL>::sampleSpeciesNode()
+corax_rnode_t *UndatedDLMultiModel<REAL>::sampleSpeciesNode(unsigned int &category)
 {
+  category = 0;
   auto rootCID = this->_ccp.getCladesNumber() - 1;
   auto &uq = _dlclvs[rootCID];
   auto totalLL = std::accumulate(uq.begin(), uq.end(), REAL());
