@@ -260,7 +260,8 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
   // family: the UndatedDTLMultiModel integrates over all possible
   // roots and adds a 1/numberOfGeneRoots weight that is not
   // present un the UndatedDTL, so we multiply back here
-  res *= double(N); 
+  auto rootCorrection = double(this->_ccp.getRootsNumber()); 
+  res *= rootCorrection; 
   auto ret = log(res);
   return ret;
 }
