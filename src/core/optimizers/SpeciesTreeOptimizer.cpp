@@ -427,19 +427,19 @@ double SpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
   return computeLikelihood();
 }
 
-void SpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &speciesTree,
+void SpeciesTreeLikelihoodEvaluator::getTransferInformation(SpeciesTree &speciesTree,
     TransferFrequencies &frequencies,
     PerSpeciesEvents &perSpeciesEvents)
 {
   ParallelContext::barrier();
   unsigned int reconciliationSamples = 0; // use ML reconciliation
-  Routines::getTransfersFrequencies(speciesTree,
+  Routines::getTransfersFrequencies(speciesTree.getTree(),
     *_geneTrees,
     *_modelRates,
     reconciliationSamples,
     frequencies);
   const bool forceTransfers = true;
-  Routines::getPerSpeciesEvents(speciesTree,
+  Routines::getPerSpeciesEvents(speciesTree.getTree(),
     *_geneTrees,
     *_modelRates,
     reconciliationSamples,

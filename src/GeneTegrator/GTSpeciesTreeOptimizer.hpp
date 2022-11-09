@@ -41,7 +41,7 @@ public:
   virtual void pushRollback() {}
   virtual void popAndApplyRollback() {}
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);
-  virtual void getTransferInformation(PLLRootedTree &speciesTree,
+  virtual void getTransferInformation(SpeciesTree &speciesTree,
     TransferFrequencies &frequencies,
     PerSpeciesEvents &perSpeciesEvents);
   virtual bool pruneSpeciesTree() const {return _modelRates->info.pruneSpeciesTree;}

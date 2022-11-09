@@ -138,8 +138,6 @@ static double callback(void *p, double x)
   auto *evaluator = (GTSpeciesTreeLikelihoodEvaluator *)p;
   evaluator->setAlpha(x);
   auto ll = evaluator->computeLikelihood();
-  std::cout.precision(17);
-  Logger::info << "Callback alpha = " << x << " ll = " << ll << std::endl;
   return -ll;
 }
 
@@ -165,11 +163,11 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeGammaRates()
                                   (void *)this,
                                   &callback);
   setAlpha(alpha);
-  auto newLL = computeLikelihood();
   std::vector<double> categories(_modelRates->info.gammaCategories);
   corax_compute_gamma_cats(alpha, categories.size(), &categories[0], 
       CORAX_GAMMA_RATES_MEAN);
   Logger::info << "alpha = " << alpha << std::endl;
+  Logger::info << "rate categories: ";
   for (auto c: categories) {
     Logger::info << c << " ";
   }
@@ -178,27 +176,25 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeGammaRates()
   return ll;
 }
   
-void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &speciesTree,
+void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(SpeciesTree &speciesTree,
     TransferFrequencies &transferFrequencies,
     PerSpeciesEvents &perSpeciesEvents)
 {
-  assert(false);
-  /*
   // this is duplicated code from Routines...
-  const auto labelToId = speciesTree.getDeterministicLabelToId();
-  const auto idToLabel = speciesTree.getDeterministicIdToLabel();
+  const auto labelToId = speciesTree.getTree().getDeterministicLabelToId();
+  const auto idToLabel = speciesTree.getTree().getDeterministicIdToLabel();
   const unsigned int labelsNumber = idToLabel.size();
   const VectorUint zeros(labelsNumber, 0);
   transferFrequencies.count = MatrixUint(labelsNumber, zeros);
   transferFrequencies.idToLabel = idToLabel;
-  perSpeciesEvents = PerSpeciesEvents(speciesTree.getNodesNumber());
+  perSpeciesEvents = PerSpeciesEvents(speciesTree.getTree().getNodesNumber());
   auto infoCopy = _modelRates->info;
   for (const auto &geneTree: _geneTrees->getTrees()) {
     auto &family = (*_families)[geneTree.familyIndex];
     GeneSpeciesMapping mapping;
     mapping.fill(family.mappingFile, family.startingGeneTree);
     UndatedDTLMultiModel<ScaledValue> evaluation(
-        speciesTree,
+        speciesTree.getDatedTree(),
         mapping,
         infoCopy,
         family.startingGeneTree);
@@ -219,7 +215,6 @@ void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(PLLRootedTree &spe
   }
   perSpeciesEvents.parallelSum();
   assert(ParallelContext::isRandConsistent());
-  */
 }
 
 void GTSpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(

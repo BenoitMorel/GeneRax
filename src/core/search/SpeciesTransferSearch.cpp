@@ -66,7 +66,7 @@ static bool transferRound(SpeciesTree &speciesTree,
   auto hash1 = speciesTree.getNodeIndexHash(); 
   TransferFrequencies frequencies;
   PerSpeciesEvents perSpeciesEvents;
-  evaluation.getTransferInformation(speciesTree.getTree(),
+  evaluation.getTransferInformation(speciesTree,
       frequencies,
       perSpeciesEvents);
   unsigned int speciesNumber = speciesTree.getTree().getNodesNumber();

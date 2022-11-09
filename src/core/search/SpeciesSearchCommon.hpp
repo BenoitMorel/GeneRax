@@ -68,7 +68,7 @@ public:
    */
   virtual void popAndApplyRollback() = 0;
   
-  virtual void getTransferInformation(PLLRootedTree &speciesTree,
+  virtual void getTransferInformation(SpeciesTree &speciesTree,
     TransferFrequencies &frequencies,
     PerSpeciesEvents &perSpeciesEvents) = 0;
   
