@@ -81,7 +81,7 @@ private:
     corax_rnode_t *originSpeciesNode,
     size_t category,
     Scenario::Event &event);
-
+  corax_rnode_t *getSpeciesLCA();
   
 };
 
@@ -115,7 +115,7 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(DatedTree &speciesTree,
   for (unsigned int i = 0; i < 3; ++i) {
     _dtlRates[i] = std::vector<double>(N, 0.2);
   }
-  setAlpha(100.0);
+  setAlpha(1.0);
   this->onSpeciesTreeChange(nullptr);
 }
  
@@ -234,22 +234,29 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
   }
   auto rootCID = this->_ccp.getCladesNumber() - 1;
   std::vector<REAL> categoryLikelihoods(_gammaCatNumber, REAL());
+  
+  std::vector<corax_rnode_t *> rootNode;
+  std::vector<corax_rnode_t *> *speciesNodes;
   switch (_originationStrategy) {
   case OriginationStrategy::ROOT:
-    for (size_t c = 0; c < _gammaCatNumber; ++c) {
-      categoryLikelihoods[c] += _dtlclvs[rootCID]._uq[this->_speciesTree.getRoot()->node_index * _gammaCatNumber + c];
-    }
+    rootNode.push_back(this->_speciesTree.getRoot());
+    speciesNodes = &rootNode;
     break;
   case OriginationStrategy::UNIFORM:
-    for (auto speciesNode: this->_allSpeciesNodes) {
-      auto e = speciesNode->node_index;
-      for (size_t c = 0; c < _gammaCatNumber; ++c) {
-        categoryLikelihoods[c] += _dtlclvs[rootCID]._uq[e * _gammaCatNumber + c];
-      }
-    }
+    speciesNodes = &(this->_allSpeciesNodes);
+    break;
+  case OriginationStrategy::LCA:
+    rootNode.push_back(getSpeciesLCA());
+    speciesNodes = &rootNode;
     break;
   default:
     assert(false);
+  }
+  for (auto speciesNode: *speciesNodes) {
+    auto e = speciesNode->node_index;
+    for (size_t c = 0; c < _gammaCatNumber; ++c) {
+      categoryLikelihoods[c] += _dtlclvs[rootCID]._uq[e * _gammaCatNumber + c];
+    }
   }
   // condition on survival
   for (unsigned int c = 0; c < _gammaCatNumber; ++c) {
@@ -585,13 +592,17 @@ corax_rnode_t *UndatedDTLMultiModel<REAL>::sampleSpeciesNode(unsigned int &categ
   auto rootCID = this->_ccp.getCladesNumber() - 1;
   auto &uq = _dtlclvs[rootCID]._uq;
   std::vector<corax_rnode_t *> rootNodeVector;
-  rootNodeVector.push_back(this->_speciesTree.getRoot());
   std::vector<corax_rnode_t *> *speciesNodeCandidates = nullptr;
   switch (_originationStrategy) {
   case OriginationStrategy::UNIFORM:
     speciesNodeCandidates = &(this->_allSpeciesNodes);
     break;
   case OriginationStrategy::ROOT:
+    rootNodeVector.push_back(this->_speciesTree.getRoot());
+    speciesNodeCandidates = &rootNodeVector;
+    break;
+  case OriginationStrategy::LCA:
+    rootNodeVector.push_back(getSpeciesLCA());
     speciesNodeCandidates = &rootNodeVector;
     break;
   default:
@@ -619,5 +630,17 @@ corax_rnode_t *UndatedDTLMultiModel<REAL>::sampleSpeciesNode(unsigned int &categ
   } 
   assert(false);
   return nullptr;
+}
+template <class REAL>  
+corax_rnode_t *UndatedDTLMultiModel<REAL>::getSpeciesLCA()
+{
+  auto tree = &this->_speciesTree;
+  corax_rnode_t *lca = nullptr;
+  for (auto it: this->_speciesNameToId) {
+    auto spid = it.second;
+    auto node = tree->getNode(spid);
+    lca = tree->getLCA(lca, node);
+  }
+  return lca;
 }
 

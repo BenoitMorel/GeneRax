@@ -432,6 +432,12 @@ void PLLRootedTree::onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *
   
 corax_rnode_t *PLLRootedTree::getLCA(corax_rnode_t *n1, corax_rnode_t *n2)
 {
+  if (!n1) {
+    return n2;
+  }
+  if (!n2) {
+    return n1;
+  } 
   return getLCA(n1->node_index, n2->node_index);
 }
   
