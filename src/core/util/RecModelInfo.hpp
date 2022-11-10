@@ -11,6 +11,10 @@ struct RecModelInfo {
   bool perFamilyRates;
   // number of gamma categories for rate heterogeneity among families
   size_t gammaCategories;
+
+  // at which ancestral species do we consider that originations
+  // are possible, and with which probability
+  OriginationStrategy originationStrategy;
   
   // if set to true,  for each family, we prune from the species
   // tree the taxa that are not covered in this family
@@ -32,6 +36,7 @@ struct RecModelInfo {
     model(RecModel::UndatedDTL),
     perFamilyRates(true),
     gammaCategories(1),
+    originationStrategy(OriginationStrategy::ROOT),
     pruneSpeciesTree(true),
     rootedGeneTree(true),
     branchLengthThreshold(-1.0),
@@ -44,6 +49,7 @@ struct RecModelInfo {
   RecModelInfo(RecModel model,
       bool perFamilyRates,
       unsigned int gammaCategories,
+      OriginationStrategy originationStrategy,
       bool pruneSpeciesTree,
       bool rootedGeneTree,
       double branchLengthThreshold,
@@ -53,6 +59,7 @@ struct RecModelInfo {
     model(model),
     perFamilyRates(perFamilyRates),
     gammaCategories(gammaCategories),
+    originationStrategy(originationStrategy),
     pruneSpeciesTree(pruneSpeciesTree),
     rootedGeneTree(rootedGeneTree),
     branchLengthThreshold(branchLengthThreshold),
@@ -67,6 +74,8 @@ struct RecModelInfo {
   {
     model = RecModel(atoi(argv[i++]));  
     perFamilyRates = bool(atoi(argv[i++]));
+    gammaCategories = atoi(argv[i++]);
+    originationStrategy = Enums::strToOrigination(argv[i++]);
     pruneSpeciesTree = bool(atoi(argv[i++]));
     rootedGeneTree = bool(atoi(argv[i++]));
     std::string con = argv[i++];
@@ -84,6 +93,8 @@ struct RecModelInfo {
     std::vector<std::string> argv;
     argv.push_back(std::to_string(static_cast<int>(model)));
     argv.push_back(std::to_string(static_cast<int>(perFamilyRates)));
+    argv.push_back(std::to_string(static_cast<int>(gammaCategories)));
+    argv.push_back(Enums::originationToStr(originationStrategy));
     argv.push_back(std::to_string(static_cast<int>(pruneSpeciesTree)));
     argv.push_back(std::to_string(static_cast<int>(rootedGeneTree)));
     argv.push_back(ArgumentsHelper::transferConstraintToStr(transferConstraint));
@@ -99,7 +110,7 @@ struct RecModelInfo {
 
   static int getArgc() 
   {
-    return 8;
+    return 10;
   }
 
   unsigned int modelFreeParameters() const {

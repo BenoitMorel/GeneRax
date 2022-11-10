@@ -26,6 +26,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   lossRate(0.2),
   transferRate(0.2),
   gammaCategories(1),
+  originationStrategy(OriginationStrategy::UNIFORM),
   reconcile(true),
   buildSuperMatrix(false),
   reconciliationSampleNumber(0),

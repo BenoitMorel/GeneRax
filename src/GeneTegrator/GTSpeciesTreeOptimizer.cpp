@@ -109,10 +109,15 @@ private:
 double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
 {
   auto rates = *_modelRates;
-  Logger::timed << "[Species search] Initial rates: " << _modelRates->rates << std::endl;
   OptimizationSettings settings;
   double ll = computeLikelihood();
-  Logger::timed << "[Species search] Initial likleihood " << ll << std::endl;
+  Logger::timed << "[Species search] Before model rate opt, ll=" << ll << " initial rates: " << _modelRates->rates << std::endl;
+  Logger::timed << "[SpeciesSearch] Optimizing model rates ";
+  if (thorough) {
+    Logger::info << "(thorough)" << std::endl;
+  } else {
+    Logger::info << "(light)" << std::endl;
+  }
   if (!thorough) {
     settings.lineSearchMinImprovement = 10.0;
     settings.minAlpha = 0.01;
@@ -125,11 +130,9 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
       function, 
       _modelRates->rates, 
       settings);
-    Logger::timed << "[Species search] Best rates: " << _modelRates->rates << std::endl;
   ll = computeLikelihood();
-  Logger::timed << "New ll = " << ll << std::endl;
+  Logger::timed << "[Species search]   After model rate opt, ll=" << ll << " initial rates: " << _modelRates->rates << std::endl;
   ll = optimizeGammaRates();
-  Logger::timed << "New ll after gamma opt " << ll << std::endl;
   return ll;
 }
 
@@ -148,7 +151,6 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeGammaRates()
   if (gammaCategories == 1) {
     return ll;
   }
-  Logger::timed << "Before optimizing gamma rates: ll=" << ll << std::endl;
   double minAlpha = CORAX_OPT_MIN_ALPHA;  
   double maxAlpha = CORAX_OPT_MAX_ALPHA;  
   double startingAlpha = 1.0;
@@ -166,6 +168,7 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeGammaRates()
   std::vector<double> categories(_modelRates->info.gammaCategories);
   corax_compute_gamma_cats(alpha, categories.size(), &categories[0], 
       CORAX_GAMMA_RATES_MEAN);
+  Logger::timed << "[Species search]   After gamma cat  opt, ll=" << ll << std::endl;
   Logger::info << "alpha = " << alpha << std::endl;
   Logger::info << "rate categories: ";
   for (auto c: categories) {
@@ -295,16 +298,14 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   ParallelContext::maxUInt(maxCladesNumber);
   ParallelContext::sumUInt(totalCladesNumber);
   double averageCladesNumber = double(totalCladesNumber) / double(ParallelContext::getSize());
-  Logger::info << "Load balancing: " << maxCladesNumber << " " << averageCladesNumber <<  "(" << worstFamily << ")"  << std::endl;
-
   Logger::timed << "Initializing ccps finished" << std::endl;
+  Logger::timed << "Load balancing: " << averageCladesNumber / maxCladesNumber << std::endl;
   _speciesTree->addListener(this);
   ParallelContext::barrier();
   _evaluator.setEvaluations(*_speciesTree, _modelRates, families, _evaluations, _geneTrees);
   
   Logger::timed << "Initial ll=" << _evaluator.computeLikelihood() << std::endl;
  
-  randomizeRoot(); 
   saveCurrentSpeciesTreeId("starting_species_tree.newick");
   saveCurrentSpeciesTreeId();
 }

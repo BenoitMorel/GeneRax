@@ -8,13 +8,15 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
   argv(iargv),
   reconciliationModelStr("UndatedDTL"),
   transferConstraint(TransferConstaint::NONE),
+  originationStrategy(OriginationStrategy::UNIFORM),
   speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
   speciesSearchStrategy(SpeciesSearchStrategy::HYBRID),
   pruneSpeciesTree(false),
   gammaCategories(1),
   geneTreeSamples(0),
   output("GeneTegrator"),
-  seed(123)
+  seed(123),
+  randomSpeciesRoot(false)
 {
   for (int i = 1; i < argc; ++i) {
     std::string arg(argv[i]);
@@ -32,6 +34,8 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
       reconciliationModelStr = std::string(argv[++i]);
     } else if (arg == "--transfer-constraint") {
       transferConstraint = ArgumentsHelper::strToTransferConstraint(std::string(argv[++i]));
+    } else if (arg == "--origination") {
+      originationStrategy = Enums::strToOrigination(std::string(argv[++i]));
     } else if (arg == "--prune-species-tree") {
       pruneSpeciesTree = true;
     } else if (arg == "--gene-tree-samples") {
@@ -42,6 +46,8 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
       output = std::string(argv[++i]);
     } else if (arg == "--seed") {
       seed = atoi(argv[++i]);
+    } else if (arg == "--random-species-root") {
+      randomSpeciesRoot = true;
     } else {
       std::cerr << "Unknown argument " << arg << std::endl;
     }

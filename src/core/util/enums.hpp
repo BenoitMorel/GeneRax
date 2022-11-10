@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <IO/Logger.hpp>
 
 using StringToUintMap = std::unordered_map<std::string, unsigned int>;
 
@@ -45,6 +46,10 @@ enum class SpeciesSearchStrategy {
  */
 enum class TransferConstaint {
   NONE, PARENTS, SOFTDATED
+};
+
+enum class OriginationStrategy {
+  UNIFORM, ROOT, LCA
 };
 
 /*
@@ -179,10 +184,38 @@ public:
       return SpeciesTreeAlgorithm::User;
     }
   }
-  
+
+
   static const char *getEventName(ReconciliationEventType type) {
     static const char *eventNames[]  = {"S", "SL", "D", "T", "TL", "L", "Leaf", "Invalid"};
     return eventNames[static_cast<int>(type)];
+  }
+  
+  static std::string originationToStr(OriginationStrategy os)
+  {
+    switch(os) {
+    case OriginationStrategy::UNIFORM:
+      return "UNIFORM";
+    case OriginationStrategy::ROOT:
+      return "ROOT";
+    case OriginationStrategy::LCA:
+      return "LCA";
+    }
+    exit(41);
+  }
+
+  static OriginationStrategy strToOrigination(const std::string &str) 
+  {
+    if (str == "UNIFORM") {
+      return OriginationStrategy::UNIFORM;
+    }  else if (str == "ROOT") {
+      return OriginationStrategy::ROOT;
+    }  else if (str == "LCA") {
+      return OriginationStrategy::LCA;
+    } else {
+      Logger::info << "Invalid origination strategy " << str << std::endl;
+      exit(41);
+    }
   }
 
 };

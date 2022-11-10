@@ -38,6 +38,7 @@ struct GeneRaxInstance {
     recModelInfo = RecModelInfo(recModel,
         args.perFamilyDTLRates,
         args.gammaCategories,
+        args.originationStrategy,
         args.pruneSpeciesTree,
         args.rootedGeneTree,
         args.minGeneBranchLength,

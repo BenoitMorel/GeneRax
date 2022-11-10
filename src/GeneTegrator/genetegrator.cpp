@@ -93,11 +93,6 @@ void run( GeneTegratorArguments &args)
     Logger::info << "No valid family, aborting" << std::endl;
     ParallelContext::abort(0);
   }
-  /*
-  Logger::info << "Number of families before trimming: " << families.size() << std::endl;
-  trimFamilies(families);
-  Logger::info << "Number of families after trimming: " << families.size() << std::endl;
-  */
   initStartingSpeciesTree(args, families);
   
   RecModelInfo info;
@@ -105,11 +100,17 @@ void run( GeneTegratorArguments &args)
   info.model = ArgumentsHelper::strToRecModel(args.reconciliationModelStr); 
   info.transferConstraint = args.transferConstraint;
   info.gammaCategories = args.gammaCategories;
+  info.originationStrategy = args.originationStrategy;
   GTSpeciesTreeOptimizer speciesTreeOptimizer(
       args.speciesTree,
       families,
       info,
       args.output);
+  if (args.randomSpeciesRoot) {
+    Logger::timed << "Random root position!" << std::endl;
+    speciesTreeOptimizer.randomizeRoot();
+    Logger::timed << "New ll=" << speciesTreeOptimizer.getEvaluator().computeLikelihood() << std::endl;
+  }
   switch (args.speciesSearchStrategy) {
   case SpeciesSearchStrategy::HYBRID:
     speciesTreeOptimizer.optimize();

@@ -77,6 +77,7 @@ public:
   void randomizeRoot();
   void saveSpeciesTree();
   void saveSpeciesTreeRootLL();
+  SpeciesTreeLikelihoodEvaluatorInterface &getEvaluator() {return _evaluator;}
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   PerCoreGeneTrees _geneTrees;
