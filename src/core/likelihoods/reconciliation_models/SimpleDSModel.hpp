@@ -11,7 +11,9 @@
 
 
 
-
+/**
+ * TOOD DOCUMENTATION: check what this model does, and where it is used
+ */
 template <class REAL>
 class SimpleDSModel: public GTBaseReconciliationModel<REAL> {
 public:

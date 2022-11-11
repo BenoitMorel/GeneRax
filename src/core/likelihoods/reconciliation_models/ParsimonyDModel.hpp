@@ -42,7 +42,6 @@ protected:
   virtual double  getGeneRootLikelihood(corax_unode_t *root, corax_rnode_t *) {
     return _dlclvs[root->node_index + this->_maxGeneId + 1].cost;
   }
-
   // overload from parent
   virtual void recomputeSpeciesProbabilities() {}
   virtual double getLikelihoodFactor() const {return 1.0;}
@@ -70,9 +69,6 @@ private:
   std::vector<DLCLV> _dlclvs;
  
 private:
-  std::vector<corax_rnode_s *> &getSpeciesNodesToUpdate() {
-    return this->_speciesNodesToUpdate;
-  }
 
 };
 

@@ -47,7 +47,6 @@ protected:
   virtual REAL getGeneRootLikelihood(corax_unode_t *root, corax_rnode_t *speciesRoot) {
     return _dlclvs[root->node_index + this->_maxGeneId + 1][speciesRoot->node_index];
   }
-
   // overload from parent
   virtual void recomputeSpeciesProbabilities();
   virtual REAL getLikelihoodFactor() const;
@@ -66,13 +65,11 @@ private:
   std::vector<double> _PS; // Speciation probability, per species branch
   std::vector<double> _uE; // Extinction probability, per species branch
   
-  // uq[cladeId][speciesId] 
   typedef std::vector<REAL> DLCLV;
   std::vector<DLCLV> _dlclvs;
  
 private:
   std::vector<corax_rnode_s *> &getSpeciesNodesToUpdate() {
-    //return this->_speciesNodesToUpdate;
     return this->_allSpeciesNodes;
   }
 
@@ -83,9 +80,9 @@ template <class REAL>
 void UndatedDLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
 {
   GTBaseReconciliationModel<REAL>::setInitialGeneTree(tree);
-  assert(this->_allSpeciesNodesCount);
+  assert(this->getSpeciesNodeNumber());
   assert(this->_maxGeneId);
-  std::vector<REAL> zeros(this->_allSpeciesNodesCount);
+  std::vector<REAL> zeros(this->getSpeciesNodeNumber());
   _dlclvs = std::vector<std::vector<REAL> >(2 * (this->_maxGeneId + 1),zeros);
 }
 
@@ -95,13 +92,13 @@ void UndatedDLModel<REAL>::setRates(const RatesVector &rates)
   assert(rates.size() == 2);
   auto &dupRates = rates[0];
   auto &lossRates = rates[1];
-  assert(this->_allSpeciesNodesCount == dupRates.size());
-  assert(this->_allSpeciesNodesCount == lossRates.size());
+  assert(this->getSpeciesNodeNumber() == dupRates.size());
+  assert(this->getSpeciesNodeNumber() == lossRates.size());
   _PD = dupRates;
   _PL = lossRates;
-  _PS = std::vector<double>(this->_allSpeciesNodesCount, 1.0);
+  _PS = std::vector<double>(this->getSpeciesNodeNumber(), 1.0);
   this->_geneRoot = 0;
-  for (unsigned int e = 0; e < this->_allSpeciesNodesCount; ++e) {
+  for (unsigned int e = 0; e < this->getSpeciesNodeNumber(); ++e) {
     double sum = _PD[e] + _PL[e] + _PS[e];
     _PD[e] /= sum;
     _PL[e] /= sum;
@@ -116,7 +113,7 @@ template <class REAL>
 void UndatedDLModel<REAL>::recomputeSpeciesProbabilities()
 {
   if (!_uE.size()) {
-    _uE = std::vector<double>(this->_allSpeciesNodesCount, 0.0);
+    _uE = std::vector<double>(this->getSpeciesNodeNumber(), 0.0);
   }
   for (auto speciesNode: getSpeciesNodesToUpdate()) {
     auto e = speciesNode->node_index;

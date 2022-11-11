@@ -42,7 +42,7 @@ protected:
       }
     }
     this->_speciesCoverage = std::vector<unsigned int>(
-        this->_allSpeciesNodesCount, 0);
+        this->getSpeciesNodeNumber(), 0);
     for (auto p: cidToLeaves) {
       auto cid = p.first;
       const auto &geneName = cidToLeaves.at(cid);

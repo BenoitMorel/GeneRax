@@ -1,22 +1,16 @@
 #include "BaseReconciliationModel.hpp"
 
+
 static bool fillNodesPostOrder(corax_rnode_t *node, 
-    std::vector<corax_rnode_t *> &nodes, 
-    std::unordered_set<corax_rnode_t *> *nodesToAdd = nullptr)  
+    std::vector<corax_rnode_t *> &nodes) 
 {
-  bool addMyself = true;
-  if (nodesToAdd) {
-    addMyself = (nodesToAdd->find(node) != nodesToAdd->end());
-  }
   if (node->left) {
     assert(node->right);
-    addMyself |= fillNodesPostOrder(node->left, nodes, nodesToAdd);
-    addMyself |= fillNodesPostOrder(node->right, nodes, nodesToAdd);
+    fillNodesPostOrder(node->left, nodes);
+    fillNodesPostOrder(node->right, nodes);
   }
-  if (addMyself) {
-    nodes.push_back(node);
-  }
-  return addMyself;
+  nodes.push_back(node);
+  return true;
 }
 
 
@@ -58,10 +52,10 @@ bool BaseReconciliationModel::fillPrunedNodesPostOrder(corax_rnode_t *node,
 
 void BaseReconciliationModel::initSpeciesTree()
 {
-  _allSpeciesNodesCount = _speciesTree.getNodesNumber();
-  _speciesLeft = std::vector<corax_rnode_t *>(_allSpeciesNodesCount, nullptr);
-  _speciesRight = std::vector<corax_rnode_t *>(_allSpeciesNodesCount, nullptr);
-  _speciesParent = std::vector<corax_rnode_t *>(_allSpeciesNodesCount, nullptr);
+  auto maxSpeciesNodeIndex = _speciesTree.getNodesNumber();
+  _speciesLeft = std::vector<corax_rnode_t *>(maxSpeciesNodeIndex, nullptr);
+  _speciesRight = std::vector<corax_rnode_t *>(maxSpeciesNodeIndex, nullptr);
+  _speciesParent = std::vector<corax_rnode_t *>(maxSpeciesNodeIndex, nullptr);
   _speciesNameToId.clear();
   onSpeciesTreeChange(nullptr);
   for (auto node: _allSpeciesNodes) {
@@ -97,7 +91,7 @@ void BaseReconciliationModel::onSpeciesTreeChange(
   }
   _prunedRoot = _speciesTree.getRoot();
   if (_info.pruneSpeciesTree && _speciesCoverage.size()) {
-    std::vector<corax_rnode_t *> pruned(_allSpeciesNodesCount, nullptr);
+    std::vector<corax_rnode_t *> pruned(getSpeciesNodeNumber(), nullptr);
     for (auto speciesNode: _allSpeciesNodes) {
       auto e = speciesNode->node_index;
       if (!speciesNode->left) {
@@ -129,24 +123,16 @@ void BaseReconciliationModel::onSpeciesTreeChange(
 
 void BaseReconciliationModel::beforeComputeLogLikelihood()
 {
-  if (_allSpeciesNodesInvalid) { // update everything
-    _speciesNodesToUpdate = _allSpeciesNodes;
-  } else if (_invalidatedSpeciesNodes.size()) { // partial update
-    // here, fill _speciesNodesToUpdate with the invalid nodes
-    _speciesNodesToUpdate.clear();
-    fillPrunedNodesPostOrder(getPrunedRoot(), _speciesNodesToUpdate, &_invalidatedSpeciesNodes);
-  } else {
-    _speciesNodesToUpdate.clear();
-  }
+  // currently, we are not really using the fact that
+  // some species nodes should not be re-evaluated
   _allSpeciesNodesInvalid = false;
   _invalidatedSpeciesNodes.clear();
-  //assert(!_speciesNodesToUpdate.size() || _speciesNodesToUpdate.back() == getPrunedRoot());
   recomputeSpeciesProbabilities();
 }
 
 void BaseReconciliationModel::setFractionMissingGenes(const std::string &fractionMissingFile)
 {
-  _fm = std::vector<double>(_allSpeciesNodesCount, 0.0);
+  _fm = std::vector<double>(getSpeciesNodeNumber(), 0.0);
   if (!fractionMissingFile.size()) {
     return;
   }

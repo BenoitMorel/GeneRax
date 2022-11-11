@@ -109,33 +109,69 @@ public:
 
   corax_rnode_t *getPrunedRoot() {return _prunedRoot;}
 protected:
+
+  /*
+   * Init all structures that describe the species tree, in particular
+   * the structure representing the pruned species tree in pruned mode
+   * This function should be called once at the start
+   */
   virtual void initSpeciesTree();
+  
+  /*
+   *  Recompute probability values depending on the species tree only
+   *  (not on the gene tree), such as the exctinction probability or
+   *  the per-species event probabilities
+   *  This function should be typically called after changing the DTL 
+   *  rates or after updating the species tree.
+   */
   virtual void recomputeSpeciesProbabilities() = 0;
+
+  /**
+   *  Callback that is always called at the start of computeLogLikelihood
+   */
   virtual void beforeComputeLogLikelihood(); 
   
+  /*
+   * Fill nodes with the nodes of the species tree that belong to 
+   * the "pruned species tree". nodesToAdd represents the species leaves
+   * are covered by this gene family. Nodes are filled in post order fashion
+   */
   bool fillPrunedNodesPostOrder(corax_rnode_t *node, 
     std::vector<corax_rnode_t *> &nodes, 
     std::unordered_set<corax_rnode_t *> *nodesToAdd = nullptr);  
 
 
+  PLLRootedTree &getSpeciesTree() {return _speciesTree;}
+
+  unsigned int getSpeciesNodeNumber() const {return _allSpeciesNodes.size();}
 
 protected:
+  // description of the model
   RecModelInfo _info;
+  // reference to the species tree
   PLLRootedTree &_speciesTree;
-  std::vector <corax_rnode_t *> _speciesNodesToUpdate;
+  // list of all species tree nodes used for the likelihood computation
   std::vector <corax_rnode_t *> _allSpeciesNodes;
-  unsigned int _allSpeciesNodesCount;
+  // map gene leaves to species leaves. The mapping is not computed by this class 
   std::vector<unsigned int> _geneToSpecies;
+  // defines at which level (species/genes/none) we do imcremental recomputations  
   PartialLikelihoodMode _likelihoodMode;
+  // fraction of missing genes, indexed by gene ids
   std::vector<double> _fm;
+  // number of genes that cover each species leaf
   std::vector<unsigned int> _speciesCoverage;
+  // number of species leaf that are covered by at least one gene
   unsigned int _numberOfCoveredSpecies;
   std::map<std::string, std::string> _geneNameToSpeciesName;
+  // species name (leaf label) to species node index 
   std::map<std::string, unsigned int> _speciesNameToId;
+  // if true, we have to recompute the whole likelihood from scratch 
+  // (no imcremental recomputation)
   bool _allSpeciesNodesInvalid;
+  // species internal nodes that need to be recomputed
   std::unordered_set<corax_rnode_t *> _invalidatedSpeciesNodes;
-  // left, right and parent species vectors, 
-  // indexed with the species nodex_index
+  //Internal representation of the current species tree. Always use these
+  //pointers to be compliant with the pruned species tree mode
   std::vector<corax_rnode_t *> _speciesLeft;
   std::vector<corax_rnode_t *> _speciesRight;
   std::vector<corax_rnode_t *> _speciesParent;

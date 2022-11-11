@@ -129,10 +129,6 @@ private:
     }
   }
 
-  std::vector<corax_rnode_s *> &getSpeciesNodesToUpdate() {
-    return this->_speciesNodesToUpdate;
-  }
-
   std::vector<corax_rnode_s *> &getSpeciesNodesToUpdateSafe() {
     return this->_allSpeciesNodes;
   }
@@ -143,7 +139,7 @@ template <class REAL>
 void UndatedDTLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
 {
   GTBaseReconciliationModel<REAL>::setInitialGeneTree(tree);
-  DTLCLV nullCLV(this->_allSpeciesNodesCount);
+  DTLCLV nullCLV(this->getSpeciesNodeNumber());
   _dtlclvs = std::vector<DTLCLV>(2 * (this->_maxGeneId + 1), nullCLV);
 }
 
@@ -157,14 +153,14 @@ void UndatedDTLModel<REAL>::setRates(const RatesVector &rates)
   auto &dupRates = rates[0];
   auto &lossRates = rates[1];
   auto &transferRates = rates[2];
-  assert(this->_allSpeciesNodesCount == dupRates.size());
-  assert(this->_allSpeciesNodesCount == lossRates.size());
-  assert(this->_allSpeciesNodesCount == transferRates.size());
+  assert(this->getSpeciesNodeNumber() == dupRates.size());
+  assert(this->getSpeciesNodeNumber() == lossRates.size());
+  assert(this->getSpeciesNodeNumber() == transferRates.size());
   _PD = dupRates;
   _PL = lossRates;
   _PT = transferRates;
-  _PS.resize(this->_allSpeciesNodesCount);
-  for (unsigned int e = 0; e < this->_allSpeciesNodesCount; ++e) {
+  _PS.resize(this->getSpeciesNodeNumber());
+  for (unsigned int e = 0; e < this->getSpeciesNodeNumber(); ++e) {
     if (this->_info.noDup) {
       _PD[e] = 0.0;
     }
@@ -198,7 +194,7 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
       _orderedSpeciesRanks[leaf->node_index] = rank;
     }
   }
-  _uE.resize(this->_allSpeciesNodesCount);
+  _uE.resize(this->getSpeciesNodeNumber());
   for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
     _uE[speciesNode->node_index] = 0.0;
   }

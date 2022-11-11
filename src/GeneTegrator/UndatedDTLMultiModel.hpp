@@ -20,13 +20,16 @@ public:
 
   virtual ~UndatedDTLMultiModel() {}
 
+
   virtual void setRates(const RatesVector &);
   virtual void setAlpha(double alpha); 
   virtual double computeLogLikelihood();
   virtual corax_rnode_t *sampleSpeciesNode(unsigned int &category);
   
 private:
-  
+ 
+
+
   DatedTree &_datedTree;
   size_t _gammaCatNumber;
   std::vector<double> _gammaScalers;
@@ -107,7 +110,7 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(DatedTree &speciesTree,
   _originationStrategy(info.originationStrategy)
 {
   std::vector<REAL> zeros(this->_speciesTree.getNodesNumber());
-  DTLCLV nullCLV(this->_allSpeciesNodesCount, _gammaCatNumber);
+  DTLCLV nullCLV(this->getSpeciesNodeNumber(), _gammaCatNumber);
   _dtlclvs = std::vector<DTLCLV>(2 * (this->_ccp.getCladesNumber()), nullCLV);
   auto N = this->_speciesTree.getNodesNumber();
   
@@ -147,7 +150,7 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
       REAL());
   std::fill(uq.begin(), uq.end(), REAL());
   std::fill(correctionSum.begin(), correctionSum.end(), REAL());
-  auto N = this->_allSpeciesNodesCount;
+  auto N = this->getSpeciesNodeNumber();
   std::vector<REAL> sums(_gammaCatNumber, REAL());
   for (auto speciesNode: this->_allSpeciesNodes) {
     auto e = speciesNode->node_index;
@@ -284,7 +287,7 @@ void UndatedDTLMultiModel<REAL>::sampleTransferEvent(unsigned int cid,
     Scenario::Event &event)
 {
   auto e = originSpeciesNode->node_index;
-  auto N = this->_allSpeciesNodesCount;
+  auto N = this->getSpeciesNodeNumber();
   auto c = category;
   auto ec = e * _gammaCatNumber + c;
   auto &clv = _dtlclvs[cid];
@@ -354,11 +357,11 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
   auto &dupRates = _dtlRates[0];
   auto &lossRates = _dtlRates[1];
   auto &transferRates = _dtlRates[2];
-  auto N = this->_allSpeciesNodesCount;
-  assert(N == dupRates.size());
-  assert(N == lossRates.size());
-  assert(N == transferRates.size());
-  for (unsigned int e = 0; e < this->_allSpeciesNodesCount; ++e) {
+  auto maxSpeciesId = this->getSpeciesTree().getNodesNumber();
+  assert(maxSpeciesId == dupRates.size());
+  assert(maxSpeciesId == lossRates.size());
+  assert(maxSpeciesId == transferRates.size());
+  for (unsigned int e = 0; e < this->getSpeciesNodeNumber(); ++e) {
     for (size_t c = 0; c < _gammaCatNumber; ++c) {
       auto ec = e * _gammaCatNumber + c;
       _PD[ec] = dupRates[e];
@@ -408,7 +411,7 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
       }
     }
     for (size_t c = 0; c < _gammaCatNumber; ++c) {
-      _transferExtinctionSum[c] /= double(N);
+      _transferExtinctionSum[c] /= double(this->getSpeciesNodeNumber());
     }
   }
 }

@@ -76,12 +76,12 @@ void UndatedDLMultiModel<REAL>::setRates(const RatesVector &rates)
   assert(rates.size() == 2);
   auto &dupRates = rates[0];
   auto &lossRates = rates[1];
-  assert(this->_allSpeciesNodesCount == dupRates.size());
-  assert(this->_allSpeciesNodesCount == lossRates.size());
+  assert(this->getSpeciesNodeNumber() == dupRates.size());
+  assert(this->getSpeciesNodeNumber() == lossRates.size());
   _PD = dupRates;
   _PL = lossRates;
-  _PS.resize(this->_allSpeciesNodesCount);
-  for (unsigned int e = 0; e < this->_allSpeciesNodesCount; ++e) {
+  _PS.resize(this->getSpeciesNodeNumber());
+  for (unsigned int e = 0; e < this->getSpeciesNodeNumber(); ++e) {
     if (this->_info.noDup) {
       _PD[e] = 0.0;
     }
