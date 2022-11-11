@@ -39,7 +39,6 @@ private:
   std::vector<double> _PT; // Transfer probability, per species branch
   std::vector<double> _PS; // Speciation probability, per species branch
   std::vector<double> _uE; // Extinction probability, per species branch
-  std::vector<double> _transferExtinctionSum;
   
   TransferConstaint _transferConstraint;
   OriginationStrategy _originationStrategy;
@@ -380,8 +379,9 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
   }
   
   std::fill(_uE.begin(), _uE.end(), 0.0);
-  
-  _transferExtinctionSum = std::vector<double>(_gammaCatNumber, REAL());
+ 
+  std::vector correctionSum = std::vector<double>(_gammaCatNumber, REAL())
+  auto transferSum = std::vector<double>(_gammaCatNumber, REAL());
   for (unsigned int it = 0; it < 4; ++it) {
     for (auto speciesNode: this->_allSpeciesNodes) {
       auto e = speciesNode->node_index;
@@ -389,7 +389,7 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
         auto ec = e * _gammaCatNumber + c;
         double proba(_PL[ec]);
         proba += _uE[ec] * _uE[ec] * _PD[ec];
-        proba += _transferExtinctionSum[c] * _PT[ec] * _uE[ec];
+        proba += transferSum[c] * _PT[ec] * _uE[ec];
         if (this->getSpeciesLeft(speciesNode)) {
           auto g = this->getSpeciesLeft(speciesNode)->node_index;
           auto h = this->getSpeciesRight(speciesNode)->node_index;
@@ -400,18 +400,18 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
         _uE[ec] = proba;
       }
     }
-    std::fill(_transferExtinctionSum.begin(),
-        _transferExtinctionSum.end(),
+    std::fill(transferSum.begin(),
+        transferSum.end(),
         0.0);
     for (auto speciesNode: this->_allSpeciesNodes) {
       auto e = speciesNode->node_index;
       for (size_t c = 0; c < _gammaCatNumber; ++c) {
         auto ec = e * _gammaCatNumber + c;
-        _transferExtinctionSum[c] += _uE[ec];
+        transferSum[c] += _uE[ec];
       }
     }
     for (size_t c = 0; c < _gammaCatNumber; ++c) {
-      _transferExtinctionSum[c] /= double(this->getSpeciesNodeNumber());
+      transferSum[c] /= double(this->getSpeciesNodeNumber());
     }
   }
 }
