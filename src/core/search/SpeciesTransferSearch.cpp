@@ -5,6 +5,7 @@
 #include <search/SpeciesSearchCommon.hpp>
 #include <trees/SpeciesTree.hpp>
 #include <trees/PLLRootedTree.hpp>
+#include <IO/FileSystem.hpp>
 
 struct TransferMove {
   unsigned int prune;
@@ -59,7 +60,8 @@ static bool transferRound(SpeciesTree &speciesTree,
   SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
   SpeciesSearchState &searchState,
   MovesBlackList &blacklist,
-  bool &maxImprovementsReached)
+  bool &maxImprovementsReached,
+  const std::string &outputDir)
 {
   maxImprovementsReached = false;
   unsigned int minTransfers = 1;
@@ -80,8 +82,8 @@ static bool transferRound(SpeciesTree &speciesTree,
   std::unordered_map<std::string, unsigned int> labelsToIds;
   speciesTree.getLabelsToId(labelsToIds);
   std::vector<TransferMove> transferMoves;
-  Logger::info << "WARNING, CREATING FILE yoyo.txt" << std::endl;
-  ParallelOfstream os("yoyo.txt");
+  std::string transferFile(FileSystem::joinPaths(outputDir, "tempTransferFile.txt"));
+  ParallelOfstream os(transferFile);
   for (unsigned int from = 0; from < frequencies.count.size(); ++from) {
     for (unsigned int to = 0; to < frequencies.count.size(); ++to) {
       auto regraft = labelsToIds[frequencies.idToLabel[from]];
@@ -181,7 +183,8 @@ static bool transferRound(SpeciesTree &speciesTree,
 bool SpeciesTransferSearch::transferSearch(
   SpeciesTree &speciesTree,
   SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
-  SpeciesSearchState &searchState)
+  SpeciesSearchState &searchState,
+  const std::string &outputDir)
 {
   Logger::info << std::endl;
   Logger::timed << "[Species search]" 
@@ -196,7 +199,7 @@ bool SpeciesTransferSearch::transferSearch(
       searchState.bestLL = evaluation.optimizeModelRates();
     }
     stop = !transferRound(speciesTree, evaluation, searchState, 
-        blacklist, maxImprovementsReached);
+        blacklist, maxImprovementsReached, outputDir);
     if (!stop) {
       better = true;
     }
