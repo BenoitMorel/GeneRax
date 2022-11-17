@@ -80,9 +80,9 @@ template <class REAL>
 void UndatedDLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
 {
   GTBaseReconciliationModel<REAL>::setInitialGeneTree(tree);
-  assert(this->getSpeciesNodeNumber());
+  assert(this->getPrunedSpeciesNodeNumber());
   assert(this->_maxGeneId);
-  std::vector<REAL> zeros(this->getSpeciesNodeNumber());
+  std::vector<REAL> zeros(this->getPrunedSpeciesNodeNumber());
   _dlclvs = std::vector<std::vector<REAL> >(2 * (this->_maxGeneId + 1),zeros);
 }
 
@@ -92,13 +92,13 @@ void UndatedDLModel<REAL>::setRates(const RatesVector &rates)
   assert(rates.size() == 2);
   auto &dupRates = rates[0];
   auto &lossRates = rates[1];
-  assert(this->getSpeciesNodeNumber() == dupRates.size());
-  assert(this->getSpeciesNodeNumber() == lossRates.size());
+  assert(this->getPrunedSpeciesNodeNumber() == dupRates.size());
+  assert(this->getPrunedSpeciesNodeNumber() == lossRates.size());
   _PD = dupRates;
   _PL = lossRates;
-  _PS = std::vector<double>(this->getSpeciesNodeNumber(), 1.0);
+  _PS = std::vector<double>(this->getPrunedSpeciesNodeNumber(), 1.0);
   this->_geneRoot = 0;
-  for (unsigned int e = 0; e < this->getSpeciesNodeNumber(); ++e) {
+  for (unsigned int e = 0; e < this->getPrunedSpeciesNodeNumber(); ++e) {
     double sum = _PD[e] + _PL[e] + _PS[e];
     _PD[e] /= sum;
     _PL[e] /= sum;
@@ -113,7 +113,7 @@ template <class REAL>
 void UndatedDLModel<REAL>::recomputeSpeciesProbabilities()
 {
   if (!_uE.size()) {
-    _uE = std::vector<double>(this->getSpeciesNodeNumber(), 0.0);
+    _uE = std::vector<double>(this->getPrunedSpeciesNodeNumber(), 0.0);
   }
   for (auto speciesNode: getSpeciesNodesToUpdate()) {
     auto e = speciesNode->node_index;

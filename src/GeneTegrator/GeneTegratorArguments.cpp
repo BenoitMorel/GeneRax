@@ -7,7 +7,7 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
   reconciliationModelStr("UndatedDTL"),
-  transferConstraint(TransferConstaint::NONE),
+  transferConstraint(TransferConstaint::PARENTS),
   originationStrategy(OriginationStrategy::UNIFORM),
   speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
   speciesSearchStrategy(SpeciesSearchStrategy::HYBRID),

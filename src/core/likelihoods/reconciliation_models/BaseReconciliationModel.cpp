@@ -52,13 +52,15 @@ bool BaseReconciliationModel::fillPrunedNodesPostOrder(corax_rnode_t *node,
 
 void BaseReconciliationModel::initSpeciesTree()
 {
-  auto maxSpeciesNodeIndex = _speciesTree.getNodesNumber();
-  _speciesLeft = std::vector<corax_rnode_t *>(maxSpeciesNodeIndex, nullptr);
-  _speciesRight = std::vector<corax_rnode_t *>(maxSpeciesNodeIndex, nullptr);
-  _speciesParent = std::vector<corax_rnode_t *>(maxSpeciesNodeIndex, nullptr);
+  _allSpeciesNodes.clear();
+  fillNodesPostOrder(_speciesTree.getRoot(), _allSpeciesNodes);
+  assert(getAllSpeciesNodeNumber());
+  _speciesLeft = std::vector<corax_rnode_t *>(getAllSpeciesNodeNumber(), nullptr);
+  _speciesRight = std::vector<corax_rnode_t *>(getAllSpeciesNodeNumber(), nullptr);
+  _speciesParent = std::vector<corax_rnode_t *>(getAllSpeciesNodeNumber(), nullptr);
   _speciesNameToId.clear();
   onSpeciesTreeChange(nullptr);
-  for (auto node: _allSpeciesNodes) {
+  for (auto node: getAllSpeciesNodes()) {
     if (!node->left) {
       _speciesNameToId[node->label] = node->node_index;
     }
@@ -83,7 +85,7 @@ void BaseReconciliationModel::onSpeciesTreeChange(
   }
   _allSpeciesNodes.clear();
   fillNodesPostOrder(_speciesTree.getRoot(), _allSpeciesNodes);
-  for (auto speciesNode: _allSpeciesNodes) {
+  for (auto speciesNode: getAllSpeciesNodes()) {
     auto e = speciesNode->node_index;
     _speciesLeft[e] = speciesNode->left;
     _speciesRight[e] = speciesNode->right;
@@ -91,8 +93,8 @@ void BaseReconciliationModel::onSpeciesTreeChange(
   }
   _prunedRoot = _speciesTree.getRoot();
   if (_info.pruneSpeciesTree && _speciesCoverage.size()) {
-    std::vector<corax_rnode_t *> pruned(getSpeciesNodeNumber(), nullptr);
-    for (auto speciesNode: _allSpeciesNodes) {
+    std::vector<corax_rnode_t *> pruned(getAllSpeciesNodeNumber(), nullptr);
+    for (auto speciesNode: getAllSpeciesNodes()) {
       auto e = speciesNode->node_index;
       if (!speciesNode->left) {
         pruned[e] = (_speciesCoverage[e] ? speciesNode : nullptr);   
@@ -115,10 +117,15 @@ void BaseReconciliationModel::onSpeciesTreeChange(
         }
       }
     }
-    _allSpeciesNodes.clear();
-    fillPrunedNodesPostOrder(getPrunedRoot(), _allSpeciesNodes);
+    _prunedSpeciesNodes.clear();
+    fillPrunedNodesPostOrder(getPrunedRoot(), _prunedSpeciesNodes);
+  } else {
+    _prunedSpeciesNodes.clear();
+    fillNodesPostOrder(_speciesTree.getRoot(), _prunedSpeciesNodes);
+
   }
-  assert(_allSpeciesNodes.size()); // && _allSpeciesNodes.back() == _speciesTree.getRoot());
+  assert(getAllSpeciesNodeNumber());
+  assert(getPrunedSpeciesNodeNumber());
 }
 
 void BaseReconciliationModel::beforeComputeLogLikelihood()
@@ -132,7 +139,7 @@ void BaseReconciliationModel::beforeComputeLogLikelihood()
 
 void BaseReconciliationModel::setFractionMissingGenes(const std::string &fractionMissingFile)
 {
-  _fm = std::vector<double>(getSpeciesNodeNumber(), 0.0);
+  _fm = std::vector<double>(getPrunedSpeciesNodeNumber(), 0.0);
   if (!fractionMissingFile.size()) {
     return;
   }

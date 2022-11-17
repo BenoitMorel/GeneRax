@@ -33,7 +33,7 @@ private:
   using DLCLV = std::vector<REAL>;
   std::vector<DLCLV> _dlclvs;
 
-  REAL getLikelihoodFactor() const;
+  REAL getLikelihoodFactor();
   virtual void recomputeSpeciesProbabilities();
   virtual void computeProbability(CID cid, 
     corax_rnode_t *speciesNode, 
@@ -53,15 +53,15 @@ UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree,
       geneSpeciesMapping,
       info,
       geneTreesFile),
-  _PD(speciesTree.getNodesNumber(), 0.2),
-  _PL(speciesTree.getNodesNumber(), 0.2),
-  _PS(speciesTree.getNodesNumber(), 1.0),
-  _uE(speciesTree.getNodesNumber(), 0.0)
+  _PD(this->getAllSpeciesNodeNumber(), 0.2),
+  _PL(this->getAllSpeciesNodeNumber(), 0.2),
+  _PS(this->getAllSpeciesNodeNumber(), 1.0),
+  _uE(this->getAllSpeciesNodeNumber(), 0.0)
 {
-  std::vector<REAL> zeros(speciesTree.getNodesNumber(), REAL());
+  std::vector<REAL> zeros(this->getAllSpeciesNodeNumber(), REAL());
   _dlclvs = std::vector<std::vector<REAL> >(
       this->_ccp.getCladesNumber(), zeros);
-  for (unsigned int e = 0; e < this->_speciesTree.getNodesNumber(); ++e) {
+  for (unsigned int e = 0; e < this->getPrunedSpeciesNodeNumber(); ++e) {
     double sum = _PD[e] + _PL[e] + _PS[e];
     _PD[e] /= sum;
     _PL[e] /= sum;
@@ -76,12 +76,13 @@ void UndatedDLMultiModel<REAL>::setRates(const RatesVector &rates)
   assert(rates.size() == 2);
   auto &dupRates = rates[0];
   auto &lossRates = rates[1];
-  assert(this->getSpeciesNodeNumber() == dupRates.size());
-  assert(this->getSpeciesNodeNumber() == lossRates.size());
+  assert(this->getAllSpeciesNodeNumber() == dupRates.size());
+  assert(this->getAllSpeciesNodeNumber() == lossRates.size());
   _PD = dupRates;
   _PL = lossRates;
-  _PS.resize(this->getSpeciesNodeNumber());
-  for (unsigned int e = 0; e < this->getSpeciesNodeNumber(); ++e) {
+  _PS.resize(this->getAllSpeciesNodeNumber());
+  for (auto node: this->getPrunedSpeciesNodes()) {
+    auto e = node->node_index;
     if (this->_info.noDup) {
       _PD[e] = 0.0;
     }
@@ -104,7 +105,7 @@ double UndatedDLMultiModel<REAL>::computeLogLikelihood()
   _dlclvs = std::vector<std::vector<REAL> >(
       this->_ccp.getCladesNumber(), zeros);
   for (CID cid = 0; cid < this->_ccp.getCladesNumber(); ++cid) {
-    for (auto speciesNode: this->_allSpeciesNodes) {
+    for (auto speciesNode: this->getPrunedSpeciesNodes()) {
       auto category = 0;
       computeProbability(cid, 
           speciesNode,
@@ -114,7 +115,7 @@ double UndatedDLMultiModel<REAL>::computeLogLikelihood()
   }
   auto rootCID = this->_ccp.getCladesNumber() - 1;
   REAL res = REAL();
-  for (auto speciesNode: this->_allSpeciesNodes) {
+  for (auto speciesNode: this->getPrunedSpeciesNodes()) {
     res += _dlclvs[rootCID][speciesNode->node_index];
   }
   // the root correction makes sure that UndatedDLMultiModel and
@@ -129,7 +130,7 @@ double UndatedDLMultiModel<REAL>::computeLogLikelihood()
 template <class REAL>
 void UndatedDLMultiModel<REAL>::recomputeSpeciesProbabilities()
 {
-  for (auto speciesNode: this->_allSpeciesNodes) {
+  for (auto speciesNode: this->getPrunedSpeciesNodes()) {
     auto e = speciesNode->node_index;
     double a = _PD[e];
     double b = -1.0;
@@ -244,10 +245,10 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
 }
   
 template <class REAL>
-REAL UndatedDLMultiModel<REAL>::getLikelihoodFactor() const
+REAL UndatedDLMultiModel<REAL>::getLikelihoodFactor() 
 {
   REAL factor(0.0);
-  for (auto speciesNode: this->_allSpeciesNodes) {
+  for (auto speciesNode: this->getPrunedSpeciesNodes()) {
     auto e = speciesNode->node_index;
     factor += (REAL(1.0) - REAL(_uE[e]));
   }
@@ -264,7 +265,7 @@ corax_rnode_t *UndatedDLMultiModel<REAL>::sampleSpeciesNode(unsigned int &catego
   auto totalLL = std::accumulate(uq.begin(), uq.end(), REAL());
   REAL toSample = totalLL * Random::getProba();
   REAL sumLL = REAL();
-  for (auto speciesNode: this->_allSpeciesNodes) {
+  for (auto speciesNode: this->getPrunedSpeciesNodes()) {
      sumLL += uq[speciesNode->node_index];
      if (sumLL > toSample) {
         return speciesNode;

@@ -200,7 +200,7 @@ void GTBaseReconciliationModel<REAL>::mapGenesToSpecies()
   }
   this->_numberOfCoveredSpecies = 0;
   this->_speciesCoverage = std::vector<unsigned int>(
-      this->getSpeciesNodeNumber(), 0);
+      this->getAllSpeciesNodeNumber(), 0);
   for (auto node: _allNodes) {
     if (!this->_speciesCoverage[this->_geneToSpecies[node->node_index]]) {
       this->_numberOfCoveredSpecies++;

@@ -72,7 +72,7 @@ private:
 
 
   void updateCLV(CID cid);
-  double getLikelihoodFactor(unsigned int category) const;
+  double getLikelihoodFactor(unsigned int category);
   virtual void recomputeSpeciesProbabilities();
   virtual void computeProbability(CID cid, 
     corax_rnode_t *speciesNode, 
@@ -109,7 +109,7 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(DatedTree &speciesTree,
   _originationStrategy(info.originationStrategy)
 {
   std::vector<REAL> zeros(this->_speciesTree.getNodesNumber());
-  DTLCLV nullCLV(this->getSpeciesNodeNumber(), _gammaCatNumber);
+  DTLCLV nullCLV(this->getPrunedSpeciesNodeNumber(), _gammaCatNumber);
   _dtlclvs = std::vector<DTLCLV>(2 * (this->_ccp.getCladesNumber()), nullCLV);
   auto N = this->_speciesTree.getNodesNumber();
   
@@ -149,9 +149,9 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
       REAL());
   std::fill(uq.begin(), uq.end(), REAL());
   std::fill(correctionSum.begin(), correctionSum.end(), REAL());
-  auto N = this->getSpeciesNodeNumber();
+  auto N = this->getPrunedSpeciesNodeNumber();
   std::vector<REAL> sums(_gammaCatNumber, REAL());
-  for (auto speciesNode: this->_allSpeciesNodes) {
+  for (auto speciesNode: this->getPrunedSpeciesNodes()) {
     auto e = speciesNode->node_index;
     for (size_t c = 0; c < _gammaCatNumber; ++c) {
       auto ec = e * _gammaCatNumber + c;  
@@ -201,7 +201,7 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
         softDatedSum[c] += uq[ec];
       }
     }
-    for (auto node: this->_allSpeciesNodes) {
+    for (auto node: this->getPrunedSpeciesNodes()) {
       auto e = node->node_index;
       auto p = node->parent ? node->parent->node_index : e;
       if (e != p) {
@@ -245,7 +245,7 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
     speciesNodes = &rootNode;
     break;
   case OriginationStrategy::UNIFORM:
-    speciesNodes = &(this->_allSpeciesNodes);
+    speciesNodes = &(this->getPrunedSpeciesNodes());
     break;
   case OriginationStrategy::LCA:
     rootNode.push_back(getSpeciesLCA());
@@ -286,7 +286,7 @@ void UndatedDTLMultiModel<REAL>::sampleTransferEvent(unsigned int cid,
     Scenario::Event &event)
 {
   auto e = originSpeciesNode->node_index;
-  auto N = this->getSpeciesNodeNumber();
+  auto N = this->getPrunedSpeciesNodeNumber();
   auto c = category;
   auto ec = e * _gammaCatNumber + c;
   auto &clv = _dtlclvs[cid];
@@ -320,7 +320,7 @@ void UndatedDTLMultiModel<REAL>::sampleTransferEvent(unsigned int cid,
     }
   }
 
-  for (auto speciesNode: this->_allSpeciesNodes) {
+  for (auto speciesNode: this->getAllSpeciesNodes()) {
     auto h = speciesNode->node_index;
     if (_transferConstraint == TransferConstaint::NONE) {
     }
@@ -360,7 +360,7 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
   assert(maxSpeciesId == dupRates.size());
   assert(maxSpeciesId == lossRates.size());
   assert(maxSpeciesId == transferRates.size());
-  for (unsigned int e = 0; e < this->getSpeciesNodeNumber(); ++e) {
+  for (unsigned int e = 0; e < this->getPrunedSpeciesNodeNumber(); ++e) {
     for (size_t c = 0; c < _gammaCatNumber; ++c) {
       auto ec = e * _gammaCatNumber + c;
       _PD[ec] = dupRates[e];
@@ -379,11 +379,10 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
   }
   
   std::fill(_uE.begin(), _uE.end(), 0.0);
- 
-  std::vector correctionSum = std::vector<double>(_gammaCatNumber, REAL())
+  //std::vector correctionSum = std::vector<double>(_gammaCatNumber, REAL())
   auto transferSum = std::vector<double>(_gammaCatNumber, REAL());
   for (unsigned int it = 0; it < 4; ++it) {
-    for (auto speciesNode: this->_allSpeciesNodes) {
+    for (auto speciesNode: this->getAllSpeciesNodes()) {
       auto e = speciesNode->node_index;
       for (size_t c = 0; c < _gammaCatNumber; ++c) {
         auto ec = e * _gammaCatNumber + c;
@@ -403,7 +402,7 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
     std::fill(transferSum.begin(),
         transferSum.end(),
         0.0);
-    for (auto speciesNode: this->_allSpeciesNodes) {
+    for (auto speciesNode: this->getAllSpeciesNodes()) {
       auto e = speciesNode->node_index;
       for (size_t c = 0; c < _gammaCatNumber; ++c) {
         auto ec = e * _gammaCatNumber + c;
@@ -411,7 +410,7 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
       }
     }
     for (size_t c = 0; c < _gammaCatNumber; ++c) {
-      transferSum[c] /= double(this->getSpeciesNodeNumber());
+      transferSum[c] /= double(this->getPrunedSpeciesNodeNumber());
     }
   }
 }
@@ -579,10 +578,10 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
 }
   
 template <class REAL>
-double UndatedDTLMultiModel<REAL>::getLikelihoodFactor(unsigned int category) const
+double UndatedDTLMultiModel<REAL>::getLikelihoodFactor(unsigned int category) 
 {
   double factor(0.0);
-  for (auto speciesNode: this->_allSpeciesNodes) {
+  for (auto speciesNode: this->getPrunedSpeciesNodes()) {
     auto e = speciesNode->node_index;
     factor += 1.0 - _uE[e * _gammaCatNumber + category];
   }
@@ -598,7 +597,7 @@ corax_rnode_t *UndatedDTLMultiModel<REAL>::sampleSpeciesNode(unsigned int &categ
   std::vector<corax_rnode_t *> *speciesNodeCandidates = nullptr;
   switch (_originationStrategy) {
   case OriginationStrategy::UNIFORM:
-    speciesNodeCandidates = &(this->_allSpeciesNodes);
+    speciesNodeCandidates = &(this->getPrunedSpeciesNodes());
     break;
   case OriginationStrategy::ROOT:
     rootNodeVector.push_back(this->_speciesTree.getRoot());

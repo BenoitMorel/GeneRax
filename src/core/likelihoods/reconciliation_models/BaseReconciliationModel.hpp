@@ -143,7 +143,11 @@ protected:
 
   PLLRootedTree &getSpeciesTree() {return _speciesTree;}
 
-  unsigned int getSpeciesNodeNumber() const {return _allSpeciesNodes.size();}
+  unsigned int getPrunedSpeciesNodeNumber() const {return _prunedSpeciesNodes.size();}
+  unsigned int getAllSpeciesNodeNumber() const {return _allSpeciesNodes.size();}
+
+  std::vector <corax_rnode_t *> &getAllSpeciesNodes() {return _allSpeciesNodes;}
+  std::vector <corax_rnode_t *> &getPrunedSpeciesNodes() {return _prunedSpeciesNodes;}
 
 protected:
   // description of the model
@@ -152,6 +156,7 @@ protected:
   PLLRootedTree &_speciesTree;
   // list of all species tree nodes used for the likelihood computation
   std::vector <corax_rnode_t *> _allSpeciesNodes;
+  std::vector <corax_rnode_t *> _prunedSpeciesNodes;
   // map gene leaves to species leaves. The mapping is not computed by this class 
   std::vector<unsigned int> _geneToSpecies;
   // defines at which level (species/genes/none) we do imcremental recomputations  
