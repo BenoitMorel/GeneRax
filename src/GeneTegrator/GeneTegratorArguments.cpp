@@ -13,6 +13,7 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
   speciesSearchStrategy(SpeciesSearchStrategy::HYBRID),
   pruneSpeciesTree(false),
   gammaCategories(1),
+  trimFamilyRatio(1.0),
   geneTreeSamples(0),
   output("GeneTegrator"),
   seed(123),
@@ -38,10 +39,12 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
       originationStrategy = Enums::strToOrigination(std::string(argv[++i]));
     } else if (arg == "--prune-species-tree") {
       pruneSpeciesTree = true;
-    } else if (arg == "--gene-tree-samples") {
-      geneTreeSamples = atoi(argv[++i]);
+    } else if (arg == "--trim-ratio") {
+      trimFamilyRatio = atof(argv[++i]);
     } else if (arg == "--gamma-categories") {
       gammaCategories = atoi(argv[++i]);
+    } else if (arg == "--gene-tree-samples") {
+      geneTreeSamples = atoi(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
       output = std::string(argv[++i]);
     } else if (arg == "--seed") {

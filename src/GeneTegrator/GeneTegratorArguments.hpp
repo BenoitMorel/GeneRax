@@ -22,6 +22,7 @@ public:
   SpeciesSearchStrategy speciesSearchStrategy;
   bool pruneSpeciesTree;
   unsigned int gammaCategories;
+  double trimFamilyRatio;
   unsigned int geneTreeSamples;
   std::string output;
   int seed;
