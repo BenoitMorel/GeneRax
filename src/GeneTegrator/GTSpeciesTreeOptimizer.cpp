@@ -13,6 +13,96 @@ static bool testAndSwap(size_t &hash1, size_t &hash2) {
   return hash1 != hash2;
 }
 
+static std::shared_ptr<MultiModel> createModel(SpeciesTree &speciesTree,
+  const FamilyInfo &family,
+  const ModelParameters &modelParameters,
+  bool highPrecision)
+{
+  std::shared_ptr<MultiModel> model;
+  GeneSpeciesMapping mapping;
+  mapping.fill(family.mappingFile, family.startingGeneTree);
+  const auto &info = modelParameters.info;  
+  switch (info.model) {
+  case RecModel::UndatedDL:
+    if (highPrecision) {
+      model = std::make_shared<UndatedDLMultiModel<ScaledValue> >(
+        speciesTree.getTree(),
+        mapping,
+        info,
+        family.startingGeneTree);
+    } else {
+      model = std::make_shared<UndatedDLMultiModel<double> >(
+        speciesTree.getTree(),
+        mapping,
+        info,
+        family.startingGeneTree);
+    }
+    break;
+  case RecModel::UndatedDTL:
+    if (highPrecision) {
+      model = std::make_shared<UndatedDTLMultiModel<ScaledValue> >(
+        speciesTree.getDatedTree(),
+        mapping,
+        info,
+        family.startingGeneTree);
+    } else {
+      model = std::make_shared<UndatedDTLMultiModel<double> >(
+        speciesTree.getDatedTree(),
+        mapping,
+        info,
+        family.startingGeneTree);
+    }
+    break;
+  default:
+    assert(false);
+    break;
+  }
+  std::vector<std::vector<double> > rates;
+  unsigned int N = speciesTree.getTree().getNodesNumber();
+  for (unsigned int d = 0; d < modelParameters.rates.dimensions(); ++d) {
+    rates.push_back(std::vector<double>(N, modelParameters.rates[d]));
+  }
+  model->setRates(rates);
+  return model;
+}
+
+GTSpeciesTreeLikelihoodEvaluator::GTSpeciesTreeLikelihoodEvaluator(
+    SpeciesTree &speciesTree,
+    ModelParameters &modelRates, 
+    const Families &families,
+    PerCoreGeneTrees &geneTrees):
+  _speciesTree(speciesTree),
+  _modelRates(modelRates),
+  _families(families),
+  _geneTrees(geneTrees)
+  
+{
+  for (const auto &geneTree: _geneTrees.getTrees()) {
+    auto &family = families[geneTree.familyIndex];
+    _evaluations.push_back(createModel(_speciesTree,
+          family,
+          _modelRates,
+          false));
+    _highPrecisions.push_back(-1);
+  }
+  ParallelContext::barrier();
+  unsigned int cladesNumber = 0;
+  unsigned int worstFamily = 0;
+  for (auto &evaluation: _evaluations) {
+    cladesNumber += evaluation->getCCP().getCladesNumber();
+    worstFamily = std::max(worstFamily, evaluation->getCCP().getCladesNumber());
+  }
+  unsigned int totalCladesNumber = cladesNumber;
+  unsigned int maxCladesNumber = cladesNumber;
+  ParallelContext::maxUInt(worstFamily);
+  ParallelContext::maxUInt(maxCladesNumber);
+  ParallelContext::sumUInt(totalCladesNumber);
+  double averageCladesNumber = double(totalCladesNumber) / double(ParallelContext::getSize());
+  Logger::timed << "Initializing ccps finished" << std::endl;
+  Logger::timed << "Total number of clades: " << totalCladesNumber << std::endl;
+  Logger::timed << "Load balancing: " << averageCladesNumber / maxCladesNumber << std::endl;
+}
+
 double GTSpeciesTreeLikelihoodEvaluator::computeLikelihood()
 {
   return computeLikelihoodFast();
@@ -21,20 +111,79 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihood()
 double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
 {
   double sumLL = 0.0;
-  for (auto &evaluation: *_evaluations) {
-    auto ll = evaluation->computeLogLikelihood();
+  for (unsigned int i = 0; i < _evaluations.size(); ++i) {
+    auto ll = _evaluations[i]->computeLogLikelihood();
+    auto famIndex = _geneTrees.getTrees()[i].familyIndex;
+    auto &family = _families[famIndex];
+    if (_highPrecisions[i] == -1 && !std::isnormal(ll)) {
+      // we are in low precision mode (we use double)
+      // and it's not accurate enough, switch to
+      // high precision mode
+      _evaluations[i] = createModel(_speciesTree, 
+          family,
+          _modelRates,
+          true);
+      _highPrecisions[i] = 0;
+      ll = _evaluations[i]->computeLogLikelihood();
+      assert(std::isnormal(ll));
+    }
+
+    if (_highPrecisions[i] >= 0 && _highPrecisions[i] % 20 == 0) {
+      // we are in high precision mode, we now check if we can
+      // switch to low precision mode to make computations faster
+      auto ev = createModel(_speciesTree, 
+          family,
+          _modelRates,
+          false);
+      auto newLL = ev->computeLogLikelihood();
+      auto newLLPrec = _evaluations[i]->computeLogLikelihood();
+      if (std::isnormal(newLL)) {
+        _evaluations[i] = ev;
+        _highPrecisions[i] = -1;
+      }
+    }
+    if (_highPrecisions[i] >= 0) { 
+      _highPrecisions[i]++;
+    }
     sumLL += ll;
   }
+  printHightPrecisionCount();
   ParallelContext::sumDouble(sumLL);
   return sumLL;
 }
 
 void GTSpeciesTreeLikelihoodEvaluator::setAlpha(double alpha)
 {
-  for (auto evaluation: *_evaluations) {
+  for (auto evaluation: _evaluations) {
     evaluation->setAlpha(alpha);
   }
 }
+  
+void GTSpeciesTreeLikelihoodEvaluator::printHightPrecisionCount()
+{
+  unsigned int high = 0;
+  unsigned int low = 0;
+  for (auto v : _highPrecisions) {
+    if (v >= 0) {
+      high++;
+    } else {
+      low++;
+    }
+  }
+  ParallelContext::sumUInt(high);
+  ParallelContext::sumUInt(low);
+  //Logger::info << " Double: " << low << " scaledvalue: " << high << std::endl;
+}
+
+void GTSpeciesTreeLikelihoodEvaluator::onSpeciesTreeChange(
+    const std::unordered_set<corax_rnode_t *> *nodesToInvalidate)
+{
+  for (auto &evaluation: _evaluations) {
+    evaluation->onSpeciesTreeChange(nodesToInvalidate);
+  }
+}
+
+
 
 
 class GTEvaluatorFunction: public FunctionToOptimize
@@ -108,10 +257,9 @@ private:
 
 double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
 {
-  auto rates = *_modelRates;
   OptimizationSettings settings;
   double ll = computeLikelihood();
-  Logger::timed << "[Species search] Before model rate opt, ll=" << ll << " initial rates: " << _modelRates->rates << std::endl;
+  Logger::timed << "[Species search] Before model rate opt, ll=" << ll << " initial rates: " << _modelRates.rates << std::endl;
   Logger::timed << "[SpeciesSearch] Optimizing model rates ";
   if (thorough) {
     Logger::info << "(thorough)" << std::endl;
@@ -123,15 +271,15 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
     settings.minAlpha = 0.01;
     settings.optimizationMinImprovement = std::max(3.0, ll / 1000.0);
   }
-  GTMultiEvaluatorsFunction function(*_evaluations, 
-      _modelRates->info, 
-      _speciesTree->getTree().getNodesNumber());
-  _modelRates->rates = DTLOptimizer::optimizeParameters(
+  GTMultiEvaluatorsFunction function(_evaluations, 
+      _modelRates.info, 
+      _speciesTree.getTree().getNodesNumber());
+  _modelRates.rates = DTLOptimizer::optimizeParameters(
       function, 
-      _modelRates->rates, 
+      _modelRates.rates, 
       settings);
   ll = computeLikelihood();
-  Logger::timed << "[Species search]   After model rate opt, ll=" << ll << " initial rates: " << _modelRates->rates << std::endl;
+  Logger::timed << "[Species search]   After model rate opt, ll=" << ll << " initial rates: " << _modelRates.rates << std::endl;
   ll = optimizeGammaRates();
   return ll;
 }
@@ -146,7 +294,7 @@ static double callback(void *p, double x)
 
 double GTSpeciesTreeLikelihoodEvaluator::optimizeGammaRates()
 {
-  auto gammaCategories = _modelRates->info.gammaCategories;
+  auto gammaCategories = _modelRates.info.gammaCategories;
   auto ll = computeLikelihood();
   if (gammaCategories == 1) {
     return ll;
@@ -165,7 +313,7 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeGammaRates()
                                   (void *)this,
                                   &callback);
   setAlpha(alpha);
-  std::vector<double> categories(_modelRates->info.gammaCategories);
+  std::vector<double> categories(_modelRates.info.gammaCategories);
   corax_compute_gamma_cats(alpha, categories.size(), &categories[0], 
       CORAX_GAMMA_RATES_MEAN);
   Logger::timed << "[Species search]   After gamma cat  opt, ll=" << ll << std::endl;
@@ -191,11 +339,10 @@ void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(SpeciesTree &speci
   transferFrequencies.count = MatrixUint(labelsNumber, zeros);
   transferFrequencies.idToLabel = idToLabel;
   perSpeciesEvents = PerSpeciesEvents(speciesTree.getTree().getNodesNumber());
-  auto infoCopy = _modelRates->info;
-  //infoCopy.transferConstraint = TransferConstaint::NONE;
+  auto infoCopy = _modelRates.info;
   infoCopy.originationStrategy = OriginationStrategy::UNIFORM;
-  for (const auto &geneTree: _geneTrees->getTrees()) {
-    auto &family = (*_families)[geneTree.familyIndex];
+  for (const auto &geneTree: _geneTrees.getTrees()) {
+    auto &family = (_families)[geneTree.familyIndex];
     GeneSpeciesMapping mapping;
     mapping.fill(family.mappingFile, family.startingGeneTree);
     UndatedDTLMultiModel<ScaledValue> evaluation(
@@ -203,12 +350,13 @@ void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(SpeciesTree &speci
         mapping,
         infoCopy,
         family.startingGeneTree);
-    Scenario scenario;
+    
+    evaluation.computeLogLikelihood();
     // warning, this might make the random state 
     // inconsistent between the MPI ranks
     // ParallelContext::makeRandConsistent() needs to be called 
     // right after the loop
-    evaluation.computeLogLikelihood();
+    Scenario scenario;
     evaluation.inferMLScenario(scenario, true);
     scenario.countTransfers(labelToId, 
         transferFrequencies.count);
@@ -227,12 +375,14 @@ void GTSpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
 {
   ParallelContext::barrier();
   std::vector<double> localLL;
-  for (auto &evaluation: *_evaluations) {
+  for (auto &evaluation: _evaluations) {
     localLL.push_back(evaluation->computeLogLikelihood());
   }
   ParallelContext::concatenateHetherogeneousDoubleVectors(
       localLL, perFamLL);
 }
+
+
 
 
 GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
@@ -263,58 +413,22 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
       1, //_geneTrees.getTrees().size(), 
       info);
   Logger::timed << "Initializing ccps" << std::endl;
-  for (const auto &geneTree: _geneTrees.getTrees()) {
-    auto &family = families[geneTree.familyIndex];
-    GeneSpeciesMapping mapping;
-    mapping.fill(family.mappingFile, family.startingGeneTree);
-    switch (info.model) {
-    case RecModel::UndatedDL:
-      _evaluations.push_back(
-        std::make_shared<UndatedDLMultiModel<double> >(
-        _speciesTree->getTree(),
-        mapping,
-        info,
-        family.startingGeneTree));
-      break;
-    case RecModel::UndatedDTL:
-      _evaluations.push_back(std::make_shared<UndatedDTLMultiModel<ScaledValue> >(
-        _speciesTree->getDatedTree(),
-        mapping,
-        info,
-        family.startingGeneTree));
-      break;
-    default:
-      assert(false);
-      break;
-    }
-  }
-  unsigned int cladesNumber = 0;
-  unsigned int worstFamily = 0;
-  for (auto &evaluation: _evaluations) {
-    cladesNumber += evaluation->getCCP().getCladesNumber();
-    worstFamily = std::max(worstFamily, evaluation->getCCP().getCladesNumber());
-  }
-  unsigned int totalCladesNumber = cladesNumber;
-  unsigned int maxCladesNumber = cladesNumber;
-  ParallelContext::maxUInt(worstFamily);
-  ParallelContext::maxUInt(maxCladesNumber);
-  ParallelContext::sumUInt(totalCladesNumber);
-  double averageCladesNumber = double(totalCladesNumber) / double(ParallelContext::getSize());
-  Logger::timed << "Initializing ccps finished" << std::endl;
-  Logger::timed << "Load balancing: " << averageCladesNumber / maxCladesNumber << std::endl;
   _speciesTree->addListener(this);
   ParallelContext::barrier();
-  _evaluator.setEvaluations(*_speciesTree, _modelRates, families, _evaluations, _geneTrees);
-  
-  Logger::timed << "Initial ll=" << _evaluator.computeLikelihood() << std::endl;
- 
+  _evaluator = std::make_unique<GTSpeciesTreeLikelihoodEvaluator>(
+      *_speciesTree, 
+      _modelRates, 
+      families, 
+      _geneTrees);
+  Logger::timed << "Initial ll=" << getEvaluator().computeLikelihood() 
+    << std::endl;
   saveCurrentSpeciesTreeId("starting_species_tree.newick");
   saveCurrentSpeciesTreeId();
 }
   
 double GTSpeciesTreeOptimizer::optimizeModelRates(bool thorough)
 {
-  return _evaluator.optimizeModelRates(thorough);
+  return getEvaluator().optimizeModelRates(thorough);
 }
 
 void GTSpeciesTreeOptimizer::optimize()
@@ -322,7 +436,7 @@ void GTSpeciesTreeOptimizer::optimize()
   size_t hash1 = 0;
   size_t hash2 = 0;
   unsigned int index = 0;
-  _searchState.bestLL = _evaluator.computeLikelihood();
+  _searchState.bestLL = getEvaluator().computeLikelihood();
   /**
    *  Alternate transfer search and normal
    *  SPR search, until one does not find
@@ -347,7 +461,7 @@ void GTSpeciesTreeOptimizer::optimize()
 double GTSpeciesTreeOptimizer::sprSearch(unsigned int radius)
 {
   SpeciesSPRSearch::SPRSearch(*_speciesTree,
-      _evaluator,
+      getEvaluator(),
       _searchState,
       radius);
   Logger::timed << "After normal search: LL=" << _searchState.bestLL << std::endl;
@@ -357,9 +471,7 @@ double GTSpeciesTreeOptimizer::sprSearch(unsigned int radius)
 
 void GTSpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate)
 {
-  for (auto &evaluation: _evaluations) {
-    evaluation->onSpeciesTreeChange(nodesToInvalidate);
-  }
+  getEvaluator().onSpeciesTreeChange(nodesToInvalidate);
 }
 
 
@@ -398,7 +510,7 @@ double GTSpeciesTreeOptimizer::rootSearch(unsigned int maxDepth, bool thorough)
   _searchState.farFromPlausible = thorough;
   SpeciesRootSearch::rootSearch(
       *_speciesTree,
-      _evaluator,
+      getEvaluator(),
       _searchState,
       maxDepth,
       &_rootLikelihoods);
@@ -410,7 +522,7 @@ double GTSpeciesTreeOptimizer::transferSearch()
 {
   SpeciesTransferSearch::transferSearch(
     *_speciesTree,
-    _evaluator,
+    getEvaluator(),
     _searchState,
     _outputDir);
   Logger::timed << "After normal search: LL=" 
@@ -418,32 +530,6 @@ double GTSpeciesTreeOptimizer::transferSearch()
   return _searchState.bestLL;
 }
   
-void GTSpeciesTreeOptimizer::printFamilyDimensions(const std::string &outputFile)
-{
-  std::vector<unsigned int> localTreeSizes;
-  std::vector<unsigned int> localCcpSizes;
-  std::vector<unsigned int> treeSizes;
-  std::vector<unsigned int> ccpSizes;
-  for (auto &evaluation: _evaluations) {
-    auto &ccp = evaluation->getCCP();
-    localTreeSizes.push_back(ccp.getLeafNumber());
-    localCcpSizes.push_back(ccp.getCladesNumber());
-  }
-  ParallelContext::concatenateHetherogeneousUIntVectors(
-      localTreeSizes, treeSizes);
-  ParallelContext::concatenateHetherogeneousUIntVectors(
-      localCcpSizes, ccpSizes);
-  std::vector<PairUInt> dims(treeSizes.size());
-  for (unsigned int i = 0; i < treeSizes.size(); ++i) {
-    dims[i].first = treeSizes[i];
-    dims[i].second = ccpSizes[i];
-  }
-  std::sort(dims.begin(), dims.end());
-  ParallelOfstream os(outputFile);
-  for (auto &dim: dims) {
-    os << dim.first << "," << dim.second << std::endl;
-  }
-}
 
 void GTSpeciesTreeOptimizer::reconcile(unsigned int samples)
 {
@@ -480,7 +566,7 @@ void GTSpeciesTreeOptimizer::optimizeDates(bool thorough)
     return; 
   }
   DatedSpeciesTreeSearch::optimizeDates(*_speciesTree,
-      _evaluator,
+      getEvaluator(),
       _searchState,
       thorough);
 }

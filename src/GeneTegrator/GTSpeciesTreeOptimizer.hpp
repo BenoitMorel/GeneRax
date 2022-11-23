@@ -19,24 +19,15 @@ using PerCoreMultiEvaluation = std::vector<MultiEvaluationPtr>;
 
 class GTSpeciesTreeLikelihoodEvaluator: public SpeciesTreeLikelihoodEvaluatorInterface {
 public:
-  GTSpeciesTreeLikelihoodEvaluator()
-  {}
-  void setEvaluations(SpeciesTree &speciesTree,
+  GTSpeciesTreeLikelihoodEvaluator(SpeciesTree &speciesTree,
       ModelParameters &modelRates, 
       const Families &families,
-      PerCoreMultiEvaluation &evaluations,
-      PerCoreGeneTrees &geneTrees) {
-    _speciesTree = &speciesTree;
-    _modelRates = &modelRates;
-    _families = &families;
-    _evaluations = &evaluations;
-    _geneTrees = &geneTrees;
-  }
+      PerCoreGeneTrees &geneTrees);
   virtual ~GTSpeciesTreeLikelihoodEvaluator() {}
   virtual double computeLikelihood();
   virtual double computeLikelihoodFast();
   virtual bool providesFastLikelihoodImpl() const {return false;}
-  virtual bool isDated() const {return _modelRates->info.isDated();}
+  virtual bool isDated() const {return _modelRates.info.isDated();}
   virtual double optimizeModelRates(bool thorough = false);
   virtual void pushRollback() {}
   virtual void popAndApplyRollback() {}
@@ -44,16 +35,22 @@ public:
   virtual void getTransferInformation(SpeciesTree &speciesTree,
     TransferFrequencies &frequencies,
     PerSpeciesEvents &perSpeciesEvents);
-  virtual bool pruneSpeciesTree() const {return _modelRates->info.pruneSpeciesTree;}
+  virtual bool pruneSpeciesTree() const {return _modelRates.info.pruneSpeciesTree;}
   virtual void setAlpha(double alpha);
+  
+  virtual void onSpeciesTreeChange(
+      const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
+  void printHightPrecisionCount();
 protected:
   virtual double optimizeGammaRates();
 private:
-  SpeciesTree *_speciesTree;
-  ModelParameters *_modelRates;
-  const Families *_families;
-  PerCoreMultiEvaluation *_evaluations;
-  PerCoreGeneTrees *_geneTrees;
+  SpeciesTree &_speciesTree;
+  ModelParameters &_modelRates;
+  const Families &_families;
+  PerCoreMultiEvaluation _evaluations;
+  std::vector<int> _highPrecisions;
+  PerCoreGeneTrees &_geneTrees;
+
 };
 
 
@@ -70,20 +67,19 @@ public:
   double transferSearch();
   void onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
   void reconcile(unsigned int samples);
-  void printFamilyDimensions(const std::string &outputFile);
   double optimizeModelRates(bool thorough = false);
   void optimizeDates(bool thorough = true);
   SpeciesTree &getSpeciesTree() {return *_speciesTree;}
   void randomizeRoot();
   void saveSpeciesTree();
   void saveSpeciesTreeRootLL();
-  SpeciesTreeLikelihoodEvaluatorInterface &getEvaluator() {return _evaluator;}
+  SpeciesTreeLikelihoodEvaluatorInterface &getEvaluator() {return *_evaluator;}
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   PerCoreGeneTrees _geneTrees;
   RecModelInfo _info;
   PerCoreMultiEvaluation _evaluations;
-  GTSpeciesTreeLikelihoodEvaluator _evaluator;
+  std::unique_ptr<GTSpeciesTreeLikelihoodEvaluator> _evaluator;
   ModelParameters _modelRates;
   std::string _outputDir;
   SpeciesSearchState _searchState;

@@ -82,6 +82,15 @@ public:
    *  Are we in prune species tree mode?
    */
   virtual bool pruneSpeciesTree() const = 0;
+
+  /**
+   *  Should be called when the species tree is updated
+   */
+  virtual void onSpeciesTreeChange(
+      const std::unordered_set<corax_rnode_t *> *nodesToInvalidate) {
+    (void)(nodesToInvalidate);
+  }
+
 };
 
 /**
