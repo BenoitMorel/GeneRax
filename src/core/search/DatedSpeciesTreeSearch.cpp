@@ -48,7 +48,7 @@ static void perturbateDates(SpeciesTree &speciesTree, double perturbation = 1.0)
   for (size_t i = 0; i < perturbations; ++i) {
     auto rank = Random::getInt() % N;
     auto  displacement =  1 + (Random::getInt() % maxDisplacement);
-    auto nodesToMove = (Random::getInt() % 2) + 1;
+    auto nodesToMove = static_cast<size_t>((Random::getInt() % 2) + 1);
     for (size_t k = 0; k < nodesToMove; ++k) {
       for (size_t j = 0; j < displacement; ++j) {
         tree.moveUp(rank + k - j);
@@ -60,7 +60,7 @@ static void perturbateDates(SpeciesTree &speciesTree, double perturbation = 1.0)
 double DatedSpeciesTreeSearch::optimizeDates(
       SpeciesTree &speciesTree,
       SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
-      SpeciesSearchState &searchState,
+      SpeciesSearchState &,
       double currentLL,
       bool thorough)
 {

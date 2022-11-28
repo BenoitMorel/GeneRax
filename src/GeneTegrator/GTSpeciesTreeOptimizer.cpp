@@ -136,7 +136,6 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
           _modelRates,
           false);
       auto newLL = ev->computeLogLikelihood();
-      auto newLLPrec = _evaluations[i]->computeLogLikelihood();
       if (std::isnormal(newLL)) {
         _evaluations[i] = ev;
         _highPrecisions[i] = -1;
