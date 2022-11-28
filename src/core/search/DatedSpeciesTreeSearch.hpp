@@ -9,6 +9,7 @@ public:
   static double optimizeDates(SpeciesTree &speciesTree,
       SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
       SpeciesSearchState &searchState,
+      double currentLL,
       bool thorough);
 
 };

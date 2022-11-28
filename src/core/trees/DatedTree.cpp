@@ -83,8 +83,8 @@ void DatedTree::moveNodeToRoot(corax_rnode_t *node)
   auto e = node->node_index;
   auto rank = _ranks[e];
   while (rank != 0) {
-    assert(moveUp(rank, true));
-    
+    auto ok = moveUp(rank, true);
+    assert(ok);
     rank = _ranks[e];
   }
   assert(rank == _ranks[e]);

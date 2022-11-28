@@ -61,9 +61,10 @@ double DatedSpeciesTreeSearch::optimizeDates(
       SpeciesTree &speciesTree,
       SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
       SpeciesSearchState &searchState,
+      double currentLL,
       bool thorough)
 {
-  auto bestLL = evaluation.computeLikelihood();
+  auto bestLL = currentLL;
   if (!evaluation.isDated()) {
     return bestLL;
   }

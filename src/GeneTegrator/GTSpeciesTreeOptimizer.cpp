@@ -568,6 +568,7 @@ void GTSpeciesTreeOptimizer::optimizeDates(bool thorough)
   DatedSpeciesTreeSearch::optimizeDates(*_speciesTree,
       getEvaluator(),
       _searchState,
+      getEvaluator().computeLikelihood(),
       thorough);
 }
 
