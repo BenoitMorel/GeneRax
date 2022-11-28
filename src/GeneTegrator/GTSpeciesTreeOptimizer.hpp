@@ -50,7 +50,9 @@ private:
   PerCoreMultiEvaluation _evaluations;
   std::vector<int> _highPrecisions;
   PerCoreGeneTrees &_geneTrees;
-
+  
+  std::unordered_map<size_t, double> _llCache;
+  bool _enableLLCache;
 };
 
 
