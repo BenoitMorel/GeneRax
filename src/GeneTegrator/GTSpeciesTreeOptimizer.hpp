@@ -48,6 +48,7 @@ private:
   ModelParameters &_modelRates;
   const Families &_families;
   PerCoreMultiEvaluation _evaluations;
+  PerCoreMultiEvaluation _approxEvaluations;
   std::vector<int> _highPrecisions;
   PerCoreGeneTrees &_geneTrees;
   

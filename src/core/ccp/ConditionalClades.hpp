@@ -32,7 +32,8 @@ class ConditionalClades {
 public:
   ConditionalClades() {}
   ConditionalClades(const std::string &inputFile, 
-      bool fromBinary = false);
+      bool fromBinary = false,
+      int maxSamples = -1);
   void printContent() const; 
   void printStats() const;
   unsigned int getCladesNumber() const {return _cladeToCID.size();}

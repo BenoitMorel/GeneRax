@@ -15,7 +15,8 @@ public:
   UndatedDLMultiModel(PLLRootedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
       const RecModelInfo &info,
-      const std::string &geneTreesFile);
+      const std::string &geneTreesFile,
+      int maxSamples = -1);
 
   virtual ~UndatedDLMultiModel() {}
 
@@ -48,11 +49,13 @@ template <class REAL>
 UndatedDLMultiModel<REAL>::UndatedDLMultiModel(PLLRootedTree &speciesTree, 
     const GeneSpeciesMapping &geneSpeciesMapping, 
     const RecModelInfo &info,
-    const std::string &geneTreesFile):
+    const std::string &geneTreesFile,
+    int maxSamples):
   MultiModelTemplate<REAL>(speciesTree,
       geneSpeciesMapping,
       info,
-      geneTreesFile),
+      geneTreesFile,
+      maxSamples),
   _PD(this->getAllSpeciesNodeNumber(), 0.2),
   _PL(this->getAllSpeciesNodeNumber(), 0.2),
   _PS(this->getAllSpeciesNodeNumber(), 1.0),

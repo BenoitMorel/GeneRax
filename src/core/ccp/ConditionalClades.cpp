@@ -84,11 +84,24 @@ void printClade(const CCPClade &clade,
 void readTrees(const std::string &inputFile,
     WeightedTrees &weightedTrees,
     unsigned int &inputTrees,
-    unsigned int &uniqueInputTrees)
+    unsigned int &uniqueInputTrees,
+    int maxSamples)
 {
   std::ifstream infile(inputFile);
   std::string line;
+  std::vector<std::string> lines;
   while (std::getline(infile, line)) {
+    lines.push_back(line);
+  }
+  if (maxSamples >= 0 && static_cast<int>(lines.size()) > maxSamples) {
+    // only get a subset of the trees
+    auto copy = lines;
+    lines.clear();
+    for (int i = 0; i < maxSamples; ++i) {
+      lines.push_back(copy[i * (copy.size() / maxSamples)]);
+    }
+  }
+  for (auto line: lines) {
     TreeWraper wraper;
     wraper.tree = std::make_shared<PLLUnrootedTree>(line, false);
     auto it = weightedTrees.find(wraper);
@@ -160,7 +173,8 @@ static void firstPass(const WeightedTrees &weightedTrees,
 
 
 ConditionalClades::ConditionalClades(const std::string &inputFile,
-    bool fromBinary):
+    bool fromBinary, 
+    int maxSamples):
   _inputTrees(0),
   _uniqueInputTrees(0)
 {
@@ -172,7 +186,7 @@ ConditionalClades::ConditionalClades(const std::string &inputFile,
   CCPClade emptyClade;
   CCPClade fullClade;
   WeightedTrees weightedTrees;
-  readTrees(inputFile, weightedTrees, _inputTrees, _uniqueInputTrees); 
+  readTrees(inputFile, weightedTrees, _inputTrees, _uniqueInputTrees, maxSamples); 
   auto &anyTree = *(weightedTrees.begin()->first.tree);
   for (auto leaf: anyTree.getLabels()) {
     leafToId.insert({leaf, leafToId.size()});

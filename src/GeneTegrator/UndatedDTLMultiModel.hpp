@@ -16,7 +16,8 @@ public:
   UndatedDTLMultiModel(DatedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
       const RecModelInfo &info,
-      const std::string &geneTreesFile);
+      const std::string &geneTreesFile,
+      int maxSamples = -1);
 
   virtual ~UndatedDTLMultiModel() {}
 
@@ -95,11 +96,13 @@ template <class REAL>
 UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(DatedTree &speciesTree, 
     const GeneSpeciesMapping &geneSpeciesMapping, 
     const RecModelInfo &info,
-    const std::string &geneTreesFile):
+    const std::string &geneTreesFile,
+    int maxSamples):
   MultiModelTemplate<REAL>(speciesTree.getRootedTree(),
       geneSpeciesMapping,
       info,
-      geneTreesFile),
+      geneTreesFile,
+      maxSamples),
   _datedTree(speciesTree),
   _gammaCatNumber(info.gammaCategories),
   _gammaScalers(_gammaCatNumber, 1.0),
