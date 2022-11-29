@@ -39,7 +39,9 @@ private:
   std::vector<double> _PT; // Transfer probability, per species branch
   std::vector<double> _PS; // Speciation probability, per species branch
   std::vector<double> _uE; // Extinction probability, per species branch
-  
+
+  std::unordered_map<size_t, double> _llCache;
+
   TransferConstaint _transferConstraint;
   OriginationStrategy _originationStrategy;
   /**
@@ -84,7 +86,8 @@ private:
     size_t category,
     Scenario::Event &event);
   corax_rnode_t *getSpeciesLCA();
-  
+  size_t getHash();
+  void resetCache() {_llCache.clear();}
 };
 
 
@@ -124,6 +127,7 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(DatedTree &speciesTree,
 template <class REAL>
 void UndatedDTLMultiModel<REAL>::setRates(const RatesVector &rates) 
 {
+  resetCache();
   assert(rates.size() == 3);
   _dtlRates = rates;
   recomputeSpeciesProbabilities();
@@ -131,6 +135,7 @@ void UndatedDTLMultiModel<REAL>::setRates(const RatesVector &rates)
 template <class REAL>
 void UndatedDTLMultiModel<REAL>::setAlpha(double alpha)
 {
+  resetCache();
   corax_compute_gamma_cats(alpha, _gammaScalers.size(), &_gammaScalers[0], 
       CORAX_GAMMA_RATES_MEAN);
   recomputeSpeciesProbabilities(); 
@@ -230,6 +235,12 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
   if (this->_ccp.skip()) {
     return 0.0;
   }
+  auto hash = this->getHash();
+  auto cacheIt = _llCache.find(hash);
+  if (cacheIt != _llCache.end()) {
+    return cacheIt->second;
+  }
+
   this->beforeComputeLogLikelihood();
   for (CID cid = 0; cid < this->_ccp.getCladesNumber(); ++cid) {
     updateCLV(cid);
@@ -276,6 +287,7 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
   auto rootCorrection = double(this->_ccp.getRootsNumber()); 
   res *= rootCorrection; 
   auto ret = log(res);
+  _llCache[hash] = ret; 
   return ret;
 }
 
@@ -644,5 +656,21 @@ corax_rnode_t *UndatedDTLMultiModel<REAL>::getSpeciesLCA()
     lca = tree->getLCA(lca, node);
   }
   return lca;
+}
+  
+template <class REAL> 
+size_t UndatedDTLMultiModel<REAL>::getHash()
+{
+  auto hash = this->getSpeciesTreeHash();
+  switch (_transferConstraint) {
+  case TransferConstaint::NONE:
+  case TransferConstaint::PARENTS:
+    return hash;
+  case TransferConstaint::SOFTDATED:
+    return this->_datedTree.getOrderingHash(hash);
+  default:
+    assert(false);
+  }
+  return hash;
 }
 

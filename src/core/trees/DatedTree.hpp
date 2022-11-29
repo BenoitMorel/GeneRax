@@ -31,6 +31,11 @@ public:
   Backup getBackup() {Backup backup; backup.ranks = _ranks; return backup;}
   void restore(const Backup &backup);
 
+  /**
+   *  hash value that characterizes the current order of the speciation events
+   *
+   */
+  size_t getOrderingHash(size_t startingHash = 42) const;
 private:
   PLLRootedTree *_rootedTree;
  

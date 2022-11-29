@@ -149,6 +149,8 @@ protected:
   std::vector <corax_rnode_t *> &getAllSpeciesNodes() {return _allSpeciesNodes;}
   std::vector <corax_rnode_t *> &getPrunedSpeciesNodes() {return _prunedSpeciesNodes;}
 
+  virtual size_t getSpeciesTreeHash() const;
+
 protected:
   // description of the model
   RecModelInfo _info;
@@ -181,5 +183,8 @@ protected:
   std::vector<corax_rnode_t *> _speciesRight;
   std::vector<corax_rnode_t *> _speciesParent;
   corax_rnode_t *_prunedRoot;
+
+private:
+  size_t getTreeHashRec(const corax_rnode_t *node, size_t i) const;
 };
 

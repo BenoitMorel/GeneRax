@@ -1,4 +1,5 @@
 #include "BaseReconciliationModel.hpp"
+#include <functional>
 
 
 static bool fillNodesPostOrder(corax_rnode_t *node, 
@@ -126,6 +127,34 @@ void BaseReconciliationModel::onSpeciesTreeChange(
   }
   assert(getAllSpeciesNodeNumber());
   assert(getPrunedSpeciesNodeNumber());
+}
+
+
+
+size_t BaseReconciliationModel::getTreeHashRec(const corax_rnode_t *node, size_t i) const {
+  assert(node);
+  std::hash<size_t> hash_fn;
+  if (i == 0) {
+    i = 1;
+  }
+  if (!node->left) {
+    return hash_fn(node->node_index);
+  }
+  auto hash1 = getTreeHashRec(_speciesLeft[node->node_index], i + 1);
+  auto hash2 = getTreeHashRec(_speciesRight[node->node_index], i + 1);
+  auto m = std::min(hash1, hash2);
+  auto M = std::max(hash1, hash2);
+  auto res = hash_fn(m * i + M);
+  res = hash_fn(res * i + node->node_index);
+  return res;
+}
+
+size_t BaseReconciliationModel::getSpeciesTreeHash() const
+{
+  if (!_prunedRoot) {
+    return 0; 
+  }
+  return getTreeHashRec(_prunedRoot, 0);
 }
 
 void BaseReconciliationModel::beforeComputeLogLikelihood()

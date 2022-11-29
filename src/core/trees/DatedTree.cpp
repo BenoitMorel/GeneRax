@@ -122,3 +122,19 @@ void DatedTree::restore(const Backup &backup)
   }
 }
 
+// taken from https://stackoverflow.com/a/27952689
+size_t hash_combine( size_t lhs, size_t rhs ) {
+  lhs ^= rhs + 0x9e3779b9 + (lhs << 6) + (lhs >> 2);
+  return lhs;
+}
+  
+size_t DatedTree::getOrderingHash(size_t startingHash) const
+{
+  std::hash<size_t> hash_fn;
+  size_t hash = hash_fn(startingHash);
+  for (auto rank: _ranks) {
+    hash = hash_combine(rank, hash);
+  }
+  return hash;
+}
+

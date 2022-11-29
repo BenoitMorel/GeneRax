@@ -101,7 +101,6 @@ GTSpeciesTreeLikelihoodEvaluator::GTSpeciesTreeLikelihoodEvaluator(
   Logger::timed << "Initializing ccps finished" << std::endl;
   Logger::timed << "Total number of clades: " << totalCladesNumber << std::endl;
   Logger::timed << "Load balancing: " << averageCladesNumber / maxCladesNumber << std::endl;
-  _enableLLCache = !isDated();
 }
 
 double GTSpeciesTreeLikelihoodEvaluator::computeLikelihood()
@@ -111,14 +110,6 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihood()
 
 double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
 {
-  if (_enableLLCache) {
-    auto hash = _speciesTree.getHash();
-    auto it = _llCache.find(hash);
-    if (it != _llCache.end()) {
-      return it->second;
-    }
-  }
-
   double sumLL = 0.0;
   for (unsigned int i = 0; i < _evaluations.size(); ++i) {
     auto ll = _evaluations[i]->computeLogLikelihood();
@@ -157,10 +148,6 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
   }
   printHightPrecisionCount();
   ParallelContext::sumDouble(sumLL);
-  if (_enableLLCache) {
-    auto hash = _speciesTree.getHash();
-    _llCache[hash] = sumLL;
-  }
   return sumLL;
 }
 
@@ -169,7 +156,6 @@ void GTSpeciesTreeLikelihoodEvaluator::setAlpha(double alpha)
   for (auto evaluation: _evaluations) {
     evaluation->setAlpha(alpha);
   }
-  _llCache.clear();
 }
   
 void GTSpeciesTreeLikelihoodEvaluator::printHightPrecisionCount()
@@ -270,8 +256,6 @@ private:
 
 double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
 {
-  auto enableCacheSave = _enableLLCache;
-  _enableLLCache = false;
   OptimizationSettings settings;
   double ll = computeLikelihood();
   Logger::timed << "[Species search] Before model rate opt, ll=" << ll << " initial rates: " << _modelRates.rates << std::endl;
@@ -296,8 +280,6 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
   ll = computeLikelihood();
   Logger::timed << "[Species search]   After model rate opt, ll=" << ll << " initial rates: " << _modelRates.rates << std::endl;
   ll = optimizeGammaRates();
-  _enableLLCache = enableCacheSave;
-  _llCache.clear();
   return ll;
 }
 
@@ -316,8 +298,6 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeGammaRates()
   if (gammaCategories == 1) {
     return ll;
   }
-  auto enableCacheSave = _enableLLCache;
-  _enableLLCache = false;
   double minAlpha = CORAX_OPT_MIN_ALPHA;  
   double maxAlpha = CORAX_OPT_MAX_ALPHA;  
   double startingAlpha = 1.0;
@@ -342,8 +322,6 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeGammaRates()
     Logger::info << c << " ";
   }
   Logger::info << std::endl;
-  _enableLLCache = enableCacheSave;
-  _llCache.clear();
   return ll;
 }
   
