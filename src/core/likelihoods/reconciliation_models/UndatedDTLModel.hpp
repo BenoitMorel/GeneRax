@@ -139,7 +139,7 @@ template <class REAL>
 void UndatedDTLModel<REAL>::setInitialGeneTree(PLLUnrootedTree &tree)
 {
   GTBaseReconciliationModel<REAL>::setInitialGeneTree(tree);
-  DTLCLV nullCLV(this->getPrunedSpeciesNodeNumber());
+  DTLCLV nullCLV(this->_allSpeciesNodes.size());
   _dtlclvs = std::vector<DTLCLV>(2 * (this->_maxGeneId + 1), nullCLV);
 }
 
@@ -153,14 +153,16 @@ void UndatedDTLModel<REAL>::setRates(const RatesVector &rates)
   auto &dupRates = rates[0];
   auto &lossRates = rates[1];
   auto &transferRates = rates[2];
+  /*
   assert(this->getPrunedSpeciesNodeNumber() == dupRates.size());
   assert(this->getPrunedSpeciesNodeNumber() == lossRates.size());
   assert(this->getPrunedSpeciesNodeNumber() == transferRates.size());
+  */
   _PD = dupRates;
   _PL = lossRates;
   _PT = transferRates;
-  _PS.resize(this->getPrunedSpeciesNodeNumber());
-  for (unsigned int e = 0; e < this->getPrunedSpeciesNodeNumber(); ++e) {
+  _PS.resize(_PD.size());
+  for (unsigned int e = 0; e < _PD.size(); ++e) {
     if (this->_info.noDup) {
       _PD[e] = 0.0;
     }
@@ -180,6 +182,9 @@ UndatedDTLModel<REAL>::~UndatedDTLModel() { }
 
 
 
+
+
+
 template <class REAL>
 void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
 {
@@ -194,7 +199,7 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
       _orderedSpeciesRanks[leaf->node_index] = rank;
     }
   }
-  _uE.resize(this->getPrunedSpeciesNodeNumber());
+  _uE.resize(_PD.size());
   for (auto speciesNode: getSpeciesNodesToUpdateSafe()) {
     _uE[speciesNode->node_index] = 0.0;
   }
