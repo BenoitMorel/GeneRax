@@ -5,7 +5,7 @@
 
 class DatedTree {
 public:
-  DatedTree(PLLRootedTree *rootedTree, bool fromBL = false);
+  DatedTree(PLLRootedTree *rootedTree, bool fromBL = true);
   
 
 
