@@ -4,6 +4,6 @@ set(asteroid_SOURCES asteroid.cpp
   AsteroidOptimizer.cpp
   )
 add_program(asteroid "${asteroid_SOURCES}")
-target_link_libraries(asteroid mpi-scheduler) 
+target_link_libraries(asteroid PRIVATE mpi-scheduler) 
 
 

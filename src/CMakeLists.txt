@@ -14,15 +14,17 @@ macro(add_program program_name program_sources)
   else()
     add_executable(${program_name} ${program_sources})
   endif()
+  target_sources(${program_name} PRIVATE ${program_sources})
   target_link_libraries(${program_name} 
+    PRIVATE
     jointsearch-core
-    ${CORAX_LIBRARIES}
+    ${CORAX_LIB_TARGET}
     ${MPI_LIBRARIES}
     )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
   if (JOINTSEARCH_BUILD_AS_LIBRARY AND NOT APPLE)
-    target_link_libraries(${program_name} gcc_s gcc)
+    target_link_libraries(${program_name} PRIVATE gcc_s gcc)
   endif()
 
   set_target_properties(${program_name}
@@ -51,7 +53,7 @@ macro(add_program_corax program_name program_sources)
   endif()
   target_link_libraries(${program_name} 
     jointsearch-core
-    ${CORAX_LIBRARIES}
+    ${CORAX_LIB_TARGET}
     ${MPI_LIBRARIES}
     )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")

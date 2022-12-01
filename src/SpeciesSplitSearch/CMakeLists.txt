@@ -4,6 +4,6 @@ set(speciessplitsearch_SOURCES speciessplitsearch.cpp
   SpeciesSplitSpeciesTreeOptimizer.cpp
   )
 add_program(speciessplitsearch "${speciessplitsearch_SOURCES}")
-target_link_libraries(speciessplitsearch mpi-scheduler) 
+target_link_libraries(speciessplitsearch PRIVATE mpi-scheduler) 
 
 
