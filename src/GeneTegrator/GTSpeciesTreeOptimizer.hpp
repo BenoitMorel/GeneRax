@@ -41,6 +41,7 @@ public:
   virtual void onSpeciesTreeChange(
       const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
   void printHightPrecisionCount();
+  MultiModel &getEvaluation(unsigned int i) {return *_evaluations[i];}
 protected:
   virtual double optimizeGammaRates();
 private:
@@ -79,7 +80,6 @@ private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   PerCoreGeneTrees _geneTrees;
   RecModelInfo _info;
-  PerCoreMultiEvaluation _evaluations;
   std::unique_ptr<GTSpeciesTreeLikelihoodEvaluator> _evaluator;
   ModelParameters _modelRates;
   std::string _outputDir;

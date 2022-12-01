@@ -285,6 +285,7 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
   ll = computeLikelihood();
   Logger::timed << "[Species search]   After model rate opt, ll=" << ll << " initial rates: " << _modelRates.rates << std::endl;
   ll = optimizeGammaRates();
+  ll = computeLikelihood();
   return ll;
 }
 
@@ -550,12 +551,14 @@ void GTSpeciesTreeOptimizer::reconcile(unsigned int samples)
 
     for (unsigned int sample = 0; sample < samples; ++ sample) {
       auto out = FileSystem::joinPaths(recDir, families[i].name + std::string("_") +  std::to_string(sample) + ".xml");
-      auto &evaluation = _evaluations[i];
-      evaluation->computeLogLikelihood();
+      auto eventCountsFile = FileSystem::joinPaths(recDir, families[i].name + std::string("_eventcount_") +  std::to_string(sample) + ".txt");
+      auto &evaluation = _evaluator->getEvaluation(i);
+      evaluation.computeLogLikelihood();
       Scenario scenario;
-      evaluation->inferMLScenario(scenario, true);
+      evaluation.inferMLScenario(scenario, true);
       scenario.saveReconciliation(out, ReconciliationFormat::RecPhyloXML, false);
       scenario.saveReconciliation(geneTreesOs, ReconciliationFormat::NewickEvents);
+      scenario.saveEventsCounts(eventCountsFile, false);
       geneTreesOs <<  "\n";
     }
   }
