@@ -371,7 +371,7 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
   auto &dupRates = _dtlRates[0];
   auto &lossRates = _dtlRates[1];
   auto &transferRates = _dtlRates[2];
-  auto maxSpeciesId = this->getSpeciesTree().getNodesNumber();
+  auto maxSpeciesId = this->getPrunedSpeciesNodeNumber();
   assert(maxSpeciesId == dupRates.size());
   assert(maxSpeciesId == lossRates.size());
   assert(maxSpeciesId == transferRates.size());
@@ -394,7 +394,6 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
   }
   
   std::fill(_uE.begin(), _uE.end(), 0.0);
-  //std::vector correctionSum = std::vector<double>(_gammaCatNumber, REAL())
   auto transferSum = std::vector<double>(_gammaCatNumber, REAL());
   for (unsigned int it = 0; it < 4; ++it) {
     for (auto speciesNode: this->getAllSpeciesNodes()) {

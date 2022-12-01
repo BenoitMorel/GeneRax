@@ -25,6 +25,15 @@ else()
     message(FATAL_ERROR "Compiler ${CMAKE_CXX_COMPILER} has no C++14 support.")
 endif()
 
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE
+      "Debug"
+            CACHE STRING "Build type" FORCE
+            )
+          message(STATUS "CMAKE_BUILD_TYPE not set, defaulting to Debug")
+endif ()
+
+
 
 add_subdirectory(ext)
 
