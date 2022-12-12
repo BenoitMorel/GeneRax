@@ -177,7 +177,7 @@ void LibpllParsers::saveUtree(const corax_unode_t *utree,
   bool append)
 {
   std::ofstream os(fileName, (append ? std::ofstream::app : std::ofstream::out));
-  char *newick = corax_utree_export_newick_rooted(utree, 0);
+  char *newick = corax_utree_export_newick_rooted(utree, utree->length);
   os << newick;
   os.close();
   free(newick);

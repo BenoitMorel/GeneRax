@@ -237,7 +237,7 @@ void ReconciliationWriter::saveReconciliationRecPhyloXML(corax_rtree_t *speciesT
 
 static void recursivelySaveReconciliationsNewickEvents(
     corax_unode_t *node, 
-    bool isVirtualRoot, 
+    unsigned int depth, 
     std::vector<std::vector<Scenario::Event> > &geneToEvents, 
     ParallelOfstream &os)
 {
@@ -245,20 +245,20 @@ static void recursivelySaveReconciliationsNewickEvents(
   if(node->next) {
     auto left = node->next->back;
     auto right = node->next->next->back;
-    if (isVirtualRoot) {
+    if (depth == 0) {
       left = node->next;
       right = node->next->back;
     }
     os << "(";
     recursivelySaveReconciliationsNewickEvents(
         left, 
-        false, 
+        depth + 1, 
         geneToEvents, 
         os);
     os << ",";
     recursivelySaveReconciliationsNewickEvents(
         right, 
-        false, 
+        depth + 1, 
         geneToEvents, 
         os);
     os << ")";
@@ -268,7 +268,12 @@ static void recursivelySaveReconciliationsNewickEvents(
   } else {
     os << Enums::getEventName(geneToEvents[node->node_index].back().type); 
   }
-  if (!isVirtualRoot) {
+  if (depth == 1) {
+    // we split the length of the virtual root in two
+    // for each branch under the root
+    os << ":" << node->length / 2.0;
+  }
+  if (depth > 1) {
     os << ":" << node->length;
   }
 }
@@ -284,7 +289,7 @@ void ReconciliationWriter::saveReconciliationNewickEvents(corax_unode_t *geneRoo
   virtualRoot.label = nullptr;
   virtualRoot.length = 0.0;
   recursivelySaveReconciliationsNewickEvents(&virtualRoot, 
-      true, 
+      0, 
       geneToEvent, 
       os);
   os << ";";
