@@ -40,6 +40,7 @@ PLLTreeInfo::PLLTreeInfo(const std::string &newickStrOrFile,
   _treeinfo(nullptr, treeinfoDestroy),
   _model(LibpllParsers::getModel(modelStrOrFile))
 {
+  std::cerr << "create tree info from " << newickStrOrFile << std::endl;
   PLLSequencePtrs sequences;
   unsigned int *patternWeights = nullptr;
   LibpllParsers::parseMSA(alignmentFilename, _model->charmap(), sequences, patternWeights);

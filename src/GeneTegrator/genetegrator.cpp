@@ -26,12 +26,14 @@ void filterInvalidFamilies(Families &families)
   families = validFamilies;
 }
 
-void trimFamilies(Families &families, unsigned int minSpecies, double trimRatio) 
+void trimFamilies(Families &families, int minSpecies, double trimRatio) 
 {
   Logger::timed << "Families: " << families.size() << std::endl;
-  Logger::timed << "Triming families covering less than " << minSpecies << " species " << std::endl;
-  TrimFamilies::trimMinSpeciesCoverage(families, minSpecies);
-  Logger::timed << "Families: " << families.size() << std::endl;
+  if (minSpecies != -1) {
+    Logger::timed << "Triming families covering less than " << minSpecies << " species " << std::endl;
+    TrimFamilies::trimMinSpeciesCoverage(families, minSpecies);
+    Logger::timed << "Families: " << families.size() << std::endl;
+  }
   if (trimRatio < 1.0) {
     Logger::timed << "Trimming families with too many clades (keeping " 
       << trimRatio * 100.0 << "\% of the families) " << std::endl;
@@ -89,8 +91,7 @@ void run( GeneTegratorArguments &args)
   Logger::initFileOutput(FileSystem::joinPaths(args.output, "genetegrator"));
   auto families = FamiliesFileParser::parseFamiliesFile(args.families);
   filterInvalidFamilies(families);
-  unsigned int minCoveredSpecies = 3;
-  trimFamilies(families, minCoveredSpecies, args.trimFamilyRatio);
+  trimFamilies(families, args.minCoveredSpecies, args.trimFamilyRatio);
   if (families.size() == 0) {
     Logger::info << "No valid family, aborting" << std::endl;
     ParallelContext::abort(0);
