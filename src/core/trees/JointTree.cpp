@@ -241,7 +241,13 @@ void JointTree::save(const std::string &fileName, bool append) {
     reconciliationEvaluation_->enableMADRooting(false);
   }
   assert(root);
-  LibpllParsers::saveUtree(root, fileName, append);
+  std::ofstream os;
+  if (append) {
+    os.open(fileName, std::ios_base::app);
+  } else {
+    os.open(fileName);
+  }
+  os << PLLUnrootedTree::getRootedNewickString(root) << std::endl;
 }
 
 corax_treeinfo_t * JointTree::getTreeInfo() {

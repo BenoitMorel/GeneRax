@@ -563,17 +563,13 @@ std::string PLLUnrootedTree::getNewickString(UnodePrinter f,
       corax_unode_t *root, 
       bool rooted)
 {
-  std::stringstream ss;
   if (!root) {
     root = getAnyInnerNode();
   }
   if (rooted) {
-    ss << "(";
-    printAux(root, ss, f);
-    ss << ",";
-    printAux(root->back, ss, f);
-    ss << ");";
+    return getRootedNewickString(root, f);
   } else {
+    std::stringstream ss;
     ss << "(";
     printAux(root->back, ss, f);
     ss << ",";
@@ -581,7 +577,28 @@ std::string PLLUnrootedTree::getNewickString(UnodePrinter f,
     ss << ",";
     printAux(root->next->next->back, ss, f);
     ss << ");";
+    return ss.str();
   }
+}
+  
+std::string PLLUnrootedTree::getRootedNewickString(corax_unode_t *root, 
+      UnodePrinter f)
+{
+  std::stringstream ss;
+  auto rootLength = root->length;
+  auto rootBackLength = root->back->length;
+  assert(rootLength == rootBackLength);
+  // temporarily divide the virtual root BL by two, to place
+  // the root at the middle of this branch in the rooted newick
+  root->length /= 2.0;
+  root->back->length /= 2.0;
+  ss << "(";
+  printAux(root, ss, f);
+  ss << ",";
+  printAux(root->back, ss, f);
+  ss << ");";
+  root->length = rootLength;
+  root->back->length = rootBackLength;
   return ss.str();
 }
 

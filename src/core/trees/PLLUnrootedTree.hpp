@@ -91,6 +91,8 @@ public:
   std::string getNewickString(UnodePrinter f = defaultUnodePrinter,
       corax_unode_t *root = nullptr, 
       bool rooted = false);
+  static std::string getRootedNewickString(corax_unode_t *root, 
+      UnodePrinter f = defaultUnodePrinter);
   static std::string getSubtreeString(corax_unode_t *subtree, UnodePrinter f = defaultUnodePrinter);
 
   /**
