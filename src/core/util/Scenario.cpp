@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 #include <map>
-
+#include <sstream>
 
 const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "L", "Leaf", "Invalid"};
 
@@ -63,6 +63,7 @@ void Scenario::saveEventsCounts(const std::string &filename, bool masterRankOnly
     os << eventNames[i] << ":" << _eventsCount[i] << std::endl;
   }
 }
+  
 
 void Scenario::gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents) const
 {
@@ -94,6 +95,20 @@ void Scenario::gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents
   }
 }
 
+
+static void dumpSpeciesToEventCount(ParallelOfstream &os,
+    const std::map<std::string, std::vector<unsigned int> > &speciesToEventCount)
+{
+  os << "# species_label speciations duplications losses transfers" << std::endl;
+  for (auto &it: speciesToEventCount) {
+    os << it.first << " ";
+    for (auto v: it.second) {
+      os << v << " ";
+    }
+    os << "\n";
+  } 
+}
+
 void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool masterRankOnly) {
   
   ParallelOfstream os(filename, masterRankOnly);
@@ -103,6 +118,10 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
     assert(_speciesTree->nodes[e]->label);
     speciesToEventCount.insert({std::string(_speciesTree->nodes[e]->label), defaultCount});
   }
+  // 0: speciation (or numbero of gene copies)
+  // 1: duplication
+  // 2: loss:
+  // 3: transfer
   for (auto &event: _events) {
     auto &eventCount = speciesToEventCount[_speciesTree->nodes[event.speciesNode]->label];
     switch (event.type) {
@@ -112,7 +131,8 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
         break;
       case ReconciliationEventType::EVENT_SL: 
         eventCount[0]++;
-        eventCount[2]++;
+        // count the loss
+        speciesToEventCount[event.pllLostSpeciesNode->label][2]++;
         break;
       case ReconciliationEventType::EVENT_D:
         eventCount[1]++;
@@ -121,20 +141,52 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
         eventCount[3]++;
         break;
       case ReconciliationEventType::EVENT_TL:
-        eventCount[2]++;
+        speciesToEventCount[event.pllLostSpeciesNode->label][2]++;
         eventCount[3]++;
         break;
       case ReconciliationEventType::EVENT_L: case ReconciliationEventType::EVENT_Invalid:
         break;
     }
   }
-  for (auto &it: speciesToEventCount) {
-    os << it.first << " ";
-    for (auto v: it.second) {
-      os << v << " ";
+  dumpSpeciesToEventCount(os, speciesToEventCount);
+}
+
+void Scenario::mergePerSpeciesEventCounts(const std::string &filename,
+    const std::vector<std::string> &filenames,
+    bool parallel)
+{
+  ParallelOfstream os(filename, parallel);
+  std::map<std::string, std::vector<unsigned int> > speciesToEventCount;
+  std::vector<unsigned int> defaultCount(static_cast<unsigned int>(4), 0);
+  for (const auto &subfile: filenames) {
+    std::ifstream is(subfile);
+    std::string line;
+    while (std::getline(is, line)) {
+      if (line[0] == '%') {
+        continue;
+      }
+      std::istringstream is(line);
+      std::string species;
+      is >> species;
+      auto iter = speciesToEventCount.find(species);
+      if (iter == speciesToEventCount.end()) {
+        speciesToEventCount.insert({species, defaultCount});
+        iter = speciesToEventCount.find(species);
+      }
+      for (unsigned int i = 0; i < 4; ++i) {
+        unsigned int temp;
+        is >> temp;
+        iter->second[i] += temp;
+      }
     }
-    os << "\n";
-  } 
+  }
+  if (parallel) {
+    for (const auto &pair: speciesToEventCount) {
+      const auto &species = pair.first;
+      ParallelContext::sumVectorUInt(speciesToEventCount[species]);
+    }
+  }
+  dumpSpeciesToEventCount(os, speciesToEventCount);
 }
 
 void Scenario::saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly)

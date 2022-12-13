@@ -494,11 +494,13 @@ void UndatedDTLModel<REAL>::computeProbability(corax_unode_t *geneNode, corax_rn
       event->type = ReconciliationEventType::EVENT_SL;
       event->destSpeciesNode = f;
       event->pllDestSpeciesNode = this->getSpeciesLeft(speciesNode);
+      event->pllLostSpeciesNode = this->getSpeciesRight(speciesNode);
       break;
     case 4:
       event->type = ReconciliationEventType::EVENT_SL;
       event->destSpeciesNode = g;
       event->pllDestSpeciesNode = this->getSpeciesRight(speciesNode);
+      event->pllLostSpeciesNode = this->getSpeciesLeft(speciesNode);
       break;
     case 5:
       //assert (values[5] != proba);

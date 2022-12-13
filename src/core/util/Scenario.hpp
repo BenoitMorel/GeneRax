@@ -69,7 +69,8 @@ public:
       speciesNode(INVALID_NODE_ID), 
       destSpeciesNode(INVALID_NODE_ID),
       pllTransferedGeneNode(nullptr),
-      pllDestSpeciesNode(nullptr)
+      pllDestSpeciesNode(nullptr),
+      pllLostSpeciesNode(nullptr)
     {}
     ReconciliationEventType type;
     unsigned int geneNode;
@@ -88,6 +89,7 @@ public:
     // temporary variables for event inference
     corax_unode_t *pllTransferedGeneNode;
     corax_rnode_t *pllDestSpeciesNode;
+    corax_rnode_t *pllLostSpeciesNode;
     
     std::string label;
 
@@ -150,6 +152,9 @@ public:
   void saveLargestOrthoGroup(std::string &filename, bool masterRankOnly = true) const;
   void saveAllOrthoGroups(std::string &filename, bool masterRankOnly = true) const;
   void savePerSpeciesEventsCounts(const std::string &filename, bool masterRankOnl = true);
+  static void mergePerSpeciesEventCounts(const std::string &filename,
+      const std::vector<std::string> &filenames,
+      bool parallel);
   void gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents) const;
   void countTransfers(const StringToUint &labelToId,
       MatrixUint &count);
