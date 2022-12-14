@@ -117,7 +117,12 @@ static void dumpSpeciesToEventCount(ParallelOfstream &os,
     const std::map<std::string, std::vector<unsigned int> > &speciesToEventCount)
 {
   os << "# species_label speciations duplications losses transfers" << std::endl;
+  std::vector<unsigned int> defaultCount(static_cast<unsigned int>(4), 0);
   for (auto &it: speciesToEventCount) {
+    if (defaultCount == it.second) {
+      // do not write species without any event
+      continue;
+    }
     os << it.first << " ";
     for (auto v: it.second) {
       os << v << " ";
@@ -214,13 +219,17 @@ void Scenario::mergeTransfers(const PLLRootedTree &speciesTree,
 }
 
 
-void Scenario::mergePerSpeciesEventCounts(const std::string &filename,
+void Scenario::mergePerSpeciesEventCounts(const PLLRootedTree &speciesTree,
+    const std::string &filename,
     const std::vector<std::string> &filenames,
     bool parallel)
 {
   ParallelOfstream os(filename, parallel);
   std::map<std::string, std::vector<unsigned int> > speciesToEventCount;
   std::vector<unsigned int> defaultCount(static_cast<unsigned int>(4), 0);
+  for (const auto &label:  speciesTree.getLabels(true)) {
+    speciesToEventCount.insert({label, defaultCount});
+  }
   for (const auto &subfile: filenames) {
     std::ifstream is(subfile);
     std::string line;
@@ -232,10 +241,6 @@ void Scenario::mergePerSpeciesEventCounts(const std::string &filename,
       std::string species;
       iss >> species;
       auto iter = speciesToEventCount.find(species);
-      if (iter == speciesToEventCount.end()) {
-        speciesToEventCount.insert({species, defaultCount});
-        iter = speciesToEventCount.find(species);
-      }
       for (unsigned int i = 0; i < 4; ++i) {
         unsigned int temp;
         iss >> temp;

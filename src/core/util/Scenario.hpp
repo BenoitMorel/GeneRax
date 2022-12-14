@@ -157,7 +157,8 @@ public:
   void saveLargestOrthoGroup(std::string &filename, bool masterRankOnly = true) const;
   void saveAllOrthoGroups(std::string &filename, bool masterRankOnly = true) const;
   void savePerSpeciesEventsCounts(const std::string &filename, bool masterRankOnl = true);
-  static void mergePerSpeciesEventCounts(const std::string &filename,
+  static void mergePerSpeciesEventCounts(const PLLRootedTree &tree,
+      const std::string &filename,
       const std::vector<std::string> &filenames,
       bool parallel);
   void gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents) const;
