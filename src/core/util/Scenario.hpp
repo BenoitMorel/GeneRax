@@ -143,6 +143,11 @@ public:
    */
   void saveEventsCounts(const std::string &filename, bool masterRankOnly = true); 
   void saveTransfers(const std::string &filename, bool masterRankOnly = true); 
+  static void mergeTransfers(const PLLRootedTree &speciesTree,
+      const std::string &filename,
+      const std::vector<std::string> &filenames,
+      bool parallel);
+
   void saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly = true);
   void saveReconciliation(ParallelOfstream &os, ReconciliationFormat format);
   static void saveTransferPairCountGlobal(PLLRootedTree &speciesTree,

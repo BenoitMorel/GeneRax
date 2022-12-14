@@ -9,6 +9,23 @@
 
 const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "L", "Leaf", "Invalid"};
 
+struct TransferPair {
+  unsigned int count;
+  unsigned int id1;
+  unsigned int id2;
+  TransferPair(unsigned int count, unsigned int id1, unsigned int id2):
+    count(count), id1(id1), id2(id2) {}
+  bool operator < (const TransferPair& p) const
+  {
+    if (count != p.count) {
+      return count < p.count;
+    } else if (id1 != p.id1) {
+      return id1 < p.id1;
+    } else {
+      return id2 < p.id2;
+    }
+  }
+};
   
 void PerSpeciesEvents::parallelSum() 
 {
@@ -151,6 +168,52 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
   dumpSpeciesToEventCount(os, speciesToEventCount);
 }
 
+void Scenario::mergeTransfers(const PLLRootedTree &speciesTree,
+    const std::string &filename,
+    const std::vector<std::string> &filenames,
+    bool parallel)
+{
+  ParallelOfstream os(filename, parallel);
+  const auto labelToId = speciesTree.getDeterministicLabelToId();
+  const auto idToLabel = speciesTree.getDeterministicIdToLabel();
+  const unsigned int N = labelToId.size();
+  const VectorUint zeros(N, 0);
+  auto countMatrix = MatrixUint(N, zeros);
+  for (const auto &f: filenames) {
+    std::ifstream is(f);
+    std::string line;
+    while (std::getline(is, line)) {
+      if (line[0] == '#') {
+        continue;
+      }
+      std::istringstream iss(line);
+      std::string sp1;
+      std::string sp2;
+      unsigned int count = 0;
+      iss >> sp1 >> sp2 >> count;
+      countMatrix[labelToId.at(sp1)][labelToId.at(sp2)] += count;
+    }
+  }
+  std::vector<TransferPair> transfers;
+  for (unsigned int i = 0; i < N; ++i) {
+    for (unsigned int j = 0; j < N; ++j) {
+      if (parallel) {
+        ParallelContext::sumUInt(countMatrix[i][j]);
+      }
+      if (!countMatrix[i][j]) {
+        continue;
+      }
+      transfers.push_back(TransferPair(countMatrix[i][j], i, j));
+    }
+  }
+  std::sort(transfers.rbegin(), transfers.rend());
+  for (const auto &t: transfers) {
+    os << idToLabel[t.id1] << " " << idToLabel[t.id2] << " " << t.count << std::endl;
+
+  }
+}
+
+
 void Scenario::mergePerSpeciesEventCounts(const std::string &filename,
     const std::vector<std::string> &filenames,
     bool parallel)
@@ -162,12 +225,12 @@ void Scenario::mergePerSpeciesEventCounts(const std::string &filename,
     std::ifstream is(subfile);
     std::string line;
     while (std::getline(is, line)) {
-      if (line[0] == '%') {
+      if (line[0] == '#') {
         continue;
       }
-      std::istringstream is(line);
+      std::istringstream iss(line);
       std::string species;
-      is >> species;
+      iss >> species;
       auto iter = speciesToEventCount.find(species);
       if (iter == speciesToEventCount.end()) {
         speciesToEventCount.insert({species, defaultCount});
@@ -175,7 +238,7 @@ void Scenario::mergePerSpeciesEventCounts(const std::string &filename,
       }
       for (unsigned int i = 0; i < 4; ++i) {
         unsigned int temp;
-        is >> temp;
+        iss >> temp;
         iter->second[i] += temp;
       }
     }
@@ -243,7 +306,7 @@ void Scenario::saveTransfers(const std::string &filename, bool masterRankOnly)
   for (auto &event: _events) {
     if (event.type == ReconciliationEventType::EVENT_T || event.type == ReconciliationEventType::EVENT_TL) {
       os << _speciesTree->nodes[event.speciesNode]->label << " " 
-        << _speciesTree->nodes[event.destSpeciesNode]->label << std::endl;
+        << _speciesTree->nodes[event.destSpeciesNode]->label << " " << 1  << std::endl;
     }
   }
 }
@@ -286,23 +349,6 @@ void Scenario::saveAllOrthoGroups(std::string &filename, bool masterRankOnly) co
 }
 
 
-struct TransferPair {
-  unsigned int count;
-  unsigned int id1;
-  unsigned int id2;
-  TransferPair(unsigned int count, unsigned int id1, unsigned int id2):
-    count(count), id1(id1), id2(id2) {}
-  bool operator < (const TransferPair& p) const
-  {
-    if (count != p.count) {
-      return count < p.count;
-    } else if (id1 != p.id1) {
-      return id1 < p.id1;
-    } else {
-      return id2 < p.id2;
-    }
-  }
-};
 
 void Scenario::saveTransferPairCountGlobal(PLLRootedTree &speciesTree,
     std::vector<Scenario> &scenarios,
@@ -348,7 +394,6 @@ void Scenario::saveTransferPairCountGlobal(PLLRootedTree &speciesTree,
       << " " << p.count 
       << std::endl;
   }
-
 }
 
 
