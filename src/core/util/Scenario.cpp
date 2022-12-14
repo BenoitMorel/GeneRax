@@ -227,7 +227,7 @@ void Scenario::mergePerSpeciesEventCounts(const PLLRootedTree &speciesTree,
   ParallelOfstream os(filename, parallel);
   std::map<std::string, std::vector<unsigned int> > speciesToEventCount;
   std::vector<unsigned int> defaultCount(static_cast<unsigned int>(4), 0);
-  for (const auto &label:  speciesTree.getLabels(true)) {
+  for (const auto &label:  speciesTree.getLabels(false)) {
     speciesToEventCount.insert({label, defaultCount});
   }
   for (const auto &subfile: filenames) {
