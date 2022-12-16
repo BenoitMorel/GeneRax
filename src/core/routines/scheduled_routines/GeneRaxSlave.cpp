@@ -80,7 +80,7 @@ static void optimizeGeneTreesSlave(const std::string &startingGeneTreeFile,
   jointTree->printLoglk();
   Logger::info << "Initial ll = " << bestLoglk << std::endl;
   if (sprRadius > 0) {
-    while(SPRSearch::applySPRRound(*jointTree, sprRadius, bestLoglk, true)) {} 
+    while(SPRSearch::applySPRRound(*jointTree, sprRadius, true)) {} 
   }
   jointTree->printLoglk();
   if (outputGeneTree.size() && ParallelContext::getRank() == 0) {

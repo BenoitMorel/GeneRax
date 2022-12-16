@@ -52,11 +52,6 @@ static bool sprYeldsSameTree(corax_unode_t *p, corax_unode_t *r)
     || (r == p->back) || (r == p->next->back) || (r == p->next->next->back);
 }
 
-static bool isValidSPRMove(corax_unode_s *prune, corax_unode_s *regraft) {
-  assert(prune);
-  assert(regraft);
-  return !sprYeldsSameTree(prune, regraft);
-}
 
 static bool isSPRMoveValid(PLLUnrootedTree &tree,
     corax_unode_t *prune, 
@@ -75,40 +70,6 @@ static bool isSPRMoveValid(PLLUnrootedTree &tree,
   return !sprYeldsSameTree(prune, regraft);
 }
 
-
-
-static void getRegraftsRec(unsigned int pruneIndex, 
-    corax_unode_t *regraft, 
-    int maxRadius, 
-    double supportThreshold, 
-    std::vector<unsigned int> &path, 
-    std::vector<SPRMoveDesc> &moves)
-{
-  assert(regraft);
-  double bootstrapValue = (nullptr == regraft->label) ? 0.0 : std::atof(regraft->label);
-  if (supportThreshold >= 0.0 && bootstrapValue > supportThreshold) {
-    return;
-  }
-  if (path.size()) {
-    moves.push_back(SPRMoveDesc(pruneIndex, regraft->node_index, path));
-  }
-  if (static_cast<int>(path.size()) < maxRadius && regraft->next) {
-    path.push_back(regraft->node_index);
-    getRegraftsRec(pruneIndex, regraft->next->back, maxRadius, supportThreshold, path, moves);
-    getRegraftsRec(pruneIndex, regraft->next->next->back, maxRadius, supportThreshold, path, moves);
-    path.pop_back();
-  }
-}
-
-static void getRegrafts(JointTree &jointTree, unsigned int pruneIndex, int maxRadius, std::vector<SPRMoveDesc> &moves) 
-{
-  corax_unode_t *pruneNode = jointTree.getNode(pruneIndex);
-  std::vector<unsigned int> path;
-  auto supportThreshold = jointTree.getSupportThreshold();
-  getRegraftsRec(pruneIndex, pruneNode->next->back, maxRadius, supportThreshold, path, moves);
-  getRegraftsRec(pruneIndex, pruneNode->next->next->back, maxRadius, supportThreshold, path, moves);
-}
-
 static void addInvolvedNode(corax_unode_t *node, 
     std::unordered_set<corax_unode_t *> &involved)
 {
@@ -123,45 +84,6 @@ static bool wasInvolved(corax_unode_t *node,
     std::unordered_set<corax_unode_t *> &involved)
 {
   return involved.find(node) != involved.end();
-}
-
-static void getAllPotentialMoves(JointTree &jointTree,
-    int radius,
-    std::vector<std::shared_ptr<SPRMove> > &allMoves)
-{
-  std::vector<unsigned int> allNodes;
-  getAllPruneIndices(jointTree, allNodes);
-  std::vector<SPRMoveDesc> potentialMoves;
-  for (unsigned int i = 0; i < allNodes.size(); ++i) {
-      auto pruneIndex = allNodes[i];
-      getRegrafts(jointTree, pruneIndex, radius, potentialMoves);
-  }
-  std::vector<std::array<bool, 2> > redundantNNIMoves(
-      jointTree.getTreeInfo()->subnode_count, 
-      std::array<bool, 2>{{false,false}});
-  for (auto &move: potentialMoves) {
-    auto pruneIndex = move.pruneIndex;
-    auto regraftIndex = move.regraftIndex;
-    if (!isValidSPRMove(jointTree.getNode(pruneIndex), jointTree.getNode(regraftIndex))) {
-      continue;
-    }
-    // in case of a radius 1, SPR moves are actually NNI moves
-    // the traversal algorithm produces redundant moves, so we 
-    // get rid of them here
-    if (move.path.size() == 1) { 
-      auto nniEdge = jointTree.getNode(move.path[0]);
-      bool isPruneNext = nniEdge->back->next->node_index == pruneIndex;
-      bool isRegraftNext = nniEdge->next->back->node_index == regraftIndex;
-      auto nniType = static_cast<unsigned int>(isPruneNext == isRegraftNext);
-      auto nniBranchIndex = std::min(nniEdge->node_index, nniEdge->back->node_index);
-      if (redundantNNIMoves[nniBranchIndex][nniType]) {
-        continue;
-      }
-      redundantNNIMoves[nniBranchIndex][nniType] = true; 
-    }
-    allMoves.push_back(SPRMove::createSPRMove(pruneIndex, regraftIndex, move.path));
-  }
-
 }
 
 static bool sequentiallyApplyBetterMoves(JointTree &jointTree, 
@@ -355,7 +277,7 @@ static void synchronizeMoves(JointTree &jointTree, std::vector<std::shared_ptr<S
   }
 }
 
-bool SPRSearch::applySPRRoundDigg(JointTree &jointTree, int radius, bool blo) 
+bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, bool blo) 
 {
   std::vector<unsigned int> pruneIndices;
   getAllPruneIndices(jointTree, pruneIndices);
@@ -400,46 +322,19 @@ bool SPRSearch::applySPRRoundDigg(JointTree &jointTree, int radius, bool blo)
 }
 
 
-bool SPRSearch::applySPRRound(JointTree &jointTree, int radius, double &bestLoglk, bool blo) {
-  return applySPRRoundDigg(jointTree, radius, blo);
-  std::vector<std::shared_ptr<SPRMove> > allMoves;
-  getAllPotentialMoves(jointTree, radius, allMoves);
-  Logger::timed << "Start SPR round " 
-    << "(std::hash=" << jointTree.getUnrootedTreeHash() << ", (best ll=" 
-    << bestLoglk << ", radius=" << radius << ", possible moves: " << allMoves.size() << ")"
-    << std::endl;
-  std::vector<std::shared_ptr<SPRMove> > betterMoves;
-  Logger::info << "Searching all potential good moves..." << std::endl;
-  SearchUtils::findBetterMoves(jointTree, 
-      allMoves,
-      betterMoves,
-      blo);
-  bestLoglk = jointTree.computeJointLoglk();
-  bool foundBetterMove = applyTheBetterMoves(jointTree, 
-      betterMoves,
-      blo,
-      bestLoglk);
-  return foundBetterMove;
-}
 
 
 void SPRSearch::applySPRSearch(JointTree &jointTree)
 { 
   jointTree.printLoglk();
-  double startingLoglk = jointTree.computeJointLoglk();
-  double bestLoglk = startingLoglk;
-  while (applySPRRound(jointTree, 1, bestLoglk)) {}
+  while (applySPRRound(jointTree, 1)) {}
   jointTree.optimizeParameters();
-  bestLoglk = jointTree.computeJointLoglk();
-  while (applySPRRound(jointTree, 1, bestLoglk)) {}
+  while (applySPRRound(jointTree, 1)) {}
   jointTree.optimizeParameters(true, false);
-  bestLoglk = jointTree.computeJointLoglk();
-  while (applySPRRound(jointTree, 2, bestLoglk)) {}
+  while (applySPRRound(jointTree, 2)) {}
   jointTree.optimizeParameters(true, false);
-  bestLoglk = jointTree.computeJointLoglk();
-  while (applySPRRound(jointTree, 3, bestLoglk)) {}
+  while (applySPRRound(jointTree, 3)) {}
   jointTree.optimizeParameters(true, false);
-  bestLoglk = jointTree.computeJointLoglk();
-  while (applySPRRound(jointTree, 5, bestLoglk)) {}
+  while (applySPRRound(jointTree, 5)) {}
 }
 
