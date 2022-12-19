@@ -115,8 +115,10 @@ void readTrees(const std::string &inputFile,
   uniqueInputTrees = weightedTrees.size();
 }
 
-
-static void firstPass(const WeightedTrees &weightedTrees,
+// extract all clades and map them to clade IDs, which 
+// are sorted (child clades appear before the parent clades)
+// for each weighted tree, also stores its node in post order
+static void extractClades(const WeightedTrees &weightedTrees,
     const std::unordered_map<std::string, unsigned int> &leafToId,
     CladeToCID &cladeToCID,
     CIDToClade &cidToClade,
@@ -128,15 +130,19 @@ static void firstPass(const WeightedTrees &weightedTrees,
   CCPClade emptyClade(anyTree.getLeavesNumber(), false);
   CCPClade fullClade(anyTree.getLeavesNumber(), true);
   auto leafNumber = anyTree.getLeavesNumber();
-  std::unordered_set<CCPClade> unorderedClades;
-  unorderedClades.insert(fullClade);
   std::vector<corax_unode_t *> nodes;
   std::vector<char> buffer;
+  // iterate over all trees of the tree distribution
+  OrderedClades orderedClades;
+  orderedClades.insert(fullClade);
   for (auto pair: weightedTrees) {
     auto &tree = *(pair.first.tree);
     std::vector<CCPClade> nodeIndexToClade(tree.getDirectedNodesNumber(), 
         emptyClade);
     postOrderNodes.emplace_back(tree.getPostOrderNodes());
+    // traverse all directed nodes of the current tree, and compute
+    // the corresponding clade. Store them into nodeIndexToClade to 
+    // reuse the child subclades in the post order traversal
     for (auto node: postOrderNodes.back()) {
       auto nodeIndex = node->node_index;
       auto &clade = nodeIndexToClade[nodeIndex];
@@ -148,26 +154,87 @@ static void firstPass(const WeightedTrees &weightedTrees,
         auto &rightClade = nodeIndexToClade[node->next->next->back->node_index];
         clade = leftClade | rightClade;
       }
-      unorderedClades.insert(clade);
+      orderedClades.insert(clade);
     }
-  }
-  OrderedClades orderedClades;
-  for (auto &clade: unorderedClades) {
-    orderedClades.insert(clade);
   }
   cidToClade.clear();
   cladeToCID.clear();
+  // fill cidToClade and cladeToCID
+  // The order is important because we want to make sure that a parent
+  // clade always comes after its child clades in the CID ordering 
   for (auto it = orderedClades.begin(); it != orderedClades.end(); ++it) {
     auto &clade = *it;
     unsigned int CID = cidToClade.size();
     cidToClade.push_back(clade);
     cladeToCID[clade] = CID;
   }
+  // so far we have only added the non-trivial clades. Now we add
+  // the trivial clades 
   for (auto pair: leafToId) {
     CCPClade clade(leafNumber, false);
     clade.set(pair.second);
     cidToLeaf[cladeToCID[clade]] = pair.first;
   }
+}
+
+
+// fill cladeCounts (number of times each clade occurs) and
+// subcladeCOunts (for each clade, the number of times each subclade
+// occures)
+static void fillCladeCounts(const WeightedTrees &weightedTrees,
+    unsigned int inputTrees,
+    const CladeToCID &cladeToCID,
+    const std::unordered_map<std::string, unsigned int> &leafToId,
+    const std::vector<std::vector<corax_unode_t*> > &postOrderNodes,
+    CladeCounts &cladeCounts,
+    SubcladeCounts &subcladeCounts)
+{
+  auto &anyTree = *(weightedTrees.begin()->first.tree);
+  auto emptyClade = CCPClade(anyTree.getLeavesNumber(), false);
+  auto fullClade = CCPClade(anyTree.getLeavesNumber(), true);
+  auto fullCladeCID = cladeToCID.at(fullClade);
+  std::vector<CCPClade> nodeIndexToClade(anyTree.getDirectedNodesNumber(), emptyClade); 
+  std::vector<CID> nodeIndexToCID(anyTree.getDirectedNodesNumber());
+  // root clade
+  addClade(fullCladeCID, cladeCounts, 
+      inputTrees * anyTree.getDirectedNodesNumber());
+  unsigned int weightedTreeIndex = 0;
+  for (auto pair: weightedTrees) {
+    auto treeCount = pair.second;
+    for (auto node: postOrderNodes.at(weightedTreeIndex)) {
+      auto nodeIndex = node->node_index;
+      auto &clade = nodeIndexToClade.at(nodeIndex);
+      CID cid;
+      if (!node->next) { // leaf
+        auto id = leafToId.at(node->label);
+        clade = emptyClade;
+        clade.set(id);
+        cid = cladeToCID.at(clade);
+      } else {
+        auto &leftClade = nodeIndexToClade[node->next->back->node_index];
+        auto &rightClade = nodeIndexToClade[node->next->next->back->node_index];
+        auto leftCID = nodeIndexToCID[node->next->back->node_index];
+        auto rightCID = nodeIndexToCID[node->next->next->back->node_index];
+        clade = leftClade | rightClade;
+        cid = cladeToCID.at(clade);
+        if (leftCID < rightCID) {
+          auto leftCID = cladeToCID.at(leftClade);
+          addSubclade(cid, leftCID, subcladeCounts, treeCount);
+        } else {
+          auto rightCID = cladeToCID.at(rightClade);
+          addSubclade(cid, rightCID, subcladeCounts, treeCount);
+        }
+      }
+      nodeIndexToCID[node->node_index] = cid;
+      addClade(cid, cladeCounts, treeCount);
+      
+      // todo should we check that a clade/complementary is only
+      // added once to the root??
+      addSubclade(fullCladeCID, cid, subcladeCounts, treeCount);
+    }
+    weightedTreeIndex++;
+  }
+
 }
 
 
@@ -196,57 +263,27 @@ ConditionalClades::ConditionalClades(const std::string &inputFile,
   fullClade = CCPClade(anyTree.getLeavesNumber(), true);
   
   std::vector<std::vector<corax_unode_t*> > postOrderNodes;
-  firstPass(weightedTrees, 
+  // first pass to get all clades and assign them a CID
+  extractClades(weightedTrees, 
       leafToId,
       _cladeToCID,
       _CIDToClade,
       _CIDToLeaf,
       postOrderNodes
       );
+
+
   CladeCounts cladeCounts;
   SubcladeCounts subcladeCounts(_CIDToClade.size());
-  auto fullCladeCID = _cladeToCID[fullClade];
-  std::vector<CCPClade> nodeIndexToClade(anyTree.getDirectedNodesNumber(), emptyClade); 
-  std::vector<CID> nodeIndexToCID(anyTree.getDirectedNodesNumber());
-  // root clade
-  addClade(fullCladeCID, cladeCounts, 
-      _inputTrees * anyTree.getDirectedNodesNumber());
-  unsigned int weightedTreeIndex = 0;
-  for (auto pair: weightedTrees) {
-    auto treeCount = pair.second;
-    for (auto node: postOrderNodes[weightedTreeIndex]) {
-      auto nodeIndex = node->node_index;
-      auto &clade = nodeIndexToClade[nodeIndex];
-      CID cid;
-      if (!node->next) { // leaf
-        auto id = leafToId[node->label];
-        clade = emptyClade;
-        clade.set(id);
-        cid = _cladeToCID[clade];
-      } else {
-        auto &leftClade = nodeIndexToClade[node->next->back->node_index];
-        auto &rightClade = nodeIndexToClade[node->next->next->back->node_index];
-        auto leftCID = nodeIndexToCID[node->next->back->node_index];
-        auto rightCID = nodeIndexToCID[node->next->next->back->node_index];
-        clade = leftClade | rightClade;
-        cid = _cladeToCID[clade];
-        if (leftCID < rightCID) {
-          auto leftCID = _cladeToCID[leftClade];
-          addSubclade(cid, leftCID, subcladeCounts, treeCount);
-        } else {
-          auto rightCID = _cladeToCID[rightClade];
-          addSubclade(cid, rightCID, subcladeCounts, treeCount);
-        }
-      }
-      nodeIndexToCID[node->node_index] = cid;
-      addClade(cid, cladeCounts, treeCount);
-      
-      // todo should we check that a clade/complementary is only
-      // added once to the root??
-      addSubclade(fullCladeCID, cid, subcladeCounts, treeCount);
-    }
-    weightedTreeIndex++;
-  }
+  // second pass to count the number of occurence of each clade,
+  // and for each clade, the number of occurences of its subclades
+  fillCladeCounts(weightedTrees,
+      _inputTrees,
+      _cladeToCID,
+      leafToId,
+      postOrderNodes,
+      cladeCounts,
+      subcladeCounts);
   _fillCCP(cladeCounts, subcladeCounts);
 }
   
