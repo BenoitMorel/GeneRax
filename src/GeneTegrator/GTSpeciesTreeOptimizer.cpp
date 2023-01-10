@@ -82,6 +82,7 @@ GTSpeciesTreeLikelihoodEvaluator::GTSpeciesTreeLikelihoodEvaluator(
   _geneTrees(geneTrees)
   
 {
+  Logger::timed << "Initializing ccps and evaluators..." << std::endl;
   for (const auto &geneTree: _geneTrees.getTrees()) {
     auto &family = families[geneTree.familyIndex];
     _evaluations.push_back(createModel(_speciesTree,
@@ -415,7 +416,6 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   _modelRates = ModelParameters(startingRates, 
       1, //_geneTrees.getTrees().size(), 
       info);
-  Logger::timed << "Initializing ccps" << std::endl;
   _speciesTree->addListener(this);
   ParallelContext::barrier();
   _evaluator = std::make_unique<GTSpeciesTreeLikelihoodEvaluator>(

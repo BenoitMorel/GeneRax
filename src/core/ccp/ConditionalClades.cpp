@@ -2,7 +2,7 @@
 #include "ConditionalClades.hpp"
 #include <trees/PLLUnrootedTree.hpp>
 #include <IO/Logger.hpp>
-
+#include <cassert>
 #include <fstream>
 #include <iostream>
 
@@ -181,13 +181,15 @@ static void extractClades(const WeightedTrees &weightedTrees,
 // fill cladeCounts (number of times each clade occurs) and
 // subcladeCOunts (for each clade, the number of times each subclade
 // occures)
+// if CIDToDeviation is not null, fill it with the map deviations
 static void fillCladeCounts(const WeightedTrees &weightedTrees,
     unsigned int inputTrees,
     const CladeToCID &cladeToCID,
     const std::unordered_map<std::string, unsigned int> &leafToId,
     const std::vector<std::vector<corax_unode_t*> > &postOrderNodes,
     CladeCounts &cladeCounts,
-    SubcladeCounts &subcladeCounts)
+    SubcladeCounts &subcladeCounts,
+    std::unordered_map<unsigned int, double> *CIDToDeviation = nullptr)
 {
   auto &anyTree = *(weightedTrees.begin()->first.tree);
   auto emptyClade = CCPClade(anyTree.getLeavesNumber(), false);
@@ -200,6 +202,10 @@ static void fillCladeCounts(const WeightedTrees &weightedTrees,
       inputTrees * anyTree.getDirectedNodesNumber());
   unsigned int weightedTreeIndex = 0;
   for (auto pair: weightedTrees) {
+    std::vector<double> deviations;
+    if (CIDToDeviation) {
+      deviations = pair.first.tree->getMADRelativeDeviations();
+    }
     auto treeCount = pair.second;
     for (auto node: postOrderNodes.at(weightedTreeIndex)) {
       auto nodeIndex = node->node_index;
@@ -225,12 +231,13 @@ static void fillCladeCounts(const WeightedTrees &weightedTrees,
           addSubclade(cid, rightCID, subcladeCounts, treeCount);
         }
       }
+      // add the root sublade if the virtual root is node
       nodeIndexToCID[node->node_index] = cid;
       addClade(cid, cladeCounts, treeCount);
-      
-      // todo should we check that a clade/complementary is only
-      // added once to the root??
       addSubclade(fullCladeCID, cid, subcladeCounts, treeCount);
+      if (CIDToDeviation) {
+        CIDToDeviation->insert({cid, deviations[node->node_index]});
+      }
     }
     weightedTreeIndex++;
   }
@@ -241,9 +248,11 @@ static void fillCladeCounts(const WeightedTrees &weightedTrees,
 
 ConditionalClades::ConditionalClades(const std::string &inputFile,
     bool fromBinary, 
-    int maxSamples):
+    int maxSamples,
+    bool madRooting):
   _inputTrees(0),
-  _uniqueInputTrees(0)
+  _uniqueInputTrees(0),
+  _madRooting(false)
 {
   if (fromBinary) {
     unserialize(inputFile);
@@ -253,8 +262,10 @@ ConditionalClades::ConditionalClades(const std::string &inputFile,
   CCPClade emptyClade;
   CCPClade fullClade;
   WeightedTrees weightedTrees;
+  Logger::timed << "Read trees..." << std::endl;
   readTrees(inputFile, weightedTrees, _inputTrees, _uniqueInputTrees, maxSamples); 
   auto &anyTree = *(weightedTrees.begin()->first.tree);
+  Logger::timed << "Read labels..." << std::endl;
   for (auto leaf: anyTree.getLabels()) {
     leafToId.insert({leaf, leafToId.size()});
     _idToLeaf.push_back(leaf);
@@ -264,6 +275,7 @@ ConditionalClades::ConditionalClades(const std::string &inputFile,
   
   std::vector<std::vector<corax_unode_t*> > postOrderNodes;
   // first pass to get all clades and assign them a CID
+  Logger::timed << "Extract clades..." << std::endl;
   extractClades(weightedTrees, 
       leafToId,
       _cladeToCID,
@@ -275,24 +287,37 @@ ConditionalClades::ConditionalClades(const std::string &inputFile,
 
   CladeCounts cladeCounts;
   SubcladeCounts subcladeCounts(_CIDToClade.size());
+  std::unique_ptr<std::unordered_map<unsigned int, double> >
+    CIDToDeviation;
+  if (_madRooting) {
+    CIDToDeviation = 
+      std::make_unique<std::unordered_map<unsigned int, double> >();
+    }
   // second pass to count the number of occurence of each clade,
   // and for each clade, the number of occurences of its subclades
+  Logger::timed << "Fill clade counts..." << std::endl;
   fillCladeCounts(weightedTrees,
       _inputTrees,
       _cladeToCID,
       leafToId,
       postOrderNodes,
       cladeCounts,
-      subcladeCounts);
-  _fillCCP(cladeCounts, subcladeCounts);
+      subcladeCounts,
+      CIDToDeviation.get());
+  Logger::timed << "Fill CCP..." << std::endl;
+  _fillCCP(cladeCounts, subcladeCounts, CIDToDeviation.get());
 }
   
 void ConditionalClades::_fillCCP(CladeCounts &cladeCounts,
-      SubcladeCounts &subcladeCounts)
+      SubcladeCounts &subcladeCounts,
+      std::unordered_map<unsigned int, double> *CIDToDeviation)
 {
   _allCladeSplits.clear();
   auto cladesNumber = _CIDToClade.size();
   _allCladeSplits.resize(cladesNumber);
+  auto rootCID = cladesNumber -  1;
+  CCPClade fullClade(_CIDToClade[0].size(), true);
+  assert(rootCID = _cladeToCID[fullClade]);
   for (unsigned int cid = 0; cid < cladesNumber; ++cid) {
     auto &clade = _CIDToClade[cid];
     auto cladeCount = cladeCounts[cid];
@@ -305,17 +330,22 @@ void ConditionalClades::_fillCCP(CladeCounts &cladeCounts,
         auto cladeLeft = _CIDToClade[CIDLeft];
         auto cladeRight = getComplementary(clade, cladeLeft);
         auto CIDRight = _cladeToCID[cladeRight];
-        double frequency = double(subcladeCount.second) / double(cladeCount); 
-        sumFrequencies += frequency;
         CladeSplit split;
         split.parent = cid;
         split.left = CIDLeft;
         split.right = CIDRight;
+        double frequency = double(subcladeCount.second) / double(cladeCount); 
+        if (CIDToDeviation && split.parent == rootCID) {
+          double deviation = (*CIDToDeviation)[split.left] + 1.0;
+          frequency /= (deviation * deviation);
+        }
         split.frequency = frequency;
+        sumFrequencies += frequency;
         cladeSplits.push_back(split);
       }
-      // Check that frequencies sum to one
-      assert(fabs(1.0 - sumFrequencies) < 0.000001);
+      for (auto &split: cladeSplits) {
+        split.frequency /= sumFrequencies;
+      }
     }
   }
 }

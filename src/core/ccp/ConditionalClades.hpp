@@ -18,6 +18,7 @@ struct CladeSplit {
   CID left;
   CID right;
   double frequency;
+  double deviation;
   CladeSplit():
     frequency(0.0)
   {
@@ -33,7 +34,8 @@ public:
   ConditionalClades() {}
   ConditionalClades(const std::string &inputFile, 
       bool fromBinary = false,
-      int maxSamples = -1);
+      int maxSamples = -1,
+      bool madRooting = false);
   void printContent() const; 
   void printStats() const;
   unsigned int getCladesNumber() const {return _cladeToCID.size();}
@@ -54,6 +56,7 @@ public:
 private:
   unsigned int _inputTrees;
   unsigned int _uniqueInputTrees;
+  bool _madRooting;
   std::vector<std::string> _idToLeaf;
   CIDToLeaf _CIDToLeaf;
   CladeToCID _cladeToCID;
@@ -61,7 +64,8 @@ private:
   std::vector<CladeSplits> _allCladeSplits;
 private:
   void _fillCCP(CladeCounts &cladeCounts,
-      SubcladeCounts &subcladeCounts);
+      SubcladeCounts &subcladeCounts,
+      std::unordered_map<unsigned int, double> *CIDToDeviation = nullptr);
 };
 
 
