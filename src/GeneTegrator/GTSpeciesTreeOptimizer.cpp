@@ -16,8 +16,7 @@ static bool testAndSwap(size_t &hash1, size_t &hash2) {
 static std::shared_ptr<MultiModel> createModel(SpeciesTree &speciesTree,
   const FamilyInfo &family,
   const ModelParameters &modelParameters,
-  bool highPrecision,
-  int maxSamples = -1)
+  bool highPrecision)
 {
   std::shared_ptr<MultiModel> model;
   GeneSpeciesMapping mapping;
@@ -30,15 +29,13 @@ static std::shared_ptr<MultiModel> createModel(SpeciesTree &speciesTree,
         speciesTree.getTree(),
         mapping,
         info,
-        family.startingGeneTree,
-        maxSamples);
+        family.ccp);
     } else {
       model = std::make_shared<UndatedDLMultiModel<double> >(
         speciesTree.getTree(),
         mapping,
         info,
-        family.startingGeneTree,
-        maxSamples);
+        family.ccp);
     }
     break;
   case RecModel::UndatedDTL:
@@ -47,15 +44,13 @@ static std::shared_ptr<MultiModel> createModel(SpeciesTree &speciesTree,
         speciesTree.getDatedTree(),
         mapping,
         info,
-        family.startingGeneTree,
-        maxSamples);
+        family.ccp);
     } else {
       model = std::make_shared<UndatedDTLMultiModel<double> >(
         speciesTree.getDatedTree(),
         mapping,
         info,
-        family.startingGeneTree,
-        maxSamples);
+        family.ccp);
     }
     break;
   default:
@@ -353,7 +348,7 @@ void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(SpeciesTree &speci
         speciesTree.getDatedTree(),
         mapping,
         infoCopy,
-        family.startingGeneTree);
+        family.ccp);
     
     evaluation.computeLogLikelihood();
     // warning, this might make the random state 

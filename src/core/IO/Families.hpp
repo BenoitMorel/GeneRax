@@ -8,6 +8,7 @@
 struct FamilyInfo {
   std::string name;
   std::string startingGeneTree;
+  std::string ccp;
   std::string alignmentFile;
   std::string mappingFile;
   std::string libpllModel;
@@ -19,6 +20,7 @@ struct FamilyInfo {
   void reset() {
     name = "";
     startingGeneTree = "__random__";
+    ccp = "";
     alignmentFile = "";
     mappingFile = "";
     libpllModel = "GTR";

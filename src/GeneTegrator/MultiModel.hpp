@@ -20,12 +20,11 @@ public:
   MultiModel(PLLRootedTree &speciesTree,
       const GeneSpeciesMapping &geneSpeciesMapping, 
       const RecModelInfo &info,
-      const std::string &geneTreesFile,
-      int maxSamples = -1):
+      const std::string &ccpFile):
     BaseReconciliationModel(speciesTree,
         geneSpeciesMapping,
         info),
-    _ccp(geneTreesFile, false, maxSamples)
+    _ccp(ccpFile, true)
   {
     mapGenesToSpecies();
   }
@@ -62,13 +61,11 @@ public:
   MultiModelTemplate(PLLRootedTree &speciesTree,
       const GeneSpeciesMapping &geneSpeciesMapping, 
       const RecModelInfo &info,
-      const std::string &geneTreesFile,
-      int maxSamples = -1):
+      const std::string &ccpFile):
     MultiModel(speciesTree,
         geneSpeciesMapping,
         info,
-        geneTreesFile,
-        maxSamples){}
+        ccpFile){}
   virtual ~MultiModelTemplate() {}
   virtual bool inferMLScenario(Scenario &scenario, 
     bool stochastic = false);

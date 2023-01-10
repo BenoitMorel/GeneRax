@@ -1,4 +1,6 @@
 #include "GeneTegratorArguments.hpp"
+#include <cstdio>
+#include <ccp/ConditionalClades.hpp>
 #include <parallelization/ParallelContext.hpp>
 #include <IO/Logger.hpp>
 #include <IO/FileSystem.hpp>
@@ -18,12 +20,33 @@ void filterInvalidFamilies(Families &families)
   for (const auto &family: families) {
     std::ifstream is(family.startingGeneTree);
     if (!is || is.peek() == std::ifstream::traits_type::eof()) {
-      Logger::info << "Invalid family " << family.name << std::endl;
+      Logger::error << "Can't open input gene trees for family " << family.name << std::endl;
       continue;
     }
     validFamilies.push_back(family);  
   }
   families = validFamilies;
+}
+
+void generateCCPs(const std::string &ccpDir, Families &families)
+{
+  Logger::timed << "Generating ccp files..." << std::endl;
+  for (auto &family: families) {
+    family.ccp = FileSystem::joinPaths(ccpDir, family.name + ".ccp");
+  } 
+  auto N = families.size();
+  for (auto i = ParallelContext::getBegin(N); i < ParallelContext::getEnd(N); i ++) {
+    ConditionalClades ccp(families[i].startingGeneTree, false);
+    ccp.serialize(families[i].ccp);
+  }
+}
+
+void cleanupCCPs(Families &families) 
+{
+  Logger::timed << "Cleaning up ccp files..." << std::endl;
+  for (const auto &family: families) {
+    std::remove(family.ccp.c_str());
+  }
 }
 
 void trimFamilies(Families &families, int minSpecies, double trimRatio) 
@@ -88,9 +111,12 @@ void run( GeneTegratorArguments &args)
   Random::setSeed(static_cast<unsigned int>(args.seed));
   FileSystem::mkdir(args.output, true);
   FileSystem::mkdir(args.output + "/species_trees", true);
+  std::string ccpDir = FileSystem::joinPaths(args.output, "ccps");
+  FileSystem::mkdir(ccpDir, true);
   Logger::initFileOutput(FileSystem::joinPaths(args.output, "genetegrator"));
   auto families = FamiliesFileParser::parseFamiliesFile(args.families);
   filterInvalidFamilies(families);
+  generateCCPs(ccpDir, families);
   trimFamilies(families, args.minCoveredSpecies, args.trimFamilyRatio);
   if (families.size() == 0) {
     Logger::info << "No valid family, aborting" << std::endl;
@@ -139,6 +165,7 @@ void run( GeneTegratorArguments &args)
   Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   speciesTreeOptimizer.reconcile(args.geneTreeSamples);
   speciesTreeOptimizer.saveSpeciesTree(); 
+  cleanupCCPs(families);
   Logger::timed <<"End of the execution" << std::endl;
 }
 
