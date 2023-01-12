@@ -9,12 +9,13 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
   reconciliationModelStr("UndatedDTL"),
   transferConstraint(TransferConstaint::PARENTS),
   originationStrategy(OriginationStrategy::UNIFORM),
-  speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
-  speciesSearchStrategy(SpeciesSearchStrategy::HYBRID),
   pruneSpeciesTree(false),
   gammaCategories(1),
-  trimFamilyRatio(1.0),
+  ccpRooting(CCPRooting::UNIFORM),
+  speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
+  speciesSearchStrategy(SpeciesSearchStrategy::HYBRID),
   minCoveredSpecies(-1),
+  trimFamilyRatio(1.0),
   geneTreeSamples(0),
   output("GeneTegrator"),
   seed(123),
@@ -46,6 +47,8 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
       minCoveredSpecies = atof(argv[++i]);
     } else if (arg == "--gamma-categories") {
       gammaCategories = atoi(argv[++i]);
+    } else if (arg == "--gene-tree-rooting") {
+      ccpRooting = ArgumentsHelper::strToCCPRooting(std::string(argv[++i]));
     } else if (arg == "--gene-tree-samples") {
       geneTreeSamples = atoi(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {

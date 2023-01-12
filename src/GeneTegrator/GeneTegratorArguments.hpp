@@ -11,21 +11,35 @@ public:
   GeneTegratorArguments(int argc, char * argv[]);
   void printHelp();
 public:
+  
   int argc;
   char ** argv;
+
+  // input data
   std::string families;
   std::string speciesTree;
   std::string reconciliationModelStr;
+  
+  // model
   TransferConstaint transferConstraint;
   OriginationStrategy originationStrategy;
-  SpeciesTreeAlgorithm speciesTreeAlgorithm;
-  SpeciesSearchStrategy speciesSearchStrategy;
   bool pruneSpeciesTree;
   unsigned int gammaCategories;
+  CCPRooting ccpRooting;
+
+  // search
+  SpeciesTreeAlgorithm speciesTreeAlgorithm;
+  SpeciesSearchStrategy speciesSearchStrategy;
+  
+  // trimming
   int minCoveredSpecies;
   double trimFamilyRatio;
+  
+  // output
   unsigned int geneTreeSamples;
   std::string output;
+  
+  // random seed
   int seed;
   
   // experimental

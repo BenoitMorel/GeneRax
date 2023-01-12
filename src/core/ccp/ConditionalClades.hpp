@@ -5,6 +5,7 @@
 #include <set>
 #include <maths/bitvector.hpp>
 #include <iostream>
+#include <util/enums.hpp>
 
 using CID = unsigned int;
 
@@ -25,6 +26,8 @@ struct CladeSplit {
   }
 };
 
+
+
 using CladeSplits = std::vector<CladeSplit>;
 using CladeToCID = std::unordered_map<CCPClade, CID>;
 using CIDToClade = std::vector<CCPClade>;
@@ -33,9 +36,7 @@ class ConditionalClades {
 public:
   ConditionalClades() {}
   ConditionalClades(const std::string &inputFile, 
-      bool fromBinary = false,
-      int maxSamples = -1,
-      bool madRooting = false);
+      CCPRooting ccpRooting);
   void printContent() const; 
   void printStats() const;
   unsigned int getCladesNumber() const {return _cladeToCID.size();}
@@ -53,10 +54,13 @@ public:
 
   void serialize(const std::string &outputFile);
   void unserialize(const std::string &inputFile);
+
+  bool madRooting() const {return _ccpRooting == CCPRooting::MAD;}
+
 private:
   unsigned int _inputTrees;
   unsigned int _uniqueInputTrees;
-  bool _madRooting;
+  CCPRooting _ccpRooting;
   std::vector<std::string> _idToLeaf;
   CIDToLeaf _CIDToLeaf;
   CladeToCID _cladeToCID;

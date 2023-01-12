@@ -1,10 +1,10 @@
 #include <ccp/ConditionalClades.hpp>
 #include <cassert>
-
+#include <util/enums.hpp>
 
 void test(const std::string &newickFile)
 {
-  ConditionalClades cc(newickFile);
+  ConditionalClades cc(newickFile, CCPRooting::UNIFORM);
   cc.printContent();
 }
 

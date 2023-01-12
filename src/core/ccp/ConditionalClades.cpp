@@ -5,12 +5,29 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
+#include <trees/PLLRootedTree.hpp>
 
 struct TreeWraper {
   std::shared_ptr<PLLUnrootedTree> tree;
+  corax_unode_t *root;
+  size_t hash;
+
+  TreeWraper(const std::string newickStr,
+      bool rooted):root(nullptr) {
+    tree = std::make_shared<PLLUnrootedTree>(newickStr, false);
+    if (rooted) {
+      PLLRootedTree rootedTree(newickStr, false);
+      root = tree->getVirtualRoot(rootedTree);
+      hash = tree->getRootedTreeHash(root);
+    } else {
+      hash = tree->getUnrootedTreeHash();
+    }
+  }
+
   bool operator ==(const TreeWraper &other) const
   {
-    return PLLUnrootedTree::areIsomorphic(*tree, *(other.tree));
+    return root == other.root && 
+      PLLUnrootedTree::areIsomorphic(*tree, *(other.tree));
   }
 };
 
@@ -22,7 +39,7 @@ namespace std
       size_t
         operator()(const TreeWraper& tree) const
         {
-          return tree.tree->getUnrootedTreeHash();
+          return tree.hash;
         }
     };
 }
@@ -78,14 +95,10 @@ void printClade(const CCPClade &clade,
 }
 
 
-
-
-
 void readTrees(const std::string &inputFile,
     WeightedTrees &weightedTrees,
     unsigned int &inputTrees,
-    unsigned int &uniqueInputTrees,
-    int maxSamples)
+    unsigned int &uniqueInputTrees)
 {
   std::ifstream infile(inputFile);
   std::string line;
@@ -93,17 +106,8 @@ void readTrees(const std::string &inputFile,
   while (std::getline(infile, line)) {
     lines.push_back(line);
   }
-  if (maxSamples >= 0 && static_cast<int>(lines.size()) > maxSamples) {
-    // only get a subset of the trees
-    auto copy = lines;
-    lines.clear();
-    for (int i = 0; i < maxSamples; ++i) {
-      lines.push_back(copy[i * (copy.size() / maxSamples)]);
-    }
-  }
   for (auto line: lines) {
-    TreeWraper wraper;
-    wraper.tree = std::make_shared<PLLUnrootedTree>(line, false);
+    TreeWraper wraper(line, false);;
     auto it = weightedTrees.find(wraper);
     if (it == weightedTrees.end()) {
       weightedTrees.insert({wraper, 1});
@@ -247,23 +251,17 @@ static void fillCladeCounts(const WeightedTrees &weightedTrees,
 
 
 ConditionalClades::ConditionalClades(const std::string &inputFile,
-    bool fromBinary, 
-    int maxSamples,
-    bool madRooting):
+      CCPRooting ccpRooting):
   _inputTrees(0),
   _uniqueInputTrees(0),
-  _madRooting(false)
+  _ccpRooting(ccpRooting)
 {
-  if (fromBinary) {
-    unserialize(inputFile);
-    return;
-  }
   std::unordered_map<std::string, unsigned int> leafToId;
   CCPClade emptyClade;
   CCPClade fullClade;
   WeightedTrees weightedTrees;
   Logger::timed << "Read trees..." << std::endl;
-  readTrees(inputFile, weightedTrees, _inputTrees, _uniqueInputTrees, maxSamples); 
+  readTrees(inputFile, weightedTrees, _inputTrees, _uniqueInputTrees); 
   auto &anyTree = *(weightedTrees.begin()->first.tree);
   Logger::timed << "Read labels..." << std::endl;
   for (auto leaf: anyTree.getLabels()) {
@@ -289,7 +287,7 @@ ConditionalClades::ConditionalClades(const std::string &inputFile,
   SubcladeCounts subcladeCounts(_CIDToClade.size());
   std::unique_ptr<std::unordered_map<unsigned int, double> >
     CIDToDeviation;
-  if (_madRooting) {
+  if (madRooting()) {
     CIDToDeviation = 
       std::make_unique<std::unordered_map<unsigned int, double> >();
     }

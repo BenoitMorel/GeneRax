@@ -482,7 +482,9 @@ void GTSpeciesTreeOptimizer::saveSpeciesTree()
 std::string GTSpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
 {
   std::string res = Paths::getSpeciesTreeFile(_outputDir, name);
-  _speciesTree->getDatedTree().rescaleBranchLengths();
+  if (_evaluator->isDated()) {
+    _speciesTree->getDatedTree().rescaleBranchLengths();
+  }
   saveCurrentSpeciesTreePath(res, masterRankOnly);
   if (_rootLikelihoods.idToLL.size()) {
     auto newick = _speciesTree->getTree().getNewickString();

@@ -19,7 +19,8 @@ void TrimFamilies::trimHighCladesNumber(Families &families,
   auto begin = ParallelContext::getBegin(families.size());
   auto end = ParallelContext::getEnd(families.size());
   for (auto i = begin; i < end; ++i) {
-    ConditionalClades ccp(families[i].startingGeneTree);
+    ConditionalClades ccp;
+    ccp.unserialize(families[i].ccp);
     localCcpSizes.push_back(ccp.getCladesNumber());
     localCheck.push_back(i);
   }

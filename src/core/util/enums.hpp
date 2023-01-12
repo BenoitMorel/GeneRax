@@ -98,6 +98,23 @@ enum class SpeciesTreeAlgorithm {
 };
 
 /**
+ *  Defines how to estimate the root frequencies when
+ *  building the conditional clade probabilities from
+ *  a list of trees
+ */
+enum class CCPRooting {
+  // the input trees are considered unrooted and all root position
+  // have the same frequency
+  UNIFORM = 0, 
+  // the input trees must be rooted and the alternative 
+  // root positions have a null frequency
+  ROOTED,
+  // the input trees are considered unrooted and MAD rooting
+  // is used to estimate the frequency of the root positions
+  MAD
+};
+
+/**
  * Helper methods to work with the enums
  */
 class Enums {

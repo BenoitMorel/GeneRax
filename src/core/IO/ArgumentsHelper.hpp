@@ -176,4 +176,16 @@ public:
     }
   }
 
+  static CCPRooting strToCCPRooting(const std::string &str) {
+    if (str == "UNIFORM") {
+      return CCPRooting::UNIFORM;
+    } else if (str == "ROOTED") {
+      return CCPRooting::ROOTED;
+    } else if (str == "MAD") {
+      return CCPRooting::MAD;
+    } else {
+      Logger::info << "Invalid rooting mode for conditional clade probabilities: " << str << std::endl;
+      exit(41);
+    }
+  }
 };

@@ -28,25 +28,31 @@ void filterInvalidFamilies(Families &families)
   families = validFamilies;
 }
 
-void generateCCPs(const std::string &ccpDir, Families &families)
+void generateCCPs(const std::string &ccpDir, 
+    Families &families, 
+    CCPRooting ccpRooting)
 {
+  ParallelContext::barrier();
   Logger::timed << "Generating ccp files..." << std::endl;
   for (auto &family: families) {
     family.ccp = FileSystem::joinPaths(ccpDir, family.name + ".ccp");
   } 
   auto N = families.size();
   for (auto i = ParallelContext::getBegin(N); i < ParallelContext::getEnd(N); i ++) {
-    ConditionalClades ccp(families[i].startingGeneTree, false);
+    ConditionalClades ccp(families[i].startingGeneTree, ccpRooting);
     ccp.serialize(families[i].ccp);
   }
+  ParallelContext::barrier();
 }
 
 void cleanupCCPs(Families &families) 
 {
+  ParallelContext::barrier();
   Logger::timed << "Cleaning up ccp files..." << std::endl;
   for (const auto &family: families) {
     std::remove(family.ccp.c_str());
   }
+  ParallelContext::barrier();
 }
 
 void trimFamilies(Families &families, int minSpecies, double trimRatio) 
@@ -116,7 +122,7 @@ void run( GeneTegratorArguments &args)
   Logger::initFileOutput(FileSystem::joinPaths(args.output, "genetegrator"));
   auto families = FamiliesFileParser::parseFamiliesFile(args.families);
   filterInvalidFamilies(families);
-  generateCCPs(ccpDir, families);
+  generateCCPs(ccpDir, families, args.ccpRooting);
   trimFamilies(families, args.minCoveredSpecies, args.trimFamilyRatio);
   if (families.size() == 0) {
     Logger::info << "No valid family, aborting" << std::endl;
@@ -149,7 +155,7 @@ void run( GeneTegratorArguments &args)
     //speciesTreeOptimizer.optimizeModelRates(false);
     //speciesTreeOptimizer.optimizeDates();
     //speciesTreeOptimizer.optimizeModelRates(false);
-    speciesTreeOptimizer.optimizeModelRates(true);
+    speciesTreeOptimizer.optimizeModelRates(false);
     //speciesTreeOptimizer.optimizeDates();
     //Logger::timed << "First root search, non thorough" << std::endl;
     //speciesTreeOptimizer.rootSearch(10, false);

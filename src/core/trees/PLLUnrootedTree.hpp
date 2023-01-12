@@ -102,7 +102,7 @@ public:
 
   
   size_t getUnrootedTreeHash() const;
-
+  size_t getRootedTreeHash(corax_unode_t *root) const;
   /**
    *  Direct access to the libpll structure
    */

@@ -23,9 +23,9 @@ public:
       const std::string &ccpFile):
     BaseReconciliationModel(speciesTree,
         geneSpeciesMapping,
-        info),
-    _ccp(ccpFile, true)
+        info)
   {
+    _ccp.unserialize(ccpFile);
     mapGenesToSpecies();
   }
   virtual ~MultiModel() {}

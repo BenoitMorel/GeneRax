@@ -723,6 +723,12 @@ size_t PLLUnrootedTree::getUnrootedTreeHash() const
   return res;
 }
 
+size_t PLLUnrootedTree::getRootedTreeHash(corax_unode_t *root) const
+{
+  auto res = getTreeHashRec(root, 0) + getTreeHashRec(root->back, 0);
+  return res;
+}
+
 
 
 static const char *orderChildren(corax_unode_t *node,
