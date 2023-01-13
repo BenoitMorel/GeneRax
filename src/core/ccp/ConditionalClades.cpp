@@ -61,12 +61,14 @@ static void addClade(CID cid,
     CladeCounts &cladeCounts,
     unsigned int count)
 {
+  assert(count);
   auto cladeCountsIt = cladeCounts.find(cid);
   if (cladeCountsIt == cladeCounts.end()) {
     cladeCounts.insert({cid, count});
   } else {
     cladeCountsIt->second += count;
   }
+  //Logger::info << "addClade " << cid << " " << count << std::endl;
 }
 
 static void addSubclade(CID cid,
@@ -74,6 +76,7 @@ static void addSubclade(CID cid,
     SubcladeCounts &subcladeCounts,
     unsigned int count)
 {
+  //Logger::info << "addsubclade ";
   addClade(subcladeCID, subcladeCounts[cid], count);
 }
    
@@ -95,7 +98,8 @@ void printClade(const CCPClade &clade,
 }
 
 
-void readTrees(const std::string &inputFile,
+static void readTrees(const std::string &inputFile,
+    bool rooted,
     WeightedTrees &weightedTrees,
     unsigned int &inputTrees,
     unsigned int &uniqueInputTrees)
@@ -107,7 +111,7 @@ void readTrees(const std::string &inputFile,
     lines.push_back(line);
   }
   for (auto line: lines) {
-    TreeWraper wraper(line, false);;
+    TreeWraper wraper(line, rooted);;
     auto it = weightedTrees.find(wraper);
     if (it == weightedTrees.end()) {
       weightedTrees.insert({wraper, 1});
@@ -136,14 +140,22 @@ static void extractClades(const WeightedTrees &weightedTrees,
   auto leafNumber = anyTree.getLeavesNumber();
   std::vector<corax_unode_t *> nodes;
   std::vector<char> buffer;
-  // iterate over all trees of the tree distribution
   OrderedClades orderedClades;
+  // add the root clade (containing all taxa)
   orderedClades.insert(fullClade);
+  // iterate over all trees of the tree distribution
   for (auto pair: weightedTrees) {
+    auto virtualRoot = pair.first.root;
     auto &tree = *(pair.first.tree);
     std::vector<CCPClade> nodeIndexToClade(tree.getDirectedNodesNumber(), 
         emptyClade);
-    postOrderNodes.emplace_back(tree.getPostOrderNodes());
+    if (virtualRoot) {
+      postOrderNodes.emplace_back(tree.getPostOrderNodesRooted(virtualRoot));
+      //Logger::info << "number of nodes under the root " << postOrderNodes.back().size() <<  std::endl;
+      //Logger::info << tree.getLeavesNumber() << std::endl;
+    } else {
+      postOrderNodes.emplace_back(tree.getPostOrderNodes());
+    }
     // traverse all directed nodes of the current tree, and compute
     // the corresponding clade. Store them into nodeIndexToClade to 
     // reuse the child subclades in the post order traversal
@@ -179,6 +191,7 @@ static void extractClades(const WeightedTrees &weightedTrees,
     clade.set(pair.second);
     cidToLeaf[cladeToCID[clade]] = pair.first;
   }
+  //Logger::info << "number of cids " << cidToClade.size() << std::endl;
 }
 
 
@@ -235,10 +248,12 @@ static void fillCladeCounts(const WeightedTrees &weightedTrees,
           addSubclade(cid, rightCID, subcladeCounts, treeCount);
         }
       }
-      // add the root sublade if the virtual root is node
+
       nodeIndexToCID[node->node_index] = cid;
       addClade(cid, cladeCounts, treeCount);
-      addSubclade(fullCladeCID, cid, subcladeCounts, treeCount);
+      if (pair.first.root == nullptr || node == pair.first.root || node->back == pair.first.root) {
+        addSubclade(fullCladeCID, cid, subcladeCounts, treeCount);
+      }
       if (CIDToDeviation) {
         CIDToDeviation->insert({cid, deviations[node->node_index]});
       }
@@ -260,10 +275,12 @@ ConditionalClades::ConditionalClades(const std::string &inputFile,
   CCPClade emptyClade;
   CCPClade fullClade;
   WeightedTrees weightedTrees;
-  Logger::timed << "Read trees..." << std::endl;
-  readTrees(inputFile, weightedTrees, _inputTrees, _uniqueInputTrees); 
+  readTrees(inputFile, 
+      (ccpRooting == CCPRooting::ROOTED),
+      weightedTrees, 
+      _inputTrees, 
+      _uniqueInputTrees); 
   auto &anyTree = *(weightedTrees.begin()->first.tree);
-  Logger::timed << "Read labels..." << std::endl;
   for (auto leaf: anyTree.getLabels()) {
     leafToId.insert({leaf, leafToId.size()});
     _idToLeaf.push_back(leaf);
@@ -273,7 +290,6 @@ ConditionalClades::ConditionalClades(const std::string &inputFile,
   
   std::vector<std::vector<corax_unode_t*> > postOrderNodes;
   // first pass to get all clades and assign them a CID
-  Logger::timed << "Extract clades..." << std::endl;
   extractClades(weightedTrees, 
       leafToId,
       _cladeToCID,
@@ -293,7 +309,6 @@ ConditionalClades::ConditionalClades(const std::string &inputFile,
     }
   // second pass to count the number of occurence of each clade,
   // and for each clade, the number of occurences of its subclades
-  Logger::timed << "Fill clade counts..." << std::endl;
   fillCladeCounts(weightedTrees,
       _inputTrees,
       _cladeToCID,
@@ -302,7 +317,6 @@ ConditionalClades::ConditionalClades(const std::string &inputFile,
       cladeCounts,
       subcladeCounts,
       CIDToDeviation.get());
-  Logger::timed << "Fill CCP..." << std::endl;
   _fillCCP(cladeCounts, subcladeCounts, CIDToDeviation.get());
 }
   
@@ -319,6 +333,12 @@ void ConditionalClades::_fillCCP(CladeCounts &cladeCounts,
   for (unsigned int cid = 0; cid < cladesNumber; ++cid) {
     auto &clade = _CIDToClade[cid];
     auto cladeCount = cladeCounts[cid];
+    /*
+    if (!cladeCount) {
+      Logger::info << "error with clade cid=" << cid << " " << clade.dump() << std::endl;
+    }
+    */
+    assert(cladeCount);
     auto &cladeSplits = _allCladeSplits[cid];
     if (subcladeCounts[cid].size()) {
       // internal clade
@@ -354,8 +374,9 @@ void ConditionalClades::printContent() const
   for (unsigned int CID = 0; CID < _allCladeSplits.size(); ++CID) {
     auto &clade = _CIDToClade[CID];
     auto &cladeSplits = _allCladeSplits[CID];
+    std::cerr << "clade " << CID << " ";
     printClade(clade, _idToLeaf);
-    std::cout << std::endl;
+    std::cerr << std::endl;
     double sumFrequencies = 0.0;
     for (auto &cladeSplit: cladeSplits) {
       std::cerr << "  ";
@@ -504,8 +525,6 @@ void ConditionalClades::serialize(const std::string &outputFile)
       serializeCladeSplit(cladeSplit, os); 
     }
   }
-
-  Logger::info << _cladeToCID.size() << std::endl;
 }
 
 void ConditionalClades::unserialize(const std::string &inputFile)
@@ -549,8 +568,6 @@ void ConditionalClades::unserialize(const std::string &inputFile)
       cladeSplits[j] = unserializeCladeSplit(is);
     }
   }
-  Logger::info << _cladeToCID.size() << std::endl;
-  Logger::info << std::endl;
 }
 
 void ConditionalClades::printStats() const

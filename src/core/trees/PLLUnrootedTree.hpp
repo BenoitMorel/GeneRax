@@ -128,9 +128,16 @@ public:
    *  Create a vector of all nodes (including all three pll
    *  internal elements per internal node), such that a node
    *  always comes after its (virtual) children.
+   *  - getPostOrderNodes returns all direct nodes (and skip the leaves 
+   *  if innerOnly is set)
+   *  - getPostOrderNodesFrom returns all the nodes under node (including node itself)
+   *  - getPostOrderNodesRooted virtually roots the tree at virtualRoot 
+   *  and returns all nodes that are directed from virtualRoot to the tips
+   *  virtualRoot and virtualRoot->back are also included
    */
   std::vector<corax_unode_t*> getPostOrderNodes(bool innerOnly = false) const;
   std::vector<corax_unode_t*> getPostOrderNodesFrom(corax_unode_t *node) const;
+  std::vector<corax_unode_t*> getPostOrderNodesRooted(corax_unode_t *virtualRoot) const;
   std::vector<corax_unode_t*> getReverseDepthNodes() const;
   
  

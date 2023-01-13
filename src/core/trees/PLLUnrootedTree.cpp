@@ -302,6 +302,16 @@ std::vector<corax_unode_t*> PLLUnrootedTree::getPostOrderNodesFrom(corax_unode_t
 }
 
 
+std::vector<corax_unode_t*> PLLUnrootedTree::getPostOrderNodesRooted(corax_unode_t *virtualRoot) const
+{
+  std::vector<corax_unode_t*> nodes;
+  std::vector<char> markedNodes(getDirectedNodesNumber(), false);
+  fillPostOrder(virtualRoot, nodes, markedNodes);
+  fillPostOrder(virtualRoot->back, nodes, markedNodes);
+  return nodes;
+}
+
+
 std::vector<corax_unode_t*> PLLUnrootedTree::getPostOrderNodes(bool innerOnly) const
 {
   std::vector<corax_unode_t*> nodes;
