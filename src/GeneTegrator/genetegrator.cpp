@@ -155,7 +155,9 @@ void run( GeneTegratorArguments &args)
     //speciesTreeOptimizer.optimizeModelRates(false);
     //speciesTreeOptimizer.optimizeDates();
     //speciesTreeOptimizer.optimizeModelRates(false);
-    speciesTreeOptimizer.optimizeModelRates(false);
+    if (!args.fixRates) {
+      speciesTreeOptimizer.optimizeModelRates(false);
+    }
     //speciesTreeOptimizer.optimizeDates();
     //Logger::timed << "First root search, non thorough" << std::endl;
     //speciesTreeOptimizer.rootSearch(10, false);
@@ -170,7 +172,9 @@ void run( GeneTegratorArguments &args)
   }
   Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   speciesTreeOptimizer.reconcile(args.geneTreeSamples);
-  speciesTreeOptimizer.addBestHighway();
+  if (args.highways) {
+    speciesTreeOptimizer.addBestHighway();
+  }
   speciesTreeOptimizer.saveSpeciesTree(); 
   cleanupCCPs(families);
   Logger::timed <<"End of the execution" << std::endl;

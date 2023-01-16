@@ -14,6 +14,8 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
   ccpRooting(CCPRooting::UNIFORM),
   speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
   speciesSearchStrategy(SpeciesSearchStrategy::HYBRID),
+  fixRates(false),
+  highways(false),
   minCoveredSpecies(-1),
   trimFamilyRatio(1.0),
   geneTreeSamples(0),
@@ -35,6 +37,10 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
       speciesSearchStrategy = ArgumentsHelper::strToSpeciesSearchStrategy(std::string(argv[++i]));
     } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModelStr = std::string(argv[++i]);
+    } else if (arg == "--fix-rates") {
+      fixRates = true;
+    } else if (arg == "--highways") {
+      highways = true;
     } else if (arg == "--transfer-constraint") {
       transferConstraint = ArgumentsHelper::strToTransferConstraint(std::string(argv[++i]));
     } else if (arg == "--origination") {

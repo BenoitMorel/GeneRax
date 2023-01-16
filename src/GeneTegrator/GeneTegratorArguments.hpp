@@ -30,7 +30,9 @@ public:
   // search
   SpeciesTreeAlgorithm speciesTreeAlgorithm;
   SpeciesSearchStrategy speciesSearchStrategy;
-  
+  bool fixRates;
+  bool highways;
+
   // trimming
   int minCoveredSpecies;
   double trimFamilyRatio;
