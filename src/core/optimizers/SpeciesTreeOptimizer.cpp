@@ -200,8 +200,7 @@ double SpeciesTreeOptimizer::transferSearch()
   SpeciesTransferSearch::transferSearch(
       *_speciesTree,
     _evaluator,
-    _searchState,
-    _outputDir);
+    _searchState);
   Logger::timed << "After normal search: LL=" << _searchState.bestLL << std::endl;
   return _searchState.bestLL;
 }

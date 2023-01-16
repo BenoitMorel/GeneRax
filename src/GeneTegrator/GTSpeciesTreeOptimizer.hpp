@@ -42,11 +42,16 @@ public:
       const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
   void printHightPrecisionCount();
   MultiModel &getEvaluation(unsigned int i) {return *_evaluations[i];}
+
+
+  void addHighway(const Highway &highway);
+  void removeHighway();
 protected:
   virtual double optimizeGammaRates();
 private:
   SpeciesTree &_speciesTree;
   ModelParameters &_modelRates;
+  std::vector<Highway> _highways;
   const Families &_families;
   PerCoreMultiEvaluation _evaluations;
   PerCoreMultiEvaluation _approxEvaluations;
@@ -71,6 +76,7 @@ public:
   void reconcile(unsigned int samples);
   double optimizeModelRates(bool thorough = false);
   void optimizeDates(bool thorough = true);
+  double addBestHighway();
   SpeciesTree &getSpeciesTree() {return *_speciesTree;}
   void randomizeRoot();
   void saveSpeciesTree();

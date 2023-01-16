@@ -152,6 +152,11 @@ public:
   /**
    * Division operator
    */
+  inline ScaledValue operator/(double v) const {
+    auto res = ScaledValue(value / v, scaler);
+    return res;
+  }
+
   inline ScaledValue& operator/=(double v) {
     value /= v; 
     return *this;

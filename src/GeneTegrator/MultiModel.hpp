@@ -14,6 +14,15 @@ struct ReconciliationCell {
   REAL maxProba;
 };
 
+struct Highway {
+  Highway(corax_rnode_t *src, corax_rnode_t *dest):
+    src(src),
+    dest(dest)
+  {}
+  corax_rnode_t *src;
+  corax_rnode_t *dest;
+};
+
 
 class MultiModel: public BaseReconciliationModel {
 public:
@@ -31,6 +40,8 @@ public:
   virtual ~MultiModel() {}
 
   const ConditionalClades &getCCP() const {return _ccp;}
+
+  virtual void setHighways(const std::vector<Highway> &highways) {(void)(highways);}
 protected:
   void mapGenesToSpecies() {
     const auto &cidToLeaves = _ccp.getCidToLeaves();

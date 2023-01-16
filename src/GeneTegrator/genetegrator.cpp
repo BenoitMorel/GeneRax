@@ -170,6 +170,7 @@ void run( GeneTegratorArguments &args)
   }
   Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   speciesTreeOptimizer.reconcile(args.geneTreeSamples);
+  speciesTreeOptimizer.addBestHighway();
   speciesTreeOptimizer.saveSpeciesTree(); 
   cleanupCCPs(families);
   Logger::timed <<"End of the execution" << std::endl;

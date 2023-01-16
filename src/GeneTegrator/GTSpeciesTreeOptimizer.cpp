@@ -16,6 +16,7 @@ static bool testAndSwap(size_t &hash1, size_t &hash2) {
 static std::shared_ptr<MultiModel> createModel(SpeciesTree &speciesTree,
   const FamilyInfo &family,
   const ModelParameters &modelParameters,
+  const std::vector<Highway> &highways,
   bool highPrecision)
 {
   std::shared_ptr<MultiModel> model;
@@ -63,6 +64,7 @@ static std::shared_ptr<MultiModel> createModel(SpeciesTree &speciesTree,
     rates.push_back(std::vector<double>(N, modelParameters.rates[d]));
   }
   model->setRates(rates);
+  model->setHighways(highways);
   return model;
 }
 
@@ -83,6 +85,7 @@ GTSpeciesTreeLikelihoodEvaluator::GTSpeciesTreeLikelihoodEvaluator(
     _evaluations.push_back(createModel(_speciesTree,
           family,
           _modelRates,
+          _highways,
           false));
     _highPrecisions.push_back(-1);
   }
@@ -123,6 +126,7 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
       _evaluations[i] = createModel(_speciesTree, 
           family,
           _modelRates,
+          _highways,
           true);
       _highPrecisions[i] = 0;
       ll = _evaluations[i]->computeLogLikelihood();
@@ -135,6 +139,7 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
       auto ev = createModel(_speciesTree, 
           family,
           _modelRates,
+          _highways,
           false);
       auto newLL = ev->computeLogLikelihood();
       if (std::isnormal(newLL)) {
@@ -184,7 +189,21 @@ void GTSpeciesTreeLikelihoodEvaluator::onSpeciesTreeChange(
 }
 
 
+void GTSpeciesTreeLikelihoodEvaluator::addHighway(const Highway &highway)
+{
+  _highways.push_back(highway);
+  for (auto &evaluation: _evaluations) {
+    evaluation->setHighways(_highways);
+  }
+}
 
+void GTSpeciesTreeLikelihoodEvaluator::removeHighway()
+{
+  _highways.pop_back();
+  for (auto &evaluation: _evaluations) {
+    evaluation->setHighways(_highways);
+  }
+}
 
 class GTEvaluatorFunction: public FunctionToOptimize
 {
@@ -526,8 +545,7 @@ double GTSpeciesTreeOptimizer::transferSearch()
   SpeciesTransferSearch::transferSearch(
     *_speciesTree,
     getEvaluator(),
-    _searchState,
-    _outputDir);
+    _searchState);
   Logger::timed << "After normal search: LL=" 
     << _searchState.bestLL << std::endl;
   return _searchState.bestLL;
@@ -629,4 +647,44 @@ void GTSpeciesTreeOptimizer::randomizeRoot()
   }
 }
 
+double GTSpeciesTreeOptimizer::addBestHighway()
+{
+  double initialLL = getEvaluator().computeLikelihood(); 
+  Logger::info << "initial ll=" << initialLL << std::endl;
+  double bestLL = initialLL;
+  TransferFrequencies frequencies;
+  PerSpeciesEvents perSpeciesEvents;
+  getEvaluator().getTransferInformation(*_speciesTree,
+    frequencies,
+    perSpeciesEvents);
+
+  unsigned int minTransfers = 1;
+  MovesBlackList blacklist;
+  std::vector<TransferMove> transferMoves;
+  SpeciesTransferSearch::getSortedTransferList(*_speciesTree,
+    getEvaluator(),
+    minTransfers,
+    blacklist, 
+    transferMoves);
+
+  unsigned int currentIt = 0;
+  for (const auto &transferMove: transferMoves) {
+    auto prune = _speciesTree->getNode(transferMove.prune); 
+    auto regraft = _speciesTree->getNode(transferMove.regraft);
+    Highway highway(prune, regraft);
+    _evaluator->addHighway(highway);
+    auto ll = getEvaluator().computeLikelihood();
+    Logger::info << "transfers=" << transferMove.transfers << "\tll = " << ll << std::endl;
+    _evaluator->removeHighway();
+    if (ll > bestLL) {
+      Logger::info << "best highway so far: " << highway.src->label << "->" << highway.dest->label << std::endl;
+      Logger::info << "with ll=" << ll << std::endl;
+      bestLL = ll;
+    }
+    if (currentIt++ > 100) {
+      break;
+    }
+  }
+  return bestLL;
+}
 
