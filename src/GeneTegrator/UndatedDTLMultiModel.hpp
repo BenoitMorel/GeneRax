@@ -26,10 +26,12 @@ public:
   virtual double computeLogLikelihood();
   virtual corax_rnode_t *sampleSpeciesNode(unsigned int &category);
   virtual void setHighways(const std::vector<Highway> &highways) {
-    _highways = highways;
-    _highwaysSizes = std::vector<size_t>(this->_speciesTree.getNodesNumber(), 0);
-    for (const auto &highway: _highways) {
-      _highwaysSizes[highway.src->node_index]++;
+    for (auto &speciesHighways: _highways) {
+      speciesHighways.clear();
+    }
+    for (auto highway: highways) {
+      _highways[highway.src->node_index].push_back(highway);
+
     }
     resetCache();
     recomputeSpeciesProbabilities();
@@ -46,12 +48,11 @@ private:
   std::vector<double> _PD; // Duplication probability, per species branch
   std::vector<double> _PL; // Loss probability, per species branch
   std::vector<double> _PT; // Transfer probability, per species branch
+  std::vector<double> _PH; // Highway probability, per species branch
   std::vector<double> _PS; // Speciation probability, per species branch
   std::vector<double> _uE; // Extinction probability, per species branch
   std::unordered_map<size_t, double> _llCache;
-
-  std::vector<Highway> _highways;
-  std::vector<size_t> _highwaysSizes;
+  std::vector<std::vector<Highway> > _highways;
   TransferConstaint _transferConstraint;
   OriginationStrategy _originationStrategy;
   /**
@@ -99,10 +100,9 @@ private:
   size_t getHash();
   void resetCache() {_llCache.clear();}
 
-  double getHighwayRatio() const {return 10.0;}
-  double getTransferWeightNorm(unsigned int e) const {
-    return _highwaysSizes[e] * getHighwayRatio() 
-      + double(this->getPrunedSpeciesNodeNumber());}
+  double getTransferWeightNorm() const {
+    return double(this->getPrunedSpeciesNodeNumber());
+  }
 };
 
 
@@ -121,6 +121,7 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(DatedTree &speciesTree,
   _PD(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.2),
   _PL(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.2),
   _PT(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.1),
+  _PH(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.1),
   _PS(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 1.0),
   _uE(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.0),
   _transferConstraint(info.transferConstraint),
@@ -130,7 +131,7 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(DatedTree &speciesTree,
   DTLCLV nullCLV(this->getPrunedSpeciesNodeNumber(), _gammaCatNumber);
   _dtlclvs = std::vector<DTLCLV>(2 * (this->_ccp.getCladesNumber()), nullCLV);
   auto N = this->_speciesTree.getNodesNumber();
-  _highwaysSizes = std::vector<size_t>(N, 0); 
+  _highways.resize(N);
   _dtlRates.resize(3);
   for (unsigned int i = 0; i < 3; ++i) {
     _dtlRates[i] = std::vector<double>(N, 0.2);
@@ -180,7 +181,7 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
           c,
           uq[ec]);
       auto v = uq[ec];
-      v /=  getTransferWeightNorm(e);
+      v /=  getTransferWeightNorm();
       scale(v);
       sums[c] += v;
     }
@@ -197,7 +198,7 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
         while (parent) {
           auto p = parent->node_index;
           auto pc = p * _gammaCatNumber + c;
-          auto temp = uq[pc] / getTransferWeightNorm(p);
+          auto temp = uq[pc] / getTransferWeightNorm();
           scale(temp);
           correctionSum[ec] += temp;
           parent = parent->parent;
@@ -212,7 +213,7 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
       auto e = leaf->node_index;
       for (size_t c = 0; c < _gammaCatNumber; ++c) {
         auto ec = e * _gammaCatNumber + c;
-        softDatedSum[c] += uq[ec] / getTransferWeightNorm(e);
+        softDatedSum[c] += uq[ec] / getTransferWeightNorm();
       }
     }
     for (auto it = _datedTree.getOrderedSpeciations().rbegin(); 
@@ -222,7 +223,7 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
       for (size_t c = 0; c < _gammaCatNumber; ++c) {
         auto ec = e * _gammaCatNumber + c;
         softDatedSums[ec] = softDatedSum[c];
-        auto temp = uq[ec] / getTransferWeightNorm(e);
+        auto temp = uq[ec] / getTransferWeightNorm();
         scale(temp);
         softDatedSum[c] += temp; 
       }
@@ -399,10 +400,17 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
         _PD[ec] = 0.0;
       }
       auto sum = _PD[ec] + _PL[ec] + _PT[ec] + _PS[ec];
+      if (_highways[e].size()) {
+        _PH[ec] = _PT[ec];
+        sum += _PH[ec];
+      } else {
+        _PH[ec] = 0.0;
+      }
       _PD[ec] /= sum;
       _PL[ec] /= sum;
       _PT[ec] /= sum;
       _PS[ec] /= sum;
+      _PH[ec] /= sum;
     }
   }
   
@@ -580,29 +588,26 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
     }
     
     // highway transfers
-    for (auto highway: _highways) {
-      if (e == highway.src->node_index) {
-        // e is the src species, d is the receiving species
-        auto d = highway.dest->node_index;
-        auto dc = d * _gammaCatNumber + c;  
-        temp = (_dtlclvs[cidLeft]._uq[ec] * _dtlclvs[cidRight]._uq[dc]) * (_PT[ec] * freq * getHighwayRatio() / getTransferWeightNorm(e));
-        scale(temp);
-        proba += temp;
-        if (recCell && proba > maxProba) {
-          recCell->event.type = ReconciliationEventType::EVENT_T;
-          recCell->event.destSpeciesNode = d;
-          recCell->event.leftGeneIndex = cidLeft;
-          recCell->event.rightGeneIndex = cidRight; 
-        }
-        temp = (_dtlclvs[cidRight]._uq[ec] * _dtlclvs[cidLeft]._uq[dc]) * (_PT[ec] * freq * getHighwayRatio() / getTransferWeightNorm(e));
-        scale(temp);
-        proba += temp;
-        if (recCell && proba > maxProba) {
-          recCell->event.type = ReconciliationEventType::EVENT_T;
-          recCell->event.destSpeciesNode = d;
-          recCell->event.leftGeneIndex = cidRight;
-          recCell->event.rightGeneIndex = cidLeft; 
-        }
+    for (auto highway: _highways[e]) {
+      auto d = highway.dest->node_index;
+      auto dc = d * _gammaCatNumber + c;  
+      temp = (_dtlclvs[cidLeft]._uq[ec] * _dtlclvs[cidRight]._uq[dc]) * (_PH[ec] * freq);
+      scale(temp);
+      proba += temp;
+      if (recCell && proba > maxProba) {
+        recCell->event.type = ReconciliationEventType::EVENT_T;
+        recCell->event.destSpeciesNode = d;
+        recCell->event.leftGeneIndex = cidLeft;
+        recCell->event.rightGeneIndex = cidRight; 
+      }
+      temp = (_dtlclvs[cidRight]._uq[ec] * _dtlclvs[cidLeft]._uq[dc]) * (_PH[ec] * freq);
+      scale(temp);
+      proba += temp;
+      if (recCell && proba > maxProba) {
+        recCell->event.type = ReconciliationEventType::EVENT_T;
+        recCell->event.destSpeciesNode = d;
+        recCell->event.leftGeneIndex = cidRight;
+        recCell->event.rightGeneIndex = cidLeft; 
       }
     }
   }
