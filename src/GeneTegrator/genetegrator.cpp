@@ -156,7 +156,7 @@ void run( GeneTegratorArguments &args)
     //speciesTreeOptimizer.optimizeDates();
     //speciesTreeOptimizer.optimizeModelRates(false);
     if (!args.fixRates) {
-      speciesTreeOptimizer.optimizeModelRates(false);
+      speciesTreeOptimizer.optimizeModelRates(true);
     }
     //speciesTreeOptimizer.optimizeDates();
     //Logger::timed << "First root search, non thorough" << std::endl;

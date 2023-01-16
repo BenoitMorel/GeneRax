@@ -130,9 +130,8 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
           true);
       _highPrecisions[i] = 0;
       ll = _evaluations[i]->computeLogLikelihood();
-      assert(std::isnormal(ll));
     }
-
+    assert(std::isnormal(ll));
     if (_highPrecisions[i] >= 0 && _highPrecisions[i] % 20 == 0) {
       // we are in high precision mode, we now check if we can
       // switch to low precision mode to make computations faster
@@ -297,7 +296,7 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
       _modelRates.rates, 
       settings);
   ll = computeLikelihood();
-  Logger::timed << "[Species search]   After model rate opt, ll=" << ll << " initial rates: " << _modelRates.rates << std::endl;
+  Logger::timed << "[Species search]   After model rate opt, ll=" << ll << " rates: " << _modelRates.rates << std::endl;
   ll = optimizeGammaRates();
   ll = computeLikelihood();
   return ll;

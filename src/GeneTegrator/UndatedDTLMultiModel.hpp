@@ -181,6 +181,7 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
           uq[ec]);
       auto v = uq[ec];
       v /=  getTransferWeightNorm(e);
+      scale(v);
       sums[c] += v;
     }
   }
@@ -196,7 +197,8 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
         while (parent) {
           auto p = parent->node_index;
           auto pc = p * _gammaCatNumber + c;
-          auto temp = uq[pc] / getTransferWeightNorm(p);;
+          auto temp = uq[pc] / getTransferWeightNorm(p);
+          scale(temp);
           correctionSum[ec] += temp;
           parent = parent->parent;
         }
@@ -220,7 +222,9 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
       for (size_t c = 0; c < _gammaCatNumber; ++c) {
         auto ec = e * _gammaCatNumber + c;
         softDatedSums[ec] = softDatedSum[c];
-        softDatedSum[c] += uq[ec] / getTransferWeightNorm(e);
+        auto temp = uq[ec] / getTransferWeightNorm(e);
+        scale(temp);
+        softDatedSum[c] += temp; 
       }
     }
     for (auto node: this->getPrunedSpeciesNodes()) {
@@ -582,6 +586,7 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
         auto d = highway.dest->node_index;
         auto dc = d * _gammaCatNumber + c;  
         temp = (_dtlclvs[cidLeft]._uq[ec] * _dtlclvs[cidRight]._uq[dc]) * (_PT[ec] * freq * getHighwayRatio() / getTransferWeightNorm(e));
+        scale(temp);
         proba += temp;
         if (recCell && proba > maxProba) {
           recCell->event.type = ReconciliationEventType::EVENT_T;
@@ -590,6 +595,7 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
           recCell->event.rightGeneIndex = cidRight; 
         }
         temp = (_dtlclvs[cidRight]._uq[ec] * _dtlclvs[cidLeft]._uq[dc]) * (_PT[ec] * freq * getHighwayRatio() / getTransferWeightNorm(e));
+        scale(temp);
         proba += temp;
         if (recCell && proba > maxProba) {
           recCell->event.type = ReconciliationEventType::EVENT_T;
