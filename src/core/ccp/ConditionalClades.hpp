@@ -32,8 +32,31 @@ using CladeSplits = std::vector<CladeSplit>;
 using CladeToCID = std::unordered_map<CCPClade, CID>;
 using CIDToClade = std::vector<CCPClade>;
 using CIDToLeaf = std::unordered_map<unsigned int, std::string>;
+  
+
+
+/**
+ * Conditional clade representation of distribution of gene trees,
+ * used to compute conditional clade probabilities.
+ * 
+ * A clade is represented with a bitvector, in which each bit
+ * corresponds to the presence/absence of a given taxon in the calde
+ *
+ * The ID of a leaf/taxon corresponds to its index in the 
+ * bitvectors representing clades
+ *
+ * The CID is a unique identifier for a clade
+ * 
+ * A CladeSplit is a split of a clade into two child clades. Its
+ * frequency corresponds to how often this clade is split into
+ * those two child clades in the distribution of gene trees. 
+ *
+ * For each non-trivial clade, we store a vector of CladeSplits, 
+ * whose frequencies should sum to one.
+ *
+ */
 class ConditionalClades {
-public:
+ public:
   ConditionalClades() {}
   ConditionalClades(const std::string &inputFile, 
       CCPRooting ccpRooting);
@@ -54,10 +77,17 @@ public:
 
   void serialize(const std::string &outputFile);
   void unserialize(const std::string &inputFile);
+  void buildFromGeneTrees(const std::string &inputFile, 
+      CCPRooting);
+  void buildFromALEFormat(const std::string &inputFile, 
+        CCPRooting ccpRooting);
 
   bool madRooting() const {return _ccpRooting == CCPRooting::MAD;}
 
+  void reorderClades(const std::vector<CID> &mappings);
+
 private:
+  
   unsigned int _inputTrees;
   unsigned int _uniqueInputTrees;
   CCPRooting _ccpRooting;

@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <trees/PLLRootedTree.hpp>
+#include <sstream>
 
 struct TreeWraper {
   std::shared_ptr<PLLUnrootedTree> tree;
@@ -271,6 +272,168 @@ ConditionalClades::ConditionalClades(const std::string &inputFile,
   _uniqueInputTrees(0),
   _ccpRooting(ccpRooting)
 {
+  std::ifstream is(inputFile);
+  if (is.peek() == '#') {
+    try {
+      buildFromALEFormat(inputFile, ccpRooting);
+      //printContent();
+      return;
+    } catch (...) {
+      // maybe that wasn't the ALE format after all!
+      // try reading the file as a list of gene trees
+    }
+  }
+  buildFromGeneTrees(inputFile, ccpRooting);
+  //printContent();
+}
+
+static CID getCIDFromALE(size_t readCID, size_t cladeNumber)
+{
+  return readCID - 1; 
+}
+ 
+void ConditionalClades::buildFromALEFormat(const std::string &inputFile, 
+        CCPRooting ccpRooting)
+{
+  assert(ccpRooting == CCPRooting::UNIFORM);
+  std::ifstream is(inputFile);
+  std::string line;
+  // read comment "#constructor string"
+  std::getline(is, line);
+  std::string constructorString;
+  std::getline(is, constructorString);
+  PLLUnrootedTree tree(constructorString, false);
+  auto N = tree.getLeavesNumber();
+  // read comment "#observations"
+  std::getline(is, line);
+  is >> _inputTrees; 
+  std::getline(is, line);
+  // read comment "#Bip counts"
+  std::getline(is, line);
+  // read the bip counts
+  std::unordered_map<size_t, double> bipCounts; 
+  size_t cladeNumber = 0;
+  while (is.peek() != '#') {
+    size_t id;
+    size_t count;
+    is >> id >> count;
+    std::getline(is, line);
+    cladeNumber = std::max(cladeNumber, id);
+    id = getCIDFromALE(id, cladeNumber);;
+    bipCounts.insert({id, count});
+  }
+  for (unsigned int i = 0; i < N; ++i) {
+    bipCounts.insert({i, _inputTrees});
+  }
+  cladeNumber++; // for the clade with all taxa
+  // read comment "#Bip _bls"
+  std::getline(is, line);
+  // skip the bls for now 
+  while (is.peek() != '#') {
+    std::getline(is, line);
+  }
+  // read comment "#Dip _counts"
+  std::getline(is, line);
+  // read the dips
+  _allCladeSplits.resize(cladeNumber);
+  while (is.peek() != '#') {
+    CladeSplit split;
+    std::getline(is, line);
+    std::istringstream iss(line);
+    iss >> split.parent >> split.left >> split.right >> split.frequency;
+    split.parent = getCIDFromALE(split.parent, cladeNumber);;
+    split.left = getCIDFromALE(split.left, cladeNumber);;
+    split.right = getCIDFromALE(split.right, cladeNumber);;
+    split.frequency /= bipCounts[split.parent];
+    _allCladeSplits[split.parent].push_back(split);
+  }
+  // read comment "#last_leafset_id"
+  std::getline(is, line);
+  size_t cladeNumberCheck;
+  is >> cladeNumberCheck;
+  cladeNumberCheck++;
+  assert(cladeNumber == cladeNumberCheck);
+  std::getline(is, line);
+  
+  // read comment "#leaf-id"
+  std::getline(is, line);
+  _idToLeaf.resize(N);
+  while (is.peek() != '#') {
+    std::getline(is, line);
+    std::istringstream iss(line);
+    std::string leaf;
+    size_t id;
+    iss >> leaf >> id;
+    id--;
+    _idToLeaf[id] = leaf;
+  }
+  // read comment "#set-id"
+  std::getline(is, line);
+  _CIDToClade.resize(cladeNumber);
+  std::vector<CID> cidMapping(cladeNumber);
+  cidMapping[cladeNumber - 1] = cladeNumber - 1;
+  CID newCID = 0;
+  while (is.peek() != '#') {
+    std::getline(is, line);
+    std::istringstream iss(line);
+    CCPClade clade(N);
+    size_t CID;
+    size_t leafID;
+    std::string separator;
+    iss >> CID;
+    CID = getCIDFromALE(CID, cladeNumber);
+    cidMapping[CID] = newCID++;
+    iss >> separator;
+    unsigned int cladeSize = 0;
+    while (!iss.eof()) {
+      iss >> leafID;
+      leafID--;
+      clade.set(leafID);
+      cladeSize++;
+    }
+    _CIDToClade[CID] = clade;
+    _cladeToCID.insert({clade, CID});
+    if (cladeSize == 1) {
+      // leaf
+      _CIDToLeaf[CID] = _idToLeaf[leafID];
+    }
+  }
+  // now fill the root clade
+  CCPClade fullClade(N, true);
+  size_t fullCID = cladeNumber -1;
+  _CIDToClade[fullCID] = fullClade;
+  _cladeToCID.insert({fullClade, fullCID});
+  for (unsigned int cid = 0; cid < _CIDToClade.size() - 1; ++cid) {
+    CladeSplit split;
+    split.parent = fullCID;
+    auto clade = _CIDToClade[cid];
+    if (!clade[0]) {
+      // do not add both a split and its complementary
+    //  continue;
+    }
+    auto compClade = ~clade;
+    split.left = cid;
+    split.right = _cladeToCID[compClade];
+    assert(bipCounts[cid] == bipCounts[split.right]);
+    split.frequency = double(bipCounts[cid]) / double(_inputTrees * 2 * (2 * N - 3));
+    _allCladeSplits[split.parent].push_back(split);
+  }
+  for (auto &splits: _allCladeSplits) {
+    if (!splits.size()) {
+      continue;
+    }
+    double sum = 0.0;
+    for (auto &split: splits) {
+      sum += split.frequency;
+    }
+    assert(fabs(sum - 1.0) < 0.0000001);
+  }
+  reorderClades(cidMapping);
+}
+
+void ConditionalClades::buildFromGeneTrees(const std::string &inputFile, 
+  CCPRooting ccpRooting)
+{
   std::unordered_map<std::string, unsigned int> leafToId;
   CCPClade emptyClade;
   CCPClade fullClade;
@@ -319,6 +482,7 @@ ConditionalClades::ConditionalClades(const std::string &inputFile,
       CIDToDeviation.get());
   _fillCCP(cladeCounts, subcladeCounts, CIDToDeviation.get());
 }
+  
   
 void ConditionalClades::_fillCCP(CladeCounts &cladeCounts,
       SubcladeCounts &subcladeCounts,
@@ -568,10 +732,45 @@ void ConditionalClades::unserialize(const std::string &inputFile)
       cladeSplits[j] = unserializeCladeSplit(is);
     }
   }
+  //printContent();
 }
 
 void ConditionalClades::printStats() const
 {
   std::cerr << "Leaves " << _CIDToLeaf.size() << " clades: " << _cladeToCID.size() <<  " unique trees " << _uniqueInputTrees << std::endl;
 
+}
+
+void ConditionalClades::reorderClades(const std::vector<CID> &mappings)
+{
+  auto cladeNumber = mappings.size();
+  // remap _CIDToLeaf
+  CIDToLeaf newCIDToLeaf(cladeNumber);
+  for (const auto &pair: _CIDToLeaf) {
+    newCIDToLeaf[mappings[pair.first]] = pair.second;
+  }
+  _CIDToLeaf = newCIDToLeaf;
+  // remap _CIDToClade
+  for (const auto &pair: _cladeToCID) {
+    _CIDToClade[mappings[pair.second]] = pair.first;
+  }
+  // remap _cladeToCID
+  for (CID cid = 0; cid < cladeNumber; ++cid) {
+    _cladeToCID.insert({_CIDToClade[cid], cid});
+  }
+  // remap _allCladeSplits
+  std::vector<CladeSplits> newAllCladeSplits(cladeNumber);
+  for (unsigned int oldCid = 0; oldCid < cladeNumber; ++oldCid) {
+    auto newCid = mappings[oldCid];
+    const auto &cladeSplits = _allCladeSplits[oldCid];
+    for (const auto &split: cladeSplits) {
+      CladeSplit newSplit;
+      newSplit.parent = mappings[split.parent];
+      newSplit.left = mappings[split.left];
+      newSplit.right = mappings[split.right];
+      newSplit.frequency = split.frequency;
+      newAllCladeSplits[newCid].push_back(newSplit);
+    }
+  }
+  _allCladeSplits = newAllCladeSplits;
 }

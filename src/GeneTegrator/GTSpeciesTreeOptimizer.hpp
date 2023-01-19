@@ -76,7 +76,7 @@ public:
   void reconcile(unsigned int samples);
   double optimizeModelRates(bool thorough = false);
   void optimizeDates(bool thorough = true);
-  double addBestHighway();
+  void searchHighways(const std::string &output);
   SpeciesTree &getSpeciesTree() {return *_speciesTree;}
   void randomizeRoot();
   void saveSpeciesTree();

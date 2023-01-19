@@ -8,6 +8,21 @@
 #include <search/SpeciesTransferSearch.hpp>
 #include <search/DatedSpeciesTreeSearch.hpp>
 
+
+struct ScoredHighway {
+  ScoredHighway(const Highway &highway, double score):
+    highway(highway),
+    score(score)
+  {}
+
+  Highway highway;
+  double score;
+
+  bool operator < (const ScoredHighway &other) {
+    return score < other.score;
+  }
+};
+
 static bool testAndSwap(size_t &hash1, size_t &hash2) {
   std::swap(hash1, hash2);
   return hash1 != hash2;
@@ -646,11 +661,10 @@ void GTSpeciesTreeOptimizer::randomizeRoot()
   }
 }
 
-double GTSpeciesTreeOptimizer::addBestHighway()
+void GTSpeciesTreeOptimizer::searchHighways(const std::string &output)
 {
   double initialLL = getEvaluator().computeLikelihood(); 
   Logger::info << "initial ll=" << initialLL << std::endl;
-  double bestLL = initialLL;
   TransferFrequencies frequencies;
   PerSpeciesEvents perSpeciesEvents;
   getEvaluator().getTransferInformation(*_speciesTree,
@@ -666,7 +680,9 @@ double GTSpeciesTreeOptimizer::addBestHighway()
     blacklist, 
     transferMoves);
 
-  unsigned int currentIt = 0;
+  std::vector<ScoredHighway> scoredHighways;
+  unsigned int failures = 0;
+  unsigned int iterations = 0;
   for (const auto &transferMove: transferMoves) {
     auto prune = _speciesTree->getNode(transferMove.prune); 
     auto regraft = _speciesTree->getNode(transferMove.regraft);
@@ -675,15 +691,27 @@ double GTSpeciesTreeOptimizer::addBestHighway()
     auto ll = getEvaluator().computeLikelihood();
     Logger::info << "transfers=" << transferMove.transfers << "\tll = " << ll << std::endl;
     _evaluator->removeHighway();
-    if (ll > bestLL) {
-      Logger::info << "best highway so far: " << highway.src->label << "->" << highway.dest->label << std::endl;
-      Logger::info << "with ll=" << ll << std::endl;
-      bestLL = ll;
+    if (ll > initialLL) {
+      Logger::timed << "New highway: " << highway.src->label << "->" << highway.dest->label << "with ll=" << ll << std::endl;
+      scoredHighways.push_back(ScoredHighway(highway, ll));
+      failures = 0;
+    } else {
+      failures++;
     }
-    if (currentIt++ > 100) {
+    iterations++;
+    if (failures > 10 && iterations > 100) {
       break;
     }
   }
-  return bestLL;
+  ParallelOfstream os(output, true);
+  Logger::info << "Outputing the " << scoredHighways.size() << 
+    " highays into " << output << std::endl;
+  std::sort(scoredHighways.rbegin(), scoredHighways.rend());
+  for (const auto &scoredHighway: scoredHighways) {
+    os << scoredHighway.score << ", ";
+    os << scoredHighway.highway.src->label << ",";
+    os << scoredHighway.highway.dest->label << std::endl;
+  }
+
 }
 

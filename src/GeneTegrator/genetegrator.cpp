@@ -172,8 +172,11 @@ void run( GeneTegratorArguments &args)
   }
   Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   speciesTreeOptimizer.reconcile(args.geneTreeSamples);
+  
   if (args.highways) {
-    speciesTreeOptimizer.addBestHighway();
+    auto highwayOutput = FileSystem::joinPaths(args.output,
+      "highways.txt");
+    speciesTreeOptimizer.searchHighways(highwayOutput);
   }
   speciesTreeOptimizer.saveSpeciesTree(); 
   cleanupCCPs(families);
