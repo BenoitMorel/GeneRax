@@ -613,25 +613,25 @@ void GTSpeciesTreeOptimizer::reconcile(unsigned int samples)
         std::string("_perspecies_eventcount.txt"));
     Scenario::mergePerSpeciesEventCounts(_speciesTree->getTree(),
         perSpeciesEventCountsFile,
-        perSpeciesEventCountsFiles, false);
+        perSpeciesEventCountsFiles, false, true);
     summaryPerSpeciesEventCountsFiles.push_back(perSpeciesEventCountsFile);
     auto transferFile = FileSystem::joinPaths(summariesDir, families[i].name + 
         std::string("_transfers.txt"));
     Scenario::mergeTransfers(_speciesTree->getTree(),
         transferFile,
-        transferFiles, false);
+        transferFiles, false, true);
     summaryTransferFiles.push_back(transferFile);
   }
   auto totalPerSpeciesEventCountsFile = FileSystem::joinPaths(recDir, "perspecies_eventcount.txt");
   Scenario::mergePerSpeciesEventCounts(_speciesTree->getTree(),
       totalPerSpeciesEventCountsFile, 
       summaryPerSpeciesEventCountsFiles, 
-      true);
+      true, false);
   auto totalTransferFile = FileSystem::joinPaths(recDir, "transfers.txt");
   Scenario::mergeTransfers(_speciesTree->getTree(),
       totalTransferFile, 
       summaryTransferFiles, 
-      true);
+      true, false);
   ParallelContext::makeRandConsistent();
 }
 

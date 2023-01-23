@@ -10,10 +10,10 @@
 const char *Scenario::eventNames[]  = {"S", "SL", "D", "T", "TL", "L", "Leaf", "Invalid"};
 
 struct TransferPair {
-  unsigned int count;
+  double count;
   unsigned int id1;
   unsigned int id2;
-  TransferPair(unsigned int count, unsigned int id1, unsigned int id2):
+  TransferPair(double count, unsigned int id1, unsigned int id2):
     count(count), id1(id1), id2(id2) {}
   bool operator < (const TransferPair& p) const
   {
@@ -114,15 +114,16 @@ void Scenario::gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents
 
 
 static void dumpSpeciesToEventCount(ParallelOfstream &os,
-    const std::map<std::string, std::vector<unsigned int> > &speciesToEventCount)
+    const std::map<std::string, std::vector<double> > &speciesToEventCount)
 {
-  os << "# species_label speciations duplications losses transfers" << std::endl;
-  std::vector<unsigned int> defaultCount(static_cast<unsigned int>(4), 0);
+  os << "# species_label speciations duplications losses transfers presence" << std::endl;
+  std::vector<double> defaultCount(5, 0.0);
   for (auto &it: speciesToEventCount) {
     if (defaultCount == it.second) {
       // do not write species without any event
       continue;
     }
+    assert(it.second.size() == 5);
     os << it.first << " ";
     for (auto v: it.second) {
       os << v << " ";
@@ -134,8 +135,8 @@ static void dumpSpeciesToEventCount(ParallelOfstream &os,
 void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool masterRankOnly) {
   
   ParallelOfstream os(filename, masterRankOnly);
-  std::map<std::string, std::vector<unsigned int> > speciesToEventCount;
-  std::vector<unsigned int> defaultCount(static_cast<unsigned int>(4), 0);
+  std::map<std::string, std::vector<double> > speciesToEventCount;
+  std::vector<double> defaultCount(5, 0);
   for (unsigned int e = 0; e < _speciesTree->tip_count + _speciesTree->inner_count; ++e) {
     assert(_speciesTree->nodes[e]->label);
     speciesToEventCount.insert({std::string(_speciesTree->nodes[e]->label), defaultCount});
@@ -144,15 +145,18 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
   // 1: duplication
   // 2: loss:
   // 3: transfer
+  // 4: presence (1 or 0)
   for (auto &event: _events) {
     auto &eventCount = speciesToEventCount[_speciesTree->nodes[event.speciesNode]->label];
     switch (event.type) {
       case ReconciliationEventType::EVENT_S: 
       case ReconciliationEventType::EVENT_None:
         eventCount[0]++;
+        eventCount[4] = 1;
         break;
       case ReconciliationEventType::EVENT_SL: 
         eventCount[0]++;
+        eventCount[4] = 1;
         // count the loss
         speciesToEventCount[event.pllLostSpeciesNode->label][2]++;
         break;
@@ -176,14 +180,15 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
 void Scenario::mergeTransfers(const PLLRootedTree &speciesTree,
     const std::string &filename,
     const std::vector<std::string> &filenames,
-    bool parallel)
+    bool parallel,
+    bool normalize)
 {
   ParallelOfstream os(filename, parallel);
   const auto labelToId = speciesTree.getDeterministicLabelToId();
   const auto idToLabel = speciesTree.getDeterministicIdToLabel();
   const unsigned int N = labelToId.size();
-  const VectorUint zeros(N, 0);
-  auto countMatrix = MatrixUint(N, zeros);
+  const VectorDouble zeros(N, 0.0);
+  auto countMatrix = MatrixDouble(N, zeros);
   for (const auto &f: filenames) {
     std::ifstream is(f);
     std::string line;
@@ -194,21 +199,29 @@ void Scenario::mergeTransfers(const PLLRootedTree &speciesTree,
       std::istringstream iss(line);
       std::string sp1;
       std::string sp2;
-      unsigned int count = 0;
+      double count = 0.0;
       iss >> sp1 >> sp2 >> count;
       countMatrix[labelToId.at(sp1)][labelToId.at(sp2)] += count;
     }
+  }
+  unsigned int subfileCount = filenames.size();
+  if (parallel) {
+    ParallelContext::sumUInt(subfileCount);
   }
   std::vector<TransferPair> transfers;
   for (unsigned int i = 0; i < N; ++i) {
     for (unsigned int j = 0; j < N; ++j) {
       if (parallel) {
-        ParallelContext::sumUInt(countMatrix[i][j]);
+        ParallelContext::sumDouble(countMatrix[i][j]);
       }
-      if (!countMatrix[i][j]) {
+      if (0.0 == countMatrix[i][j]) {
         continue;
       }
-      transfers.push_back(TransferPair(countMatrix[i][j], i, j));
+      double transferCount = countMatrix[i][j];
+      if (normalize) {
+        transferCount /= static_cast<double>(subfileCount);
+      }
+      transfers.push_back(TransferPair(transferCount, i, j));
     }
   }
   std::sort(transfers.rbegin(), transfers.rend());
@@ -222,11 +235,12 @@ void Scenario::mergeTransfers(const PLLRootedTree &speciesTree,
 void Scenario::mergePerSpeciesEventCounts(const PLLRootedTree &speciesTree,
     const std::string &filename,
     const std::vector<std::string> &filenames,
-    bool parallel)
+    bool parallel,
+    bool normalize)
 {
   ParallelOfstream os(filename, parallel);
-  std::map<std::string, std::vector<unsigned int> > speciesToEventCount;
-  std::vector<unsigned int> defaultCount(static_cast<unsigned int>(4), 0);
+  std::map<std::string, std::vector<double> > speciesToEventCount;
+  std::vector<double> defaultCount(5, 0.0);
   for (const auto &label:  speciesTree.getLabels(false)) {
     speciesToEventCount.insert({label, defaultCount});
   }
@@ -241,17 +255,28 @@ void Scenario::mergePerSpeciesEventCounts(const PLLRootedTree &speciesTree,
       std::string species;
       iss >> species;
       auto iter = speciesToEventCount.find(species);
-      for (unsigned int i = 0; i < 4; ++i) {
+      for (unsigned int i = 0; i < 5; ++i) {
         unsigned int temp;
         iss >> temp;
         iter->second[i] += temp;
       }
     }
   }
+  unsigned int subfileCount = filenames.size(); 
   if (parallel) {
+    if (normalize) {
+      ParallelContext::sumUInt(subfileCount);
+    }
     for (const auto &pair: speciesToEventCount) {
       const auto &species = pair.first;
-      ParallelContext::sumVectorUInt(speciesToEventCount[species]);
+      ParallelContext::sumVectorDouble(speciesToEventCount[species]);
+    }
+  }
+  if (normalize) {
+    for (const auto &pair: speciesToEventCount) {
+      for (auto &count: speciesToEventCount[pair.first]) {
+        count /= static_cast<double>(subfileCount);
+      }
     }
   }
   dumpSpeciesToEventCount(os, speciesToEventCount);

@@ -146,7 +146,8 @@ public:
   static void mergeTransfers(const PLLRootedTree &speciesTree,
       const std::string &filename,
       const std::vector<std::string> &filenames,
-      bool parallel);
+      bool parallel,
+      bool normalize);
 
   void saveReconciliation(const std::string &filename, ReconciliationFormat format, bool masterRankOnly = true);
   void saveReconciliation(ParallelOfstream &os, ReconciliationFormat format);
@@ -160,7 +161,8 @@ public:
   static void mergePerSpeciesEventCounts(const PLLRootedTree &tree,
       const std::string &filename,
       const std::vector<std::string> &filenames,
-      bool parallel);
+      bool parallel,
+      bool normalize);
   void gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents) const;
   void countTransfers(const StringToUint &labelToId,
       MatrixUint &count);
