@@ -256,7 +256,7 @@ void Scenario::mergePerSpeciesEventCounts(const PLLRootedTree &speciesTree,
       iss >> species;
       auto iter = speciesToEventCount.find(species);
       for (unsigned int i = 0; i < 5; ++i) {
-        unsigned int temp;
+        double temp;
         iss >> temp;
         iter->second[i] += temp;
       }
