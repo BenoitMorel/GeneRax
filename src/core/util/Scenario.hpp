@@ -195,6 +195,7 @@ public:
   corax_rtree_t *getSpeciesTree() const {return _speciesTree;}
   const std::vector<std::vector<Event> > &
     getGeneIdToEvents() const {return _geneIdToEvents;}
+  corax_rnode_t *getOriginationSpecies() const;
 private:
   static const char *eventNames[];
   std::vector<Event> _events;

@@ -116,17 +116,17 @@ void Scenario::gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents
 static void dumpSpeciesToEventCount(ParallelOfstream &os,
     const std::map<std::string, std::vector<double> > &speciesToEventCount)
 {
-  os << "# species_label speciations duplications losses transfers presence" << std::endl;
-  std::vector<double> defaultCount(5, 0.0);
+  os << "species,_label, speciations, duplications, losses, transfers, presence, origination" << std::endl;
+  std::vector<double> defaultCount(6, 0.0);
   for (auto &it: speciesToEventCount) {
     if (defaultCount == it.second) {
       // do not write species without any event
       continue;
     }
-    assert(it.second.size() == 5);
-    os << it.first << " ";
+    assert(it.second.size() == 6);
+    os << it.first;
     for (auto v: it.second) {
-      os << v << " ";
+      os << ", " << v;
     }
     os << "\n";
   } 
@@ -136,7 +136,7 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
   
   ParallelOfstream os(filename, masterRankOnly);
   std::map<std::string, std::vector<double> > speciesToEventCount;
-  std::vector<double> defaultCount(5, 0);
+  std::vector<double> defaultCount(6, 0);
   for (unsigned int e = 0; e < _speciesTree->tip_count + _speciesTree->inner_count; ++e) {
     assert(_speciesTree->nodes[e]->label);
     speciesToEventCount.insert({std::string(_speciesTree->nodes[e]->label), defaultCount});
@@ -146,6 +146,7 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
   // 2: loss:
   // 3: transfer
   // 4: presence (1 or 0)
+  // 5: origination
   for (auto &event: _events) {
     auto &eventCount = speciesToEventCount[_speciesTree->nodes[event.speciesNode]->label];
     switch (event.type) {
@@ -174,7 +175,17 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
         break;
     }
   }
+  auto origin = getOriginationSpecies();
+  assert(origin && origin->label);
+  speciesToEventCount[origin->label][5] = 1.0;
   dumpSpeciesToEventCount(os, speciesToEventCount);
+}
+  
+corax_rnode_t *Scenario::getOriginationSpecies() const
+{
+  auto &rootEvents = _geneIdToEvents[_virtualRootIndex];
+  assert(rootEvents.size());
+  return _speciesTree->nodes[rootEvents[0].speciesNode];
 }
 
 void Scenario::mergeTransfers(const PLLRootedTree &speciesTree,
@@ -240,7 +251,7 @@ void Scenario::mergePerSpeciesEventCounts(const PLLRootedTree &speciesTree,
 {
   ParallelOfstream os(filename, parallel);
   std::map<std::string, std::vector<double> > speciesToEventCount;
-  std::vector<double> defaultCount(5, 0.0);
+  std::vector<double> defaultCount(6, 0.0);
   for (const auto &label:  speciesTree.getLabels(false)) {
     speciesToEventCount.insert({label, defaultCount});
   }
@@ -254,10 +265,14 @@ void Scenario::mergePerSpeciesEventCounts(const PLLRootedTree &speciesTree,
       std::istringstream iss(line);
       std::string species;
       iss >> species;
+      std::cerr << species << std::endl;
+      species.pop_back(); // remove comma
       auto iter = speciesToEventCount.find(species);
-      for (unsigned int i = 0; i < 5; ++i) {
+      for (unsigned int i = 0; i < 6; ++i) {
         double temp;
         iss >> temp;
+        std::string comma;
+        iss >> comma;
         iter->second[i] += temp;
       }
     }
