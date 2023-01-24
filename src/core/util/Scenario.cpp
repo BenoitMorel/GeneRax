@@ -265,7 +265,6 @@ void Scenario::mergePerSpeciesEventCounts(const PLLRootedTree &speciesTree,
       std::istringstream iss(line);
       std::string species;
       iss >> species;
-      std::cerr << species << std::endl;
       species.pop_back(); // remove comma
       auto iter = speciesToEventCount.find(species);
       for (unsigned int i = 0; i < 6; ++i) {
