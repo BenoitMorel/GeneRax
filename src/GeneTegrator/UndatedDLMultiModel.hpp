@@ -123,7 +123,7 @@ double UndatedDLMultiModel<REAL>::computeLogLikelihood()
   // family: the UndatedDLMultiModel integrates over all possible
   // roots and adds a 1/numberOfGeneRoots weight that is not
   // present un the UndatedDL, so we multiply back here
-  REAL rootCorrection(double(this->_ccp.getRootsNumber()));
+  auto rootCorrection = double(this->_ccp.getLeafNumber() * 2 - 3);
   return log(res) - log(getLikelihoodFactor()) + log(rootCorrection);
 }
 

@@ -301,7 +301,7 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
   // family: the UndatedDTLMultiModel integrates over all possible
   // roots and adds a 1/numberOfGeneRoots weight that is not
   // present un the UndatedDTL, so we multiply back here
-  auto rootCorrection = double(this->_ccp.getRootsNumber()); 
+  auto rootCorrection = double(this->_ccp.getLeafNumber() * 2 - 3); 
   res *= rootCorrection; 
   auto ret = log(res);
   _llCache[hash] = ret; 
