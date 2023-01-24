@@ -497,11 +497,6 @@ void ConditionalClades::_fillCCP(CladeCounts &cladeCounts,
   for (unsigned int cid = 0; cid < cladesNumber; ++cid) {
     auto &clade = _CIDToClade[cid];
     auto cladeCount = cladeCounts[cid];
-    /*
-    if (!cladeCount) {
-      Logger::info << "error with clade cid=" << cid << " " << clade.dump() << std::endl;
-    }
-    */
     assert(cladeCount);
     auto &cladeSplits = _allCladeSplits[cid];
     if (subcladeCounts[cid].size()) {
@@ -511,6 +506,9 @@ void ConditionalClades::_fillCCP(CladeCounts &cladeCounts,
         auto CIDLeft = subcladeCount.first;
         auto cladeLeft = _CIDToClade[CIDLeft];
         auto cladeRight = getComplementary(clade, cladeLeft);
+        if (cladeRight < cladeLeft) {
+          continue;
+        }
         auto CIDRight = _cladeToCID[cladeRight];
         CladeSplit split;
         split.parent = cid;
