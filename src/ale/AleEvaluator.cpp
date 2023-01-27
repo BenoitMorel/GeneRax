@@ -242,6 +242,7 @@ private:
   unsigned int _speciesNodeNumber;
 };
 
+
 class GTMultiEvaluatorsFunction: public FunctionToOptimize
 {
 public:

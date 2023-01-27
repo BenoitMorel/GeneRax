@@ -34,7 +34,7 @@ static bool lineSearchParameters(FunctionToOptimize &function,
     llComputationsLine++;
     if (currentRates.getScore() + settings.lineSearchMinImprovement
         < proposal.getScore()) {
-      //Logger::info << "Improv alpha=" << alpha << " score=" << proposal.getScore() << std::endl;
+      //Logger::info << "Improv alpha=" << alpha << " score=" << proposal.getScore() << " p=" << proposal << std::endl;
       currentRates = proposal;
       noImprovement = false;
       alpha *= 1.5;
@@ -43,7 +43,7 @@ static bool lineSearchParameters(FunctionToOptimize &function,
       if (!noImprovement) {
         return true;
       }
-      //Logger::info << "No improv alpha=" << alpha << std::endl;
+      //Logger::info << "No improv alpha=" << alpha << " score=" << proposal.getScore() << " p=" << proposal  << std::endl;
     }
   }
   return !noImprovement;

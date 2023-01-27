@@ -10,8 +10,15 @@
 class RecModelInfo;
 double log(ScaledValue v);
 
+struct WeightedHighway {
+  Highway highway;
+  double proba;
+};
+
 template <class REAL>
 class UndatedDTLMultiModel: public MultiModelTemplate<REAL> {
+
+  
 public: 
   UndatedDTLMultiModel(DatedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
@@ -26,12 +33,14 @@ public:
   virtual double computeLogLikelihood();
   virtual corax_rnode_t *sampleSpeciesNode(unsigned int &category);
   virtual void setHighways(const std::vector<Highway> &highways) {
-    for (auto &speciesHighways: _highways) {
-      speciesHighways.clear();
+    for (auto &speciesWeightedHighways: _highways) {
+      speciesWeightedHighways.clear();
     }
     for (auto highway: highways) {
-      _highways[highway.src->node_index].push_back(highway);
-
+      WeightedHighway hp;
+      hp.highway = highway;
+      hp.proba = highway.prob; // this value will be normalized later on
+      _highways[highway.src->node_index].push_back(hp);
     }
     resetCache();
     recomputeSpeciesProbabilities();
@@ -48,11 +57,10 @@ private:
   std::vector<double> _PD; // Duplication probability, per species branch
   std::vector<double> _PL; // Loss probability, per species branch
   std::vector<double> _PT; // Transfer probability, per species branch
-  std::vector<double> _PH; // Highway probability, per species branch
   std::vector<double> _PS; // Speciation probability, per species branch
   std::vector<double> _uE; // Extinction probability, per species branch
   std::unordered_map<size_t, double> _llCache;
-  std::vector<std::vector<Highway> > _highways;
+  std::vector<std::vector<WeightedHighway> > _highways;
   TransferConstaint _transferConstraint;
   OriginationStrategy _originationStrategy;
   /**
@@ -121,7 +129,6 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(DatedTree &speciesTree,
   _PD(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.2),
   _PL(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.2),
   _PT(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.1),
-  _PH(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.1),
   _PS(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 1.0),
   _uE(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.0),
   _transferConstraint(info.transferConstraint),
@@ -400,17 +407,16 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
         _PD[ec] = 0.0;
       }
       auto sum = _PD[ec] + _PL[ec] + _PT[ec] + _PS[ec];
-      if (_highways[e].size()) {
-        _PH[ec] = _PT[ec];
-        sum += _PH[ec];
-      } else {
-        _PH[ec] = 0.0;
+      for (const auto &highway: _highways[e]) {
+        sum += highway.highway.prob;
       }
       _PD[ec] /= sum;
       _PL[ec] /= sum;
       _PT[ec] /= sum;
       _PS[ec] /= sum;
-      _PH[ec] /= sum;
+      for (auto &highway: _highways[e]) {
+        highway.proba = highway.highway.prob / sum;
+      }
     }
   }
   
@@ -589,9 +595,9 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
     
     // highway transfers
     for (auto highway: _highways[e]) {
-      auto d = highway.dest->node_index;
+      auto d = highway.highway.dest->node_index;
       auto dc = d * _gammaCatNumber + c;  
-      temp = (_dtlclvs[cidLeft]._uq[ec] * _dtlclvs[cidRight]._uq[dc]) * (_PH[ec] * freq);
+      temp = (_dtlclvs[cidLeft]._uq[ec] * _dtlclvs[cidRight]._uq[dc]) * (highway.proba * freq);
       scale(temp);
       proba += temp;
       if (recCell && proba > maxProba) {
@@ -600,7 +606,7 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
         recCell->event.leftGeneIndex = cidLeft;
         recCell->event.rightGeneIndex = cidRight; 
       }
-      temp = (_dtlclvs[cidRight]._uq[ec] * _dtlclvs[cidLeft]._uq[dc]) * (_PH[ec] * freq);
+      temp = (_dtlclvs[cidRight]._uq[ec] * _dtlclvs[cidLeft]._uq[dc]) * (highway.proba * freq);
       scale(temp);
       proba += temp;
       if (recCell && proba > maxProba) {
