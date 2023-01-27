@@ -1,6 +1,7 @@
 
 set(alegenerax_SOURCES ale.cpp 
   AleArguments.cpp
+  AleEvaluator.cpp
   AleOptimizer.cpp
   TrimFamilies.cpp
   )
