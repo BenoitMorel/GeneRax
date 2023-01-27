@@ -1,11 +1,11 @@
-#include "GeneTegratorArguments.hpp"
+#include "AleArguments.hpp"
 #include <cstdio>
 #include <ccp/ConditionalClades.hpp>
 #include <parallelization/ParallelContext.hpp>
 #include <IO/Logger.hpp>
 #include <IO/FileSystem.hpp>
 #include <IO/FamiliesFileParser.hpp>
-#include "GTSpeciesTreeOptimizer.hpp"
+#include "AleOptimizer.hpp"
 #include "TrimFamilies.hpp"
 #include <util/Paths.hpp>
 #include <util/RecModelInfo.hpp>
@@ -71,7 +71,7 @@ void trimFamilies(Families &families, int minSpecies, double trimRatio)
   Logger::timed << "Families: " << families.size() << std::endl;
 }
 
-void initStartingSpeciesTree(GeneTegratorArguments &args,
+void initStartingSpeciesTree(AleArguments &args,
     Families &families)
 {
   Logger::timed << "Initializing starting species tree..." << std::endl;
@@ -112,7 +112,7 @@ void initStartingSpeciesTree(GeneTegratorArguments &args,
   Logger::timed << "Finished starting species tree initialization" << std::endl;
 }
 
-void run( GeneTegratorArguments &args)
+void run( AleArguments &args)
 {
   Random::setSeed(static_cast<unsigned int>(args.seed));
   FileSystem::mkdir(args.output, true);
@@ -136,7 +136,7 @@ void run( GeneTegratorArguments &args)
   info.transferConstraint = args.transferConstraint;
   info.gammaCategories = args.gammaCategories;
   info.originationStrategy = args.originationStrategy;
-  GTSpeciesTreeOptimizer speciesTreeOptimizer(
+  AleOptimizer speciesTreeOptimizer(
       args.speciesTree,
       families,
       info,
@@ -188,7 +188,7 @@ int genetegrator_main(int argc, char** argv, void* comm)
   ParallelContext::init(comm); 
   Logger::init();
   Logger::timed << "GeneTegrator v0.0.0" << std::endl; 
-  GeneTegratorArguments args(argc, argv); 
+  AleArguments args(argc, argv); 
   run(args);
   Logger::close();
   ParallelContext::finalize();

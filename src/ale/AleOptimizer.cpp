@@ -1,4 +1,4 @@
-#include "GTSpeciesTreeOptimizer.hpp" 
+#include "AleOptimizer.hpp" 
 #include <IO/FileSystem.hpp>
 #include <IO/Logger.hpp>
 #include <optimizers/DTLOptimizer.hpp>
@@ -417,7 +417,7 @@ void GTSpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
 
 
 
-GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
+AleOptimizer::AleOptimizer(
     const std::string speciesTreeFile, 
     const Families &families, 
     const RecModelInfo &info,
@@ -457,12 +457,12 @@ GTSpeciesTreeOptimizer::GTSpeciesTreeOptimizer(
   saveCurrentSpeciesTreeId();
 }
   
-double GTSpeciesTreeOptimizer::optimizeModelRates(bool thorough)
+double AleOptimizer::optimizeModelRates(bool thorough)
 {
   return getEvaluator().optimizeModelRates(thorough);
 }
 
-void GTSpeciesTreeOptimizer::optimize()
+void AleOptimizer::optimize()
 {
   size_t hash1 = 0;
   size_t hash2 = 0;
@@ -490,7 +490,7 @@ void GTSpeciesTreeOptimizer::optimize()
   rootSearch(-1);
 
 }
-double GTSpeciesTreeOptimizer::sprSearch(unsigned int radius)
+double AleOptimizer::sprSearch(unsigned int radius)
 {
   SpeciesSPRSearch::SPRSearch(*_speciesTree,
       getEvaluator(),
@@ -501,18 +501,18 @@ double GTSpeciesTreeOptimizer::sprSearch(unsigned int radius)
 }
 
 
-void GTSpeciesTreeOptimizer::onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate)
+void AleOptimizer::onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate)
 {
   getEvaluator().onSpeciesTreeChange(nodesToInvalidate);
 }
 
 
-void GTSpeciesTreeOptimizer::saveSpeciesTree()
+void AleOptimizer::saveSpeciesTree()
 {
   saveCurrentSpeciesTreeId();
 }
 
-std::string GTSpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
+std::string AleOptimizer::saveCurrentSpeciesTreeId(std::string name, bool masterRankOnly)
 {
   std::string res = Paths::getSpeciesTreeFile(_outputDir, name);
   if (_evaluator->isDated()) {
@@ -530,7 +530,7 @@ std::string GTSpeciesTreeOptimizer::saveCurrentSpeciesTreeId(std::string name, b
   return res;
 }
 
-void GTSpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly)
+void AleOptimizer::saveCurrentSpeciesTreePath(const std::string &str, bool masterRankOnly)
 {
   _speciesTree->saveToFile(str, masterRankOnly);
   if (masterRankOnly) {
@@ -538,7 +538,7 @@ void GTSpeciesTreeOptimizer::saveCurrentSpeciesTreePath(const std::string &str, 
   }
 }
   
-double GTSpeciesTreeOptimizer::rootSearch(unsigned int maxDepth, bool thorough)
+double AleOptimizer::rootSearch(unsigned int maxDepth, bool thorough)
 {
   _rootLikelihoods.reset();
   if (thorough) {
@@ -554,7 +554,7 @@ double GTSpeciesTreeOptimizer::rootSearch(unsigned int maxDepth, bool thorough)
   return _searchState.bestLL;
 }
   
-double GTSpeciesTreeOptimizer::transferSearch()
+double AleOptimizer::transferSearch()
 {
   SpeciesTransferSearch::transferSearch(
     *_speciesTree,
@@ -566,7 +566,7 @@ double GTSpeciesTreeOptimizer::transferSearch()
 }
   
 
-void GTSpeciesTreeOptimizer::reconcile(unsigned int samples)
+void AleOptimizer::reconcile(unsigned int samples)
 {
   if (samples == 0) {
     return;
@@ -635,7 +635,7 @@ void GTSpeciesTreeOptimizer::reconcile(unsigned int samples)
   ParallelContext::makeRandConsistent();
 }
 
-void GTSpeciesTreeOptimizer::optimizeDates(bool thorough)
+void AleOptimizer::optimizeDates(bool thorough)
 {
   if (!_info.isDated()) {
     return; 
@@ -649,7 +649,7 @@ void GTSpeciesTreeOptimizer::optimizeDates(bool thorough)
 
 
 
-void GTSpeciesTreeOptimizer::randomizeRoot()
+void AleOptimizer::randomizeRoot()
 {
   auto &tree = _speciesTree->getDatedTree();
   unsigned int N = tree.getOrderedSpeciations().size();
@@ -661,7 +661,7 @@ void GTSpeciesTreeOptimizer::randomizeRoot()
   }
 }
 
-void GTSpeciesTreeOptimizer::searchHighways(const std::string &output)
+void AleOptimizer::searchHighways(const std::string &output)
 {
   double initialLL = getEvaluator().computeLikelihood(); 
   Logger::info << "initial ll=" << initialLL << std::endl;

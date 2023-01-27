@@ -1,9 +1,9 @@
-#include "GeneTegratorArguments.hpp"
+#include "AleArguments.hpp"
 #include <IO/Logger.hpp>
 #include <climits>  
 
 
-GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
+AleArguments::AleArguments(int iargc, char * iargv[]):
   argc(iargc),
   argv(iargv),
   reconciliationModelStr("UndatedDTL"),
@@ -70,7 +70,7 @@ GeneTegratorArguments::GeneTegratorArguments(int iargc, char * iargv[]):
 }
 
 
-void GeneTegratorArguments::printHelp()
+void AleArguments::printHelp()
 {
   Logger::info << "TODO" << std::endl;
 }

@@ -61,9 +61,9 @@ private:
 };
 
 
-class GTSpeciesTreeOptimizer: public SpeciesTree::Listener {
+class AleOptimizer: public SpeciesTree::Listener {
 public:
-  GTSpeciesTreeOptimizer(const std::string speciesTreeFile, 
+  AleOptimizer(const std::string speciesTreeFile, 
       const Families &families, 
       const RecModelInfo &info,
       const std::string &outputDir);

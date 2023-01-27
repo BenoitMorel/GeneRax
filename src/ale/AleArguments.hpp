@@ -6,9 +6,9 @@
 
   
 
-class GeneTegratorArguments {
+class AleArguments {
 public:
-  GeneTegratorArguments(int argc, char * argv[]);
+  AleArguments(int argc, char * argv[]);
   void printHelp();
 public:
   
