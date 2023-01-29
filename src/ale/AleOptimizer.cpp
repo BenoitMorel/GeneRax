@@ -320,7 +320,7 @@ void AleOptimizer::searchHighways(const std::string &output)
   for (const auto &transferMove: transferMoves) {
     auto prune = _speciesTree->getNode(transferMove.prune); 
     auto regraft = _speciesTree->getNode(transferMove.regraft);
-    Highway highway(prune, regraft);
+    Highway highway(regraft, prune);
     HighwayFunction f(*_evaluator, highway);
    
     Parameters startingParameter(1);
