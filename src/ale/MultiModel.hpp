@@ -15,16 +15,16 @@ struct ReconciliationCell {
 };
 
 struct Highway {
-  Highway():src(nullptr), dest(nullptr), prob(0.0) {}
+  Highway():src(nullptr), dest(nullptr), proba(0.0) {}
 
   Highway(corax_rnode_t *src, corax_rnode_t *dest):
     src(src),
     dest(dest),
-    prob(0.1)
+    proba(0.1)
   {}
   corax_rnode_t *src;
   corax_rnode_t *dest;
-  double prob;
+  double proba;
 };
 
 

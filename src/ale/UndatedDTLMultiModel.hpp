@@ -39,7 +39,7 @@ public:
     for (auto highway: highways) {
       WeightedHighway hp;
       hp.highway = highway;
-      hp.proba = highway.prob; // this value will be normalized later on
+      hp.proba = highway.proba; // this value will be normalized later on
       _highways[highway.src->node_index].push_back(hp);
     }
     resetCache();
@@ -408,14 +408,14 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
       }
       auto sum = _PD[ec] + _PL[ec] + _PT[ec] + _PS[ec];
       for (const auto &highway: _highways[e]) {
-        sum += highway.highway.prob;
+        sum += highway.highway.proba;
       }
       _PD[ec] /= sum;
       _PL[ec] /= sum;
       _PT[ec] /= sum;
       _PS[ec] /= sum;
       for (auto &highway: _highways[e]) {
-        highway.proba = highway.highway.prob / sum;
+        highway.proba = highway.highway.proba / sum;
       }
     }
   }
@@ -602,18 +602,24 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
       proba += temp;
       if (recCell && proba > maxProba) {
         recCell->event.type = ReconciliationEventType::EVENT_T;
+        recCell->event.pllDestSpeciesNode = 
+          this->_speciesTree.getNode(d);
         recCell->event.destSpeciesNode = d;
         recCell->event.leftGeneIndex = cidLeft;
         recCell->event.rightGeneIndex = cidRight; 
+        return;
       }
       temp = (_dtlclvs[cidRight]._uq[ec] * _dtlclvs[cidLeft]._uq[dc]) * (highway.proba * freq);
       scale(temp);
       proba += temp;
       if (recCell && proba > maxProba) {
         recCell->event.type = ReconciliationEventType::EVENT_T;
+        recCell->event.pllDestSpeciesNode = 
+          this->_speciesTree.getNode(d);
         recCell->event.destSpeciesNode = d;
         recCell->event.leftGeneIndex = cidRight;
-        recCell->event.rightGeneIndex = cidLeft; 
+        recCell->event.rightGeneIndex = cidLeft;
+        return;
       }
     }
   }
@@ -639,6 +645,10 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
       recCell->event.pllLostSpeciesNode = this->getSpeciesLeft(speciesNode);
       return;
     }
+  }
+  if (recCell) {
+    std::cerr << proba << " " << maxProba << std::endl;
+    assert(false);
   }
 }
   

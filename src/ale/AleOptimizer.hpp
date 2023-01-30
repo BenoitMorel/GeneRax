@@ -12,6 +12,21 @@
 #include <maths/ModelParameters.hpp>
 #include "AleEvaluator.hpp"
 
+struct ScoredHighway {
+  ScoredHighway(const Highway &highway, double score, double scoreDiff):
+    highway(highway),
+    score(score),
+    scoreDiff(scoreDiff)
+  {}
+
+  Highway highway;
+  double score;
+  double scoreDiff;
+  bool operator < (const ScoredHighway &other) {
+    return score < other.score;
+  }
+};
+
 class AleOptimizer: public SpeciesTree::Listener {
 public:
   AleOptimizer(const std::string speciesTreeFile, 
@@ -27,12 +42,16 @@ public:
   void reconcile(unsigned int samples);
   double optimizeModelRates(bool thorough = false);
   void optimizeDates(bool thorough = true);
-  void searchHighways(const std::string &output);
   SpeciesTree &getSpeciesTree() {return *_speciesTree;}
   void randomizeRoot();
   void saveSpeciesTree();
   void saveSpeciesTreeRootLL();
   SpeciesTreeLikelihoodEvaluatorInterface &getEvaluator() {return *_evaluator;}
+  void getBestHighways(std::vector<ScoredHighway> &highways);
+  void saveBestHighways(const std::vector<ScoredHighway> &highways,
+      const std::string &output);
+  void addHighways(const std::vector<ScoredHighway> &candidateHighways,
+      std::vector<ScoredHighway> &acceptedHighways);
 private:
   std::unique_ptr<SpeciesTree> _speciesTree;
   PerCoreGeneTrees _geneTrees;

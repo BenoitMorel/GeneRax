@@ -171,13 +171,17 @@ void run( AleArguments &args)
     break;
   }
   Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
-  speciesTreeOptimizer.reconcile(args.geneTreeSamples);
-  
   if (args.highways) {
     auto highwayOutput = FileSystem::joinPaths(args.output,
-      "highways.txt");
-    speciesTreeOptimizer.searchHighways(highwayOutput);
+      "highway_best_candidates.txt");
+    std::vector<ScoredHighway> candidateHighways;
+    speciesTreeOptimizer.getBestHighways(candidateHighways);
+    speciesTreeOptimizer.saveBestHighways(candidateHighways,
+        highwayOutput);
+    std::vector<ScoredHighway> acceptedHighways;
+    speciesTreeOptimizer.addHighways(candidateHighways, acceptedHighways);
   }
+  speciesTreeOptimizer.reconcile(args.geneTreeSamples);
   speciesTreeOptimizer.saveSpeciesTree(); 
   cleanupCCPs(families);
   Logger::timed <<"End of the execution" << std::endl;
