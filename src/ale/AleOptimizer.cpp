@@ -18,21 +18,26 @@ static bool testAndSwap(size_t &hash1, size_t &hash2) {
 class HighwayFunction: public FunctionToOptimize {
 public: 
   HighwayFunction(GTSpeciesTreeLikelihoodEvaluator &evaluator,
-    const Highway &highway): _highway(highway), _evaluator(evaluator) {}
+    const std::vector<Highway*> &highways): _highways(highways), _evaluator(evaluator) {}
   
   virtual double evaluate(Parameters &parameters) {
-    assert(parameters.dimensions() == 1);
+    assert(parameters.dimensions() == _highways.size());
     parameters.ensurePositivity();
-    Highway highway = _highway;
-    highway.proba = parameters[0];
-    _evaluator.addHighway(highway);
+    for (unsigned int i = 0; i < _highways.size(); ++i)  {
+      Highway highwayCopy = *_highways[i];
+      highwayCopy.proba = parameters[i];
+      _evaluator.addHighway(highwayCopy);
+    }
     auto ll = _evaluator.computeLikelihood();
-    _evaluator.removeHighway();
+    for (auto highway: _highways) {
+      (void)(highway);
+      _evaluator.removeHighway();
+    }
     parameters.setScore(ll);
     return ll;
   }
 private:
-  Highway _highway;
+  const std::vector<Highway *> &_highways;
   GTSpeciesTreeLikelihoodEvaluator &_evaluator;
 };
 
@@ -286,7 +291,9 @@ static Parameters testHighwayFast(GTSpeciesTreeLikelihoodEvaluator &evaluator,
     Highway &highway,
     double startingProbability = 0.1)
 {
-  HighwayFunction f(evaluator, highway);
+  std::vector<Highway *> highways;
+  highways.push_back(&highway);
+  HighwayFunction f(evaluator, highways);
   Parameters parameters(1);
   parameters[0] = startingProbability;
   f.evaluate(parameters);
@@ -296,9 +303,29 @@ static Parameters testHighway(GTSpeciesTreeLikelihoodEvaluator &evaluator,
     Highway &highway,
     double startingProbability = 0.1)
 {
-  HighwayFunction f(evaluator, highway);
+  std::vector<Highway *> highways;
+  highways.push_back(&highway);
+  HighwayFunction f(evaluator, highways);
   Parameters startingParameter(1);
   startingParameter[0] = startingProbability;
+  OptimizationSettings settings;
+  auto parameters = DTLOptimizer::optimizeParameters(
+      f, 
+      startingParameter, 
+      settings);
+  return parameters;
+}
+
+static Parameters testHighways(GTSpeciesTreeLikelihoodEvaluator &evaluator,
+    const std::vector<Highway *> &highways,
+    const std::vector<double> &startingProbabilities)
+{
+  assert(highways.size() == startingProbabilities.size());
+  HighwayFunction f(evaluator, highways);
+  Parameters startingParameter(highways.size());
+  for (unsigned int i = 0; i < highways.size(); ++i) {
+    startingParameter[i] = startingProbabilities[i];
+  }
   OptimizationSettings settings;
   auto parameters = DTLOptimizer::optimizeParameters(
       f, 
@@ -381,6 +408,7 @@ void AleOptimizer::addHighways(const std::vector<ScoredHighway> &candidateHighwa
 {
   double initialLL = getEvaluator().computeLikelihood(); 
   double currentLL = initialLL;
+  /*
   Logger::timed << "Trying to add the " << candidateHighways.size() << " candidate highways one by one" << std::endl;
   Logger::info << "initial ll=" << initialLL << std::endl;
   for (const auto candidate: candidateHighways) {
@@ -397,6 +425,20 @@ void AleOptimizer::addHighways(const std::vector<ScoredHighway> &candidateHighwa
       Logger::timed << "Rejecting highway " << highway.src->label << "->" << highway.dest->label << std::endl;
     }
   }
+  */
+  Logger::timed << "Trying to add all candidate highways simultaneously" << std::endl;
+  std::vector<Highway> highways;
+  std::vector<Highway *> highwaysPtr;
+  std::vector<double> startingProbabilities;
+  for (const auto candidate: candidateHighways) {
+    highways.push_back(candidate.highway);
+    startingProbabilities.push_back(candidate.highway.proba);
+  }
+  for (auto &highway: highways) {
+    highwaysPtr.push_back(&highway);
+  }
+  auto parameters = testHighways(*_evaluator, highwaysPtr, startingProbabilities);
+  Logger::info << parameters << std::endl;
 }
 
 void AleOptimizer::saveBestHighways(const std::vector<ScoredHighway> &scoredHighways,
