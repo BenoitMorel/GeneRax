@@ -282,6 +282,16 @@ void AleOptimizer::randomizeRoot()
   }
 }
 
+static Parameters testHighwayFast(GTSpeciesTreeLikelihoodEvaluator &evaluator,
+    Highway &highway,
+    double startingProbability = 0.1)
+{
+  HighwayFunction f(evaluator, highway);
+  Parameters parameters(1);
+  parameters[0] = startingProbability;
+  f.evaluate(parameters);
+  return parameters;
+}
 static Parameters testHighway(GTSpeciesTreeLikelihoodEvaluator &evaluator,
     Highway &highway,
     double startingProbability = 0.1)
@@ -318,16 +328,21 @@ void AleOptimizer::getBestHighways(std::vector<ScoredHighway> &scoredHighways)
   
   unsigned int failures = 0;
   unsigned int iterations = 0;
+  size_t fastRoundMaxTrials = 500;
+  size_t slowRoundMaxTrials = 25;
+  std::vector<ScoredHighway> scoredHighwaysFast;
+  Logger::timed << "Looking for the best highways candidates among " << fastRoundMaxTrials << " candidates (fast round)" << std::endl;
   for (const auto &transferMove: transferMoves) {
     auto prune = _speciesTree->getNode(transferMove.prune); 
     auto regraft = _speciesTree->getNode(transferMove.regraft);
     Highway highway(regraft, prune);
-    auto parameters = testHighway(*_evaluator, highway);
+    auto parameters = testHighwayFast(*_evaluator, highway);
     if (parameters.getScore() > initialLL + 1.0) {
       Logger::timed << "Candidate highway " << highway.src->label << "->" << highway.dest->label << std::endl;
-      Logger::timed << "ph=" << parameters[0] << " ll=" << parameters.getScore() << std::endl; 
+    Logger::timed << "ph=" << parameters[0] 
+      << " lldiff=" << initialLL - parameters.getScore() << std::endl; 
       highway.proba = parameters[0];
-      scoredHighways.push_back(ScoredHighway(highway, 
+      scoredHighwaysFast.push_back(ScoredHighway(highway, 
             parameters.getScore(),
             initialLL - parameters.getScore()));
       failures = 0;
@@ -336,7 +351,24 @@ void AleOptimizer::getBestHighways(std::vector<ScoredHighway> &scoredHighways)
       failures++;
     }
     iterations++;
-    if (failures > 10 || iterations > 20) {
+    if (failures > 10 || iterations > fastRoundMaxTrials) {
+      break;
+    }
+  }
+  std::sort(scoredHighwaysFast.rbegin(), scoredHighwaysFast.rend());
+  iterations = 1;
+  Logger::timed << "Looking for the best highways candidates among " << slowRoundMaxTrials << " candidates (slow round)" << std::endl;
+  for (const auto &scoredHighway: scoredHighwaysFast) {
+    Highway highway(scoredHighway.highway);
+    auto parameters = testHighway(*_evaluator, highway);
+    highway.proba = parameters[0];
+    scoredHighways.push_back(ScoredHighway(highway, 
+          parameters.getScore(),
+          initialLL - parameters.getScore()));
+    Logger::timed << "Good candidate highway " << highway.src->label << "->" << highway.dest->label << std::endl;
+    Logger::timed << "ph=" << parameters[0] 
+      << " lldiff=" << initialLL - parameters.getScore() << std::endl;
+    if (++iterations > slowRoundMaxTrials) {
       break;
     }
   }
@@ -349,6 +381,7 @@ void AleOptimizer::addHighways(const std::vector<ScoredHighway> &candidateHighwa
 {
   double initialLL = getEvaluator().computeLikelihood(); 
   double currentLL = initialLL;
+  Logger::timed << "Trying to add the " << candidateHighways.size() << " candidate highways one by one" << std::endl;
   Logger::info << "initial ll=" << initialLL << std::endl;
   for (const auto candidate: candidateHighways) {
     Highway highway(candidate.highway);
@@ -357,7 +390,8 @@ void AleOptimizer::addHighways(const std::vector<ScoredHighway> &candidateHighwa
       highway.proba = parameters[0];
       _evaluator->addHighway(highway);
       Logger::timed << "Accepting highway " << highway.src->label << "->" << highway.dest->label << std::endl;
-      Logger::timed << "ph=" << parameters[0] << " ll=" << parameters.getScore() << std::endl; 
+      Logger::timed << "ph=" << parameters[0] 
+        << " lldiff=" << initialLL - parameters.getScore() << std::endl; 
       currentLL = getEvaluator().computeLikelihood();
     } else {
       Logger::timed << "Rejecting highway " << highway.src->label << "->" << highway.dest->label << std::endl;
