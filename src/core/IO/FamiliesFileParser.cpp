@@ -29,6 +29,8 @@ static bool update_family(const std::string &line,
     currentFamily.alignmentFile = value;
   } else if (key == "starting_gene_tree") {
     currentFamily.startingGeneTree = value;
+  } else if (key == "likelihoods") {
+    currentFamily.likelihoodFile = value;
   } else if (key == "mapping") {
     currentFamily.mappingFile = value;
   } else if (key == "subst_model") {

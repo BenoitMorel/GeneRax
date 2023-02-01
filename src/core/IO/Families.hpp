@@ -13,6 +13,7 @@ struct FamilyInfo {
   std::string mappingFile;
   std::string libpllModel;
   std::string statsFile;
+  std::string likelihoodFile;
   unsigned int color;
   FamilyInfo() {
     reset();
@@ -26,6 +27,7 @@ struct FamilyInfo {
     libpllModel = "GTR";
     statsFile = "";
     color = 0;
+    likelihoodFile = "";
   }
 };
 

@@ -39,7 +39,7 @@ void generateCCPs(const std::string &ccpDir,
   } 
   auto N = families.size();
   for (auto i = ParallelContext::getBegin(N); i < ParallelContext::getEnd(N); i ++) {
-    ConditionalClades ccp(families[i].startingGeneTree, ccpRooting);
+    ConditionalClades ccp(families[i].startingGeneTree, families[i].likelihoodFile, ccpRooting);
     ccp.serialize(families[i].ccp);
   }
   ParallelContext::barrier();

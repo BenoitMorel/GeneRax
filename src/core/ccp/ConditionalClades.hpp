@@ -10,7 +10,7 @@
 using CID = unsigned int;
 
 using CCPClade = genesis::utils::Bitvector;
-using CladeCounts = std::unordered_map<CID, unsigned int>;
+using CladeCounts = std::unordered_map<CID, double>;
 using SubcladeCounts = std::vector<CladeCounts>;
 using OrderedClades = std::set<CCPClade>;
 
@@ -58,7 +58,10 @@ using CIDToLeaf = std::unordered_map<unsigned int, std::string>;
 class ConditionalClades {
  public:
   ConditionalClades() {}
-  ConditionalClades(const std::string &inputFile, 
+  ConditionalClades(const std::string &inputFile,
+      CCPRooting ccpRooting);
+  ConditionalClades(const std::string &inputFile,
+      const std::string &likelihoods,
       CCPRooting ccpRooting);
   void printContent() const; 
   void printStats() const;
@@ -78,6 +81,7 @@ class ConditionalClades {
   void serialize(const std::string &outputFile);
   void unserialize(const std::string &inputFile);
   void buildFromGeneTrees(const std::string &inputFile, 
+      const std::string &likelihoods,
       CCPRooting);
   void buildFromALEFormat(const std::string &inputFile, 
         CCPRooting ccpRooting);
@@ -97,8 +101,8 @@ private:
   CIDToClade _CIDToClade;
   std::vector<CladeSplits> _allCladeSplits;
 private:
-  void _fillCCP(CladeCounts &cladeCounts,
-      SubcladeCounts &subcladeCounts,
+  void _fillCCP(SubcladeCounts &subcladeCounts,
+      bool useLikelihoods,
       std::unordered_map<unsigned int, double> *CIDToDeviation = nullptr);
 };
 
