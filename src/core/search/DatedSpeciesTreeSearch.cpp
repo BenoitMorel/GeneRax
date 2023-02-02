@@ -71,7 +71,6 @@ double DatedSpeciesTreeSearch::optimizeDates(
   Logger::timed << "Optimizing dates, ll=" << bestLL << std::endl;
   optimizeDatesNaive(speciesTree, evaluation); 
   bestLL = evaluation.computeLikelihood();
- 
   unsigned int unsuccessfulTrials = 0;
   const unsigned int maxTrials = 3;
   auto &tree = speciesTree.getDatedTree();
@@ -88,6 +87,7 @@ double DatedSpeciesTreeSearch::optimizeDates(
     } else {
       unsuccessfulTrials = 0;
       bestLL = ll;
+      Logger::timed << " better ll=" << bestLL << std::endl;
     }
   } 
   Logger::timed << "after optimizating dates, ll = " << bestLL << std::endl;

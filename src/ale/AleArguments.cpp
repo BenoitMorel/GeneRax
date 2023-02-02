@@ -14,6 +14,7 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
   ccpRooting(CCPRooting::UNIFORM),
   speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
   speciesSearchStrategy(SpeciesSearchStrategy::HYBRID),
+  inferSpeciationOrders(false),
   fixRates(false),
   highways(false),
   minCoveredSpecies(-1),
@@ -35,6 +36,8 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
       speciesTreeAlgorithm = Enums::strToSpeciesTree(speciesTree);
     } else if (arg == "--species-search") {
       speciesSearchStrategy = ArgumentsHelper::strToSpeciesSearchStrategy(std::string(argv[++i]));
+    } else if (arg == "--infer-speciation-orders") {
+      inferSpeciationOrders = true;
     } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModelStr = std::string(argv[++i]);
     } else if (arg == "--fix-rates") {

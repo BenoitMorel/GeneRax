@@ -30,6 +30,7 @@ public:
   // search
   SpeciesTreeAlgorithm speciesTreeAlgorithm;
   SpeciesSearchStrategy speciesSearchStrategy;
+  bool inferSpeciationOrders;
   bool fixRates;
   bool highways;
 

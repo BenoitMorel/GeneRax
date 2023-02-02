@@ -144,7 +144,6 @@ void run( AleArguments &args)
   if (args.randomSpeciesRoot) {
     Logger::timed << "Random root position!" << std::endl;
     speciesTreeOptimizer.randomizeRoot();
-    Logger::timed << "New ll=" << speciesTreeOptimizer.getEvaluator().computeLikelihood() << std::endl;
   }
   switch (args.speciesSearchStrategy) {
   case SpeciesSearchStrategy::HYBRID:
@@ -169,6 +168,11 @@ void run( AleArguments &args)
   default:
     assert(false); // not implemented yet
     break;
+  }
+  if (args.inferSpeciationOrders) {
+    speciesTreeOptimizer.optimizeDates();
+    auto ll = speciesTreeOptimizer.getEvaluator().computeLikelihood();
+    Logger::timed << "ll after optimizing dates: " << ll << std::endl;
   }
   Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   if (args.highways) {
