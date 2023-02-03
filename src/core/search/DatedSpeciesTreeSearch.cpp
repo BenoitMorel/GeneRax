@@ -17,6 +17,7 @@ static double optimizeDatesNaive(SpeciesTree &speciesTree,
       if (!tree.moveUp(rank)) {
         continue;
       }
+      evaluation.onSpeciesDatesChange();
       auto ll = evaluation.computeLikelihood();
       if (ll > bestLL) {
         tryAgain = true;
@@ -28,6 +29,7 @@ static double optimizeDatesNaive(SpeciesTree &speciesTree,
       assert(tree.isConsistent());
     }
   }
+  evaluation.onSpeciesDatesChange();
   //Logger::timed << "end naive dated round ll= " << bestLL <<  std::endl;
   return bestLL;
 }
@@ -78,6 +80,7 @@ double DatedSpeciesTreeSearch::optimizeDates(
     auto backup = tree.getBackup();
     double perturbation = double(unsuccessfulTrials + 1) / double(maxTrials);
     perturbateDates(speciesTree, perturbation);
+    evaluation.onSpeciesDatesChange();
     auto ll = evaluation.computeLikelihood();
     optimizeDatesNaive(speciesTree, evaluation);
     ll = evaluation.computeLikelihood();

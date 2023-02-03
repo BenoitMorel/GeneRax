@@ -150,18 +150,14 @@ void run( AleArguments &args)
     speciesTreeOptimizer.optimize();
     break;
   case SpeciesSearchStrategy::EVAL:
-    
-    //speciesTreeOptimizer.optimizeModelRates(false);
-    //speciesTreeOptimizer.optimizeDates();
-    //speciesTreeOptimizer.optimizeModelRates(false);
-    if (!args.fixRates) {
-      speciesTreeOptimizer.optimizeModelRates(true);
-    }
-    //speciesTreeOptimizer.optimizeDates();
-    //Logger::timed << "First root search, non thorough" << std::endl;
-    //speciesTreeOptimizer.rootSearch(10, false);
-    //Logger::timed << "Second root search, thorough" << std::endl;
-    //speciesTreeOptimizer.rootSearch(2, true);
+    speciesTreeOptimizer.optimizeModelRates(true);
+    break;
+  case SpeciesSearchStrategy::REROOT:
+    speciesTreeOptimizer.optimizeModelRates(true);
+    Logger::timed << "First root search, non thorough" << std::endl;
+    speciesTreeOptimizer.rootSearch(2, false);
+    Logger::timed << "Second root search, thorough" << std::endl;
+    speciesTreeOptimizer.rootSearch(2, true);
     break;
   case SpeciesSearchStrategy::SKIP:
     break;
@@ -172,7 +168,6 @@ void run( AleArguments &args)
   if (args.inferSpeciationOrders) {
     speciesTreeOptimizer.optimizeDates();
     auto ll = speciesTreeOptimizer.getEvaluator().computeLikelihood();
-    Logger::timed << "ll after optimizing dates: " << ll << std::endl;
   }
   Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   if (args.highways) {
@@ -185,6 +180,7 @@ void run( AleArguments &args)
     std::vector<ScoredHighway> acceptedHighways;
     speciesTreeOptimizer.addHighways(candidateHighways, acceptedHighways);
   }
+  //speciesTreeOptimizer.optimizeModelRates(true);
   speciesTreeOptimizer.reconcile(args.geneTreeSamples);
   speciesTreeOptimizer.saveSpeciesTree(); 
   cleanupCCPs(families);

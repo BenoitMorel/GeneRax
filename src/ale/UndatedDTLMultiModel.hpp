@@ -39,13 +39,27 @@ public:
     for (auto highway: highways) {
       WeightedHighway hp;
       hp.highway = highway;
+      // map the highway to the pruned species tree
+      hp.highway.src = _speciesToPrunedNode[highway.src->node_index];
+      hp.highway.dest = _speciesToPrunedNode[highway.dest->node_index];
       hp.proba = highway.proba; // this value will be normalized later on
-      _highways[highway.src->node_index].push_back(hp);
+      if (hp.highway.src != hp.highway.dest) {
+        // do not count transfers to self
+        _highways[hp.highway.src->node_index].push_back(hp);
+      }
     }
     resetCache();
     recomputeSpeciesProbabilities();
   }
-  
+  virtual void onSpeciesDatesChange() {resetCache(); recomputeSpeciesProbabilities();}
+
+  virtual void onSpeciesTreeChange(
+      const std::unordered_set<corax_rnode_t *> *nodesToInvalidate)  {
+    MultiModelTemplate<REAL>::onSpeciesTreeChange(nodesToInvalidate);
+    updateSpeciesToPrunedNode();
+  }
+
+
 private:
  
 
@@ -90,6 +104,7 @@ private:
   
   std::vector<DTLCLV> _dtlclvs;
 
+  std::vector<corax_rnode_t *> _speciesToPrunedNode;
 
 
   void updateCLV(CID cid);
@@ -111,8 +126,82 @@ private:
   double getTransferWeightNorm() const {
     return double(this->getPrunedSpeciesNodeNumber());
   }
+  
+  void updateSpeciesToPrunedNode();
 };
 
+
+// helper function for updateSpeciesToPrunedNode
+static void auxUntilPrunedRoot(corax_rnode_t *speciesNode, 
+    corax_rnode_t *prunedRoot,
+    std::vector<corax_rnode_t *> &speciesToPrunedNode)
+{
+  assert(speciesNode);
+  assert(prunedRoot);
+  speciesToPrunedNode[speciesNode->node_index] = prunedRoot;
+  if (speciesNode == prunedRoot) {
+    return;
+  }
+  if (speciesNode->left) {
+    assert(speciesNode->right);
+    auxUntilPrunedRoot(speciesNode->left, prunedRoot, speciesToPrunedNode);
+    auxUntilPrunedRoot(speciesNode->right, prunedRoot, speciesToPrunedNode);
+  }
+}
+
+// helper function for updateSpeciesToPrunedNode
+static void fillUnsampledSpeciesRec(corax_rnode_t *unsampledNode,
+    corax_rnode_t *prunedNodeToAssign,
+    std::vector<corax_rnode_t *> &speciesToPrunedNode)
+{
+  speciesToPrunedNode[unsampledNode->node_index] = prunedNodeToAssign;
+  if (unsampledNode->left) {
+    fillUnsampledSpeciesRec(unsampledNode->left, prunedNodeToAssign, speciesToPrunedNode);
+    fillUnsampledSpeciesRec(unsampledNode->right, prunedNodeToAssign, speciesToPrunedNode);
+  }
+}
+
+template <class REAL>
+void UndatedDTLMultiModel<REAL>::updateSpeciesToPrunedNode() 
+{
+  if (!_speciesToPrunedNode.size()) {
+    _speciesToPrunedNode.resize(this->getAllSpeciesNodeNumber());
+  }
+  if (!this->prunedMode()) {
+    for (auto speciesNode: this->getAllSpeciesNodes()) {
+      auto e = speciesNode->node_index;
+      _speciesToPrunedNode[e] = speciesNode;
+    }
+    return;
+  }
+  std::fill(_speciesToPrunedNode.begin(), _speciesToPrunedNode.end(), nullptr);
+  for (auto speciesNode: this->getAllSpeciesNodes()) {
+    auto e = speciesNode->node_index;
+    if (speciesNode->left) {
+      auto left = speciesNode->left->node_index;
+      auto right = speciesNode->right->node_index;
+      if (_speciesToPrunedNode[left] && _speciesToPrunedNode[right]) {
+        // this node belongs to the pruned nodes
+        _speciesToPrunedNode[e] = speciesNode;
+      } else if (_speciesToPrunedNode[left]) {
+        _speciesToPrunedNode[e] = _speciesToPrunedNode[left];
+        fillUnsampledSpeciesRec(speciesNode->right, _speciesToPrunedNode[e], _speciesToPrunedNode);
+      } else if (_speciesToPrunedNode[right]) {
+        _speciesToPrunedNode[e] = _speciesToPrunedNode[right];
+        fillUnsampledSpeciesRec(speciesNode->left, _speciesToPrunedNode[e], _speciesToPrunedNode);
+      } // else do nothing
+    } else {
+      if (this->_speciesCoverage[e]) {
+        _speciesToPrunedNode[e] = speciesNode;
+      }
+    }
+  } 
+  // if the  root of the pruned species tree is not the root, we need 
+  // to map all parents and siblings of the pruned root to the pruned root
+  auxUntilPrunedRoot(this->getSpeciesTree().getRoot(),
+    this->getPrunedRoot(),
+    _speciesToPrunedNode);
+}
 
 template <class REAL>
 UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(DatedTree &speciesTree, 

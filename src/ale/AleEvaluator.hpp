@@ -37,7 +37,7 @@ public:
     PerSpeciesEvents &perSpeciesEvents);
   virtual bool pruneSpeciesTree() const {return _modelRates.info.pruneSpeciesTree;}
   virtual void setAlpha(double alpha);
-  
+  virtual void onSpeciesDatesChange();  
   virtual void onSpeciesTreeChange(
       const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
   void printHightPrecisionCount();

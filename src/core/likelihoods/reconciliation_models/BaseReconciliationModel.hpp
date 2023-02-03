@@ -184,6 +184,8 @@ protected:
   std::vector<corax_rnode_t *> _speciesParent;
   corax_rnode_t *_prunedRoot;
 
+  bool prunedMode() const {return _info.pruneSpeciesTree;}
+
 private:
   size_t getTreeHashRec(const corax_rnode_t *node, size_t i) const;
 };

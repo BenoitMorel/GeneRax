@@ -46,6 +46,8 @@ public:
   const ConditionalClades &getCCP() const {return _ccp;}
 
   virtual void setHighways(const std::vector<Highway> &highways) {(void)(highways);}
+
+  virtual void onSpeciesDatesChange() {}
 protected:
   void mapGenesToSpecies() {
     const auto &cidToLeaves = _ccp.getCidToLeaves();

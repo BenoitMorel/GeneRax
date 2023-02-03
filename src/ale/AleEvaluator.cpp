@@ -183,6 +183,12 @@ void GTSpeciesTreeLikelihoodEvaluator::onSpeciesTreeChange(
   }
 }
 
+void GTSpeciesTreeLikelihoodEvaluator::onSpeciesDatesChange()
+{
+  for (auto &evaluation: _evaluations) {
+    evaluation->onSpeciesDatesChange();
+  }
+}
 
 void GTSpeciesTreeLikelihoodEvaluator::addHighway(const Highway &highway)
 {

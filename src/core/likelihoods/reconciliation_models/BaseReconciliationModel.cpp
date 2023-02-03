@@ -68,6 +68,8 @@ void BaseReconciliationModel::initSpeciesTree()
   }
 }
 
+
+
 void BaseReconciliationModel::onSpeciesTreeChange(
     const std::unordered_set<corax_rnode_t *> *nodesToInvalidate)
 {
@@ -93,7 +95,7 @@ void BaseReconciliationModel::onSpeciesTreeChange(
     _speciesParent[e] = speciesNode->parent;
   }
   _prunedRoot = _speciesTree.getRoot();
-  if (_info.pruneSpeciesTree && _speciesCoverage.size()) {
+  if (prunedMode() && _speciesCoverage.size()) {
     std::vector<corax_rnode_t *> pruned(getAllSpeciesNodeNumber(), nullptr);
     for (auto speciesNode: getAllSpeciesNodes()) {
       auto e = speciesNode->node_index;

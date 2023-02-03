@@ -91,6 +91,11 @@ public:
     (void)(nodesToInvalidate);
   }
 
+  /**
+   *  Should be called when the species tree dates (speciation orders)
+   *  change
+   */
+  virtual void onSpeciesDatesChange() {};
 };
 
 /**
