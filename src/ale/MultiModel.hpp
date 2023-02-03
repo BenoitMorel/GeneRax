@@ -25,7 +25,13 @@ struct Highway {
   corax_rnode_t *src;
   corax_rnode_t *dest;
   double proba;
+  
+  friend std::ostream& operator<<(std::ostream& os, const Highway &h) {
+    os << "(" << h.src->label << " -> " << h.dest->label << ")";
+    return os;
+  }
 };
+  
 
 
 class MultiModel: public BaseReconciliationModel {

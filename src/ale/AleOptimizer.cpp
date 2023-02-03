@@ -318,20 +318,22 @@ static Parameters testHighway(GTSpeciesTreeLikelihoodEvaluator &evaluator,
 
 static Parameters testHighways(GTSpeciesTreeLikelihoodEvaluator &evaluator,
     const std::vector<Highway *> &highways,
-    const std::vector<double> &startingProbabilities)
+    const Parameters &startingProbabilities,
+    bool optimize)
 {
-  assert(highways.size() == startingProbabilities.size());
+  assert(highways.size() == startingProbabilities.dimensions());
   HighwayFunction f(evaluator, highways);
-  Parameters startingParameter(highways.size());
-  for (unsigned int i = 0; i < highways.size(); ++i) {
-    startingParameter[i] = startingProbabilities[i];
+  if (optimize) {
+    OptimizationSettings settings;
+    return DTLOptimizer::optimizeParameters(
+        f, 
+        startingProbabilities, 
+        settings);
+  } else {
+    auto parameters = startingProbabilities;
+    f.evaluate(parameters);
+    return parameters;
   }
-  OptimizationSettings settings;
-  auto parameters = DTLOptimizer::optimizeParameters(
-      f, 
-      startingParameter, 
-      settings);
-  return parameters;
 }
 
 void AleOptimizer::getBestHighways(std::vector<ScoredHighway> &scoredHighways)
@@ -356,6 +358,7 @@ void AleOptimizer::getBestHighways(std::vector<ScoredHighway> &scoredHighways)
   unsigned int failures = 0;
   unsigned int iterations = 0;
   size_t fastRoundMaxTrials = 100;
+  size_t maxFailures = 10;
   size_t slowRoundMaxTrials = 25;
   std::vector<ScoredHighway> scoredHighwaysFast;
   Logger::timed << "Looking for the best highways candidates among " << fastRoundMaxTrials << " candidates (fast round)" << std::endl;
@@ -374,11 +377,11 @@ void AleOptimizer::getBestHighways(std::vector<ScoredHighway> &scoredHighways)
             initialLL - parameters.getScore()));
       failures = 0;
     } else {
-      Logger::timed << "not a candidate highway " << std::endl;
+      Logger::timed << "not a candidate highway " << highway << std::endl;
       failures++;
     }
     iterations++;
-    if (failures > 10 || iterations > fastRoundMaxTrials) {
+    if (failures > maxFailures || iterations > fastRoundMaxTrials) {
       break;
     }
   }
@@ -402,7 +405,31 @@ void AleOptimizer::getBestHighways(std::vector<ScoredHighway> &scoredHighways)
   std::sort(scoredHighways.rbegin(), scoredHighways.rend());
 }
 
-  
+ 
+static void testAllButOneHighways(GTSpeciesTreeLikelihoodEvaluator &evaluator,
+    std::vector<ScoredHighway> &highways,
+    double refLL)
+{
+  for (unsigned int i = 0; i < highways.size(); ++i) {
+    std::vector<Highway *> allButOneHighways;
+    Parameters allButOneParameters;
+    for (unsigned int j = 0; j < highways.size(); ++j) {
+      if (i != j) {
+        auto &highway = highways[j];
+        allButOneHighways.push_back(&highway.highway);
+        allButOneParameters.addValue(highway.highway.proba);
+      }
+    }
+    auto parameters = testHighways(evaluator, 
+        allButOneHighways,
+        allButOneParameters,
+        false);
+    highways[i].score = parameters.getScore();
+    highways[i].scoreDiff  = refLL - parameters.getScore();
+    Logger::timed << highways[i].highway << " diff= " << highways[i].scoreDiff << std::endl;
+  }
+}
+
 void AleOptimizer::addHighways(const std::vector<ScoredHighway> &candidateHighways,
     std::vector<ScoredHighway> &acceptedHighways)
 {
@@ -411,16 +438,24 @@ void AleOptimizer::addHighways(const std::vector<ScoredHighway> &candidateHighwa
   Logger::timed << "Trying to add all candidate highways simultaneously" << std::endl;
   std::vector<Highway> highways;
   std::vector<Highway *> highwaysPtr;
-  std::vector<double> startingProbabilities;
+  Parameters startingProbabilities;
   for (const auto candidate: candidateHighways) {
     highways.push_back(candidate.highway);
-    startingProbabilities.push_back(candidate.highway.proba);
+    startingProbabilities.addValue(candidate.highway.proba);
   }
   for (auto &highway: highways) {
     highwaysPtr.push_back(&highway);
   }
-  auto parameters = testHighways(*_evaluator, highwaysPtr, startingProbabilities);
+  auto parameters = testHighways(*_evaluator, highwaysPtr, startingProbabilities, true);
   Logger::info << parameters << std::endl;
+  for (unsigned int i = 0; i < candidateHighways.size(); ++i) {
+    ScoredHighway sh(candidateHighways[i]);
+    sh.highway.proba = parameters[i];
+    acceptedHighways.push_back(sh);
+  }
+  testAllButOneHighways(*_evaluator, acceptedHighways, parameters.getScore());
+  std::sort(acceptedHighways.rbegin(), acceptedHighways.rend());
+  
 }
 
 void AleOptimizer::saveBestHighways(const std::vector<ScoredHighway> &scoredHighways,

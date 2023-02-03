@@ -58,6 +58,10 @@ public:
     return static_cast<unsigned int>(_parameters.size());
   }
 
+  inline void addValue(double value) {
+    _parameters.push_back(value);
+  }
+
   inline Parameters getSubParameters(unsigned int begin, unsigned int size) const {
     return Parameters(std::vector<double>(_parameters.begin() + begin, 
           _parameters.begin() + begin + size));

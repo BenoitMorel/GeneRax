@@ -13,7 +13,7 @@
 #include "AleEvaluator.hpp"
 
 struct ScoredHighway {
-  ScoredHighway(const Highway &highway, double score, double scoreDiff):
+  ScoredHighway(const Highway &highway, double score = 0.0, double scoreDiff = 0.0):
     highway(highway),
     score(score),
     scoreDiff(scoreDiff)
