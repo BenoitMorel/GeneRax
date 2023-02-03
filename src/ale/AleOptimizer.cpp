@@ -355,7 +355,7 @@ void AleOptimizer::getBestHighways(std::vector<ScoredHighway> &scoredHighways)
   
   unsigned int failures = 0;
   unsigned int iterations = 0;
-  size_t fastRoundMaxTrials = 500;
+  size_t fastRoundMaxTrials = 100;
   size_t slowRoundMaxTrials = 25;
   std::vector<ScoredHighway> scoredHighwaysFast;
   Logger::timed << "Looking for the best highways candidates among " << fastRoundMaxTrials << " candidates (fast round)" << std::endl;
@@ -408,24 +408,6 @@ void AleOptimizer::addHighways(const std::vector<ScoredHighway> &candidateHighwa
 {
   double initialLL = getEvaluator().computeLikelihood(); 
   double currentLL = initialLL;
-  /*
-  Logger::timed << "Trying to add the " << candidateHighways.size() << " candidate highways one by one" << std::endl;
-  Logger::info << "initial ll=" << initialLL << std::endl;
-  for (const auto candidate: candidateHighways) {
-    Highway highway(candidate.highway);
-    auto parameters = testHighway(*_evaluator, highway, highway.proba);
-    if (parameters.getScore() > currentLL + 1.0) {
-      highway.proba = parameters[0];
-      _evaluator->addHighway(highway);
-      Logger::timed << "Accepting highway " << highway.src->label << "->" << highway.dest->label << std::endl;
-      Logger::timed << "ph=" << parameters[0] 
-        << " lldiff=" << initialLL - parameters.getScore() << std::endl; 
-      currentLL = getEvaluator().computeLikelihood();
-    } else {
-      Logger::timed << "Rejecting highway " << highway.src->label << "->" << highway.dest->label << std::endl;
-    }
-  }
-  */
   Logger::timed << "Trying to add all candidate highways simultaneously" << std::endl;
   std::vector<Highway> highways;
   std::vector<Highway *> highwaysPtr;
