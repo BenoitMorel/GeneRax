@@ -4,7 +4,7 @@
 
 void test(const std::string &newickFile)
 {
-  ConditionalClades cc(newickFile, CCPRooting::UNIFORM);
+  ConditionalClades cc(newickFile, "", CCPRooting::UNIFORM);
   cc.printContent();
 }
 

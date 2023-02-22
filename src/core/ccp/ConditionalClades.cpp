@@ -287,7 +287,9 @@ static void fillCladeCounts(const WeightedTrees &weightedTrees,
 
 
 
+
 ConditionalClades::ConditionalClades(const std::string &inputFile,
+    const std::string &likelihoods,
       CCPRooting ccpRooting):
   _inputTrees(0),
   _uniqueInputTrees(0),
@@ -304,18 +306,6 @@ ConditionalClades::ConditionalClades(const std::string &inputFile,
       // try reading the file as a list of gene trees
     }
   }
-  std::string likelihoods;
-  buildFromGeneTrees(inputFile, likelihoods, ccpRooting);
-  //printContent();
-}
-
-ConditionalClades::ConditionalClades(const std::string &inputFile,
-    const std::string &likelihoods,
-      CCPRooting ccpRooting):
-  _inputTrees(0),
-  _uniqueInputTrees(0),
-  _ccpRooting(ccpRooting)
-{
   buildFromGeneTrees(inputFile, likelihoods, ccpRooting);
 }
 

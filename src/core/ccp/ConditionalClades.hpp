@@ -59,8 +59,6 @@ class ConditionalClades {
  public:
   ConditionalClades() {}
   ConditionalClades(const std::string &inputFile,
-      CCPRooting ccpRooting);
-  ConditionalClades(const std::string &inputFile,
       const std::string &likelihoods,
       CCPRooting ccpRooting);
   void printContent() const; 
