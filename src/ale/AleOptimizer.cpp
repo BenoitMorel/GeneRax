@@ -340,11 +340,6 @@ void AleOptimizer::getBestHighways(std::vector<ScoredHighway> &scoredHighways)
 {
   double initialLL = getEvaluator().computeLikelihood(); 
   Logger::info << "initial ll=" << initialLL << std::endl;
-  TransferFrequencies frequencies;
-  PerSpeciesEvents perSpeciesEvents;
-  getEvaluator().getTransferInformation(*_speciesTree,
-    frequencies,
-    perSpeciesEvents);
 
   unsigned int minTransfers = 1;
   MovesBlackList blacklist;
@@ -433,8 +428,6 @@ static void testAllButOneHighways(GTSpeciesTreeLikelihoodEvaluator &evaluator,
 void AleOptimizer::addHighways(const std::vector<ScoredHighway> &candidateHighways,
     std::vector<ScoredHighway> &acceptedHighways)
 {
-  double initialLL = getEvaluator().computeLikelihood(); 
-  double currentLL = initialLL;
   Logger::timed << "Trying to add all candidate highways simultaneously" << std::endl;
   std::vector<Highway> highways;
   std::vector<Highway *> highwaysPtr;
