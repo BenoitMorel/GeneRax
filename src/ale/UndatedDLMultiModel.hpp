@@ -35,7 +35,7 @@ private:
 
   REAL getLikelihoodFactor();
   virtual void recomputeSpeciesProbabilities();
-  virtual void computeProbability(CID cid, 
+  virtual bool computeProbability(CID cid, 
     corax_rnode_t *speciesNode, 
     size_t category,
     REAL &proba,
@@ -145,7 +145,7 @@ void UndatedDLMultiModel<REAL>::recomputeSpeciesProbabilities()
 }
 
 template <class REAL>
-void UndatedDLMultiModel<REAL>::computeProbability(CID cid, 
+bool UndatedDLMultiModel<REAL>::computeProbability(CID cid, 
     corax_rnode_t *speciesNode, 
     size_t,
     REAL &proba,
@@ -167,7 +167,7 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
     if (this->_geneToSpecies[cid] == e) {
       proba = REAL(_PS[e]);
     }
-    return;
+    return true;
   }
   REAL temp;
   unsigned int f = 0;
@@ -190,7 +190,7 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
         recCell->event.type = ReconciliationEventType::EVENT_S;
         recCell->event.leftGeneIndex = cidLeft;
         recCell->event.rightGeneIndex = cidRight;
-        return;
+        return true;
       }
       temp = _dlclvs[cidRight][f] * _dlclvs[cidLeft][g] * (_PS[e] * freq); 
       scale(temp);
@@ -199,7 +199,7 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
         recCell->event.type = ReconciliationEventType::EVENT_S;
         recCell->event.leftGeneIndex = cidRight;
         recCell->event.rightGeneIndex = cidLeft;
-        return;
+        return true;
       }
     }
     // D events
@@ -210,7 +210,7 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
       recCell->event.type = ReconciliationEventType::EVENT_D;
       recCell->event.leftGeneIndex = cidLeft;
       recCell->event.rightGeneIndex = cidRight;
-      return;
+      return true;
     }
   }
   if (not isSpeciesLeaf) {
@@ -222,7 +222,7 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
       recCell->event.type = ReconciliationEventType::EVENT_SL;
       recCell->event.destSpeciesNode = f;
       recCell->event.pllDestSpeciesNode = this->getSpeciesLeft(speciesNode);
-      return;
+      return true;
     }
     
     temp = _dlclvs[cid][g] * (_uE[f] * _PS[e]);
@@ -232,16 +232,16 @@ void UndatedDLMultiModel<REAL>::computeProbability(CID cid,
       recCell->event.type = ReconciliationEventType::EVENT_SL;
       recCell->event.destSpeciesNode = g;
       recCell->event.pllDestSpeciesNode = this->getSpeciesRight(speciesNode);
-      return;
+      return true;
     }
   }
   // DL event
   //proba /= (1.0 - 2.0 * _PD[e] * _uE[e]); 
   if (recCell) {
-    std::cerr << "cerr " << proba << " " << maxProba << " " << (proba > maxProba) << std::endl;
-    // we haven't sampled any event...
-    assert(false);
+    //std::cerr << "cerr " << proba << " " << maxProba << " " << (proba > maxProba) << std::endl;
+    return false; // we haven't sampled any event
   }
+  return true;
 }
   
 template <class REAL>

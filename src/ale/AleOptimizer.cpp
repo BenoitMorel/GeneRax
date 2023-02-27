@@ -212,7 +212,9 @@ void AleOptimizer::reconcile(unsigned int samples)
     std::vector<std::string> transferFiles;
     std::string geneTreesPath = FileSystem::joinPaths(allRecDir, families[i].name + std::string(".newick"));
     ParallelOfstream geneTreesOs(geneTreesPath, false);
-
+    std::vector<Scenario> scenarios;
+    _evaluator->sampleScenarios(i, samples, scenarios);
+    assert(scenarios.size() == samples);
     for (unsigned int sample = 0; sample < samples; ++ sample) {
       auto out = FileSystem::joinPaths(allRecDir, 
           families[i].name + std::string("_") +  std::to_string(sample) + ".xml");
@@ -224,10 +226,7 @@ void AleOptimizer::reconcile(unsigned int samples)
           families[i].name + std::string("_transfers_") +  std::to_string(sample) + ".txt");
       perSpeciesEventCountsFiles.push_back(perSpeciesEventCountsFile);
       transferFiles.push_back(transferFile);
-      auto &evaluation = _evaluator->getEvaluation(i);
-      evaluation.computeLogLikelihood();
-      Scenario scenario;
-      evaluation.inferMLScenario(scenario, true);
+      auto &scenario = scenarios[sample];
       scenario.saveReconciliation(out, ReconciliationFormat::RecPhyloXML, false);
       scenario.saveReconciliation(geneTreesOs, ReconciliationFormat::NewickEvents);
       scenario.saveEventsCounts(eventCountsFile, false);

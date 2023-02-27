@@ -47,8 +47,11 @@ public:
 
   void addHighway(const Highway &highway);
   void removeHighway();
+  void sampleScenarios(unsigned int family, unsigned int samples,
+      std::vector<Scenario> &scenarios);
 protected:
   virtual double optimizeGammaRates();
+  void resetEvaluation(unsigned int i, bool highPrecision);
 private:
   SpeciesTree &_speciesTree;
   ModelParameters &_modelRates;
@@ -56,8 +59,8 @@ private:
   const Families &_families;
   PerCoreMultiEvaluation _evaluations;
   PerCoreMultiEvaluation _approxEvaluations;
-  std::vector<int> _highPrecisions;
   PerCoreGeneTrees &_geneTrees;
+  std::vector<int> _highPrecisions;
   
 };
 

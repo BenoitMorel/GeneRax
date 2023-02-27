@@ -72,18 +72,14 @@ GTSpeciesTreeLikelihoodEvaluator::GTSpeciesTreeLikelihoodEvaluator(
   _speciesTree(speciesTree),
   _modelRates(modelRates),
   _families(families),
-  _geneTrees(geneTrees)
+  _geneTrees(geneTrees),
+  _highPrecisions(_geneTrees.getTrees().size(), -1)
   
 {
   Logger::timed << "Initializing ccps and evaluators..." << std::endl;
-  for (const auto &geneTree: _geneTrees.getTrees()) {
-    auto &family = families[geneTree.familyIndex];
-    _evaluations.push_back(createModel(_speciesTree,
-          family,
-          _modelRates,
-          _highways,
-          false));
-    _highPrecisions.push_back(-1);
+  _evaluations.resize(_geneTrees.getTrees().size());
+  for (unsigned int i = 0; i < _geneTrees.getTrees().size(); ++i) {
+    resetEvaluation(i, false);
   }
   ParallelContext::barrier();
   unsigned int cladesNumber = 0;
@@ -108,6 +104,28 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihood()
   return computeLikelihoodFast();
 }
 
+
+void GTSpeciesTreeLikelihoodEvaluator::resetEvaluation(unsigned int i, bool highPrecision)
+{
+  auto famIndex = _geneTrees.getTrees()[i].familyIndex;
+  auto &family = _families[famIndex];
+  _evaluations[i] = createModel(_speciesTree, 
+      family,
+      _modelRates,
+      _highways,
+      highPrecision);
+  _highPrecisions[i] = highPrecision;
+  auto ll = _evaluations[i]->computeLogLikelihood();
+  if (highPrecision) {
+    _highPrecisions[i] = 0;
+  } else {
+    _highPrecisions[i] = -1;
+    if (!std::isnormal(ll)) {
+      resetEvaluation(i, true);
+    }
+  }
+}
+
 double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
 {
   double sumLL = 0.0;
@@ -119,13 +137,7 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
       // we are in low precision mode (we use double)
       // and it's not accurate enough, switch to
       // high precision mode
-      _evaluations[i] = createModel(_speciesTree, 
-          family,
-          _modelRates,
-          _highways,
-          true);
-      _highPrecisions[i] = 0;
-      ll = _evaluations[i]->computeLogLikelihood();
+      resetEvaluation(i, true);
     }
     if (!std::isnormal(ll)) {
       std::cerr << "Error: ll=" << ll << " for family " << family.name << std::endl;
@@ -134,16 +146,7 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
     if (_highPrecisions[i] >= 0 && _highPrecisions[i] % 20 == 0) {
       // we are in high precision mode, we now check if we can
       // switch to low precision mode to make computations faster
-      auto ev = createModel(_speciesTree, 
-          family,
-          _modelRates,
-          _highways,
-          false);
-      auto newLL = ev->computeLogLikelihood();
-      if (std::isnormal(newLL)) {
-        _evaluations[i] = ev;
-        _highPrecisions[i] = -1;
-      }
+        resetEvaluation(i, false);
     }
     if (_highPrecisions[i] >= 0) { 
       _highPrecisions[i]++;
@@ -381,7 +384,8 @@ void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(SpeciesTree &speci
     // ParallelContext::makeRandConsistent() needs to be called 
     // right after the loop
     Scenario scenario;
-    evaluation.inferMLScenario(scenario, true);
+    bool ok = evaluation.inferMLScenario(scenario, true);
+    assert(ok);
     scenario.countTransfers(labelToId, 
         transferFrequencies.count);
     scenario.gatherReconciliationStatistics(perSpeciesEvents);
@@ -407,4 +411,19 @@ void GTSpeciesTreeLikelihoodEvaluator::fillPerFamilyLikelihoods(
       localLL, perFamLL);
 }
 
-
+void GTSpeciesTreeLikelihoodEvaluator::sampleScenarios(unsigned int family, unsigned int samples,
+      std::vector<Scenario> &scenarios)
+{
+  assert(family < _evaluations.size());
+  scenarios = std::vector<Scenario>(samples);
+  getEvaluation(family).computeLogLikelihood();
+  for (unsigned int s = 0; s < samples; ++s) {
+    bool ok  = getEvaluation(family).inferMLScenario(scenarios[s], true);
+    if (!ok) {
+      assert(_highPrecisions[family] == -1);
+      resetEvaluation(family, true);
+      sampleScenarios(family, samples, scenarios);
+      return;
+    }
+  }
+}

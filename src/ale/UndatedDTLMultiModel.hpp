@@ -110,7 +110,7 @@ private:
   void updateCLV(CID cid);
   double getLikelihoodFactor(unsigned int category);
   virtual void recomputeSpeciesProbabilities();
-  virtual void computeProbability(CID cid, 
+  virtual bool  computeProbability(CID cid, 
     corax_rnode_t *speciesNode, 
     size_t category,
     REAL &proba,
@@ -547,7 +547,7 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
 
 
 template <class REAL>
-void UndatedDTLMultiModel<REAL>::computeProbability(CID cid, 
+bool UndatedDTLMultiModel<REAL>::computeProbability(CID cid, 
     corax_rnode_t *speciesNode,
     size_t category,
     REAL &proba,
@@ -570,7 +570,7 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
     if (this->_geneToSpecies[cid] == e) {
       proba = REAL(_PS[ec]);
     }
-    return;
+    return true;
   }
   REAL temp;
   unsigned int f = 0;
@@ -598,7 +598,7 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
         recCell->event.type = ReconciliationEventType::EVENT_S;
         recCell->event.leftGeneIndex = cidLeft;
         recCell->event.rightGeneIndex = cidRight;
-        return;
+        return true;
       }
       temp = _dtlclvs[cidRight]._uq[fc] * _dtlclvs[cidLeft]._uq[gc] * (_PS[ec] * freq); 
       scale(temp);
@@ -607,7 +607,7 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
         recCell->event.type = ReconciliationEventType::EVENT_S;
         recCell->event.leftGeneIndex = cidRight;
         recCell->event.rightGeneIndex = cidLeft;
-        return;
+        return true;
       }
     }
     // D event
@@ -618,7 +618,7 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
       recCell->event.type = ReconciliationEventType::EVENT_D;
       recCell->event.leftGeneIndex = cidLeft;
       recCell->event.rightGeneIndex = cidRight;
-      return;
+      return true;
     }
 
 
@@ -649,7 +649,7 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
         recCell->event.pllDestSpeciesNode->node_index;
       recCell->event.leftGeneIndex = cidRight; 
       recCell->event.rightGeneIndex = cidLeft; 
-      return;
+      return true;
     }
    
     switch (_transferConstraint) {
@@ -679,7 +679,7 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
         recCell->event.pllDestSpeciesNode->node_index;
       recCell->event.leftGeneIndex = cidLeft; 
       recCell->event.rightGeneIndex = cidRight; 
-      return;
+      return true;
     }
     
     // highway transfers
@@ -696,7 +696,7 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
         recCell->event.destSpeciesNode = d;
         recCell->event.leftGeneIndex = cidLeft;
         recCell->event.rightGeneIndex = cidRight; 
-        return;
+        return true;
       }
       temp = (_dtlclvs[cidRight]._uq[ec] * _dtlclvs[cidLeft]._uq[dc]) * (highway.proba * freq);
       scale(temp);
@@ -708,7 +708,7 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
         recCell->event.destSpeciesNode = d;
         recCell->event.leftGeneIndex = cidRight;
         recCell->event.rightGeneIndex = cidLeft;
-        return;
+        return true;
       }
     }
   }
@@ -722,7 +722,7 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
       recCell->event.destSpeciesNode = f;
       recCell->event.pllDestSpeciesNode = this->getSpeciesLeft(speciesNode);
       recCell->event.pllLostSpeciesNode = this->getSpeciesRight(speciesNode);
-      return;
+      return true;
     }
     temp = _dtlclvs[cid]._uq[gc] * (_uE[fc] * _PS[ec]);
     scale(temp);
@@ -732,13 +732,14 @@ void UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
       recCell->event.destSpeciesNode = g;
       recCell->event.pllDestSpeciesNode = this->getSpeciesRight(speciesNode);
       recCell->event.pllLostSpeciesNode = this->getSpeciesLeft(speciesNode);
-      return;
+      return true;
     }
   }
   if (recCell) {
-    std::cerr << proba << " " << maxProba << std::endl;
-    assert(false);
+    //std::cerr << "boum " << proba << " " << maxProba << std::endl;
+    return false;
   }
+  return true;
 }
   
 template <class REAL>

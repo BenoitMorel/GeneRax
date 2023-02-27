@@ -167,7 +167,7 @@ void run( AleArguments &args)
   }
   if (args.inferSpeciationOrders) {
     speciesTreeOptimizer.optimizeDates();
-    auto ll = speciesTreeOptimizer.getEvaluator().computeLikelihood();
+    speciesTreeOptimizer.getEvaluator().computeLikelihood();
   }
   Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   if (args.highways) {
