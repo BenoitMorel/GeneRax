@@ -127,6 +127,9 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
       _highPrecisions[i] = 0;
       ll = _evaluations[i]->computeLogLikelihood();
     }
+    if (!std::isnormal(ll)) {
+      std::cerr << "Error: ll=" << ll << " for family " << family.name << std::endl;
+    }
     assert(std::isnormal(ll));
     if (_highPrecisions[i] >= 0 && _highPrecisions[i] % 20 == 0) {
       // we are in high precision mode, we now check if we can
