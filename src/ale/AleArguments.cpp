@@ -17,7 +17,7 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
   inferSpeciationOrders(false),
   fixRates(false),
   highways(false),
-  minCoveredSpecies(-1),
+  minCoveredSpecies(4),
   trimFamilyRatio(1.0),
   geneTreeSamples(0),
   output("GeneTegrator"),
