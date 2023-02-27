@@ -38,7 +38,7 @@ struct SpeciesEvents {
 
 
   double speciesFrequency() const {
-    return SCount + SLCount;
+    return SCount + SLCount + LeafCount;
   }
 };
 
