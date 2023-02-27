@@ -34,7 +34,8 @@ public:
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);
   virtual void getTransferInformation(SpeciesTree &speciesTree,
     TransferFrequencies &frequencies,
-    PerSpeciesEvents &perSpeciesEvents);
+    PerSpeciesEvents &perSpeciesEvents,
+    PerCorePotentialTransfers &potentialTransfers);
   virtual bool pruneSpeciesTree() const {return _modelRates.info.pruneSpeciesTree;}
   virtual void setAlpha(double alpha);
   virtual void onSpeciesDatesChange();  

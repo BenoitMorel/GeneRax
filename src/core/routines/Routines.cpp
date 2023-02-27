@@ -19,6 +19,7 @@
 #include <DistanceMethods/MiniNJ.hpp>
 #include <DistanceMethods/Cherry.hpp>
 #include <DistanceMethods/CherryPro.hpp>
+#include <search/SpeciesTransferSearch.hpp>
   
 std::unique_ptr<PLLRootedTree> 
 Routines::computeInitialSpeciesTree(Families &families,
@@ -509,7 +510,8 @@ void Routines::getTransfersFrequencies(PLLRootedTree &speciesTree,
     PerCoreGeneTrees &geneTrees,
     const ModelParameters &modelParameters,
     unsigned int reconciliationSamples,
-    TransferFrequencies &transferFrequencies)
+    TransferFrequencies &transferFrequencies,
+    PerCorePotentialTransfers &potentialTransfers)
 {
   const bool optimizeRates = false;
   ModelParameters transfersModelParameter;
@@ -534,7 +536,9 @@ void Routines::getTransfersFrequencies(PLLRootedTree &speciesTree,
       reconciliationSamples,
       optimizeRates, 
       scenarios);
-  
+  for (const auto &scenario: scenarios) {
+    potentialTransfers.addScenario(scenario);
+  }
   const auto labelToId = speciesTree.getDeterministicLabelToId();
   const auto idToLabel = speciesTree.getDeterministicIdToLabel();
   const unsigned int labelsNumber = idToLabel.size();

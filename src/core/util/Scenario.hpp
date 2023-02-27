@@ -166,6 +166,8 @@ public:
   void gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents) const;
   void countTransfers(const StringToUint &labelToId,
       MatrixUint &count);
+  
+  std::vector<unsigned int> getPerSpeciesCopies() const;
 
   unsigned int getEventCount(ReconciliationEventType type) const {
     return _eventsCount[static_cast<unsigned int>(type)];

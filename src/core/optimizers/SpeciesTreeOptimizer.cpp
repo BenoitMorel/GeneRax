@@ -429,7 +429,8 @@ double SpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
 
 void SpeciesTreeLikelihoodEvaluator::getTransferInformation(SpeciesTree &speciesTree,
     TransferFrequencies &frequencies,
-    PerSpeciesEvents &perSpeciesEvents)
+    PerSpeciesEvents &perSpeciesEvents,
+    PerCorePotentialTransfers &potentialTransfers)
 {
   ParallelContext::barrier();
   unsigned int reconciliationSamples = 0; // use ML reconciliation
@@ -437,7 +438,8 @@ void SpeciesTreeLikelihoodEvaluator::getTransferInformation(SpeciesTree &species
     *_geneTrees,
     *_modelRates,
     reconciliationSamples,
-    frequencies);
+    frequencies,
+    potentialTransfers);
   const bool forceTransfers = true;
   Routines::getPerSpeciesEvents(speciesTree.getTree(),
     *_geneTrees,

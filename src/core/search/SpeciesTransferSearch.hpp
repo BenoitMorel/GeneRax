@@ -3,12 +3,13 @@
 #include <string>
 #include <unordered_set>
 #include <vector>
+#include <util/types.hpp>
 
 class SpeciesTree;
 class SpeciesTreeLikelihoodEvaluatorInterface;
 class AverageStream;
 class SpeciesSearchState;
-
+class Scenario;
 static unsigned int hashints(unsigned int a, unsigned int b) {
   return (a + b) * (a + b + 1) / 2  + b;
 }
@@ -48,6 +49,14 @@ struct MovesBlackList {
   std::unordered_set<TransferMove> _blacklist;
   bool isBlackListed(const TransferMove &move) { return _blacklist.find(move) != _blacklist.end();}
   void blacklist(const TransferMove &move) { _blacklist.insert(move); }
+};
+
+struct PerCorePotentialTransfers {
+  
+  PerCorePotentialTransfers() {}  
+  void addScenario(const Scenario &scenario);
+  unsigned int getPotentialTransfers(unsigned int src, unsigned int dest);
+  MatrixUint copies; // copies[species][family]
 };
 
 

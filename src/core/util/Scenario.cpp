@@ -80,6 +80,20 @@ void Scenario::saveEventsCounts(const std::string &filename, bool masterRankOnly
     os << eventNames[i] << ":" << _eventsCount[i] << std::endl;
   }
 }
+
+
+std::vector<unsigned int> Scenario::getPerSpeciesCopies() const
+{
+  std::vector<unsigned int> copies(_rootedTree->getNodesNumber(), 0);
+  for (const auto &event: _events) {
+    if (event.type == ReconciliationEventType::EVENT_S
+        || event.type == ReconciliationEventType::EVENT_SL
+        || event.type == ReconciliationEventType::EVENT_None) {
+      copies[event.speciesNode]++;
+    }
+  }
+  return copies;
+}
   
 
 void Scenario::gatherReconciliationStatistics(PerSpeciesEvents &perSpeciesEvents) const

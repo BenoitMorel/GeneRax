@@ -6,8 +6,32 @@
 #include <trees/SpeciesTree.hpp>
 #include <trees/PLLRootedTree.hpp>
 #include <IO/FileSystem.hpp>
+  
 
+void PerCorePotentialTransfers::addScenario(const Scenario &scenario)
+{
+  auto famCopies = scenario.getPerSpeciesCopies();
+  if (!copies.size()) {
+    copies.resize(famCopies.size());
+  }
+  assert(copies.size() == famCopies.size());
+  for (unsigned int species = 0; species < famCopies.size(); ++species) {
+    copies[species].push_back(famCopies[species]);
+  }
+}
 
+unsigned int PerCorePotentialTransfers::getPotentialTransfers(unsigned int src, unsigned int dest)
+{
+  unsigned int res = 0;
+  assert(copies[src].size() == copies[dest].size());
+  for (unsigned int fam = 0; fam < copies[src].size(); ++fam) {
+    if (copies[dest][fam]) {
+      res += copies[src][fam];
+    }
+  }
+  ParallelContext::sumUInt(res);
+  return res;
+}
 
 void SpeciesTransferSearch::getSortedTransferList(SpeciesTree &speciesTree,
     SpeciesTreeLikelihoodEvaluatorInterface &evaluation,
@@ -18,9 +42,10 @@ void SpeciesTransferSearch::getSortedTransferList(SpeciesTree &speciesTree,
 {
   TransferFrequencies frequencies;
   PerSpeciesEvents perSpeciesEvents;
+  PerCorePotentialTransfers potentialTransfers;
   evaluation.getTransferInformation(speciesTree,
       frequencies,
-      perSpeciesEvents);
+      perSpeciesEvents, potentialTransfers);
   unsigned int speciesNumber = speciesTree.getTree().getNodesNumber();
   std::vector<double> speciesFrequencies;
   for (unsigned int e = 0; e < speciesNumber; ++e) {
@@ -42,9 +67,12 @@ void SpeciesTransferSearch::getSortedTransferList(SpeciesTree &speciesTree,
       }
       TransferMove move(prune, regraft, count);
       double factor = 1.0;
-      if (true) {//evaluation.pruneSpeciesTree()) {
+      if (false) {//evaluation.pruneSpeciesTree()) {
         factor /= (1.0 + sqrt(speciesFrequencies[prune]));
         factor /= (1.0 + sqrt(speciesFrequencies[regraft]));
+      }
+      if (true) {
+        factor = 1.0 / double(potentialTransfers.getPotentialTransfers(regraft, prune));
       }
       if (!blacklist.isBlackListed(move)) {
         transferMoves.push_back(TransferMove(prune, regraft, factor * count)); 

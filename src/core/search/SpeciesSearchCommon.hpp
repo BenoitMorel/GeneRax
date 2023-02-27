@@ -8,7 +8,7 @@
 #include <maths/AverageStream.hpp>
 
 class SpeciesTree; 
-
+class PerCorePotentialTransfers;
 using TreePerFamLL = std::pair<std::string, PerFamLL>;
 using TreePerFamLLVec = std::vector<TreePerFamLL>;
 struct RootLikelihoods {
@@ -70,7 +70,8 @@ public:
   
   virtual void getTransferInformation(SpeciesTree &speciesTree,
     TransferFrequencies &frequencies,
-    PerSpeciesEvents &perSpeciesEvents) = 0;
+    PerSpeciesEvents &perSpeciesEvents,
+    PerCorePotentialTransfers &potentialTransfers) = 0;
   
   /**
    * Fill perFamLL with the per-family (over all parallel

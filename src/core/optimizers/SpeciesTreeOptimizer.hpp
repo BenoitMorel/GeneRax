@@ -70,7 +70,8 @@ public:
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);
   virtual void getTransferInformation(SpeciesTree &speciesTree,
     TransferFrequencies &frequencies,
-    PerSpeciesEvents &perSpeciesEvents);
+    PerSpeciesEvents &perSpeciesEvents,
+    PerCorePotentialTransfers &potentialTransfers);
   virtual bool pruneSpeciesTree() const {return _pruneSpeciesTree;}
 private:
   PerCoreGeneTrees *_geneTrees;

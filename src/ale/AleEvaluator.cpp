@@ -352,7 +352,8 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeGammaRates()
   
 void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(SpeciesTree &speciesTree,
     TransferFrequencies &transferFrequencies,
-    PerSpeciesEvents &perSpeciesEvents)
+    PerSpeciesEvents &perSpeciesEvents,
+    PerCorePotentialTransfers &potentialTransfers)
 {
   // this is duplicated code from Routines...
   const auto labelToId = speciesTree.getTree().getDeterministicLabelToId();
@@ -384,6 +385,7 @@ void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(SpeciesTree &speci
     scenario.countTransfers(labelToId, 
         transferFrequencies.count);
     scenario.gatherReconciliationStatistics(perSpeciesEvents);
+    potentialTransfers.addScenario(scenario);
   }
   ParallelContext::makeRandConsistent();
   for (unsigned int i = 0; i < labelsNumber; ++i) {

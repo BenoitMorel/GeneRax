@@ -13,7 +13,7 @@ class Parameters;
 class ModelParameters;
 class PLLRootedTree;
 class PerCoreGeneTrees;
-
+class PerCorePotentialTransfers;
 
 class Routines {
 
@@ -94,7 +94,8 @@ public:
     PerCoreGeneTrees &geneTrees,
     const ModelParameters &modelRates,
     unsigned int reconciliationSamples,
-    TransferFrequencies &frequencies);
+    TransferFrequencies &frequencies,
+    PerCorePotentialTransfers &potentialTransfers);
   
   static void getLabelsFromTransferKey(const std::string &key, 
       std::string &label1, 
