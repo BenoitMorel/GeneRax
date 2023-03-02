@@ -130,14 +130,15 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
 {
   double sumLL = 0.0;
   for (unsigned int i = 0; i < _evaluations.size(); ++i) {
-    auto ll = _evaluations[i]->computeLogLikelihood();
     auto famIndex = _geneTrees.getTrees()[i].familyIndex;
+    auto ll = _evaluations[i]->computeLogLikelihood();
     auto &family = _families[famIndex];
     if (_highPrecisions[i] == -1 && !std::isnormal(ll)) {
       // we are in low precision mode (we use double)
       // and it's not accurate enough, switch to
       // high precision mode
       resetEvaluation(i, true);
+      ll = _evaluations[i]->computeLogLikelihood();
     }
     if (!std::isnormal(ll)) {
       std::cerr << "Error: ll=" << ll << " for family " << family.name << std::endl;
