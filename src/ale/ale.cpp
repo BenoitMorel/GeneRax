@@ -11,7 +11,7 @@
 #include <util/RecModelInfo.hpp>
 #include <routines/Routines.hpp>
 #include <routines/SlavesMain.hpp>
-
+#include <IO/HighwayCandidateParser.hpp>
 
 void filterInvalidFamilies(Families &families)
 {
@@ -171,10 +171,21 @@ void run( AleArguments &args)
   }
   Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   if (args.highways) {
+    // let's infer highways of transfers!
     auto highwayOutput = FileSystem::joinPaths(args.output,
       "highway_best_candidates.txt");
     std::vector<ScoredHighway> candidateHighways;
-    speciesTreeOptimizer.getBestHighways(candidateHighways);
+    if (args.highwayCandidates.size()) {
+      // the user sets the candidates
+      auto highways = HighwayCandidateParser::parse(args.highwayCandidates,
+          speciesTreeOptimizer.getSpeciesTree().getTree());
+      for (const auto &highway: highways) {
+        candidateHighways.push_back(ScoredHighway(highway));
+      }
+    } else {
+      // automatically search for candidates
+      speciesTreeOptimizer.getBestHighways(candidateHighways);
+    }
     speciesTreeOptimizer.saveBestHighways(candidateHighways,
         highwayOutput);
     auto acceptedHighwayOutput = FileSystem::joinPaths(args.output,

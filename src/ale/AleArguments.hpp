@@ -32,7 +32,10 @@ public:
   SpeciesSearchStrategy speciesSearchStrategy;
   bool inferSpeciationOrders;
   bool fixRates;
+  
+  // highways
   bool highways;
+  std::string highwayCandidates;
 
   // trimming
   int minCoveredSpecies;

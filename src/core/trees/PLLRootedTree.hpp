@@ -181,6 +181,8 @@ public:
    */
   std::vector<unsigned int> getNodeIndexMapping(PLLRootedTree &otherTree);
 
+  std::unordered_map<std::string, corax_rnode_t *> getLabelToNode(bool leafOnly);
+
   bool areNodeIndicesParallelConsistent() const;
 
   std::vector<corax_rnode_t *> getOrderedSpeciations() const;

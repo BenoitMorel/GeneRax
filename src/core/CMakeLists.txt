@@ -8,6 +8,7 @@ set(jointsearch-core_SOURCES
   IO/NewickParserCommon.cpp
   IO/RootedNewickParser.cpp
   IO/Families.cpp
+  IO/HighwayCandidateParser.cpp
   IO/Logger.cpp
   IO/GeneSpeciesMapping.cpp
   IO/FamiliesFileParser.cpp

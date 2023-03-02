@@ -3,6 +3,7 @@
 #include <ccp/ConditionalClades.hpp>
 #include <likelihoods/reconciliation_models/BaseReconciliationModel.hpp>
 #include <IO/LibpllParsers.hpp>
+#include <IO/HighwayCandidateParser.hpp>
 
 
 class GeneSpeciesMapping;
@@ -14,24 +15,6 @@ struct ReconciliationCell {
   REAL maxProba;
 };
 
-struct Highway {
-  Highway():src(nullptr), dest(nullptr), proba(0.0) {}
-
-  Highway(corax_rnode_t *src, corax_rnode_t *dest):
-    src(src),
-    dest(dest),
-    proba(0.1)
-  {}
-  corax_rnode_t *src;
-  corax_rnode_t *dest;
-  double proba;
-  
-  friend std::ostream& operator<<(std::ostream& os, const Highway &h) {
-    os << "(" << h.src->label << " -> " << h.dest->label << ")";
-    return os;
-  }
-};
-  
 
 
 class MultiModel: public BaseReconciliationModel {
