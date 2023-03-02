@@ -39,6 +39,10 @@ std::vector<Highway> HighwayCandidateParser::parse(
     if (isBlanck(line)) {
       continue;
     }
+    removeSpaces(line);
+    if (line[0] =='#') {
+      continue;
+    }
     bool ok = true;
     std::string from;
     std::string to;
@@ -57,8 +61,8 @@ std::vector<Highway> HighwayCandidateParser::parse(
         " not found in the species tree. Check your highway candidate file at line " 
         << lineNumber << " of file " << candidateFile << std::endl;
     }
-    removeSpaces(from);
-    removeSpaces(to);
+    //removeSpaces(from);
+    //removeSpaces(to);
     if (ok && labelToNode.find(to) == labelToNode.end()) {
       ok = false;
       Logger::info << "Error: to label " << to << 
