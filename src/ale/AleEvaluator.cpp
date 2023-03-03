@@ -117,7 +117,7 @@ void GTSpeciesTreeLikelihoodEvaluator::resetEvaluation(unsigned int i, bool high
   _highPrecisions[i] = highPrecision;
   auto ll = _evaluations[i]->computeLogLikelihood();
   if (highPrecision) {
-    _highPrecisions[i] = 0;
+    _highPrecisions[i] = 1;
   } else {
     _highPrecisions[i] = -1;
     if (!std::isnormal(ll)) {
@@ -138,6 +138,7 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
       // and it's not accurate enough, switch to
       // high precision mode
       resetEvaluation(i, true);
+      ll = _evaluations[i]->computeLogLikelihood();
     }
     if (!std::isnormal(ll)) {
       std::cerr << "Error: ll=" << ll << " for family " << family.name << std::endl;
