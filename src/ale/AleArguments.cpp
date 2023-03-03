@@ -17,6 +17,8 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
   inferSpeciationOrders(false),
   fixRates(false),
   highways(false),
+  highwayCandidatesStep1(100),
+  highwayCandidatesStep2(25),
   minCoveredSpecies(4),
   trimFamilyRatio(1.0),
   geneTreeSamples(0),
@@ -44,8 +46,12 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
       fixRates = true;
     } else if (arg == "--highways") {
       highways = true;
-    } else if (arg == "--highway-candidates") {
-      highwayCandidates = std::string(argv[++i]);
+    } else if (arg == "--highway-candidates-file") {
+      highwayCandidateFile= std::string(argv[++i]);
+    } else if (arg == "--highway-candidates-step1") {
+      highwayCandidatesStep1 = atoi(argv[++i]);
+    } else if (arg == "--highway-candidates-step2") {
+      highwayCandidatesStep2 = atoi(argv[++i]);
     } else if (arg == "--transfer-constraint") {
       transferConstraint = ArgumentsHelper::strToTransferConstraint(std::string(argv[++i]));
     } else if (arg == "--origination") {

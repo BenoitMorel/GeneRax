@@ -822,7 +822,7 @@ corax_rnode_t *UndatedDTLMultiModel<REAL>::getSpeciesLCA()
     auto node = tree->getNode(spid);
     lca = tree->getLCA(lca, node);
   }
-  return lca;
+  return _speciesToPrunedNode[lca->node_index];
 }
   
 template <class REAL> 

@@ -51,7 +51,7 @@ public:
   void saveSpeciesTree();
   void saveSpeciesTreeRootLL();
   SpeciesTreeLikelihoodEvaluatorInterface &getEvaluator() {return *_evaluator;}
-  void getCandidateHighways(std::vector<ScoredHighway> &highways);
+  void getCandidateHighways(std::vector<ScoredHighway> &highways, unsigned int toTest);
   void selectBestHighways(const std::vector<ScoredHighway> &highways, std::vector<ScoredHighway> &bestHighways);
   void saveBestHighways(const std::vector<ScoredHighway> &highways,
       const std::string &output);

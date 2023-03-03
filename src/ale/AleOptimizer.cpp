@@ -337,7 +337,7 @@ static Parameters testHighways(GTSpeciesTreeLikelihoodEvaluator &evaluator,
   }
 }
 
-void AleOptimizer::getCandidateHighways(std::vector<ScoredHighway> &scoredHighways)
+void AleOptimizer::getCandidateHighways(std::vector<ScoredHighway> &scoredHighways, unsigned int toTest)
 {
   double initialLL = getEvaluator().computeLikelihood(); 
   Logger::info << "initial ll=" << initialLL << std::endl;
@@ -353,10 +353,8 @@ void AleOptimizer::getCandidateHighways(std::vector<ScoredHighway> &scoredHighwa
   
   unsigned int failures = 0;
   unsigned int iterations = 0;
-  size_t fastRoundMaxTrials = 100;
-  size_t maxFailures = 10;
-  size_t slowRoundMaxTrials = 25;
-  Logger::timed << "Looking for the best highways candidates among " << fastRoundMaxTrials << " candidates (fast round)" << std::endl;
+  size_t maxFailures = std::max((unsigned int)(10), toTest / 5);
+  Logger::timed << "Looking for the best highways candidates among " << toTest<< " candidates (fast round)" << std::endl;
   for (const auto &transferMove: transferMoves) {
     auto prune = _speciesTree->getNode(transferMove.prune); 
     auto regraft = _speciesTree->getNode(transferMove.regraft);
@@ -376,7 +374,7 @@ void AleOptimizer::getCandidateHighways(std::vector<ScoredHighway> &scoredHighwa
       failures++;
     }
     iterations++;
-    if (failures > maxFailures || iterations > fastRoundMaxTrials) {
+    if (failures > maxFailures || iterations > toTest) {
       break;
     }
   }
@@ -389,7 +387,6 @@ void AleOptimizer::selectBestHighways(const std::vector<ScoredHighway> &highways
   Logger::timed << "Looking for the best highways candidates among " << highways.size() << " candidates (slow round)" << std::endl;
   double initialLL = getEvaluator().computeLikelihood(); 
   Logger::info << "initial ll=" << initialLL << std::endl;
-  unsigned int iterations = 1;
   for (const auto &scoredHighway: highways) {
     Highway highway(scoredHighway.highway);
     auto parameters = testHighway(*_evaluator, highway);

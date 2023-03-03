@@ -35,7 +35,9 @@ public:
   
   // highways
   bool highways;
-  std::string highwayCandidates;
+  std::string highwayCandidateFile;
+  unsigned int highwayCandidatesStep1;
+  unsigned int highwayCandidatesStep2;
 
   // trimming
   int minCoveredSpecies;
