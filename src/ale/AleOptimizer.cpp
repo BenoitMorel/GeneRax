@@ -308,6 +308,8 @@ static Parameters testHighway(GTSpeciesTreeLikelihoodEvaluator &evaluator,
   Parameters startingParameter(1);
   startingParameter[0] = startingProbability;
   OptimizationSettings settings;
+  settings.minAlpha = 0.001;
+  //settings.epsilon = -0.01;
   auto parameters = DTLOptimizer::optimizeParameters(
       f, 
       startingParameter, 

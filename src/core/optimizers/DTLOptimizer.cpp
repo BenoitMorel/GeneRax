@@ -1,5 +1,5 @@
 #include <optimizers/DTLOptimizer.hpp>
-
+#include <iomanip>
 #include <parallelization/ParallelContext.hpp>
 #include <IO/Logger.hpp>
 #include <parallelization/PerCoreGeneTrees.hpp>
@@ -26,7 +26,7 @@ static bool lineSearchParameters(FunctionToOptimize &function,
   const double minAlpha = settings.minAlpha;
   Parameters currentGradient(gradient);
   bool noImprovement = true;
-  //Logger::info << "lineSearch " << currentRates.getScore() << std::endl;
+  //Logger::info << "lineSearch " << currentRates.getScore() <<  " gradient: " << gradient << std::endl;
   while (alpha > minAlpha) {
     currentGradient.normalize(alpha);
     Parameters proposal = currentRates + (currentGradient * alpha);
@@ -43,7 +43,7 @@ static bool lineSearchParameters(FunctionToOptimize &function,
       if (!noImprovement) {
         return true;
       }
-      //Logger::info << "No improv alpha=" << alpha << " score=" << proposal.getScore() << " p=" << proposal  << std::endl;
+      //Logger::info << std::setprecision(15) << "No improv alpha=" << alpha << " score=" << proposal.getScore() << " p=" << proposal  << std::endl;
     }
   }
   return !noImprovement;
@@ -72,8 +72,17 @@ Parameters DTLOptimizer::optimizeParameters(FunctionToOptimize &function,
       function.evaluate(closeRates);
       llComputationsGrad++;
       gradient[i] = (currentRates.getScore() - closeRates.getScore()) / (-epsilon);
+      //Logger::info << "gradient" << currentRates.getScore() - closeRates.getScore() << " " << gradient[i] << std::endl;
     }
   } while (lineSearchParameters(function, currentRates, gradient, llComputationsLine, settings));
+  /*
+  Parameters minusGradient(gradient);
+  for (unsigned int i = 0; i < gradient.dimensions(); ++i) {
+    minusGradient[i] = -gradient[i];
+  }
+  Logger::info << "Final line search with minus gradient" << std::endl;
+  lineSearchParameters(function, currentRates, minusGradient, llComputationsLine, settings);
+  */
   return currentRates;
 }
 

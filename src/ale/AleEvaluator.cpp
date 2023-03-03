@@ -15,6 +15,7 @@ static std::shared_ptr<MultiModel> createModel(SpeciesTree &speciesTree,
   const std::vector<Highway> &highways,
   bool highPrecision)
 {
+  highPrecision = true;
   std::shared_ptr<MultiModel> model;
   GeneSpeciesMapping mapping;
   mapping.fill(family.mappingFile, family.startingGeneTree);
