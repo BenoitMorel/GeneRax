@@ -213,75 +213,52 @@ void GTSpeciesTreeLikelihoodEvaluator::removeHighway()
   }
 }
 
-class GTEvaluatorFunction: public FunctionToOptimize
+
+class DTLParametersOptimizer: public FunctionToOptimize
 {
 public:
-  GTEvaluatorFunction(ReconciliationModelInterface &evaluation,
-      RecModelInfo &info,
-      unsigned int speciesNodeNumber):
-    _evaluation(evaluation),
-    _info(info),
-    _speciesNodeNumber(speciesNodeNumber){}
+  DTLParametersOptimizer(GTSpeciesTreeLikelihoodEvaluator &evaluator):
+    _evaluator(evaluator)
+  {}
 
   virtual double evaluate(Parameters &parameters) {
     parameters.ensurePositivity();
-    unsigned int freeParameters = Enums::freeParameters(_info.model);
-    if (!freeParameters) {
-      return _evaluation.computeLogLikelihood();
-    }
-    assert(parameters.dimensions());
-    assert(0 == parameters.dimensions() % freeParameters);
-    std::vector<std::vector<double> > rates;
-    rates.resize(freeParameters);
-    for (auto &r: rates) {
-      r.resize(_speciesNodeNumber);
-    }
-    // this handles both per-species and global rates
-    for (unsigned int d = 0; d < rates.size(); ++d) {
-      for (unsigned int e = 0; e < _speciesNodeNumber; ++e) {
-        (rates[d])[e] = parameters[(e * rates.size() + d) % parameters.dimensions()];
-      }
-    }
-    _evaluation.setRates(rates);
-    
-    double res = _evaluation.computeLogLikelihood();
+    _evaluator.setParameters(parameters);
+    auto res = _evaluator.computeLikelihood();
     parameters.setScore(res);
     return res;
+
   }
-
 private:
-  ReconciliationModelInterface &_evaluation;
-  RecModelInfo &_info;
-  unsigned int _speciesNodeNumber;
+  GTSpeciesTreeLikelihoodEvaluator &_evaluator;
 };
+  
 
-
-class GTMultiEvaluatorsFunction: public FunctionToOptimize
+void GTSpeciesTreeLikelihoodEvaluator::setParameters(Parameters &parameters)
 {
-public:
-  GTMultiEvaluatorsFunction(PerCoreMultiEvaluation &evaluations,
-      RecModelInfo &info, 
-      unsigned int speciesNodeNumber)
-  {
-    for (auto &evaluation: evaluations) {
-      _functions.push_back(std::make_shared<GTEvaluatorFunction>(*evaluation, 
-            info,
-            speciesNodeNumber));
+  unsigned int freeParameters = Enums::freeParameters(_modelRates.info.model);
+  if (!freeParameters) {
+    return;
+  }
+  assert(parameters.dimensions());
+  assert(0 == parameters.dimensions() % freeParameters);
+  std::vector<std::vector<double> > rates;
+  rates.resize(freeParameters);
+  auto speciesNodeNumber = _speciesTree.getTree().getNodesNumber();
+  for (auto &r: rates) {
+    r.resize(speciesNodeNumber);
+  }
+  // this handles both per-species and global rates
+  for (unsigned int d = 0; d < rates.size(); ++d) {
+    for (unsigned int e = 0; e < speciesNodeNumber; ++e) {
+      (rates[d])[e] = parameters[(e * rates.size() + d) % parameters.dimensions()];
     }
   }
-
-  virtual double evaluate(Parameters &parameters) {
-    double res = 0.0;
-    for (auto &function: _functions) {
-      res += function->evaluate(parameters);
-    }
-    ParallelContext::sumDouble(res);
-    parameters.setScore(res);
-    return res;
+  for (auto evaluation: _evaluations) { 
+    evaluation->setRates(rates);
   }
-private:
-  std::vector<std::shared_ptr<GTEvaluatorFunction>> _functions;
-};
+   
+}
 
 double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
 {
@@ -298,9 +275,12 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
     settings.minAlpha = 0.01;
     settings.optimizationMinImprovement = std::max(3.0, ll / 1000.0);
   }
+  /*
   GTMultiEvaluatorsFunction function(_evaluations, 
       _modelRates.info, 
       _speciesTree.getTree().getNodesNumber());
+      */
+  DTLParametersOptimizer function(*this);
   _modelRates.rates = DTLOptimizer::optimizeParameters(
       function, 
       _modelRates.rates, 

@@ -150,7 +150,7 @@ void run( AleArguments &args)
     speciesTreeOptimizer.optimize();
     break;
   case SpeciesSearchStrategy::EVAL:
-    speciesTreeOptimizer.optimizeModelRates(true);
+    speciesTreeOptimizer.optimizeModelRates(false);
     break;
   case SpeciesSearchStrategy::REROOT:
     speciesTreeOptimizer.optimizeModelRates(true);
