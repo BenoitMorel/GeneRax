@@ -44,6 +44,8 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
       fixRates = true;
     } else if (arg == "--highways") {
       highways = true;
+    } else if (arg == "--highway-candidates") {
+      highwayCandidates = std::string(argv[++i]);
     } else if (arg == "--transfer-constraint") {
       transferConstraint = ArgumentsHelper::strToTransferConstraint(std::string(argv[++i]));
     } else if (arg == "--origination") {

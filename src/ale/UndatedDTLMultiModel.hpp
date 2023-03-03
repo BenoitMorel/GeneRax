@@ -445,7 +445,7 @@ void UndatedDTLMultiModel<REAL>::sampleTransferEvent(unsigned int cid,
     }
   }
 
-  for (auto speciesNode: this->getAllSpeciesNodes()) {
+  for (auto speciesNode: this->getPrunedSpeciesNodes()) {
     auto h = speciesNode->node_index;
     if (_transferConstraint == TransferConstaint::NONE) {
     }
@@ -485,7 +485,8 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
   assert(maxSpeciesId == dupRates.size());
   assert(maxSpeciesId == lossRates.size());
   assert(maxSpeciesId == transferRates.size());
-  for (unsigned int e = 0; e < this->getPrunedSpeciesNodeNumber(); ++e) {
+  for (auto speciesNode: this->getPrunedSpeciesNodes()) {
+    auto e = speciesNode->node_index;
     for (size_t c = 0; c < _gammaCatNumber; ++c) {
       auto ec = e * _gammaCatNumber + c;
       _PD[ec] = dupRates[e];
@@ -505,6 +506,7 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
       _PS[ec] /= sum;
       for (auto &highway: _highways[e]) {
         highway.proba = highway.highway.proba / sum;
+        assert(highway.proba < 1.0);
       }
     }
   }
@@ -512,7 +514,7 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
   std::fill(_uE.begin(), _uE.end(), 0.0);
   auto transferSum = std::vector<double>(_gammaCatNumber, REAL());
   for (unsigned int it = 0; it < 4; ++it) {
-    for (auto speciesNode: this->getAllSpeciesNodes()) {
+    for (auto speciesNode: this->getPrunedSpeciesNodes()) {
       auto e = speciesNode->node_index;
       for (size_t c = 0; c < _gammaCatNumber; ++c) {
         auto ec = e * _gammaCatNumber + c;
@@ -527,12 +529,16 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
           proba += _uE[gc]  * _uE[hc] * _PS[ec];
         }
         _uE[ec] = proba;
+        if (!(proba < REAL(1.0))) {
+          std::cerr << "hey " << proba << " < " << REAL(1.0) << " is wrong"  << std::endl;
+        }
+        assert(proba < REAL(1.000001));
       }
     }
     std::fill(transferSum.begin(),
         transferSum.end(),
         0.0);
-    for (auto speciesNode: this->getAllSpeciesNodes()) {
+    for (auto speciesNode: this->getPrunedSpeciesNodes()) {
       auto e = speciesNode->node_index;
       for (size_t c = 0; c < _gammaCatNumber; ++c) {
         auto ec = e * _gammaCatNumber + c;
@@ -541,6 +547,7 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
     }
     for (size_t c = 0; c < _gammaCatNumber; ++c) {
       transferSum[c] /= double(this->getPrunedSpeciesNodeNumber());
+      assert(transferSum[c] < REAL(1.0001));
     }
   }
 }
@@ -683,12 +690,15 @@ bool UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
     }
     
     // highway transfers
-    for (auto highway: _highways[e]) {
+    for (const auto &highway: _highways[e]) {
       auto d = highway.highway.dest->node_index;
       auto dc = d * _gammaCatNumber + c;  
       temp = (_dtlclvs[cidLeft]._uq[ec] * _dtlclvs[cidRight]._uq[dc]) * (highway.proba * freq);
       scale(temp);
       proba += temp;
+      if (proba > REAL(1.0)) {
+        std::cerr << "error " << _dtlclvs[cidLeft]._uq[ec] << " " << _dtlclvs[cidRight]._uq[dc] << " " << highway.proba << " " << freq << std::endl;
+      }
       if (recCell && proba > maxProba) {
         recCell->event.type = ReconciliationEventType::EVENT_T;
         recCell->event.pllDestSpeciesNode = 
@@ -701,6 +711,9 @@ bool UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
       temp = (_dtlclvs[cidRight]._uq[ec] * _dtlclvs[cidLeft]._uq[dc]) * (highway.proba * freq);
       scale(temp);
       proba += temp;
+      if (proba > REAL(1.0)) {
+        std::cerr << "error " << _dtlclvs[cidRight]._uq[ec] << " " << _dtlclvs[cidLeft]._uq[dc] << " " << highway.proba << " " << freq << std::endl;
+      }
       if (recCell && proba > maxProba) {
         recCell->event.type = ReconciliationEventType::EVENT_T;
         recCell->event.pllDestSpeciesNode = 
@@ -735,6 +748,7 @@ bool UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
       return true;
     }
   }
+  assert(proba < REAL(1.0));
   if (recCell) {
     //std::cerr << "boum " << proba << " " << maxProba << std::endl;
     return false;

@@ -741,4 +741,16 @@ std::vector<corax_rnode_t *> PLLRootedTree::getOrderedSpeciations() const
   return speciations;
 }
 
+std::unordered_map<std::string, corax_rnode_t *> PLLRootedTree::getLabelToNode(bool leafOnly)
+{
+  std::unordered_map<std::string, corax_rnode_t *> res;
+  for (auto node: getNodes()) {
+    if (leafOnly && node->right) {
+      continue;
+    }
+    std::string label = node->label;
+    res.insert({label, node});
+  }
+  return res;
+}
 

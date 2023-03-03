@@ -38,12 +38,13 @@ public:
     PerCorePotentialTransfers &potentialTransfers);
   virtual bool pruneSpeciesTree() const {return _modelRates.info.pruneSpeciesTree;}
   virtual void setAlpha(double alpha);
+  virtual void setParameters(Parameters &parameters);
   virtual void onSpeciesDatesChange();  
   virtual void onSpeciesTreeChange(
       const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
   void printHightPrecisionCount();
   MultiModel &getEvaluation(unsigned int i) {return *_evaluations[i];}
-
+  
 
   void addHighway(const Highway &highway);
   void removeHighway();

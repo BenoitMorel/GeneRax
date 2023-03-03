@@ -335,7 +335,7 @@ static Parameters testHighways(GTSpeciesTreeLikelihoodEvaluator &evaluator,
   }
 }
 
-void AleOptimizer::getBestHighways(std::vector<ScoredHighway> &scoredHighways)
+void AleOptimizer::getCandidateHighways(std::vector<ScoredHighway> &scoredHighways)
 {
   double initialLL = getEvaluator().computeLikelihood(); 
   Logger::info << "initial ll=" << initialLL << std::endl;
@@ -354,7 +354,6 @@ void AleOptimizer::getBestHighways(std::vector<ScoredHighway> &scoredHighways)
   size_t fastRoundMaxTrials = 100;
   size_t maxFailures = 10;
   size_t slowRoundMaxTrials = 25;
-  std::vector<ScoredHighway> scoredHighwaysFast;
   Logger::timed << "Looking for the best highways candidates among " << fastRoundMaxTrials << " candidates (fast round)" << std::endl;
   for (const auto &transferMove: transferMoves) {
     auto prune = _speciesTree->getNode(transferMove.prune); 
@@ -366,7 +365,7 @@ void AleOptimizer::getBestHighways(std::vector<ScoredHighway> &scoredHighways)
     Logger::timed << "ph=" << parameters[0] 
       << " lldiff=" << initialLL - parameters.getScore() << std::endl; 
       highway.proba = parameters[0];
-      scoredHighwaysFast.push_back(ScoredHighway(highway, 
+      scoredHighways.push_back(ScoredHighway(highway, 
             parameters.getScore(),
             initialLL - parameters.getScore()));
       failures = 0;
@@ -379,24 +378,28 @@ void AleOptimizer::getBestHighways(std::vector<ScoredHighway> &scoredHighways)
       break;
     }
   }
-  std::sort(scoredHighwaysFast.rbegin(), scoredHighwaysFast.rend());
-  iterations = 1;
-  Logger::timed << "Looking for the best highways candidates among " << slowRoundMaxTrials << " candidates (slow round)" << std::endl;
-  for (const auto &scoredHighway: scoredHighwaysFast) {
+  std::sort(scoredHighways.rbegin(), scoredHighways.rend());
+}
+
+void AleOptimizer::selectBestHighways(const std::vector<ScoredHighway> &highways, 
+    std::vector<ScoredHighway> &bestHighways)
+{
+  Logger::timed << "Looking for the best highways candidates among " << highways.size() << " candidates (slow round)" << std::endl;
+  double initialLL = getEvaluator().computeLikelihood(); 
+  Logger::info << "initial ll=" << initialLL << std::endl;
+  unsigned int iterations = 1;
+  for (const auto &scoredHighway: highways) {
     Highway highway(scoredHighway.highway);
     auto parameters = testHighway(*_evaluator, highway);
     highway.proba = parameters[0];
-    scoredHighways.push_back(ScoredHighway(highway, 
+    bestHighways.push_back(ScoredHighway(highway, 
           parameters.getScore(),
           initialLL - parameters.getScore()));
     Logger::timed << "Good candidate highway " << highway.src->label << "->" << highway.dest->label << std::endl;
     Logger::timed << "ph=" << parameters[0] 
       << " lldiff=" << initialLL - parameters.getScore() << std::endl;
-    if (++iterations > slowRoundMaxTrials) {
-      break;
-    }
   }
-  std::sort(scoredHighways.rbegin(), scoredHighways.rend());
+  std::sort(bestHighways.rbegin(), bestHighways.rend());
 }
 
  

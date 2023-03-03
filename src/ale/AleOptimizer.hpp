@@ -13,6 +13,10 @@
 #include "AleEvaluator.hpp"
 
 struct ScoredHighway {
+  ScoredHighway() 
+  {}
+
+  
   ScoredHighway(const Highway &highway, double score = 0.0, double scoreDiff = 0.0):
     highway(highway),
     score(score),
@@ -47,7 +51,8 @@ public:
   void saveSpeciesTree();
   void saveSpeciesTreeRootLL();
   SpeciesTreeLikelihoodEvaluatorInterface &getEvaluator() {return *_evaluator;}
-  void getBestHighways(std::vector<ScoredHighway> &highways);
+  void getCandidateHighways(std::vector<ScoredHighway> &highways);
+  void selectBestHighways(const std::vector<ScoredHighway> &highways, std::vector<ScoredHighway> &bestHighways);
   void saveBestHighways(const std::vector<ScoredHighway> &highways,
       const std::string &output);
   void addHighways(const std::vector<ScoredHighway> &candidateHighways,

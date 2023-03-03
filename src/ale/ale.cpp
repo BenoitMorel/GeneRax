@@ -11,7 +11,7 @@
 #include <util/RecModelInfo.hpp>
 #include <routines/Routines.hpp>
 #include <routines/SlavesMain.hpp>
-
+#include <IO/HighwayCandidateParser.hpp>
 
 void filterInvalidFamilies(Families &families)
 {
@@ -150,7 +150,7 @@ void run( AleArguments &args)
     speciesTreeOptimizer.optimize();
     break;
   case SpeciesSearchStrategy::EVAL:
-    speciesTreeOptimizer.optimizeModelRates(true);
+    speciesTreeOptimizer.optimizeModelRates(false);
     break;
   case SpeciesSearchStrategy::REROOT:
     speciesTreeOptimizer.optimizeModelRates(true);
@@ -171,16 +171,30 @@ void run( AleArguments &args)
   }
   Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   if (args.highways) {
+    // let's infer highways of transfers!
     auto highwayOutput = FileSystem::joinPaths(args.output,
       "highway_best_candidates.txt");
     std::vector<ScoredHighway> candidateHighways;
-    speciesTreeOptimizer.getBestHighways(candidateHighways);
-    speciesTreeOptimizer.saveBestHighways(candidateHighways,
+    if (args.highwayCandidates.size()) {
+      // the user sets the candidates
+      auto highways = HighwayCandidateParser::parse(args.highwayCandidates,
+          speciesTreeOptimizer.getSpeciesTree().getTree());
+      for (const auto &highway: highways) {
+        candidateHighways.push_back(ScoredHighway(highway));
+      }
+    } else {
+      // automatically search for candidates
+      speciesTreeOptimizer.getCandidateHighways(candidateHighways);
+    }
+    candidateHighways.resize(std::min(candidateHighways.size(), size_t(25)));
+    std::vector<ScoredHighway> bestHighways;
+    speciesTreeOptimizer.selectBestHighways(candidateHighways, bestHighways);
+    speciesTreeOptimizer.saveBestHighways(bestHighways,
         highwayOutput);
     auto acceptedHighwayOutput = FileSystem::joinPaths(args.output,
       "highway_accepted_highways.txt");
     std::vector<ScoredHighway> acceptedHighways;
-    speciesTreeOptimizer.addHighways(candidateHighways, acceptedHighways);
+    speciesTreeOptimizer.addHighways(bestHighways, acceptedHighways);
     speciesTreeOptimizer.saveBestHighways(acceptedHighways,
         acceptedHighwayOutput);
   }

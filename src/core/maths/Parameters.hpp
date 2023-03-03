@@ -70,7 +70,7 @@ public:
   void ensurePositivity() {
     for (auto &p: _parameters) {
       p = std::max(0.0000001, p);
-      p = std::min(1.0, p);
+      //p = std::min(1.0, p);
     }
   }
 

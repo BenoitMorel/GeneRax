@@ -27,6 +27,8 @@ public:
   operator double()
   {
     if (scaler == NULL_SCALER) {
+      return 0.0;
+    } else if (scaler == 0) {
       return value;
     } else {
       return 0.0;
