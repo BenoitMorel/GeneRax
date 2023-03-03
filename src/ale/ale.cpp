@@ -184,14 +184,17 @@ void run( AleArguments &args)
       }
     } else {
       // automatically search for candidates
-      speciesTreeOptimizer.getBestHighways(candidateHighways);
+      speciesTreeOptimizer.getCandidateHighways(candidateHighways);
     }
-    speciesTreeOptimizer.saveBestHighways(candidateHighways,
+    candidateHighways.resize(std::min(candidateHighways.size(), size_t(25)));
+    std::vector<ScoredHighway> bestHighways;
+    speciesTreeOptimizer.selectBestHighways(candidateHighways, bestHighways);
+    speciesTreeOptimizer.saveBestHighways(bestHighways,
         highwayOutput);
     auto acceptedHighwayOutput = FileSystem::joinPaths(args.output,
       "highway_accepted_highways.txt");
     std::vector<ScoredHighway> acceptedHighways;
-    speciesTreeOptimizer.addHighways(candidateHighways, acceptedHighways);
+    speciesTreeOptimizer.addHighways(bestHighways, acceptedHighways);
     speciesTreeOptimizer.saveBestHighways(acceptedHighways,
         acceptedHighwayOutput);
   }
