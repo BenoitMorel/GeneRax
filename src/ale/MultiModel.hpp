@@ -16,7 +16,11 @@ struct ReconciliationCell {
 };
 
 
-
+/**
+* Base class for reconciliation models that take as input
+* gene tree distributions (represented by conditional clade
+* probabilities)
+*/
 class MultiModel: public BaseReconciliationModel {
 public:
   MultiModel(PLLRootedTree &speciesTree,
@@ -61,6 +65,11 @@ protected:
   ConditionalClades _ccp;
 };
 
+
+/**
+* Implements all basic methods required by the child classes
+* and that require the REAL template
+*/
 template<class REAL>
 class MultiModelTemplate: public MultiModel {
 public:
@@ -73,17 +82,36 @@ public:
         info,
         ccpFile){}
   virtual ~MultiModelTemplate() {}
+  /**
+  * Samples a reconciled gene tree and stores it into 
+  * scenario
+  */
   virtual bool inferMLScenario(Scenario &scenario, 
     bool stochastic = false);
 protected:
+  /**
+  * Sample the species node from with the sampled gene tree
+  * originates. The implementation depends on the origination
+  * mode (unifor, from the root etc.)
+  */
   virtual corax_rnode_t *sampleSpeciesNode(unsigned int &category) = 0;
 
 private:
+  /**
+  * Compute the CLV for a given cid (clade id) and a 
+  * given species node. Returns true in case of sucess
+  * If recCell is set, the function samples the next
+  * event in the reconciliation space
+  */
   virtual bool computeProbability(CID cid, 
     corax_rnode_t *speciesNode, 
     size_t category,
     REAL &proba,
     ReconciliationCell<REAL> *recCell = nullptr) = 0;
+  
+  /**
+  * Recursively sample a reconciled gene tree
+  */
   bool backtrace(unsigned int cid, 
       corax_rnode_t *speciesRoot,
       corax_unode_t *geneNode,

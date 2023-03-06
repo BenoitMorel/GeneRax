@@ -18,7 +18,10 @@ struct WeightedHighway {
 template <class REAL>
 class UndatedDTLMultiModel: public MultiModelTemplate<REAL> {
 
-  
+
+#define EXCLUDE_ABOVE_PRUNED
+#define EXCLUDE_DEAD_NODES
+
 public: 
   UndatedDTLMultiModel(DatedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
@@ -42,6 +45,10 @@ public:
       // map the highway to the pruned species tree
       hp.highway.src = _speciesToPrunedNode[highway.src->node_index];
       hp.highway.dest = _speciesToPrunedNode[highway.dest->node_index];
+      if (!hp.highway.src || !hp.highway.dest) {
+        // this highway should not affect this family
+        continue;
+      }
       hp.proba = highway.proba; // this value will be normalized later on
       if (hp.highway.src != hp.highway.dest) {
         // do not count transfers to self
@@ -185,10 +192,14 @@ void UndatedDTLMultiModel<REAL>::updateSpeciesToPrunedNode()
         _speciesToPrunedNode[e] = speciesNode;
       } else if (_speciesToPrunedNode[left]) {
         _speciesToPrunedNode[e] = _speciesToPrunedNode[left];
+        #ifndef EXCLUDE_DEAD_NODES
         fillUnsampledSpeciesRec(speciesNode->right, _speciesToPrunedNode[e], _speciesToPrunedNode);
+        #endif
       } else if (_speciesToPrunedNode[right]) {
         _speciesToPrunedNode[e] = _speciesToPrunedNode[right];
+        #ifndef EXCLUDE_DEAD_NODES
         fillUnsampledSpeciesRec(speciesNode->left, _speciesToPrunedNode[e], _speciesToPrunedNode);
+        #endif
       } // else do nothing
     } else {
       if (this->_speciesCoverage[e]) {
@@ -198,9 +209,11 @@ void UndatedDTLMultiModel<REAL>::updateSpeciesToPrunedNode()
   } 
   // if the  root of the pruned species tree is not the root, we need 
   // to map all parents and siblings of the pruned root to the pruned root
+#ifndef EXCLUDE_ABOVE_PRUNED
   auxUntilPrunedRoot(this->getSpeciesTree().getRoot(),
     this->getPrunedRoot(),
     _speciesToPrunedNode);
+#endif
 }
 
 template <class REAL>
