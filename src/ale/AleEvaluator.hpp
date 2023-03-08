@@ -21,6 +21,7 @@ class GTSpeciesTreeLikelihoodEvaluator: public SpeciesTreeLikelihoodEvaluatorInt
 public:
   GTSpeciesTreeLikelihoodEvaluator(SpeciesTree &speciesTree,
       ModelParameters &modelRates, 
+      bool optimizeRates,
       const Families &families,
       PerCoreGeneTrees &geneTrees);
   virtual ~GTSpeciesTreeLikelihoodEvaluator() {}
@@ -56,6 +57,7 @@ protected:
 private:
   SpeciesTree &_speciesTree;
   ModelParameters &_modelRates;
+  bool _optimizeRates;
   std::vector<Highway> _highways;
   const Families &_families;
   PerCoreMultiEvaluation _evaluations;

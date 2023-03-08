@@ -36,6 +36,7 @@ public:
   AleOptimizer(const std::string speciesTreeFile, 
       const Families &families, 
       const RecModelInfo &info,
+      bool optimizeRates,
       const std::string &outputDir);
 
   void optimize();

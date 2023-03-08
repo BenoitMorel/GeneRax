@@ -15,7 +15,7 @@ static std::shared_ptr<MultiModel> createModel(SpeciesTree &speciesTree,
   const std::vector<Highway> &highways,
   bool highPrecision)
 {
-  highPrecision = true;
+//  highPrecision = true;
   std::shared_ptr<MultiModel> model;
   GeneSpeciesMapping mapping;
   mapping.fill(family.mappingFile, family.startingGeneTree);
@@ -68,10 +68,12 @@ static std::shared_ptr<MultiModel> createModel(SpeciesTree &speciesTree,
 GTSpeciesTreeLikelihoodEvaluator::GTSpeciesTreeLikelihoodEvaluator(
     SpeciesTree &speciesTree,
     ModelParameters &modelRates, 
+    bool optimizeRates,
     const Families &families,
     PerCoreGeneTrees &geneTrees):
   _speciesTree(speciesTree),
   _modelRates(modelRates),
+  _optimizeRates(optimizeRates),
   _families(families),
   _geneTrees(geneTrees),
   _highPrecisions(_geneTrees.getTrees().size(), -1)
@@ -201,7 +203,7 @@ void GTSpeciesTreeLikelihoodEvaluator::onSpeciesDatesChange()
 void GTSpeciesTreeLikelihoodEvaluator::addHighway(const Highway &highway)
 {
   _highways.push_back(highway);
-  for (auto &evaluation: _evaluations) {
+   for (auto &evaluation: _evaluations) {
     evaluation->setHighways(_highways);
   }
 }
@@ -263,31 +265,29 @@ void GTSpeciesTreeLikelihoodEvaluator::setParameters(Parameters &parameters)
 
 double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
 {
-  OptimizationSettings settings;
-  double ll = computeLikelihood();
-  Logger::timed << "[SpeciesSearch] Optimizing model rates ";
-  if (thorough) {
-    Logger::info << "(thorough)" << std::endl;
-  } else {
-    Logger::info << "(light)" << std::endl;
+  double ll = 0.0;
+  if (_optimizeRates) {
+    OptimizationSettings settings;
+    ll = computeLikelihood();
+    Logger::timed << "[SpeciesSearch] Optimizing model rates ";
+    if (thorough) {
+      Logger::info << "(thorough)" << std::endl;
+    } else {
+      Logger::info << "(light)" << std::endl;
+    }
+    if (!thorough) {
+      settings.lineSearchMinImprovement = 10.0;
+      settings.minAlpha = 0.01;
+      settings.optimizationMinImprovement = std::max(3.0, ll / 1000.0);
+    }
+    DTLParametersOptimizer function(*this);
+    _modelRates.rates = DTLOptimizer::optimizeParameters(
+        function, 
+        _modelRates.rates, 
+        settings);
+    ll = computeLikelihood();
+    Logger::timed << "[Species search]   After model rate opt, ll=" << ll << " rates: " << _modelRates.rates << std::endl;
   }
-  if (!thorough) {
-    settings.lineSearchMinImprovement = 10.0;
-    settings.minAlpha = 0.01;
-    settings.optimizationMinImprovement = std::max(3.0, ll / 1000.0);
-  }
-  /*
-  GTMultiEvaluatorsFunction function(_evaluations, 
-      _modelRates.info, 
-      _speciesTree.getTree().getNodesNumber());
-      */
-  DTLParametersOptimizer function(*this);
-  _modelRates.rates = DTLOptimizer::optimizeParameters(
-      function, 
-      _modelRates.rates, 
-      settings);
-  ll = computeLikelihood();
-  Logger::timed << "[Species search]   After model rate opt, ll=" << ll << " rates: " << _modelRates.rates << std::endl;
   ll = optimizeGammaRates();
   ll = computeLikelihood();
   return ll;

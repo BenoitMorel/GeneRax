@@ -47,6 +47,7 @@ AleOptimizer::AleOptimizer(
     const std::string speciesTreeFile, 
     const Families &families, 
     const RecModelInfo &info,
+    bool optimizeRates,
     const std::string &outputDir):
   _speciesTree(std::make_unique<SpeciesTree>(speciesTreeFile)),
   _geneTrees(families, false, true),
@@ -61,7 +62,7 @@ AleOptimizer::AleOptimizer(
     startingRates = Parameters(0.2, 0.2);
     break;
   case RecModel::UndatedDTL:
-    startingRates = Parameters(0.2, 0.2, 0.1);
+    startingRates = Parameters(0.05, 0.2, 0.1);
     break;
   default:
     assert(false);
@@ -75,6 +76,7 @@ AleOptimizer::AleOptimizer(
   _evaluator = std::make_unique<GTSpeciesTreeLikelihoodEvaluator>(
       *_speciesTree, 
       _modelRates, 
+      optimizeRates,
       families, 
       _geneTrees);
   Logger::timed << "Initial ll=" << getEvaluator().computeLikelihood() 
@@ -300,7 +302,7 @@ static Parameters testHighwayFast(GTSpeciesTreeLikelihoodEvaluator &evaluator,
 }
 static Parameters testHighway(GTSpeciesTreeLikelihoodEvaluator &evaluator,
     Highway &highway,
-    double startingProbability = 0.1)
+    double startingProbability = 0.01)
 {
   std::vector<Highway *> highways;
   highways.push_back(&highway);
@@ -308,8 +310,9 @@ static Parameters testHighway(GTSpeciesTreeLikelihoodEvaluator &evaluator,
   Parameters startingParameter(1);
   startingParameter[0] = startingProbability;
   OptimizationSettings settings;
-  settings.minAlpha = 0.001;
-  //settings.epsilon = -0.01;
+  settings.minAlpha = 0.0001;
+  settings.epsilon = -0.00001;
+  Logger::info << "Unoptimized ll=" << f.evaluate(startingParameter) << std::endl;
   auto parameters = DTLOptimizer::optimizeParameters(
       f, 
       startingParameter, 
@@ -389,12 +392,12 @@ void AleOptimizer::selectBestHighways(const std::vector<ScoredHighway> &highways
   Logger::info << "initial ll=" << initialLL << std::endl;
   for (const auto &scoredHighway: highways) {
     Highway highway(scoredHighway.highway);
+    Logger::timed << "Optimizing candidate highway " << highway.src->label << "->" << highway.dest->label << std::endl;
     auto parameters = testHighway(*_evaluator, highway);
     highway.proba = parameters[0];
     bestHighways.push_back(ScoredHighway(highway, 
           parameters.getScore(),
           initialLL - parameters.getScore()));
-    Logger::timed << "Good candidate highway " << highway.src->label << "->" << highway.dest->label << std::endl;
     Logger::timed << "ph=" << parameters[0] 
       << " lldiff=" << initialLL - parameters.getScore() << std::endl;
   }

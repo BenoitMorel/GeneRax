@@ -140,6 +140,7 @@ void run( AleArguments &args)
       args.speciesTree,
       families,
       info,
+      !args.fixRates,
       args.output);
   if (args.randomSpeciesRoot) {
     Logger::timed << "Random root position!" << std::endl;
@@ -150,7 +151,7 @@ void run( AleArguments &args)
     speciesTreeOptimizer.optimize();
     break;
   case SpeciesSearchStrategy::EVAL:
-    speciesTreeOptimizer.optimizeModelRates(false);
+   // speciesTreeOptimizer.optimizeModelRates(false);
     break;
   case SpeciesSearchStrategy::REROOT:
     speciesTreeOptimizer.optimizeModelRates(true);
@@ -198,7 +199,7 @@ void run( AleArguments &args)
     speciesTreeOptimizer.saveBestHighways(acceptedHighways,
         acceptedHighwayOutput);
   }
-  //speciesTreeOptimizer.optimizeModelRates(true);
+  speciesTreeOptimizer.optimizeModelRates(true);
   speciesTreeOptimizer.reconcile(args.geneTreeSamples);
   speciesTreeOptimizer.saveSpeciesTree(); 
   cleanupCCPs(families);
