@@ -23,7 +23,8 @@ public:
       ModelParameters &modelRates, 
       bool optimizeRates,
       const Families &families,
-      PerCoreGeneTrees &geneTrees);
+      PerCoreGeneTrees &geneTrees,
+      const std::string &outputDir);
   virtual ~GTSpeciesTreeLikelihoodEvaluator() {}
   virtual double computeLikelihood();
   virtual double computeLikelihoodFast();
@@ -45,12 +46,14 @@ public:
       const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
   void printHightPrecisionCount();
   MultiModel &getEvaluation(unsigned int i) {return *_evaluations[i];}
-  
 
   void addHighway(const Highway &highway);
   void removeHighway();
   void sampleScenarios(unsigned int family, unsigned int samples,
       std::vector<Scenario> &scenarios);
+  std::string getOutputDir() const {return _outputDir;}
+  void savePerFamilyLikelihoodDiff(const std::string &output); 
+  void saveSnapshotPerFamilyLL();
 protected:
   virtual double optimizeGammaRates();
   void resetEvaluation(unsigned int i, bool highPrecision);
@@ -64,7 +67,8 @@ private:
   PerCoreMultiEvaluation _approxEvaluations;
   PerCoreGeneTrees &_geneTrees;
   std::vector<int> _highPrecisions;
-  
+  std::string _outputDir;
+  std::vector<double> _snapshotPerFamilyLL;
 };
 
 

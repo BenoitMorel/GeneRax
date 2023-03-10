@@ -70,14 +70,15 @@ GTSpeciesTreeLikelihoodEvaluator::GTSpeciesTreeLikelihoodEvaluator(
     ModelParameters &modelRates, 
     bool optimizeRates,
     const Families &families,
-    PerCoreGeneTrees &geneTrees):
+    PerCoreGeneTrees &geneTrees,
+    const std::string &outputDir):
   _speciesTree(speciesTree),
   _modelRates(modelRates),
   _optimizeRates(optimizeRates),
   _families(families),
   _geneTrees(geneTrees),
-  _highPrecisions(_geneTrees.getTrees().size(), -1)
-  
+  _highPrecisions(_geneTrees.getTrees().size(), -1),
+  _outputDir(outputDir)
 {
   Logger::timed << "Initializing ccps and evaluators..." << std::endl;
   _evaluations.resize(_geneTrees.getTrees().size());
@@ -409,3 +410,40 @@ void GTSpeciesTreeLikelihoodEvaluator::sampleScenarios(unsigned int family, unsi
     }
   }
 }
+  
+void GTSpeciesTreeLikelihoodEvaluator::savePerFamilyLikelihoodDiff(const std::string &output) 
+{
+  std::vector<unsigned int> indices;
+  std::vector<double> likelihoods;
+  for (unsigned int i = 0; i < _evaluations.size(); ++i) {
+    auto famIndex = _geneTrees.getTrees()[i].familyIndex;
+    auto ll = _evaluations[i]->computeLogLikelihood();
+    indices.push_back(famIndex);
+    likelihoods.push_back(ll);
+  }
+  std::vector<unsigned int> allIndices;
+  std::vector<double> allLikelihoods;
+  ParallelContext::concatenateHetherogeneousDoubleVectors(likelihoods,
+  allLikelihoods);
+  ParallelContext::concatenateHetherogeneousUIntVectors(indices, allIndices);
+  assert(likelihoods.size() == _snapshotPerFamilyLL.size());
+  ParallelOfstream os(output);
+  for (unsigned int i = 0; i < likelihoods.size(); ++i) {
+    auto &family = _families[allIndices[i]];
+    auto ll = allLikelihoods[i];
+    os << family.name << " " << ll - _snapshotPerFamilyLL[i]<< std::endl;
+  }
+}
+
+void GTSpeciesTreeLikelihoodEvaluator::saveSnapshotPerFamilyLL()
+{
+  std::vector<double> likelihoods;
+  for (unsigned int i = 0; i < _evaluations.size(); ++i) {
+    auto ll = _evaluations[i]->computeLogLikelihood();
+    likelihoods.push_back(ll);
+  }
+  ParallelContext::concatenateHetherogeneousDoubleVectors(likelihoods,
+  _snapshotPerFamilyLL);
+}
+
+

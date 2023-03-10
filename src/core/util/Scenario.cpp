@@ -272,6 +272,7 @@ void Scenario::mergePerSpeciesEventCounts(const PLLRootedTree &speciesTree,
   for (const auto &subfile: filenames) {
     std::ifstream is(subfile);
     std::string line;
+    std::getline(is, line);
     while (std::getline(is, line)) {
       if (line[0] == '#') {
         continue;
@@ -281,6 +282,9 @@ void Scenario::mergePerSpeciesEventCounts(const PLLRootedTree &speciesTree,
       iss >> species;
       species.pop_back(); // remove comma
       auto iter = speciesToEventCount.find(species);
+      if (iter == speciesToEventCount.end()) {
+        std::cerr << "Can't find " << species << " in mergePerSpeciesEventCounts when merging file " << filename << std::endl;
+      }
       for (unsigned int i = 0; i < 6; ++i) {
         double temp;
         iss >> temp;

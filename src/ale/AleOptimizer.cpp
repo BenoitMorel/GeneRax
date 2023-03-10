@@ -21,6 +21,10 @@ public:
     const std::vector<Highway*> &highways): _highways(highways), _evaluator(evaluator) {}
   
   virtual double evaluate(Parameters &parameters) {
+    return evaluatePrint(parameters, false); 
+  }
+  
+  virtual double evaluatePrint(Parameters &parameters, bool print) {
     assert(parameters.dimensions() == _highways.size());
     parameters.ensurePositivity();
     for (unsigned int i = 0; i < _highways.size(); ++i)  {
@@ -29,6 +33,14 @@ public:
       _evaluator.addHighway(highwayCopy);
     }
     auto ll = _evaluator.computeLikelihood();
+    if (print) {
+      std::string out = FileSystem::joinPaths(_evaluator.getOutputDir(),
+        std::string("transferll_") + std::string(_highways[0]->src->label) + 
+        std::string("_") + std::string(_highways[0]->dest->label));
+      _evaluator.savePerFamilyLikelihoodDiff(out);
+      Logger::info << "Saving diff with p=" << parameters[0] 
+        << " into " << out << std::endl;
+    }
     for (auto highway: _highways) {
       (void)(highway);
       _evaluator.removeHighway();
@@ -78,7 +90,8 @@ AleOptimizer::AleOptimizer(
       _modelRates, 
       optimizeRates,
       families, 
-      _geneTrees);
+      _geneTrees,
+      _outputDir);
   Logger::timed << "Initial ll=" << getEvaluator().computeLikelihood() 
     << std::endl;
   saveCurrentSpeciesTreeId("starting_species_tree.newick");
@@ -312,7 +325,7 @@ static Parameters testHighway(GTSpeciesTreeLikelihoodEvaluator &evaluator,
   OptimizationSettings settings;
   settings.minAlpha = 0.0001;
   settings.epsilon = -0.000001;
-  Logger::info << "Unoptimized ll=" << f.evaluate(startingParameter) << std::endl;
+  Logger::info << "Unoptimized ll=" << f.evaluatePrint(startingParameter, true) << std::endl;
   auto parameters = DTLOptimizer::optimizeParameters(
       f, 
       startingParameter, 
@@ -390,6 +403,7 @@ void AleOptimizer::selectBestHighways(const std::vector<ScoredHighway> &highways
   Logger::timed << "Looking for the best highways candidates among " << highways.size() << " candidates (slow round)" << std::endl;
   double initialLL = getEvaluator().computeLikelihood(); 
   Logger::info << "initial ll=" << initialLL << std::endl;
+  _evaluator->saveSnapshotPerFamilyLL();
   for (const auto &scoredHighway: highways) {
     Highway highway(scoredHighway.highway);
     Logger::timed << "Optimizing candidate highway " << highway.src->label << "->" << highway.dest->label << std::endl;
