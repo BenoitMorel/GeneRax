@@ -426,9 +426,9 @@ void GTSpeciesTreeLikelihoodEvaluator::savePerFamilyLikelihoodDiff(const std::st
   ParallelContext::concatenateHetherogeneousDoubleVectors(likelihoods,
   allLikelihoods);
   ParallelContext::concatenateHetherogeneousUIntVectors(indices, allIndices);
-  assert(likelihoods.size() == _snapshotPerFamilyLL.size());
+  assert(allLikelihoods.size() == _snapshotPerFamilyLL.size());
   ParallelOfstream os(output);
-  for (unsigned int i = 0; i < likelihoods.size(); ++i) {
+  for (unsigned int i = 0; i < allLikelihoods.size(); ++i) {
     auto &family = _families[allIndices[i]];
     auto ll = allLikelihoods[i];
     os << family.name << " " << ll - _snapshotPerFamilyLL[i]<< std::endl;
