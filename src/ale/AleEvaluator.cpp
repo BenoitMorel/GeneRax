@@ -410,7 +410,22 @@ void GTSpeciesTreeLikelihoodEvaluator::sampleScenarios(unsigned int family, unsi
     }
   }
 }
-  
+ 
+struct ScoredString {
+  ScoredString(const std::string str, double score):
+    str(str), score(score)
+  {}
+
+  bool operator < (const ScoredString &other) {
+    if (score == other.score) {
+      return str < other.str;
+    }
+    return score < other.score;
+  }
+  std::string str;
+  double score;
+};
+
 void GTSpeciesTreeLikelihoodEvaluator::savePerFamilyLikelihoodDiff(const std::string &output) 
 {
   std::vector<unsigned int> indices;
@@ -428,10 +443,15 @@ void GTSpeciesTreeLikelihoodEvaluator::savePerFamilyLikelihoodDiff(const std::st
   ParallelContext::concatenateHetherogeneousUIntVectors(indices, allIndices);
   assert(allLikelihoods.size() == _snapshotPerFamilyLL.size());
   ParallelOfstream os(output);
+  std::vector<ScoredString> scoredFamilies;
   for (unsigned int i = 0; i < allLikelihoods.size(); ++i) {
     auto &family = _families[allIndices[i]];
     auto ll = allLikelihoods[i];
-    os << family.name << " " << ll - _snapshotPerFamilyLL[i]<< std::endl;
+    scoredFamilies.push_back(ScoredString(family.name, ll - _snapshotPerFamilyLL[i]));
+  }
+  std::sort(scoredFamilies.begin(), scoredFamilies.end());
+  for (const auto scoredFamily: scoredFamilies) {
+    os << scoredFamily.score << " " << scoredFamily.str << std::endl;
   }
 }
 
