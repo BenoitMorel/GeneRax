@@ -121,7 +121,7 @@ void run( AleArguments &args)
   FileSystem::mkdir(ccpDir, true);
   Logger::initFileOutput(FileSystem::joinPaths(args.output, "genetegrator"));
   auto families = FamiliesFileParser::parseFamiliesFile(args.families);
-  filterInvalidFamilies(families);
+  //filterInvalidFamilies(families);
   generateCCPs(ccpDir, families, args.ccpRooting);
   trimFamilies(families, args.minCoveredSpecies, args.trimFamilyRatio);
   if (families.size() == 0) {
@@ -151,7 +151,7 @@ void run( AleArguments &args)
     speciesTreeOptimizer.optimize();
     break;
   case SpeciesSearchStrategy::EVAL:
-   // speciesTreeOptimizer.optimizeModelRates(false);
+    speciesTreeOptimizer.optimizeModelRates(false);
     break;
   case SpeciesSearchStrategy::REROOT:
     speciesTreeOptimizer.optimizeModelRates(true);

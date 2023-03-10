@@ -302,7 +302,7 @@ static Parameters testHighwayFast(GTSpeciesTreeLikelihoodEvaluator &evaluator,
 }
 static Parameters testHighway(GTSpeciesTreeLikelihoodEvaluator &evaluator,
     Highway &highway,
-    double startingProbability = 0.01)
+    double startingProbability = 0.1)
 {
   std::vector<Highway *> highways;
   highways.push_back(&highway);
@@ -311,7 +311,7 @@ static Parameters testHighway(GTSpeciesTreeLikelihoodEvaluator &evaluator,
   startingParameter[0] = startingProbability;
   OptimizationSettings settings;
   settings.minAlpha = 0.0001;
-  settings.epsilon = -0.00001;
+  settings.epsilon = -0.000001;
   Logger::info << "Unoptimized ll=" << f.evaluate(startingParameter) << std::endl;
   auto parameters = DTLOptimizer::optimizeParameters(
       f, 
