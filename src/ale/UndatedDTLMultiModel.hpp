@@ -21,7 +21,7 @@ class UndatedDTLMultiModel: public MultiModelTemplate<REAL> {
 
 #define EXCLUDE_ABOVE_PRUNED
 #define EXCLUDE_DEAD_NODES
-
+#define COMPUTE_TL
 public: 
   UndatedDTLMultiModel(DatedTree &speciesTree, 
       const GeneSpeciesMapping &geneSpeciesMapping, 
@@ -43,9 +43,14 @@ public:
       WeightedHighway hp;
       hp.highway = highway;
       // map the highway to the pruned species tree
-      hp.highway.src = _speciesToPrunedNode[highway.src->node_index];
-      hp.highway.dest = _speciesToPrunedNode[highway.dest->node_index];
-      if (!hp.highway.src || !hp.highway.dest) {
+      if (this->prunedMode()) {
+        hp.highway.src = _speciesToPrunedNode[highway.src->node_index];
+        hp.highway.dest = _speciesToPrunedNode[highway.dest->node_index];
+      } else {
+        hp.highway.src = highway.src;
+        hp.highway.dest = highway.dest;
+      }
+      if (/*!_speciesToPrunedNode[highway.dest->node_index] ||*/ !hp.highway.src  || !hp.highway.dest) {
         // this highway should not affect this family
         continue;
       }
@@ -69,6 +74,7 @@ public:
 
 private:
  
+  REAL getTransferSum(unsigned int cid, unsigned int e, unsigned int c);
 
 
   DatedTree &_datedTree;
@@ -174,6 +180,7 @@ void UndatedDTLMultiModel<REAL>::updateSpeciesToPrunedNode()
   if (!_speciesToPrunedNode.size()) {
     _speciesToPrunedNode.resize(this->getAllSpeciesNodeNumber());
   }
+  /*
   if (!this->prunedMode()) {
     for (auto speciesNode: this->getAllSpeciesNodes()) {
       auto e = speciesNode->node_index;
@@ -181,6 +188,7 @@ void UndatedDTLMultiModel<REAL>::updateSpeciesToPrunedNode()
     }
     return;
   }
+  */
   std::fill(_speciesToPrunedNode.begin(), _speciesToPrunedNode.end(), nullptr);
   for (auto speciesNode: this->getAllSpeciesNodes()) {
     auto e = speciesNode->node_index;
@@ -274,83 +282,88 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
   auto &uq = clv._uq;
   auto &correctionSum = clv._correctionSum;
   
-  std::fill(clv._survivingTransferSum.begin(), 
-      clv._survivingTransferSum.end(), 
-      REAL());
   std::fill(uq.begin(), uq.end(), REAL());
-  std::fill(correctionSum.begin(), correctionSum.end(), REAL());
   auto N = this->getPrunedSpeciesNodeNumber();
-  std::vector<REAL> sums(_gammaCatNumber, REAL());
-  for (auto speciesNode: this->getPrunedSpeciesNodes()) {
-    auto e = speciesNode->node_index;
-    for (size_t c = 0; c < _gammaCatNumber; ++c) {
-      auto ec = e * _gammaCatNumber + c;  
-      computeProbability(cid, 
-          speciesNode,
-          c,
-          uq[ec]);
-      auto v = uq[ec];
-      v /=  getTransferWeightNorm();
-      scale(v);
-      sums[c] += v;
-    }
-  }
-  if (_transferConstraint == TransferConstaint::PARENTS) {
-    auto postOrder = this->_speciesTree.getPostOrderNodes();
-    for (auto it = postOrder.rbegin();
-        it != postOrder.rend(); ++it)  {
-      auto speciesNode = *it;
+  unsigned int maxIt = this->_info.noTL ? 1 : 4;
+  // if we want to account for TL events, we have to 
+  // reiterate several times
+  for (unsigned int it = 0; it < maxIt; ++it) {
+    std::vector<REAL> sums(_gammaCatNumber, REAL());
+    for (auto speciesNode: this->getPrunedSpeciesNodes()) {
       auto e = speciesNode->node_index;
       for (size_t c = 0; c < _gammaCatNumber; ++c) {
-        auto parent = speciesNode;
-        auto ec = e * _gammaCatNumber + c;
-        while (parent) {
-          auto p = parent->node_index;
-          auto pc = p * _gammaCatNumber + c;
-          auto temp = uq[pc] / getTransferWeightNorm();
-          scale(temp);
-          correctionSum[ec] += temp;
-          parent = parent->parent;
-        }
+        auto ec = e * _gammaCatNumber + c;  
+        computeProbability(cid, 
+            speciesNode,
+            c,
+            uq[ec]);
+        auto v = uq[ec];
+        v /=  getTransferWeightNorm();
+        scale(v);
+        sums[c] += v;
       }
     }
-  }
-  if (_transferConstraint == TransferConstaint::SOFTDATED) {
-    std::vector<REAL> softDatedSums(N * _gammaCatNumber, REAL());
-    std::vector<REAL> softDatedSum(_gammaCatNumber, REAL());
-    for (auto leaf: this->_speciesTree.getLeaves()) {
-      auto e = leaf->node_index;
-      for (size_t c = 0; c < _gammaCatNumber; ++c) {
-        auto ec = e * _gammaCatNumber + c;
-        softDatedSum[c] += uq[ec] / getTransferWeightNorm();
-      }
-    }
-    for (auto it = _datedTree.getOrderedSpeciations().rbegin(); 
-        it != _datedTree.getOrderedSpeciations().rend(); ++it) {
-      auto node = (*it);
-      auto e = node->node_index;
-      for (size_t c = 0; c < _gammaCatNumber; ++c) {
-        auto ec = e * _gammaCatNumber + c;
-        softDatedSums[ec] = softDatedSum[c];
-        auto temp = uq[ec] / getTransferWeightNorm();
-        scale(temp);
-        softDatedSum[c] += temp; 
-      }
-    }
-    for (auto node: this->getPrunedSpeciesNodes()) {
-      auto e = node->node_index;
-      auto p = node->parent ? node->parent->node_index : e;
-      if (e != p) {
+    std::fill(correctionSum.begin(), correctionSum.end(), REAL());
+    std::fill(clv._survivingTransferSum.begin(), 
+        clv._survivingTransferSum.end(), 
+        REAL());
+    if (_transferConstraint == TransferConstaint::PARENTS) {
+      auto postOrder = this->_speciesTree.getPostOrderNodes();
+      for (auto it = postOrder.rbegin();
+          it != postOrder.rend(); ++it)  {
+        auto speciesNode = *it;
+        auto e = speciesNode->node_index;
         for (size_t c = 0; c < _gammaCatNumber; ++c) {
-          auto pc = p * _gammaCatNumber + c;
+          auto parent = speciesNode;
           auto ec = e * _gammaCatNumber + c;
-          correctionSum[ec] = softDatedSums[pc];
+          while (parent) {
+            auto p = parent->node_index;
+            auto pc = p * _gammaCatNumber + c;
+            auto temp = uq[pc] / getTransferWeightNorm();
+            scale(temp);
+            correctionSum[ec] += temp;
+            parent = parent->parent;
+          }
         }
       }
     }
-  }
-  for (size_t c = 0; c < _gammaCatNumber; ++c) {
-    clv._survivingTransferSum[c] = sums[c];
+    if (_transferConstraint == TransferConstaint::SOFTDATED) {
+      std::vector<REAL> softDatedSums(N * _gammaCatNumber, REAL());
+      std::vector<REAL> softDatedSum(_gammaCatNumber, REAL());
+      for (auto leaf: this->_speciesTree.getLeaves()) {
+        auto e = leaf->node_index;
+        for (size_t c = 0; c < _gammaCatNumber; ++c) {
+          auto ec = e * _gammaCatNumber + c;
+          softDatedSum[c] += uq[ec] / getTransferWeightNorm();
+        }
+      }
+      for (auto it = _datedTree.getOrderedSpeciations().rbegin(); 
+          it != _datedTree.getOrderedSpeciations().rend(); ++it) {
+        auto node = (*it);
+        auto e = node->node_index;
+        for (size_t c = 0; c < _gammaCatNumber; ++c) {
+          auto ec = e * _gammaCatNumber + c;
+          softDatedSums[ec] = softDatedSum[c];
+          auto temp = uq[ec] / getTransferWeightNorm();
+          scale(temp);
+          softDatedSum[c] += temp; 
+        }
+      }
+      for (auto node: this->getPrunedSpeciesNodes()) {
+        auto e = node->node_index;
+        auto p = node->parent ? node->parent->node_index : e;
+        if (e != p) {
+          for (size_t c = 0; c < _gammaCatNumber; ++c) {
+            auto pc = p * _gammaCatNumber + c;
+            auto ec = e * _gammaCatNumber + c;
+            correctionSum[ec] = softDatedSums[pc];
+          }
+        }
+      }
+    }
+    for (size_t c = 0; c < _gammaCatNumber; ++c) {
+      clv._survivingTransferSum[c] = sums[c];
+    }
   }
 }
 
@@ -373,7 +386,7 @@ double UndatedDTLMultiModel<REAL>::computeLogLikelihood()
   }
   auto rootCID = this->_ccp.getCladesNumber() - 1;
   std::vector<REAL> categoryLikelihoods(_gammaCatNumber, REAL());
-  
+
   std::vector<corax_rnode_t *> rootNode;
   std::vector<corax_rnode_t *> *speciesNodes;
   switch (_originationStrategy) {
@@ -531,15 +544,24 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
       auto e = speciesNode->node_index;
       for (size_t c = 0; c < _gammaCatNumber; ++c) {
         auto ec = e * _gammaCatNumber + c;
+        // L
         double proba(_PL[ec]);
+        // D
         proba += _uE[ec] * _uE[ec] * _PD[ec];
+        // T
         proba += transferSum[c] * _PT[ec] * _uE[ec];
+        // S
         if (this->getSpeciesLeft(speciesNode)) {
           auto g = this->getSpeciesLeft(speciesNode)->node_index;
           auto h = this->getSpeciesRight(speciesNode)->node_index;
           auto gc = g * _gammaCatNumber + c;
           auto hc = h * _gammaCatNumber + c;
           proba += _uE[gc]  * _uE[hc] * _PS[ec];
+        }
+        // transfer
+        for (const auto &highway: _highways[e]) {
+          auto d = highway.highway.dest->node_index;
+          auto dc = d * _gammaCatNumber + c;
         }
         _uE[ec] = proba;
         if (!(proba < REAL(1.0))) {
@@ -548,6 +570,17 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
         assert(proba < REAL(1.000001));
       }
     }
+    for (auto speciesNode: this->getPrunedSpeciesNodes()) {
+      if (speciesNode->left) {
+        continue;
+      }
+      auto e = speciesNode->node_index;
+      for (size_t c = 0; c < _gammaCatNumber; ++c) {
+        auto ec = e * _gammaCatNumber + c;
+        _uE[ec] = _uE[ec] * (1.0 - this->_fm[e]) + this->_fm[e];
+      }
+    }
+      
     std::fill(transferSum.begin(),
         transferSum.end(),
         0.0);
@@ -562,9 +595,23 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
       transferSum[c] /= double(this->getPrunedSpeciesNodeNumber());
       assert(transferSum[c] < REAL(1.0001));
     }
-  }
+  } // iterations to account for TL
 }
 
+template <class REAL>
+REAL UndatedDTLMultiModel<REAL>::getTransferSum(unsigned int cid, unsigned int e, unsigned int c) {
+  auto ec = e * _gammaCatNumber + c;
+  switch (_transferConstraint) {
+  case TransferConstaint::NONE:
+    return  _dtlclvs[cid]._survivingTransferSum[c];
+  case TransferConstaint::PARENTS:
+    return (_dtlclvs[cid]._survivingTransferSum[c] - _dtlclvs[cid]._correctionSum[ec]);
+  case TransferConstaint::SOFTDATED:
+    return _dtlclvs[cid]._correctionSum[ec];
+  default:
+    assert(false);
+  }
+}
 
 template <class REAL>
 bool UndatedDTLMultiModel<REAL>::computeProbability(CID cid, 
@@ -640,22 +687,8 @@ bool UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
       recCell->event.rightGeneIndex = cidRight;
       return true;
     }
-
-
     // T event
-    switch (_transferConstraint) {
-    case TransferConstaint::NONE:
-      temp =  _dtlclvs[cidLeft]._survivingTransferSum[c] * (_PT[ec] * freq);
-      break;
-    case TransferConstaint::PARENTS:
-      temp = (_dtlclvs[cidLeft]._survivingTransferSum[c] - _dtlclvs[cidLeft]._correctionSum[ec]) * (_PT[ec] * freq);
-      break;
-    case TransferConstaint::SOFTDATED:
-      temp = _dtlclvs[cidLeft]._correctionSum[ec] * (_PT[ec] * freq);
-      break;
-    default:
-      assert(false);
-    }
+    temp = getTransferSum(cidLeft, e, c) * (_PT[ec] * freq);
     temp *= _dtlclvs[cidRight]._uq[ec];
     scale(temp);
     proba += temp;
@@ -671,21 +704,7 @@ bool UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
       recCell->event.rightGeneIndex = cidLeft; 
       return true;
     }
-   
-    switch (_transferConstraint) {
-    case TransferConstaint::NONE:
-      temp = _dtlclvs[cidRight]._survivingTransferSum[c] * (_PT[ec] * freq);
-      break;
-    case TransferConstaint::PARENTS:
-      temp = (_dtlclvs[cidRight]._survivingTransferSum[c] 
-          - _dtlclvs[cidRight]._correctionSum[ec]) * (_PT[ec] * freq);
-      break;
-    case TransferConstaint::SOFTDATED:
-      temp = _dtlclvs[cidRight]._correctionSum[ec] * (_PT[ec] * freq);
-      break;
-    default:
-      assert(false);
-    }
+    temp = getTransferSum(cidRight, e, c) * (_PT[ec] * freq);
     temp *= _dtlclvs[cidLeft]._uq[ec];
     scale(temp);
     proba += temp;
@@ -737,7 +756,8 @@ bool UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
         return true;
       }
     }
-  }
+  } // iteration of cids
+
   if (not isSpeciesLeaf) {
     // SL event
     temp = _dtlclvs[cid]._uq[fc] * (_uE[gc] * _PS[ec]);
@@ -761,9 +781,53 @@ bool UndatedDTLMultiModel<REAL>::computeProbability(CID cid,
       return true;
     }
   }
+  // TL event
+  if (!this->_info.noTL) {
+    // the gene is transfered to the dest species and goes extinct in 
+    // the src species
+    temp = getTransferSum(cid, e, c) * (_PT[ec]);
+    temp *= _uE[ec];
+    scale(temp);
+    proba += temp;
+    if (recCell && proba > maxProba) {
+      recCell->event.type = ReconciliationEventType::EVENT_TL;
+      sampleTransferEvent(cid, 
+          speciesNode,
+          c,
+          recCell->event);
+      recCell->event.destSpeciesNode = 
+        recCell->event.pllDestSpeciesNode->node_index;
+      return true;
+    }
+    // TL from a highway
+    for (const auto &highway: _highways[e]) {
+      auto d = highway.highway.dest->node_index;
+      auto dc = d * _gammaCatNumber + c;  
+      // we transfer but the gene gets extinct in the receiving species
+      temp = (_dtlclvs[cid]._uq[ec] * _uE[dc]) * highway.proba;
+      scale(temp);
+      proba += temp;
+      if (recCell && proba > maxProba) {
+        // in fact, nothing happens, we'll have to resample
+        recCell->event.type = ReconciliationEventType::EVENT_TL;
+        recCell->event.pllDestSpeciesNode = nullptr; 
+        return true;
+      }
+      // we transfer and the gene gets extinct in the sending species
+      temp = (_dtlclvs[cid]._uq[dc] * _uE[ec]) * highway.proba;
+      scale(temp);
+      proba += temp;
+      if (recCell && proba > maxProba) {
+        recCell->event.type = ReconciliationEventType::EVENT_TL;
+        recCell->event.pllDestSpeciesNode = highway.highway.dest; 
+        recCell->event.destSpeciesNode = d;
+        return true;
+      }
+    }
+  }
   assert(proba < REAL(1.0));
   if (recCell) {
-    //std::cerr << "boum " << proba << " " << maxProba << std::endl;
+    std::cerr << "boum " << proba << " " << maxProba << std::endl;
     return false;
   }
   return true;

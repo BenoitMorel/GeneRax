@@ -24,8 +24,10 @@ public:
   TransferConstaint transferConstraint;
   OriginationStrategy originationStrategy;
   bool pruneSpeciesTree;
+  bool noTL;
   unsigned int gammaCategories;
   CCPRooting ccpRooting;
+  std::string fractionMissingFile;
 
   // search
   SpeciesTreeAlgorithm speciesTreeAlgorithm;

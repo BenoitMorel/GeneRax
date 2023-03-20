@@ -44,6 +44,7 @@ struct GeneRaxInstance {
         args.minGeneBranchLength,
         args.transferConstraint,
         args.noDup,
+        false, // no TL
         args.fractionMissingFile
         );
     rates = getUserParameters();

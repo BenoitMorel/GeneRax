@@ -182,7 +182,7 @@ void Scenario::savePerSpeciesEventsCounts(const std::string &filename, bool mast
         eventCount[3]++;
         break;
       case ReconciliationEventType::EVENT_TL:
-        speciesToEventCount[event.pllLostSpeciesNode->label][2]++;
+        eventCount[2]++;
         eventCount[3]++;
         break;
       case ReconciliationEventType::EVENT_L: case ReconciliationEventType::EVENT_Invalid:

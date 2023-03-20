@@ -121,7 +121,7 @@ void run( AleArguments &args)
   FileSystem::mkdir(ccpDir, true);
   Logger::initFileOutput(FileSystem::joinPaths(args.output, "genetegrator"));
   auto families = FamiliesFileParser::parseFamiliesFile(args.families);
-  //filterInvalidFamilies(families);
+  filterInvalidFamilies(families);
   generateCCPs(ccpDir, families, args.ccpRooting);
   trimFamilies(families, args.minCoveredSpecies, args.trimFamilyRatio);
   if (families.size() == 0) {
@@ -132,10 +132,12 @@ void run( AleArguments &args)
   
   RecModelInfo info;
   info.pruneSpeciesTree = args.pruneSpeciesTree;
+  info.noTL = args.noTL;
   info.model = ArgumentsHelper::strToRecModel(args.reconciliationModelStr); 
   info.transferConstraint = args.transferConstraint;
   info.gammaCategories = args.gammaCategories;
   info.originationStrategy = args.originationStrategy;
+  info.fractionMissingFile = args.fractionMissingFile;
   AleOptimizer speciesTreeOptimizer(
       args.speciesTree,
       families,
@@ -176,6 +178,7 @@ void run( AleArguments &args)
     auto highwayOutput = FileSystem::joinPaths(args.output,
       "highway_best_candidates.txt");
     std::vector<ScoredHighway> candidateHighways;
+    // initial candidates
     if (args.highwayCandidateFile.size()) {
       // the user sets the candidates
       auto highways = HighwayCandidateParser::parse(args.highwayCandidateFile,
@@ -187,9 +190,12 @@ void run( AleArguments &args)
       // automatically search for candidates
       speciesTreeOptimizer.getCandidateHighways(candidateHighways, args.highwayCandidatesStep1);
     }
-    candidateHighways.resize(std::min(candidateHighways.size(), size_t(args.highwayCandidatesStep2)));
+    // first filtering step
+    std::vector<ScoredHighway> filteredHighways;
+    speciesTreeOptimizer.filterCandidateHighwaysFast(candidateHighways, filteredHighways);
+    filteredHighways.resize(std::min(filteredHighways.size(), size_t(args.highwayCandidatesStep2)));
     std::vector<ScoredHighway> bestHighways;
-    speciesTreeOptimizer.selectBestHighways(candidateHighways, bestHighways);
+    speciesTreeOptimizer.selectBestHighways(filteredHighways, bestHighways);
     speciesTreeOptimizer.saveBestHighways(bestHighways,
         highwayOutput);
     auto acceptedHighwayOutput = FileSystem::joinPaths(args.output,

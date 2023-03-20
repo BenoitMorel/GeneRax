@@ -170,15 +170,24 @@ void BaseReconciliationModel::beforeComputeLogLikelihood()
 
 void BaseReconciliationModel::setFractionMissingGenes(const std::string &fractionMissingFile)
 {
-  _fm = std::vector<double>(getPrunedSpeciesNodeNumber(), 0.0);
   if (!fractionMissingFile.size()) {
+    _fm = std::vector<double>(getPrunedSpeciesNodeNumber(), 0.0);
     return;
   }
+  _fm = std::vector<double>(getPrunedSpeciesNodeNumber(), -1.0);
   std::ifstream is(fractionMissingFile);
   std::string species;
   double fm;
   while (is >> species >> fm) {
-    _fm[_speciesNameToId[species]] = fm;
+    if (_speciesNameToId.find(species) != _speciesNameToId.end()) {
+      _fm[_speciesNameToId[species]] = fm;
+    }
+  }
+  for (unsigned int i = 0; i < _speciesNameToId.size(); ++i) {
+    if (_fm[i] == -1.0) {
+      std::cerr << "Error, the fraction of missing file " << fractionMissingFile << " does not cover the species " << _speciesTree.getNode(i)->label << std::endl;
+      assert(false);
+    }
   }
 }
   

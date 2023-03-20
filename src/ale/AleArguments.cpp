@@ -10,6 +10,7 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
   transferConstraint(TransferConstaint::PARENTS),
   originationStrategy(OriginationStrategy::UNIFORM),
   pruneSpeciesTree(false),
+  noTL(false),
   gammaCategories(1),
   ccpRooting(CCPRooting::UNIFORM),
   speciesTreeAlgorithm(SpeciesTreeAlgorithm::User),
@@ -58,6 +59,8 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
       originationStrategy = Enums::strToOrigination(std::string(argv[++i]));
     } else if (arg == "--prune-species-tree") {
       pruneSpeciesTree = true;
+    } else if (arg == "--no-tl") {
+      noTL = true;
     } else if (arg == "--trim-ratio") {
       trimFamilyRatio = atof(argv[++i]);
     } else if (arg == "--min-covered-species") {
@@ -66,6 +69,8 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
       gammaCategories = atoi(argv[++i]);
     } else if (arg == "--gene-tree-rooting") {
       ccpRooting = ArgumentsHelper::strToCCPRooting(std::string(argv[++i]));
+    } else if (arg == "--fraction-missing") {
+      fractionMissingFile = argv[++i];
     } else if (arg == "--gene-tree-samples") {
       geneTreeSamples = atoi(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {

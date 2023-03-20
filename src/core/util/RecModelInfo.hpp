@@ -29,6 +29,9 @@ struct RecModelInfo {
   // disable duplications
   bool noDup;
 
+  // disableTL
+  bool noTL;
+
   std::string fractionMissingFile;
  
     
@@ -41,7 +44,8 @@ struct RecModelInfo {
     rootedGeneTree(true),
     branchLengthThreshold(-1.0),
     transferConstraint(TransferConstaint::NONE),
-    noDup(false)
+    noDup(false),
+    noTL(false)
   {
 
   }
@@ -55,6 +59,7 @@ struct RecModelInfo {
       double branchLengthThreshold,
       TransferConstaint transferConstraint,
       bool noDup,
+      bool noTL,
       const std::string &fractionMissingFile):
     model(model),
     perFamilyRates(perFamilyRates),
@@ -65,6 +70,7 @@ struct RecModelInfo {
     branchLengthThreshold(branchLengthThreshold),
     transferConstraint(transferConstraint),
     noDup(noDup),
+    noTL(noTL),
     fractionMissingFile(fractionMissingFile)
   {
 
@@ -81,6 +87,7 @@ struct RecModelInfo {
     std::string con = argv[i++];
     transferConstraint = ArgumentsHelper::strToTransferConstraint(con);
     noDup = bool(atoi(argv[i++]));
+    noTL = bool(atoi(argv[i++]));
     branchLengthThreshold = double(atof(argv[i++]));
     fractionMissingFile = std::string(argv[i++]);
     if (fractionMissingFile == "NONE") {
@@ -99,6 +106,7 @@ struct RecModelInfo {
     argv.push_back(std::to_string(static_cast<int>(rootedGeneTree)));
     argv.push_back(ArgumentsHelper::transferConstraintToStr(transferConstraint));
     argv.push_back(std::to_string(static_cast<int>(noDup)));
+    argv.push_back(std::to_string(static_cast<int>(noTL)));
     argv.push_back(std::to_string(branchLengthThreshold));
     if (fractionMissingFile.size()) {
       argv.push_back(fractionMissingFile);
@@ -110,7 +118,7 @@ struct RecModelInfo {
 
   static int getArgc() 
   {
-    return 10;
+    return 11;
   }
 
   unsigned int modelFreeParameters() const {

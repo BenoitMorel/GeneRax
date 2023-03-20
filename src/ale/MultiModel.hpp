@@ -179,7 +179,15 @@ bool MultiModelTemplate<REAL>::backtrace(unsigned int cid,
     recCell.event.leftGeneIndex = leftGeneNode->node_index;
     recCell.event.rightGeneIndex = rightGeneNode->node_index;
   }
-  scenario.addEvent(recCell.event);
+  bool addEvent = true;
+  if (recCell.event.type == ReconciliationEventType::EVENT_TL &&
+      recCell.event.pllDestSpeciesNode == nullptr) {
+    addEvent = false;
+  }
+
+  if (addEvent) {
+    scenario.addEvent(recCell.event);
+  }
 
   bool ok = true;
   std::string label;
@@ -204,7 +212,12 @@ bool MultiModelTemplate<REAL>::backtrace(unsigned int cid,
     ok &= backtrace(rightCid, recCell.event.pllDestSpeciesNode, rightGeneNode, c, scenario, stochastic);
     break;
   case ReconciliationEventType::EVENT_TL:
-    assert(false);
+    if (recCell.event.pllDestSpeciesNode == nullptr) {
+      // the gene was lost in the recieving species, we resample again
+      ok &= backtrace(cid, speciesNode, geneNode, c, scenario, stochastic);
+    } else {
+      ok &= backtrace(cid, recCell.event.pllDestSpeciesNode, geneNode, c, scenario, stochastic);
+    }
     break;
   case ReconciliationEventType::EVENT_None:
     label = _ccp.getCidToLeaves().at(cid);
