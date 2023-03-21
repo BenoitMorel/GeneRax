@@ -208,7 +208,9 @@ void run( AleArguments &args)
   speciesTreeOptimizer.optimizeModelRates(true);
   speciesTreeOptimizer.reconcile(args.geneTreeSamples);
   speciesTreeOptimizer.saveSpeciesTree(); 
-  cleanupCCPs(families);
+  if (args.cleanupCCP) {
+    cleanupCCPs(families);
+  }
   Logger::timed <<"End of the execution" << std::endl;
 }
 

@@ -24,6 +24,7 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
   trimFamilyRatio(1.0),
   geneTreeSamples(0),
   output("GeneTegrator"),
+  cleanupCCP(true),
   seed(123),
   randomSpeciesRoot(false)
 {
@@ -75,6 +76,8 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
       geneTreeSamples = atoi(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {
       output = std::string(argv[++i]);
+    } else if (arg == "--skip-cleanup-ccp") {
+      cleanupCCP = false;
     } else if (arg == "--seed") {
       seed = atoi(argv[++i]);
     } else if (arg == "--random-species-root") {

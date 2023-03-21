@@ -48,7 +48,8 @@ public:
   // output
   unsigned int geneTreeSamples;
   std::string output;
-  
+  bool cleanupCCP;
+
   // random seed
   int seed;
   

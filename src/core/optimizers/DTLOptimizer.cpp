@@ -22,11 +22,13 @@ static bool lineSearchParameters(FunctionToOptimize &function,
     const OptimizationSettings &settings
     )
 {
+  
   double alpha = 0.1; 
   const double minAlpha = settings.minAlpha;
   Parameters currentGradient(gradient);
   bool noImprovement = true;
   //Logger::info << "lineSearch " << currentRates.getScore() <<  " gradient: " << gradient << std::endl;
+  //Logger::info << "minimprov " << settings.lineSearchMinImprovement <<  std::endl; 
   while (alpha > minAlpha) {
     currentGradient.normalize(alpha);
     Parameters proposal = currentRates + (currentGradient * alpha);
@@ -40,10 +42,10 @@ static bool lineSearchParameters(FunctionToOptimize &function,
       alpha *= 1.5;
     } else {
       alpha *= 0.5;
+      //Logger::info << std::setprecision(15) << "No improv alpha=" << alpha << " score_to_beat=" << currentRates.getScore() << " p=" << proposal  << std::endl;
       if (!noImprovement) {
         return true;
       }
-      //Logger::info << std::setprecision(15) << "No improv alpha=" << alpha << " score=" << proposal.getScore() << " p=" << proposal  << std::endl;
     }
   }
   return !noImprovement;
@@ -60,6 +62,8 @@ Parameters DTLOptimizer::optimizeParameters(FunctionToOptimize &function,
   double epsilon = settings.epsilon;
   Parameters currentRates = startingParameters;
   function.evaluate(currentRates);
+  function.evaluate(currentRates);
+  function.evaluate(currentRates);
   unsigned int llComputationsGrad = 0;
   unsigned int llComputationsLine = 0;
   unsigned int dimensions = startingParameters.dimensions();
@@ -69,20 +73,13 @@ Parameters DTLOptimizer::optimizeParameters(FunctionToOptimize &function,
     for (unsigned int i = 0; i < dimensions; ++i) {
       Parameters closeRates = currentRates;
       closeRates[i] += epsilon;
+      //Logger::info << "Close rates: " << closeRates << std::endl;
       function.evaluate(closeRates);
       llComputationsGrad++;
       gradient[i] = (currentRates.getScore() - closeRates.getScore()) / (-epsilon);
-      //Logger::info << "gradient" << currentRates.getScore() - closeRates.getScore() << " " << gradient[i] << std::endl;
+      //Logger::info << " GRAD: currll=" << currentRates.getScore() << " newll=" << closeRates.getScore() << " diff=" << currentRates.getScore() - closeRates.getScore() << " grad[i]=" << gradient[i] << " epsilon=" << epsilon  << std::endl;
     }
   } while (lineSearchParameters(function, currentRates, gradient, llComputationsLine, settings));
-  /*
-  Parameters minusGradient(gradient);
-  for (unsigned int i = 0; i < gradient.dimensions(); ++i) {
-    minusGradient[i] = -gradient[i];
-  }
-  Logger::info << "Final line search with minus gradient" << std::endl;
-  lineSearchParameters(function, currentRates, minusGradient, llComputationsLine, settings);
-  */
   return currentRates;
 }
 

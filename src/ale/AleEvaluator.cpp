@@ -132,6 +132,7 @@ void GTSpeciesTreeLikelihoodEvaluator::resetEvaluation(unsigned int i, bool high
 
 double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
 {
+  //Logger::timed << "computeLogLikelihoodFast...";
   double sumLL = 0.0;
   for (unsigned int i = 0; i < _evaluations.size(); ++i) {
     auto famIndex = _geneTrees.getTrees()[i].familyIndex;
@@ -160,6 +161,7 @@ double GTSpeciesTreeLikelihoodEvaluator::computeLikelihoodFast()
   }
   printHightPrecisionCount();
   ParallelContext::sumDouble(sumLL);
+  //Logger::info << " ll = " << sumLL << std::endl;
   return sumLL;
 }
 
@@ -277,9 +279,9 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
       Logger::info << "(light)" << std::endl;
     }
     if (!thorough) {
-      settings.lineSearchMinImprovement = 10.0;
+      settings.lineSearchMinImprovement = std::max(3.0, ll / 1000.0);
       settings.minAlpha = 0.01;
-      settings.optimizationMinImprovement = std::max(3.0, ll / 1000.0);
+      settings.optimizationMinImprovement = settings.lineSearchMinImprovement;
     }
     DTLParametersOptimizer function(*this);
     _modelRates.rates = DTLOptimizer::optimizeParameters(

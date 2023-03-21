@@ -378,16 +378,16 @@ void AleOptimizer::getCandidateHighways(std::vector<ScoredHighway> &scoredHighwa
 
 void AleOptimizer::filterCandidateHighwaysFast(const std::vector<ScoredHighway> &highways, std::vector<ScoredHighway> &filteredHighways)
 {
-  double initialLL = getEvaluator().computeLikelihood(); 
-  Logger::info << "initial ll=" << initialLL << std::endl;
   double proba = 0.01;
   Logger::timed << "Filering " << highways.size() << " candidate highways using p=" << proba << std::endl;
+  double initialLL = getEvaluator().computeLikelihood(); 
+  Logger::timed << "initial ll=" << initialLL << std::endl;
   for (const auto &scoredHighway: highways) {
     auto highway = scoredHighway.highway;
     auto parameters = testHighwayFast(*_evaluator, highway, proba);
     auto llDiff = parameters.getScore() - initialLL;
 
-    if (llDiff > 0.1) {
+    if (llDiff > 0.01) {
       Logger::timed << "Accepting candidate: ";
       highway.proba = parameters[0];
       filteredHighways.push_back(ScoredHighway(highway, 
@@ -396,7 +396,7 @@ void AleOptimizer::filterCandidateHighwaysFast(const std::vector<ScoredHighway> 
       Logger::timed << "Rejecting candidate: ";
     }
     Logger::info << highway.src->label << "->" << highway.dest->label << std::endl;
-    Logger::info << " ll diff =" << llDiff << std::endl; 
+    Logger::info << " ll diff = " << llDiff << std::endl; 
   }
   std::sort(filteredHighways.rbegin(), filteredHighways.rend());
 }
