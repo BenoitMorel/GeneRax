@@ -25,6 +25,39 @@ void removeSpaces(std::string &str) {
   str.erase(end_pos, str.end());
 }
 
+
+bool readTaxa(std::stringstream &iss, 
+    std::vector<corax_rnode_t *> &nodes,
+    const std::string &candidateFile,
+    unsigned int lineNumber,
+    const std::unordered_map<std::string, corax_rnode_t *> &labelToNode,
+    bool from) 
+{
+  std::string str;
+  char delimiter = from ? ',' : '\n';
+  std::string fromToString = from ? "from" : "to";
+  if (!std::getline(iss, str, delimiter)) {
+    Logger::info << "Error: can't read the " << fromToString << " from species at line " << lineNumber << " of file " << candidateFile << std::endl;
+    return false;
+  }  
+  removeSpaces(str);
+  if (str == "*") {
+    for (auto it: labelToNode) {
+      nodes.push_back(it.second);
+    }
+    return true;
+  }
+  auto it = labelToNode.find(str);
+  if (it == labelToNode.end()) {
+    Logger::info << "Error: " << fromToString << " label " << str << 
+      " not found in the species tree. Check line " 
+      << lineNumber << " of file " << candidateFile << std::endl;
+    return false;
+  }
+  nodes.push_back(it->second);
+  return true;
+}
+
 std::vector<Highway> HighwayCandidateParser::parse(
     const std::string &candidateFile,
     PLLRootedTree &speciesTree)
@@ -44,36 +77,21 @@ std::vector<Highway> HighwayCandidateParser::parse(
       continue;
     }
     bool ok = true;
-    std::string from;
-    std::string to;
     std::stringstream iss(line);
-    if (!std::getline(iss, from, ',')) {
-      Logger::info << "Error: can't read the from species at line " << lineNumber << " of file " << candidateFile << std::endl;
-      ok = false;
-    }   
-    if (ok && !std::getline(iss, to)) {
-      Logger::info << "Error: can't read the dest species at line " << lineNumber << " of file " << candidateFile << std::endl;
-      ok = false;
-    }
-    if (ok && labelToNode.find(from) == labelToNode.end()) {
-      ok = false;
-      Logger::info << "Error: from label " << from << 
-        " not found in the species tree. Check your highway candidate file at line " 
-        << lineNumber << " of file " << candidateFile << std::endl;
-    }
-    //removeSpaces(from);
-    //removeSpaces(to);
-    if (ok && labelToNode.find(to) == labelToNode.end()) {
-      ok = false;
-      Logger::info << "Error: to label " << to << 
-        " not found in the species tree. Check your highway candidate file at line " 
-        << lineNumber << " of file " << candidateFile << std::endl;
-    }
-    candidates.push_back(Highway(labelToNode[from], labelToNode[to]));
+    std::vector<corax_rnode_t *> froms;
+    std::vector<corax_rnode_t *> tos;
+    ok &= readTaxa(iss, froms, candidateFile, lineNumber, labelToNode, true);
+  
+    ok &= readTaxa(iss, tos, candidateFile, lineNumber, labelToNode, false);
     if (!ok) {
       candidates.clear();
       return candidates;
     }
+    for (auto from: froms) {
+      for(auto to: tos) {
+        candidates.push_back(Highway(from, to));
+      }
+    } 
   }
 
   return candidates;

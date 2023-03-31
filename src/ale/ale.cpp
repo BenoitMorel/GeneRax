@@ -28,6 +28,31 @@ void filterInvalidFamilies(Families &families)
   families = validFamilies;
 }
 
+
+bool checkCCP(FamilyInfo &family,
+    ConditionalClades &ccp, 
+    std::unordered_set<std::string> &allSpecies)
+{
+  GeneSpeciesMapping mapping;
+  mapping.fill(family.mappingFile, family.startingGeneTree);
+  auto m = mapping.getMap();
+  for (auto pair: ccp.getCidToLeaves()) {
+    auto gene = pair.second;
+    auto it = m.find(gene);
+    if (it == m.end()) {
+      Logger::error << "Gene " << gene << " not mapped to any species "
+        << "in family "  << family.name << std::endl;
+      return false;
+    }
+    auto species = it->second; 
+    if (allSpecies.find(species) == allSpecies.end()) {
+      Logger::error << "Gene " << gene << " from family " << family.name << " is mapped to species " << species << " but this species is not in the species tree" << std::endl;
+      return false;
+    }
+  }
+  return true;
+}
+
 void generateCCPs(const std::string &ccpDir, 
     Families &families, 
     CCPRooting ccpRooting)
@@ -53,6 +78,23 @@ void cleanupCCPs(Families &families)
     std::remove(family.ccp.c_str());
   }
   ParallelContext::barrier();
+}
+
+void checkCCPAndSpeciesTree(Families &families,
+    CCPRooting ccpRooting,
+    const std::string &speciesTreePath)
+{
+  PLLRootedTree speciesTree(speciesTreePath);
+  auto labels = speciesTree.getLabels(true);
+  auto N = families.size();
+  for (auto i = ParallelContext::getBegin(N); i < ParallelContext::getEnd(N); i ++) {
+    ConditionalClades ccp;
+    ccp.unserialize(families[i].ccp);
+    bool ok = checkCCP(families[i], ccp, labels);
+    if (!ok) {
+      ParallelContext::abort(4);
+    }
+  }  
 }
 
 void trimFamilies(Families &families, int minSpecies, double trimRatio) 
@@ -129,7 +171,8 @@ void run( AleArguments &args)
     ParallelContext::abort(0);
   }
   initStartingSpeciesTree(args, families);
-  
+  Logger::timed << "Checking that ccp and mappings are valid..." << std::endl;
+  checkCCPAndSpeciesTree(families, args.ccpRooting, args.speciesTree); 
   RecModelInfo info;
   info.pruneSpeciesTree = args.pruneSpeciesTree;
   info.noTL = args.noTL;
@@ -172,7 +215,6 @@ void run( AleArguments &args)
     speciesTreeOptimizer.optimizeDates();
     speciesTreeOptimizer.getEvaluator().computeLikelihood();
   }
-  Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   if (args.highways) {
     // let's infer highways of transfers!
     auto highwayOutput = FileSystem::joinPaths(args.output,
@@ -206,6 +248,7 @@ void run( AleArguments &args)
         acceptedHighwayOutput);
   }
   speciesTreeOptimizer.optimizeModelRates(true);
+  Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   speciesTreeOptimizer.reconcile(args.geneTreeSamples);
   speciesTreeOptimizer.saveSpeciesTree(); 
   if (args.cleanupCCP) {

@@ -62,8 +62,6 @@ Parameters DTLOptimizer::optimizeParameters(FunctionToOptimize &function,
   double epsilon = settings.epsilon;
   Parameters currentRates = startingParameters;
   function.evaluate(currentRates);
-  function.evaluate(currentRates);
-  function.evaluate(currentRates);
   unsigned int llComputationsGrad = 0;
   unsigned int llComputationsLine = 0;
   unsigned int dimensions = startingParameters.dimensions();
@@ -80,6 +78,7 @@ Parameters DTLOptimizer::optimizeParameters(FunctionToOptimize &function,
       //Logger::info << " GRAD: currll=" << currentRates.getScore() << " newll=" << closeRates.getScore() << " diff=" << currentRates.getScore() - closeRates.getScore() << " grad[i]=" << gradient[i] << " epsilon=" << epsilon  << std::endl;
     }
   } while (lineSearchParameters(function, currentRates, gradient, llComputationsLine, settings));
+  function.evaluate(currentRates);
   return currentRates;
 }
 

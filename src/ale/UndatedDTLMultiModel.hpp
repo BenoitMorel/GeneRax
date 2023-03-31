@@ -111,7 +111,8 @@ private:
     std::vector<REAL> _correctionSum;
 
     // sum of transfer probabilities. Can be computed only once
-    // for all species, to reduce computation complexity
+    // for all species, to reduce computation complexity 
+    // (each entry corresponds to one category)
     std::vector<REAL> _survivingTransferSum;
   };
   
@@ -283,6 +284,7 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
   auto &correctionSum = clv._correctionSum;
   
   std::fill(uq.begin(), uq.end(), REAL());
+  auto tempUq = uq;
   auto N = this->getPrunedSpeciesNodeNumber();
   unsigned int maxIt = this->_info.noTL ? 1 : 4;
   std::fill(correctionSum.begin(), correctionSum.end(), REAL());
@@ -297,16 +299,18 @@ void UndatedDTLMultiModel<REAL>::updateCLV(CID cid)
       auto e = speciesNode->node_index;
       for (size_t c = 0; c < _gammaCatNumber; ++c) {
         auto ec = e * _gammaCatNumber + c;  
+        REAL v = REAL();
         computeProbability(cid, 
             speciesNode,
             c,
-            uq[ec]);
-        auto v = uq[ec];
+            v);
+        tempUq[ec] = v;
         v /=  getTransferWeightNorm();
         scale(v);
         sums[c] += v;
       }
     }
+    std::swap(tempUq, uq);
     std::fill(correctionSum.begin(), correctionSum.end(), REAL());
     std::fill(clv._survivingTransferSum.begin(), 
         clv._survivingTransferSum.end(), 
@@ -549,44 +553,45 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
       auto e = speciesNode->node_index;
       for (size_t c = 0; c < _gammaCatNumber; ++c) {
         auto ec = e * _gammaCatNumber + c;
-        // L
-        REAL proba(_PL[ec]);
-        if (it == maxIt - 1) {
-          proba = _uE[ec] * (1.0 - this->_fm[e]) + REAL(this->_fm[e]);
+        if (it == maxIt - 1 && !speciesNode->left) {
+          _uE[ec] = _uE[ec] * (1.0 - this->_fm[e]) + REAL(this->_fm[e]);
           scale(_uE[ec]);
-        }
-        REAL temp;
-        // D
-        temp = _uE[ec] * _uE[ec] * _PD[ec];
-        scale(temp);
-        proba += temp;
-        // T
-        temp = transferSum[c] * _uE[ec] * _PT[ec];
-        scale(temp);
-        proba += temp;
-        // S
-        if (this->getSpeciesLeft(speciesNode)) {
-          auto g = this->getSpeciesLeft(speciesNode)->node_index;
-          auto h = this->getSpeciesRight(speciesNode)->node_index;
-          auto gc = g * _gammaCatNumber + c;
-          auto hc = h * _gammaCatNumber + c;
-          temp = _uE[gc]  * _uE[hc] * _PS[ec];
+        } else {
+          // L
+          REAL proba(_PL[ec]);
+          REAL temp;
+          // D
+          temp = _uE[ec] * _uE[ec] * _PD[ec];
           scale(temp);
           proba += temp;
-        }
-        // transfer highway
-        for (const auto &highway: _highways[e]) {
-          auto d = highway.highway.dest->node_index;
-          auto dc = d * _gammaCatNumber + c;
-          temp = _uE[ec] * _uE[dc] * highway.proba;
+          // T
+          temp = transferSum[c] * _uE[ec] * _PT[ec];
           scale(temp);
           proba += temp;
+          // S
+          if (this->getSpeciesLeft(speciesNode)) {
+            auto g = this->getSpeciesLeft(speciesNode)->node_index;
+            auto h = this->getSpeciesRight(speciesNode)->node_index;
+            auto gc = g * _gammaCatNumber + c;
+            auto hc = h * _gammaCatNumber + c;
+            temp = _uE[gc]  * _uE[hc] * _PS[ec];
+            scale(temp);
+            proba += temp;
+          }
+          // transfer highway
+          for (const auto &highway: _highways[e]) {
+            auto d = highway.highway.dest->node_index;
+            auto dc = d * _gammaCatNumber + c;
+            temp = _uE[ec] * _uE[dc] * highway.proba;
+            scale(temp);
+            proba += temp;
+          }
+          _uE[ec] = proba;
+          if (!(proba < REAL(1.0))) {
+            std::cerr << "hey " << proba << " < " << REAL(1.0) << " is wrong"  << std::endl;
+          }
+          assert(proba < REAL(1.000001));
         }
-        _uE[ec] = proba;
-        if (!(proba < REAL(1.0))) {
-          std::cerr << "hey " << proba << " < " << REAL(1.0) << " is wrong"  << std::endl;
-        }
-        assert(proba < REAL(1.000001));
       }
     }
     // now compute transfer sum for the next iteration    
@@ -607,19 +612,6 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
       }
     }
   } // iterations to account for TL
-  
-  // now update _uE with fration of missing genes
-  for (auto speciesNode: this->getPrunedSpeciesNodes()) {
-    if (speciesNode->left) {
-      continue;
-    }
-    auto e = speciesNode->node_index;
-    for (size_t c = 0; c < _gammaCatNumber; ++c) {
-      auto ec = e * _gammaCatNumber + c;
-      _uE[ec] = _uE[ec] * (1.0 - this->_fm[e]) + REAL(this->_fm[e]);
-      scale(_uE[ec]);
-    }
-  }
 }
 
 template <class REAL>

@@ -74,7 +74,7 @@ AleOptimizer::AleOptimizer(
     startingRates = Parameters(0.2, 0.2);
     break;
   case RecModel::UndatedDTL:
-    startingRates = Parameters(0.05, 0.2, 0.1);
+    startingRates = Parameters(0.1, 0.2, 0.1);
     break;
   default:
     assert(false);
@@ -325,7 +325,7 @@ static Parameters testHighway(GTSpeciesTreeLikelihoodEvaluator &evaluator,
   startingParameter[0] = startingProbability;
   OptimizationSettings settings;
   settings.minAlpha = 0.0001;
-  settings.epsilon = -0.000001;
+  settings.epsilon = 0.00001;
   Logger::info << "Unoptimized ll=" << f.evaluatePrint(startingParameter, true) << std::endl;
   auto parameters = DTLOptimizer::optimizeParameters(
       f, 
@@ -343,6 +343,9 @@ static Parameters testHighways(GTSpeciesTreeLikelihoodEvaluator &evaluator,
   HighwayFunction f(evaluator, highways);
   if (optimize) {
     OptimizationSettings settings;
+    settings.lineSearchMinImprovement = 3.0;
+    settings.minAlpha = 0.01;
+    settings.epsilon = -0.000001;
     return DTLOptimizer::optimizeParameters(
         f, 
         startingProbabilities, 
@@ -386,7 +389,6 @@ void AleOptimizer::filterCandidateHighwaysFast(const std::vector<ScoredHighway> 
     auto highway = scoredHighway.highway;
     auto parameters = testHighwayFast(*_evaluator, highway, proba);
     auto llDiff = parameters.getScore() - initialLL;
-
     if (llDiff > 0.01) {
       Logger::timed << "Accepting candidate: ";
       highway.proba = parameters[0];
@@ -395,10 +397,11 @@ void AleOptimizer::filterCandidateHighwaysFast(const std::vector<ScoredHighway> 
     } else {
       Logger::timed << "Rejecting candidate: ";
     }
+    Logger::info << initialLL << " " << parameters.getScore() << std::endl;
     Logger::info << highway.src->label << "->" << highway.dest->label << std::endl;
     Logger::info << " ll diff = " << llDiff << std::endl; 
   }
-  std::sort(filteredHighways.rbegin(), filteredHighways.rend());
+  std::sort(filteredHighways.begin(), filteredHighways.end());
 }
 
 
