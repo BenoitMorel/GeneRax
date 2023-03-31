@@ -64,7 +64,7 @@ private:
   PerCoreGeneTrees _geneTrees;
   RecModelInfo _info;
   std::unique_ptr<GTSpeciesTreeLikelihoodEvaluator> _evaluator;
-  ModelParameters _modelRates;
+  AleModelParameters _modelRates;
   std::string _outputDir;
   SpeciesSearchState _searchState;
   RootLikelihoods _rootLikelihoods;

@@ -11,16 +11,20 @@
 #include <vector>
 #include <maths/ModelParameters.hpp>
 
+#include "AleModelParameters.hpp"
+
 class RecModelInfo;
 using MultiEvaluation = MultiModel;
 using MultiEvaluationPtr = 
   std::shared_ptr<MultiEvaluation>;
 using PerCoreMultiEvaluation = std::vector<MultiEvaluationPtr>;
 
+
+
 class GTSpeciesTreeLikelihoodEvaluator: public SpeciesTreeLikelihoodEvaluatorInterface {
 public:
   GTSpeciesTreeLikelihoodEvaluator(SpeciesTree &speciesTree,
-      ModelParameters &modelRates, 
+      AleModelParameters &modelRates, 
       bool optimizeRates,
       const Families &families,
       PerCoreGeneTrees &geneTrees,
@@ -29,7 +33,7 @@ public:
   virtual double computeLikelihood();
   virtual double computeLikelihoodFast();
   virtual bool providesFastLikelihoodImpl() const {return false;}
-  virtual bool isDated() const {return _modelRates.info.isDated();}
+  virtual bool isDated() const {return _modelRates.getInfo().isDated();}
   virtual double optimizeModelRates(bool thorough = false);
   virtual void pushRollback() {}
   virtual void popAndApplyRollback() {}
@@ -38,7 +42,7 @@ public:
     TransferFrequencies &frequencies,
     PerSpeciesEvents &perSpeciesEvents,
     PerCorePotentialTransfers &potentialTransfers);
-  virtual bool pruneSpeciesTree() const {return _modelRates.info.pruneSpeciesTree;}
+  virtual bool pruneSpeciesTree() const {return _modelRates.getInfo().pruneSpeciesTree;}
   virtual void setAlpha(double alpha);
   virtual void setParameters(Parameters &parameters);
   virtual void onSpeciesDatesChange();  
@@ -59,7 +63,7 @@ protected:
   void resetEvaluation(unsigned int i, bool highPrecision);
 private:
   SpeciesTree &_speciesTree;
-  ModelParameters &_modelRates;
+  AleModelParameters &_modelRates;
   bool _optimizeRates;
   std::vector<Highway> _highways;
   const Families &_families;

@@ -80,8 +80,9 @@ AleOptimizer::AleOptimizer(
     assert(false);
     break;
   }
-  _modelRates = ModelParameters(startingRates, 
-      1, //_geneTrees.getTrees().size(), 
+  std::vector<unsigned int> speciesToCat(_speciesTree->getTree().getNodesNumber(), 0);
+  _modelRates = AleModelParameters(startingRates, 
+      speciesToCat, //_geneTrees.getTrees().size(), 
       info);
   _speciesTree->addListener(this);
   ParallelContext::barrier();

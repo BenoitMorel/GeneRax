@@ -11,14 +11,14 @@
 
 static std::shared_ptr<MultiModel> createModel(SpeciesTree &speciesTree,
   const FamilyInfo &family,
-  const ModelParameters &modelParameters,
+  const AleModelParameters &modelParameters,
   const std::vector<Highway> &highways,
   bool highPrecision)
 {
   std::shared_ptr<MultiModel> model;
   GeneSpeciesMapping mapping;
   mapping.fill(family.mappingFile, family.startingGeneTree);
-  const auto &info = modelParameters.info;  
+  const auto &info = modelParameters.getInfo();  
   switch (info.model) {
   case RecModel::UndatedDL:
     if (highPrecision) {
@@ -56,8 +56,12 @@ static std::shared_ptr<MultiModel> createModel(SpeciesTree &speciesTree,
   }
   std::vector<std::vector<double> > rates;
   unsigned int N = speciesTree.getTree().getNodesNumber();
-  for (unsigned int d = 0; d < modelParameters.rates.dimensions(); ++d) {
-    rates.push_back(std::vector<double>(N, modelParameters.rates[d]));
+  for (unsigned int d = 0; d < modelParameters.perCategoryFreeParameters(); ++d) { 
+    std::vector<double> subrates;
+    for (unsigned int s = 0; s < N; ++s) {
+      subrates.push_back(modelParameters.getRate(s, d));
+    }
+    rates.push_back(subrates);
   }
   model->setRates(rates);
   model->setHighways(highways);
@@ -66,7 +70,7 @@ static std::shared_ptr<MultiModel> createModel(SpeciesTree &speciesTree,
 
 GTSpeciesTreeLikelihoodEvaluator::GTSpeciesTreeLikelihoodEvaluator(
     SpeciesTree &speciesTree,
-    ModelParameters &modelRates, 
+    AleModelParameters &modelRates, 
     bool optimizeRates,
     const Families &families,
     PerCoreGeneTrees &geneTrees,
@@ -241,23 +245,21 @@ private:
 
 void GTSpeciesTreeLikelihoodEvaluator::setParameters(Parameters &parameters)
 {
-  unsigned int freeParameters = Enums::freeParameters(_modelRates.info.model);
+  unsigned int freeParameters = Enums::freeParameters(_modelRates.getInfo().model);
   if (!freeParameters) {
     return;
   }
   assert(parameters.dimensions());
   assert(0 == parameters.dimensions() % freeParameters);
+  _modelRates.setRates(parameters);
   std::vector<std::vector<double> > rates;
-  rates.resize(freeParameters);
-  auto speciesNodeNumber = _speciesTree.getTree().getNodesNumber();
-  for (auto &r: rates) {
-    r.resize(speciesNodeNumber);
-  }
-  // this handles both per-species and global rates
-  for (unsigned int d = 0; d < rates.size(); ++d) {
-    for (unsigned int e = 0; e < speciesNodeNumber; ++e) {
-      (rates[d])[e] = parameters[(e * rates.size() + d) % parameters.dimensions()];
+  unsigned int N = _speciesTree.getTree().getNodesNumber();
+  for (unsigned int d = 0; d < _modelRates.perCategoryFreeParameters(); ++d) { 
+    std::vector<double> subrates;
+    for (unsigned int s = 0; s < N; ++s) {
+      subrates.push_back(_modelRates.getRate(s, d));
     }
+    rates.push_back(subrates);
   }
   for (auto evaluation: _evaluations) { 
     evaluation->setRates(rates);
@@ -283,12 +285,12 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
       settings.optimizationMinImprovement = settings.lineSearchMinImprovement;
     }
     DTLParametersOptimizer function(*this);
-    _modelRates.rates = DTLOptimizer::optimizeParameters(
+    _modelRates.setRates(DTLOptimizer::optimizeParameters(
         function, 
-        _modelRates.rates, 
-        settings);
+        _modelRates.getRates(), 
+        settings));
     ll = computeLikelihood();
-    Logger::timed << "[Species search]   After model rate opt, ll=" << ll << " rates: " << _modelRates.rates << std::endl;
+    Logger::timed << "[Species search]   After model rate opt, ll=" << ll << " rates: " << _modelRates.getRates() << std::endl;
   }
   ll = optimizeGammaRates();
   ll = computeLikelihood();
@@ -305,7 +307,7 @@ static double callback(void *p, double x)
 
 double GTSpeciesTreeLikelihoodEvaluator::optimizeGammaRates()
 {
-  auto gammaCategories = _modelRates.info.gammaCategories;
+  auto gammaCategories = _modelRates.getInfo().gammaCategories;
   auto ll = computeLikelihood();
   if (gammaCategories == 1) {
     return ll;
@@ -324,7 +326,7 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeGammaRates()
                                   (void *)this,
                                   &callback);
   setAlpha(alpha);
-  std::vector<double> categories(_modelRates.info.gammaCategories);
+  std::vector<double> categories(_modelRates.getInfo().gammaCategories);
   corax_compute_gamma_cats(alpha, categories.size(), &categories[0], 
       CORAX_GAMMA_RATES_MEAN);
   Logger::timed << "[Species search]   After gamma cat  opt, ll=" << ll << std::endl;
@@ -350,7 +352,7 @@ void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(SpeciesTree &speci
   transferFrequencies.count = MatrixUint(labelsNumber, zeros);
   transferFrequencies.idToLabel = idToLabel;
   perSpeciesEvents = PerSpeciesEvents(speciesTree.getTree().getNodesNumber());
-  auto infoCopy = _modelRates.info;
+  auto infoCopy = _modelRates.getInfo();
   infoCopy.originationStrategy = OriginationStrategy::UNIFORM;
   for (const auto &geneTree: _geneTrees.getTrees()) {
     auto &family = (_families)[geneTree.familyIndex];
