@@ -28,6 +28,7 @@ public:
   unsigned int gammaCategories;
   CCPRooting ccpRooting;
   std::string fractionMissingFile;
+  std::string speciesCategoryFile;
 
   // search
   SpeciesTreeAlgorithm speciesTreeAlgorithm;

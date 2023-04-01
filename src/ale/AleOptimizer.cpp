@@ -1,6 +1,7 @@
 #include "AleOptimizer.hpp" 
 #include <IO/FileSystem.hpp>
 #include <IO/Logger.hpp>
+#include <IO/IO.hpp>
 #include <optimizers/DTLOptimizer.hpp>
 #include <util/Paths.hpp>
 #include <maths/Random.hpp>
@@ -54,12 +55,61 @@ private:
 };
 
 
+static void getSpeciesToCatRec(corax_rnode_t *node,
+    std::vector<unsigned int> &speciesToCat,
+    unsigned int currentCat,
+    const std::map<std::string, unsigned int> &labelToCat)
+{
+  std::string label = node->label;
+  auto it = labelToCat.find(label);
+  if (it != labelToCat.end()) {
+    currentCat = it->second;
+  }
+  speciesToCat[node->node_index] = currentCat;
+  if (node->left) {
+    getSpeciesToCatRec(node->left, speciesToCat, currentCat, labelToCat);
+    getSpeciesToCatRec(node->right, speciesToCat, currentCat, labelToCat);
+  }
+}
+
+static std::vector<unsigned int> getSpeciesToCat(const PLLRootedTree &speciesTree,
+    const std::string &speciesCategoryFile)
+{
+  unsigned int N = speciesTree.getNodesNumber();
+  std::vector<unsigned int> res(N, 0);
+  std::ifstream is(speciesCategoryFile);
+  if (!is) {
+    return res;
+  }
+  std::map<std::string, unsigned int> labelToCat;
+  std::string line;
+  auto allLabels = speciesTree.getLabels(false);
+  while (std::getline(is, line)) {
+    IO::removeSpaces(line);
+    if (line.size() == 0 || labelToCat.find(line) != labelToCat.end()) {
+      continue;
+    }
+    if (allLabels.find(line) == allLabels.end()) {
+      Logger::error << "Warning, label " << line << " from " << 
+        speciesCategoryFile << " is not in the species tree" << std::endl;
+      continue;
+    }
+    unsigned int cat = labelToCat.size() + 1;
+    labelToCat.insert({line, cat});
+  }
+  getSpeciesToCatRec(speciesTree.getRoot(),
+      res,
+      0,
+      labelToCat);
+  return res; 
+}
 
 AleOptimizer::AleOptimizer(
     const std::string speciesTreeFile, 
     const Families &families, 
     const RecModelInfo &info,
     bool optimizeRates,
+    const std::string &speciesCategoryFile,
     const std::string &outputDir):
   _speciesTree(std::make_unique<SpeciesTree>(speciesTreeFile)),
   _geneTrees(families, false, true),
@@ -80,7 +130,8 @@ AleOptimizer::AleOptimizer(
     assert(false);
     break;
   }
-  std::vector<unsigned int> speciesToCat(_speciesTree->getTree().getNodesNumber(), 0);
+  auto speciesToCat = getSpeciesToCat(_speciesTree->getTree(),
+      speciesCategoryFile);
   _modelRates = AleModelParameters(startingRates, 
       speciesToCat, //_geneTrees.getTrees().size(), 
       info);

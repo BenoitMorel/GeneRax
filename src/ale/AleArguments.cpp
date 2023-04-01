@@ -72,6 +72,8 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
       ccpRooting = ArgumentsHelper::strToCCPRooting(std::string(argv[++i]));
     } else if (arg == "--fraction-missing") {
       fractionMissingFile = argv[++i];
+    } else if (arg == "--species-categories") {
+      speciesCategoryFile = argv[++i];
     } else if (arg == "--gene-tree-samples") {
       geneTreeSamples = atoi(argv[++i]);
     } else if (arg == "-p" || arg == "--prefix") {

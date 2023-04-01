@@ -186,6 +186,7 @@ void run( AleArguments &args)
       families,
       info,
       !args.fixRates,
+      args.speciesCategoryFile,
       args.output);
   if (args.randomSpeciesRoot) {
     Logger::timed << "Random root position!" << std::endl;

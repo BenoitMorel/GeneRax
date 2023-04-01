@@ -83,6 +83,7 @@ public:
    * labels
    */
   std::unordered_set<std::string> getLeavesLabels();
+  std::unordered_set<std::string> getAllLabels();
 
   /*
    * Save the tree in newick format in filename

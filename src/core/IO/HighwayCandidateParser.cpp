@@ -1,29 +1,7 @@
 #include "HighwayCandidateParser.hpp"
 #include <sstream>
 #include <algorithm>
-
-static bool isBlanck(const std::string &s) 
-{
-  return s.empty() 
-    || std::all_of(s.begin(), 
-        s.end(), 
-        [](char c){return std::isspace(c);});
-}
-
-template<typename T, typename P>
-T remove_if(T beg, T end, P pred)
-{
-  T dest = beg;
-  for (T itr = beg;itr != end; ++itr)
-    if (!pred(*itr))
-      *(dest++) = *itr;
-  return dest;
-}
-
-void removeSpaces(std::string &str) {
-  std::string::iterator end_pos = std::remove(str.begin(), str.end(), ' ');
-  str.erase(end_pos, str.end());
-}
+#include <IO/IO.hpp>
 
 
 bool readTaxa(std::stringstream &iss, 
@@ -40,7 +18,7 @@ bool readTaxa(std::stringstream &iss,
     Logger::info << "Error: can't read the " << fromToString << " from species at line " << lineNumber << " of file " << candidateFile << std::endl;
     return false;
   }  
-  removeSpaces(str);
+  IO::removeSpaces(str);
   if (str == "*") {
     for (auto it: labelToNode) {
       nodes.push_back(it.second);
@@ -69,10 +47,10 @@ std::vector<Highway> HighwayCandidateParser::parse(
   size_t lineNumber = 0;
   while (std::getline(is, line)) {
     lineNumber++;
-    if (isBlanck(line)) {
+    if (IO::isBlanck(line)) {
       continue;
     }
-    removeSpaces(line);
+    IO::removeSpaces(line);
     if (line[0] =='#') {
       continue;
     }
