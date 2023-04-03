@@ -27,7 +27,7 @@ static bool lineSearchParameters(FunctionToOptimize &function,
   const double minAlpha = settings.minAlpha;
   Parameters currentGradient(gradient);
   bool noImprovement = true;
-  //Logger::info << "lineSearch " << currentRates.getScore() <<  " gradient: " << gradient << std::endl;
+  Logger::info << "lineSearch " << currentRates.getScore() <<  " gradient: " << gradient << std::endl;
   //Logger::info << "minimprov " << settings.lineSearchMinImprovement <<  std::endl; 
   while (alpha > minAlpha) {
     currentGradient.normalize(alpha);
@@ -36,7 +36,7 @@ static bool lineSearchParameters(FunctionToOptimize &function,
     llComputationsLine++;
     if (currentRates.getScore() + settings.lineSearchMinImprovement
         < proposal.getScore()) {
-      //Logger::info << "Improv alpha=" << alpha << " score=" << proposal.getScore() << " p=" << proposal << std::endl;
+      Logger::info << "Improv alpha=" << alpha << " score=" << proposal.getScore() << " p=" << proposal << std::endl;
       currentRates = proposal;
       noImprovement = false;
       alpha *= 1.5;
@@ -52,7 +52,7 @@ static bool lineSearchParameters(FunctionToOptimize &function,
 }
 
 
-Parameters DTLOptimizer::optimizeParameters(FunctionToOptimize &function,
+Parameters optimizeParametersGradient(FunctionToOptimize &function,
     const Parameters &startingParameters,
     OptimizationSettings settings)
 {
@@ -66,6 +66,7 @@ Parameters DTLOptimizer::optimizeParameters(FunctionToOptimize &function,
   unsigned int llComputationsLine = 0;
   unsigned int dimensions = startingParameters.dimensions();
   Parameters gradient(dimensions);
+  Logger::info << "Computing gradient..." << std::endl;
   do {
     std::vector<Parameters> closeRates(dimensions, currentRates);
     for (unsigned int i = 0; i < dimensions; ++i) {
@@ -207,7 +208,116 @@ Parameters DTLOptimizer::optimizeParametersPerSpecies(PerCoreEvaluations &evalua
 }
 
 
+static Parameters findBestPointNelderMear(Parameters r1, 
+    Parameters r2, 
+    unsigned int iterations, 
+    FunctionToOptimize &function) 
+{
+  Parameters best = r1;
+  best.setScore(-100000000000);
+  unsigned int bestI = 0;
+  for (auto i = 0; i < iterations; ++i) {
+    Parameters current = r1 + ((r2 - r1) * (double(i) / double(iterations - 1)));
+    function.evaluate(current);
+    if (current < best) {
+      best = current;
+      bestI = i;
+    }
+  }
+  return best;
+}
 
 
 
+static Parameters optimizeParametersNelderMear(FunctionToOptimize &function, 
+    const Parameters &startingParameters,
+    OptimizationSettings settings = OptimizationSettings())
+{
+  std::vector<Parameters> rates;
+  rates.push_back(startingParameters);
+  auto N = startingParameters.dimensions();
+  for (unsigned int r = 0; r < N; ++r) {
+    auto p = startingParameters;
+    p[r] -=  0.09;
+    rates.push_back(p);
+  }
+  // n + 1 points for n dimensions
+  assert(rates.size() == N + 1);
 
+  for (auto &r: rates) {
+    function.evaluate(r);
+  }
+  Parameters worstRate = startingParameters;
+  unsigned int currentIt = 0;
+ 
+  while (worstRate.distance(rates.back()) > 0.005) {
+    std::sort(rates.begin(), rates.end());
+    worstRate = rates.back();
+    // centroid
+    Parameters x0(worstRate.dimensions());
+    for (unsigned int i = 0; i < rates.size() - 1; ++i) {
+      x0 = x0 + rates[i];
+    }
+    x0 = x0 / double(rates.size() - 1);
+    // reflexion, exansion and contraction at the same time
+    Parameters x1 = x0 - (x0 - rates.back()) * 0.5;  
+    Parameters x2 = x0 + (x0 - rates.back()) * 1.5;  
+    unsigned int iterations = 8;
+    Parameters xr = findBestPointNelderMear(x1, x2, iterations, function);
+    if (xr < rates[rates.size() - 1] ) {
+      rates.back() = xr;
+    }
+    currentIt++;
+  }
+  std::sort(rates.begin(), rates.end());
+  function.evaluate(rates[0]);
+  Logger::timed << "Simplex converged after " << currentIt << " iterations" << std::endl;
+  return rates[0];
+}
+
+Parameters DTLOptimizer::optimizeParameters(FunctionToOptimize &function,
+    Parameters startingParameters,
+    OptimizationSettings settings)
+{
+  switch(settings.strategy) {
+  case RecOpt::Gradient:
+      return optimizeParametersGradient(function, 
+          startingParameters, 
+          settings);
+  case RecOpt::Simplex:
+      return optimizeParametersNelderMear(function, 
+          startingParameters,
+          settings);
+  default:
+      assert(false);
+      return startingParameters;
+  }
+}
+      
+
+static Parameters optimizeParametersCorax(FunctionToOptimize &function, 
+    const Parameters &startingParameters,
+    OptimizationSettings settings = OptimizationSettings())
+{
+  unsigned int xnum = startingParameters.dimensions();
+  //double *xparameters = &startingParameters.getVector()[0];
+  //double **x = &xparameters;
+  //Parameters paramMin(
+
+  return startingParameters;
+}
+
+/*
+CORAX_EXPORT double corax_opt_minimize_lbfgsb_multi(
+    unsigned int  xnum,
+    double      **x,
+    double      **xmin,
+    double      **xmax,
+    int         **bound,
+    unsigned int *n,
+    unsigned int  nmax,
+    double        factr,
+    double        pgtol,
+    void         *params,
+    double (*target_funk)(void *, double **, double *, int *));
+*/

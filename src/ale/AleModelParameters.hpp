@@ -25,13 +25,16 @@ public:
    *  @brief Constructor
    *  @param startingRates the set of rates to assign to each category
    *  @param speciesToCategory mapping species node index to category
+   *  @param cat index to cat label
    *  @param info Description of the model
    */
   AleModelParameters(const Parameters &startingRates,
       const std::vector<unsigned int> &speciesToCategory,
+      const std::vector<std::string> &catToLabel,
       const RecModelInfo &info):
     _info(info),
     _speciesToCat(speciesToCategory),
+    _catToLabel(catToLabel),
     _catNumber(*std::max_element(std::begin(speciesToCategory), std::end(speciesToCategory)) + 1),
     _parameters(_catNumber, startingRates)
   {
@@ -58,8 +61,13 @@ public:
   /**
    *  Get a specific rate for a specific species
    */
-  double getRate(unsigned int species, unsigned int rate) const {
-    return _parameters[_speciesToCat[species] * perCategoryFreeParameters() + rate];}
+  double getRateFromSpecies(unsigned int species, unsigned int rate) const {
+    return getRateFromCat(_speciesToCat[species], rate);
+  }
+  
+  double getRateFromCat(unsigned int cat, unsigned int rate) const {
+    return _parameters[cat * perCategoryFreeParameters() + rate];
+  }
 
   /**
    *  Get model description
@@ -79,24 +87,29 @@ public:
    */
   const Parameters &getRates() {return _parameters;}
 
-  friend std::ofstream &operator<<(std::ofstream &os, const ModelParameters &mp)  {
+  friend std::ostream &operator<<(std::ostream &os, const AleModelParameters &mp)  {
     os << "[";
-    for (unsigned int c = 0; c < categoryNumber() << ++c) {
+    for (unsigned int c = 0; c < mp.categoryNumber(); ++c) {
+      os << mp._catToLabel[c] << " ";
       os << "(";
-      for (unsigned int r = 0; r < perCategoryFreeParameters(); ++r) {
-           
+      for (unsigned int r = 0; r < mp.perCategoryFreeParameters(); ++r) {
+        os << mp.getRateFromCat(c, r);
+        if (r !=  mp.perCategoryFreeParameters() -1) {
+          os << ",";
+        }
       }
       os << ")";
-      if (c != categoryNumber() - 1) {
+      if (c != mp.categoryNumber() - 1) {
         os << ",";
       }
     }
     os << "]";
-i   return os;
+    return os;
   }
 private:
   RecModelInfo _info;
   std::vector<unsigned int> _speciesToCat;
+  std::vector<std::string> _catToLabel;
   unsigned int _catNumber;
   Parameters _parameters;
 };

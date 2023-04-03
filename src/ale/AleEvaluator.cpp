@@ -59,7 +59,7 @@ static std::shared_ptr<MultiModel> createModel(SpeciesTree &speciesTree,
   for (unsigned int d = 0; d < modelParameters.perCategoryFreeParameters(); ++d) { 
     std::vector<double> subrates;
     for (unsigned int s = 0; s < N; ++s) {
-      subrates.push_back(modelParameters.getRate(s, d));
+      subrates.push_back(modelParameters.getRateFromSpecies(s, d));
     }
     rates.push_back(subrates);
   }
@@ -257,7 +257,7 @@ void GTSpeciesTreeLikelihoodEvaluator::setParameters(Parameters &parameters)
   for (unsigned int d = 0; d < _modelRates.perCategoryFreeParameters(); ++d) { 
     std::vector<double> subrates;
     for (unsigned int s = 0; s < N; ++s) {
-      subrates.push_back(_modelRates.getRate(s, d));
+      subrates.push_back(_modelRates.getRateFromSpecies(s, d));
     }
     rates.push_back(subrates);
   }
@@ -280,7 +280,7 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
       Logger::info << "(light)" << std::endl;
     }
     if (!thorough) {
-      settings.lineSearchMinImprovement = std::max(3.0, ll / 1000.0);
+      settings.lineSearchMinImprovement = std::max(3.0, ll / 10000.0);
       settings.minAlpha = 0.01;
       settings.optimizationMinImprovement = settings.lineSearchMinImprovement;
     }
@@ -290,7 +290,7 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
         _modelRates.getRates(), 
         settings));
     ll = computeLikelihood();
-    Logger::timed << "[Species search]   After model rate opt, ll=" << ll << " rates: " << _modelRates.getRates() << std::endl;
+    Logger::timed << "[Species search]   After model rate opt, ll=" << ll << " rates: " << _modelRates << std::endl;
   }
   ll = optimizeGammaRates();
   ll = computeLikelihood();

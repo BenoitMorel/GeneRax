@@ -13,12 +13,14 @@ class RootedTree;
 
 struct OptimizationSettings {
   OptimizationSettings(): 
+    strategy(RecOpt::Gradient),
     lineSearchMinImprovement(0.1),
     optimizationMinImprovement(3.0),
     minAlpha(0.0000001),
     epsilon(0.0000001)
   {}
 
+  RecOpt strategy;
   double lineSearchMinImprovement;
   double optimizationMinImprovement;
   double minAlpha;
@@ -46,10 +48,11 @@ public:
    *  @param startingParameters starting parameters
    *  @return The parameters that maximize the function
    */
-  static Parameters optimizeParameters(PerCoreEvaluations &evaluations, 
-      const Parameters &startingParameters,
-      OptimizationSettings settings = OptimizationSettings());
   static Parameters optimizeParameters(FunctionToOptimize &function, 
+      Parameters startingParameters,
+      OptimizationSettings settings = OptimizationSettings());
+  
+  static Parameters optimizeParameters(PerCoreEvaluations &evaluations, 
       const Parameters &startingParameters,
       OptimizationSettings settings = OptimizationSettings());
  

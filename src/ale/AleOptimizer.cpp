@@ -72,14 +72,17 @@ static void getSpeciesToCatRec(corax_rnode_t *node,
   }
 }
 
-static std::vector<unsigned int> getSpeciesToCat(const PLLRootedTree &speciesTree,
-    const std::string &speciesCategoryFile)
+void  getSpeciesToCat(const PLLRootedTree &speciesTree,
+    const std::string &speciesCategoryFile,
+    std::vector<unsigned int> &speciesToCat,
+    std::vector<std::string> &catToLabel)
 {
   unsigned int N = speciesTree.getNodesNumber();
-  std::vector<unsigned int> res(N, 0);
+  speciesToCat = std::vector<unsigned int>(N, 0);
+  catToLabel.push_back("all");
   std::ifstream is(speciesCategoryFile);
   if (!is) {
-    return res;
+    return;
   }
   std::map<std::string, unsigned int> labelToCat;
   std::string line;
@@ -96,12 +99,13 @@ static std::vector<unsigned int> getSpeciesToCat(const PLLRootedTree &speciesTre
     }
     unsigned int cat = labelToCat.size() + 1;
     labelToCat.insert({line, cat});
+    catToLabel.push_back(line);
   }
   getSpeciesToCatRec(speciesTree.getRoot(),
-      res,
+      speciesToCat,
       0,
       labelToCat);
-  return res; 
+  
 }
 
 AleOptimizer::AleOptimizer(
@@ -130,10 +134,15 @@ AleOptimizer::AleOptimizer(
     assert(false);
     break;
   }
-  auto speciesToCat = getSpeciesToCat(_speciesTree->getTree(),
-      speciesCategoryFile);
+  std::vector<unsigned int> speciesToCat;
+  std::vector<std::string> catToLabel;
+  getSpeciesToCat(_speciesTree->getTree(),
+      speciesCategoryFile,
+      speciesToCat,
+      catToLabel);
   _modelRates = AleModelParameters(startingRates, 
-      speciesToCat, //_geneTrees.getTrees().size(), 
+      speciesToCat, 
+      catToLabel,
       info);
   _speciesTree->addListener(this);
   ParallelContext::barrier();

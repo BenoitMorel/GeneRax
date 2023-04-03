@@ -36,6 +36,17 @@ bool readTaxa(std::stringstream &iss,
   return true;
 }
 
+bool isParent(corax_rnode_t *parent, corax_rnode_t *child)
+{
+  while (child) {
+    if (parent == child) {
+      return true;
+    }
+    child = child->parent;
+  }
+  return false;
+}
+
 std::vector<Highway> HighwayCandidateParser::parse(
     const std::string &candidateFile,
     PLLRootedTree &speciesTree)
@@ -67,8 +78,11 @@ std::vector<Highway> HighwayCandidateParser::parse(
     }
     for (auto from: froms) {
       for(auto to: tos) {
-        candidates.push_back(Highway(from, to));
+        if (!isParent(to, from)) {
+          candidates.push_back(Highway(from, to));
+        }
       }
+
     } 
   }
 

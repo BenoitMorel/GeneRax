@@ -87,14 +87,16 @@ void checkCCPAndSpeciesTree(Families &families,
   PLLRootedTree speciesTree(speciesTreePath);
   auto labels = speciesTree.getLabels(true);
   auto N = families.size();
+  bool ok = true;
   for (auto i = ParallelContext::getBegin(N); i < ParallelContext::getEnd(N); i ++) {
     ConditionalClades ccp;
     ccp.unserialize(families[i].ccp);
-    bool ok = checkCCP(families[i], ccp, labels);
-    if (!ok) {
-      ParallelContext::abort(4);
-    }
+    ok &= checkCCP(families[i], ccp, labels);
   }  
+  ParallelContext::barrier();
+  if (!ok) {
+    ParallelContext::abort(4);
+  }
 }
 
 void trimFamilies(Families &families, int minSpecies, double trimRatio) 
