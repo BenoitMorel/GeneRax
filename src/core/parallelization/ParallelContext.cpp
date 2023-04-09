@@ -340,7 +340,7 @@ void ParallelContext::concatenateHetherogeneousDoubleVectors(
 }
 
 void ParallelContext::concatenateHetherogeneousUIntVectors(
-      const std::vector<unsigned int> &localVector, 
+      std::vector<unsigned int> localVector, 
       std::vector<unsigned int> &globalVector)
 {
   if (!_mpiEnabled) {

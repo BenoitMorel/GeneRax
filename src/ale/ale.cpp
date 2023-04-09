@@ -53,7 +53,22 @@ bool checkCCP(FamilyInfo &family,
   return true;
 }
 
+
+bool compare(unsigned int a, unsigned int b, const std::vector<unsigned int> &data)
+{
+      return data[a]<data[b];
+}
+
+std::vector<unsigned int> getSortedIndices(const std::vector<unsigned int> &values)
+{
+  std::vector<unsigned int> indices(values.size());
+  std::iota(std::begin(indices), std::end(indices), 0);
+  std::sort(std::rbegin(indices), std::rend(indices), std::bind(compare,  std::placeholders::_1, std::placeholders::_2, values)); 
+  return indices;
+}
+
 void generateCCPs(const std::string &ccpDir, 
+    const std::string &ccpDimensionFile,
     Families &families, 
     CCPRooting ccpRooting)
 {
@@ -63,10 +78,30 @@ void generateCCPs(const std::string &ccpDir,
     family.ccp = FileSystem::joinPaths(ccpDir, family.name + ".ccp");
   } 
   auto N = families.size();
+  
+  std::vector<unsigned int> familyIndices;
+  std::vector<unsigned int> treeSizes;
+  std::vector<unsigned int> ccpSizes;
   for (auto i = ParallelContext::getBegin(N); i < ParallelContext::getEnd(N); i ++) {
     ConditionalClades ccp(families[i].startingGeneTree, families[i].likelihoodFile, ccpRooting);
     ccp.serialize(families[i].ccp);
+    familyIndices.push_back(i);
+    treeSizes.push_back(ccp.getLeafNumber());
+    ccpSizes.push_back(ccp.getCladesNumber());
   }
+  ParallelContext::barrier();
+  ParallelContext::concatenateHetherogeneousUIntVectors(familyIndices, familyIndices);
+  ParallelContext::concatenateHetherogeneousUIntVectors(treeSizes, treeSizes);
+  ParallelContext::concatenateHetherogeneousUIntVectors(ccpSizes, ccpSizes);
+  ParallelOfstream os(ccpDimensionFile);
+  assert(familyIndices.size() == families.size());
+  auto sortedIndices = getSortedIndices(ccpSizes);
+  for (unsigned int i = 0; i < familyIndices.size(); ++i) {
+    auto j = sortedIndices[i];
+    os << families[familyIndices[j]].name << ",";
+    os << treeSizes[j] << "," << ccpSizes[j] << std::endl;
+  }
+
   ParallelContext::barrier();
 }
 
@@ -166,7 +201,8 @@ void run( AleArguments &args)
   Logger::initFileOutput(FileSystem::joinPaths(args.output, "genetegrator"));
   auto families = FamiliesFileParser::parseFamiliesFile(args.families);
   filterInvalidFamilies(families);
-  generateCCPs(ccpDir, families, args.ccpRooting);
+  auto ccpDimensionFile = FileSystem::joinPaths(args.output, "ccpdim.txt");
+  generateCCPs(ccpDir, ccpDimensionFile, families, args.ccpRooting);
   trimFamilies(families, args.minCoveredSpecies, args.trimFamilyRatio);
   if (families.size() == 0) {
     Logger::info << "No valid family, aborting" << std::endl;
@@ -216,7 +252,6 @@ void run( AleArguments &args)
     break;
   }
   if (args.inferSpeciationOrders) {
-    speciesTreeOptimizer.optimizeDates(false);
     speciesTreeOptimizer.optimizeDates(true);
     speciesTreeOptimizer.getEvaluator().computeLikelihood();
   }

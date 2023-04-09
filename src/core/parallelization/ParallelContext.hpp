@@ -62,7 +62,7 @@ public:
    * Concatenates vectors of different sizes 
    */
   static void concatenateHetherogeneousUIntVectors(
-      const std::vector<unsigned int> &localVector, 
+      std::vector<unsigned int> localVector, 
       std::vector<unsigned int> &globalVector);
   static void concatenateHetherogeneousDoubleVectors(
       const std::vector<double> &localVector, 
