@@ -35,7 +35,8 @@ public:
   SpeciesSearchStrategy speciesSearchStrategy;
   bool inferSpeciationOrders;
   bool fixRates;
-  
+  bool skipThoroughRates;
+
   // highways
   bool highways;
   std::string highwayCandidateFile;
@@ -56,6 +57,6 @@ public:
   
   // experimental
   bool randomSpeciesRoot;
-
+  bool verboseOptRates;
 };
 

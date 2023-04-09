@@ -137,4 +137,15 @@ size_t DatedTree::getOrderingHash(size_t startingHash) const
   }
   return hash;
 }
-
+  
+bool DatedTree::canTransferUnderRelDated(unsigned int nodeIndexFrom,
+      unsigned int nodeIndexTo) const
+{
+  // father of from is before to
+  auto from = _rootedTree->getNode(nodeIndexFrom);
+  if (!from->parent) {
+    return true;
+  }
+  auto parentFromIndex = from->parent->node_index;
+  return _ranks[parentFromIndex] <= _ranks[nodeIndexTo]; 
+}

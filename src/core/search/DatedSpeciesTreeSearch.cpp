@@ -12,7 +12,7 @@ static double optimizeDatesNaive(SpeciesTree &speciesTree,
   bool tryAgain = true;
   while (tryAgain) {
     tryAgain = false;
-    //Logger::timed << "new naive dated round ll= " << bestLL <<  std::endl;
+    Logger::timed << "new naive dated round ll= " << bestLL <<  std::endl;
     for (unsigned int rank = 0; rank < max; ++rank) {
       if (!tree.moveUp(rank)) {
         continue;
@@ -30,7 +30,7 @@ static double optimizeDatesNaive(SpeciesTree &speciesTree,
     }
   }
   evaluation.onSpeciesDatesChange();
-  //Logger::timed << "end naive dated round ll= " << bestLL <<  std::endl;
+  Logger::timed << "end naive dated round ll= " << bestLL <<  std::endl;
   return bestLL;
 }
 
@@ -74,7 +74,7 @@ double DatedSpeciesTreeSearch::optimizeDates(
   optimizeDatesNaive(speciesTree, evaluation); 
   bestLL = evaluation.computeLikelihood();
   unsigned int unsuccessfulTrials = 0;
-  const unsigned int maxTrials = 3;
+  const unsigned int maxTrials = 2;
   auto &tree = speciesTree.getDatedTree();
   while (thorough && unsuccessfulTrials < maxTrials) {
     auto backup = tree.getBackup();

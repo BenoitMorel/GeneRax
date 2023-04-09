@@ -31,6 +31,9 @@ public:
   Backup getBackup() {Backup backup; backup.ranks = _ranks; return backup;}
   void restore(const Backup &backup);
 
+  bool canTransferUnderRelDated(unsigned int nodeIndexFrom,
+      unsigned int nodeIndexTo) const;
+
   /**
    *  hash value that characterizes the current order of the speciation events
    *

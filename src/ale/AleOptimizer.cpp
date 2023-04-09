@@ -113,6 +113,7 @@ AleOptimizer::AleOptimizer(
     const Families &families, 
     const RecModelInfo &info,
     bool optimizeRates,
+    bool optimizeVerbose,
     const std::string &speciesCategoryFile,
     const std::string &outputDir):
   _speciesTree(std::make_unique<SpeciesTree>(speciesTreeFile)),
@@ -150,6 +151,7 @@ AleOptimizer::AleOptimizer(
       *_speciesTree, 
       _modelRates, 
       optimizeRates,
+      optimizeVerbose,
       families, 
       _geneTrees,
       _outputDir);
@@ -346,6 +348,7 @@ void AleOptimizer::optimizeDates(bool thorough)
       _searchState,
       getEvaluator().computeLikelihood(),
       thorough);
+  saveCurrentSpeciesTreeId();
 }
 
 
@@ -404,9 +407,10 @@ static Parameters testHighways(GTSpeciesTreeLikelihoodEvaluator &evaluator,
   HighwayFunction f(evaluator, highways);
   if (optimize) {
     OptimizationSettings settings;
-    settings.lineSearchMinImprovement = 3.0;
-    settings.minAlpha = 0.01;
-    settings.epsilon = -0.000001;
+    settings.lineSearchMinImprovement = 1.0;
+    settings.minAlpha = 0.001;
+    settings.epsilon = 0.000001;
+    settings.verbose = true;
     return DTLOptimizer::optimizeParameters(
         f, 
         startingProbabilities, 
@@ -440,6 +444,31 @@ void AleOptimizer::getCandidateHighways(std::vector<ScoredHighway> &scoredHighwa
   }
 }
 
+bool isHighwayCompatible(Highway &highway,
+    const RecModelInfo &info,
+    const DatedTree &tree)
+{
+  auto from = highway.src;
+  auto to = highway.dest;
+  switch (info.transferConstraint) {
+  case TransferConstaint::NONE:
+    return true;
+  case TransferConstaint::PARENTS:
+    while (to) {
+      if (to == from) {
+        return false;
+      }
+      to = to->parent;
+    }
+    return true;
+  case TransferConstaint::SOFTDATED:
+    return tree.canTransferUnderRelDated(from->node_index,
+        to->node_index);
+  }
+  assert(false);
+  return false;    
+}
+
 void AleOptimizer::filterCandidateHighwaysFast(const std::vector<ScoredHighway> &highways, std::vector<ScoredHighway> &filteredHighways)
 {
   double proba = 0.01;
@@ -448,6 +477,10 @@ void AleOptimizer::filterCandidateHighwaysFast(const std::vector<ScoredHighway> 
   Logger::timed << "initial ll=" << initialLL << std::endl;
   for (const auto &scoredHighway: highways) {
     auto highway = scoredHighway.highway;
+    if (!isHighwayCompatible(highway, _info, _speciesTree->getDatedTree())) {
+      Logger::info << "Incompatible highway " << highway.src->label << "->" << highway.dest->label << std::endl;
+      continue;
+    }
     auto parameters = testHighwayFast(*_evaluator, highway, proba);
     auto llDiff = parameters.getScore() - initialLL;
     if (llDiff > 0.01) {

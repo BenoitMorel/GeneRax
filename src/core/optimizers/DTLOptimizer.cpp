@@ -27,7 +27,9 @@ static bool lineSearchParameters(FunctionToOptimize &function,
   const double minAlpha = settings.minAlpha;
   Parameters currentGradient(gradient);
   bool noImprovement = true;
-  Logger::info << "lineSearch " << currentRates.getScore() <<  " gradient: " << gradient << std::endl;
+  if (settings.verbose) {
+    Logger::info << "lineSearch " << currentRates.getScore() <<  " gradient: " << gradient << std::endl;
+  }
   //Logger::info << "minimprov " << settings.lineSearchMinImprovement <<  std::endl; 
   while (alpha > minAlpha) {
     currentGradient.normalize(alpha);
@@ -36,7 +38,9 @@ static bool lineSearchParameters(FunctionToOptimize &function,
     llComputationsLine++;
     if (currentRates.getScore() + settings.lineSearchMinImprovement
         < proposal.getScore()) {
-      Logger::info << "Improv alpha=" << alpha << " score=" << proposal.getScore() << " p=" << proposal << std::endl;
+      if (settings.verbose) {
+        Logger::info << "Improv alpha=" << alpha << " score=" << proposal.getScore() << " p=" << proposal << std::endl;
+      }      
       currentRates = proposal;
       noImprovement = false;
       alpha *= 1.5;
@@ -66,7 +70,9 @@ Parameters optimizeParametersGradient(FunctionToOptimize &function,
   unsigned int llComputationsLine = 0;
   unsigned int dimensions = startingParameters.dimensions();
   Parameters gradient(dimensions);
-  Logger::info << "Computing gradient..." << std::endl;
+  if (settings.verbose) {
+    Logger::info << "Computing gradient..." << std::endl;
+  }
   do {
     std::vector<Parameters> closeRates(dimensions, currentRates);
     for (unsigned int i = 0; i < dimensions; ++i) {

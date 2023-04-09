@@ -17,7 +17,8 @@ struct OptimizationSettings {
     lineSearchMinImprovement(0.1),
     optimizationMinImprovement(3.0),
     minAlpha(0.0000001),
-    epsilon(0.0000001)
+    epsilon(0.0000001),
+    verbose(false)
   {}
 
   RecOpt strategy;
@@ -25,6 +26,7 @@ struct OptimizationSettings {
   double optimizationMinImprovement;
   double minAlpha;
   double epsilon;
+  bool verbose;
 };
 
 class FunctionToOptimize {

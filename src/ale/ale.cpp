@@ -188,6 +188,7 @@ void run( AleArguments &args)
       families,
       info,
       !args.fixRates,
+      args.verboseOptRates,
       args.speciesCategoryFile,
       args.output);
   if (args.randomSpeciesRoot) {
@@ -215,7 +216,8 @@ void run( AleArguments &args)
     break;
   }
   if (args.inferSpeciationOrders) {
-    speciesTreeOptimizer.optimizeDates();
+    speciesTreeOptimizer.optimizeDates(false);
+    speciesTreeOptimizer.optimizeDates(true);
     speciesTreeOptimizer.getEvaluator().computeLikelihood();
   }
   if (args.highways) {
@@ -250,7 +252,9 @@ void run( AleArguments &args)
     speciesTreeOptimizer.saveBestHighways(acceptedHighways,
         acceptedHighwayOutput);
   }
-  speciesTreeOptimizer.optimizeModelRates(true);
+  if (!args.skipThoroughRates) {
+    speciesTreeOptimizer.optimizeModelRates(true);
+  }
   Logger::timed <<"Sampling reconciled gene trees... (" << args.geneTreeSamples  << " samples)" << std::endl;
   speciesTreeOptimizer.reconcile(args.geneTreeSamples);
   speciesTreeOptimizer.saveSpeciesTree(); 

@@ -72,6 +72,7 @@ GTSpeciesTreeLikelihoodEvaluator::GTSpeciesTreeLikelihoodEvaluator(
     SpeciesTree &speciesTree,
     AleModelParameters &modelRates, 
     bool optimizeRates,
+    bool optimizeVerbose,
     const Families &families,
     PerCoreGeneTrees &geneTrees,
     const std::string &outputDir):
@@ -81,7 +82,8 @@ GTSpeciesTreeLikelihoodEvaluator::GTSpeciesTreeLikelihoodEvaluator(
   _families(families),
   _geneTrees(geneTrees),
   _highPrecisions(_geneTrees.getTrees().size(), -1),
-  _outputDir(outputDir)
+  _outputDir(outputDir),
+  _optimizeVerbose(optimizeVerbose)
 {
   Logger::timed << "Initializing ccps and evaluators..." << std::endl;
   _evaluations.resize(_geneTrees.getTrees().size());
@@ -272,6 +274,7 @@ double GTSpeciesTreeLikelihoodEvaluator::optimizeModelRates(bool thorough)
   double ll = 0.0;
   if (_optimizeRates) {
     OptimizationSettings settings;
+    settings.verbose = _optimizeVerbose;
     ll = computeLikelihood();
     Logger::timed << "[SpeciesSearch] Optimizing model rates ";
     if (thorough) {

@@ -17,6 +17,7 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
   speciesSearchStrategy(SpeciesSearchStrategy::HYBRID),
   inferSpeciationOrders(false),
   fixRates(false),
+  skipThoroughRates(false),
   highways(false),
   highwayCandidatesStep1(100),
   highwayCandidatesStep2(25),
@@ -26,7 +27,8 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
   output("GeneTegrator"),
   cleanupCCP(true),
   seed(123),
-  randomSpeciesRoot(false)
+  randomSpeciesRoot(false),
+  verboseOptRates(false)
 {
   for (int i = 1; i < argc; ++i) {
     std::string arg(argv[i]);
@@ -44,6 +46,8 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
       inferSpeciationOrders = true;
     } else if (arg == "-r" || arg == "--rec-model") {
       reconciliationModelStr = std::string(argv[++i]);
+    } else if (arg == "--skip-thorough-rates") {
+      skipThoroughRates = true;
     } else if (arg == "--fix-rates") {
       fixRates = true;
     } else if (arg == "--highways") {
@@ -84,6 +88,8 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
       seed = atoi(argv[++i]);
     } else if (arg == "--random-species-root") {
       randomSpeciesRoot = true;
+    } else if (arg == "--verbose-opt-rates") {
+      verboseOptRates = true;
     } else {
       std::cerr << "Unknown argument " << arg << std::endl;
     }

@@ -37,6 +37,7 @@ public:
       const Families &families, 
       const RecModelInfo &info,
       bool optimizeRates,
+      bool optimizeVerbose,
       const std::string &speciesCategoryFile,
       const std::string &outputDir);
 

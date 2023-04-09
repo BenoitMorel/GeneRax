@@ -26,6 +26,7 @@ public:
   GTSpeciesTreeLikelihoodEvaluator(SpeciesTree &speciesTree,
       AleModelParameters &modelRates, 
       bool optimizeRates,
+      bool optimizeVerbose,
       const Families &families,
       PerCoreGeneTrees &geneTrees,
       const std::string &outputDir);
@@ -34,7 +35,7 @@ public:
   virtual double computeLikelihoodFast();
   virtual bool providesFastLikelihoodImpl() const {return false;}
   virtual bool isDated() const {return _modelRates.getInfo().isDated();}
-  virtual double optimizeModelRates(bool thorough = false);
+  virtual double optimizeModelRates(bool thorough);
   virtual void pushRollback() {}
   virtual void popAndApplyRollback() {}
   virtual void fillPerFamilyLikelihoods(PerFamLL &perFamLL);
@@ -73,6 +74,7 @@ private:
   std::vector<int> _highPrecisions;
   std::string _outputDir;
   std::vector<double> _snapshotPerFamilyLL;
+  bool _optimizeVerbose;
 };
 
 
