@@ -337,16 +337,30 @@ void AleOptimizer::reconcile(unsigned int samples)
       true, false);
   ParallelContext::makeRandConsistent();
 }
+  
+void AleOptimizer::fastDating()
+{
+  for (unsigned int i = 0; i < 10; ++i) {
+    Logger::timed << "STARTING IT " << i << std::endl;
+    DatedSpeciesTreeSearch::optimizeDatesFromReconciliation(*_speciesTree,
+      _searchState,
+      getEvaluator());
+  }
+}
 
 void AleOptimizer::optimizeDates(bool thorough)
 {
   if (!_info.isDated()) {
     return; 
   }
+  auto ll = getEvaluator().computeLikelihood();
+  _searchState.bestLL = ll;
+   
+  speciesTreeOptimizer.fastDating();
   DatedSpeciesTreeSearch::optimizeDates(*_speciesTree,
       getEvaluator(),
       _searchState,
-      getEvaluator().computeLikelihood(),
+      ll,
       thorough);
   saveCurrentSpeciesTreeId();
 }

@@ -357,6 +357,7 @@ void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(SpeciesTree &speci
   perSpeciesEvents = PerSpeciesEvents(speciesTree.getTree().getNodesNumber());
   auto infoCopy = _modelRates.getInfo();
   infoCopy.originationStrategy = OriginationStrategy::UNIFORM;
+  infoCopy.transferConstraint = TransferConstaint::PARENTS;
   for (const auto &geneTree: _geneTrees.getTrees()) {
     auto &family = (_families)[geneTree.familyIndex];
     GeneSpeciesMapping mapping;

@@ -12,6 +12,10 @@ public:
       double currentLL,
       bool thorough);
 
+  static double optimizeDatesFromReconciliation(SpeciesTree &speciesTree,
+      SpeciesSearchState &state,  
+      SpeciesTreeLikelihoodEvaluatorInterface &evaluation);
+
 };
 
 
