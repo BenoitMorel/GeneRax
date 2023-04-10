@@ -69,7 +69,40 @@ void TrimFamilies::trimMinSpeciesCoverage(Families &families,
     families.push_back(copy[i]);
   }
 }
-
+  
+void TrimFamilies::trimCladeSplitRatio(Families &families,
+      double maxRatio)
+{
+  auto begin = ParallelContext::getBegin(families.size());
+  auto end = ParallelContext::getEnd(families.size());
+  std::vector<unsigned int> localToKeep;
+  std::vector<unsigned int> toKeep;
+  unsigned int allClades = 0;
+  unsigned int filteredClades = 0;
+  for (unsigned int i = begin; i < end; ++i) {
+    ConditionalClades ccp;
+    ccp.unserialize(families[i].ccp);
+    auto c = ccp.getCladesNumber();
+    auto n = ccp.getLeafNumber() * 2;
+    allClades += c;
+    if (maxRatio * n >= c) {
+      localToKeep.push_back(i); 
+      filteredClades += c;
+    }
+  }
+  ParallelContext::concatenateHetherogeneousUIntVectors(localToKeep,
+      toKeep);
+  ParallelContext::sumUInt(allClades);
+  ParallelContext::sumUInt(filteredClades);
+  Logger::info << "Clades before trimming: " << allClades << std::endl;
+  Logger::info << "Clades after trimming: " << filteredClades << std::endl;
+  Families copy = families;
+  families.clear();
+  for (auto i: toKeep) {
+    assert(ParallelContext::isIntEqual(i));
+    families.push_back(copy[i]);
+  }
+}
 
 
 

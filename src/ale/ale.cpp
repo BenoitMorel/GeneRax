@@ -133,7 +133,8 @@ void checkCCPAndSpeciesTree(Families &families,
   }
 }
 
-void trimFamilies(Families &families, int minSpecies, double trimRatio) 
+void trimFamilies(Families &families, int minSpecies, double trimRatio,
+    double maxCladeSplitRatio) 
 {
   Logger::timed << "Families: " << families.size() << std::endl;
   if (minSpecies != -1) {
@@ -145,6 +146,12 @@ void trimFamilies(Families &families, int minSpecies, double trimRatio)
     Logger::timed << "Trimming families with too many clades (keeping " 
       << trimRatio * 100.0 << "\% of the families) " << std::endl;
     TrimFamilies::trimHighCladesNumber(families, trimRatio);
+  }
+  if (maxCladeSplitRatio > 0) {
+    Logger::timed << "Triming families with a ratio clades/nodes > " << maxCladeSplitRatio<< std::endl;
+    TrimFamilies::trimCladeSplitRatio(families, maxCladeSplitRatio);
+    Logger::timed << "Families: " << families.size() << std::endl;
+
   }
   Logger::timed << "Families: " << families.size() << std::endl;
 }
@@ -202,7 +209,8 @@ void run( AleArguments &args)
   filterInvalidFamilies(families);
   auto ccpDimensionFile = FileSystem::joinPaths(args.output, "ccpdim.txt");
   generateCCPs(ccpDir, ccpDimensionFile, families, args.ccpRooting);
-  trimFamilies(families, args.minCoveredSpecies, args.trimFamilyRatio);
+  trimFamilies(families, args.minCoveredSpecies, args.trimFamilyRatio,
+      args.maxCladeSplitRatio);
   if (families.size() == 0) {
     Logger::info << "No valid family, aborting" << std::endl;
     ParallelContext::abort(0);

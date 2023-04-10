@@ -46,7 +46,8 @@ public:
   // trimming
   int minCoveredSpecies;
   double trimFamilyRatio;
-  
+  double maxCladeSplitRatio;
+
   // output
   unsigned int geneTreeSamples;
   std::string output;

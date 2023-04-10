@@ -23,6 +23,7 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
   highwayCandidatesStep2(25),
   minCoveredSpecies(4),
   trimFamilyRatio(1.0),
+  maxCladeSplitRatio(-1.0),
   geneTreeSamples(0),
   output("GeneTegrator"),
   cleanupCCP(true),
@@ -70,6 +71,8 @@ AleArguments::AleArguments(int iargc, char * iargv[]):
       trimFamilyRatio = atof(argv[++i]);
     } else if (arg == "--min-covered-species") {
       minCoveredSpecies = atof(argv[++i]);
+    } else if (arg == "--max-clade-split-ratio") {
+      maxCladeSplitRatio = atof(argv[++i]);
     } else if (arg == "--gamma-categories") {
       gammaCategories = atoi(argv[++i]);
     } else if (arg == "--gene-tree-rooting") {
