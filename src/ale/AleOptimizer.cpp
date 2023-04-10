@@ -356,7 +356,6 @@ void AleOptimizer::optimizeDates(bool thorough)
   auto ll = getEvaluator().computeLikelihood();
   _searchState.bestLL = ll;
    
-  speciesTreeOptimizer.fastDating();
   DatedSpeciesTreeSearch::optimizeDates(*_speciesTree,
       getEvaluator(),
       _searchState,
