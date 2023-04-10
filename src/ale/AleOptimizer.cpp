@@ -77,7 +77,7 @@ void  getSpeciesToCat(const PLLRootedTree &speciesTree,
     std::vector<unsigned int> &speciesToCat,
     std::vector<std::string> &catToLabel)
 {
-  unsigned int N = speciesTree.getNodesNumber();
+  unsigned int N = speciesTree.getNodeNumber();
   speciesToCat = std::vector<unsigned int>(N, 0);
   catToLabel.push_back("all");
   std::ifstream is(speciesCategoryFile);

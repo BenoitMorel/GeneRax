@@ -163,9 +163,9 @@ static void extractClades(const WeightedTrees &weightedTrees,
     )
 {
   auto &anyTree = *(weightedTrees.begin()->first.tree);
-  CCPClade emptyClade(anyTree.getLeavesNumber(), false);
-  CCPClade fullClade(anyTree.getLeavesNumber(), true);
-  auto leafNumber = anyTree.getLeavesNumber();
+  CCPClade emptyClade(anyTree.getLeafNumber(), false);
+  CCPClade fullClade(anyTree.getLeafNumber(), true);
+  auto leafNumber = anyTree.getLeafNumber();
   std::vector<corax_unode_t *> nodes;
   std::vector<char> buffer;
   OrderedClades orderedClades;
@@ -175,7 +175,7 @@ static void extractClades(const WeightedTrees &weightedTrees,
   for (auto pair: weightedTrees) {
     auto virtualRoot = pair.first.root;
     auto &tree = *(pair.first.tree);
-    std::vector<CCPClade> nodeIndexToClade(tree.getDirectedNodesNumber(), 
+    std::vector<CCPClade> nodeIndexToClade(tree.getDirectedNodeNumber(), 
         emptyClade);
     if (virtualRoot) {
       postOrderNodes.emplace_back(tree.getPostOrderNodesRooted(virtualRoot));
@@ -233,11 +233,11 @@ static void fillCladeCounts(const WeightedTrees &weightedTrees,
     std::unordered_map<unsigned int, double> *CIDToDeviation = nullptr)
 {
   auto &anyTree = *(weightedTrees.begin()->first.tree);
-  auto emptyClade = CCPClade(anyTree.getLeavesNumber(), false);
-  auto fullClade = CCPClade(anyTree.getLeavesNumber(), true);
+  auto emptyClade = CCPClade(anyTree.getLeafNumber(), false);
+  auto fullClade = CCPClade(anyTree.getLeafNumber(), true);
   auto fullCladeCID = cladeToCID.at(fullClade);
-  std::vector<CCPClade> nodeIndexToClade(anyTree.getDirectedNodesNumber(), emptyClade); 
-  std::vector<CID> nodeIndexToCID(anyTree.getDirectedNodesNumber());
+  std::vector<CCPClade> nodeIndexToClade(anyTree.getDirectedNodeNumber(), emptyClade); 
+  std::vector<CID> nodeIndexToCID(anyTree.getDirectedNodeNumber());
   // root clade
   unsigned int weightedTreeIndex = 0;
   for (auto pair: weightedTrees) {
@@ -324,7 +324,7 @@ void ConditionalClades::buildFromALEFormat(const std::string &inputFile,
   std::string constructorString;
   std::getline(is, constructorString);
   PLLUnrootedTree tree(constructorString, false);
-  auto N = tree.getLeavesNumber();
+  auto N = tree.getLeafNumber();
   // read comment "#observations"
   std::getline(is, line);
   is >> _inputTrees; 
@@ -471,8 +471,8 @@ void ConditionalClades::buildFromGeneTrees(const std::string &inputFile,
     leafToId.insert({leaf, leafToId.size()});
     _idToLeaf.push_back(leaf);
   }
-  emptyClade = CCPClade(anyTree.getLeavesNumber(), false);
-  fullClade = CCPClade(anyTree.getLeavesNumber(), true);
+  emptyClade = CCPClade(anyTree.getLeafNumber(), false);
+  fullClade = CCPClade(anyTree.getLeafNumber(), true);
   
   std::vector<std::vector<corax_unode_t*> > postOrderNodes;
   // first pass to get all clades and assign them a CID

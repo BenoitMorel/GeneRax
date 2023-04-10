@@ -274,7 +274,7 @@ void JointTree::setRates(const Parameters &ratesVector)
 void JointTree::printInfo() 
 {
   auto treeInfo = getTreeInfo();
-  auto speciesLeaves = getSpeciesTree().getLeavesNumber();
+  auto speciesLeaves = getSpeciesTree().getLeafNumber();
   auto geneLeaves = treeInfo->tip_count;
   auto sites = treeInfo->partitions[0]->sites;
   Logger::info << "Species leaves: " << speciesLeaves << std::endl;

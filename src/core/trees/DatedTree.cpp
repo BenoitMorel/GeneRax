@@ -16,7 +16,7 @@ DatedTree::DatedTree(PLLRootedTree *rootedTree, bool fromBL):
       }
     }
   }
-  _ranks.resize(rootedTree->getNodesNumber());
+  _ranks.resize(rootedTree->getNodeNumber());
   unsigned int rank = 0;
   for (auto species: _orderedSpeciations) {
     _ranks[species->node_index] = rank++; 
@@ -30,7 +30,7 @@ DatedTree::DatedTree(PLLRootedTree *rootedTree, bool fromBL):
 void DatedTree::rescaleBranchLengths()
 {
   assert(isConsistent());
-  std::vector<double> heights(_rootedTree->getNodesNumber(), 0.0);
+  std::vector<double> heights(_rootedTree->getNodeNumber(), 0.0);
   double height = 0.0;
   
   for (auto node: _orderedSpeciations) {

@@ -61,13 +61,13 @@ public:
    * Tree dimension
    */
   // number of nodes in the node buffer (#leaves + #innner)
-  unsigned int getNodesNumber() const;
+  unsigned int getNodeNumber() const;
   // #leaves + 3 * #inner
-  unsigned int getDirectedNodesNumber() const;
+  unsigned int getDirectedNodeNumber() const;
   // #leaves
-  unsigned int getLeavesNumber() const;
+  unsigned int getLeafNumber() const;
   // #inner
-  unsigned int getInnerNodesNumber() const; 
+  unsigned int getInnerNodeNumber() const; 
   
   std::unordered_set<std::string> getLabels() const;
 
@@ -82,7 +82,7 @@ public:
   /**
    * labels
    */
-  std::unordered_set<std::string> getLeavesLabels();
+  std::unordered_set<std::string> getLeafLabels();
   std::unordered_set<std::string> getAllLabels();
 
   /*

@@ -6,7 +6,7 @@
 
 DSTagger::DSTagger(PLLUnrootedTree &tree):_tree(tree),
   _isRootDup(false),
-  _clvs(_tree.getDirectedNodesNumber() + 3)
+  _clvs(_tree.getDirectedNodeNumber() + 3)
 {
   for (auto node: _tree.getPostOrderNodes()) {
     auto &clv = _clvs[node->node_index];
@@ -43,7 +43,7 @@ DSTagger::DSTagger(PLLUnrootedTree &tree):_tree(tree),
   
 
   for (unsigned int i = 0; i < 3; ++i) {
-    _roots[i].node_index = _tree.getDirectedNodesNumber() + i;
+    _roots[i].node_index = _tree.getDirectedNodeNumber() + i;
     _roots[i].next = &_roots[(i + 1) % 3];
     _clvs[_roots[i].node_index].isDup = _isRootDup;
   }

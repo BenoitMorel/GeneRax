@@ -155,7 +155,7 @@ void PolytomySolver::solveSimpleInterface(
       std::map<std::string, unsigned int> &speciesLabelsToSolve
       )
 {
-  unsigned int speciesNumber = speciesTree.getNodesNumber(); 
+  unsigned int speciesNumber = speciesTree.getNodeNumber(); 
   std::vector<Entry> cells(speciesNumber);
   for (auto node: speciesTree.getPostOrderNodes()) {
     auto spid = node->node_index;

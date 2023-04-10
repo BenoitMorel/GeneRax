@@ -37,7 +37,7 @@ public:
       treeCount++;
       if (_labelToId.size() == 0) {
         // first tree: fill the leaf<->ID mapping
-        for (auto &label: tree.getLeavesLabels()) {
+        for (auto &label: tree.getLeafLabels()) {
           _idToLabel.push_back(label);
           _labelToId.insert({label, _labelToId.size()});
           UnorderedPairInt p;

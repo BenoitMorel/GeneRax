@@ -46,7 +46,7 @@ void SpeciesTransferSearch::getSortedTransferList(SpeciesTree &speciesTree,
   evaluation.getTransferInformation(speciesTree,
       frequencies,
       perSpeciesEvents, potentialTransfers);
-  unsigned int speciesNumber = speciesTree.getTree().getNodesNumber();
+  unsigned int speciesNumber = speciesTree.getTree().getNodeNumber();
   std::vector<double> speciesFrequencies;
   for (unsigned int e = 0; e < speciesNumber; ++e) {
     auto &speciesEvents = perSpeciesEvents.events[e];
@@ -103,7 +103,7 @@ static bool transferRound(SpeciesTree &speciesTree,
       transferMoves.push_back(transferMove); 
     }
   }
-  unsigned int speciesNumber = speciesTree.getTree().getNodesNumber();
+  unsigned int speciesNumber = speciesTree.getTree().getNodeNumber();
   unsigned int index = 0;
   const unsigned int stopAfterFailures = 50u;
   const unsigned int stopAfterImprovements = std::max(15u, speciesNumber / 4);

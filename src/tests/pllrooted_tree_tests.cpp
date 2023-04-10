@@ -33,7 +33,7 @@ void testTree(const std::string &treeStr)
   os.close();
   PLLRootedTree treeFromFile("temp.txt", true);
   PLLRootedTree tree(treeStr, false);
-  assert(tree.getNodesNumber() == treeFromFile.getNodesNumber());
+  assert(tree.getNodeNumber() == treeFromFile.getNodeNumber());
 
   for (auto n1: tree.getNodes()) {
     for (auto n2: tree.getNodes()) {

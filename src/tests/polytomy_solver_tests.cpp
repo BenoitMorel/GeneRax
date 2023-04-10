@@ -63,7 +63,7 @@ void test_1()
   
   auto speciesLabelToId = speciesTree.getLabelToIntMap();
   std::vector<unsigned int> geneToSpecies(
-      geneTree.getDirectedNodesNumber(), 0);
+      geneTree.getDirectedNodeNumber(), 0);
   for (auto leaf: geneTree.getLeaves()) {
     std::string geneString = leaf->label;
     std::string speciesString;

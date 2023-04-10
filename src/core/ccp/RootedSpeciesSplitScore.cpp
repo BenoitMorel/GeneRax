@@ -10,8 +10,8 @@ RootedSpeciesSplitScore::RootedSpeciesSplitScore(PLLRootedTree &speciesTree,
     const SpeciesSplits &splits):
   _splits(splits),
   _speciesTree(&speciesTree),
-  _spidToNodeIndex(_speciesTree->getNodesNumber()),
-  _nodeIndexToSpid(_speciesTree->getNodesNumber(), INVALID_SPID)
+  _spidToNodeIndex(_speciesTree->getNodeNumber()),
+  _nodeIndexToSpid(_speciesTree->getNodeNumber(), INVALID_SPID)
   //_labelToSpid(splits.getLabelToSpid())
 {
 }

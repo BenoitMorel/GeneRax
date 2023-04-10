@@ -119,36 +119,36 @@ void PLLUnrootedTree::setMissingBranchLengths(double minBL)
   
 CArrayRange<corax_unode_t*> PLLUnrootedTree::getLeaves() const
 {
-  return CArrayRange<corax_unode_t*>(_tree->nodes, getLeavesNumber());
+  return CArrayRange<corax_unode_t*>(_tree->nodes, getLeafNumber());
 }
 
 CArrayRange<corax_unode_t*> PLLUnrootedTree::getNodes() const
 {
-  return CArrayRange<corax_unode_t*>(_tree->nodes, getNodesNumber());
+  return CArrayRange<corax_unode_t*>(_tree->nodes, getNodeNumber());
 }
 
 CArrayRange<corax_unode_t*> PLLUnrootedTree::getInnerNodes() const
 {
-  return CArrayRange<corax_unode_t*>(_tree->nodes + getLeavesNumber(), getInnerNodesNumber());
+  return CArrayRange<corax_unode_t*>(_tree->nodes + getLeafNumber(), getInnerNodeNumber());
 }
 
 
-unsigned int PLLUnrootedTree::getNodesNumber() const
+unsigned int PLLUnrootedTree::getNodeNumber() const
 {
-  return getLeavesNumber() + getInnerNodesNumber();
+  return getLeafNumber() + getInnerNodeNumber();
 }
 
-unsigned int PLLUnrootedTree::getDirectedNodesNumber() const
+unsigned int PLLUnrootedTree::getDirectedNodeNumber() const
 {
-  return getLeavesNumber() + 3 * getInnerNodesNumber();
+  return getLeafNumber() + 3 * getInnerNodeNumber();
 }
 
-unsigned int PLLUnrootedTree::getLeavesNumber() const
+unsigned int PLLUnrootedTree::getLeafNumber() const
 {
   return _tree->tip_count;
 }
 
-unsigned int PLLUnrootedTree::getInnerNodesNumber() const
+unsigned int PLLUnrootedTree::getInnerNodeNumber() const
 {
   return _tree->inner_count;
 }
@@ -160,10 +160,10 @@ corax_unode_t *PLLUnrootedTree::getNode(unsigned int node_index) const
 
 corax_unode_t *PLLUnrootedTree::getAnyInnerNode() const
 {
-  return getNode(getLeavesNumber());
+  return getNode(getLeafNumber());
 }
   
-std::unordered_set<std::string> PLLUnrootedTree::getLeavesLabels()
+std::unordered_set<std::string> PLLUnrootedTree::getLeafLabels()
 {
   std::unordered_set<std::string> res;
   for (auto leaf: getLeaves()) {
@@ -266,7 +266,7 @@ std::vector<corax_unode_t *> PLLUnrootedTree::getBranchesDeterministic() const
   std::vector<ToSort> toSortVector;
   ToSort toSort;
   fillBranchesRec(root->back, toSortVector, toSort);
-  assert(toSortVector.size() == getLeavesNumber() * 2 - 3);
+  assert(toSortVector.size() == getLeafNumber() * 2 - 3);
   std::sort(toSortVector.begin(), toSortVector.end(), less_than_key());
   std::vector<corax_unode_t *> res;
   for (const auto &toSort: toSortVector) {
@@ -296,7 +296,7 @@ static void fillPostOrder(corax_unode_t *node,
 std::vector<corax_unode_t*> PLLUnrootedTree::getPostOrderNodesFrom(corax_unode_t *node) const
 {
   std::vector<corax_unode_t*> nodes;
-  std::vector<char> markedNodes(getDirectedNodesNumber(), false);
+  std::vector<char> markedNodes(getDirectedNodeNumber(), false);
   fillPostOrder(node, nodes, markedNodes);
   return nodes;
 }
@@ -305,7 +305,7 @@ std::vector<corax_unode_t*> PLLUnrootedTree::getPostOrderNodesFrom(corax_unode_t
 std::vector<corax_unode_t*> PLLUnrootedTree::getPostOrderNodesRooted(corax_unode_t *virtualRoot) const
 {
   std::vector<corax_unode_t*> nodes;
-  std::vector<char> markedNodes(getDirectedNodesNumber(), false);
+  std::vector<char> markedNodes(getDirectedNodeNumber(), false);
   fillPostOrder(virtualRoot, nodes, markedNodes);
   fillPostOrder(virtualRoot->back, nodes, markedNodes);
   return nodes;
@@ -315,7 +315,7 @@ std::vector<corax_unode_t*> PLLUnrootedTree::getPostOrderNodesRooted(corax_unode
 std::vector<corax_unode_t*> PLLUnrootedTree::getPostOrderNodes(bool innerOnly) const
 {
   std::vector<corax_unode_t*> nodes;
-  std::vector<char> markedNodes(getDirectedNodesNumber(), false);
+  std::vector<char> markedNodes(getDirectedNodeNumber(), false);
   if (innerOnly) {
     for (auto node: getLeaves()) {
       markedNodes[node->node_index] = true;
@@ -326,9 +326,9 @@ std::vector<corax_unode_t*> PLLUnrootedTree::getPostOrderNodes(bool innerOnly) c
     fillPostOrder(node->back, nodes, markedNodes);
   }
   if (innerOnly) {
-    assert(nodes.size() == getDirectedNodesNumber() - getLeavesNumber());
+    assert(nodes.size() == getDirectedNodeNumber() - getLeafNumber());
   } else {
-    assert(nodes.size() == getDirectedNodesNumber());
+    assert(nodes.size() == getDirectedNodeNumber());
   }
   return nodes;
 }
@@ -336,7 +336,7 @@ std::vector<corax_unode_t*> PLLUnrootedTree::getPostOrderNodes(bool innerOnly) c
 std::vector<corax_unode_t*> PLLUnrootedTree::getReverseDepthNodes() const
 {
   std::deque<corax_unode_t *> q;
-  std::vector<bool> marked(getDirectedNodesNumber(), false);
+  std::vector<bool> marked(getDirectedNodeNumber(), false);
   std::vector<corax_unode_t *> nodes;
   for (auto leaf: getLeaves()) {
     marked[leaf->node_index] = true;
@@ -361,7 +361,7 @@ std::vector<corax_unode_t*> PLLUnrootedTree::getReverseDepthNodes() const
       marked[right->node_index] = true;
     }
   }
-  assert(nodes.size() == getDirectedNodesNumber());
+  assert(nodes.size() == getDirectedNodeNumber());
   return nodes; 
 }
 
@@ -386,9 +386,9 @@ static void computePairwiseDistancesRec(corax_unode_t *currentNode,
 void PLLUnrootedTree::computePairwiseDistances(MatrixDouble &distances,
     bool leavesOnly)
 {
-  auto M = leavesOnly ? getLeavesNumber() : getDirectedNodesNumber(); 
-  auto N = getLeavesNumber();
-  auto MIter = leavesOnly ? getLeavesNumber() : getNodesNumber();
+  auto M = leavesOnly ? getLeafNumber() : getDirectedNodeNumber(); 
+  auto N = getLeafNumber();
+  auto MIter = leavesOnly ? getLeafNumber() : getNodeNumber();
   VectorDouble zeros(N, 0.0);
   distances = MatrixDouble(M, zeros);
   for (unsigned int i = 0; i < MIter; ++i) {
@@ -789,13 +789,13 @@ static bool areIsomorphicAux(corax_unode_t *node1,
 bool PLLUnrootedTree::areIsomorphic(const PLLUnrootedTree &t1,
     const PLLUnrootedTree &t2)
 {
-  if (t1.getNodesNumber() != t2.getNodesNumber()) {
+  if (t1.getNodeNumber() != t2.getNodeNumber()) {
     return false;
   }
   auto startingLeaf1 = findMinimumHashLeaf(t1.getAnyInnerNode())->back;
   auto startingLeaf2 = findMinimumHashLeaf(t2.getAnyInnerNode())->back;
-  std::vector<bool> leftFirst1(t1.getDirectedNodesNumber(), true);;
-  std::vector<bool> leftFirst2(t2.getDirectedNodesNumber(), true);;
+  std::vector<bool> leftFirst1(t1.getDirectedNodeNumber(), true);;
+  std::vector<bool> leftFirst2(t2.getDirectedNodeNumber(), true);;
   orderChildren(startingLeaf1, leftFirst1);
   orderChildren(startingLeaf2, leftFirst2);
   return areIsomorphicAux(startingLeaf1, 

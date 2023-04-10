@@ -67,7 +67,7 @@ public:
   int getCladeSize(int speciesId)  {return _speciesIdToCladeSize[speciesId];}
   std::string toString();
   void printInternalState();
-  unsigned int getLeavesNumber() {
+  unsigned int getLeafNumber() {
     return _leavesNumber;
   }
   std::pair<int, int> getChildrenIds(const CherryProEdge &edge);
@@ -594,7 +594,7 @@ void CherryProTree::mergeNodesWithSpeciesId(unsigned int speciesId)
   GeneIdsSet geneSetCopy = geneSet;
   for (auto geneId: geneSetCopy) { 
     while (true) {
-      if (getLeavesNumber() < 4) {
+      if (getLeafNumber() < 4) {
         // nothing to merge!
         return;
       }
@@ -664,8 +664,8 @@ std::string CherryProTree::recursiveToString(int nodeId)
 static std::vector<int> computePLLIdToId(PLLUnrootedTree &pllTree)
 {
   int currentId = 0;
-  int maxPllNodeId = pllTree.getLeavesNumber()
-    + pllTree.getInnerNodesNumber() * 3;
+  int maxPllNodeId = pllTree.getLeafNumber()
+    + pllTree.getInnerNodeNumber() * 3;
   std::vector<int> pllIdToId(maxPllNodeId, -1);
   for (auto pllNode: pllTree.getNodes()) {
     if (pllIdToId[pllNode->node_index] == -1) {
@@ -688,7 +688,7 @@ CherryProTree::CherryProTree(const std::string &treeString,
 
 {
   PLLUnrootedTree pllTree(treeString, false);
-  _nodes.resize(pllTree.getLeavesNumber() * 2 - 2);
+  _nodes.resize(pllTree.getLeafNumber() * 2 - 2);
   auto pllIdToId = computePLLIdToId(pllTree);
   for (auto pllNode: pllTree.getNodes()) {
     auto geneId = pllIdToId[pllNode->node_index];
@@ -727,7 +727,7 @@ static void filterGeneTrees(std::vector<std::shared_ptr<CherryProTree> > &geneTr
   auto geneTreesCopy = geneTrees;
   geneTrees.clear();
   for (auto geneTree: geneTreesCopy) {
-    if (geneTree->getLeavesNumber() >= 3 && geneTree->coveredSpeciesNumber() >= 3 ) {
+    if (geneTree->getLeafNumber() >= 3 && geneTree->coveredSpeciesNumber() >= 3 ) {
       geneTrees.push_back(geneTree);
     }
   }

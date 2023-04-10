@@ -56,7 +56,7 @@ static void fillSpeciesDistances(const PLLUnrootedTree &speciesTree,
     DistanceMatrix &speciesDistanceMatrix,
     std::vector<bool> *belongsToPruned = nullptr)
 {
-  std::vector<unsigned int> nodeIndexToSpid(speciesTree.getLeavesNumber());
+  std::vector<unsigned int> nodeIndexToSpid(speciesTree.getLeafNumber());
   for (auto leaf: speciesTree.getLeaves()) {
     nodeIndexToSpid[leaf->node_index] = speciesStringToSpeciesId.at(leaf->label);
   }
@@ -90,7 +90,7 @@ Astrid::Astrid(const PLLUnrootedTree &speciesTree,
     _speciesStringToSpeciesId.insert({label, _speciesIdToSpeciesString.size()});
     _speciesIdToSpeciesString.push_back(label);
   }
-  for (unsigned int i = 0; i < speciesTree.getLeavesNumber() + 3; ++i) {
+  for (unsigned int i = 0; i < speciesTree.getLeafNumber() + 3; ++i) {
     _pows.push_back(std::pow(0.5, i));
   }
   _geneDistanceMatrices.resize(1);

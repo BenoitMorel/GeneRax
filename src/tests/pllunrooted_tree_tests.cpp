@@ -31,9 +31,9 @@ void testTree(const std::string &treeStr)
   PLLUnrootedTree treeFromFile("temp.txt", true);
   PLLUnrootedTree tree(treeStr, false);
   for (auto node: tree.getNodes()) {
-    testGetClade(node, tree.getLeavesNumber());
+    testGetClade(node, tree.getLeafNumber());
   }
-  assert(tree.getNodesNumber() == treeFromFile.getNodesNumber());
+  assert(tree.getNodeNumber() == treeFromFile.getNodeNumber());
 }
 
 
@@ -51,11 +51,11 @@ void testDistances(bool leavesOnly)
   for (auto leaf: t1.getLeaves()) {
     indices.insert({std::string(leaf->label), leaf->node_index});
   }
-  assert(indices.size() == t1.getLeavesNumber());
+  assert(indices.size() == t1.getLeafNumber());
   
-  for (unsigned int i = 0; i < t1.getLeavesNumber(); ++i) {
+  for (unsigned int i = 0; i < t1.getLeafNumber(); ++i) {
     assert(distances[i][i] == 0.0);
-    for (unsigned int j = 0; j < t1.getLeavesNumber(); ++j) {
+    for (unsigned int j = 0; j < t1.getLeafNumber(); ++j) {
       assert(almostEqual(distances[i][j], distances[j][i]));
     }
   }
@@ -81,7 +81,7 @@ void testMADRooting()
 {
   PLLUnrootedTree t1(treeWithDistances1, false);
   auto deviations = t1.getMADRelativeDeviations(); 
-  assert(deviations.size() == t1.getDirectedNodesNumber());
+  assert(deviations.size() == t1.getDirectedNodeNumber());
   auto minIt = std::min_element(deviations.begin(), deviations.end());
   auto minIndex = std::distance(deviations.begin(), minIt);
   corax_unode_t *root = nullptr;

@@ -58,7 +58,7 @@ SpeciesTreeOptimizer::SpeciesTreeOptimizer(const std::string speciesTreeFile,
   _computeAllGeneClades();
   _searchState.farFromPlausible &= 
     _unsupportedCladesNumber() > std::max<unsigned int>(
-      _speciesTree->getTree().getNodesNumber() / 4, 1);
+      _speciesTree->getTree().getNodeNumber() / 4, 1);
   if (_searchState.farFromPlausible) {
     Logger::info << "The starting tree is far from being plausible" << std::endl;
   }

@@ -107,20 +107,20 @@ static unsigned int intersectionSize(const TaxaSet &s1, const TaxaSet &s2)
 
 void ICCalculator::_computeIntersections()
 {
-  auto speciesNodeCount = _referenceTree.getDirectedNodesNumber();
+  auto speciesNodeCount = _referenceTree.getDirectedNodeNumber();
   auto familyCount= _evaluationTrees.size();
   _interCounts.clear();
   _interCounts.resize(familyCount);
   std::vector<unsigned int> speciesZeros(speciesNodeCount, 0);
   for (unsigned int famid = 0; famid < _evaluationTrees.size(); ++famid) {
     _interCounts[famid].resize(
-        _evaluationTrees[famid]->getDirectedNodesNumber());
+        _evaluationTrees[famid]->getDirectedNodeNumber());
     for (auto &geneCounts:_interCounts[famid]) {
       geneCounts = speciesZeros;
     }
   }
   std::vector<TaxaSet> speciesSets(speciesNodeCount);
-  _speciesSubtreeSizes.resize(_referenceTree.getDirectedNodesNumber());
+  _speciesSubtreeSizes.resize(_referenceTree.getDirectedNodeNumber());
   for (auto speciesNode: _referenceTree.getPostOrderNodes()) {
     auto spid = speciesNode->node_index;
     fillWithChildren(speciesNode, speciesSets[spid]);
@@ -312,13 +312,13 @@ static double getLogScore(const std::array<unsigned long, 3> &q)
 
 void ICCalculator::_computeQuadriCounts()
 {
-  auto branchNumbers = _referenceTree.getLeavesNumber() * 2 - 3;
+  auto branchNumbers = _referenceTree.getLeafNumber() * 2 - 3;
   _qpic = std::vector<double>(branchNumbers, 1.0);
   _eqpic = std::vector<double>(branchNumbers, 1.0);
   _localSupport1 = std::vector<double>(branchNumbers, 1.0);
   _localSupport2 = std::vector<double>(branchNumbers, 1.0);
   _localSupport3 = std::vector<double>(branchNumbers, 1.0);
-  unsigned int speciesNodeCount = _referenceTree.getDirectedNodesNumber();
+  unsigned int speciesNodeCount = _referenceTree.getDirectedNodeNumber();
   auto familyCount = _evaluationTrees.size();
   _quadriCounts.clear();
   _quadriCounts.resize(speciesNodeCount);
@@ -533,7 +533,7 @@ void ICCalculator::computeScores(PLLRootedTree &tree,
       tempOutputSupport,
       tempOutputSupportTriplets);
   ParallelContext::barrier();
-  idToSupport.resize(tree.getNodesNumber());
+  idToSupport.resize(tree.getNodeNumber());
   PLLRootedTree treeWithSupport(tempOutputEQPIC, true);
   Logger::timed << "Tree with support:" << std::endl;
   Logger::info << treeWithSupport.getNewickString() << std::endl;

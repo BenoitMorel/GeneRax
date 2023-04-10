@@ -60,7 +60,7 @@ public:
   int coveredSpeciesNumber();
   std::string toString();
   void printInternalState();
-  unsigned int getLeavesNumber() {
+  unsigned int getLeafNumber() {
     return _leavesNumber;
   }
 
@@ -483,7 +483,7 @@ void CherryTree::mergeNodesWithSpeciesId(unsigned int speciesId)
   // MERGE NEIGHBORS
   for (auto geneId: geneSetCopy) { 
     while (true) {
-      if (getLeavesNumber() < 4) {
+      if (getLeafNumber() < 4) {
         // nothing to merge!
         return;
       }
@@ -526,7 +526,7 @@ void CherryTree::mergeNodesWithSpeciesId(unsigned int speciesId1,
   // MERGE NEIGHBORS
   for (auto geneId: genesToMerge) { 
     while (true) {
-      if (getLeavesNumber() < 4) {
+      if (getLeafNumber() < 4) {
         // nothing to merge!
         return;
       }
@@ -609,8 +609,8 @@ std::string CherryTree::recursiveToString(int nodeId, int sonToSkipId)
 static std::vector<int> computePLLIdToId(PLLUnrootedTree &pllTree)
 {
   int currentId = 0;
-  int maxPllNodeId = pllTree.getLeavesNumber()
-    + pllTree.getInnerNodesNumber() * 3;
+  int maxPllNodeId = pllTree.getLeafNumber()
+    + pllTree.getInnerNodeNumber() * 3;
   std::vector<int> pllIdToId(maxPllNodeId, -1);
   for (auto pllNode: pllTree.getNodes()) {
     if (pllIdToId[pllNode->node_index] == -1) {
@@ -632,7 +632,7 @@ CherryTree::CherryTree(const std::string &treeString,
   _leavesNumber(0)
 {
   PLLUnrootedTree pllTree(treeString, false);
-  _nodes.resize(pllTree.getLeavesNumber() * 2 - 2);
+  _nodes.resize(pllTree.getLeafNumber() * 2 - 2);
   auto pllIdToId = computePLLIdToId(pllTree);
   for (auto pllNode: pllTree.getNodes()) {
     auto geneId = pllIdToId[pllNode->node_index];
@@ -670,7 +670,7 @@ static void filterGeneTrees(std::vector<std::shared_ptr<CherryTree> > &geneTrees
   auto geneTreesCopy = geneTrees;
   geneTrees.clear();
   for (auto geneTree: geneTreesCopy) {
-    if (geneTree->getLeavesNumber() >= 4 && geneTree->coveredSpeciesNumber() > 2 ) {
+    if (geneTree->getLeafNumber() >= 4 && geneTree->coveredSpeciesNumber() > 2 ) {
       geneTrees.push_back(geneTree);
     }
   }

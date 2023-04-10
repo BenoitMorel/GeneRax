@@ -190,7 +190,7 @@ void UndatedDTLModel<REAL>::recomputeSpeciesProbabilities()
 {
   if (_transferConstraint == TransferConstaint::SOFTDATED) {
     _orderedSpeciations = this->_speciesTree.getOrderedSpeciations();  
-    _orderedSpeciesRanks.resize(this->_speciesTree.getNodesNumber());
+    _orderedSpeciesRanks.resize(this->_speciesTree.getNodeNumber());
     unsigned int rank = 0;
     for (auto species: _orderedSpeciations) {
       _orderedSpeciesRanks[species->node_index] = rank++; 
@@ -304,7 +304,7 @@ void UndatedDTLModel<REAL>::updateCLV(corax_unode_t *geneNode)
   if (_transferConstraint == TransferConstaint::SOFTDATED) {
     std::vector<REAL> softDatedSums(N, REAL());
     std::vector<double> possibleTransfers(N, REAL());
-    double currentPossibleTransfers = static_cast<double>(this->_speciesTree.getLeavesNumber()) - 1.0;
+    double currentPossibleTransfers = static_cast<double>(this->_speciesTree.getLeafNumber()) - 1.0;
     REAL softDatedSum = REAL();
     for (auto leaf: this->_speciesTree.getLeaves()) {
       auto e = leaf->node_index;
@@ -556,7 +556,7 @@ void UndatedDTLModel<REAL>::getBestTransfer(corax_unode_t *parentGeneNode,
   REAL &proba, 
   bool stochastic)
 {
-  unsigned int speciesNumber = this->_speciesTree.getNodesNumber();;
+  unsigned int speciesNumber = this->_speciesTree.getNodeNumber();;
   proba = REAL();
   auto e = originSpeciesNode->node_index;
   std::unordered_set<unsigned int> parents;
@@ -655,7 +655,7 @@ void UndatedDTLModel<REAL>::getBestTransferLoss(Scenario &scenario,
   auto e = originSpeciesNode->node_index;
   auto u = parentGeneNode->node_index;
   
-  unsigned int speciesNumber = this->_speciesTree.getNodesNumber();;
+  unsigned int speciesNumber = this->_speciesTree.getNodeNumber();;
   std::vector<REAL> transferProbas(speciesNumber, REAL());
   REAL factor = _uE[e] * (_PT[e] / static_cast<double>(this->_allSpeciesNodes.size()));
   for (auto species: this->_allSpeciesNodes) {

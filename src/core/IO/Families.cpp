@@ -276,7 +276,7 @@ void Family::printStats(Families &families,
 
   Logger::timed << "Input data information:" << std::endl;
   Logger::info << "- Number of gene families: " << families.size() << std::endl;
-  Logger::info << "- Number of species: " << speciesTree.getLeavesNumber() << std::endl;
+  Logger::info << "- Number of species: " << speciesTree.getLeafNumber() << std::endl;
   Logger::info << "- Total number of genes: " << totalGeneNumber << std::endl;
   Logger::info << "- Average number of genes per family: " << totalGeneNumber / families.size() << std::endl;
   Logger::info << "- Maximum number of genes per family: " << maxGeneNumber << std::endl;

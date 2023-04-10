@@ -74,9 +74,9 @@ public:
   /*
    * Tree dimension
    */
-  unsigned int getNodesNumber() const;
-  unsigned int getLeavesNumber() const;
-  unsigned int getInnerNodesNumber() const; 
+  unsigned int getNodeNumber() const;
+  unsigned int getLeafNumber() const;
+  unsigned int getInnerNodeNumber() const; 
 
   /*
    * Node access

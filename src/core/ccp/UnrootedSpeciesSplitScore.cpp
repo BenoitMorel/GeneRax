@@ -25,13 +25,13 @@ UnrootedSpeciesSplitScore::UnrootedSpeciesSplitScore(PLLRootedTree &rootedSpecie
     const SpeciesSplits &splits):
   _splits(splits),
   _speciesTree(std::make_unique<PLLUnrootedTree>(rootedSpeciesTree)),
-  _bidToNodeIndex(_speciesTree->getLeavesNumber() - 3),
-  _nodeIndexToBid(_speciesTree->getDirectedNodesNumber(), INVALID_BID),
-  _emptyBranchSet(_speciesTree->getLeavesNumber() - 3),
+  _bidToNodeIndex(_speciesTree->getLeafNumber() - 3),
+  _nodeIndexToBid(_speciesTree->getDirectedNodeNumber(), INVALID_BID),
+  _emptyBranchSet(_speciesTree->getLeafNumber() - 3),
   _labelToSpid(splits.getLabelToSpid())
 {
-  std::vector<BranchSet> emptySets(_speciesTree->getLeavesNumber(), _emptyBranchSet);
-  _paths.resize(_speciesTree->getLeavesNumber());
+  std::vector<BranchSet> emptySets(_speciesTree->getLeafNumber(), _emptyBranchSet);
+  _paths.resize(_speciesTree->getLeafNumber());
   std::fill(_paths.begin(), _paths.end(), emptySets);
 }
   

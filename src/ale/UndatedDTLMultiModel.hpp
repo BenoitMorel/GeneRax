@@ -237,18 +237,18 @@ UndatedDTLMultiModel<REAL>::UndatedDTLMultiModel(DatedTree &speciesTree,
   _datedTree(speciesTree),
   _gammaCatNumber(info.gammaCategories),
   _gammaScalers(_gammaCatNumber, 1.0),
-  _PD(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.2),
-  _PL(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.2),
-  _PT(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 0.1),
-  _PS(this->_speciesTree.getNodesNumber() * _gammaCatNumber, 1.0),
-  _uE(this->_speciesTree.getNodesNumber() * _gammaCatNumber, REAL()),
+  _PD(this->_speciesTree.getNodeNumber() * _gammaCatNumber, 0.2),
+  _PL(this->_speciesTree.getNodeNumber() * _gammaCatNumber, 0.2),
+  _PT(this->_speciesTree.getNodeNumber() * _gammaCatNumber, 0.1),
+  _PS(this->_speciesTree.getNodeNumber() * _gammaCatNumber, 1.0),
+  _uE(this->_speciesTree.getNodeNumber() * _gammaCatNumber, REAL()),
   _transferConstraint(info.transferConstraint),
   _originationStrategy(info.originationStrategy)
 {
-  std::vector<REAL> zeros(this->_speciesTree.getNodesNumber());
+  std::vector<REAL> zeros(this->_speciesTree.getNodeNumber());
   DTLCLV nullCLV(this->getPrunedSpeciesNodeNumber(), _gammaCatNumber);
   _dtlclvs = std::vector<DTLCLV>(2 * (this->_ccp.getCladesNumber()), nullCLV);
-  auto N = this->_speciesTree.getNodesNumber();
+  auto N = this->_speciesTree.getNodeNumber();
   _highways.resize(N);
   _dtlRates.resize(3);
   for (unsigned int i = 0; i < 3; ++i) {
@@ -515,7 +515,7 @@ void UndatedDTLMultiModel<REAL>::recomputeSpeciesProbabilities()
   auto &dupRates = _dtlRates[0];
   auto &lossRates = _dtlRates[1];
   auto &transferRates = _dtlRates[2];
-  auto maxSpeciesId = this->_speciesTree.getNodesNumber();
+  auto maxSpeciesId = this->_speciesTree.getNodeNumber();
   assert(maxSpeciesId == dupRates.size());
   assert(maxSpeciesId == lossRates.size());
   assert(maxSpeciesId == transferRates.size());

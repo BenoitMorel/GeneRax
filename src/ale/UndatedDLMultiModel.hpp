@@ -101,7 +101,7 @@ double UndatedDLMultiModel<REAL>::computeLogLikelihood()
     return 0.0;
   }
   this->beforeComputeLogLikelihood();
-  std::vector<REAL> zeros(this->_speciesTree.getNodesNumber(), REAL());
+  std::vector<REAL> zeros(this->_speciesTree.getNodeNumber(), REAL());
   _dlclvs = std::vector<std::vector<REAL> >(
       this->_ccp.getCladesNumber(), zeros);
   for (CID cid = 0; cid < this->_ccp.getCladesNumber(); ++cid) {

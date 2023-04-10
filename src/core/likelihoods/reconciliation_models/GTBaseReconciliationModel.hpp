@@ -535,7 +535,7 @@ bool GTBaseReconciliationModel<REAL>::inferMLScenario(Scenario &scenario, bool s
   virtualRoot.next = geneRoot;
   virtualRoot.node_index = geneRoot->node_index + _maxGeneId + 1;
   scenario.setVirtualRootIndex(virtualRoot.node_index);
-  scenario.initBlackList(_maxGeneId, this->_speciesTree.getNodesNumber());
+  scenario.initBlackList(_maxGeneId, this->_speciesTree.getNodeNumber());
   return  backtrace(&virtualRoot, speciesRoot, scenario, true, stochastic);
 }
 

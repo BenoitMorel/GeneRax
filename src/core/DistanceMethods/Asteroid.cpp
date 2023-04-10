@@ -86,7 +86,7 @@ static void fillSpeciesDistances(const PLLUnrootedTree &speciesTree,
     DistanceMatrix &speciesDistanceMatrix,
     std::vector<bool> *belongsToPruned = nullptr)
 {
-  std::vector<unsigned int> nodeIndexToSpid(speciesTree.getLeavesNumber());
+  std::vector<unsigned int> nodeIndexToSpid(speciesTree.getLeafNumber());
   for (auto leaf: speciesTree.getLeaves()) {
     nodeIndexToSpid[leaf->node_index] = speciesStringToSpeciesId.at(leaf->label);
   }
@@ -109,8 +109,8 @@ static void getPrunedSpeciesMatrix(const PLLUnrootedTree &speciesTree,
   const std::unordered_set<std::string> &coverage,
   DistanceMatrix &distanceMatrix)
 {
-  std::vector<bool> hasChildren(speciesTree.getDirectedNodesNumber(), false);
-  std::vector<bool> belongsToPruned(speciesTree.getDirectedNodesNumber(), false);
+  std::vector<bool> hasChildren(speciesTree.getDirectedNodeNumber(), false);
+  std::vector<bool> belongsToPruned(speciesTree.getDirectedNodeNumber(), false);
   for (auto node: speciesTree.getPostOrderNodes()) {
     auto index = node->node_index;
     if (node->next) {
@@ -144,17 +144,17 @@ Asteroid::Asteroid(const PLLUnrootedTree &speciesTree,
     std::string label(leaf->label);
     _speciesStringToSpeciesId.insert({label, _speciesStringToSpeciesId.size()});
   }
-  for (unsigned int i = 0; i < speciesTree.getLeavesNumber() + 3; ++i) {
+  for (unsigned int i = 0; i < speciesTree.getLeafNumber() + 3; ++i) {
     _pows.push_back(std::pow(0.5, i));
   }
-  _N = speciesTree.getDirectedNodesNumber(); 
+  _N = speciesTree.getDirectedNodeNumber(); 
   // fill species-spid mappings
   Families perCoreFamilies;
   PerCoreGeneTrees::getPerCoreFamilies(families, perCoreFamilies);
   _K = perCoreFamilies.size();
   _geneDistanceMatrices.resize(_K);
   _geneDistanceDenominators.resize(_K);
-  unsigned int speciesNumber = speciesTree.getLeavesNumber();
+  unsigned int speciesNumber = speciesTree.getLeafNumber();
   _perFamilyCoverageStr.resize(_K);
   _perFamilyCoverage.resize(_K);
   // map each species string to a species ID
@@ -162,7 +162,7 @@ Asteroid::Asteroid(const PLLUnrootedTree &speciesTree,
   Logger::timed << "Asteroid::Asteroid 2" << std::endl;
   for (unsigned int i = 0; i < _K; ++i) {
     auto &family = perCoreFamilies[i];
-    _perFamilyCoverage[i] = std::vector<bool>(speciesTree.getLeavesNumber(), false);
+    _perFamilyCoverage[i] = std::vector<bool>(speciesTree.getLeafNumber(), false);
     _geneDistanceMatrices[i] = getNullMatrix(speciesNumber);
     _geneDistanceDenominators[i] = getNullMatrix(speciesNumber);
     GeneSpeciesMapping mappings;
@@ -191,7 +191,7 @@ Asteroid::Asteroid(const PLLUnrootedTree &speciesTree,
   Logger::info << "Patterns: " << coverageSet.size() << std::endl;
   _prunedSpeciesMatrices = std::vector<DistanceMatrix>(
       _K, getNullMatrix(speciesNumber));
-  auto nodesNumber = speciesTree.getDirectedNodesNumber();
+  auto nodesNumber = speciesTree.getDirectedNodeNumber();
   Logger::timed << "Asteroid::Asteroid 3" << std::endl;
   auto zero = getMatrix(nodesNumber, 
         _K, 
@@ -328,7 +328,7 @@ double Asteroid::computeBME(const PLLUnrootedTree &speciesTree)
 
 void Asteroid::_computeSubBMEsPrune(const PLLUnrootedTree &speciesTree)
 {
-  auto nodesNumber = speciesTree.getDirectedNodesNumber();
+  auto nodesNumber = speciesTree.getDirectedNodeNumber();
   // Fill hasChildren and belongsToPruned
   _hasChildren = getBoolMatrix(nodesNumber, 
       _K,

@@ -25,7 +25,7 @@ void RootLikelihoods::saveValue(corax_rnode_t *subtree, double ll)
 
 void RootLikelihoods::fillTree(PLLRootedTree &tree)
 {
-  std::vector<double> nodeIdToLL(tree.getNodesNumber(), 0.0);
+  std::vector<double> nodeIdToLL(tree.getNodeNumber(), 0.0);
   double bestLL = -std::numeric_limits<double>::infinity();
   for (auto node: tree.getNodes()) {
     auto id = getSubtreeID(node);

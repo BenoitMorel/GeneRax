@@ -163,8 +163,8 @@ std::unique_ptr<PLLRootedTree> NeighborJoining::applyNJ(
   std::vector<unsigned int> constrainIndexToMatrixIndex;
   std::vector<unsigned int> matrixIndexToConstrainIndex;
   if (constrainTree) {
-    constrainIndexToMatrixIndex.resize(constrainTree->getNodesNumber());
-    matrixIndexToConstrainIndex.resize(constrainTree->getNodesNumber());
+    constrainIndexToMatrixIndex.resize(constrainTree->getNodeNumber());
+    matrixIndexToConstrainIndex.resize(constrainTree->getNodeNumber());
     for (auto leaf: constrainTree->getLeaves()) {
       auto constrainIndex = leaf->node_index;
       auto speciesLabel = std::string(leaf->label);

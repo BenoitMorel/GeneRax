@@ -30,7 +30,7 @@ static void fillChildrenRec(corax_unode_t *node,
 
 PolyTree::PolyTree(PLLUnrootedTree &tree):
   _tree(tree),
-  _cells(tree.getDirectedNodesNumber())
+  _cells(tree.getDirectedNodeNumber())
 {
   for (auto node: tree.getPostOrderNodes()) {
     auto gid = node->node_index;

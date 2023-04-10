@@ -45,11 +45,11 @@ void ReconciliationEvaluation::setRates(const Parameters &parameters)
   assert(0 == parameters.dimensions() % freeParameters);
   _rates.resize(freeParameters);
   for (auto &r: _rates) {
-    r.resize(_speciesTree.getNodesNumber());
+    r.resize(_speciesTree.getNodeNumber());
   }
   // this handles both per-species and global rates
   for (unsigned int d = 0; d < _rates.size(); ++d) {
-    for (unsigned int e = 0; e < _speciesTree.getNodesNumber(); ++e) {
+    for (unsigned int e = 0; e < _speciesTree.getNodeNumber(); ++e) {
       (_rates[d])[e] = parameters[(e * _rates.size() + d) % parameters.dimensions()];
     }
   }

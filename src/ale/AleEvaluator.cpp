@@ -55,7 +55,7 @@ static std::shared_ptr<MultiModel> createModel(SpeciesTree &speciesTree,
     break;
   }
   std::vector<std::vector<double> > rates;
-  unsigned int N = speciesTree.getTree().getNodesNumber();
+  unsigned int N = speciesTree.getTree().getNodeNumber();
   for (unsigned int d = 0; d < modelParameters.perCategoryFreeParameters(); ++d) { 
     std::vector<double> subrates;
     for (unsigned int s = 0; s < N; ++s) {
@@ -255,7 +255,7 @@ void GTSpeciesTreeLikelihoodEvaluator::setParameters(Parameters &parameters)
   assert(0 == parameters.dimensions() % freeParameters);
   _modelRates.setRates(parameters);
   std::vector<std::vector<double> > rates;
-  unsigned int N = _speciesTree.getTree().getNodesNumber();
+  unsigned int N = _speciesTree.getTree().getNodeNumber();
   for (unsigned int d = 0; d < _modelRates.perCategoryFreeParameters(); ++d) { 
     std::vector<double> subrates;
     for (unsigned int s = 0; s < N; ++s) {
@@ -354,7 +354,7 @@ void GTSpeciesTreeLikelihoodEvaluator::getTransferInformation(SpeciesTree &speci
   const VectorUint zeros(labelsNumber, 0);
   transferFrequencies.count = MatrixUint(labelsNumber, zeros);
   transferFrequencies.idToLabel = idToLabel;
-  perSpeciesEvents = PerSpeciesEvents(speciesTree.getTree().getNodesNumber());
+  perSpeciesEvents = PerSpeciesEvents(speciesTree.getTree().getNodeNumber());
   auto infoCopy = _modelRates.getInfo();
   infoCopy.originationStrategy = OriginationStrategy::UNIFORM;
   infoCopy.transferConstraint = TransferConstaint::PARENTS;

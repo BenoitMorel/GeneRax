@@ -176,7 +176,7 @@ void ReconciliationBLEstimator::estimate(
         samples,
         optimizeRates,
         scenarios);
-    double speciesNodesNumber = speciesTree.getNodesNumber();
+    double speciesNodesNumber = speciesTree.getNodeNumber();
     std::vector<double> speciesSumBL(speciesNodesNumber, 0.0);
     std::vector<double> speciesWeightBL(speciesNodesNumber, 0.0);
        

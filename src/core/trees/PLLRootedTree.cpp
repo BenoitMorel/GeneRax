@@ -243,7 +243,7 @@ void PLLRootedTree::ensureUniqueLabels()
   // get the leaf labels
   auto labels = getLabels(true); 
   labels.insert("");
-  std::vector<std::string> anyLeafLabel(getNodesNumber());
+  std::vector<std::string> anyLeafLabel(getNodeNumber());
   for (auto node: getPostOrderNodes()) {
     if (!node->left) {
       anyLeafLabel[node->node_index] = node->label;
@@ -276,30 +276,30 @@ void PLLRootedTree::labelRootedTree(const std::string &unlabelledNewickFile,
   
 CArrayRange<corax_rnode_t*> PLLRootedTree::getLeaves() const
 {
-  return CArrayRange<corax_rnode_t*>(_tree->nodes, getLeavesNumber());
+  return CArrayRange<corax_rnode_t*>(_tree->nodes, getLeafNumber());
 }
 
 CArrayRange<corax_rnode_t*> PLLRootedTree::getInnerNodes() const
 {
-  return CArrayRange<corax_rnode_t*>(_tree->nodes + getLeavesNumber(), getInnerNodesNumber());
+  return CArrayRange<corax_rnode_t*>(_tree->nodes + getLeafNumber(), getInnerNodeNumber());
 }
 
 CArrayRange<corax_rnode_t*> PLLRootedTree::getNodes() const
 {
-  return CArrayRange<corax_rnode_t*>(_tree->nodes, getNodesNumber());
+  return CArrayRange<corax_rnode_t*>(_tree->nodes, getNodeNumber());
 }
 
-unsigned int PLLRootedTree::getNodesNumber() const
+unsigned int PLLRootedTree::getNodeNumber() const
 {
-  return getLeavesNumber() + getInnerNodesNumber();
+  return getLeafNumber() + getInnerNodeNumber();
 }
 
-unsigned int PLLRootedTree::getLeavesNumber() const
+unsigned int PLLRootedTree::getLeafNumber() const
 {
   return _tree->tip_count;
 }
 
-unsigned int PLLRootedTree::getInnerNodesNumber() const
+unsigned int PLLRootedTree::getInnerNodeNumber() const
 {
   return _tree->inner_count;
 }
@@ -330,7 +330,7 @@ corax_rnode_t *PLLRootedTree::getNeighbor(unsigned int node_index) const
 
 corax_rnode_t *PLLRootedTree::getAnyInnerNode() const
 {
-  return getNode(getLeavesNumber());
+  return getNode(getLeafNumber());
 }
   
 void PLLRootedTree::getLeafLabelsUnder(corax_rnode_t *node,
@@ -533,7 +533,7 @@ static void findLCAs(corax_rnode_t *n1, std::vector<corax_rnode_t *> &n1lcas)
 
 void PLLRootedTree::buildLCACache()
 {
-  auto N = getNodesNumber();
+  auto N = getNodeNumber();
   _lcaCache = std::make_unique<LCACache>();
   std::vector<corax_rnode_t *> nulls(N, nullptr);
   _lcaCache->lcas = std::vector<std::vector<corax_rnode_t *> >(N, nulls);
@@ -578,13 +578,13 @@ std::vector<std::string> PLLRootedTree::getDeterministicIdToLabel() const
 std::vector<unsigned int> 
 PLLRootedTree::getNodeIndexMapping(PLLRootedTree &otherTree)
 {
-  assert(otherTree.getNodesNumber() == getNodesNumber());
+  assert(otherTree.getNodeNumber() == getNodeNumber());
   std::map<std::string, corax_rnode_t*> otherTreeLabelToNode;
   for (auto node: otherTree.getLeaves()) {
     std::string label(node->label);
     otherTreeLabelToNode[label] = node;
   }
-  std::vector<unsigned int> mapping(getNodesNumber(), 0);
+  std::vector<unsigned int> mapping(getNodeNumber(), 0);
   for (auto node: this->getPostOrderNodes()) {
     corax_rnode_t *otherNode = nullptr;
     if (!node->left) {

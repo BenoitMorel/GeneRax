@@ -113,7 +113,7 @@ void Routines::exportPerSpeciesRates(const std::string &speciesTreeFile,
   ParallelOfstream os(outputFile);
   PLLRootedTree speciesTree(speciesTreeFile);
   auto freeParameters = recModelInfo.modelFreeParameters();
-  auto speciesNodesNumber = speciesTree.getNodesNumber();
+  auto speciesNodesNumber = speciesTree.getNodeNumber();
   assert(speciesNodesNumber * freeParameters == rates.dimensions());
   for (auto node: speciesTree.getNodes()) {
     auto e = node->node_index;
@@ -144,7 +144,7 @@ void Routines::optimizeRates(bool userDTLRates,
   buildEvaluations(geneTrees, speciesTree, recModelInfo, evaluations);
   if (perSpeciesRates) {
     assert(speciesTree.areNodeIndicesParallelConsistent());
-    rates = DTLOptimizer::optimizeParametersPerSpecies(evaluations, speciesTree.getNodesNumber());
+    rates = DTLOptimizer::optimizeParametersPerSpecies(evaluations, speciesTree.getNodeNumber());
   } else {
     rates = DTLOptimizer::optimizeParametersGlobalDTL(evaluations);
   }
@@ -472,7 +472,7 @@ void Routines::getPerSpeciesEvents(PLLRootedTree &speciesTree,
   PerSpeciesEvents &events,
   bool forceTransfers)
 {
-  events = PerSpeciesEvents(speciesTree.getNodesNumber());
+  events = PerSpeciesEvents(speciesTree.getNodeNumber());
   std::vector<Scenario> scenarios;
   bool optimizeRates = false;
   ModelParameters transfersModelParameter;

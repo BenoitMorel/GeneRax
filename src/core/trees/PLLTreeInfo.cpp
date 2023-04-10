@@ -131,7 +131,7 @@ corax_treeinfo_t *PLLTreeInfo::buildTreeInfo(const Model &model,
   params_to_optimize |= CORAX_OPT_PARAM_BRANCHES_ITERATIVE;
   std::vector<unsigned int> params_indices(model.num_ratecats(), 0); 
   auto treeinfo = corax_treeinfo_create(utree.getAnyInnerNode(), 
-      utree.getLeavesNumber(), 1, CORAX_BRLEN_SCALED);
+      utree.getLeafNumber(), 1, CORAX_BRLEN_SCALED);
   if (!treeinfo || !treeinfo->root)
     throw LibpllException("Cannot create treeinfo");
   corax_treeinfo_init_partition(treeinfo, 0, partition,
