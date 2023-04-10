@@ -116,7 +116,6 @@ void cleanupCCPs(Families &families)
 }
 
 void checkCCPAndSpeciesTree(Families &families,
-    CCPRooting ccpRooting,
     const std::string &speciesTreePath)
 {
   PLLRootedTree speciesTree(speciesTreePath);
@@ -210,7 +209,7 @@ void run( AleArguments &args)
   }
   initStartingSpeciesTree(args, families);
   Logger::timed << "Checking that ccp and mappings are valid..." << std::endl;
-  checkCCPAndSpeciesTree(families, args.ccpRooting, args.speciesTree); 
+  checkCCPAndSpeciesTree(families, args.speciesTree); 
   RecModelInfo info;
   info.pruneSpeciesTree = args.pruneSpeciesTree;
   info.noTL = args.noTL;

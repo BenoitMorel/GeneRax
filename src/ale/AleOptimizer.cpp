@@ -533,31 +533,6 @@ void AleOptimizer::selectBestHighways(const std::vector<ScoredHighway> &highways
   std::sort(bestHighways.rbegin(), bestHighways.rend());
 }
 
- 
-static void testAllButOneHighways(GTSpeciesTreeLikelihoodEvaluator &evaluator,
-    std::vector<ScoredHighway> &highways,
-    double refLL)
-{
-  for (unsigned int i = 0; i < highways.size(); ++i) {
-    std::vector<Highway *> allButOneHighways;
-    Parameters allButOneParameters;
-    for (unsigned int j = 0; j < highways.size(); ++j) {
-      if (i != j) {
-        auto &highway = highways[j];
-        allButOneHighways.push_back(&highway.highway);
-        allButOneParameters.addValue(highway.highway.proba);
-      }
-    }
-    auto parameters = testHighways(evaluator, 
-        allButOneHighways,
-        allButOneParameters,
-        false);
-    highways[i].score = parameters.getScore();
-    highways[i].scoreDiff  = refLL - parameters.getScore();
-    Logger::timed << highways[i].highway << " diff= " << highways[i].scoreDiff << std::endl;
-  }
-}
-
 void AleOptimizer::addHighways(const std::vector<ScoredHighway> &candidateHighways,
     std::vector<ScoredHighway> &acceptedHighways)
 {

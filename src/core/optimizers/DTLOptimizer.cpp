@@ -221,13 +221,11 @@ static Parameters findBestPointNelderMear(Parameters r1,
 {
   Parameters best = r1;
   best.setScore(-100000000000);
-  unsigned int bestI = 0;
-  for (auto i = 0; i < iterations; ++i) {
+  for (unsigned int i = 0; i < iterations; ++i) {
     Parameters current = r1 + ((r2 - r1) * (double(i) / double(iterations - 1)));
     function.evaluate(current);
     if (current < best) {
       best = current;
-      bestI = i;
     }
   }
   return best;
@@ -236,8 +234,7 @@ static Parameters findBestPointNelderMear(Parameters r1,
 
 
 static Parameters optimizeParametersNelderMear(FunctionToOptimize &function, 
-    const Parameters &startingParameters,
-    OptimizationSettings settings = OptimizationSettings())
+    const Parameters &startingParameters)
 {
   std::vector<Parameters> rates;
   rates.push_back(startingParameters);
@@ -292,15 +289,14 @@ Parameters DTLOptimizer::optimizeParameters(FunctionToOptimize &function,
           settings);
   case RecOpt::Simplex:
       return optimizeParametersNelderMear(function, 
-          startingParameters,
-          settings);
+          startingParameters);
   default:
       assert(false);
       return startingParameters;
   }
 }
       
-
+/*
 static Parameters optimizeParametersCorax(FunctionToOptimize &function, 
     const Parameters &startingParameters,
     OptimizationSettings settings = OptimizationSettings())
@@ -312,7 +308,7 @@ static Parameters optimizeParametersCorax(FunctionToOptimize &function,
 
   return startingParameters;
 }
-
+*/
 /*
 CORAX_EXPORT double corax_opt_minimize_lbfgsb_multi(
     unsigned int  xnum,

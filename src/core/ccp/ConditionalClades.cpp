@@ -225,7 +225,6 @@ static void extractClades(const WeightedTrees &weightedTrees,
 // occures)
 // if CIDToDeviation is not null, fill it with the map deviations
 static void fillCladeCounts(const WeightedTrees &weightedTrees,
-    unsigned int inputTrees,
     const CladeToCID &cladeToCID,
     const std::unordered_map<std::string, unsigned int> &leafToId,
     const std::vector<std::vector<corax_unode_t*> > &postOrderNodes,
@@ -497,7 +496,6 @@ void ConditionalClades::buildFromGeneTrees(const std::string &inputFile,
   // and for each clade, the number of occurences of its subclades
   bool useLikelihoods = likelihoods.size();
   fillCladeCounts(weightedTrees,
-      _inputTrees,
       _cladeToCID,
       leafToId,
       postOrderNodes,
