@@ -31,6 +31,7 @@ struct ScoredHighway {
   }
 };
 
+
 class AleOptimizer: public SpeciesTree::Listener {
 public:
   AleOptimizer(const std::string speciesTreeFile, 
@@ -48,7 +49,6 @@ public:
   void onSpeciesTreeChange(const std::unordered_set<corax_rnode_t *> *nodesToInvalidate);
   void reconcile(unsigned int samples);
   double optimizeModelRates(bool thorough = false);
-  void fastDating();
   void optimizeDates(bool thorough = true);
   SpeciesTree &getSpeciesTree() {return *_speciesTree;}
   void randomizeRoot();

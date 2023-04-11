@@ -337,30 +337,49 @@ void AleOptimizer::reconcile(unsigned int samples)
       true, false);
   ParallelContext::makeRandConsistent();
 }
-  
-void AleOptimizer::fastDating()
-{
-  for (unsigned int i = 0; i < 10; ++i) {
-    Logger::timed << "STARTING IT " << i << std::endl;
-    DatedSpeciesTreeSearch::optimizeDatesFromReconciliation(*_speciesTree,
-      _searchState,
-      getEvaluator());
-  }
-}
+ 
 
 void AleOptimizer::optimizeDates(bool thorough)
 {
   if (!_info.isDated()) {
     return; 
   }
-  auto ll = getEvaluator().computeLikelihood();
-  _searchState.bestLL = ll;
-   
+  auto scoredBackups = DatedSpeciesTreeSearch::optimizeDatesFromReconciliation(*_speciesTree, getEvaluator(), 200);
+  Logger::timed << "Sorted dating likelihoods from fast datings:" << std::endl;
+  for (auto &sb: scoredBackups) {
+    Logger::info << sb.score << " ";
+  }
+  Logger::info << std::endl;
+  auto initialLL = getEvaluator().computeLikelihood();
+ 
+  auto bestLL = initialLL;
+  auto bestDatedTree = _speciesTree->getDatedTree().getBackup();
+
+  for (unsigned int i = 0; i < 1; ++i) {
+    Logger::timed << "AleOptimizer::optimizeDates Iteration " << i << " of naive search from good starting dating" << std::endl;
+    _speciesTree->getDatedTree().restore(scoredBackups[i].backup);
+    _searchState.bestLL = scoredBackups[i].score;
+    DatedSpeciesTreeSearch::optimizeDates(*_speciesTree,
+        getEvaluator(),
+        _searchState,
+        scoredBackups[i].score,
+        false);
+    if (_searchState.bestLL > bestLL) {
+      bestLL = _searchState.bestLL;
+      bestDatedTree = _speciesTree->getDatedTree().getBackup();
+      Logger::timed << "AleOptimizer::optimizeDates better tree ll=" << bestLL << std::endl;
+    } 
+    Logger::timed << std::endl;
+  }
+  _speciesTree->getDatedTree().restore(bestDatedTree);
+  _searchState.bestLL = bestLL;
+  Logger::info << "End of multiple naive searches, now thorough" << std::endl;
   DatedSpeciesTreeSearch::optimizeDates(*_speciesTree,
       getEvaluator(),
       _searchState,
-      ll,
-      thorough);
+      bestLL,
+      true);
+
   saveCurrentSpeciesTreeId();
 }
 
