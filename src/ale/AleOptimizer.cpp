@@ -350,30 +350,11 @@ void AleOptimizer::optimizeDates(bool thorough)
     Logger::info << sb.score << " ";
   }
   Logger::info << std::endl;
-  auto initialLL = getEvaluator().computeLikelihood();
  
-  auto bestLL = initialLL;
-  auto bestDatedTree = _speciesTree->getDatedTree().getBackup();
 
-  for (unsigned int i = 0; i < 1; ++i) {
-    Logger::timed << "AleOptimizer::optimizeDates Iteration " << i << " of naive search from good starting dating" << std::endl;
-    _speciesTree->getDatedTree().restore(scoredBackups[i].backup);
-    _searchState.bestLL = scoredBackups[i].score;
-    DatedSpeciesTreeSearch::optimizeDates(*_speciesTree,
-        getEvaluator(),
-        _searchState,
-        scoredBackups[i].score,
-        false);
-    if (_searchState.bestLL > bestLL) {
-      bestLL = _searchState.bestLL;
-      bestDatedTree = _speciesTree->getDatedTree().getBackup();
-      Logger::timed << "AleOptimizer::optimizeDates better tree ll=" << bestLL << std::endl;
-    } 
-    Logger::timed << std::endl;
-  }
-  _speciesTree->getDatedTree().restore(bestDatedTree);
+  auto bestLL = scoredBackups[0].score;
   _searchState.bestLL = bestLL;
-  Logger::info << "End of multiple naive searches, now thorough" << std::endl;
+  _speciesTree->getDatedTree().restore(scoredBackups[0].backup);
   DatedSpeciesTreeSearch::optimizeDates(*_speciesTree,
       getEvaluator(),
       _searchState,

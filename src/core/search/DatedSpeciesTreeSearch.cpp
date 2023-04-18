@@ -84,11 +84,23 @@ static void perturbateDates(SpeciesTree &speciesTree, double perturbation = 1.0)
   }
   for (size_t i = 0; i < perturbations; ++i) {
     auto rank = Random::getInt() % N;
+    bool upOrDown = Random::getBool();
     auto  displacement =  1 + (Random::getInt() % maxDisplacement);
-    auto nodesToMove = static_cast<size_t>((Random::getInt() % 2) + 1);
+    auto nodesToMove = static_cast<size_t>((Random::getInt() % 10) + 1);
+    bool ok = true;
     for (size_t k = 0; k < nodesToMove; ++k) {
       for (size_t j = 0; j < displacement; ++j) {
-        tree.moveUp(rank + k - j);
+        if (upOrDown) {
+          ok &= tree.moveUp(rank + k - j);
+        } else {
+          ok &= tree.moveDown(rank - k + j);
+        }
+        if (!ok) {
+          break;
+        }
+      }
+      if (!ok) {
+        break;
       }
     }
   }
@@ -213,7 +225,7 @@ ScoredBackups DatedSpeciesTreeSearch::optimizeDatesFromReconciliation(SpeciesTre
   for (unsigned int i = 0; i < searches; ++i) {
     // we should replace this with anything that would produce
     // a random dating more efficiently
-    perturbateDates(speciesTree, 100.0);
+    tree.randomize();
     SpeciesSearchState fakeState(speciesTree, "");
     fakeState.bestLL = fakeEvaluator.computeLikelihood();
     // first local search to get to a good starting tree

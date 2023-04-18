@@ -7,7 +7,7 @@ public:
   static void setSeed(unsigned int seed);
   static int getInt(); 
   static double getProba();
-
+  static bool getBool();
 private:
   static std::mt19937_64 _rng;
   static std::uniform_int_distribution<int> _unii;

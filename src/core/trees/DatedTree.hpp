@@ -34,6 +34,8 @@ public:
   bool canTransferUnderRelDated(unsigned int nodeIndexFrom,
       unsigned int nodeIndexTo) const;
 
+  void randomize();
+
   /**
    *  hash value that characterizes the current order of the speciation events
    *

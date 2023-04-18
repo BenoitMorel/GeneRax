@@ -13,6 +13,11 @@ int Random::getInt()
   return _unii(_rng);
 }
 
+bool Random::getBool()
+{
+  return getInt() % 2;
+}
+
 double Random::getProba() 
 {
   return _uniproba(_rng);

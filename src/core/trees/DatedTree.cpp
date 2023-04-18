@@ -1,6 +1,7 @@
 #include "DatedTree.hpp"
 #include <iostream>
 #include <IO/Logger.hpp>
+#include <maths/Random.hpp>
 
 DatedTree::DatedTree(PLLRootedTree *rootedTree, bool fromBL):
   _rootedTree(rootedTree)
@@ -149,3 +150,26 @@ bool DatedTree::canTransferUnderRelDated(unsigned int nodeIndexFrom,
   auto parentFromIndex = from->parent->node_index;
   return _ranks[parentFromIndex] <= _ranks[nodeIndexTo]; 
 }
+
+void DatedTree::randomize()
+{
+  std::vector<corax_rnode_t *> toAdd;
+  toAdd.push_back(_rootedTree->getRoot());
+  unsigned int currentRank = 0;
+  while (toAdd.size()) {
+    unsigned int i = Random::getInt() % toAdd.size();
+    auto node = toAdd[i];
+    if (node->left) {
+      _orderedSpeciations[currentRank] = node;
+      _ranks[node->node_index] = currentRank;
+      currentRank++;
+      toAdd[i] = node->left;
+      toAdd.push_back(node->right);
+    } else {
+      toAdd[i] = toAdd.back();
+      toAdd.pop_back();
+    }
+  }
+}
+
+
