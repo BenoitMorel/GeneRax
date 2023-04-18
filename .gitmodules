@@ -7,3 +7,6 @@
 	path = ext/coraxlib
   branch = dev
   url = https://codeberg.org/Exelixis-Lab/coraxlib.git
+[submodule "ext/GeneRaxCore"]
+	path = ext/GeneRaxCore
+	url = git@github.com:BenoitMorel/GeneRaxCore.git

@@ -3,7 +3,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -Wextra")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra -pedantic -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wlogical-op -Wmissing-include-dirs -Wnoexcept -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-null-sentinel -Wstrict-overflow=5 -Wundef -Wno-unused -Wno-variadic-macros -Wno-parentheses -fdiagnostics-show-option")
 
 
-add_subdirectory(core)
   
 
 
@@ -17,7 +16,7 @@ macro(add_program program_name program_sources)
   target_sources(${program_name} PRIVATE ${program_sources})
   target_link_libraries(${program_name} 
     PRIVATE
-    jointsearch-core
+    generaxcore
     ${CORAX_LIB_TARGET}
     ${MPI_LIBRARIES}
     )
@@ -52,7 +51,7 @@ macro(add_program_corax program_name program_sources)
     add_executable(${program_name} ${program_sources})
   endif()
   target_link_libraries(${program_name} 
-    jointsearch-core
+    generaxcore
     ${CORAX_LIB_TARGET}
     ${MPI_LIBRARIES}
     )
