@@ -82,7 +82,6 @@ endmacro()
 
 
 add_subdirectory(GeneRax)
-add_subdirectory(ale)
 #add_subdirectory(Asteroid)
 add_subdirectory(NJRax)
 add_subdirectory(LightSearch)
