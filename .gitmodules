@@ -9,4 +9,4 @@
   url = https://codeberg.org/Exelixis-Lab/coraxlib.git
 [submodule "ext/GeneRaxCore"]
 	path = ext/GeneRaxCore
-	url = git@github.com:BenoitMorel/GeneRaxCore.git
+	url = https://github.com/BenoitMorel/GeneRaxCore.git
