@@ -12,13 +12,13 @@ It infers gene family trees from their aligned sequences, the mapping between ge
 
 It accounts for sequence substitutions, gene duplication, gene loss and horizontal gene transfer.
 
-When using GeneRax, please cite: https://academic.oup.com/mbe/article/doi/10.1093/molbev/msaa141/5851843
+When using GeneRax, please cite: [https://academic.oup.com/mbe/article/doi/10.1093/molbev/msaa141/5851843](https://academic.oup.com/mbe/article/doi/10.1093/molbev/msaa141/5851843)
 
 GeneRax is also available on [`bioconda`](https://anaconda.org/bioconda/generax) 
 
 # SpeciesRax
 
-SpeciesRax is part of the GeneRax tool and is available since GeneRax v2.0.0. SpeciesRax infers a rooted species tree from a set of unrooted gene trees. Preprint and wiki coming soon!
+SpeciesRax is part of the GeneRax tool and is available since GeneRax v2.0.0. SpeciesRax infers a rooted species tree from a set of unrooted gene trees. When using SpeciesRax, please cite [https://academic.oup.com/mbe/article/39/2/msab365/6503503](https://academic.oup.com/mbe/article/39/2/msab365/6503503)
 
 ## Requirement
 
@@ -32,13 +32,6 @@ SpeciesRax is part of the GeneRax tool and is available since GeneRax v2.0.0. Sp
 ## Installation 
 
 (Please note that you can also install through [`bioconda`](https://anaconda.org/bioconda/generax))
-
-Installing the dependencies on Ubuntu and other Debian-based systems:
-```
-sudo apt-get install flex bison libgmp3-dev
-```
-
-On other systems: [`GNU Bison`](http://www.gnu.org/software/bison/) [`Flex`](http://flex.sourceforge.net/) [`GMP`](https://gmplib.org/)
 
 
  To download GeneRax, please use git,  and clone with --recursive!!!
