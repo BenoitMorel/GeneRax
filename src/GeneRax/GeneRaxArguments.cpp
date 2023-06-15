@@ -20,7 +20,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   recRadius(0),
   perSpeciesDTLRates(false),
   userDTLRates(false),
-  transferConstraint(TransferConstaint::NONE),
+  transferConstraint(TransferConstaint::PARENTS),
   noDup(false),
   dupRate(0.2),
   lossRate(0.2),
