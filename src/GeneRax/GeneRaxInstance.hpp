@@ -41,6 +41,7 @@ struct GeneRaxInstance {
         args.originationStrategy,
         args.pruneSpeciesTree,
         args.rootedGeneTree,
+        args.madRooting,
         args.minGeneBranchLength,
         args.transferConstraint,
         args.noDup,
