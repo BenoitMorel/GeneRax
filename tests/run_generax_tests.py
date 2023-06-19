@@ -7,7 +7,7 @@ from  distutils.spawn import find_executable
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 REPO_DIR = os.path.realpath(os.path.join(SCRIPT_DIR, os.pardir))
 GENERAX = os.path.join(REPO_DIR, "build", "bin", "generax")
-FAMILIES_SCRIPT = os.path.join(REPO_DIR, "scripts", "build_families_file.py")
+FAMILIES_SCRIPT = os.path.join(REPO_DIR, "scripts", "build_family_file.py")
 DATA_DIR = os.path.join(REPO_DIR, "data")
 OUTPUT = os.path.join(REPO_DIR, "tests", "outputs")
 
