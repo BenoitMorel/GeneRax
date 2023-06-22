@@ -217,7 +217,13 @@ void GeneRaxArguments::checkInputs() {
   }
   if (forceGeneTreeRoot) {
     if (geneSearchStrategy != GeneSearchStrategy::SKIP && geneSearchStrategy != GeneSearchStrategy::EVAL) {
-      Logger::info << "[Error] Warning, --enforce-gene-tree-root is only compatible with the SKIP and EVAL gene tree search strategies" << std::endl;
+      Logger::info << "[Error] --enforce-gene-tree-root is only compatible with the SKIP and EVAL gene tree search strategies" << std::endl;
+      ok = false;
+    }
+  }
+  if (noDup) {
+    if (reconciliationModelStr == "UndatedDL") {
+      Logger::info << "[Error] --no-dup is not compatible with the UndatedDL model" << std::endl;
       ok = false;
     }
   }
