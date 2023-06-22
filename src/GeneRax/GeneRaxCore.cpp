@@ -269,6 +269,7 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
           instance.rates, 
           instance.elapsedRates);
         instance.totalRecLL = instance.rates.getScore();
+        Logger::timed << "ll=" << instance.totalRecLL << std::endl;
       } else {
         long elapsed = 0;
         bool enableLibpll = false;

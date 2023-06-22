@@ -14,6 +14,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   outputPath("GeneRax"),
   perFamilyDTLRates(false),
   rootedGeneTree(true),
+  forceGeneTreeRoot(false),
   madRooting(false),
   pruneSpeciesTree(false),
   supportThreshold(-1.0),
@@ -90,6 +91,8 @@ void GeneRaxArguments::init() {
       perFamilyDTLRates = true;
     } else if (arg == "--unrooted-gene-tree") {
       rootedGeneTree = false;
+    } else if (arg == "--enforce-gene-tree-root") {
+      forceGeneTreeRoot = true;
     } else if (arg == "--mad-rooting") {
       madRooting = true;
     } else if (arg == "--prune-species-tree") {
@@ -212,6 +215,12 @@ void GeneRaxArguments::checkInputs() {
     Logger::info << "[Error] Invalid reconciliation model string " << reconciliationModelStr << std::endl;
     ok = false;
   }
+  if (forceGeneTreeRoot) {
+    if (geneSearchStrategy != GeneSearchStrategy::SKIP && geneSearchStrategy != GeneSearchStrategy::EVAL) {
+      Logger::info << "[Error] Warning, --enforce-gene-tree-root is only compatible with the SKIP and EVAL gene tree search strategies" << std::endl;
+      ok = false;
+    }
+  }
   if (!ok) {
     Logger::info << "Aborting." << std::endl;
     ParallelContext::abort(1);
@@ -279,6 +288,7 @@ void GeneRaxArguments::printSummary() {
   }
   Logger::info << "- Infer ML reconciliation: " << boolStr[reconcile] << std::endl;
   Logger::info << "- Unrooted reconciliation likelihood: " << boolStr[!rootedGeneTree] << std::endl;
+  Logger::info << "- Enforcing gene tree root: " << boolStr[forceGeneTreeRoot] << std::endl;
   Logger::info << "- Prune species tree mode: " << boolStr[pruneSpeciesTree] << std::endl;
   Logger::info << std::endl;
 
