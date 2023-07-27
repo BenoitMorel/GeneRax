@@ -47,8 +47,8 @@ struct GeneRaxInstance {
         args.transferConstraint,
         args.noDup,
         false, // no TL
-        args.fractionMissingFile
-        );
+        args.fractionMissingFile,
+        false); // memory savings
     rates = getUserParameters();
   }
   

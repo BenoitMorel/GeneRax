@@ -272,7 +272,7 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
         Logger::timed << "ll=" << instance.totalRecLL << std::endl;
       } else {
         long elapsed = 0;
-        bool enableLibpll = false;
+        bool enableLibpll = true;
         unsigned int sprRadius = 0;
         Routines::optimizeGeneTrees(
             instance.currentFamilies, 
