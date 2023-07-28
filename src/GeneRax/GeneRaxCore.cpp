@@ -270,31 +270,31 @@ void GeneRaxCore::reconcile(GeneRaxInstance &instance)
           instance.elapsedRates);
         instance.totalRecLL = instance.rates.getScore();
         Logger::timed << "ll=" << instance.totalRecLL << std::endl;
-      } else {
-        long elapsed = 0;
-        bool enableLibpll = true;
-        unsigned int sprRadius = 0;
-        Routines::optimizeGeneTrees(
-            instance.currentFamilies, 
-            instance.recModelInfo,
-            instance.rates, 
-            instance.args.outputPath, 
-            "results", 
-            instance.args.execPath, 
-            instance.speciesTree, 
-            RecOpt::Gradient,
-            false,
-            instance.args.supportThreshold, 
-            instance.args.recWeight, 
-            true, 
-            enableLibpll, 
-            sprRadius, 
-            instance.currentIteration++, 
-            ParallelContext::allowSchedulerSplitImplementation(), 
-            elapsed);
-        double temp = 0.0;
-        Routines::gatherLikelihoods(instance.currentFamilies, temp, instance.totalRecLL);
-      }
+      } 
+      long elapsed = 0;
+      bool enableLibpll = true;
+      unsigned int sprRadius = 0;
+      Logger::timed << "Optimizing the phylogenetic likelihood..." << std::endl;
+      Routines::optimizeGeneTrees(
+          instance.currentFamilies, 
+          instance.recModelInfo,
+          instance.rates, 
+          instance.args.outputPath, 
+          "results", 
+          instance.args.execPath, 
+          instance.speciesTree, 
+          RecOpt::Gradient,
+          false,
+          instance.args.supportThreshold, 
+          instance.args.recWeight, 
+          true, 
+          enableLibpll, 
+          sprRadius, 
+          instance.currentIteration++, 
+          ParallelContext::allowSchedulerSplitImplementation(), 
+          elapsed);
+      double temp = 0.0;
+      Routines::gatherLikelihoods(instance.currentFamilies, temp, instance.totalRecLL);
     }
         
     Logger::timed << "Reconciling gene trees with the species tree..." << std::endl;
