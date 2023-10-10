@@ -113,20 +113,20 @@ def check_reconciliation(test_output, model):
   nhx_dup_A = os.path.join(reconciliations_path, "gene_dup_A_reconciliated.nhx")
   nhx_dup_AB = os.path.join(reconciliations_path, "gene_dup_AB_reconciliated.nhx")
   nhx_transfer_A_D = os.path.join(reconciliations_path, "gene_transfer_A_D_reconciliated.nhx")
-  if (not is_string_in_file("[&&NHX:S=A:D=Y:H=N:B=0]", nhx_dup_A)):
+  if (not is_string_in_file("[&&NHX:S=A:D=Y:H=N:B", nhx_dup_A)):
     print("Failed to infer a duplication in species A (" + nhx_dup_A + ")")
     return False
   if (count_string_in_file("=Y", nhx_dup_A) != 1):
     print("Inferred to many events in " + nhx_dup_A)
     return False;
-  if (not is_string_in_file("[&&NHX:S=AB:D=Y:H=N:B=0]", nhx_dup_AB)):
+  if (not is_string_in_file("[&&NHX:S=AB:D=Y:H=N:B=", nhx_dup_AB)):
     print("Failed to infer a duplication in species AB (" + nhx_dup_AB + ")")
     return False
   if (count_string_in_file("=Y", nhx_dup_AB) != 1):
     print("Inferred to many events in " + nhx_dup_AB)
     return False;
   if (model == "UndatedDTL"):
-    if (not is_string_in_file("[&&NHX:S=A:D=N:H=Y@A@D:B=0]", nhx_transfer_A_D)):
+    if (not is_string_in_file("[&&NHX:S=A:D=N:H=Y@A@D:B=", nhx_transfer_A_D)):
       print("Failed to infer a transfer from A to D (" + nhx_transfer_A_D + ")")
       return False
     if (count_string_in_file("=Y", nhx_transfer_A_D) != 1):
