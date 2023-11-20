@@ -6,4 +6,4 @@ set(generax_SOURCES generax.cpp
   )
 add_program(generax "${generax_SOURCES}")
 target_link_libraries(generax PRIVATE mpi-scheduler) 
-
+install(TARGETS generax DESTINATION bin)

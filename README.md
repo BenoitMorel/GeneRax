@@ -51,6 +51,20 @@ To build the sources:
 ```
 ./install.sh
 ```
+
+The generated executable is located here:
+```
+build/bin/generax
+```
+
+To copy the executable to your PATH, such that you can call generax from anywhere:
+```
+cd build
+sudo make install
+```
+
+
+
 ## Running
 
 See the wiki (https://github.com/BenoitMorel/GeneRax/wiki)
