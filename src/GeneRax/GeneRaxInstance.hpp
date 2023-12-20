@@ -41,11 +41,14 @@ struct GeneRaxInstance {
         args.originationStrategy,
         args.pruneSpeciesTree,
         args.rootedGeneTree,
+        false, // force gene tree rooting
+        false, // mad rooting
         args.minGeneBranchLength,
         args.transferConstraint,
         args.noDup,
         false, // no TL
-        args.fractionMissingFile
+        args.fractionMissingFile,
+        false // memory savings
         );
     rates = getUserParameters();
   }
