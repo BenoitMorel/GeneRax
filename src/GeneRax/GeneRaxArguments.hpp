@@ -64,6 +64,9 @@ public:
    bool quartetSupportAllQuartets;
    int eqpicRadius;
    
+   // checkpointing
+   bool checkpoint;
+
    // hacky stuff
    bool generateFakeAlignments;
 private:

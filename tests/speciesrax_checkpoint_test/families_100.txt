@@ -1,0 +1,301 @@
+[FAMILIES]
+- HBG284369_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG284369_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG284369_sim/mappings/mapping.link
+- HBG284523_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG284523_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG284523_sim/mappings/mapping.link
+- HBG284947_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG284947_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG284947_sim/mappings/mapping.link
+- HBG284990_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG284990_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG284990_sim/mappings/mapping.link
+- HBG285179_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG285179_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG285179_sim/mappings/mapping.link
+- HBG285270_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG285270_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG285270_sim/mappings/mapping.link
+- HBG285605_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG285605_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG285605_sim/mappings/mapping.link
+- HBG285698_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG285698_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG285698_sim/mappings/mapping.link
+- HBG285727_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG285727_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG285727_sim/mappings/mapping.link
+- HBG286075_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG286075_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG286075_sim/mappings/mapping.link
+- HBG286237_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG286237_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG286237_sim/mappings/mapping.link
+- HBG286341_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG286341_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG286341_sim/mappings/mapping.link
+- HBG286527_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG286527_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG286527_sim/mappings/mapping.link
+- HBG286573_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG286573_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG286573_sim/mappings/mapping.link
+- HBG287056_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG287056_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG287056_sim/mappings/mapping.link
+- HBG287136_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG287136_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG287136_sim/mappings/mapping.link
+- HBG289809_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG289809_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG289809_sim/mappings/mapping.link
+- HBG293864_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG293864_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG293864_sim/mappings/mapping.link
+- HBG294213_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG294213_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG294213_sim/mappings/mapping.link
+- HBG294308_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG294308_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG294308_sim/mappings/mapping.link
+- HBG299314_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG299314_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG299314_sim/mappings/mapping.link
+- HBG301263_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG301263_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG301263_sim/mappings/mapping.link
+- HBG302271_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG302271_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG302271_sim/mappings/mapping.link
+- HBG311214_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG311214_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG311214_sim/mappings/mapping.link
+- HBG313369_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG313369_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG313369_sim/mappings/mapping.link
+- HBG317982_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG317982_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG317982_sim/mappings/mapping.link
+- HBG329596_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG329596_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG329596_sim/mappings/mapping.link
+- HBG360398_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG360398_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG360398_sim/mappings/mapping.link
+- HBG362710_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG362710_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG362710_sim/mappings/mapping.link
+- HBG370454_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG370454_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG370454_sim/mappings/mapping.link
+- HBG400967_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG400967_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG400967_sim/mappings/mapping.link
+- HBG403839_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG403839_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG403839_sim/mappings/mapping.link
+- HBG405459_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG405459_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG405459_sim/mappings/mapping.link
+- HBG405561_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG405561_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG405561_sim/mappings/mapping.link
+- HBG409922_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG409922_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG409922_sim/mappings/mapping.link
+- HBG410188_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG410188_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG410188_sim/mappings/mapping.link
+- HBG437822_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG437822_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG437822_sim/mappings/mapping.link
+- HBG456486_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG456486_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG456486_sim/mappings/mapping.link
+- HBG476673_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG476673_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG476673_sim/mappings/mapping.link
+- HBG497643_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG497643_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG497643_sim/mappings/mapping.link
+- HBG500000_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG500000_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG500000_sim/mappings/mapping.link
+- HBG507255_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG507255_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG507255_sim/mappings/mapping.link
+- HBG507761_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG507761_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG507761_sim/mappings/mapping.link
+- HBG515603_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG515603_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG515603_sim/mappings/mapping.link
+- HBG518238_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG518238_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG518238_sim/mappings/mapping.link
+- HBG518924_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG518924_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG518924_sim/mappings/mapping.link
+- HBG527379_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG527379_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG527379_sim/mappings/mapping.link
+- HBG535236_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG535236_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG535236_sim/mappings/mapping.link
+- HBG537530_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG537530_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG537530_sim/mappings/mapping.link
+- HBG540956_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG540956_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG540956_sim/mappings/mapping.link
+- HBG555690_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG555690_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG555690_sim/mappings/mapping.link
+- HBG557189_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG557189_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG557189_sim/mappings/mapping.link
+- HBG561233_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG561233_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG561233_sim/mappings/mapping.link
+- HBG571744_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG571744_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG571744_sim/mappings/mapping.link
+- HBG577712_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG577712_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG577712_sim/mappings/mapping.link
+- HBG577902_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG577902_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG577902_sim/mappings/mapping.link
+- HBG580689_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG580689_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG580689_sim/mappings/mapping.link
+- HBG581077_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG581077_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG581077_sim/mappings/mapping.link
+- HBG583461_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG583461_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG583461_sim/mappings/mapping.link
+- HBG586587_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG586587_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG586587_sim/mappings/mapping.link
+- HBG592135_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG592135_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG592135_sim/mappings/mapping.link
+- HBG610809_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG610809_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG610809_sim/mappings/mapping.link
+- HBG616253_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG616253_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG616253_sim/mappings/mapping.link
+- HBG634430_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG634430_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG634430_sim/mappings/mapping.link
+- HBG634441_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG634441_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG634441_sim/mappings/mapping.link
+- HBG634538_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG634538_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG634538_sim/mappings/mapping.link
+- HBG635075_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG635075_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG635075_sim/mappings/mapping.link
+- HBG635089_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG635089_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG635089_sim/mappings/mapping.link
+- HBG635106_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG635106_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG635106_sim/mappings/mapping.link
+- HBG635225_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG635225_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG635225_sim/mappings/mapping.link
+- HBG635304_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG635304_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG635304_sim/mappings/mapping.link
+- HBG635320_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG635320_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG635320_sim/mappings/mapping.link
+- HBG635321_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG635321_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG635321_sim/mappings/mapping.link
+- HBG635631_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG635631_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG635631_sim/mappings/mapping.link
+- HBG636404_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG636404_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG636404_sim/mappings/mapping.link
+- HBG646290_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG646290_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG646290_sim/mappings/mapping.link
+- HBG646784_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG646784_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG646784_sim/mappings/mapping.link
+- HBG647131_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG647131_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG647131_sim/mappings/mapping.link
+- HBG648813_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG648813_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG648813_sim/mappings/mapping.link
+- HBG650065_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG650065_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG650065_sim/mappings/mapping.link
+- HBG664092_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG664092_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG664092_sim/mappings/mapping.link
+- HBG668356_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG668356_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG668356_sim/mappings/mapping.link
+- HBG669860_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG669860_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG669860_sim/mappings/mapping.link
+- HBG689426_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG689426_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG689426_sim/mappings/mapping.link
+- HBG691818_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG691818_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG691818_sim/mappings/mapping.link
+- HBG692398_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG692398_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG692398_sim/mappings/mapping.link
+- HBG695954_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG695954_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG695954_sim/mappings/mapping.link
+- HBG709628_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG709628_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG709628_sim/mappings/mapping.link
+- HBG710237_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG710237_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG710237_sim/mappings/mapping.link
+- HBG710503_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG710503_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG710503_sim/mappings/mapping.link
+- HBG710518_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG710518_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG710518_sim/mappings/mapping.link
+- HBG711150_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG711150_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG711150_sim/mappings/mapping.link
+- HBG713904_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG713904_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG713904_sim/mappings/mapping.link
+- HBG731751_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG731751_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG731751_sim/mappings/mapping.link
+- HBG734153_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG734153_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG734153_sim/mappings/mapping.link
+- HBG735169_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG735169_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG735169_sim/mappings/mapping.link
+- HBG738311_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG738311_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG738311_sim/mappings/mapping.link
+- HBG753256_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG753256_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG753256_sim/mappings/mapping.link
+- HBG754735_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG754735_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG754735_sim/mappings/mapping.link
+- HBG758551_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG758551_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG758551_sim/mappings/mapping.link

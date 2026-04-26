@@ -47,6 +47,45 @@ To build the sources:
 
 See the wiki (https://github.com/BenoitMorel/GeneRax/wiki)
 
+### Running SpeciesRax with example data
+
+Download and extract the test datasets:
+
+```
+wget https://cme.h-its.org/exelixis/material/generax_data.tar.gz
+tar xzf generax_data.tar.gz
+```
+
+Prepare a families file (e.g. `families.txt`) listing gene trees and mappings:
+
+```
+[FAMILIES]
+- HBG284008_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG284008_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG284008_sim/mappings/mapping.link
+- HBG284199_sim
+starting_gene_tree = generax_data/cyano_simulated/families/HBG284199_sim/gene_trees/raxml-ng.LG+G+I.geneTree.newick
+mapping = generax_data/cyano_simulated/families/HBG284199_sim/mappings/mapping.link
+```
+
+Run SpeciesRax to infer a species tree:
+
+```
+./build/bin/generax --families families.txt --species-tree MiniNJ --strategy SKIP --rec-model UndatedDTL --per-family-rates --prune-species-tree --si-strategy HYBRID --prefix output
+```
+
+### Checkpointing
+
+For long-running SpeciesRax analyses, enable checkpointing with the `--checkpoint` flag. This saves progress after each search iteration so the run can be resumed if interrupted:
+
+```
+./build/bin/generax --families families.txt --species-tree MiniNJ --strategy SKIP --rec-model UndatedDTL --per-family-rates --prune-species-tree --si-strategy HYBRID --prefix output --checkpoint
+```
+
+If the run is interrupted, simply re-run the same command. It will detect the checkpoint in the output directory and resume from where it left off.
+
+A checkpoint test script is provided in `tests/test_speciesrax_checkpoint.sh`. It requires the test data above and should be run from the repository root.
+
 ## Issues and questions
 
 For questions, issues or feedback, please post on our google group: https://groups.google.com/g/generaxusers

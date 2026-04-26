@@ -48,6 +48,7 @@ GeneRaxArguments::GeneRaxArguments(int iargc, char * iargv[]):
   quartetSupport(false),
   quartetSupportAllQuartets(false),
   eqpicRadius(std::numeric_limits<int>::max()),
+  checkpoint(false),
   generateFakeAlignments(false)
 {
   if (argc == 1) {
@@ -170,6 +171,8 @@ void GeneRaxArguments::init() {
       quartetSupportAllQuartets = true; 
     } else if (arg == "--reconciliation-samples") {
       reconciliationSampleNumber = static_cast<unsigned int>(atoi(argv[++i]));
+    } else if (arg == "--checkpoint") {
+      checkpoint = true;
     } else if (arg == "--generate-fake-alignments") {
       generateFakeAlignments = true;
     } else {
@@ -249,6 +252,7 @@ void GeneRaxArguments::printHelp() {
   Logger::info << "--do-not-reconcile" << std::endl;
   Logger::info << "--reconciliation-samples <number of samples>" << std::endl;
   Logger::info << "--seed <seed>" << std::endl;
+  Logger::info << "--checkpoint" << std::endl;
   Logger::info << "Please find more information on the GeneRax github wiki" << std::endl;
   Logger::info << std::endl;
 
@@ -292,6 +296,7 @@ void GeneRaxArguments::printSummary() {
   Logger::info << "- Prune species tree mode: " << boolStr[pruneSpeciesTree] << std::endl;
   Logger::info << std::endl;
 
+  Logger::info << "- Checkpointing: " << boolStr[checkpoint] << std::endl;
   if (speciesStrategy != SpeciesSearchStrategy::SKIP) {
     Logger::info << "Species tree inference information:" << std::endl;
     Logger::info << "- Species tree Strategy: " << ArgumentsHelper::speciesStrategyToStr(speciesStrategy) << std::endl;
