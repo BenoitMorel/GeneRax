@@ -35,7 +35,9 @@ struct GeneRaxInstance {
     auto recModel = ArgumentsHelper::strToRecModel(
         args.reconciliationModelStr);
     std::string fractionMissingFile;
+    RecOpt opt = RecOpt::Gradient;
     recModelInfo = RecModelInfo(recModel,
+       opt,
         args.perFamilyDTLRates,
         args.gammaCategories,
         args.originationStrategy,
