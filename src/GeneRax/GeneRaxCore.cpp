@@ -192,13 +192,14 @@ static void speciesTreeSearchAux(GeneRaxInstance &instance, int samples)
   searchParams.sprRadius = instance.args.speciesSPRRadius;
   searchParams.rootSmallRadius = instance.args.speciesSmallRootRadius;
   searchParams.rootBigRadius = instance.args.speciesBigRootRadius;
-  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree, 
-      instance.currentFamilies, 
-      instance.getRecModelInfo(), 
-      startingRates, 
-      instance.args.userDTLRates, 
-      instance.args.outputPath, 
-      searchParams);
+  SpeciesTreeOptimizer speciesTreeOptimizer(instance.speciesTree,
+      instance.currentFamilies,
+      instance.getRecModelInfo(),
+      startingRates,
+      instance.args.userDTLRates,
+      instance.args.outputPath,
+      searchParams,
+      instance.args.checkpoint);
   if (instance.args.speciesSPRRadius > 0) {
     Logger::info << std::endl;
     Logger::timed << "Start optimizing the species tree with fixed gene trees (on " 
